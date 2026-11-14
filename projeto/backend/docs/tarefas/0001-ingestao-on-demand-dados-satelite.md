@@ -5,7 +5,7 @@
 - **Status:** Concluída
 - **Prioridade:** Alta
 - **Módulos Afetados:** `projeto/backend/app/repositories/external/`, `projeto/backend/app/jobs/`, `projeto/backend/app/services/`, `projeto/backend/app/controllers/`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (RNF-01), [ADR-0003](../../adr/0003-series-temporais-nasa-e-janela-de-20-anos.md), [diagrama-de-sequencias.md](../diagrama-de-sequencias.md)
+- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (RNF-01), [ADR-0003](../adr/0003-series-temporais-nasa-e-janela-de-20-anos.md), [diagrama-de-sequencias.md](../diagrama-de-sequencias.md)
 
 ---
 
@@ -65,14 +65,15 @@ Esta tarefa tem como objetivo implementar um mecanismo de **Cache-Aside Espacial
 ## 3. Sub-tarefas de Implementação (Passo a Passo com TDD)
 
 ### Sub-tarefa 1.1: Clientes HTTP Externos (`app/repositories/external/`)
-- [x] Adaptar a lógica de [`data/extract_nasa_power.py`](file:///workspace/data/extract_nasa_power.py) para uma classe limpa `NasaPowerClient`:
-  - Requisição HTTP via `httpx` para `https://power.larc.nasa.gov/api/temporal/daily/point`.
+- [x] Adaptar a lógica de [`data/extract_nasa_power.py`](../../../../data/extract_nasa_power.py) para uma classe limpa `NasaPowerClient`:
+  - Requisição HTTP com `urllib` (`app/repositories/external/http_client.py`) para `https://power.larc.nasa.gov/api/temporal/daily/point`.
   - Tratamento de timeout (máx 8s), retentativa exponencial e fallback em caso de falha.
-- [x] Adaptar a lógica de [`data/extract_soilgrids.py`](file:///workspace/data/extract_soilgrids.py) para uma classe limpa `SoilGridsClient`:
-  - Requisição HTTP para ISRIC SoilGrids REST API.
+- [x] Criar a classe `SoilGridsClient` (`app/repositories/external/soilgrids_client.py`) direto da API REST
+  do ISRIC SoilGrids. Não havia script `data/extract_soilgrids.py` para adaptar (o `data/README.md`
+  antigo citava um que nunca existiu).
   - Extração de profundidades 0-5cm, 5-15cm, 15-30cm e cálculo da textura e CAD.
 - [x] **Testes TDD:**
-  - `tests/unit/repositories/external/test_nasa_power_client.py` com mock do `httpx`.
+  - `tests/unit/repositories/external/test_nasa_power_client.py` com um `http_get` falso (sem rede).
   - `tests/unit/repositories/external/test_soilgrids_client.py` com mock de respostas JSON da ISRIC.
 
 ### Sub-tarefa 1.2: Job de Ingestão e Persistência (`app/jobs/` ou `app/services/ingestion/`)
