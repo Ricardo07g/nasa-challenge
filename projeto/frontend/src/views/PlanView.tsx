@@ -1,27 +1,56 @@
+import type { ReactNode } from 'react'
+import { Link } from 'react-router'
 import { Card } from '../design-system/components/Card'
-import { ChipGroup } from '../design-system/components/Choice'
+import { ChipGroup, NumberStepper } from '../design-system/components/Choice'
 import { PageHeading, YearTimeline } from '../design-system/components/Content'
 import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
+import { ToneBadge } from '../design-system/components/Status'
+import {
+  CalendarIcon,
+  ClimateIcon,
+  CommunityIcon,
+  DropIcon,
+  DryIcon,
+  MoneyIcon,
+  SeedIcon,
+  UncertainIcon,
+} from '../design-system/icons'
+import { formatApproxMoney, formatDayMonth } from '../i18n/format'
+import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
-import type { CropId } from '../models/recomendacao'
-import type { PlanArea, PlanScenario, PlanView as Plan } from '../services/recomendacaoRules'
-import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
+import type { CropId, NivelSinal, SinalOutono } from '../models/recomendacao'
 import type { ScreenStatus } from '../models/screenStatus'
+import type { PlanScenario, PlanView as Plan, PlantingRule, TestAreaTotals } from '../services/recomendacaoRules'
+import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import layout from './layout.module.css'
 
 export type PlanViewProps = {
   t: Messages
+  lang: Lang
   nav: { label: string; tabs: AnswerTab[]; backTo: string }
   status: ScreenStatus
   onRetry: () => void
+  signal: SinalOutono | null
   scenario: PlanScenario
   onScenario: (value: PlanScenario | null) => void
-  area: PlanArea
-  onArea: (value: PlanArea | null) => void
+  areaInput: string
+  onAreaChange: (value: string) => void
+  onAreaCommit: () => void
+  onAreaStep: (delta: number) => void
+  totals: TestAreaTotals
+  rule: PlantingRule | null
   plan: Plan | null
+  communityTo: string
 }
 
-/** Tela 7 "Plano de 3 anos": linha do tempo; embaixo, ano seco e resumo à esquerda; por onde começar à direita. */
+/** Sinal seco = laranja; normal = verde; incerto = azul. */
+const SIGNAL_LOOK: Record<NivelSinal, { tone: 'orange' | 'green' | 'blue'; icon: ReactNode }> = {
+  seco: { tone: 'orange', icon: <DryIcon /> },
+  normal: { tone: 'green', icon: <ClimateIcon /> },
+  incerto: { tone: 'blue', icon: <UncertainIcon /> },
+}
+
+/** Tela 7 "Plano de 3 anos": sinal do outono e Plano A/B (RF-20), hectares para testar (RF-21) e a linha do tempo. */
 export function PlanView(props: PlanViewProps) {
   const { t, nav, status, onRetry, plan } = props
   const p = t.plan
@@ -33,23 +62,91 @@ export function PlanView(props: PlanViewProps) {
       {status === 'loading' && <FlowLoading label={t.common.loading} />}
       {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={onRetry} />}
       {status === 'outside' && <FlowOutside t={t} />}
-      {status === 'ready' && plan && <Plan {...props} plan={plan} />}
+      {status === 'ready' && plan && <Ready {...props} plan={plan} />}
     </div>
   )
 }
 
-function Plan({ t, scenario, onScenario, area, onArea, plan }: PlanViewProps & { plan: Plan }) {
+function Ready(props: PlanViewProps & { plan: Plan }) {
+  const { t, lang, signal, scenario, onScenario, plan, totals, rule, communityTo } = props
   const p = t.plan
   const name = (crop: CropId) => t.crops.names[crop]
-  const lower = (crop: CropId) => name(crop).toLocaleLowerCase()
+  const lower = (crop: CropId) => name(crop).toLocaleLowerCase(lang)
+  const money = (value: number) => formatApproxMoney(lang, value)
+  const firstYear = plan.years[0]?.year ?? new Date().getFullYear()
   const { grain, covered, total } = plan.summary
   const coverage = covered === total ? p.coveredAll(total) : p.coveredSome(covered, total)
-  const scenarioText =
-    scenario === 'seco'
-      ? [p.dryText, ...plan.swaps.map((swap) => p.swap(lower(swap.from), swap.year, lower(swap.to)))].join(' ')
-      : p.normalText
+  const ruleText = rule
+    ? 'text' in rule
+      ? rule.text
+      : p.plantingRule(formatDayMonth(lang, rule.date), lower(rule.planA), lower(rule.planB))
+    : null
+
   return (
     <>
+      <div className={layout.pageGrid}>
+        <Card as="section" aria-label={p.signalTitle(firstYear)}>
+          <h2 className={layout.cardTitle}>{p.signalTitle(firstYear)}</h2>
+          {signal ? (
+            <>
+              <ToneBadge tone={SIGNAL_LOOK[signal.nivel].tone} icon={SIGNAL_LOOK[signal.nivel].icon}>
+                {t.signal[signal.nivel]}
+              </ToneBadge>
+              <p>{signal.motivo}</p>
+              <p className={layout.muted}>{p.signalSource(formatDayMonth(lang, signal.data))}</p>
+            </>
+          ) : (
+            <p className={layout.muted}>{p.noSignal}</p>
+          )}
+          <ChipGroup
+            label={p.planChoice}
+            options={[
+              { value: 'normal', label: p.planA },
+              { value: 'seco', label: p.planB },
+            ]}
+            value={scenario}
+            onChange={onScenario}
+          />
+          {signal?.nivel === 'incerto' && <p className={layout.muted}>{p.keepPlanB}</p>}
+          {scenario === 'seco' && <p className={layout.muted}>{p.planBTest}</p>}
+        </Card>
+        <Card as="section" aria-label={p.startSmall}>
+          <h2 className={layout.cardTitle}>{p.startSmall}</h2>
+          <NumberStepper
+            label={p.hectares}
+            value={props.areaInput}
+            unit="ha"
+            step={10}
+            decreaseLabel={p.decreaseArea}
+            increaseLabel={p.increaseArea}
+            onChange={props.onAreaChange}
+            onStep={props.onAreaStep}
+            onCommit={props.onAreaCommit}
+          />
+          <div className={layout.stack} aria-live="polite">
+            {totals.margin !== null && (
+              <p className={layout.iconLine}>
+                <MoneyIcon />
+                {p.areaMargin(money(totals.margin))}
+              </p>
+            )}
+            {totals.seed !== null && (
+              <p className={layout.iconLine}>
+                <SeedIcon />
+                {p.areaSeed(money(totals.seed))}
+              </p>
+            )}
+            {totals.worstDry !== null && (
+              <p className={layout.iconLine}>
+                <DropIcon />
+                {totals.worstDry < 0 ? p.areaDryNegative(money(totals.worstDry)) : p.areaDryPositive(money(totals.worstDry))}
+              </p>
+            )}
+          </div>
+          <p className={layout.muted}>{p.areaRest}</p>
+          <p className={layout.muted}>{p.areaNote}</p>
+        </Card>
+      </div>
       <YearTimeline
         label={p.timelineLabel}
         items={plan.years.map(({ year, crop, swappedFrom }) => ({
@@ -58,22 +155,17 @@ function Plan({ t, scenario, onScenario, area, onArea, plan }: PlanViewProps & {
           text: swappedFrom ? p.swapTagline(lower(swappedFrom)) : t.crops.taglines[crop],
         }))}
       />
+      {ruleText && (
+        <Card tone="blue">
+          <p className={layout.iconLine}>
+            <CalendarIcon />
+            <strong>{ruleText}</strong>
+          </p>
+          <p className={layout.muted}>{p.rootWater}</p>
+        </Card>
+      )}
       <div className={layout.pageGrid}>
         <div className={layout.stack}>
-          <Card>
-            <h2 className={layout.cardTitle}>{p.dryQuestion}</h2>
-            <ChipGroup
-              label={p.dryQuestion}
-              tone="blue"
-              options={[
-                { value: 'normal', label: p.normal },
-                { value: 'seco', label: p.dry },
-              ]}
-              value={scenario}
-              onChange={onScenario}
-            />
-            <p className={layout.muted}>{scenarioText}</p>
-          </Card>
           <Card tone="green" as="section" aria-label={p.withPlan}>
             <h3 className={layout.cardTitle}>{p.withPlan}</h3>
             <p>
@@ -85,28 +177,16 @@ function Plan({ t, scenario, onScenario, area, onArea, plan }: PlanViewProps & {
             <p>{plan.today}</p>
           </Card>
         </div>
-        <div className={layout.stack}>
-          <Card>
-            <h2 className={layout.cardTitle}>{p.startSmall}</h2>
-            <ChipGroup
-              label={p.startSmall}
-              options={[
-                { value: '50', label: p.area50 },
-                { value: '100', label: p.area100 },
-                { value: 'all', label: p.areaAll },
-              ]}
-              value={area}
-              onChange={onArea}
-            />
-            <p>{area === 'all' ? p.wholeText : p.partialText(Number(area))}</p>
-          </Card>
-          <Card tone="green">
-            <h2 className={layout.cardTitle}>{p.gainTitle}</h2>
-            <p>{p.gainText}</p>
-            <p className={layout.muted}>{p.gainNote}</p>
-          </Card>
-        </div>
+        <Card tone="green">
+          <h2 className={layout.cardTitle}>{p.gainTitle}</h2>
+          <p>{p.gainText}</p>
+          <p className={layout.muted}>{p.gainNote}</p>
+        </Card>
       </div>
+      <Link to={communityTo} className={layout.iconLink}>
+        <CommunityIcon />
+        {p.regionLink}
+      </Link>
     </>
   )
 }

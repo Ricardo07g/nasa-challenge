@@ -25,12 +25,15 @@ export type Opcao = {
     modelos: number
     cenario: string
   } | null
-  dinheiro: { margem_ha: number; rotulo: Rotulo; texto: string }
+  /** RF-21: `pior_ano_seco_ha` ainda não vem da API (contrato proposto). */
+  dinheiro: { margem_ha: number; rotulo: Rotulo; texto: string; pior_ano_seco_ha?: number }
   terra: { nota: number; rotulo: Rotulo; texto: string }
   /** Notas de 0 a 100 (só na tela 9). `futuro` é null sem o CMIP6. */
   notas: { seguranca: number; futuro: number | null; solo: number; renda: number; final: number }
   porque: string[]
   como_fazer: string[]
+  /** RF-21: custo da semente por hectare; ainda não vem da API (contrato proposto). */
+  custo_semente_ha?: number
 }
 
 export type Plano = { anos: CropId[]; nota: number; descricao: string }

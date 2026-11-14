@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { MetricRow, StatusPill, StripLegend, YearStrip } from './Status'
+import { MetricRow, StatusPill, StripLegend, ToneBadge, YearStrip } from './Status'
 
 describe('StatusPill', () => {
   it('mostra o rótulo com o tom certo', () => {
@@ -85,5 +85,15 @@ describe('StripLegend com nota', () => {
     render(<StripLegend items={[{ state: 'good', label: 'Choveu o bastante' }]} note="2006–2025" />)
 
     expect(screen.getByText('2006–2025')).toBeInTheDocument()
+  })
+})
+
+describe('ToneBadge', () => {
+  it('selo com ícone e texto, no tom pedido', () => {
+    render(<ToneBadge tone="orange" icon={<svg data-testid="icone" />}>Sinal de ano seco</ToneBadge>)
+
+    const badge = screen.getByText('Sinal de ano seco').closest('[data-tone]')
+    expect(badge).toHaveAttribute('data-tone', 'orange')
+    expect(screen.getByTestId('icone')).toBeInTheDocument()
   })
 })

@@ -212,13 +212,13 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
               ]}
             />
             <ChipGroup
-              label={t.plan.dryQuestion}
+              label={t.plan.planChoice}
               tone="blue"
               value="seco"
               onChange={noop}
               options={[
-                { value: 'normal', label: t.plan.normal },
-                { value: 'seco', label: t.plan.dry },
+                { value: 'normal', label: t.plan.planA },
+                { value: 'seco', label: t.plan.planB },
               ]}
             />
             <RadioCard title={t.harvest.meio.title} sub={t.harvest.meio.sub} selected onSelect={noop} />

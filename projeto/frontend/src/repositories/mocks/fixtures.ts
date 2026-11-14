@@ -50,6 +50,9 @@ type CropSeed = {
   soil: { nota: number; rotulo: Rotulo; texto: Text }
   notes: Opcao['notas']
   limit: string
+  /** Custo da semente e margem do pior ano seco por hectare (RF-21, ilustrativos). */
+  seedCost: number
+  worstDry: number
   why: TextList
   how: TextList
 }
@@ -64,6 +67,8 @@ const CROPS: CropSeed[] = [
     soil: { nota: 50, rotulo: 'bom', texto: { pt: 'Fica coberta na seca', en: 'Stays covered in the dry season' } },
     notes: { seguranca: 70, futuro: 60, solo: 50, renda: 74, final: 66 },
     limit: '2027-02-28',
+    seedCost: 520,
+    worstDry: -180,
     why: {
       pt: [
         'Plantando no meio de fevereiro, o milho floresce em abril. Em 6 dos últimos 20 anos, faltou chuva bem nessa hora (GPM IMERG + NASA POWER).',
@@ -90,6 +95,8 @@ const CROPS: CropSeed[] = [
     soil: { nota: 30, rotulo: 'medio', texto: { pt: 'Palhada média', en: 'Medium straw' } },
     notes: { seguranca: 85, futuro: 75, solo: 30, renda: 57, final: 62 },
     limit: '2027-03-20',
+    seedCost: 160,
+    worstDry: 120,
     why: {
       pt: [
         'O sorgo aguenta mais a seca que o milho: faltou chuva na floração em só 3 dos últimos 20 anos (GPM IMERG + NASA POWER).',
@@ -114,6 +121,8 @@ const CROPS: CropSeed[] = [
     soil: { nota: 10, rotulo: 'fraco', texto: { pt: 'Pouca cobertura', en: 'Little soil cover' } },
     notes: { seguranca: 70, futuro: 55, solo: 10, renda: 100, final: 58 },
     limit: '2027-02-28',
+    seedCost: 480,
+    worstDry: -420,
     why: {
       pt: [
         'É a opção que mais rende em ano bom, mas faltou chuva na floração em 6 dos últimos 20 anos (GPM IMERG + NASA POWER).',
@@ -142,6 +151,8 @@ const CROPS: CropSeed[] = [
     },
     notes: { seguranca: 85, futuro: 80, solo: 80, renda: 0, final: 55 },
     limit: '2027-02-28',
+    seedCost: 250,
+    worstDry: -250,
     why: {
       pt: [
         'Deixa de 60 a 100 kg de nitrogênio por hectare para a próxima soja e é altamente resistente ao nematoide.',
@@ -166,6 +177,8 @@ const CROPS: CropSeed[] = [
     soil: { nota: 60, rotulo: 'bom', texto: { pt: 'Muita palhada', en: 'Lots of straw' } },
     notes: { seguranca: 80, futuro: 70, solo: 60, renda: 0, final: 52 },
     limit: '2027-03-31',
+    seedCost: 110,
+    worstDry: -110,
     why: {
       pt: [
         'Cresce rápido e forma muita palha, mesmo com pouca chuva no fim do verão.',
@@ -207,11 +220,17 @@ function buildOption(seed: CropSeed, lang: Lang): Opcao {
       modelos: 3,
       cenario: 'ssp245',
     },
-    dinheiro: { margem_ha: seed.margin, rotulo: seed.moneyLabel, texto: moneyText(lang, seed.margin) },
+    dinheiro: {
+      margem_ha: seed.margin,
+      rotulo: seed.moneyLabel,
+      texto: moneyText(lang, seed.margin),
+      pior_ano_seco_ha: seed.worstDry,
+    },
     terra: { nota: seed.soil.nota, rotulo: seed.soil.rotulo, texto: seed.soil.texto[lang] },
     notas: seed.notes,
     porque: seed.why[lang],
     como_fazer: seed.how[lang],
+    custo_semente_ha: seed.seedCost,
   }
 }
 
@@ -309,6 +328,22 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
         anos: ['milho_safrinha', 'pousio', 'milho_safrinha'],
         nota: 48,
         descricao: lang === 'pt' ? 'Terra descoberta em metade dos anos' : 'Soil bare in half of the years',
+      },
+    },
+    sinal: {
+      nivel: 'incerto',
+      motivo:
+        lang === 'pt'
+          ? 'A previsão da NASA para março a maio está perto do normal: 40% de chance de chover menos.'
+          : 'The NASA outlook for March to May is close to normal: a 40% chance of less rain.',
+      fonte: ['GEOS-S2S', 'SMAP'],
+      data: '2026-11-10',
+      regra_dia_plantar: {
+        data_limite: '2027-02-28',
+        texto:
+          lang === 'pt'
+            ? 'No dia de plantar (até 28/fev), se a terra estiver seca, use o plano B: sorgo no lugar do milho.'
+            : 'On sowing day (by 28 Feb), if the soil is dry, use plan B: sorghum instead of corn.',
       },
     },
     versao_dados: '2026-11-14T13:00Z',

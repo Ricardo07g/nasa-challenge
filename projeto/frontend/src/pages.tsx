@@ -175,21 +175,28 @@ export function OptionsPage() {
 }
 
 export function PlanPage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.plan.title)
   const state = usePlanController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
   return (
     <PlanView
       t={t}
+      lang={lang}
       nav={state.nav}
       status={state.status}
       onRetry={state.retry}
+      signal={state.signal}
       scenario={state.scenario}
       onScenario={state.chooseScenario}
-      area={state.area}
-      onArea={state.chooseArea}
+      areaInput={state.areaInput}
+      onAreaChange={state.changeArea}
+      onAreaCommit={state.commitArea}
+      onAreaStep={state.stepArea}
+      totals={state.totals}
+      rule={state.rule}
       plan={state.plan}
+      communityTo={state.communityTo}
     />
   )
 }

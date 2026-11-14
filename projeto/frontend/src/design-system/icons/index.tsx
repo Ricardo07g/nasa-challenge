@@ -12,8 +12,10 @@ import {
   Check,
   ChevronDown,
   CircleCheck,
+  CircleHelp,
   CloudRain,
   CloudSun,
+  DropletOff,
   Droplets,
   History,
   Layers,
@@ -22,6 +24,7 @@ import {
   LockKeyhole,
   MapPin,
   Minus,
+  Plus,
   Satellite,
   ShieldCheck,
   Sprout,
@@ -29,6 +32,7 @@ import {
   Star,
   Users,
   Volume2,
+  Wheat,
 } from 'lucide-react'
 
 type IconProps = { size?: number }
@@ -165,4 +169,21 @@ export function StarIcon({ size = 28 }: IconProps) {
 
 export function LayersIcon({ size = 24 }: IconProps) {
   return <Layers size={size} {...decorative} />
+}
+
+// Plano de 3 anos (sinal do outono e hectares)
+export function PlusIcon({ size = 24 }: IconProps) {
+  return <Plus size={size} {...decorative} />
+}
+
+export function DryIcon({ size = 24 }: IconProps) {
+  return <DropletOff size={size} {...decorative} />
+}
+
+export function UncertainIcon({ size = 24 }: IconProps) {
+  return <CircleHelp size={size} {...decorative} />
+}
+
+export function SeedIcon({ size = 24 }: IconProps) {
+  return <Wheat size={size} {...decorative} />
 }

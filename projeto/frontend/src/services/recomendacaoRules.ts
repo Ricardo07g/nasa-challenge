@@ -6,6 +6,7 @@ import {
   type Motivo,
   type Opcao,
   type Recomendacao,
+  type SinalOutono,
 } from '../models/recomendacao'
 
 const byFinal = (a: Opcao, b: Opcao) => b.notas.final - a.notas.final
@@ -114,9 +115,6 @@ export function optionsSummary(recomendacao: Recomendacao, axis: Eixo | null): {
 
 export type PlanScenario = 'normal' | 'seco'
 
-/** Pedaço da lavoura para começar o plano ("Comece por um pedaço"). */
-export type PlanArea = '50' | '100' | 'all'
-
 export type PlanView = {
   years: { year: number; crop: CropId; swappedFrom: CropId | null }[]
   summary: { grain: number; covered: number; total: number }
@@ -144,4 +142,45 @@ export function buildPlan(recomendacao: Recomendacao, scenario: PlanScenario): P
 /** Tela 9 (para o agrônomo): as notas de 0 a 100 de cada opção, da maior nota final para a menor. */
 export function scoreRows(recomendacao: Recomendacao): { id: CropId; nome: string; notas: Opcao['notas'] }[] {
   return [...recomendacao.opcoes].sort(byFinal).map(({ id, nome, notas }) => ({ id, nome, notas }))
+}
+
+/** RF-20: o sinal de ano seco já marca o Plano B; normal, incerto ou sem sinal marcam o Plano A. */
+export function initialScenario(sinal: SinalOutono | undefined): PlanScenario {
+  return sinal?.nivel === 'seco' ? 'seco' : 'normal'
+}
+
+/** RF-21: hectares do pedaço de teste. Vazio, zero ou inválido volta para o padrão de 50 ha. */
+export function normalizeHectares(value: string | number): number {
+  const number = Number(value)
+  return !Number.isFinite(number) || number <= 0 ? 50 : Math.max(1, Math.floor(number))
+}
+
+export type TestAreaTotals = { margin: number | null; seed: number | null; worstDry: number | null }
+
+/**
+ * RF-21 (PRD §7.11): para a opção do 1º ano do plano marcado, quanto deve sobrar, o custo da semente e
+ * o pior caso num ano seco, em reais. Sem o valor por hectare na API, aquele total fica de fora.
+ */
+export function testAreaTotals(option: Opcao | undefined, hectares: number): TestAreaTotals {
+  const times = (perHectare: number | undefined) => (perHectare === undefined ? null : perHectare * hectares)
+  return {
+    margin: option ? option.dinheiro.margem_ha * hectares : null,
+    seed: times(option?.custo_semente_ha),
+    worstDry: times(option?.dinheiro.pior_ano_seco_ha),
+  }
+}
+
+export type PlantingRule = { text: string } | { date: string; planA: CropId; planB: CropId }
+
+/**
+ * RF-20: regra do dia de plantar. Vale o texto da API; sem ele, monta com a data limite da cultura do
+ * 1º ano do Plano A e a troca que o Plano B faz nesse ano.
+ */
+export function plantingRule(recomendacao: Recomendacao): PlantingRule | null {
+  if (recomendacao.sinal) return { text: recomendacao.sinal.regra_dia_plantar.texto }
+  const planA = recomendacao.plano_3_anos.normal.anos[0]
+  const planB = recomendacao.plano_3_anos.seco.anos[0]
+  const date = planA ? findOption(recomendacao.opcoes, planA)?.data_limite : null
+  if (!planA || !planB || !date) return null
+  return { date, planA, planB }
 }

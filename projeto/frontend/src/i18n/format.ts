@@ -34,3 +34,15 @@ export function formatDayMonth(lang: Lang, isoDate: string): string {
 export function formatCoordinates(point: { lat: number; lon: number }): string {
   return `${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`
 }
+
+/**
+ * Valor aproximado em reais, sem sinal (PRD §7.11): centenas até 10 mil ("3.400"); daí para cima,
+ * milhares por extenso ("26 mil" / "26 thousand").
+ */
+export function formatApproxMoney(lang: Lang, value: number): string {
+  const abs = Math.abs(value)
+  if (abs < 10000) return formatNumber(lang, Math.round(abs / 100) * 100)
+  return new Intl.NumberFormat(htmlLang(lang), { notation: 'compact', compactDisplay: 'long' }).format(
+    Math.round(abs / 1000) * 1000,
+  )
+}

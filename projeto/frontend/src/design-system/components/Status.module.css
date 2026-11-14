@@ -202,3 +202,36 @@
     font-size: 9px;
   }
 }
+
+/* Selo de tom (sinal do outono) */
+.toneBadge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+}
+
+.toneBadge svg {
+  flex: 0 0 auto;
+}
+
+.toneBadge[data-tone='green'] {
+  background: var(--color-tint-green);
+  border-color: var(--color-border-green-tint);
+  color: var(--color-primary);
+}
+
+.toneBadge[data-tone='blue'] {
+  background: var(--color-tint-blue);
+  border-color: var(--color-border-blue-tint);
+  color: var(--color-title-on-blue-tint);
+}
+
+.toneBadge[data-tone='orange'] {
+  background: var(--color-tint-orange);
+  border-color: var(--color-border-orange-tint);
+  color: var(--color-title-on-orange-tint);
+}
