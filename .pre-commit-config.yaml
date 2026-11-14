@@ -1,0 +1,53 @@
+# Checagens que rodam antes de cada commit.
+# Instalar uma vez por clone:
+#   uv tool install pre-commit
+#   pre-commit install
+# Rodar em tudo: pre-commit run --all-files
+
+repos:
+  # Bloqueia senhas, tokens e chaves (o repositório é público)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+        exclude: ^arquivos contexto/
+      - id: trailing-whitespace
+        exclude: ^arquivos contexto/
+
+  # Lint e formatação do backend (usa a config de projeto/backend/pyproject.toml)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.5
+    hooks:
+      - id: ruff-check
+        args: ["--fix"]
+        files: ^projeto/backend/
+      - id: ruff-format
+        files: ^projeto/backend/
+
+  # Mantém projeto/backend/requirements.txt igual ao uv.lock
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.13.8
+    hooks:
+      - id: uv-export
+        name: uv-export (backend/requirements.txt)
+        files: ^projeto/backend/(uv\.lock|pyproject\.toml)$
+        args:
+          - --project=projeto/backend
+          - --frozen
+          - --format=requirements-txt
+          - --no-dev
+          - --no-hashes
+          - --no-emit-project
+          - --no-header
+          - --output-file=projeto/backend/requirements.txt

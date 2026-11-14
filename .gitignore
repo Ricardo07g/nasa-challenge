@@ -1,0 +1,51 @@
+# ATENÇÃO: este repositório é PÚBLICO. Na dúvida, não commite.
+
+# Sistema operacional / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Variáveis de ambiente e segredos
+.env
+.env.*
+!.env.example
+*.local
+.netrc
+*.pem
+*.key
+*.p12
+*service-account*.json
+*credentials*.json
+*client_secret*.json
+
+# Dados (baixados ou gerados) - podem ser grandes ou ter licença própria
+data/
+*.parquet
+*.nc
+*.nc4
+*.h5
+*.hdf
+*.tif
+*.tiff
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Node
+node_modules/
+dist/
+*.log
+
+# Arquivos locais dos agentes (configurações pessoais)
+.claude/settings.local.json
+CLAUDE.local.md
+.gemini/.env
+.gemini/tmp/
