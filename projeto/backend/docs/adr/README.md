@@ -3,7 +3,7 @@
 Este diretório reúne os **Architecture Decision Records (ADRs)** do projeto **Raiz Orbital**, resultantes da auditoria cruzada entre:
 1. **Frontend (`projeto/frontend`):** Modelos TypeScript, Repositories, Mocks/Fixtures e Views do Protótipo v3;
 2. **Documentação Técnica do Backend (`projeto/backend/docs`):** Histórias de usuário, diagramas de classe e diagramas de sequência;
-3. **Pipeline de Dados Extraídos (`/data`):** Datasets reais e scripts da NASA POWER, SMAP, SoilGrids, MODIS e CMIP6;
+3. **Pipeline de Dados Extraídos (`/data`):** Datasets reais e scripts da NASA POWER e do SMAP (SoilGrids, MODIS e CMIP6 ainda sem script; ver o `data/README.md`);
 4. **Escopo do Produto:** PRD, Plano Técnico do Backend e Protótipo das Telas.
 
 ---
