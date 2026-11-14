@@ -15,6 +15,10 @@ PILOT_MAX_LON: Final[float] = -47.5
 GRID_CELL_RESOLUTION_DEG: Final[float] = 0.1
 GRID_CELL_SCALE_FACTOR: Final[int] = 10
 POINT_CACHE_STEP_DEG: Final[float] = 0.0025  # chave dos caches por ponto (~250 m)
+# Série de NDVI: usa o ponto do arquivo mais perto do talhão, se estiver a no máximo um pixel do
+# MOD13Q1 (250 m). Mais longe que isso já é outro pixel, e o /talhao responde `historico: null`.
+NDVI_POINT_MAX_DISTANCE_M: Final[float] = 250.0
+EARTH_RADIUS_M: Final[float] = 6_371_000.0
 
 # Fazenda de exemplo (plano técnico §3.3): campo de soja de 48 ha da Fazenda Experimental do
 # Glória (UFU), Uberlândia. O ponto antigo (-18,92 / -48,28) caía perto do centro urbano.
