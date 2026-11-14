@@ -21,6 +21,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0010**](0010-docs-backend-em-dia.md) | **Docs em dia: scripts que existem, ADRs com a Fazenda do Glória, status das histórias, diagramas sem GEE (e R0.3 adiado)** | **Concluída** | **Média** | `docs/`, `data/README.md`, `AGENTS.md` |
 | [**0011**](0011-http-cache-e-422-problem-json.md) | **HTTP: `Cache-Control` de um dia em `/recomendacao` e 422 em problem+json** | **Concluída** | **Média** | `app/main.py`, `app/controllers/recomendacao_controller.py` |
 | [**0013**](0013-migracao-fontes-novas.md) | **Migração das fontes novas: `cmip6_delta` mensal por modelo, `ndvi_point` com qualidade, `smap_point`, `data_run.version`; aposenta `scripts/`** | **Concluída** | **Alta** | `migrations/versions/`, `app/repositories/` |
+| [**0014**](0014-deltas-cmip6.md) | **Deltas mensais do NEX-GDDP-CMIP6 pelo THREDDS (3 modelos, SSP2-4.5, 2041–2060 × 1995–2014)** | **Concluída** | **Alta** | `pipeline/fetch_cmip6_deltas.py`, `http_client.py` |
 
 ---
 
