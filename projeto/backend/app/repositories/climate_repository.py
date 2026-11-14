@@ -84,6 +84,22 @@ def cell_center_wkt(cell_id: str) -> str:
     return f"POINT({lon} {lat})"
 
 
+def cmip6_delta_from_json(item: dict[str, Any]) -> Cmip6Delta:
+    """Um item da lista `cmip6[]` do contrato CMIP6 (chaves em português) como `Cmip6Delta`.
+
+    `tmin_c` é opcional: ausente ou `null` fica `None` (o model valida o resto).
+    """
+    tmin_c = item.get("tmin_c")
+    return Cmip6Delta(
+        model=str(item["modelo"]),
+        scenario=str(item["cenario"]),
+        month=int(item["mes"]),
+        rain_pct=float(item["chuva_pct"]),
+        tmax_c=float(item["tmax_c"]),
+        tmin_c=None if tmin_c is None else float(tmin_c),
+    )
+
+
 class FixtureClimateRepository:
     """Lê as temporadas de um arquivo JSON gerado pelo pipeline (fazenda de exemplo).
 
