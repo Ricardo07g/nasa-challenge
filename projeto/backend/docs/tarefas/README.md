@@ -31,6 +31,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0018**](0018-historico-ndvi-na-api.md) | **Histórico do talhão pelo NDVI no formato completo do guia, frase no porque e /exemplo com a colheita sugerida** | **Concluída** | **Alta** | `app/services/field_history_service.py`, `app/repositories/ndvi_repository.py`, `app/schemas/talhao.py` |
 | [**0022**](0022-carga-dos-arquivos-no-banco.md) | **Carga dos arquivos do CMIP6 e do NDVI no banco (`cmip6_delta`, `ndvi_point`, `data_run`)** | **Concluída** | **Média** | `pipeline/load_files_to_db.py`, repositories |
 | [**0023**](0023-cmip6-por-area.md) | **CMIP6 por área: um pedido por arquivo para a caixa inteira (OPeNDAP ASCII, 378 pedidos, ~45 min) e saída em data/baixados** | **Concluída** | **Alta** | `pipeline/fetch_cmip6_deltas.py` |
+| [**0017**](0017-ndvi-appeears.md) | **Script do NDVI do MODIS pelo AppEEARS (MOD13Q1 + MYD13Q1, 2016–2025, jan–jul)** | **Concluída** | **Alta** | `pipeline/fetch_ndvi.py`, `http_client.py` |
 
 ---
 
