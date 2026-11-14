@@ -1,20 +1,15 @@
 """Olhar o talhão: área com dados, solo, histórico pelo NDVI e fontes (plano técnico §3.1)."""
 
-from typing import Any, Protocol
+from typing import Any
 
 from app.models.talhao import FonteDado, Talhao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.ndvi_repository import NdviRepository
 from app.repositories.soil_repository import SoilRepository
+from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.field_history_service import FieldHistoryService
 
 CMIP6_PERIOD = "2041-2060"
-
-
-class IngestionServiceProtocol(Protocol):
-    """Contract for triggering on-demand satellite ingestion on spatial cache miss."""
-
-    def ingest_area(self, lat: float, lon: float) -> str: ...
 
 
 class TalhaoService:
@@ -36,13 +31,7 @@ class TalhaoService:
 
     def inspect_talhao(self, lat: float, lon: float) -> Talhao:
         """Returns complete field metadata for the given coordinates (US-01, US-02, US-07)."""
-        cell_id = self._climate_repo.find_cell_id(lat, lon)
-        if (
-            cell_id is None
-            and self._ingestion_service is not None
-            and hasattr(self._climate_repo, "save_cell_seasons")
-        ):
-            cell_id = self._ingestion_service.ingest_area(lat, lon)
+        cell_id = find_or_ingest_cell(self._climate_repo, self._ingestion_service, lat, lon)
 
         dentro_da_area = cell_id is not None
         solo = self._soil_repo.get_soil(lat, lon)

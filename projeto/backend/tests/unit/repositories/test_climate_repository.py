@@ -238,3 +238,15 @@ def test_should_save_cell_with_polygon_and_center_of_the_floor_cell(
     assert grid_params[0] == "-190_-483"
     assert grid_params[1] == cell_polygon_wkt("-190_-483")
     assert grid_params[3] == "POINT(-48.25 -18.95)"
+
+
+def test_should_read_postgis_seasons_with_the_cell_center_latitude(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Sem coluna de latitude no banco, a temporada vinha com lat = 0,0 e o Hargreaves errava a ETo.
+    row = (2005, date(2005, 1, 1), [1.0], "nasa_power", [30.0], [18.0], [], [], [], [], [], [])
+    _fake_driver(monkeypatch, rows=[row])
+
+    seasons = PostgisClimateRepository("postgresql://teste").get_seasons("-178_-510")
+
+    assert seasons[0].lat == pytest.approx(-17.75)

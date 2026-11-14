@@ -107,16 +107,32 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 
 ## Dados da API
 
-- A API lê **só** o que está em `Settings` (`CULTURAS_PATH`, `REGRAS_PATH`, `CLIMA_PATH`,
-  `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`). Nunca coloque caminho fixo (como `/workspace/...`) num repository.
+- A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
+  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`). Nunca coloque caminho fixo (como `/workspace/...`)
+  num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
   negócio nova com número vai para lá, não para `app/constants.py`. Os services recebem as regras
   por parâmetro (padrão: este arquivo) e `dependencies.py` injeta as do `REGRAS_PATH`.
+- **Com banco** (`DATABASE_URL` preenchida; `DATABASE_URL=` vazia vale como sem banco), o
+  `dependencies.py` liga o PostGIS e a **busca sob demanda** (tarefas 0001 e 0003):
+  - clima e solo vêm de `PostgisClimateRepository` e `PostgisSoilRepository`, com a fixture de clima
+    e o cache de solo (`SOLO_CACHE_PATH`) como **reserva**. A fazenda de exemplo funciona com o banco vazio;
+  - ponto sem célula no banco: `/talhao` ou `/recomendacao` (o que vier primeiro) chama o
+    `SatelliteIngestionService`, que busca NASA POWER (20 anos) e SoilGrids em paralelo, no máximo
+    `INGESTION_TOTAL_TIMEOUT_SECONDS` (9 s) juntos, e grava `grid_cell`, `climate_season` e `soil_point`.
+    Os pedidos seguintes saem do banco;
+  - POWER sem resposta no limite: usa a célula vizinha já gravada; sem nenhuma, não grava nada e o
+    ponto fica fora da área (o próximo pedido tenta de novo);
+  - SoilGrids com falha ou sem resposta: o ponto fica com o solo padrão (`fonte: padrao`), que **não é
+    gravado** (o `soil_point` não tem coluna de fonte e tudo nele é lido como `soilgrids`);
+  - id da célula: só `cell_id_for` (`floor` de lat/lon × 10, plano técnico §5). O polígono vai de
+    `idx/10` a `(idx + 1)/10` e a latitude da série lida do banco é a do centro da célula.
+- **Sem banco**, só arquivos, como antes: nada de busca sob demanda, solo padrão fora do cache e, fora da
+  célula da fixture, a API responde que ainda não tem dados (`dentro_da_area: false` / 404 `OUTSIDE_AREA`).
 - `app/fixtures/clima_fazenda_exemplo.json`: NASA POWER diário (chuva, máxima e mínima),
-  1/jan a 31/jul de 2005 a 2024, da célula do POWER da Fazenda do Glória (UFU). Fora dessa célula
-  a API responde que ainda não tem dados (`dentro_da_area: false` / 404 `OUTSIDE_AREA`).
+  1/jan a 31/jul de 2005 a 2024, da célula do POWER da Fazenda do Glória (UFU).
   Para gerar de novo a partir da saída do `data/extract_historical_20y.py`:
 
   ```bash
@@ -133,6 +149,19 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   (`-999` vira `None`). O `ClimateSeasonBuilder` monta as temporadas de 212 dias desde 1/jan,
   tira o ano com algum dia sem chuva, máxima ou mínima, e calcula a ETo FAO-56 Penman-Monteith.
   Faltou UR, vento, radiação ou altitude: Hargreaves-Samani na temporada inteira.
+- **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
+  apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
+  ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre
+  falsos (nada de rede). Os testes das rotas em `tests/integration/controllers/` desligam a busca sob
+  demanda (`get_satellite_ingestion_service` → `None`).
+
+  ```bash
+  # uma vez, com o compose rodando (a migração cria a extensão PostGIS)
+  docker compose exec db createdb -U raiz raiz_orbital_test
+  # da pasta projeto/backend
+  TEST_DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital_test uv run pytest -m db
+  uv run pytest -m "not db"     # só os testes sem banco
+  ```
 
 ## Configuração e segredos
 

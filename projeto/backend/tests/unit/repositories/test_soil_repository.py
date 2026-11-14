@@ -2,8 +2,17 @@
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
-from app.repositories.soil_repository import CachedSoilGridsRepository, classify_soil_texture
+import pytest
+
+from app.repositories import soil_repository
+from app.repositories.soil_repository import (
+    CachedSoilGridsRepository,
+    PostgisSoilRepository,
+    classify_soil_texture,
+)
 
 
 def test_should_classify_clayey_soil_when_clay_exceeds_35_percent() -> None:
@@ -59,3 +68,46 @@ def test_should_return_default_soil_when_no_cache_configured() -> None:
     soil = CachedSoilGridsRepository(None).get_soil(-18.9543, -48.1993)
 
     assert (soil.textura_solo, soil.cad_capacidade_agua_mm, soil.fonte) == ("medio", 50.0, "padrao")
+
+
+class _FakeCursor:
+    def __init__(self, row: tuple[Any, ...] | None) -> None:
+        self._row = row
+
+    def __enter__(self) -> "_FakeCursor":
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        return None
+
+    def execute(self, sql: str, params: tuple[Any, ...] = ()) -> None:
+        return None
+
+    def fetchone(self) -> tuple[Any, ...] | None:
+        return self._row
+
+
+class _FakeConnection:
+    def __init__(self, row: tuple[Any, ...] | None) -> None:
+        self._row = row
+
+    def __enter__(self) -> "_FakeConnection":
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        return None
+
+    def cursor(self) -> _FakeCursor:
+        return _FakeCursor(self._row)
+
+
+def test_should_fall_back_to_default_soil_when_postgis_has_no_point_and_no_fallback_given(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Sem fallback, o construtor chamava CachedSoilGridsRepository() sem cache_path (TypeError).
+    fake = SimpleNamespace(connect=lambda _url: _FakeConnection(row=None))
+    monkeypatch.setattr(soil_repository, "psycopg", fake)
+
+    soil = PostgisSoilRepository("postgresql://teste").get_soil(-17.78, -50.92)
+
+    assert (soil.textura_solo, soil.fonte) == ("medio", "padrao")

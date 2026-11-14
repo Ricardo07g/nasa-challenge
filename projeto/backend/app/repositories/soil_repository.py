@@ -24,6 +24,10 @@ class SoilRepository(Protocol):
 
     def get_soil(self, lat: float, lon: float) -> SoloInfo: ...
 
+
+class WritableSoilRepository(SoilRepository, Protocol):
+    """Solo que também grava pontos novos (PostGIS), usado pela busca sob demanda."""
+
     def save_soil(self, lat: float, lon: float, soil: SoloInfo) -> None: ...
 
 
@@ -81,7 +85,7 @@ class PostgisSoilRepository:
         self, database_url: str, fallback: CachedSoilGridsRepository | None = None
     ) -> None:
         self._database_url = database_url
-        self._fallback = fallback or CachedSoilGridsRepository()
+        self._fallback = fallback or CachedSoilGridsRepository(None)
 
     def save_soil(self, lat: float, lon: float, soil: SoloInfo) -> None:
         key = point_key(lat, lon)
