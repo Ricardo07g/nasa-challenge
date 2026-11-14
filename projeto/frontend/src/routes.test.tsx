@@ -119,6 +119,20 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Plano de 3 anos')
   })
 
+  it('"Comunidade" no cabeçalho abre a tela 8 levando o caminho', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Comunidade' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Perto de você' })).toBeInTheDocument()
+    expect(await screen.findByText('Até 30 km de Uberlândia · 18 produtores participando')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
+      'href',
+      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
+    )
+    expect(document.title).toBe('Raiz Orbital – Perto de você')
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 
