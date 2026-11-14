@@ -91,6 +91,36 @@ class RegrasSinalOutono:
 
 
 @dataclass(frozen=True)
+class RegrasAvisos:
+    """Avisos de veranico e calor da safra (plano de evolução 4.4: replay P4 e acompanhamento P6).
+
+    A janela crítica e a temperatura do calor são as mesmas da conta do aperto (`RegrasClima`).
+    """
+
+    dia_seco_abaixo_mm: float
+    veranico_min_dias: int
+    calor_dias_seguidos: int
+    max_avisos: int
+    janela_limite_dias: int
+
+
+@dataclass(frozen=True)
+class FrasesSafra:
+    """Textos dos eventos da linha do tempo da safra em uma língua (P4 e P6)."""
+
+    semeadura: str
+    sem_chuva: str
+    aviso_veranico: str
+    fase_critica_grao: str
+    fase_critica_cobertura: str
+    voltou_chuva: str
+    aviso_calor: str
+    colheita_grao: str
+    colheita_consorcio: str
+    colheita_cobertura: str
+
+
+@dataclass(frozen=True)
 class FrasesPorque:
     """Modelos de frase do "Por quê?" em uma língua (PRD 7.6, plano técnico §4.8)."""
 
@@ -113,3 +143,5 @@ class Regras:
     rotacao: RegrasRotacao
     sinal_outono: RegrasSinalOutono
     frases: dict[str, FrasesPorque]  # "pt" e "en"
+    avisos: RegrasAvisos
+    frases_safra: dict[str, FrasesSafra]  # "pt" e "en"

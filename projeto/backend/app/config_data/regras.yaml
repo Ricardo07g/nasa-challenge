@@ -161,6 +161,26 @@ sinal_outono:
     valor: 0.60
     fonte: "PRD 7.10: terra seca com a chuva dos últimos 30 dias pelo IMERG abaixo de 60% da média (e o SMAP baixo)"
 
+avisos:
+  # Avisos da safra: replay de uma safra passada (P4) e acompanhamento diário (P6), plano de
+  # evolução 4.4. A janela crítica e a temperatura do calor são as do grupo clima (mesma conta do
+  # aperto). Um aviso de veranico por sequência seca e um de calor por sequência quente.
+  dia_seco_abaixo_mm:
+    valor: 5.0
+    fonte: "Plano de evolução 4.1 (P1): dia seco = chuva abaixo de 5 mm. A revisar com a agrônoma (há quem use 1 mm)"
+  veranico_min_dias:
+    valor: 10
+    fonte: "Plano de evolução 4.4 (regras do Doc 5, no PRD): 10 ou mais dias secos na fase crítica"
+  calor_dias_seguidos:
+    valor: 2
+    fonte: "Plano de evolução 4.4 (regras do Doc 5, no PRD): 2 dias seguidos com máxima de 35 °C ou mais"
+  max_avisos:
+    valor: 2
+    fonte: "Plano de evolução 4.4: no máximo 2 avisos por semana por talhão, para não virar ruído"
+  janela_limite_dias:
+    valor: 7
+    fonte: "Plano de evolução 4.4: a semana do limite de avisos; hipótese do time: 7 dias corridos que terminam no dia do aviso (a revisar)"
+
 # Modelos de frase do "Por quê?" (PRD 7.6, plano técnico §4.8), sem IA generativa.
 # Os campos entre chaves são preenchidos pela conta; o número da frase é o mesmo da conta.
 #   seguranca: {data} {anos_aperto} {total} {calor_c} {fase} {fonte_chuva}
@@ -180,3 +200,34 @@ frases:
     fase_cobertura: "in the first {dias} days"
     futuro: "In the 2041–2060 climate (NEX-GDDP-CMIP6, {cenario}, {modelos} models), it would work in {anos_bons} of {total} years ({minimo} to {maximo}, depending on the model)."
     solo: "Computed with {textura} soil ({cad_mm} mm of available water; {fonte_solo})."
+
+# Textos da linha do tempo da safra (P4 e P6), sem IA generativa. RASCUNHO: agrônoma revisar.
+#   semeadura, colheita_grao, colheita_cobertura: {opcao} (nome da opção)
+#   aviso_veranico, voltou_chuva: {dias} (dias secos seguidos até o aviso / no total)
+#   aviso_calor: {dias} (dias quentes seguidos) {temp_c} (clima.calor_temp_c)
+#   fase_critica_cobertura: {dias} (clima.janela_cobertura_dias)
+# A fase crítica do grão e do consórcio cai na floração estimada (dias_florescer do culturas.yaml,
+# por isso "por volta de"); a da cobertura começa na semeadura.
+frases_safra:
+  pt:
+    semeadura: "Semeadura: {opcao}."
+    sem_chuva: "Parou de chover."
+    aviso_veranico: "Aviso: {dias} dias sem chuva perto da fase que mais precisa de água. Converse com o agrônomo."
+    fase_critica_grao: "Floração, por volta desta data: a fase que mais precisa de água."
+    fase_critica_cobertura: "Começam os {dias} dias em que as plantas mais precisam de água para pegar."
+    voltou_chuva: "Voltou a chover ({dias} dias sem chuva no total)."
+    aviso_calor: "Aviso: {dias} dias seguidos com {temp_c} °C ou mais perto da fase que mais precisa de água. Converse com o agrônomo."
+    colheita_grao: "Colheita: {opcao}."
+    colheita_consorcio: "Colheita do milho. O capim segue cobrindo a terra."
+    colheita_cobertura: "Fim do ciclo: {opcao}. A palhada fica cobrindo a terra."
+  en:
+    semeadura: "Sowing: {opcao}."
+    sem_chuva: "Rain stopped."
+    aviso_veranico: "Warning: {dias} days without rain close to the stage that needs water most. Talk to your agronomist."
+    fase_critica_grao: "Flowering, around this date: the stage that needs water most."
+    fase_critica_cobertura: "Start of the {dias} days when the plants need water most to establish."
+    voltou_chuva: "Rain returned ({dias} days without rain in total)."
+    aviso_calor: "Warning: {dias} days in a row at {temp_c} °C or more close to the stage that needs water most. Talk to your agronomist."
+    colheita_grao: "Harvest: {opcao}."
+    colheita_consorcio: "Corn harvest. The grass keeps covering the soil."
+    colheita_cobertura: "End of the cycle: {opcao}. The straw keeps covering the soil."

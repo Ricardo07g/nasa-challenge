@@ -10,7 +10,9 @@ import yaml
 from app.config import DEFAULT_REGRAS_PATH
 from app.models.regras import (
     FrasesPorque,
+    FrasesSafra,
     Regras,
+    RegrasAvisos,
     RegrasClima,
     RegrasNdvi,
     RegrasNotaFinal,
@@ -51,6 +53,15 @@ def _group[T](raw: dict[str, Any], group: str, cls: type[T]) -> T:
     return cls(**values)
 
 
+def _texts[T](raw: dict[str, Any], group: str, cls: type[T]) -> dict[str, T]:
+    """Modelos de frase de um grupo, por língua ("pt" e "en")."""
+    by_lang: dict[str, dict[str, Any]] = raw[group]
+    return {
+        lang: cls(**{f.name: str(texts[f.name]) for f in fields(cls)})
+        for lang, texts in by_lang.items()
+    }
+
+
 class YamlRulesRepository:
     """Lê as regras do `regras.yaml` (caminho vem de Settings)."""
 
@@ -63,7 +74,6 @@ class YamlRulesRepository:
             return self._cache
 
         raw: dict[str, Any] = yaml.safe_load(self._yaml_path.read_text(encoding="utf-8"))
-        frases: dict[str, dict[str, Any]] = raw["frases"]
         self._cache = Regras(
             clima=_group(raw, "clima", RegrasClima),
             nota_final=_group(raw, "nota_final", RegrasNotaFinal),
@@ -72,10 +82,9 @@ class YamlRulesRepository:
             ndvi=_group(raw, "ndvi", RegrasNdvi),
             rotacao=_group(raw, "rotacao", RegrasRotacao),
             sinal_outono=_group(raw, "sinal_outono", RegrasSinalOutono),
-            frases={
-                lang: FrasesPorque(**{f.name: str(textos[f.name]) for f in fields(FrasesPorque)})
-                for lang, textos in frases.items()
-            },
+            frases=_texts(raw, "frases", FrasesPorque),
+            avisos=_group(raw, "avisos", RegrasAvisos),
+            frases_safra=_texts(raw, "frases_safra", FrasesSafra),
         )
         return self._cache
 
