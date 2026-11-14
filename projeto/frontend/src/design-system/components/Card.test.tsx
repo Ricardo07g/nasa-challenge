@@ -59,6 +59,27 @@ describe('DataSourceCard', () => {
     expect(screen.getByRole('img', { name: 'Pronto' })).toBeInTheDocument()
     expect(screen.getByText('extra')).toBeInTheDocument()
   })
+
+  it('sem o dado: no lugar do ✓ vem um traço com texto acessível, e o cartão fica marcado como indisponível', () => {
+    render(
+      <DataSourceCard
+        icon={<svg />}
+        title="Clima dos próximos anos"
+        subtitle="Ainda não disponível para esta área."
+        readyLabel="Pronto"
+        status="unavailable"
+        unavailableLabel="Ainda não disponível"
+      />,
+    )
+
+    expect(screen.queryByRole('img', { name: 'Pronto' })).not.toBeInTheDocument()
+    const mark = screen.getByRole('img', { name: 'Ainda não disponível' })
+    expect(mark.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
+    expect(screen.getByRole('heading', { name: 'Clima dos próximos anos' }).closest('[data-status]')).toHaveAttribute(
+      'data-status',
+      'unavailable',
+    )
+  })
 })
 
 describe('AlternativeCard', () => {
