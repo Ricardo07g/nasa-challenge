@@ -12,7 +12,8 @@ usando dados de satélite e clima (NASA POWER, IMERG, MODIS, SMAP, CMIP6, SoilGr
 
 A fonte de verdade do produto está em `arquivos contexto/`:
 - `PRD – Raiz Orbital o que plantar depois da soja.md`: requisitos, motor de pontuação, arquitetura, backlog.
-- `Raiz Orbital – Protótipo das telas.html`: protótipo navegável das telas.
+- `Raiz Orbital – Protótipo das telas.html`: protótipo das telas (v3: 2 perguntas, 1 resposta).
+- `Raiz Orbital – plano técnico do backend.md`: contratos da API, banco, pipeline de dados e motor (leia antes de mexer no backend).
 - `Raiz Orbital discovery de produto (dores, personas e hipóteses).md`
 - `Raiz Orbital planejamento de produto, business case e business plan.md`
 

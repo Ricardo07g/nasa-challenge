@@ -4,7 +4,7 @@
 (NASA POWER, IMERG, MODIS, SMAP, CMIP6, SoilGrids) para ajudar o produtor a escolher a cultura de
 entressafra com menos risco.
 
-Os documentos do produto (PRD, discovery e business plan) estão em [`arquivos contexto/`](arquivos%20contexto/).
+Os documentos do produto (PRD, plano técnico do backend, discovery, business plan e protótipo das telas) estão em [`arquivos contexto/`](arquivos%20contexto/).
 
 ## Estrutura
 
