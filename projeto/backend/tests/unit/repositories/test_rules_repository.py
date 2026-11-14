@@ -106,6 +106,35 @@ def test_should_load_phrase_templates_in_portuguese_and_english() -> None:
     assert "{dias}" in regras.frases["pt"].fase_cobertura
 
 
+def test_should_load_shipped_alert_rules_for_the_season_replay() -> None:
+    # Plano de evolução 4.4 (P4 e P6): 10 dias secos na fase crítica, 2 dias seguidos de calor,
+    # no máximo 2 avisos por semana. Dia seco = menos de 1 mm (hipótese do time, índice CDD)
+    avisos = YamlRulesRepository(SHIPPED).get_rules().avisos
+
+    assert avisos.dia_seco_abaixo_mm == 1.0
+    assert avisos.veranico_min_dias == 10
+    assert avisos.calor_dias_seguidos == 2
+    assert (avisos.max_avisos, avisos.janela_limite_dias) == (2, 7)
+
+
+def test_should_load_season_event_texts_in_portuguese_and_english() -> None:
+    frases = YamlRulesRepository(SHIPPED).get_rules().frases_safra
+
+    assert set(frases) == {"pt", "en"}
+    assert "{dias} dias sem chuva" in frases["pt"].aviso_veranico
+    assert "{dias} days without rain" in frases["en"].aviso_veranico
+    assert "{temp_c}" in frases["pt"].aviso_calor
+    assert "{opcao}" in frases["en"].semeadura
+
+
+def test_should_refuse_an_alert_number_without_source(tmp_path: Path) -> None:
+    raw = _shipped_raw()
+    del raw["avisos"]["veranico_min_dias"]["fonte"]
+
+    with pytest.raises(ValueError, match="avisos.veranico_min_dias"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
 def test_should_read_values_from_the_file_given_by_path(tmp_path: Path) -> None:
     raw = _shipped_raw()
     raw["clima"]["isna_grao"]["valor"] = 0.7

@@ -117,3 +117,23 @@ def test_should_only_offer_alternatives_better_than_the_best_on_their_axis(
     for alt in alternativas:
         axis = AXIS_BY_MOTIVO[alt["motivo"]]
         assert notas[alt["opcao"]][axis] > melhor[axis]
+
+
+def test_should_replay_the_dry_2024_and_the_good_2023_of_the_example_farm(
+    real_data_client: TestClient,
+) -> None:
+    # P4 com a chuva real do NASA POWER: em 2024 parou de chover em 19/abr, logo depois da
+    # floração do milho (18/abr), e o aviso sai no 10º dia seco; 2023 passa sem aviso.
+    farm = {"lat": -18.9543, "lon": -48.1993}
+    dry = real_data_client.get("/api/safra-passada", params={**farm, "ano": 2024}).json()
+    good = real_data_client.get("/api/safra-passada", params={**farm, "ano": 2023}).json()
+
+    assert dry["opcao"] == "milho_safrinha"
+    assert [(e["data"], e["tipo"]) for e in dry["eventos"]] == [
+        ("2024-02-18", "semeadura"),
+        ("2024-04-18", "fase_critica"),
+        ("2024-04-19", "sem_chuva"),
+        ("2024-04-28", "aviso_veranico"),
+        ("2024-06-17", "colheita"),
+    ]
+    assert [e["tipo"] for e in good["eventos"]] == ["semeadura", "fase_critica", "colheita"]

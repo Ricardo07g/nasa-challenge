@@ -255,7 +255,7 @@ plantio (fev/mar), por cron ou à mão.
 | P1 | `opcoes[].anos_detalhe[]` no contrato do front: `{ano, bom, fase_critica, dias_sem_chuva, enso, texto}`. A `faixa` sai de `anos_detalhe[].bom` | Fases 1 e 3 + ONI da NOAA (tabela pública) | não | R4.1, decisão dos nomes |
 | P2 | Nada no backend no MVP (o relatório lê `/recomendacao`) | — | — | — |
 | P3 | `GET /api/regiao?lat&lon` no contrato do front (`projeto/frontend/src/models/region.ts`): `{raio_km, anos[{ano, pct_parado, pct_plantou, pct_incerto}], fonte}` | NDVI da área pelo AppEEARS + máscara: MCD12Q1 pelo AppEEARS, ou MapBiomas pelo Earth Engine (o único uso possível do GEE) | **token** (GEE opcional) | R3.2, R1.6 |
-| P4 | `/api/safra-passada` + service de regras de aviso | Fase 1 | não | R4.1 |
+| [P4](tarefas/0019-safra-passada.md) ✅ | `/api/safra-passada` + service de regras de aviso | Fase 1 | não | R4.1 |
 | P5 | Webhook do Telegram, `conversa_service`, interface `notificador` | — | `TELEGRAM_BOT_TOKEN` | reaproveita `/recomendacao` |
 | P6 | Cron diário (IMERG Late + POWER + SMAP) → avisos; tabelas `talhao_salvo` e `aviso`; consentimento LGPD | IMERG Late, POWER, SMAP | **token** | P4, P5, R1.6 |
 | WhatsApp | Adapter do `notificador` (desejável) | — | conta Meta | P5 |
