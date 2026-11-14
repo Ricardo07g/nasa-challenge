@@ -235,6 +235,33 @@ def test_should_raise_eto_when_tmax_rises_in_future_projection() -> None:
     )
 
 
+def test_should_shift_tmin_and_use_it_in_the_eto_when_delta_has_tmin() -> None:
+    # Hargreaves-Samani usa máxima e mínima: com o delta da mínima (tasmin), as duas mudam.
+    wb = WaterBalanceCalculator()
+    service = ClimateRiskService(wb)
+    season = _make_season(2005, daily_rain=0.0, eto=None)
+    deltas = [
+        Cmip6Delta("MODELO-TESTE", "ssp245", m, rain_pct=0.0, tmax_c=2.0, tmin_c=3.0)
+        for m in range(1, 13)
+    ]
+
+    projected = service.project_season(season, deltas)
+
+    assert projected.tmin_c[0] == pytest.approx(21.0)
+    assert projected.eto_mm[0] == pytest.approx(
+        wb.hargreaves_eto(t_max=32.0, t_min=21.0, lat_deg=-18.95, day_of_year=1), abs=0.01
+    )
+
+
+def test_should_keep_observed_tmin_in_months_whose_delta_has_no_tmin() -> None:
+    service = ClimateRiskService(WaterBalanceCalculator())
+    season = _make_season(2005, daily_rain=0.0, eto=None)
+
+    projected = service.project_season(season, _deltas("QUENTE", rain_pct=0.0, tmax_c=2.0))
+
+    assert projected.tmin_c == season.tmin_c
+
+
 def test_should_use_heat_threshold_from_injected_rules() -> None:
     # regras.yaml: calor de 29 °C em vez de 35 °C -> máxima de 30 °C já conta como dia quente
     service = ClimateRiskService(

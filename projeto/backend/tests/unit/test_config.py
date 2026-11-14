@@ -10,6 +10,7 @@ DATA_ENV_VARS = (
     "CLIMA_PATH",
     "SOLO_CACHE_PATH",
     "NDVI_CACHE_PATH",
+    "CMIP6_PATH",
 )
 CREDENTIAL_ENV_VARS = (
     "EARTHDATA_TOKEN",
@@ -76,6 +77,21 @@ def test_data_paths_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
 
     assert settings.clima_path == tmp_path / "clima.json"
     assert settings.ndvi_cache_path == tmp_path / "ndvi.json"
+
+
+def test_cmip6_path_defaults_to_none_so_there_is_no_future_without_the_file() -> None:
+    # Sem o arquivo dos deltas do NEX-GDDP-CMIP6, a API responde `futuro: null` (nada inventado).
+    settings = Settings(_env_file=None)
+
+    assert settings.cmip6_path is None
+
+
+def test_cmip6_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("CMIP6_PATH", str(tmp_path / "cmip6.json"))
+
+    settings = Settings(_env_file=None)
+
+    assert settings.cmip6_path == tmp_path / "cmip6.json"
 
 
 def test_rules_path_defaults_to_file_shipped_with_the_app() -> None:

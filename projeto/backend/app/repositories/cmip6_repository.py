@@ -1,14 +1,18 @@
-"""Contrato e implementação do acesso aos deltas mensais do NEX-GDDP-CMIP6 por célula (tabela).
+"""Contrato e implementações do acesso aos deltas mensais do NEX-GDDP-CMIP6 por célula.
 
-A tabela `cmip6_delta` é a da migração R1.6. A API ainda lê os deltas pelo
-`ClimateRepository.get_cmip6_deltas` (fixture); ligar esta tabela é o R3.1.
+Duas fontes: a tabela `cmip6_delta` (migração R1.6) e o arquivo do contrato CMIP6 que o
+`pipeline/fetch_cmip6_deltas.py` grava. A API lê pelo `ClimateRepository.get_cmip6_deltas`, que
+consulta as duas nessa ordem (R3.1).
 """
 
-from typing import Protocol
+import json
+from pathlib import Path
+from typing import Any, Protocol
 
 import psycopg
 
 from app.models.climate import Cmip6Delta
+from app.repositories.climate_repository import cell_center, cmip6_delta_from_json
 
 
 class Cmip6Repository(Protocol):
@@ -16,7 +20,45 @@ class Cmip6Repository(Protocol):
 
     def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]: ...
 
+
+class WritableCmip6Repository(Cmip6Repository, Protocol):
+    """Deltas que também são gravados (tabela `cmip6_delta`)."""
+
     def save_cmip6_deltas(self, cell_id: str, deltas: list[Cmip6Delta]) -> None: ...
+
+
+class FileCmip6Repository:
+    """Lê os deltas do arquivo do contrato CMIP6 (`versao_dados` + `pontos[]`).
+
+    Cada ponto traz a `cobertura` (a célula do NASA POWER, 0,5° × 0,625°) a que os deltas valem.
+    A célula de 0,1° recebe os deltas do ponto cuja cobertura contém o centro dela, com a mesma
+    regra da fixture do clima (borda de baixo dentro, borda de cima fora). Sem arquivo ou sem
+    ponto que cubra a célula: nenhum delta, nunca os de outra região.
+    """
+
+    def __init__(self, path: Path | None) -> None:
+        self._path = path
+        self._points: list[dict[str, Any]] | None = None
+
+    def _load(self) -> list[dict[str, Any]]:
+        if self._points is None:
+            if self._path is None or not self._path.is_file():
+                self._points = []
+            else:
+                payload = json.loads(self._path.read_text(encoding="utf-8"))
+                self._points = list(payload.get("pontos", []))
+        return self._points
+
+    def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]:
+        try:
+            lat, lon = cell_center(cell_id)
+        except ValueError:
+            return []
+        for point in self._load():
+            box = point["cobertura"]
+            if box["lat_min"] <= lat < box["lat_max"] and box["lon_min"] <= lon < box["lon_max"]:
+                return [cmip6_delta_from_json(item) for item in point.get("cmip6", [])]
+        return []
 
 
 class PostgisCmip6Repository:

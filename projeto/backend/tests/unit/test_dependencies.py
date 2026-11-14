@@ -3,7 +3,9 @@
 Nenhum teste aqui conecta no banco: os repositories do PostGIS só abrem conexão quando consultados.
 """
 
+import json
 from collections.abc import Callable, Iterator
+from pathlib import Path
 
 import pytest
 
@@ -15,6 +17,7 @@ from app.repositories.climate_repository import (
     FixtureClimateRepository,
     PostgisClimateRepository,
 )
+from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6Repository
 from app.repositories.soil_repository import CachedSoilGridsRepository, PostgisSoilRepository
 from app.services.satellite_ingestion_service import SatelliteIngestionService
 
@@ -40,9 +43,9 @@ def _clear_caches() -> None:
 
 
 @pytest.fixture
-def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[[str | None], None]]:
-    def _apply(database_url: str | None) -> None:
-        settings = Settings(_env_file=None, database_url=database_url)
+def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None]]:
+    def _apply(database_url: str | None, cmip6_path: Path | None = None) -> None:
+        settings = Settings(_env_file=None, database_url=database_url, cmip6_path=cmip6_path)
         monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
         _clear_caches()
 
@@ -108,3 +111,43 @@ def test_should_keep_file_repositories_and_no_ingestion_without_database(
     assert isinstance(dependencies.get_climate_repository(), FixtureClimateRepository)
     assert isinstance(dependencies.get_soil_repository(), CachedSoilGridsRepository)
     assert _ingestion() is None
+
+
+def _write_cmip6_file(path: Path) -> Path:
+    # Arquivo do contrato CMIP6 com valores de teste (não é dado real), célula do POWER da UFU.
+    payload = {
+        "versao_dados": {"fonte": "nex_gddp_cmip6", "parametros": {}, "fim": "2026-11-14T13:00:00Z",
+                         "versao": "2026.11-teste"},
+        "pontos": [{
+            "lat": -19.0, "lon": -48.125,
+            "cobertura": {"lat_min": -19.25, "lat_max": -18.75,
+                          "lon_min": -48.4375, "lon_max": -47.8125},
+            "cmip6": [{"modelo": "MODELO-TESTE", "cenario": "ssp245", "mes": 2,
+                       "chuva_pct": -10.0, "tmax_c": 2.0, "tmin_c": 1.0}],
+        }],
+    }  # fmt: skip
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def test_should_read_cmip6_from_table_then_file_when_database_url_is_set(
+    use_settings: Callable[..., None], tmp_path: Path
+) -> None:
+    use_settings(DATABASE_URL, cmip6_path=tmp_path / "cmip6.json")
+
+    climate = dependencies.get_climate_repository()
+
+    assert isinstance(climate, PostgisClimateRepository)
+    assert isinstance(climate._cmip6_repo, PostgisCmip6Repository)
+    assert isinstance(climate._cmip6_file_repo, FileCmip6Repository)
+    assert climate._cmip6_file_repo._path == tmp_path / "cmip6.json"
+
+
+def test_should_read_cmip6_from_the_file_of_cmip6_path_without_database(
+    use_settings: Callable[..., None], tmp_path: Path
+) -> None:
+    use_settings(None, cmip6_path=_write_cmip6_file(tmp_path / "cmip6.json"))
+
+    deltas = dependencies.get_climate_repository().get_cmip6_deltas("-190_-482")
+
+    assert [(d.model, d.month, d.tmin_c) for d in deltas] == [("MODELO-TESTE", 2, 1.0)]

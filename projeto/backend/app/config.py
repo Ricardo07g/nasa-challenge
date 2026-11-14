@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     # Caches opcionais por ponto (SoilGrids e NDVI do MODIS). Sem arquivo: solo padrão e sem NDVI.
     solo_cache_path: Path | None = None
     ndvi_cache_path: Path | None = None
+    # Deltas mensais do NEX-GDDP-CMIP6 por célula do POWER (saída do
+    # pipeline/fetch_cmip6_deltas.py). Sem arquivo: a nota de futuro fica de fora (`futuro: null`),
+    # a não ser que o banco tenha os deltas da célula (tabela `cmip6_delta`).
+    cmip6_path: Path | None = None
 
     # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
     # usam; a API não precisa de nenhuma (ADR-0005).

@@ -121,30 +121,35 @@ class ClimateRiskService:
     def project_season(self, season: ClimateSeason, deltas: list[Cmip6Delta]) -> ClimateSeason:
         """Aplica os deltas mensais de um modelo à temporada observada (método do delta, PRD 7.3).
 
-        Chuva x (1 + Δ%) e máxima + Δ °C em cada mês; a ETo é recalculada pela razão entre a
-        Hargreaves-Samani nova e a antiga (plano técnico §4.3).
+        Chuva x (1 + Δ%), máxima + Δ °C e, quando o delta traz a mínima (`tmin_c`), mínima + Δ °C
+        em cada mês; sem `tmin_c`, a mínima observada fica. A ETo é recalculada pela razão entre a
+        Hargreaves-Samani nova e a antiga (plano técnico §4.3), que usa máxima e mínima.
         """
         by_month = {d.month: d for d in deltas}
         base_eto = self.reference_eto(season)
         rain: list[float] = []
         tmax: list[float] = []
+        tmin: list[float] = []
         eto: list[float] = []
         for idx in range(len(base_eto)):
             day = season.start_date + timedelta(days=idx)
             delta = by_month.get(day.month)
             rain_pct = delta.rain_pct if delta else 0.0
             tmax_c = delta.tmax_c if delta else 0.0
+            tmin_c = delta.tmin_c if delta and delta.tmin_c is not None else 0.0
 
             new_tmax = season.tmax_c[idx] + tmax_c
+            new_tmin = season.tmin_c[idx] + tmin_c
             doy = day.timetuple().tm_yday
             hs_old = self._wb.hargreaves_eto(
                 season.tmax_c[idx], season.tmin_c[idx], season.lat, doy
             )
-            hs_new = self._wb.hargreaves_eto(new_tmax, season.tmin_c[idx], season.lat, doy)
+            hs_new = self._wb.hargreaves_eto(new_tmax, new_tmin, season.lat, doy)
             ratio = hs_new / hs_old if hs_old > 0.0 else 1.0
 
             rain.append(max(0.0, season.rain_mm[idx] * (1.0 + rain_pct / PERCENT_DIVISOR)))
             tmax.append(new_tmax)
+            tmin.append(new_tmin)
             eto.append(round(base_eto[idx] * ratio, 3))
 
         return ClimateSeason(
@@ -155,7 +160,7 @@ class ClimateRiskService:
             rain_mm=tuple(rain),
             rain_source=season.rain_source,
             tmax_c=tuple(tmax),
-            tmin_c=season.tmin_c[: len(base_eto)],
+            tmin_c=tuple(tmin),
             eto_mm=tuple(eto),
         )
 
