@@ -8,6 +8,12 @@ describe('StatusPill', () => {
 
     expect(screen.getByText('Médio')).toHaveAttribute('data-rotulo', 'medio')
   })
+
+  it.each(['bom', 'medio', 'fraco'] as const)('o rótulo %s tem um ícone, para não depender só da cor', (rotulo) => {
+    render(<StatusPill rotulo={rotulo}>Rótulo</StatusPill>)
+
+    expect(screen.getByText('Rótulo').querySelector('svg[aria-hidden="true"]')).not.toBeNull()
+  })
 })
 
 describe('MetricRow', () => {
@@ -22,6 +28,12 @@ describe('MetricRow', () => {
     expect(screen.getByText('Deu certo em 14 de 20 anos')).toBeInTheDocument()
     expect(screen.getByText('Médio')).toBeInTheDocument()
     expect(screen.getByText('faixa')).toBeInTheDocument()
+  })
+
+  it('o ícone da chuva pode ficar azul (dado de satélite)', () => {
+    render(<MetricRow icon={<svg data-testid="icone" />} iconTone="blue" label="Chuva" value="14 de 20" />)
+
+    expect(screen.getByTestId('icone').parentElement).toHaveAttribute('data-tone', 'blue')
   })
 })
 

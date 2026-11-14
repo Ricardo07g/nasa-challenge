@@ -12,6 +12,17 @@ describe('useShellController', () => {
 
     expect(result.current.header.listen.text).toBe('Ouvir')
     expect(result.current.header.lang.current).toBe('pt')
+    expect(result.current.header.slogan).toBe('Do espaço até a raiz.')
+  })
+
+  it('monta o rodapé com o aviso, o caminho do agrônomo e o projeto', () => {
+    const { result } = renderHook(() => useShellController(speech), { wrapper: providers('/', 'pt') })
+
+    expect(result.current.footer).toEqual({
+      disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
+      agronomist: 'Sou agrônomo(a): como a conta é feita',
+      project: 'NASA Space Apps Challenge 2026 · Field Shift',
+    })
   })
 
   it('troca o idioma pelo botão PT | EN', () => {

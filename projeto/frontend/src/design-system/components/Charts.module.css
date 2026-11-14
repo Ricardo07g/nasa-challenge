@@ -7,26 +7,33 @@
 
 .bars {
   display: grid;
-  gap: var(--space-3);
-  height: 176px;
+  gap: 18px;
+  height: 170px;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .barColumn {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .barTrack {
   flex: 1 1 auto;
+  width: 100%;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
 }
 
 .bar {
   display: block;
   width: 100%;
-  border-radius: 6px 6px 0 0;
+  max-width: 38px;
+  border-radius: 5px 5px 0 0;
 }
 
 .bar[data-tone='strong'] {
@@ -39,41 +46,40 @@
 
 .barLabel {
   font-size: var(--font-size-caption);
-  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
   text-align: center;
 }
 
 .caption {
-  font-size: var(--font-size-tiny);
+  font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }
 
 .dots {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
 }
 
 .dot {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  border: 2px solid var(--color-border-strong);
-  background: var(--color-surface);
+  border: 1.5px solid var(--color-primary);
+  background: transparent;
 }
 
 .dot[data-liked='true'] {
   background: var(--color-primary);
-  border-color: var(--color-primary);
 }
 
 .reading {
   display: flex;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) 0;
-  border-top: 1px solid var(--color-divider);
-  font-size: var(--font-size-small);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
   flex-wrap: wrap;
 }
 
@@ -82,12 +88,13 @@
 }
 
 .readingValue {
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .region {
   position: relative;
   border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
   overflow: hidden;
 }
 
@@ -99,14 +106,15 @@
 
 .legend {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
+  right: 12px;
+  bottom: 12px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 6px 10px;
-  border-radius: var(--radius-2xs);
+  padding: 8px 12px;
+  border-radius: var(--radius-tag);
   background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
   font-size: var(--font-size-tiny);
 }
 

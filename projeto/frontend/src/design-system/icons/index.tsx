@@ -1,161 +1,147 @@
 /**
- * Ícones do protótipo v3: SVG de uma cor, traço 2.2, pontas arredondadas, sempre aria-hidden
- * (o texto ao lado dá o significado). Cor via `currentColor`, para seguir o token do componente.
+ * Ícones da interface: lucide (traço 2, grade 24, pontas arredondadas), os mesmos da interface nova.
+ * Sempre aria-hidden: o texto ao lado dá o significado. Cor via `currentColor`, para seguir o token
+ * do componente. As telas importam daqui (nunca direto do lucide), para trocar o desenho num lugar só.
  */
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Banknote,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  CircleCheck,
+  CloudRain,
+  CloudSun,
+  Droplets,
+  History,
+  Leaf,
+  LocateFixed,
+  MapPin,
+  Minus,
+  Satellite,
+  ShieldCheck,
+  Sprout,
+  Square,
+  Volume2,
+} from 'lucide-react'
+
 type IconProps = { size?: number }
 
-const stroke = {
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 2.2,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-}
+/** Props comuns: decorativo (o texto ao lado dá o significado). */
+const decorative = { 'aria-hidden': true, focusable: false } as const
 
-export function LogoMark({ size = 30 }: IconProps) {
+/** Símbolo do Raiz Orbital: a Terra (verde), a órbita do satélite (azul) e o broto. */
+export function LogoMark({ size = 49 }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 30 30" aria-hidden="true">
-      <circle cx="15" cy="15" r="13" fill="none" stroke="var(--color-primary)" strokeWidth="2" />
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <circle cx="32" cy="32" r="24" fill="none" stroke="var(--color-primary)" strokeWidth="1.8" />
       <ellipse
-        cx="15"
-        cy="15"
-        rx="13"
-        ry="5"
+        cx="32"
+        cy="32"
+        rx="31"
+        ry="13"
+        transform="rotate(-32 32 32)"
         fill="none"
         stroke="var(--color-secondary)"
-        strokeWidth="1.6"
-        transform="rotate(-25 15 15)"
-      />
-      <path
-        d="M15 9v12M15 15c-3 0-5-2-5-5M15 17c3 0 5-2 5-5"
-        fill="none"
-        stroke="var(--color-primary)"
         strokeWidth="1.8"
-        strokeLinecap="round"
+      />
+      <path
+        d="M32 47V31M32 36C20 37 18 29 19 24C27 24 31 27 32 36ZM32 32C32 22 39 18 45 20C45 28 40 33 32 32ZM31 28C25 23 26 17 30 13C35 18 36 22 31 28Z"
+        fill="var(--color-primary)"
       />
     </svg>
   )
 }
 
+// Ações e navegação
 export function SpeakerIcon({ size = 20 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true">
-      <path d="M3 8v4h3l4 3V5L6 8H3z" fill="currentColor" />
-      <path
-        d="M13 7c1 .8 1.5 1.8 1.5 3s-.5 2.2-1.5 3M15 4.5c1.7 1.4 2.5 3.2 2.5 5.5s-.8 4.1-2.5 5.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
+  return <Volume2 size={size} {...decorative} />
 }
 
-export function PinIcon({ size = 30 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 30 30" aria-hidden="true">
-      <path d="M15 27s8-8.5 8-14a8 8 0 0 0-16 0c0 5.5 8 14 8 14z" {...stroke} />
-      <circle cx="15" cy="13" r="3" fill="currentColor" />
-    </svg>
-  )
+export function StopIcon({ size = 20 }: IconProps) {
+  return <Square size={size} {...decorative} />
 }
 
-export function CalendarIcon({ size = 30 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 30 30" aria-hidden="true">
-      <rect x="4" y="7" width="22" height="19" rx="3" {...stroke} />
-      <path d="M4 13h22M10 4v6M20 4v6" {...stroke} />
-    </svg>
-  )
+export function ArrowRightIcon({ size = 20 }: IconProps) {
+  return <ArrowRight size={size} {...decorative} />
 }
 
-export function CheckCircleIcon({ size = 30 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 30 30" aria-hidden="true">
-      <circle cx="15" cy="15" r="11" {...stroke} />
-      <path d="M10 15.5l3.5 3.5 7-7.5" {...stroke} strokeWidth={2.4} />
-    </svg>
-  )
+export function ArrowLeftIcon({ size = 20 }: IconProps) {
+  return <ArrowLeft size={size} {...decorative} />
 }
 
-export function CheckFilledIcon({ size = 26 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 26 26" aria-hidden="true">
-      <circle cx="13" cy="13" r="12" fill="currentColor" />
-      <path
-        d="M8 13.5l3.2 3.2 6.6-7"
-        fill="none"
-        stroke="var(--color-on-primary)"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+export function ArrowUpRightIcon({ size = 14 }: IconProps) {
+  return <ArrowUpRight size={size} {...decorative} />
 }
 
-export function CrosshairIcon({ size = 22 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="7" {...stroke} />
-      <circle cx="12" cy="12" r="2.2" fill="currentColor" />
-      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" {...stroke} />
-    </svg>
-  )
+export function ChevronDownIcon({ size = 18 }: IconProps) {
+  return <ChevronDown size={size} {...decorative} />
+}
+
+export function CrosshairIcon({ size = 20 }: IconProps) {
+  return <LocateFixed size={size} {...decorative} />
+}
+
+// Situação
+export function CheckIcon({ size = 24 }: IconProps) {
+  return <Check size={size} {...decorative} />
+}
+
+export function CheckCircleIcon({ size = 24 }: IconProps) {
+  return <CircleCheck size={size} {...decorative} />
+}
+
+export function MinusIcon({ size = 24 }: IconProps) {
+  return <Minus size={size} {...decorative} />
+}
+
+export function ShieldIcon({ size = 24 }: IconProps) {
+  return <ShieldCheck size={size} {...decorative} />
+}
+
+// Dados e domínio
+export function PinIcon({ size = 24 }: IconProps) {
+  return <MapPin size={size} {...decorative} />
+}
+
+export function CalendarIcon({ size = 24 }: IconProps) {
+  return <CalendarDays size={size} {...decorative} />
 }
 
 export function SatelliteIcon({ size = 24 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="9" y="9" width="6" height="6" rx="1" transform="rotate(45 12 12)" {...stroke} />
-      <path d="M7 7L3.5 3.5M17 17l3.5 3.5M4 9l5-5M15 20l5-5" {...stroke} />
-    </svg>
-  )
+  return <Satellite size={size} {...decorative} />
 }
 
 export function DropIcon({ size = 24 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" {...stroke} />
-    </svg>
-  )
+  return <Droplets size={size} {...decorative} />
+}
+
+export function RainIcon({ size = 24 }: IconProps) {
+  return <CloudRain size={size} {...decorative} />
+}
+
+export function ClimateIcon({ size = 24 }: IconProps) {
+  return <CloudSun size={size} {...decorative} />
+}
+
+export function HistoryIcon({ size = 24 }: IconProps) {
+  return <History size={size} {...decorative} />
 }
 
 export function SoilIcon({ size = 24 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3 14h18M3 18h18M6 22h12" {...stroke} />
-      <path d="M12 14V8M12 10c-2.5 0-4-1.5-4-4M12 11c2.5 0 4-1.5 4-4" {...stroke} />
-    </svg>
-  )
+  return <Sprout size={size} {...decorative} />
 }
 
-export function SunIcon({ size = 24 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="4.5" {...stroke} />
-      <path
-        d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"
-        {...stroke}
-      />
-    </svg>
-  )
+export function SproutIcon({ size = 24 }: IconProps) {
+  return <Sprout size={size} {...decorative} />
 }
 
-export function CoinIcon({ size = 22 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" {...stroke} />
-      <path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.6.8-2.6 2s1.1 1.7 2.6 2 2.6.8 2.6 2-1.1 2-2.6 2c-1.1 0-2.1-.4-2.6-1.2M12 6.5V8M12 16v1.5" {...stroke} strokeWidth={1.8} />
-    </svg>
-  )
+export function MoneyIcon({ size = 24 }: IconProps) {
+  return <Banknote size={size} {...decorative} />
 }
 
-export function LeafIcon({ size = 22 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14M5 19l7-7" {...stroke} />
-    </svg>
-  )
+export function LeafIcon({ size = 24 }: IconProps) {
+  return <Leaf size={size} {...decorative} />
 }

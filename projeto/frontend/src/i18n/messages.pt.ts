@@ -17,11 +17,16 @@ export const pt = {
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',
+    slogan: 'Do espaço até a raiz.',
     listen: 'Ouvir',
     stop: 'Parar',
     listenLabel: 'Ouvir esta tela',
     stopLabel: 'Parar a leitura',
     langToggleLabel: 'Trocar idioma: português ou inglês',
+  },
+  footer: {
+    agronomist: 'Sou agrônomo(a): como a conta é feita',
+    project: 'NASA Space Apps Challenge 2026 · Field Shift',
   },
   nav: {
     back: 'Voltar',
@@ -85,7 +90,14 @@ export const pt = {
     stepMark: '1. Marque a lavoura',
     stepHarvest: '2. Diga quando colhe',
     stepAnswer: '3. Veja a resposta',
-    agronomist: 'Sou agrônomo(a): como a conta é feita',
+    stepMarkText: 'Um ponto no mapa. É só isso.',
+    stepHarvestText: 'A época da sua colheita de soja.',
+    stepAnswerText: 'O melhor caminho para a sua terra.',
+    stepsTitle: 'Uma boa próxima safra começa com uma boa escolha.',
+    stepsEyebrow: 'Da NASA para a sua lavoura',
+    photoAlt: 'Fileiras de lavoura no Cerrado brasileiro',
+    nasaData: 'dados da NASA',
+    region: 'Triângulo Mineiro · MG',
   },
   where: {
     title: 'Onde fica a lavoura?',
@@ -95,6 +107,7 @@ export const pt = {
     locating: 'Procurando onde você está…',
     locationError: 'Não conseguimos achar onde você está. Arraste o mapa até a lavoura.',
     help: 'Ou arraste o mapa até o alfinete ficar em cima da lavoura.',
+    selected: (coordinates: string) => `Local escolhido: ${coordinates}`,
     confirm: 'É aqui',
     outsideTitle: 'Ainda não chegamos aí',
     outsideText:
@@ -251,6 +264,7 @@ export const pt = {
     colors: 'Cores',
     typography: 'Tipografia',
     shapes: 'Raios e espaços',
+    icons: 'Ícones',
     components: 'Componentes',
     environment: 'Ambiente',
     apiMode: (mode: string) => `Modo dos dados: ${mode}`,

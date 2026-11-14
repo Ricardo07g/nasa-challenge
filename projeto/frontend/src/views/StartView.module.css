@@ -1,107 +1,306 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
 }
 
+/* Foto do Cerrado de ponta a ponta, com um degradê claro do lado do texto */
 .hero {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-6);
-  align-items: center;
-  padding-top: 8px;
+  position: relative;
+  overflow: hidden;
+  min-height: 600px;
+  background: var(--color-hero-light);
 }
 
-.text {
-  flex: 1 1 340px;
-  min-width: 0;
+.photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 60%;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--hero-wash);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  padding: 63px var(--page-gutter) 58px;
+}
+
+.copy {
+  max-width: 560px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .eyebrow {
-  font-size: var(--font-size-small);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: var(--font-size-caption);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
 }
 
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
 .title {
-  font-family: var(--font-display);
   font-size: var(--font-size-hero);
-  line-height: 1.05;
-  letter-spacing: -0.8px;
+  max-width: 530px;
+  margin: 23px 0 17px;
+}
+
+.slogan {
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  color: var(--color-primary);
+  margin-bottom: 18px;
 }
 
 .lead {
+  max-width: 420px;
+  margin-bottom: 25px;
   font-size: var(--font-size-lead);
-  line-height: var(--line-height-body);
-  color: var(--color-text-secondary);
-  max-width: 520px;
+  line-height: 1.7;
+  color: var(--color-text-muted);
 }
 
 .actions {
-  max-width: 420px;
-  width: 100%;
+  max-width: 340px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 15px;
 }
 
 .meta {
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-tiny);
   text-align: center;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
 }
 
-.illustration {
-  flex: 1 1 340px;
-  min-width: 0;
-  border-radius: var(--radius-hero);
-  background: var(--color-hero-bg);
-  overflow: hidden;
+.orbit {
+  position: absolute;
+  right: 30px;
+  top: 32px;
+  width: 250px;
+  color: var(--color-primary);
+  opacity: 0.85;
 }
 
-.illustration svg {
-  display: block;
-  width: 100%;
-  height: auto;
+.photoLabel {
+  position: absolute;
+  right: 32px;
+  bottom: 28px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 17px;
+  border-radius: var(--radius-tag);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  color: var(--color-primary);
+  font-size: var(--font-size-caption);
+  line-height: 1.4;
 }
 
+.photoLabel svg {
+  flex: 0 0 auto;
+}
+
+/* Os 3 passos */
 .steps {
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  padding: 35px var(--page-gutter) 39px;
+}
+
+.stepsHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 23px;
+}
+
+.stepsTitle {
+  font-size: 22px;
+}
+
+.stepsEyebrow {
+  flex: 0 0 auto;
+}
+
+.stepsGrid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
 }
 
 .step {
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4) var(--space-3);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  text-align: center;
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1.25;
+  gap: 17px;
+  padding: 23px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+.stepIcon {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-tint-green);
   color: var(--color-primary);
 }
 
-.step span {
-  color: var(--color-text);
+.stepIcon[data-tone='blue'] {
+  background: var(--color-tint-blue);
+  color: var(--color-secondary);
 }
 
-.disclaimer {
+.stepNumber {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.stepTitle {
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.stepText {
   font-size: var(--font-size-caption);
-  line-height: var(--line-height-body);
   color: var(--color-text-muted);
 }
 
-.disclaimer a {
-  font-weight: var(--font-weight-semibold);
+@media (min-width: 1500px) {
+  .hero {
+    min-height: 640px;
+  }
+
+  .heroContent {
+    padding-block: 80px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .copy {
+    max-width: 490px;
+  }
+
+  .orbit {
+    width: 190px;
+    right: 15px;
+  }
+
+  .step {
+    padding: 18px;
+    gap: 12px;
+  }
+
+  .stepTitle {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    min-height: 0;
+  }
+
+  .hero::after {
+    background: var(--hero-wash-mobile);
+  }
+
+  .photo {
+    object-position: 66% center;
+  }
+
+  .heroContent {
+    padding-block: 35px 40px;
+  }
+
+  .copy {
+    max-width: none;
+  }
+
+  .title {
+    max-width: 360px;
+    margin-top: 18px;
+  }
+
+  .slogan {
+    font-size: 23px;
+  }
+
+  .lead {
+    max-width: 310px;
+    font-size: var(--font-size-body);
+  }
+
+  .actions {
+    max-width: none;
+  }
+
+  .meta {
+    font-size: 12px;
+  }
+
+  .orbit,
+  .photoLabel,
+  .stepsEyebrow,
+  .stepNumber {
+    display: none;
+  }
+
+  .steps {
+    padding-block: 26px;
+  }
+
+  .stepsTitle {
+    font-size: 20px;
+  }
+
+  .stepsGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .step {
+    padding: 19px;
+  }
+
+  .stepTitle {
+    font-size: 18px;
+  }
 }

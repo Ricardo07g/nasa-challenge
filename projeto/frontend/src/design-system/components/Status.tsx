@@ -1,11 +1,20 @@
 import type { ReactNode } from 'react'
+import { CheckIcon, MinusIcon, ShieldIcon } from '../icons'
 import styles from './Status.module.css'
 
 export type Rotulo = 'bom' | 'medio' | 'fraco'
 
+/** Ícone de cada rótulo: o significado não depende só da cor. */
+const PILL_ICON: Record<Rotulo, ReactNode> = {
+  bom: <CheckIcon size={14} />,
+  medio: <MinusIcon size={14} />,
+  fraco: <ShieldIcon size={14} />,
+}
+
 export function StatusPill({ rotulo, children }: { rotulo: Rotulo; children: ReactNode }) {
   return (
     <span className={styles.pill} data-rotulo={rotulo}>
+      {PILL_ICON[rotulo]}
       {children}
     </span>
   )
@@ -13,24 +22,26 @@ export function StatusPill({ rotulo, children }: { rotulo: Rotulo; children: Rea
 
 type MetricRowProps = {
   icon: ReactNode
+  /** Azul para dado de satélite (chuva); verde para o resto. */
+  iconTone?: 'green' | 'blue'
   label: string
   value: string
   pill?: ReactNode
   children?: ReactNode
 }
 
-export function MetricRow({ icon, label, value, pill, children }: MetricRowProps) {
+export function MetricRow({ icon, iconTone = 'green', label, value, pill, children }: MetricRowProps) {
   return (
     <div className={styles.metric}>
-      <div className={styles.metricHead}>
-        <span className={styles.metricIcon}>{icon}</span>
-        <div className={styles.metricText}>
-          <span className={styles.metricLabel}>{label}</span>
-          <span className={styles.metricValue}>{value}</span>
-        </div>
-        {pill}
+      <span className={styles.metricIcon} data-tone={iconTone}>
+        {icon}
+      </span>
+      <div className={styles.metricText}>
+        <span className={styles.metricLabel}>{label}</span>
+        <span className={styles.metricValue}>{value}</span>
+        {children}
       </div>
-      {children}
+      {pill && <span className={styles.metricPill}>{pill}</span>}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { AlternativeCard, Card, DataSourceCard, InfoBanner, SourceCard } from './Card'
+import { AlternativeCard, Card, DataSourceCard, IconBubble, InfoBanner, SourceCard } from './Card'
 
 describe('Card', () => {
   it('aplica o tom e o destaque', () => {
@@ -23,6 +23,18 @@ describe('Card', () => {
     )
 
     expect(screen.getByRole('region', { name: 'Como fazer' })).toBeInTheDocument()
+  })
+})
+
+describe('IconBubble', () => {
+  it('mostra o ícone numa bolinha do tom pedido', () => {
+    render(
+      <IconBubble tone="blue">
+        <svg data-testid="icone" />
+      </IconBubble>,
+    )
+
+    expect(screen.getByTestId('icone').parentElement).toHaveAttribute('data-tone', 'blue')
   })
 })
 
@@ -56,6 +68,12 @@ describe('AlternativeCard', () => {
     expect(screen.getByText('Menos risco de seca')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Sorgo' })).toBeInTheDocument()
     expect(screen.getByText('Deu certo em 17 de 20 anos.')).toBeInTheDocument()
+  })
+
+  it('pode ter um ícone ao lado do motivo', () => {
+    render(<AlternativeCard icon={<svg data-testid="icone" />} label="Menos risco de seca" title="Sorgo" text="x" />)
+
+    expect(screen.getByTestId('icone')).toBeInTheDocument()
   })
 })
 

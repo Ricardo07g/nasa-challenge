@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { ArrowLeftIcon } from '../icons'
 import styles from './Navigation.module.css'
 
 export function BackLink({ to, children }: { to: string; children: ReactNode }) {
   return (
     <Link to={to} className={styles.back}>
-      <span aria-hidden="true">‹</span> {children}
+      <ArrowLeftIcon />
+      {children}
     </Link>
   )
 }

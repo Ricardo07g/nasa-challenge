@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import type { AppFooterProps } from '../design-system/components/Footer'
 import type { AppHeaderProps } from '../design-system/components/Header'
 import { useI18n } from '../i18n/useI18n'
 import { speechService, type SpeechService } from '../services/speechService'
@@ -10,8 +11,11 @@ function mainText(): string {
   return (main?.innerText || main?.textContent || '').trim()
 }
 
-/** Controller da moldura comum a todas as telas: cabeçalho com Ouvir e PT | EN. */
-export function useShellController(speech: SpeechService = speechService): { header: AppHeaderProps } {
+/** Controller da moldura comum a todas as telas: cabeçalho com Ouvir e PT | EN, e o rodapé. */
+export function useShellController(speech: SpeechService = speechService): {
+  header: AppHeaderProps
+  footer: AppFooterProps
+} {
   const { lang, messages: t, toggleLang } = useI18n()
   const getText = useCallback(() => mainText(), [])
   const listen = useListen(lang, getText, speech)
@@ -19,6 +23,7 @@ export function useShellController(speech: SpeechService = speechService): { hea
   return {
     header: {
       homeLabel: t.header.home,
+      slogan: t.header.slogan,
       listen: {
         supported: listen.supported,
         speaking: listen.speaking,
@@ -29,6 +34,11 @@ export function useShellController(speech: SpeechService = speechService): { hea
         stopText: t.header.stop,
       },
       lang: { current: lang, onToggle: toggleLang, label: t.header.langToggleLabel },
+    },
+    footer: {
+      disclaimer: t.common.disclaimer,
+      agronomist: t.footer.agronomist,
+      project: t.footer.project,
     },
   }
 }

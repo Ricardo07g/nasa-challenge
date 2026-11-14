@@ -24,3 +24,8 @@ export function formatDayMonth(lang: Lang, isoDate: string): string {
     timeZone: 'UTC',
   }).format(date)
 }
+
+/** Ponto escolhido no mapa: "-18.9200, -48.2800" (latitude, longitude), igual em PT e EN. */
+export function formatCoordinates(point: { lat: number; lon: number }): string {
+  return `${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`
+}

@@ -17,8 +17,7 @@ body {
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: var(--font-size-body);
-  /* Igual ao protótipo: altura de linha padrão; quem precisa de 1.45 declara (--line-height-body). */
-  line-height: normal;
+  line-height: var(--line-height-body);
 }
 
 h1,
@@ -26,6 +25,19 @@ h2,
 h3,
 p {
   margin: 0;
+}
+
+/* Títulos em Space Grotesk; o componente define o tamanho. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: var(--line-height-tight);
+  font-weight: var(--font-weight-semibold);
+}
+
+h1 {
+  font-weight: var(--font-weight-bold);
 }
 
 a {
@@ -36,8 +48,18 @@ a:hover {
   color: var(--color-primary-strong);
 }
 
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
 button {
   font: inherit;
+}
+
+::selection {
+  background: var(--color-good-bg);
+  color: var(--color-primary);
 }
 
 :focus-visible {
@@ -52,4 +74,14 @@ button {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

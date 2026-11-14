@@ -31,7 +31,7 @@
   font-family: var(--font-display);
   font-size: var(--font-size-hero);
   font-weight: var(--font-weight-bold);
-  line-height: 1.05;
+  line-height: 1.1;
 }
 
 .h1 {
@@ -58,9 +58,29 @@
   width: 120px;
   height: 72px;
   background: var(--color-tint-green);
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--color-border-green-tint);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-tiny);
+}
+
+.icons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

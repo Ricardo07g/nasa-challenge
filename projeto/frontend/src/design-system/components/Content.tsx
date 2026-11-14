@@ -1,4 +1,5 @@
 import { useId, useState, type ReactNode } from 'react'
+import { ChevronDownIcon, ShieldIcon, SproutIcon } from '../icons'
 import styles from './Content.module.css'
 
 export function PageHeading({ title, subtitle, eyebrow }: { title: string; subtitle?: string; eyebrow?: string }) {
@@ -45,6 +46,7 @@ export function Disclosure({ openLabel, closeLabel, children }: DisclosureProps)
         onClick={() => setOpen((value) => !value)}
       >
         {open ? closeLabel : openLabel}
+        <ChevronDownIcon />
       </button>
       {open && (
         <div id={panelId} className={styles.disclosurePanel}>
@@ -62,7 +64,13 @@ export function Disclaimer({ children }: { children: ReactNode }) {
 export function RecommendationHero({ label, title, children }: { label: string; title: string; children?: ReactNode }) {
   return (
     <div className={styles.hero}>
-      <span className={styles.heroLabel}>{label}</span>
+      <span className={styles.heroDecor}>
+        <SproutIcon size={65} />
+      </span>
+      <span className={styles.heroLabel}>
+        <ShieldIcon size={20} />
+        {label}
+      </span>
       <h2 className={styles.heroTitle}>{title}</h2>
       {children}
     </div>

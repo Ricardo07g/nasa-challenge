@@ -43,6 +43,27 @@ describe('Button', () => {
     )
   })
 
+  it('mostra a seta no fim quando a ação avança no fluxo', () => {
+    render(
+      <>
+        <Button arrow>Começar</Button>
+        <Button>Tentar de novo</Button>
+      </>,
+    )
+
+    const withArrow = screen.getByRole('button', { name: 'Começar' })
+    expect(withArrow.lastElementChild?.tagName).toBe('svg')
+    expect(withArrow.lastElementChild).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByRole('button', { name: 'Tentar de novo' }).querySelector('svg')).toBeNull()
+  })
+
+  it('aceita um ícone no fim (ex.: ↗ no "Ver um exemplo pronto")', () => {
+    render(<Button iconEnd={<svg data-testid="fim" aria-hidden="true" />}>Ver um exemplo pronto</Button>)
+
+    const button = screen.getByRole('button', { name: 'Ver um exemplo pronto' })
+    expect(button.lastElementChild).toBe(screen.getByTestId('fim'))
+  })
+
   it('pode ficar desabilitado', () => {
     render(<Button disabled>É aqui</Button>)
 
