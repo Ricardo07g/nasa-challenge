@@ -74,3 +74,34 @@ def test_should_return_safe_medium_soil_fallback_when_isric_api_fails() -> None:
     assert soil.textura_solo == "medio"
     assert soil.cad_capacidade_agua_mm == 50.0
     assert soil.fonte == "padrao"
+
+
+def _payload_without_values(*missing: str) -> dict[str, Any]:
+    """Resposta real do SoilGrids onde o mapa não tem dado (ex.: área urbana): `mean` nulo."""
+    payload = _sample_soilgrids_payload()
+    for layer in payload["properties"]["layers"]:
+        if layer["name"] in missing:
+            for depth in layer["depths"]:
+                depth["values"]["mean"] = None
+    return payload
+
+
+def test_should_label_default_soil_as_padrao_when_soilgrids_has_no_values() -> None:
+    # Em (-17,78; -50,92) o SoilGrids responde 200 com argila e areia nulas. Antes o cliente
+    # trocava por 28%/45% e marcava "soilgrids": dado inventado com nome de fonte real, gravado no
+    # banco pela busca sob demanda.
+    client = SoilGridsClient(http_get=FakeHttpGetter([_payload_without_values("clay", "sand")]))
+
+    soil = client.fetch_soil(lat=-17.78, lon=-50.92)
+
+    assert soil.fonte == "padrao"
+    assert soil.textura_solo == "medio"
+    assert soil.cad_capacidade_agua_mm == 50.0
+
+
+def test_should_not_invent_the_missing_property_when_only_one_layer_comes_without_values() -> None:
+    client = SoilGridsClient(http_get=FakeHttpGetter([_payload_without_values("sand")]))
+
+    soil = client.fetch_soil(lat=-17.78, lon=-50.92)
+
+    assert soil.fonte == "padrao"

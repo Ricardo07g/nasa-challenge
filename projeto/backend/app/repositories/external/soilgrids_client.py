@@ -59,8 +59,11 @@ class SoilGridsClient:
                 timeout=self._timeout,
             )
             layers: list[dict[str, Any]] = payload.get("properties", {}).get("layers", [])
-            clay_pct = self._extract_layer_mean_pct(layers, "clay", DEFAULT_CLAY_PCT)
-            sand_pct = self._extract_layer_mean_pct(layers, "sand", DEFAULT_SAND_PCT)
+            clay_pct = self._extract_layer_mean_pct(layers, "clay")
+            sand_pct = self._extract_layer_mean_pct(layers, "sand")
+            if clay_pct is None or sand_pct is None:
+                # O mapa não tem dado no ponto (ex.: área urbana): não inventa argila nem areia.
+                raise ValueError("SoilGrids sem argila ou areia para o ponto")
             textura, cad_mm = classify_soil_texture(argila_pct=clay_pct, areia_pct=sand_pct)
             return SoloInfo(
                 argila_percentual=clay_pct,
@@ -84,9 +87,8 @@ class SoilGridsClient:
                 fonte="padrao",
             )
 
-    def _extract_layer_mean_pct(
-        self, layers: list[dict[str, Any]], prop_name: str, default_pct: float
-    ) -> float:
+    def _extract_layer_mean_pct(self, layers: list[dict[str, Any]], prop_name: str) -> float | None:
+        """Média 0-30 cm em %, ou None quando o SoilGrids não tem valor para a propriedade."""
         for layer in layers:
             if layer.get("name") == prop_name:
                 depths: list[dict[str, Any]] = layer.get("depths", [])
@@ -97,4 +99,4 @@ class SoilGridsClient:
                 ]
                 if vals:
                     return round(sum(vals) / len(vals), 1)
-        return default_pct
+        return None
