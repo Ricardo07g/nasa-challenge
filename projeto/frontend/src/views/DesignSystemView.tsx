@@ -1,7 +1,7 @@
 import { Button } from '../design-system/components/Button'
 import { AlternativeCard, Card, DataSourceCard, InfoBanner, SourceCard } from '../design-system/components/Card'
 import { NeighborDots, RainBarChart, RainReadingRow, RegionMap } from '../design-system/components/Charts'
-import { ChipGroup, RadioCard } from '../design-system/components/Choice'
+import { ChipGroup, DateField, RadioCard } from '../design-system/components/Choice'
 import {
   Disclaimer,
   Disclosure,
@@ -190,6 +190,9 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             <BackLink to="/design-system">{t.nav.back}</BackLink>
             <QuestionStepper current={1} total={2} label={t.stepper.label(1, 2)} />
             <Button arrow>{t.start.start}</Button>
+            <Button arrow detail={t.when.cta}>
+              {t.when.nextStep}
+            </Button>
             <Button variant="outline">{t.start.example}</Button>
             <Button variant="outline-blue" icon={<CrosshairIcon />}>
               {t.where.useLocation}
@@ -220,6 +223,15 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             />
             <RadioCard title={t.harvest.meio.title} sub={t.harvest.meio.sub} selected onSelect={noop} />
             <RadioCard title={t.harvest.tarde.title} sub={t.harvest.tarde.sub} selected={false} onSelect={noop} />
+            <RadioCard title={t.when.dateOption} sub={t.when.dateOptionHint} selected={false} expanded onSelect={noop} />
+            <DateField
+              label={t.when.dateLabel}
+              value="2027-02-18"
+              min="2027-01-15"
+              max="2027-03-31"
+              status={t.when.dateBand('18/02', t.harvest.meio.inline)}
+              onChange={noop}
+            />
           </Card>
           <Card>
             <MetricRow

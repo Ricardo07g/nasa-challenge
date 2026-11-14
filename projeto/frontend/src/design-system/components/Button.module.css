@@ -81,3 +81,27 @@
   background: var(--color-primary-strong);
   color: var(--color-on-primary);
 }
+
+/* Com segunda linha: texto à esquerda em duas linhas e a seta na ponta direita */
+.button[data-detail='true'] {
+  min-height: 74px;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.main {
+  font-size: clamp(18px, 1.8vw, 20px);
+  font-weight: var(--font-weight-bold);
+}
+
+.detail {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+  opacity: 0.85;
+}

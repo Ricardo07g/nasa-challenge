@@ -51,6 +51,20 @@ describe('rotas', () => {
     expect(screen.queryByRole('navigation', { name: 'Telas da resposta' })).not.toBeInTheDocument()
   })
 
+  it('a pergunta 2 (colheita) abre com o ponto da URL e o título da aba', async () => {
+    renderAt('/quando?lat=-18.9543&lon=-48.1993')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Meio de fevereiro/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(document.title).toBe('Raiz Orbital – Quando você colhe a soja?')
+  })
+
+  it('a pergunta 2 sem ponto marcado volta para o mapa', async () => {
+    renderAt('/quando')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })).toBeInTheDocument()
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 

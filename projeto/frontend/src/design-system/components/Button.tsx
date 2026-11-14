@@ -15,6 +15,8 @@ type CommonProps = {
   arrow?: boolean
   /** Outro ícone no fim (ex.: ↗ quando abre um exemplo). */
   iconEnd?: ReactNode
+  /** Segunda linha, menor (ex.: "Próximo passo" / "Ver a resposta"). */
+  detail?: string
 }
 
 type AsButton = CommonProps & {
@@ -31,12 +33,18 @@ type AsLink = CommonProps & {
 export type ButtonProps = AsButton | AsLink
 
 export function Button(props: ButtonProps) {
-  const { children, variant = 'primary', icon, iconEnd, fullWidth = true, arrow = false } = props
+  const { children, variant = 'primary', icon, iconEnd, fullWidth = true, arrow = false, detail } = props
   const className = styles.button
   const content = (
     <>
       {icon}
-      <span>{children}</span>
+      {detail ? (
+        <span className={styles.text}>
+          <span className={styles.main}>{children}</span> <span className={styles.detail}>{detail}</span>
+        </span>
+      ) : (
+        <span>{children}</span>
+      )}
       {arrow && <ArrowRightIcon />}
       {iconEnd}
     </>
@@ -44,7 +52,13 @@ export function Button(props: ButtonProps) {
 
   if (props.to !== undefined) {
     return (
-      <Link to={props.to} className={className} data-variant={variant} data-full={fullWidth}>
+      <Link
+        to={props.to}
+        className={className}
+        data-variant={variant}
+        data-full={fullWidth}
+        data-detail={detail !== undefined}
+      >
         {content}
       </Link>
     )
@@ -56,6 +70,7 @@ export function Button(props: ButtonProps) {
       className={className}
       data-variant={variant}
       data-full={fullWidth}
+      data-detail={detail !== undefined}
       onClick={props.onClick}
       disabled={props.disabled}
     >
