@@ -1,6 +1,12 @@
 import styles from './Charts.module.css'
 
-type Bar = { label: string; value: number; tone: 'strong' | 'soft' }
+type Bar = {
+  label: string
+  value: number
+  tone: 'strong' | 'soft' | 'earth'
+  /** Valor escrito em cima da barra (ex.: "62%"). */
+  display?: string
+}
 
 /** Barras de chuva por mês (tela 3). `value` é a altura em % da maior barra. */
 export function RainBarChart({ label, caption, bars }: { label: string; caption: string; bars: readonly Bar[] }) {
@@ -15,6 +21,7 @@ export function RainBarChart({ label, caption, bars }: { label: string; caption:
         {bars.map((bar) => (
           <span key={bar.label} className={styles.barColumn}>
             <span className={styles.barTrack}>
+              {bar.display && <span className={styles.barValue}>{bar.display}</span>}
               <span data-bar className={styles.bar} data-tone={bar.tone} style={{ height: `${bar.value}%` }} />
             </span>
             <span className={styles.barLabel}>{bar.label}</span>

@@ -1,14 +1,19 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Community } from '../models/community'
-import { buildCommunity } from '../repositories/mocks/fixtures'
+import { buildCommunity, buildTalhao } from '../repositories/mocks/fixtures'
+import { createMockRegionRepository } from '../repositories/regionRepository'
+import type { FarmService } from '../services/farmService'
 import type { CommunityService } from '../services/communityService'
 import { providers } from '../test/providers'
 import { useCommunityController } from './useCommunityController'
 
+const region = createMockRegionRepository(0)
+
 function deps(load: () => Promise<Community> = () => Promise.resolve(buildCommunity('pt'))) {
-  const community: CommunityService = { get: vi.fn(load) }
-  return { community }
+  const community: CommunityService = { get: vi.fn(load), region: vi.fn((point, lang) => region.get(point, lang)) }
+  const farm: FarmService = { talhao: vi.fn((point) => Promise.resolve(buildTalhao(point, 'pt'))), recomendacao: vi.fn() }
+  return { community, farm }
 }
 
 describe('useCommunityController (tela 8)', () => {
@@ -61,5 +66,27 @@ describe('useCommunityController (tela 8)', () => {
     await waitFor(() => expect(result.current.status).toBe('error'))
     act(() => result.current.retry())
     await waitFor(() => expect(result.current.status).toBe('ready'))
+  })
+
+  it('região pelo satélite: o último ano, a média e o histórico da lavoura para comparar (P3)', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useCommunityController(d), {
+      wrapper: providers('/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio'),
+    })
+
+    await waitFor(() => expect(result.current.region).not.toBeNull())
+    expect(result.current.region?.last).toEqual({ ano: 2025, pct: 62 })
+    expect(result.current.regionRadius).toBe(30)
+    await waitFor(() => expect(result.current.history).toEqual({ parado: 5, total: 10 }))
+    expect(d.community.region).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993 }, 'pt')
+  })
+
+  it('sem a região na API, o bloco da região some e a comunidade continua', async () => {
+    const d = deps()
+    d.community.region = vi.fn().mockRejectedValue(new Error('404'))
+    const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
+
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    expect(result.current.region).toBeNull()
   })
 })

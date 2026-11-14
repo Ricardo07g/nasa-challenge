@@ -1,8 +1,10 @@
 import type { Lang } from '../i18n/language'
 import type { Community } from '../models/community'
+import type { RegiaoSatelite } from '../models/region'
 import type { Ponto } from '../models/talhao'
-import { communityRepository as defaultRepository } from '../repositories'
+import { communityRepository as defaultRepository, regionRepository as defaultRegions } from '../repositories'
 import type { CommunityRepository } from '../repositories/communityRepository'
+import type { RegionRepository } from '../repositories/regionRepository'
 
 export type RegionPoint = Ponto & { kind: 'gauge' | 'planted' | 'idle' }
 
@@ -37,10 +39,39 @@ export function regionPoints(center: Ponto): RegionPoint[] {
   ]
 }
 
-export type CommunityService = { get(lang: Lang): Promise<Community> }
+export type CommunityService = {
+  get(lang: Lang): Promise<Community>
+  /** P3: área parada na região, pelo satélite. */
+  region(point: Ponto, lang: Lang): Promise<RegiaoSatelite>
+}
 
-export function createCommunityService(repository: CommunityRepository = defaultRepository): CommunityService {
-  return { get: (lang) => repository.get(lang) }
+export function createCommunityService(
+  repository: CommunityRepository = defaultRepository,
+  regions: RegionRepository = defaultRegions,
+): CommunityService {
+  return { get: (lang) => repository.get(lang), region: (point, lang) => regions.get(point, lang) }
+}
+
+export type RegionSummary = {
+  last: { ano: number; pct: number }
+  /** Média da série (% da área parada), arredondada. */
+  average: number
+  /** % da área que o satélite não conseguiu dizer, no último ano. */
+  uncertain: number
+  bars: { ano: number; pct: number }[]
+}
+
+/** P3: o último ano em destaque, a média da série e as barras, ano a ano. */
+export function regionSummary(region: RegiaoSatelite): RegionSummary | null {
+  const last = region.anos.at(-1)
+  if (!last) return null
+  const total = region.anos.reduce((sum, ano) => sum + ano.pct_parado, 0)
+  return {
+    last: { ano: last.ano, pct: last.pct_parado },
+    average: Math.round(total / region.anos.length),
+    uncertain: last.pct_incerto,
+    bars: region.anos.map((ano) => ({ ano: ano.ano, pct: ano.pct_parado })),
+  }
 }
 
 export const communityService = createCommunityService()

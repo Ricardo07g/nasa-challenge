@@ -5,10 +5,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
 import { buildCommunity } from '../repositories/mocks/fixtures'
-import { regionPoints } from '../services/communityService'
+import { createMockRegionRepository } from '../repositories/regionRepository'
+import { regionPoints, regionSummary } from '../services/communityService'
 import { CommunityView, type CommunityViewProps } from './CommunityView'
 
 const center = { lat: -18.9543, lon: -48.1993 }
+const region = regionSummary(await createMockRegionRepository(0).get(center, 'pt'))
 
 function setup(overrides: Partial<CommunityViewProps> = {}) {
   const props: CommunityViewProps = {
@@ -21,6 +23,9 @@ function setup(overrides: Partial<CommunityViewProps> = {}) {
     points: regionPoints(center),
     demo: null,
     onDemo: vi.fn(),
+    region,
+    regionRadius: 30,
+    history: { parado: 5, total: 10 },
     ...overrides,
   }
   render(
@@ -32,16 +37,34 @@ function setup(overrides: Partial<CommunityViewProps> = {}) {
 }
 
 describe('CommunityView (tela 8)', () => {
-  it('mostra que é simulada, o título e quantos participam', () => {
+  it('região pelo satélite: o último ano em destaque, a comparação e o gráfico ano a ano (P3)', () => {
     setup()
 
-    expect(screen.getByText('Comunidade simulada')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1, name: 'Perto de você' })).toBeInTheDocument()
-    expect(screen.getByText('Até 30 km de Uberlândia · 18 produtores participando')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
+    expect(screen.getByText('Até 30 km da lavoura · visto pelo satélite')).toBeInTheDocument()
+    expect(screen.getByText('Em 2025, 62% da área de lavoura ficou parada depois da soja.')).toBeInTheDocument()
+    expect(screen.getByText('Sua área: parada em 5 de 10 anos. Na região, em média 65% da área fica parada.')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: '% da área parada depois da soja, ano a ano.' })).toHaveTextContent('62%')
+    expect(screen.getByText(/Em 9% da área o satélite não conseguiu dizer/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
       'href',
       '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
     )
+  })
+
+  it('a comunidade vem embaixo, marcada como ilustrativa, com quantos participam', () => {
+    setup()
+
+    const community = screen.getByRole('region', { name: 'O que os vizinhos contam' })
+    expect(community).toHaveTextContent('Valores ilustrativos')
+    expect(community).toHaveTextContent('Até 30 km de Uberlândia · 18 produtores participando')
+  })
+
+  it('sem a região na API, o bloco do satélite some e a comunidade continua', () => {
+    setup({ region: null, regionRadius: null })
+
+    expect(screen.queryByText(/da área de lavoura ficou parada/)).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'O que os vizinhos contam' })).toBeInTheDocument()
   })
 
   it('o que os vizinhos plantaram: uma linha por opção, com as bolinhas', () => {
@@ -97,6 +120,9 @@ describe('CommunityView (tela 8)', () => {
           points={[]}
           demo={null}
           onDemo={vi.fn()}
+          region={null}
+          regionRadius={null}
+          history={null}
         />
       </MemoryRouter>,
     )
@@ -111,6 +137,6 @@ describe('CommunityView (tela 8)', () => {
   it('em inglês', () => {
     setup({ t: en, community: buildCommunity('en') })
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Near you' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'In your region' })).toBeInTheDocument()
   })
 })

@@ -60,3 +60,22 @@ describe('NeighborRow', () => {
     expect(screen.getByText('2 de 3 gostaram')).toBeInTheDocument()
   })
 })
+
+describe('RainBarChart com o valor em cima das barras', () => {
+  it('mostra o valor de cada barra e aceita o tom terra (área parada)', () => {
+    render(
+      <RainBarChart
+        label="% da área parada"
+        caption="Ano a ano"
+        bars={[
+          { label: '24', value: 63, tone: 'earth', display: '63%' },
+          { label: '25', value: 62, tone: 'earth', display: '62%' },
+        ]}
+      />,
+    )
+
+    const chart = screen.getByRole('img', { name: '% da área parada' })
+    expect(chart).toHaveTextContent('63%')
+    expect(chart.querySelector('[data-tone="earth"]')).not.toBeNull()
+  })
+})

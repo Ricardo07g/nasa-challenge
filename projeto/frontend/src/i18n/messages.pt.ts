@@ -291,8 +291,18 @@ export const pt = {
     footer: 'Ajuda a decidir. Não é laudo técnico, não substitui o ZARC oficial nem o agrônomo responsável.',
   },
   community: {
-    eyebrow: 'Comunidade simulada',
-    title: 'Perto de você',
+    title: 'Na sua região',
+    regionSubtitle: (km: number) => `Até ${km} km da lavoura · visto pelo satélite`,
+    regionBig: (year: number, pct: number) => `Em ${year}, ${pct}% da área de lavoura ficou parada depois da soja.`,
+    regionCompare: (idle: number, total: number, average: number) =>
+      `Sua área: parada em ${idle} de ${total} anos. Na região, em média ${average}% da área fica parada.`,
+    regionAverage: (average: number) => `Na região, em média ${average}% da área fica parada depois da soja.`,
+    regionChart: '% da área parada depois da soja, ano a ano.',
+    regionNote: (pct: number) =>
+      `Estimativa pelo satélite MODIS (NASA), pixel de 250 m. Em ${pct}% da área o satélite não conseguiu dizer. Mostramos só o total da região, nunca uma fazenda.`,
+    bridge: 'O satélite mostra quanto a região deixa a terra parada. Os vizinhos contam se valeu a pena plantar.',
+    communityTitle: 'O que os vizinhos contam',
+    illustrative: 'Valores ilustrativos',
     subtitle: (km: number, place: string, count: number) =>
       `Até ${km} km de ${place} · ${count} produtores participando`,
     neighborsTitle: (year: number) => `O que os vizinhos plantaram depois da soja em ${year}`,

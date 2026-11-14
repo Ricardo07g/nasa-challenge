@@ -289,8 +289,18 @@ export const en = {
     footer: 'Helps you decide. Not a technical report; it does not replace the official ZARC or the responsible agronomist.',
   },
   community: {
-    eyebrow: 'Simulated community',
-    title: 'Near you',
+    title: 'In your region',
+    regionSubtitle: (km: number) => `Within ${km} km of the field · seen by satellite`,
+    regionBig: (year: number, pct: number) => `In ${year}, ${pct}% of the cropland was left idle after soybeans.`,
+    regionCompare: (idle: number, total: number, average: number) =>
+      `Your field: idle in ${idle} of ${total} years. In the region, on average ${average}% of the area stays idle.`,
+    regionAverage: (average: number) => `In the region, on average ${average}% of the area stays idle after soybeans.`,
+    regionChart: '% of the area left idle after soybeans, year by year.',
+    regionNote: (pct: number) =>
+      `Estimated from the MODIS satellite (NASA), 250 m pixels. For ${pct}% of the area the satellite could not tell. We only show the regional total, never a single farm.`,
+    bridge: 'The satellite shows how much regional land stays idle. Neighbors tell you whether planting was worthwhile.',
+    communityTitle: 'What neighbors say',
+    illustrative: 'Illustrative values',
     subtitle: (km: number, place: string, count: number) =>
       `Within ${km} km of ${place} · ${count} growers taking part`,
     neighborsTitle: (year: number) => `What neighbors planted after soybeans in ${year}`,

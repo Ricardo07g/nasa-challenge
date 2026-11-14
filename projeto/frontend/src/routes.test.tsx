@@ -137,13 +137,13 @@ describe('rotas', () => {
 
     await userEvent.click(await screen.findByRole('link', { name: 'Comunidade' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Perto de você' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
     expect(await screen.findByText('Até 30 km de Uberlândia · 18 produtores participando')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
       'href',
       '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
     )
-    expect(document.title).toBe('Raiz Orbital – Perto de você')
+    expect(document.title).toBe('Raiz Orbital – Na sua região')
   })
 
   it('"Sou agrônomo(a)" no rodapé abre a tela 9 com as notas da lavoura', async () => {
