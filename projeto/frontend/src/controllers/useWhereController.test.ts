@@ -14,7 +14,7 @@ describe('useWhereController (tela 2)', () => {
   it('começa na fazenda de exemplo, perto de Uberlândia', () => {
     const { result } = renderHook(() => useWhereController(deps()), { wrapper: providers('/onde') })
 
-    expect(result.current.center).toEqual({ lat: -18.92, lon: -48.28 })
+    expect(result.current.center).toEqual({ lat: -18.9543, lon: -48.1993 })
     expect(result.current.place).toBe('Uberlândia (MG)')
     expect(result.current.outside).toBe(false)
   })
@@ -63,7 +63,7 @@ describe('useWhereController (tela 2)', () => {
 
     act(() => result.current.confirm())
 
-    expect(d.farm.talhao).toHaveBeenCalledWith({ lat: -18.92, lon: -48.28 }, 'pt')
-    expect(screen.getByTestId('location')).toHaveTextContent('/quando?lat=-18.92&lon=-48.28')
+    expect(d.farm.talhao).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993 }, 'pt')
+    expect(screen.getByTestId('location')).toHaveTextContent('/quando?lat=-18.9543&lon=-48.1993')
   })
 })

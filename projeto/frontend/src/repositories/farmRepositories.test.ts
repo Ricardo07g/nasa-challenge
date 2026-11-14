@@ -102,7 +102,7 @@ describe('repositories mock (dados de exemplo no formato do contrato)', () => {
   it('exemplo é a fazenda de Uberlândia, colheita no meio de fevereiro', async () => {
     const exemplo = await createMockExemploRepository(0).get('pt')
 
-    expect(exemplo.talhao.ponto).toEqual(UBERLANDIA)
+    expect(exemplo.talhao.ponto).toEqual({ lat: -18.9543, lon: -48.1993 })
     expect(exemplo.recomendacao.entrada.colheita).toBe('meio')
   })
 })

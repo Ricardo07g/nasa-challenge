@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { EXAMPLE_FARM, isInsidePreparedArea, nearestPlace } from './locationService'
 
 describe('locationService', () => {
-  it('a fazenda de exemplo fica em Uberlândia, dentro da área preparada', () => {
-    expect(EXAMPLE_FARM).toEqual({ lat: -18.92, lon: -48.28 })
+  it('a fazenda de exemplo é o campo de soja da Fazenda Experimental do Glória (UFU), dentro da área preparada', () => {
+    expect(EXAMPLE_FARM).toEqual({ lat: -18.9543, lon: -48.1993 })
     expect(isInsidePreparedArea(EXAMPLE_FARM)).toBe(true)
   })
 
