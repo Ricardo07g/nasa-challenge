@@ -8,6 +8,7 @@ import {
   OptionCompareCard,
   PageHeading,
   RecommendationHero,
+  ScoreTable,
   YearTimeline,
 } from './Content'
 
@@ -161,5 +162,33 @@ describe('OptionCompareCard no formato do Lovable', () => {
     expect(card).toHaveAttribute('data-unavailable', 'true')
     expect(card).toHaveTextContent('Fora da janela de plantio')
     expect(card).not.toHaveTextContent('Deu certo')
+  })
+})
+
+describe('ScoreTable', () => {
+  it('tabela com cabeçalho e uma linha por opção', () => {
+    render(
+      <ScoreTable
+        caption="Notas da demonstração"
+        headers={['Opção', 'Segurança', 'Final']}
+        rows={[
+          { name: 'Milho com braquiária', values: [70, 66] },
+          { name: 'Sorgo', values: [85, 62] },
+        ]}
+      />,
+    )
+
+    const table = screen.getByRole('table', { name: 'Notas da demonstração' })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3)
+    expect(screen.getAllByRole('row')).toHaveLength(3)
+    expect(table).toHaveTextContent('Sorgo8562')
+  })
+})
+
+describe('NumberedSteps grandes', () => {
+  it('tem a versão grande (como funciona)', () => {
+    render(<NumberedSteps size="lg" steps={['Pegamos a chuva.']} />)
+
+    expect(screen.getByRole('list')).toHaveAttribute('data-size', 'lg')
   })
 })

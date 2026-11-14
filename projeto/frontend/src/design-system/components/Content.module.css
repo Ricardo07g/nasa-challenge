@@ -53,6 +53,24 @@
   justify-content: center;
 }
 
+/* Passos grandes (como funciona): bolinha de 42 px e linha entre os passos */
+.steps[data-size='lg'] {
+  gap: 0;
+}
+
+.steps[data-size='lg'] .step {
+  gap: 20px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.steps[data-size='lg'] .stepNumber {
+  flex-basis: 42px;
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
+}
+
 /* "Por que essa?" */
 .disclosure {
   display: flex;
@@ -274,4 +292,40 @@
 
 .comparePill {
   margin-top: 7px;
+}
+
+/* Tabela de notas */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--font-size-small);
+}
+
+.tableCaption {
+  text-align: left;
+  padding-bottom: var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+}
+
+.table th,
+.table td {
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.table thead th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.table tbody th {
+  font-weight: var(--font-weight-semibold);
 }

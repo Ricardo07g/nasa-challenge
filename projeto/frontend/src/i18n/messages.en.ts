@@ -11,8 +11,6 @@ export const en = {
     mockNotice: 'Sample data: the scoring engine is not connected yet.',
     disclaimer: 'It helps you decide. It does not replace your agronomist.',
     ready: 'Done',
-    comingSoonTitle: 'Screen under construction',
-    comingSoonText: 'This prototype screen is still being built.',
   },
   header: {
     home: 'Raiz Orbital, back to start',
@@ -284,6 +282,16 @@ export const en = {
       },
       soil: { what: 'Soil type', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },
+    scoresTitle: 'Scores for each option (0 to 100)',
+    scoresHeaders: {
+      crop: 'Option',
+      safety: 'Safety',
+      future: 'Future',
+      soil: 'Soil',
+      income: 'Income',
+      final: 'Final',
+    },
+    exampleFarm: 'Example farm: UFU experimental area, Uberlândia (MG).',
     disclaimer: 'Decision support: check with your agronomist before buying seed.',
   },
   designSystem: {

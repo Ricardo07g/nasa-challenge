@@ -12,9 +12,9 @@ export function PageHeading({ title, subtitle, eyebrow }: { title: string; subti
   )
 }
 
-export function NumberedSteps({ steps }: { steps: readonly string[] }) {
+export function NumberedSteps({ steps, size = 'md' }: { steps: readonly string[]; size?: 'md' | 'lg' }) {
   return (
-    <ol className={styles.steps}>
+    <ol className={styles.steps} data-size={size}>
       {steps.map((step, index) => (
         <li key={step} className={styles.step}>
           <span className={styles.stepNumber} aria-hidden="true">
@@ -159,5 +159,41 @@ export function OptionCompareCard({ rank, name, rows, highlighted = false, unava
         ))
       )}
     </article>
+  )
+}
+
+type ScoreTableProps = {
+  caption: string
+  headers: readonly string[]
+  rows: readonly { name: string; values: readonly number[] }[]
+}
+
+/** Tabela simples de notas (só na tela "Como a conta é feita"). Rola para o lado no celular. */
+export function ScoreTable({ caption, headers, rows }: ScoreTableProps) {
+  return (
+    <div className={styles.tableWrap}>
+      <table className={styles.table}>
+        <caption className={styles.tableCaption}>{caption}</caption>
+        <thead>
+          <tr>
+            {headers.map((header) => (
+              <th key={header} scope="col">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.name}>
+              <th scope="row">{row.name}</th>
+              {row.values.map((value, index) => (
+                <td key={index}>{value}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

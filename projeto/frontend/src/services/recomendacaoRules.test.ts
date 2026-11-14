@@ -9,6 +9,7 @@ import {
   harvestYear,
   planSummary,
   planSwaps,
+  scoreRows,
   sortOptions,
 } from './recomendacaoRules'
 
@@ -207,5 +208,14 @@ describe('buildPlan (tela 7)', () => {
     expect(plan.years[1].swappedFrom).toBeNull()
     expect(plan.swaps).toEqual([{ year: 2027, from: 'milho_braquiaria', to: 'sorgo' }])
     expect(plan.summary).toEqual({ grain: 2, covered: 3, total: 3 })
+  })
+})
+
+describe('scoreRows (tela 9)', () => {
+  it('as notas de 0 a 100 de cada opção, da maior nota final para a menor', () => {
+    const rows = scoreRows({ opcoes: options } as Recomendacao)
+
+    expect(rows.map((row) => row.id)).toEqual(['milho_braquiaria', 'sorgo', 'milho_safrinha', 'crotalaria'])
+    expect(rows[0]).toEqual({ id: 'milho_braquiaria', nome: 'milho_braquiaria', notas: options[1].notas })
   })
 })

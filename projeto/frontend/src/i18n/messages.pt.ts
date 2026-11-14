@@ -12,8 +12,6 @@ export const pt = {
     mockNotice: 'Dados de exemplo: o motor de cálculo ainda não está ligado.',
     disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
     ready: 'Pronto',
-    comingSoonTitle: 'Tela em construção',
-    comingSoonText: 'Esta tela do protótipo ainda está sendo feita.',
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',
@@ -286,6 +284,16 @@ export const pt = {
       },
       soil: { what: 'Tipo de terra', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },
+    scoresTitle: 'Notas de cada opção (0 a 100)',
+    scoresHeaders: {
+      crop: 'Opção',
+      safety: 'Segurança',
+      future: 'Futuro',
+      soil: 'Terra',
+      income: 'Renda',
+      final: 'Final',
+    },
+    exampleFarm: 'Fazenda de exemplo: área experimental da UFU, Uberlândia (MG).',
     disclaimer: 'Apoio à decisão: confirme com o seu agrônomo antes de comprar a semente.',
   },
   designSystem: {

@@ -42,6 +42,7 @@ export function useShellController(speech: SpeechService = speechService): {
     footer: {
       disclaimer: t.common.disclaimer,
       agronomist: t.footer.agronomist,
+      agronomistTo: `/como-funciona${keepFlowQuery(search)}`,
       project: t.footer.project,
     },
   }
