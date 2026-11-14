@@ -1,15 +1,10 @@
-"""NASA POWER daily agroclimatology client (Sub-task 1.1 of Task 0001)."""
+"""Cliente do NASA POWER diário (Agroclimatology): só traz os dados, sem cálculo (tarefa 0004)."""
 
-from collections import defaultdict
 from datetime import date
-from typing import Any, Protocol
+from typing import Any, Final, Protocol
 
 from app.constants import (
-    DEFAULT_INITIAL_ARM_FRACTION,
     EXTERNAL_API_TIMEOUT_SECONDS,
-    HISTORICAL_END_YEAR,
-    HISTORICAL_START_YEAR,
-    MIN_DAILY_ETO_MM,
     NASA_POWER_COMMUNITY,
     NASA_POWER_DAILY_POINT_URL,
     NASA_POWER_MISSING_SENTINEL,
@@ -18,7 +13,7 @@ from app.constants import (
     SOLAR_RAD_DEFAULT_MJ,
     WIND_SPEED_DEFAULT_MS,
 )
-from app.models.climate import ClimateSeason
+from app.models.climate import DailyWeatherRecord, PowerDailySeries
 from app.repositories.external.http_client import (
     HttpGetter,
     default_http_get,
@@ -26,18 +21,15 @@ from app.repositories.external.http_client import (
 )
 from app.services.errors import DomainError
 
+POWER_DATE_FORMAT: Final[str] = "%Y%m%d"
+POWER_DATE_KEY_LENGTH: Final[int] = 8
+ELEVATION_COORDINATE_INDEX: Final[int] = 2  # geometry.coordinates = [lon, lat, altitude em m]
+
 
 class NasaPowerClientProtocol(Protocol):
-    """Contract for fetching 20-year daily meteorological series from NASA POWER."""
+    """Contrato para buscar a série diária bruta do NASA POWER num ponto."""
 
-    def fetch_seasons(
-        self,
-        lat: float,
-        lon: float,
-        cell_id: str,
-        start_year: int = HISTORICAL_START_YEAR,
-        end_year: int = HISTORICAL_END_YEAR,
-    ) -> list[ClimateSeason]: ...
+    def fetch_daily(self, lat: float, lon: float, start: date, end: date) -> PowerDailySeries: ...
 
 
 def _clean_val(raw: Any, fallback: float) -> float:
@@ -49,8 +41,18 @@ def _clean_val(raw: Any, fallback: float) -> float:
     return val
 
 
+def _elevation(payload: dict[str, Any]) -> float | None:
+    coordinates = payload.get("geometry", {}).get("coordinates", [])
+    if len(coordinates) <= ELEVATION_COORDINATE_INDEX:
+        return None
+    raw = coordinates[ELEVATION_COORDINATE_INDEX]
+    if raw is None or float(raw) <= NASA_POWER_MISSING_SENTINEL:
+        return None
+    return float(raw)
+
+
 class NasaPowerClient:
-    """HTTP client for NASA POWER Agroclimatology Daily Point API."""
+    """Cliente HTTP da API diária por ponto do NASA POWER (comunidade AG)."""
 
     def __init__(
         self,
@@ -60,22 +62,15 @@ class NasaPowerClient:
         self._http_get = http_get
         self._timeout = timeout
 
-    def fetch_seasons(
-        self,
-        lat: float,
-        lon: float,
-        cell_id: str,
-        start_year: int = HISTORICAL_START_YEAR,
-        end_year: int = HISTORICAL_END_YEAR,
-    ) -> list[ClimateSeason]:
-        """Fetches and parses daily meteorological seasons from NASA POWER."""
+    def fetch_daily(self, lat: float, lon: float, start: date, end: date) -> PowerDailySeries:
+        """Busca a série diária de `start` a `end` (inclusive) e a altitude da célula do POWER."""
         params: dict[str, Any] = {
             "parameters": NASA_POWER_PARAMETERS,
             "community": NASA_POWER_COMMUNITY,
             "longitude": lon,
             "latitude": lat,
-            "start": f"{start_year}0101",
-            "end": f"{end_year}1231",
+            "start": start.strftime(POWER_DATE_FORMAT),
+            "end": end.strftime(POWER_DATE_FORMAT),
             "format": "JSON",
         }
 
@@ -96,77 +91,33 @@ class NasaPowerClient:
         prec_map = param_block.get("PRECTOTCORR", {})
         tmax_map = param_block.get("T2M_MAX", {})
         tmin_map = param_block.get("T2M_MIN", {})
-        tmean_map = param_block.get("T2M", {})
         rh_map = param_block.get("RH2M", {})
         ws_map = param_block.get("WS2M", {})
         rad_map = param_block.get("ALLSKY_SFC_SW_DWN", {})
-        gwet_map = param_block.get("GWETROOT", {})
 
-        dates_by_year: dict[int, list[str]] = defaultdict(list)
-        for day_key in sorted(prec_map.keys()):
-            if len(day_key) == 8 and day_key.isdigit():
-                yr = int(day_key[:4])
-                if start_year <= yr <= end_year:
-                    dates_by_year[yr].append(day_key)
-
-        seasons: list[ClimateSeason] = []
-        for yr in sorted(dates_by_year.keys()):
-            day_keys = dates_by_year[yr]
-            first_key = day_keys[0]
-            start_dt = date(int(first_key[:4]), int(first_key[4:6]), int(first_key[6:8]))
-
-            rain_l: list[float] = []
-            tmax_l: list[float] = []
-            tmin_l: list[float] = []
-            tmean_l: list[float] = []
-            rh_l: list[float] = []
-            ws_l: list[float] = []
-            rad_l: list[float] = []
-            gwet_l: list[float] = []
-            eto_l: list[float] = []
-
-            for dk in day_keys:
-                rain = max(0.0, _clean_val(prec_map.get(dk), 0.0))
-                tmax = _clean_val(tmax_map.get(dk), 30.0)
-                tmin = _clean_val(tmin_map.get(dk), 18.0)
-                tmean = _clean_val(tmean_map.get(dk), (tmax + tmin) / 2.0)
-                rh = _clean_val(rh_map.get(dk), RH_DEFAULT_PCT)
-                ws = _clean_val(ws_map.get(dk), WIND_SPEED_DEFAULT_MS)
-                rad = _clean_val(rad_map.get(dk), SOLAR_RAD_DEFAULT_MJ)
-                gwet = _clean_val(gwet_map.get(dk), DEFAULT_INITIAL_ARM_FRACTION)
-
-                temp_span = max(1.0, tmax - tmin)
-                eto = max(
-                    MIN_DAILY_ETO_MM,
-                    round(0.0023 * (tmean + 17.8) * (temp_span**0.5) * (rad * 0.408), 3),
-                )
-
-                rain_l.append(rain)
-                tmax_l.append(tmax)
-                tmin_l.append(tmin)
-                tmean_l.append(tmean)
-                rh_l.append(rh)
-                ws_l.append(ws)
-                rad_l.append(rad)
-                gwet_l.append(gwet)
-                eto_l.append(eto)
-
-            seasons.append(
-                ClimateSeason(
-                    cell_id=cell_id,
-                    year=yr,
-                    start_date=start_dt,
-                    rain_mm=tuple(rain_l),
-                    rain_source="nasa_power",
-                    tmax_c=tuple(tmax_l),
-                    tmin_c=tuple(tmin_l),
-                    eto_mm=tuple(eto_l),
-                    gwetroot=tuple(gwet_l),
-                    tmean_c=tuple(tmean_l),
-                    rh2m_pct=tuple(rh_l),
-                    ws2m_ms=tuple(ws_l),
-                    solar_rad_mj=tuple(rad_l),
+        day_keys = sorted(
+            {
+                key
+                for values in param_block.values()
+                for key in values
+                if len(key) == POWER_DATE_KEY_LENGTH and key.isdigit()
+            }
+        )
+        days: list[DailyWeatherRecord] = []
+        for key in day_keys:
+            day = date(int(key[:4]), int(key[4:6]), int(key[6:8]))
+            if not start <= day <= end:
+                continue
+            days.append(
+                DailyWeatherRecord(
+                    data=day,
+                    prectotcorr=max(0.0, _clean_val(prec_map.get(key), 0.0)),
+                    t2m_max=_clean_val(tmax_map.get(key), 30.0),
+                    t2m_min=_clean_val(tmin_map.get(key), 18.0),
+                    rh2m=_clean_val(rh_map.get(key), RH_DEFAULT_PCT),
+                    ws2m=_clean_val(ws_map.get(key), WIND_SPEED_DEFAULT_MS),
+                    allsky_sfc_sw_dwn=_clean_val(rad_map.get(key), SOLAR_RAD_DEFAULT_MJ),
                 )
             )
 
-        return seasons
+        return PowerDailySeries(elevation_m=_elevation(payload), days=tuple(days))
