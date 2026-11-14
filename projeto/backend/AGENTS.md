@@ -94,9 +94,9 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
   - `grid_cell`, `climate_season` e `soil_point`: gravadas pela busca sob demanda (ver "Dados da API");
   - `cmip6_delta`, `ndvi_point`, `smap_point` e `data_run` (com `version`): no formato do "Contrato
     dos dados das fontes", abaixo. `PostgisCmip6Repository`, `PostgisNdviRepository`,
-    `PostgisSmapRepository` e `PostgisDataRunRepository` gravam e leem, mas a API ainda não lê
-    essas tabelas (R3.1, R3.2, R3.3 e R3.5 do roteiro). O `cmip6_delta` exige a célula em
-    `grid_cell`.
+    `PostgisSmapRepository` e `PostgisDataRunRepository` gravam e leem. A API já lê o `cmip6_delta`
+    (R3.1, ver "Deltas do CMIP6 na API"), mas ainda não lê as outras (R3.2, R3.3 e R3.5 do
+    roteiro). O `cmip6_delta` exige a célula em `grid_cell`.
 - Banco criado antes do R1.6: rode `uv run alembic upgrade head` (ou
   `docker compose run --rm migration`). A migração recria `cmip6_delta` e `ndvi_point`, troca
   `smap_moisture` por `smap_point` (o que houver nelas é apagado) e marca as cargas antigas de
@@ -126,8 +126,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 ## Dados da API
 
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
-  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`). Nunca coloque caminho fixo (como `/workspace/...`)
-  num repository.
+  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`). Nunca coloque caminho fixo (como
+  `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
@@ -184,7 +184,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   células do POWER da caixa piloto, ou `--pontos="lat,lon; lat,lon"`. Cada arquivo do THREDDS tem um
   ano de uma variável: a caixa inteira dá 4.320 pedidos de ~6 s, **cerca de 8 h**; um ponto só, ~40 min.
   Os CSV ficam em `data/cache/nex_gddp_cmip6_ncss/`: se parar, rode de novo que ele continua de onde
-  parou. As duas pastas ficam fora do git. Nada vai para o banco ainda (tabela no R1.6, leitura no R3.1).
+  parou. As duas pastas ficam fora do git. A API lê o arquivo pelo `CMIP6_PATH` (abaixo). Ainda não
+  há script que carregue o arquivo na tabela `cmip6_delta`.
 
   ```bash
   uv run python -m pipeline.fetch_cmip6_deltas --dry-run   # quantos pedidos e quanto tempo
@@ -226,6 +227,30 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   (`app/repositories/sinal_outono_repository.py`): GEOS-S2S (A2.1), SMAP recente com percentil (A2.2) e
   chuva dos últimos 30 dias (A2.3). Até essas tarefas chegarem, o `dependencies.py` injeta o
   `NoAutumnSignalDataRepository` nas três e o campo sai `null`. Nunca preencha com previsão inventada.
+- **Deltas do CMIP6 na API** (R3.1, tarefa 0021): o `get_cmip6_deltas` da célula lê, nesta ordem, e
+  fica com a primeira fonte que tiver deltas:
+  1. a tabela `cmip6_delta` da célula (só com banco; `PostgisCmip6Repository`);
+  2. o arquivo do `CMIP6_PATH` (`FileCmip6Repository`): a célula de 0,1° recebe os deltas do ponto
+     cuja `cobertura` (célula do POWER, 0,5° × 0,625°) contém o centro dela, com a borda de baixo
+     dentro e a de cima fora, como na fixture do clima;
+  3. a lista `cmip6[]` da fixture do clima (`CLIMA_PATH`), que hoje não tem nenhuma.
+
+  Com deltas, o `/talhao` lista `{"fonte": "nex_gddp_cmip6", "periodo": "2041-2060", "cenario":
+  "ssp245", "modelos": <quantos modelos>}` em `dados` e o `/recomendacao` preenche `futuro` e
+  `notas.futuro` (nota final com os 4 eixos). Sem deltas (sem `CMIP6_PATH`, sem arquivo ou sem ponto
+  que cubra a célula): `futuro: null` e a nota final com 3 eixos. O motor soma o `tmin_c` à mínima
+  quando o arquivo traz (o Hargreaves usa máxima e mínima); sem ele, a mínima observada fica.
+
+  Para ligar o arquivo gerado pelo `pipeline/fetch_cmip6_deltas.py` (ele não vai para o git sozinho):
+  - **com uv**: `CMIP6_PATH=data/output/cmip6_deltas_nex_gddp.json` no `.env` desta pasta (caminho
+    relativo à pasta de onde a API roda, `projeto/backend`);
+  - **no compose**: o container só enxerga as pastas montadas (`app/`, `tests/`, `pipeline/`,
+    `migrations/`), não a `data/`. Copie o arquivo para dentro de uma delas, por exemplo
+    `app/fixtures/cmip6_deltas_nex_gddp.json`, e aponte
+    `CMIP6_PATH=/app/app/fixtures/cmip6_deltas_nex_gddp.json` (no `.env` ou no `environment` do
+    serviço `backend`). Commitar esse arquivo derivado (pequeno, como a fixture do clima) é decisão do
+    time: ele traz o próprio `versao_dados`.
+
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
   ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre
@@ -274,7 +299,7 @@ montá-lo a partir das linhas de `data_run`.
 
 Um registro por modelo e mês: média de 2041–2060 contra 1995–2014, SSP2-4.5. `cobertura` é a área
 a que os deltas valem (a célula do POWER, como na fixture do clima). A lista `cmip6` tem o mesmo
-formato da `cmip6[]` da fixture, que o `FixtureClimateRepository` já lê.
+formato da `cmip6[]` da fixture. O `FileCmip6Repository` lê este arquivo (`CMIP6_PATH`).
 
 ```json
 {
@@ -303,7 +328,8 @@ formato da `cmip6[]` da fixture, que o `FixtureClimateRepository` já lê.
 - Conversões no script: `pr` × 86.400 → mm/dia; `tasmax` e `tasmin` − 273,15 → °C.
 - Tabela criada no R1.6: `cmip6_delta (cell_id, model, scenario, month, rain_pct, tmax_c,
   tmin_c)`, chave `(cell_id, model, scenario, month)`. Substitui a tabela agregada da migração inicial.
-- Hoje o `FixtureClimateRepository` ainda não lê `tmin_c` (fica para o R3.1).
+- O `FileCmip6Repository` e o `FixtureClimateRepository` leem o `tmin_c` (R3.1); ausente ou `null`
+  fica `None`.
 
 ### NDVI: `NdviRecord` (`app/models/talhao.py`)
 
