@@ -6,6 +6,7 @@ import { useAnswerNav } from './controllers/useAnswerNav'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useShellController } from './controllers/useShellController'
+import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
 import { EXAMPLE_FARM } from './services/locationService'
@@ -14,6 +15,7 @@ import { ComingSoonView } from './views/ComingSoonView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { ShellView } from './views/ShellView'
 import { StartView } from './views/StartView'
+import { WhenView } from './views/WhenView'
 import { WhereView } from './views/WhereView'
 
 export function ShellPage() {
@@ -51,6 +53,30 @@ export function WherePage() {
   )
 }
 
+export function WhenPage() {
+  const { lang, messages: t } = useI18n()
+  useDocumentTitle(t.when.title)
+  const state = useWhenController()
+  if (state.missingPoint) return <Navigate to="/onde" replace />
+  return (
+    <WhenView
+      t={t}
+      lang={lang}
+      backTo={state.backTo}
+      suggestion={state.suggestion}
+      selected={state.selected}
+      dateOpen={state.dateOpen}
+      date={state.date}
+      dateBand={state.dateBand}
+      window={state.window}
+      onSelect={state.select}
+      onOpenDate={state.openDate}
+      onDateChange={state.changeDate}
+      onConfirm={state.confirm}
+    />
+  )
+}
+
 /** "Ver um exemplo pronto": abre a resposta da fazenda de exemplo (RF-11). */
 export function ExamplePage() {
   return <Navigate to={`/resposta${buildFlowQuery({ ...EXAMPLE_FARM, colheita: 'meio', exemplo: true })}`} replace />
@@ -63,7 +89,7 @@ export function DesignSystemPage() {
   return <DesignSystemView t={t} {...state} />
 }
 
-type PendingScreen = 'when' | 'satellite' | 'answer' | 'options' | 'plan' | 'community' | 'method'
+type PendingScreen = 'satellite' | 'answer' | 'options' | 'plan' | 'community' | 'method'
 
 /** Telas da resposta: navegam entre si pelas abas. */
 const ANSWER_SCREENS: readonly PendingScreen[] = ['answer', 'plan', 'options']
@@ -73,7 +99,6 @@ export function PendingPage({ screen }: { screen: PendingScreen }) {
   const { messages: t } = useI18n()
   const answerNav = useAnswerNav()
   const titles: Record<PendingScreen, string> = {
-    when: t.when.title,
     satellite: t.satellite.title,
     answer: t.answer.best,
     options: t.options.title,

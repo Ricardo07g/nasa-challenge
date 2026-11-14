@@ -11,10 +11,17 @@ describe('ícone do navegador (identidade visual)', () => {
   it('o index.html aponta para os ícones do Raiz Orbital e a cor da marca', () => {
     const html = read('index.html')
 
-    expect(html).toContain('<link rel="icon" type="image/svg+xml" href="/favicon.svg" />')
-    expect(html).toContain('<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />')
-    expect(html).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />')
+    expect(html).toMatch(/<link rel="icon" href="\/favicon\.ico\?v=\d+" sizes="48x48" \/>/)
+    expect(html).toMatch(/<link rel="icon" type="image\/svg\+xml" href="\/favicon\.svg\?v=\d+" \/>/)
+    expect(html).toMatch(/<link rel="icon" type="image\/png" sizes="32x32" href="\/favicon-32\.png\?v=\d+" \/>/)
+    expect(html).toMatch(/<link rel="apple-touch-icon" href="\/apple-touch-icon\.png\?v=\d+" \/>/)
     expect(html).toContain('<meta name="theme-color" content="#1F6B47" />')
+  })
+
+  it('todos os ícones usam a mesma versão (?v=), para o navegador trocar todos juntos', () => {
+    const versions = new Set([...read('index.html').matchAll(/\?v=(\d+)"/g)].map((match) => match[1]))
+
+    expect(versions.size).toBe(1)
   })
 
   it('o favicon.svg é o símbolo da marca (verde, órbita azul), não o logo do Vite', () => {
@@ -28,5 +35,6 @@ describe('ícone do navegador (identidade visual)', () => {
   it('as versões em PNG existem', () => {
     expect(existsSync(resolve(root, 'public/favicon-32.png'))).toBe(true)
     expect(existsSync(resolve(root, 'public/apple-touch-icon.png'))).toBe(true)
+    expect(existsSync(resolve(root, 'public/favicon.ico'))).toBe(true)
   })
 })

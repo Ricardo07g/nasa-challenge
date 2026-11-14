@@ -127,7 +127,13 @@ export const pt = {
     suggestionSuffix: 'Já deixamos marcado.',
     defaultSuggestion: 'Não deu para ver pelo satélite. Deixamos marcado o meio de fevereiro.',
     hint: 'Não tem certeza? Deixe como está. Dá para mudar depois.',
+    nextStep: 'Próximo passo',
     cta: 'Ver a resposta',
+    dateOption: 'Colocar a data exata',
+    dateOptionHint: 'Se você já sabe o dia',
+    dateLabel: 'Dia da colheita',
+    dateBand: (date: string, band: string) => `Dia ${date}: conta como ${band}.`,
+    dateNeed: 'Escolha um dia dentro da época de colheita.',
     whyTitle: 'Por que perguntamos isso?',
     whyText:
       'A chuva vai acabando depois de março. Quanto mais cedo você colhe a soja, mais chuva sobra para a próxima planta.',

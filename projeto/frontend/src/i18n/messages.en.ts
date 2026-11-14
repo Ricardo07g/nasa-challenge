@@ -126,7 +126,13 @@ export const en = {
     suggestionSuffix: 'We already selected it.',
     defaultSuggestion: 'The satellite could not tell. We selected mid-February.',
     hint: 'Not sure? Leave it as it is. You can change it later.',
+    nextStep: 'Next step',
     cta: 'See the answer',
+    dateOption: 'Enter the exact date',
+    dateOptionHint: 'If you already know the day',
+    dateLabel: 'Harvest day',
+    dateBand: (date: string, band: string) => `${date} counts as ${band}.`,
+    dateNeed: 'Pick a day inside the harvest window.',
     whyTitle: 'Why do we ask?',
     whyText:
       'Rain fades after March. The earlier you harvest your soybeans, the more rain is left for the next crop.',
