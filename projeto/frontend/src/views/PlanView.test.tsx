@@ -38,6 +38,7 @@ function setup(overrides: Partial<PlanViewProps> = {}) {
     plan: buildPlan(rec, 'normal'),
     communityTo: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
     pastTo: '/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
+    showGainReference: true,
     ...overrides,
   }
   render(
@@ -67,19 +68,23 @@ describe('PlanView (tela 7)', () => {
     expect(props.onScenario).toHaveBeenCalledWith('seco')
   })
 
-  it('no Plano B, diz que ele foi testado nos anos mais secos e mostra a troca na linha do tempo', () => {
+  it('no Plano B, diz como ele foi testado (texto da API) e mostra a troca na linha do tempo', () => {
     setup({ scenario: 'seco', plan: buildPlan(rec, 'seco') })
 
-    expect(screen.getByText('O plano B foi testado nos anos mais secos dos últimos 20.')).toBeInTheDocument()
+    expect(screen.getByText('Troca o milho pelo sorgo no ano seco.')).toBeInTheDocument()
+    expect(screen.queryByText(/últimos 20/)).not.toBeInTheDocument()
     expect(screen.getByRole('list', { name: 'Plano ano a ano' })).toHaveTextContent(
       '2027SorgoNo lugar de milho com braquiária: aguenta mais a seca.',
     )
   })
 
-  it('sem o sinal na API, diz que a previsão ainda não está disponível', () => {
+  it('sem o sinal na API, o cartão do sinal não some: diz "Ainda não conectado" e o Plano A/B continua', () => {
     setup({ signal: null })
 
-    expect(screen.getByText('A previsão do outono ainda não está disponível para esta área.')).toBeInTheDocument()
+    const signal = screen.getByRole('region', { name: 'Sinal para o outono de 2027' })
+    expect(signal).toHaveTextContent('Ainda não conectado')
+    expect(signal).not.toHaveTextContent('GEOS-S2S')
+    expect(within(signal).getByRole('button', { name: 'Plano A' })).toBeInTheDocument()
   })
 
   it('hectares para testar com os totais em reais (RF-21)', async () => {
@@ -94,13 +99,14 @@ describe('PlanView (tela 7)', () => {
     expect(props.onAreaStep).toHaveBeenCalledWith(10)
   })
 
-  it('sem o custo da semente e o pior ano na API, essas linhas não aparecem', () => {
+  it('sem o custo da semente e o pior ano na API, as linhas ficam com "Ainda não conectado" (sem número)', () => {
     setup({ totals: { margin: 35000, seed: null, worstDry: null } })
 
     const area = screen.getByRole('region', { name: 'Comece por um pedaço' })
     expect(area).toHaveTextContent('Deve sobrar perto de R$ 35 mil')
-    expect(area).not.toHaveTextContent('semente')
-    expect(area).not.toHaveTextContent('pior ano seco')
+    expect(area).toHaveTextContent('Custo da semente: Ainda não conectado')
+    expect(area).toHaveTextContent('Pior ano seco: Ainda não conectado')
+    expect(area).not.toHaveTextContent('A semente custa')
   })
 
   it('pior ano seco que ainda sobra dinheiro', () => {
@@ -120,16 +126,27 @@ describe('PlanView (tela 7)', () => {
     expect(screen.getByText('O satélite mede a água na raiz. Você não precisa adivinhar.')).toBeInTheDocument()
   })
 
-  it('resumo do plano, como é hoje, o ganho na soja e o link para a região', () => {
+  it('resumo do plano, como é hoje e o link para a região', () => {
     setup()
 
     expect(screen.getByRole('region', { name: 'Com plano' })).toHaveTextContent('Terra coberta nos 3 anos · Grão em 2 de 3 anos')
     expect(screen.getByRole('region', { name: 'Como é hoje' })).toHaveTextContent('Terra descoberta em metade dos anos')
-    expect(screen.getByText('Referência ilustrativa; estudo a confirmar.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ver o que acontece na sua região' })).toHaveAttribute(
       'href',
       '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
     )
+  })
+
+  it('o estudo ilustrativo do ganho na soja só aparece com os dados de exemplo', () => {
+    setup({ showGainReference: true })
+    expect(screen.getByText('Referência ilustrativa; estudo a confirmar.')).toBeInTheDocument()
+  })
+
+  it('com a API real, o estudo ilustrativo (que não vem de dado nenhum) sai da tela', () => {
+    setup({ showGainReference: false })
+
+    expect(screen.queryByText('O ganho vem na soja seguinte')).not.toBeInTheDocument()
+    expect(screen.queryByText(/11%/)).not.toBeInTheDocument()
   })
 
   it('enquanto carrega e fora da área', () => {

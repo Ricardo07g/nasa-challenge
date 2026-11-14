@@ -5,7 +5,7 @@ import { Card } from '../design-system/components/Card'
 import { ChipGroup, NumberStepper } from '../design-system/components/Choice'
 import { PageHeading, YearTimeline } from '../design-system/components/Content'
 import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
-import { ToneBadge } from '../design-system/components/Status'
+import { NotConnected, ToneBadge } from '../design-system/components/Status'
 import {
   CalendarIcon,
   ClimateIcon,
@@ -45,6 +45,8 @@ export type PlanViewProps = {
   plan: Plan | null
   communityTo: string
   pastTo: string
+  /** O estudo do ganho na soja (ilustrativo, sem dado): só com os dados de exemplo. */
+  showGainReference: boolean
 }
 
 /** Sinal seco = laranja; normal = verde; incerto = azul. */
@@ -72,7 +74,7 @@ export function PlanView(props: PlanViewProps) {
 }
 
 function Ready(props: PlanViewProps & { plan: Plan }) {
-  const { t, lang, signal, scenario, onScenario, plan, totals, rule, communityTo, pastTo } = props
+  const { t, lang, signal, scenario, onScenario, plan, totals, rule, communityTo, pastTo, showGainReference } = props
   const p = t.plan
   const name = (crop: CropId) => t.crops.names[crop]
   const lower = (crop: CropId) => name(crop).toLocaleLowerCase(lang)
@@ -100,7 +102,7 @@ function Ready(props: PlanViewProps & { plan: Plan }) {
               <p className={layout.muted}>{p.signalSource(formatDayMonth(lang, signal.data))}</p>
             </>
           ) : (
-            <p className={layout.muted}>{p.noSignal}</p>
+            <NotConnected label={t.common.notConnected} />
           )}
           <ChipGroup
             label={p.planChoice}
@@ -112,7 +114,7 @@ function Ready(props: PlanViewProps & { plan: Plan }) {
             onChange={onScenario}
           />
           {signal?.nivel === 'incerto' && <p className={layout.muted}>{p.keepPlanB}</p>}
-          {scenario === 'seco' && <p className={layout.muted}>{p.planBTest}</p>}
+          {plan.dryNote && <p className={layout.muted}>{plan.dryNote}</p>}
         </Card>
         <Card as="section" aria-label={p.startSmall}>
           <h2 className={layout.cardTitle}>{p.startSmall}</h2>
@@ -134,17 +136,21 @@ function Ready(props: PlanViewProps & { plan: Plan }) {
                 {p.areaMargin(money(totals.margin))}
               </p>
             )}
-            {totals.seed !== null && (
+            {totals.seed !== null ? (
               <p className={layout.iconLine}>
                 <SeedIcon />
                 {p.areaSeed(money(totals.seed))}
               </p>
+            ) : (
+              <NotConnected label={t.common.notConnected} what={p.seedCost} />
             )}
-            {totals.worstDry !== null && (
+            {totals.worstDry !== null ? (
               <p className={layout.iconLine}>
                 <DropIcon />
                 {totals.worstDry < 0 ? p.areaDryNegative(money(totals.worstDry)) : p.areaDryPositive(money(totals.worstDry))}
               </p>
+            ) : (
+              <NotConnected label={t.common.notConnected} what={p.worstDry} />
             )}
           </div>
           <p className={layout.muted}>{p.areaRest}</p>
@@ -174,7 +180,8 @@ function Ready(props: PlanViewProps & { plan: Plan }) {
         </Button>
       </div>
       <div className={layout.pageGrid}>
-        <div className={layout.stack}>
+        {/* Sem o estudo ilustrativo (API real), "Com plano" e "Como é hoje" ficam lado a lado. */}
+        <div className={showGainReference ? layout.stack : layout.contents}>
           <Card tone="green" as="section" aria-label={p.withPlan}>
             <h3 className={layout.cardTitle}>{p.withPlan}</h3>
             <p>
@@ -186,11 +193,13 @@ function Ready(props: PlanViewProps & { plan: Plan }) {
             <p>{plan.today}</p>
           </Card>
         </div>
-        <Card tone="green">
-          <h2 className={layout.cardTitle}>{p.gainTitle}</h2>
-          <p>{p.gainText}</p>
-          <p className={layout.muted}>{p.gainNote}</p>
-        </Card>
+        {showGainReference && (
+          <Card tone="green">
+            <h2 className={layout.cardTitle}>{p.gainTitle}</h2>
+            <p>{p.gainText}</p>
+            <p className={layout.muted}>{p.gainNote}</p>
+          </Card>
+        )}
       </div>
       <Link to={communityTo} className={layout.iconLink}>
         <CommunityIcon />

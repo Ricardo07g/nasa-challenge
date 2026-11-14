@@ -208,6 +208,7 @@ export function PlanPage() {
       plan={state.plan}
       communityTo={state.communityTo}
       pastTo={state.pastTo}
+      showGainReference={state.showGainReference}
     />
   )
 }

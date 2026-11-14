@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { apiMode as currentApiMode } from '../repositories'
+import type { ApiMode } from '../repositories/repositoryMode'
 import { farmService, type FarmService } from '../services/farmService'
 import { keepFlowQuery } from '../services/flowParams'
 import { PAST_YEARS } from '../services/pastSeasonService'
@@ -15,9 +17,9 @@ import {
 import { useAnswerNav } from './useAnswerNav'
 import { useFlowRecomendacao } from './useFlowRecomendacao'
 
-type Deps = { farm: FarmService }
+type Deps = { farm: FarmService; apiMode: ApiMode }
 
-const defaultDeps: Deps = { farm: farmService }
+const defaultDeps: Deps = { farm: farmService, apiMode: currentApiMode }
 
 /**
  * Tela 7 "Plano de 3 anos": sinal para o outono com Plano A / Plano B (RF-20) e os hectares para testar
@@ -63,6 +65,8 @@ export function usePlanController(deps: Deps = defaultDeps) {
     totals: testAreaTotals(firstYear, hectares),
     rule: data ? plantingRule(data) : null,
     plan,
+    /** O estudo do ganho na soja é ilustrativo (não vem de dado nenhum): só com os dados de exemplo. */
+    showGainReference: deps.apiMode === 'mock',
     communityTo: `/comunidade${keepFlowQuery(search.toString())}`,
     pastTo: `/safra-passada${keepFlowQuery(search.toString())}${search.toString() ? '&' : '?'}ano=${PAST_YEARS[0]}`,
   }

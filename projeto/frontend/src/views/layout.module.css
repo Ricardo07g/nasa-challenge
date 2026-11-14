@@ -55,6 +55,11 @@
   min-width: 0;
 }
 
+/* Some como caixa: os filhos entram direto na grade de cima (ex.: dois cartões lado a lado). */
+.contents {
+  display: contents;
+}
+
 /* Cartões de opção: 3 por linha no computador, 2 no tablet, 1 no celular */
 .optionGrid {
   display: grid;

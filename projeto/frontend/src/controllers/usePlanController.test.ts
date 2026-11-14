@@ -10,9 +10,9 @@ import { usePlanController } from './usePlanController'
 const flow = 'lat=-18.9543&lon=-48.1993&colheita=meio'
 const sample = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
 
-function deps(load: () => Promise<Recomendacao> = () => Promise.resolve(sample)) {
+function deps(load: () => Promise<Recomendacao> = () => Promise.resolve(sample), apiMode: 'mock' | 'http' = 'mock') {
   const farm: FarmService = { talhao: vi.fn(), recomendacao: vi.fn(load) }
-  return { farm }
+  return { farm, apiMode }
 }
 
 async function ready(d = deps()) {
@@ -105,5 +105,13 @@ describe('usePlanController (tela 7)', () => {
     const { result } = renderHook(() => usePlanController(d), { wrapper: providers(`/plano?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('outside'))
+  })
+
+  it('o estudo ilustrativo do ganho na soja só com os dados de exemplo', async () => {
+    const mock = await ready(deps(undefined, 'mock'))
+    expect(mock.result.current.showGainReference).toBe(true)
+
+    const http = await ready(deps(undefined, 'http'))
+    expect(http.result.current.showGainReference).toBe(false)
   })
 })

@@ -120,6 +120,8 @@ export type PlanView = {
   summary: { grain: number; covered: number; total: number }
   swaps: { year: number; from: CropId; to: CropId }[]
   today: string
+  /** No ano seco, como o plano B foi testado: a descrição do plano seco que a API manda. */
+  dryNote: string | null
 }
 
 /** Tela 7: o plano de 3 anos no cenário escolhido (ano normal ou ano seco), a partir da soja que vem. */
@@ -136,6 +138,7 @@ export function buildPlan(recomendacao: Recomendacao, scenario: PlanScenario): P
     summary: planSummary(anos),
     swaps: scenario === 'seco' ? planSwaps(normal.anos, seco.anos, firstYear) : [],
     today: hoje.descricao,
+    dryNote: scenario === 'seco' ? seco.descricao || null : null,
   }
 }
 

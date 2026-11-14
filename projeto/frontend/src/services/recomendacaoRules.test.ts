@@ -188,7 +188,7 @@ describe('buildPlan (tela 7)', () => {
     entrada: { celula_id: null, colheita: 'meio', semeadura: '2027-02-18', solo: 'medio', nematoide: null },
     plano_3_anos: {
       normal: { anos: ['milho_braquiaria', 'crotalaria', 'sorgo'], nota: 66 },
-      seco: { anos: ['sorgo', 'crotalaria', 'sorgo'], nota: 58 },
+      seco: { anos: ['sorgo', 'crotalaria', 'sorgo'], nota: 58, descricao: 'Testada nos 4 anos mais secos da série (2007, 2010, 2012, 2014).' },
       hoje: { descricao: 'Terra descoberta em metade dos anos', nota: 48 },
     },
   } as Recomendacao
@@ -203,6 +203,7 @@ describe('buildPlan (tela 7)', () => {
       summary: { grain: 2, covered: 3, total: 3 },
       swaps: [],
       today: 'Terra descoberta em metade dos anos',
+      dryNote: null,
     })
   })
 
@@ -213,6 +214,10 @@ describe('buildPlan (tela 7)', () => {
     expect(plan.years[1].swappedFrom).toBeNull()
     expect(plan.swaps).toEqual([{ year: 2027, from: 'milho_braquiaria', to: 'sorgo' }])
     expect(plan.summary).toEqual({ grain: 2, covered: 3, total: 3 })
+  })
+
+  it('no ano seco, como o plano B foi testado vem da API (nada de "últimos 20" fixo)', () => {
+    expect(buildPlan(rec, 'seco').dryNote).toBe('Testada nos 4 anos mais secos da série (2007, 2010, 2012, 2014).')
   })
 })
 

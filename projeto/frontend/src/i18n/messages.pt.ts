@@ -258,12 +258,10 @@ export const pt = {
     signalTitle: (year: number) => `Sinal para o outono de ${year}`,
     signalSource: (date: string) =>
       `Previsão da NASA (GEOS-S2S) e umidade da terra (SMAP), atualizado em ${date}.`,
-    noSignal: 'A previsão do outono ainda não está disponível para esta área.',
     planChoice: 'Qual plano seguir',
     planA: 'Plano A',
     planB: 'Plano B, se secar',
     keepPlanB: 'Deixe o plano B na manga.',
-    planBTest: 'O plano B foi testado nos anos mais secos dos últimos 20.',
     swapTagline: (from: string) => `No lugar de ${from}: aguenta mais a seca.`,
     plantingRule: (date: string, planA: string, planB: string) =>
       `No dia de plantar (até ${date}), se a terra estiver seca, use o plano B: ${planB} no lugar de ${planA}.`,
@@ -280,6 +278,7 @@ export const pt = {
     areaMargin: (value: string) => `Deve sobrar perto de R$ ${value}`,
     areaSeed: (value: string) => `A semente custa perto de R$ ${value}`,
     seedCost: 'Custo da semente',
+    worstDry: 'Pior ano seco',
     areaDryNegative: (value: string) => `No pior ano seco, faltaria perto de R$ ${value}`,
     areaDryPositive: (value: string) => `No pior ano seco, sobraria perto de R$ ${value}`,
     areaRest: 'O resto da fazenda fica como hoje, para você comparar.',
