@@ -7,7 +7,7 @@ Este documento explica os conceitos geográficos e a arquitetura de dados do **R
 ## 1. Desmistificando o PostGIS
 
 > [!IMPORTANT]
-> **O PostGIS NÃO vem com mapas, cidades ou dados da NASA pré-carregados.**  
+> **O PostGIS NÃO vem com mapas, cidades ou dados da NASA pré-carregados.**
 > O PostGIS é uma extensão do PostgreSQL que adiciona **suporte a tipos e funções geométricas/espaciais**. Ele é como uma calculadora geométrica e uma gaveta vazia com índice espacial (R-Tree / GiST).
 
 - **O que o PostGIS faz:** sabe responder instantaneamente perguntas como:
@@ -49,22 +49,21 @@ Os satélites e modelos climáticos **não operam por raios circulares nem por d
 
 ## 3. Como o Python Calcula a Célula Espacial (`grid_cell`)
 
-Quando um usuário clica no mapa em qualquer lugar do Brasil, o backend converte as coordenadas contínuas em um identificador discreto de célula através de um arredondamento para **0.1°**:
+Quando um usuário clica no mapa em qualquer lugar do Brasil, o backend converte as coordenadas contínuas em um identificador discreto de célula pegando o **piso (`floor`) do passo de 0.1°** (plano técnico §5, alinhado à grade do IMERG). É a única regra do backend: `cell_id_for` em `app/repositories/climate_repository.py`, usada pela ingestão, pelos repositories e pelo polígono da célula.
 
 ```python
 lat = -18.9186
 lon = -48.2772
 
-# Arredondamento para 1 casa decimal (passo de 0.1°)
-lat_idx = round(lat * 10)  # -189
-lon_idx = round(lon * 10)  # -483
+# Piso do passo de 0.1° (floor, nunca round)
+lat_idx = math.floor(lat * 10)  # -190
+lon_idx = math.floor(lon * 10)  # -483
 
-cell_id = f"{lat_idx}_{lon_idx}"  # "-189_-483"
-lat_centro = lat_idx / 10.0  # -18.9
-lon_centro = lon_idx / 10.0  # -48.3
+cell_id = f"{lat_idx}_{lon_idx}"  # "-190_-483"
 
-# O quadrado de 11 km x 11 km é gerado com raio de 0.05° para cada lado:
-# Lat: [-18.95 até -18.85] | Lon: [-48.35 até -48.25]
+# O quadrado de 11 km x 11 km tem as bordas nos décimos: idx/10 até (idx + 1)/10
+# Lat: [-19.0 até -18.9] | Lon: [-48.3 até -48.2]
+# Centro: ((idx + 0.5) / 10) -> lat -18.95, lon -48.25
 ```
 
 ---
@@ -85,7 +84,7 @@ sequenceDiagram
 
     Produtor->>API: GET /api/talhao?lat=-17.78&lon=-50.92
     API->>DB: Busca célula que contém o ponto (ST_Contains)
-    
+
     alt Cenário 1: Célula já existe (Área Piloto / Consulta Anterior)
         DB-->>API: Retorna cell_id, 20 anos de clima e solo
         API-->>Produtor: Resposta instantânea (< 100 milissegundos)
