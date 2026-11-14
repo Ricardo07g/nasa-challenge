@@ -1,3 +1,4 @@
+import type { Opcao } from '../models/recomendacao'
 import type { SituacaoAno, Talhao, Textura } from '../models/talhao'
 
 export type HistorySummary = {
@@ -46,14 +47,39 @@ export function historySummary(historico: Talhao['historico']): HistorySummary |
   }
 }
 
-/**
- * Tela 4, cartão 2: período da chuva ("2006-2025"). Vale o IMERG; sem ele, o NASA POWER (que também
- * traz a chuva diária); sem nenhum dos dois, os 20 anos do PRD.
- */
-export function rainPeriod(dados: Talhao['dados']): { start: string; end: string } {
+export type RainSummary = {
+  /** Anos de chuva que a conta usou de fato. */
+  years: number
+  /** Período da série ("2005" a "2024"); null quando o talhão não diz. */
+  period: { start: string; end: string } | null
+  /** Anos do período que ficaram de fora (o backend descarta ano com dia faltando). */
+  skipped: number
+}
+
+/** Período da série de chuva diária: vale o IMERG; sem ele, o NASA POWER (que também traz a chuva). */
+function rainPeriod(dados: Talhao['dados']): RainSummary['period'] {
   const source = dados.find((dado) => dado.fonte === 'gpm_imerg') ?? dados.find((dado) => dado.fonte === 'nasa_power')
   const match = source?.periodo.match(/^(\d{4})-(\d{4})$/)
-  return match ? { start: match[1], end: match[2] } : { start: '2006', end: '2025' }
+  return match ? { start: match[1], end: match[2] } : null
+}
+
+/**
+ * Tela 4, cartão 2: quantos anos de chuva a conta leu, sem número fixo. Prefere `chuva.anos` das opções
+ * da recomendação (anos usados de fato; a série é a mesma para todas, vale o maior); sem ela, conta pelo
+ * período de `dados[]`. Sem nenhum dos dois, null (a tela não inventa os 20 anos do PRD).
+ */
+export function rainSummary(dados: Talhao['dados'], opcoes: readonly Opcao[] | null): RainSummary | null {
+  const period = rainPeriod(dados)
+  const span = period ? Number(period.end) - Number(period.start) + 1 : null
+  const used = opcoes?.length ? Math.max(...opcoes.map((opcao) => opcao.chuva.anos)) : null
+  const years = used ?? span
+  if (years === null) return null
+  return { years, period, skipped: span === null ? 0 : Math.max(0, span - years) }
+}
+
+/** Tela 4, cartão 4: o clima dos próximos anos só está pronto com o NEX-GDDP-CMIP6 no talhão. */
+export function climateReady(dados: Talhao['dados']): boolean {
+  return dados.some((dado) => dado.fonte === 'nex_gddp_cmip6')
 }
 
 export type SoilSummary = { textura: Textura; source: 'map' | 'user' | 'default' }

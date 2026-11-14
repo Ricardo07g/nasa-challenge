@@ -12,6 +12,7 @@ export const pt = {
     mockNotice: 'Dados de exemplo: o motor de cálculo ainda não está ligado.',
     disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
     ready: 'Pronto',
+    unavailable: 'Ainda não disponível',
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',
@@ -183,8 +184,15 @@ export const pt = {
     planted: 'Plantou',
     idle: 'Ficou parado',
     uncertain: 'Sem certeza',
-    rainTitle: '20 anos de chuva daqui',
-    rainSubtitle: (start: string, end: string) => `De ${start} a ${end}, dia por dia.`,
+    /** O número vem do dado: o backend descarta ano com dia faltando. */
+    rainTitle: (years: number) => `${years} anos de chuva daqui`,
+    rainSubtitle: (start: string, end: string, skipped: number) =>
+      `De ${start} a ${end}, dia por dia.${
+        skipped > 0 ? ` ${skipped === 1 ? '1 ano ficou' : `${skipped} anos ficaram`} de fora por falta de dado.` : ''
+      }`,
+    rainDaily: 'Dia por dia.',
+    rainUnavailableTitle: 'Chuva daqui',
+    notAvailable: 'Ainda não disponível para esta área.',
     soilTitle: (texture: string) => `Terra ${texture}`,
     soilFromMap: 'Do mapa de solos.',
     soilFromUser: 'Você escolheu.',

@@ -135,6 +135,7 @@ export function SatellitePage() {
       onRetry={state.retry}
       history={state.history}
       rain={state.rain}
+      climate={state.climate}
       soil={state.soil}
       soilOpen={state.soilOpen}
       onToggleSoil={state.toggleSoil}
