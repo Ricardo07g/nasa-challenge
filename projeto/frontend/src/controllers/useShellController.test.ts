@@ -15,6 +15,23 @@ describe('useShellController', () => {
     expect(result.current.header.slogan).toBe('Do espaço até a raiz.')
   })
 
+  it('o link da Comunidade leva junto o ponto e a colheita que estão na URL', () => {
+    const { result } = renderHook(() => useShellController(speech), {
+      wrapper: providers('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio', 'pt'),
+    })
+
+    expect(result.current.header.community).toEqual({
+      label: 'Comunidade',
+      to: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
+    })
+  })
+
+  it('sem ponto na URL, a Comunidade abre sem parâmetros', () => {
+    const { result } = renderHook(() => useShellController(speech), { wrapper: providers('/', 'pt') })
+
+    expect(result.current.header.community.to).toBe('/comunidade')
+  })
+
   it('monta o rodapé com o aviso, o caminho do agrônomo e o projeto', () => {
     const { result } = renderHook(() => useShellController(speech), { wrapper: providers('/', 'pt') })
 

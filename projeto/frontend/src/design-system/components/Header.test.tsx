@@ -8,6 +8,7 @@ function setup(overrides: Partial<AppHeaderProps> = {}) {
   const props: AppHeaderProps = {
     homeLabel: 'Raiz Orbital, voltar ao início',
     slogan: 'Do espaço até a raiz.',
+    community: { label: 'Comunidade', to: '/comunidade?lat=-18.95&lon=-48.2' },
     listen: {
       supported: true,
       speaking: false,
@@ -33,6 +34,36 @@ describe('AppHeader', () => {
     setup()
 
     expect(screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })).toHaveAttribute('href', '/')
+  })
+
+  it('tem o link da Comunidade, que leva junto o ponto da lavoura', () => {
+    setup()
+
+    expect(screen.getByRole('link', { name: 'Comunidade' })).toHaveAttribute('href', '/comunidade?lat=-18.95&lon=-48.2')
+  })
+
+  it('marca a Comunidade quando a pessoa está nela', () => {
+    render(
+      <MemoryRouter initialEntries={['/comunidade']}>
+        <AppHeader
+          homeLabel="Início"
+          slogan="Do espaço até a raiz."
+          community={{ label: 'Comunidade', to: '/comunidade' }}
+          listen={{
+            supported: false,
+            speaking: false,
+            onToggle: vi.fn(),
+            label: 'Ouvir',
+            stopLabel: 'Parar',
+            text: 'Ouvir',
+            stopText: 'Parar',
+          }}
+          lang={{ current: 'pt', onToggle: vi.fn(), label: 'Idioma' }}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('link', { name: 'Comunidade' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('mostra o slogan ao lado do nome', () => {

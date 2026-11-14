@@ -17,6 +17,7 @@ export const en = {
   header: {
     home: 'Raiz Orbital, back to start',
     slogan: 'From space to your roots.',
+    community: 'Community',
     listen: 'Listen',
     stop: 'Stop',
     listenLabel: 'Read this screen aloud',
@@ -31,6 +32,12 @@ export const en = {
     back: 'Back',
     backToAnswer: 'Answer',
     backToPlan: 'Plan',
+  },
+  answerTabs: {
+    label: 'Answer screens',
+    answer: 'Answer',
+    plan: '3-year plan',
+    options: 'All options',
   },
   stepper: {
     label: (current: number, total: number) => `Question ${current} of ${total}`,

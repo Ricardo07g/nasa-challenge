@@ -28,6 +28,29 @@ describe('rotas', () => {
     expect(screen.getByRole('main')).toBeInTheDocument()
   })
 
+  it('as telas da resposta têm as abas, com a atual marcada e o ponto mantido na URL', async () => {
+    renderAt('/plano?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    const nav = await screen.findByRole('navigation', { name: 'Telas da resposta' })
+    expect(nav).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Plano de 3 anos' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Resposta' })).toHaveAttribute(
+      'href',
+      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
+    )
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
+      'href',
+      '/quando?lat=-18.9543&lon=-48.1993&colheita=meio',
+    )
+  })
+
+  it('as outras telas não têm as abas da resposta', async () => {
+    renderAt('/onde')
+
+    await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })
+    expect(screen.queryByRole('navigation', { name: 'Telas da resposta' })).not.toBeInTheDocument()
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 

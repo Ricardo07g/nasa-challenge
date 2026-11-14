@@ -64,6 +64,25 @@
   gap: clamp(4px, 2vw, 24px);
 }
 
+.community {
+  min-height: var(--touch-min);
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--radius-2xs);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.community:hover,
+.community[aria-current='page'] {
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+}
+
 .listen {
   min-height: var(--touch-min);
   padding: 0 20px;
@@ -115,6 +134,13 @@
 
 .divider {
   color: var(--color-border);
+}
+
+/* Tela estreita: a Comunidade fica só com o ícone (o nome acessível continua no aria-label). */
+@media (max-width: 640px) {
+  .communityText {
+    display: none;
+  }
 }
 
 /* Celular: some o slogan e o texto do Ouvir fica só no ícone (o nome acessível continua). */

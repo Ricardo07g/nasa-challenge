@@ -2,6 +2,7 @@
  * Ligação de cada rota: controller (estado) → view (desenho). Sem lógica aqui.
  */
 import { Navigate, Outlet, ScrollRestoration } from 'react-router'
+import { useAnswerNav } from './controllers/useAnswerNav'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useShellController } from './controllers/useShellController'
@@ -64,9 +65,13 @@ export function DesignSystemPage() {
 
 type PendingScreen = 'when' | 'satellite' | 'answer' | 'options' | 'plan' | 'community' | 'method'
 
+/** Telas da resposta: navegam entre si pelas abas. */
+const ANSWER_SCREENS: readonly PendingScreen[] = ['answer', 'plan', 'options']
+
 /** Provisório até cada tela ficar pronta. */
 export function PendingPage({ screen }: { screen: PendingScreen }) {
   const { messages: t } = useI18n()
+  const answerNav = useAnswerNav()
   const titles: Record<PendingScreen, string> = {
     when: t.when.title,
     satellite: t.satellite.title,
@@ -77,5 +82,11 @@ export function PendingPage({ screen }: { screen: PendingScreen }) {
     method: t.method.title,
   }
   useDocumentTitle(titles[screen])
-  return <ComingSoonView t={t} title={titles[screen]} />
+  return (
+    <ComingSoonView
+      t={t}
+      title={titles[screen]}
+      answerNav={ANSWER_SCREENS.includes(screen) ? answerNav : undefined}
+    />
+  )
 }

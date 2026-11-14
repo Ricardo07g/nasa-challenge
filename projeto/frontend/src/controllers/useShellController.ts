@@ -1,7 +1,9 @@
 import { useCallback } from 'react'
+import { useLocation } from 'react-router'
 import type { AppFooterProps } from '../design-system/components/Footer'
 import type { AppHeaderProps } from '../design-system/components/Header'
 import { useI18n } from '../i18n/useI18n'
+import { keepFlowQuery } from '../services/flowParams'
 import { speechService, type SpeechService } from '../services/speechService'
 import { useListen } from './useListen'
 
@@ -19,11 +21,13 @@ export function useShellController(speech: SpeechService = speechService): {
   const { lang, messages: t, toggleLang } = useI18n()
   const getText = useCallback(() => mainText(), [])
   const listen = useListen(lang, getText, speech)
+  const { search } = useLocation()
 
   return {
     header: {
       homeLabel: t.header.home,
       slogan: t.header.slogan,
+      community: { label: t.header.community, to: `/comunidade${keepFlowQuery(search)}` },
       listen: {
         supported: listen.supported,
         speaking: listen.speaking,

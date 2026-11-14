@@ -12,7 +12,7 @@ import {
   YearTimeline,
 } from '../design-system/components/Content'
 import { ErrorState, LoadingState } from '../design-system/components/Feedback'
-import { BackLink, QuestionStepper } from '../design-system/components/Navigation'
+import { AnswerTabs, BackLink, QuestionStepper } from '../design-system/components/Navigation'
 import { MetricRow, StatusPill, YearStrip, type CellState } from '../design-system/components/Status'
 import {
   CalendarIcon,
@@ -177,6 +177,14 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
         <h2 id="ds-components" className={layout.sectionTitle}>
           {d.components}
         </h2>
+        <AnswerTabs
+          label={t.answerTabs.label}
+          tabs={[
+            { to: '/design-system#resposta', label: t.answerTabs.answer, current: true },
+            { to: '/design-system#plano', label: t.answerTabs.plan, current: false },
+            { to: '/design-system#opcoes', label: t.answerTabs.options, current: false },
+          ]}
+        />
         <div className={layout.grid}>
           <Card>
             <BackLink to="/design-system">{t.nav.back}</BackLink>

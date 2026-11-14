@@ -1,10 +1,12 @@
-import { Link } from 'react-router'
-import { LogoMark, SpeakerIcon, StopIcon } from '../icons'
+import { Link, NavLink } from 'react-router'
+import { CommunityIcon, LogoMark, SpeakerIcon, StopIcon } from '../icons'
 import styles from './Header.module.css'
 
 export type AppHeaderProps = {
   homeLabel: string
   slogan: string
+  /** Link do topo para a Comunidade (leva junto o ponto da lavoura, se houver). */
+  community: { label: string; to: string }
   listen: {
     supported: boolean
     speaking: boolean
@@ -21,7 +23,7 @@ export type AppHeaderProps = {
   }
 }
 
-export function AppHeader({ homeLabel, slogan, listen, lang }: AppHeaderProps) {
+export function AppHeader({ homeLabel, slogan, community, listen, lang }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
@@ -33,6 +35,10 @@ export function AppHeader({ homeLabel, slogan, listen, lang }: AppHeaderProps) {
           </span>
         </Link>
         <div className={styles.actions}>
+          <NavLink to={community.to} className={styles.community} aria-label={community.label}>
+            <CommunityIcon />
+            <span className={styles.communityText}>{community.label}</span>
+          </NavLink>
           {listen.supported && (
             <button
               type="button"
