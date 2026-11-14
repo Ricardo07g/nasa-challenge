@@ -241,6 +241,9 @@ export function CommunityPage() {
       points={state.points}
       demo={state.demo}
       onDemo={state.showDemo}
+      region={state.region}
+      regionRadius={state.regionRadius}
+      history={state.history}
     />
   )
 }

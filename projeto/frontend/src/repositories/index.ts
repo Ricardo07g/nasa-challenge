@@ -1,6 +1,7 @@
 import { createMockCommunityRepository } from './communityRepository'
 import { createHttpExemploRepository, createMockExemploRepository } from './exemploRepository'
 import { createHttpRecomendacaoRepository, createMockRecomendacaoRepository } from './recomendacaoRepository'
+import { createHttpRegionRepository, createMockRegionRepository } from './regionRepository'
 import { resolveApiMode } from './repositoryMode'
 import { createHttpTalhaoRepository, createMockTalhaoRepository } from './talhaoRepository'
 
@@ -15,3 +16,4 @@ export const recomendacaoRepository = useHttp
   : createMockRecomendacaoRepository()
 export const exemploRepository = useHttp ? createHttpExemploRepository() : createMockExemploRepository()
 export const communityRepository = createMockCommunityRepository()
+export const regionRepository = useHttp ? createHttpRegionRepository() : createMockRegionRepository()

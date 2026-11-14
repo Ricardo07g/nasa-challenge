@@ -25,8 +25,15 @@
   flex: 1 1 auto;
   width: 100%;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.barValue {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-weak-text);
 }
 
 .bar {
@@ -38,6 +45,11 @@
 
 .bar[data-tone='strong'] {
   background: var(--color-secondary);
+}
+
+.bar[data-tone='earth'] {
+  background: var(--color-risk);
+  border-radius: 4px 4px 0 0;
 }
 
 .bar[data-tone='soft'] {
