@@ -242,7 +242,7 @@ O backend deve seguir esse contrato.
 | A2.1 | **`previsao_sazonal`:** com o GEOS-S2S, a chance de chuva abaixo do normal em mar–mai por célula. Conferir o formato e se o produto já traz a probabilidade | `pipeline/` | R0.3 | não | T-18 |
 | A2.2 | **SMAP recente + percentil.** `sm_rootzone_pctl` pode não vir pronto: calcular pela climatologia de 2015 em diante | `pipeline/` | R2.3 | **token** | T-18 |
 | A2.3 | **Chuva dos últimos 30 dias** pelo IMERG Late, comparada com a média | `pipeline/` | R0.1 | **token** | T-18 |
-| A2.4 | **Service `sinal_outono`** (regra do PRD 7.10) e o campo `sinal{nivel, motivo, fonte[], data, regra_dia_plantar{data_limite, texto}}`, no contrato do front. Dá para fazer com TDD e repositories falsos **antes** de A2.1–A2.3 | `app/services/`, schema | testes: nenhuma; dados: A2.1–A2.3 | — | T-18 |
+| [A2.4](tarefas/0015-servico-sinal-outono.md) ✅ | **Service `sinal_outono`** (regra do PRD 7.10) e o campo `sinal{nivel, motivo, fonte[], data, regra_dia_plantar{data_limite, texto}}`, no contrato do front. Dá para fazer com TDD e repositories falsos **antes** de A2.1–A2.3 | `app/services/`, schema | testes: nenhuma; dados: A2.1–A2.3 | — | T-18 |
 | A2.5 | **Validar com as previsões retrospectivas do GMAO.** Se o acerto for baixo, a tela mostra só a regra do dia de plantar | `pipeline/` | A2.1, A2.4 | não | T-18 |
 
 A2 precisa de **dado de agora** (SMAP e chuva recentes). O script de dados tem de rodar perto da data de
