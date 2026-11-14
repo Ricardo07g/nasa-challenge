@@ -57,12 +57,11 @@ def test_should_load_shipped_weights_labels_and_soil_points() -> None:
 
 
 def test_should_load_shipped_ndvi_and_rotation_rules() -> None:
-    # PRD 7.7, 7.8 e 7.9
+    # PRD 7.7 e 7.9
     regras = YamlRulesRepository(SHIPPED).get_rules()
     ndvi, rotacao = regras.ndvi, regras.rotacao
 
-    assert (ndvi.plantou_acima, ndvi.parado_abaixo, ndvi.queda_colheita) == (0.60, 0.45, 0.50)
-    assert ndvi.meses_entressafra == frozenset({4, 5, 6, 7})
+    assert ndvi.queda_colheita == 0.50
     assert rotacao.anos_secos == 4
     assert rotacao.meses_seco == frozenset({2, 3, 4})
     assert rotacao.max_pousios == 2
@@ -94,6 +93,14 @@ def test_should_load_autumn_signal_thresholds() -> None:
     assert (sinal.chance_seco_min, sinal.chance_normal_max) == (0.50, 0.33)
     assert sinal.smap_percentil_seco == 20.0
     assert sinal.chuva_fracao_seco == 0.60
+def test_should_load_shipped_field_history_rules_from_the_ndvi_guide() -> None:
+    # PRD 7.8 e guia do histórico NDVI ("Regra do talhão"); anos 2016 a 2025 (decisão do time)
+    historico = YamlRulesRepository(SHIPPED).get_rules().historico_ndvi
+
+    assert (historico.janela_inicio, historico.janela_fim) == ("04-01", "07-31")
+    assert (historico.limite_plantou, historico.limite_parado) == (0.60, 0.45)
+    assert historico.min_observacoes == 3
+    assert (historico.ano_inicio, historico.ano_fim) == (2016, 2025)
 
 
 def test_should_load_phrase_templates_in_portuguese_and_english() -> None:
@@ -104,6 +111,9 @@ def test_should_load_phrase_templates_in_portuguese_and_english() -> None:
     assert "{anos_aperto} dos últimos {total} anos" in regras.frases["pt"].seguranca
     assert "{anos_aperto} of the last {total} years" in regras.frases["en"].seguranca
     assert "{dias}" in regras.frases["pt"].fase_cobertura
+    # PRD 7.6: frase do histórico do talhão, com o número de entressafras paradas
+    assert "{parado}" in regras.frases["pt"].historico
+    assert "{parado}" in regras.frases["en"].historico
 
 
 def test_should_load_shipped_alert_rules_for_the_season_replay() -> None:
@@ -154,6 +164,14 @@ def test_should_refuse_a_number_without_source(tmp_path: Path) -> None:
     del raw["nota_final"]["peso_renda"]["fonte"]
 
     with pytest.raises(ValueError, match="nota_final.peso_renda"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
+def test_should_refuse_a_field_history_rule_without_source(tmp_path: Path) -> None:
+    raw = _shipped_raw()
+    del raw["historico_ndvi"]["min_observacoes"]["fonte"]
+
+    with pytest.raises(ValueError, match="historico_ndvi.min_observacoes"):
         YamlRulesRepository(_write(tmp_path, raw)).get_rules()
 
 

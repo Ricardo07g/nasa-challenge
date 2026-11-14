@@ -66,6 +66,23 @@ class RegrasNdvi:
 
 
 @dataclass(frozen=True)
+class RegrasHistoricoNdvi:
+    """Histórico do talhão pelo NDVI do MODIS (PRD 7.8 e guia do histórico NDVI).
+
+    `janela_inicio` e `janela_fim` são "MM-DD" (a entressafra de cada ano); os anos vão de
+    `ano_inicio` a `ano_fim`, inclusive.
+    """
+
+    janela_inicio: str
+    janela_fim: str
+    limite_plantou: float
+    limite_parado: float
+    min_observacoes: int
+    ano_inicio: int
+    ano_fim: int
+
+
+@dataclass(frozen=True)
 class RegrasRotacao:
     """Plano de 3 anos (PRD 7.7)."""
 
@@ -129,6 +146,7 @@ class FrasesPorque:
     fase_cobertura: str
     futuro: str
     solo: str
+    historico: str
 
 
 @dataclass(frozen=True)
@@ -140,6 +158,7 @@ class Regras:
     rotulos: RegrasRotulos
     solo: RegrasSolo
     ndvi: RegrasNdvi
+    historico_ndvi: RegrasHistoricoNdvi
     rotacao: RegrasRotacao
     sinal_outono: RegrasSinalOutono
     frases: dict[str, FrasesPorque]  # "pt" e "en"
