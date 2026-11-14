@@ -55,11 +55,23 @@ def cell_center(cell_id: str) -> tuple[float, float]:
     return (lat_idx + 0.5) / GRID_CELL_SCALE_FACTOR, (lon_idx + 0.5) / GRID_CELL_SCALE_FACTOR
 
 
+def cell_bounds(cell_id: str) -> tuple[float, float, float, float]:
+    """Limites (lat_min, lat_max, lon_min, lon_max) da célula: idx/10 até (idx + 1)/10.
+
+    O ponto é da célula quando `lat_min <= lat < lat_max` e `lon_min <= lon < lon_max` (floor).
+    """
+    lat_idx, lon_idx = _cell_indexes(cell_id)
+    return (
+        lat_idx / GRID_CELL_SCALE_FACTOR,
+        (lat_idx + 1) / GRID_CELL_SCALE_FACTOR,
+        lon_idx / GRID_CELL_SCALE_FACTOR,
+        (lon_idx + 1) / GRID_CELL_SCALE_FACTOR,
+    )
+
+
 def cell_polygon_wkt(cell_id: str) -> str:
     """Quadrado da célula em WKT (lon lat), com bordas nos décimos: idx/10 até (idx + 1)/10."""
-    lat_idx, lon_idx = _cell_indexes(cell_id)
-    lat_min, lat_max = lat_idx / GRID_CELL_SCALE_FACTOR, (lat_idx + 1) / GRID_CELL_SCALE_FACTOR
-    lon_min, lon_max = lon_idx / GRID_CELL_SCALE_FACTOR, (lon_idx + 1) / GRID_CELL_SCALE_FACTOR
+    lat_min, lat_max, lon_min, lon_max = cell_bounds(cell_id)
     return (
         f"POLYGON(({lon_min} {lat_min}, {lon_max} {lat_min}, {lon_max} {lat_max}, "
         f"{lon_min} {lat_max}, {lon_min} {lat_min}))"

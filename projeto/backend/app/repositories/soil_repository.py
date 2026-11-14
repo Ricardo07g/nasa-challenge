@@ -16,6 +16,7 @@ from app.constants import (
     SAND_THRESHOLD_PCT,
 )
 from app.models.talhao import SoloInfo
+from app.repositories.climate_repository import cell_bounds, cell_id_for
 from app.repositories.point_cache import load_points, point_key
 
 
@@ -79,7 +80,16 @@ class CachedSoilGridsRepository:
 
 
 class PostgisSoilRepository:
-    """PostgreSQL + PostGIS repository for soil_point table."""
+    """Solo por ponto na tabela `soil_point`, com o solo da célula de 0,1° como reserva.
+
+    Ordem da busca em `get_soil` (tarefa 0012, R1.5):
+
+    1. o ponto exato (chave de 0,0025°, ~250 m) no banco;
+    2. o ponto exato no cache de arquivo (`fallback`), como antes;
+    3. o ponto gravado mais próximo **dentro da mesma célula de 0,1°** (a pré-carga grava o
+       centro de cada célula da caixa piloto); ponto de célula vizinha nunca entra;
+    4. o solo padrão (`fonte: padrao`).
+    """
 
     def __init__(
         self, database_url: str, fallback: CachedSoilGridsRepository | None = None
@@ -117,25 +127,58 @@ class PostgisSoilRepository:
                 )
             conn.commit()
 
+    def has_point(self, lat: float, lon: float) -> bool:
+        """O ponto (pela chave de 0,0025°) já tem solo gravado? Não olha o resto da célula."""
+        with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM soil_point WHERE key = %s LIMIT 1;", (point_key(lat, lon),))
+            return cur.fetchone() is not None
+
     def get_soil(self, lat: float, lon: float) -> SoloInfo:
         key = point_key(lat, lon)
+        lat_min, lat_max, lon_min, lon_max = cell_bounds(cell_id_for(lat, lon))
         with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
+            # Uma ida ao banco: o ponto exato primeiro; senão, o mais próximo da mesma célula
+            # (intervalo meio aberto, como o floor do id: a borda de cima é da célula vizinha).
             cur.execute(
                 """
-                SELECT argila_percentual, areia_percentual, textura_solo, cad_capacidade_agua_mm
+                SELECT argila_percentual, areia_percentual, textura_solo,
+                       cad_capacidade_agua_mm, key = %(key)s AS exact
                 FROM soil_point
-                WHERE key = %s
+                WHERE key = %(key)s
+                   OR (geom && ST_MakeEnvelope(
+                           %(lon_min)s, %(lat_min)s, %(lon_max)s, %(lat_max)s, %(srid)s)
+                       AND ST_Y(geom) >= %(lat_min)s AND ST_Y(geom) < %(lat_max)s
+                       AND ST_X(geom) >= %(lon_min)s AND ST_X(geom) < %(lon_max)s)
+                ORDER BY exact DESC,
+                         geom <-> ST_SetSRID(ST_MakePoint(%(lon)s, %(lat)s), %(srid)s)
                 LIMIT 1;
                 """,
-                (key,),
+                {
+                    "key": key,
+                    "lat": lat,
+                    "lon": lon,
+                    "lat_min": lat_min,
+                    "lat_max": lat_max,
+                    "lon_min": lon_min,
+                    "lon_max": lon_max,
+                    "srid": DEFAULT_SRID,
+                },
             )
             row = cur.fetchone()
-            if row:
-                return SoloInfo(
-                    argila_percentual=float(row[0]),
-                    areia_percentual=float(row[1]),
-                    textura_solo=str(row[2]),
-                    cad_capacidade_agua_mm=float(row[3]),
-                    fonte="soilgrids",
-                )
-        return self._fallback.get_soil(lat, lon)
+        if row is not None and row[4]:
+            return _soilgrids_soil(row)
+        from_file = self._fallback.get_soil(lat, lon)
+        if row is None or from_file.fonte != DEFAULT_SOIL.fonte:
+            return from_file
+        return _soilgrids_soil(row)
+
+
+def _soilgrids_soil(row: tuple[Any, ...]) -> SoloInfo:
+    """Linha do `soil_point` como solo: tudo o que está na tabela veio do SoilGrids."""
+    return SoloInfo(
+        argila_percentual=float(row[0]),
+        areia_percentual=float(row[1]),
+        textura_solo=str(row[2]),
+        cad_capacidade_agua_mm=float(row[3]),
+        fonte="soilgrids",
+    )

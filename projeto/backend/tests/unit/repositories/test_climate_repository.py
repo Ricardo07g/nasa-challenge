@@ -14,6 +14,7 @@ from app.repositories import climate_repository
 from app.repositories.climate_repository import (
     FixtureClimateRepository,
     PostgisClimateRepository,
+    cell_bounds,
     cell_center,
     cell_id_for,
     cell_polygon_wkt,
@@ -76,6 +77,11 @@ def test_should_build_cell_polygon_with_edges_on_the_tenths() -> None:
     assert cell_polygon_wkt("-190_-483") == (
         "POLYGON((-48.3 -19.0, -48.2 -19.0, -48.2 -18.9, -48.3 -18.9, -48.3 -19.0))"
     )
+
+
+def test_should_give_cell_bounds_on_the_tenths() -> None:
+    # (lat_min, lat_max, lon_min, lon_max): o mesmo quadrado do polígono, para filtrar no banco
+    assert cell_bounds("-190_-483") == pytest.approx((-19.0, -18.9, -48.3, -48.2))
 
 
 @pytest.mark.parametrize(
