@@ -2,6 +2,21 @@
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Final
+
+from app.models.validation import require_between
+
+# Contrato do NDVI (projeto/backend/AGENTS.md, "Contrato dos dados das fontes").
+# Faixa válida do MOD13Q1 bruto (-2000 a 10000); o NDVI físico (-0,2 a 1) cabe dentro dela.
+# O valor de preenchimento (-3000, pixel sem dado) fica de fora.
+NDVI_VALID_MIN: Final[float] = -2000.0
+NDVI_VALID_MAX: Final[float] = 10000.0
+# pixel_reliability (ORNL/AppEEARS) ou SummaryQA (Earth Engine): 0 = bom, 1 = aceitável.
+# 2 (neve) e 3 (nuvem) são descartados no script de dados e nunca chegam ao model.
+NDVI_BEST_QUALITY: Final[int] = 0
+NDVI_WORST_ACCEPTED_QUALITY: Final[int] = 1
+# Terra (MOD13Q1) e Aqua (MYD13Q1), coleção 061, defasados em 8 dias.
+NDVI_PRODUCTS: Final[frozenset[str]] = frozenset({"MOD13Q1", "MYD13Q1"})
 
 
 @dataclass(frozen=True)
@@ -17,10 +32,26 @@ class SoloInfo:
 
 @dataclass(frozen=True)
 class NdviRecord:
-    """Uma imagem de 16 dias do MODIS MOD13Q1 no ponto (NDVI bruto ou já com o fator 0,0001)."""
+    """Uma observação de 16 dias do MODIS no ponto, com a qualidade já filtrada (PRD 7.8).
+
+    `ndvi` aceita o valor bruto (inteiro com fator 0,0001) ou o físico; os arquivos e a tabela
+    novos gravam o físico. `qualidade` e `produto` são opcionais só porque o cache antigo traz
+    apenas `data` e `ndvi`.
+    """
 
     data: date
     ndvi: float
+    qualidade: int | None = None
+    produto: str | None = None
+
+    def __post_init__(self) -> None:
+        require_between("ndvi", self.ndvi, NDVI_VALID_MIN, NDVI_VALID_MAX)
+        if self.qualidade is not None and not (
+            NDVI_BEST_QUALITY <= self.qualidade <= NDVI_WORST_ACCEPTED_QUALITY
+        ):
+            raise ValueError(f"qualidade precisa ser 0 ou 1, veio {self.qualidade!r}")
+        if self.produto is not None and self.produto not in NDVI_PRODUCTS:
+            raise ValueError(f"produto precisa ser MOD13Q1 ou MYD13Q1, veio {self.produto!r}")
 
 
 @dataclass(frozen=True)

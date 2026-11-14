@@ -2,6 +2,22 @@
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Final
+
+from app.models.validation import require_between, require_finite, require_non_blank
+
+# Limites do contrato (projeto/backend/AGENTS.md, "Contrato dos dados das fontes").
+MIN_LATITUDE: Final[float] = -90.0
+MAX_LATITUDE: Final[float] = 90.0
+MIN_LONGITUDE: Final[float] = -180.0
+MAX_LONGITUDE: Final[float] = 180.0
+# Umidade volumétrica (m³/m³) e relativa (fração) ficam sempre entre 0 e 1.
+MIN_SOIL_MOISTURE_FRACTION: Final[float] = 0.0
+MAX_SOIL_MOISTURE_FRACTION: Final[float] = 1.0
+FIRST_MONTH: Final[int] = 1
+LAST_MONTH: Final[int] = 12
+# A chuva pode cair no máximo 100% (chuva zero); abaixo disso a série ficaria negativa.
+MIN_RAIN_CHANGE_PCT: Final[float] = -100.0
 
 
 @dataclass(frozen=True)
@@ -59,29 +75,58 @@ class AnnualClimateSummary:
 
 @dataclass(frozen=True)
 class SmapSoilMoisture:
-    """NASA SMAP L4 rootzone and surface soil moisture observation."""
+    """Umidade do solo do SMAP L4 (`SPL4SMGP`) num ponto e numa data (média do dia).
+
+    O motor usa `sm_rootzone_wetness` (0 a 1) para encher o balde na semeadura (PRD 7.2).
+    A camada de 0 a 5 cm (`sm_surface_m3_m3`) é opcional. A versão do produto (007 ou 008)
+    fica no `DataRun` da carga, não em cada observação.
+    """
 
     data: date
     latitude: float
     longitude: float
-    sm_surface_m3_m3: float
     sm_rootzone_m3_m3: float
     sm_rootzone_wetness: float
     fonte: str
+    sm_surface_m3_m3: float | None = None
+
+    def __post_init__(self) -> None:
+        require_between("latitude", self.latitude, MIN_LATITUDE, MAX_LATITUDE)
+        require_between("longitude", self.longitude, MIN_LONGITUDE, MAX_LONGITUDE)
+        for name, value in (
+            ("sm_rootzone_m3_m3", self.sm_rootzone_m3_m3),
+            ("sm_rootzone_wetness", self.sm_rootzone_wetness),
+            ("sm_surface_m3_m3", self.sm_surface_m3_m3),
+        ):
+            if value is not None:
+                require_between(name, value, MIN_SOIL_MOISTURE_FRACTION, MAX_SOIL_MOISTURE_FRACTION)
+        require_non_blank("fonte", self.fonte)
 
 
 @dataclass(frozen=True)
 class Cmip6Delta:
-    """Mudança do NEX-GDDP-CMIP6 (2041-2060 contra 1995-2014) mensal ou sazonal agregada."""
+    """Delta mensal de um modelo do NEX-GDDP-CMIP6: 2041-2060 contra 1995-2014 (PRD 7.3).
 
-    model: str = ""
-    scenario: str = "SSP2-4.5"
-    month: int = 0
-    rain_pct: float = 0.0
-    tmax_c: float = 0.0
-    cell_id: str = ""
-    cenario: str = "SSP2-4.5"
-    modelos_referencia: tuple[str, ...] = ()
-    aumento_temperatura_media_c: float = 0.0
-    variacao_chuva_safrinha_pct: float = 0.0
-    aumento_dias_calor_extremo_ge_35c: float = 0.0
+    O motor aplica cada mês à série observada (método do delta): chuva x (1 + rain_pct / 100) e
+    máxima + tmax_c. `tmin_c` é opcional: só vem quando o script de dados também baixa o `tasmin`
+    (decisão pendente no roteiro, seção 5).
+    """
+
+    model: str
+    scenario: str
+    month: int
+    rain_pct: float
+    tmax_c: float
+    tmin_c: float | None = None
+
+    def __post_init__(self) -> None:
+        require_non_blank("model", self.model)
+        require_non_blank("scenario", self.scenario)
+        if not FIRST_MONTH <= self.month <= LAST_MONTH:
+            raise ValueError(f"month precisa estar entre 1 e 12, veio {self.month!r}")
+        require_finite("rain_pct", self.rain_pct)
+        if self.rain_pct < MIN_RAIN_CHANGE_PCT:
+            raise ValueError(f"rain_pct não pode ser menor que -100, veio {self.rain_pct!r}")
+        require_finite("tmax_c", self.tmax_c)
+        if self.tmin_c is not None:
+            require_finite("tmin_c", self.tmin_c)

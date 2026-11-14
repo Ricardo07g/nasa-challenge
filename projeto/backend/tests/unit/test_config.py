@@ -11,12 +11,19 @@ DATA_ENV_VARS = (
     "SOLO_CACHE_PATH",
     "NDVI_CACHE_PATH",
 )
+CREDENTIAL_ENV_VARS = (
+    "EARTHDATA_TOKEN",
+    "APPEEARS_TOKEN",
+    "EARTHDATA_USERNAME",
+    "EARTHDATA_PASSWORD",
+    "EE_PROJECT",
+)
 
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Isola os testes das variáveis reais da máquina ou do container."""
-    for name in ("CORS_ORIGINS", "DATABASE_URL", *DATA_ENV_VARS):
+    for name in ("CORS_ORIGINS", "DATABASE_URL", *DATA_ENV_VARS, *CREDENTIAL_ENV_VARS):
         monkeypatch.delenv(name, raising=False)
 
 
@@ -85,3 +92,33 @@ def test_rules_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     settings = Settings(_env_file=None)
 
     assert settings.regras_path == tmp_path / "regras.yaml"
+
+
+def test_earthdata_token_defaults_to_none() -> None:
+    # A API não precisa de credencial da NASA: só os scripts de dados usam o token.
+    settings = Settings(_env_file=None)
+
+    assert settings.earthdata_token is None
+
+
+def test_earthdata_token_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("EARTHDATA_TOKEN", "token-de-teste")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.earthdata_token == "token-de-teste"
+
+
+def test_appeears_token_defaults_to_none() -> None:
+    # O AppEEARS recusa o token da Earthdata: ele tem o próprio, que só os scripts de dados usam.
+    settings = Settings(_env_file=None)
+
+    assert settings.appeears_token is None
+
+
+def test_appeears_token_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APPEEARS_TOKEN", "token-de-teste")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.appeears_token == "token-de-teste"

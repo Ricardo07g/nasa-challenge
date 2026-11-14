@@ -32,9 +32,17 @@ class Settings(BaseSettings):
     solo_cache_path: Path | None = None
     ndvi_cache_path: Path | None = None
 
-    # Credenciais dos dados da NASA / Google. Só via ambiente, nunca no código.
+    # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
+    # usam; a API não precisa de nenhuma (ADR-0005).
+    # Token da Earthdata Login (urs.earthdata.nasa.gov, vale 60 dias): NSIDC (SMAP) e GES DISC
+    # (IMERG). O AppEEARS recusa esse token.
+    earthdata_token: str | None = None
+    # Token do AppEEARS (POST /api/login, vale cerca de 48 h). Sem ele, o script de dados faz o
+    # login com o usuário e a senha da Earthdata.
+    appeears_token: str | None = None
     earthdata_username: str | None = None
     earthdata_password: str | None = None
+    # Legado: projeto do Google Earth Engine (fora do MVP). Sai quando a ADR-0005 for aceita.
     ee_project: str | None = None
 
     @field_validator("cors_origins", mode="before")
