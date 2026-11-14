@@ -190,6 +190,13 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Início')
   })
 
+  it('nos testes os dados são de exemplo: toda tela mostra o aviso fixo de demonstração', async () => {
+    renderAt('/onde')
+
+    await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })
+    expect(screen.getByRole('note')).toHaveTextContent('Modo de demonstração: dados de exemplo, não são da NASA')
+  })
+
   it('o título da aba acompanha o idioma', async () => {
     renderAt('/', 'en')
 

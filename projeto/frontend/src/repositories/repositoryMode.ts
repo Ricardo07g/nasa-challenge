@@ -1,9 +1,10 @@
 export type ApiMode = 'mock' | 'http'
 
 /**
- * `VITE_API_MODE=http` liga a API real; qualquer outra coisa usa os dados de exemplo.
- * Vale só para talhão, recomendação e exemplo: health e crop-options já existem e são sempre http.
+ * A API real é o padrão: sem a variável, nenhuma tela mostra dado que não veio da API.
+ * Os dados de exemplo (`repositories/mocks/`) só entram com `VITE_API_MODE=mock` explícito, e aí
+ * todas as telas mostram o aviso de demonstração. Health e crop-options são sempre http.
  */
 export function resolveApiMode(value: string | undefined): ApiMode {
-  return value === 'http' ? 'http' : 'mock'
+  return value === 'mock' ? 'mock' : 'http'
 }

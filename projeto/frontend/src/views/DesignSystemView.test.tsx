@@ -23,4 +23,10 @@ describe('DesignSystemView (/design-system)', () => {
     expect(climate).toHaveAttribute('data-status', 'unavailable')
     expect(climate).toHaveTextContent('Ainda não conectado')
   })
+
+  it('mostra o aviso do modo de demonstração', () => {
+    setup()
+
+    expect(screen.getByRole('note')).toHaveTextContent('Modo de demonstração: dados de exemplo, não são da NASA')
+  })
 })

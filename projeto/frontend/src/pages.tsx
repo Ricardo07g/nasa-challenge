@@ -36,9 +36,9 @@ import { WhenView } from './views/WhenView'
 import { WhereView } from './views/WhereView'
 
 export function ShellPage() {
-  const { header, footer } = useShellController()
+  const { header, footer, demoNotice } = useShellController()
   return (
-    <ShellView header={header} footer={footer}>
+    <ShellView header={header} footer={footer} demoNotice={demoNotice}>
       <ScrollRestoration />
       <Outlet />
     </ShellView>

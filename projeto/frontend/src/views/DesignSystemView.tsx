@@ -18,7 +18,7 @@ import {
   RecommendationHero,
   YearTimeline,
 } from '../design-system/components/Content'
-import { ErrorState, LoadingState, ProgressBar, SkeletonCard } from '../design-system/components/Feedback'
+import { DemoBanner, ErrorState, LoadingState, ProgressBar, SkeletonCard } from '../design-system/components/Feedback'
 import { AnswerTabs, BackLink, QuestionStepper } from '../design-system/components/Navigation'
 import {
   MetricRow,
@@ -316,6 +316,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             status="unavailable"
             unavailableLabel={t.common.notConnected}
           />
+          <DemoBanner>{t.common.demoMode}</DemoBanner>
           <NotConnectedCard icon={<RainIcon />} iconTone="blue" title={t.community.rainTitle} label={t.common.notConnected} />
           <Card>
             <NotConnected label={t.common.notConnected} />

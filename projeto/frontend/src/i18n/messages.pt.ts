@@ -9,7 +9,8 @@ export const pt = {
     loadError: 'Não foi possível carregar agora.',
     retry: 'Tentar de novo',
     sampleValues: 'Valores de exemplo.',
-    mockNotice: 'Dados de exemplo: o motor de cálculo ainda não está ligado.',
+    /** Aviso fixo em todas as telas com VITE_API_MODE=mock. */
+    demoMode: 'Modo de demonstração: dados de exemplo, não são da NASA',
     disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
     ready: 'Pronto',
     /** Dado que a API ainda não manda: o mesmo texto em todas as telas. */

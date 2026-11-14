@@ -8,7 +8,7 @@ export const en = {
     loadError: 'We could not load this right now.',
     retry: 'Try again',
     sampleValues: 'Sample values.',
-    mockNotice: 'Sample data: the scoring engine is not connected yet.',
+    demoMode: 'Demo mode: sample data, not from NASA',
     disclaimer: 'It helps you decide. It does not replace your agronomist.',
     ready: 'Done',
     notConnected: 'Not connected yet',

@@ -3,6 +3,8 @@ import { useLocation } from 'react-router'
 import type { AppFooterProps } from '../design-system/components/Footer'
 import type { AppHeaderProps } from '../design-system/components/Header'
 import { useI18n } from '../i18n/useI18n'
+import { apiMode as currentApiMode } from '../repositories'
+import type { ApiMode } from '../repositories/repositoryMode'
 import { keepFlowQuery } from '../services/flowParams'
 import { speechService, type SpeechService } from '../services/speechService'
 import { telegramService, type TelegramService } from '../services/telegramService'
@@ -15,13 +17,18 @@ function mainText(): string {
   return (main?.innerText || main?.textContent || '').trim()
 }
 
-/** Controller da moldura comum a todas as telas: cabeçalho com Ouvir e PT | EN, e o rodapé. */
+/**
+ * Controller da moldura comum a todas as telas: cabeçalho com Ouvir e PT | EN, o rodapé e, com os
+ * dados de exemplo (VITE_API_MODE=mock), o aviso fixo de demonstração.
+ */
 export function useShellController(
   speech: SpeechService = speechService,
   telegram: TelegramService = telegramService,
+  apiMode: ApiMode = currentApiMode,
 ): {
   header: AppHeaderProps
   footer: AppFooterProps
+  demoNotice: string | null
 } {
   const { lang, messages: t, toggleLang } = useI18n()
   const getText = useCallback(() => mainText(), [])
@@ -52,5 +59,6 @@ export function useShellController(
       agronomistTo: `/como-funciona${keepFlowQuery(search)}`,
       project: t.footer.project,
     },
+    demoNotice: apiMode === 'mock' ? t.common.demoMode : null,
   }
 }

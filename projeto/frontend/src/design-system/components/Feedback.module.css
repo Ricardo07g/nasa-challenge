@@ -71,3 +71,26 @@
   transform-origin: left;
   transition: transform 0.4s ease;
 }
+
+/* Modo de demonstração: faixa laranja presa no topo de todas as telas */
+.demo {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-tint-orange);
+  border-bottom: 1px solid var(--color-border-orange-tint);
+  color: var(--color-title-on-orange-tint);
+  font-size: var(--font-size-caption);
+  text-align: center;
+}
+
+.demo svg {
+  flex: 0 0 auto;
+  color: var(--color-risk);
+}
