@@ -57,4 +57,26 @@ describe('StartView (tela 1)', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'What to plant after soybeans?' })).toBeInTheDocument()
   })
+
+  it('com o bot configurado, oferece conversar pelo Telegram (P5)', () => {
+    render(
+      <MemoryRouter>
+        <StartView t={pt} telegramHref="https://t.me/BotDoTime" />
+      </MemoryRouter>,
+    )
+
+    const link = screen.getByRole('link', { name: 'Prefere conversar? Fale com o Raiz Orbital no Telegram' })
+    expect(link).toHaveAttribute('href', 'https://t.me/BotDoTime')
+    expect(link).toHaveAttribute('target', '_blank')
+  })
+
+  it('sem o bot configurado, não fala do Telegram', () => {
+    render(
+      <MemoryRouter>
+        <StartView t={pt} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByText(/Telegram/)).not.toBeInTheDocument()
+  })
 })

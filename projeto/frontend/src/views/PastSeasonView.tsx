@@ -21,6 +21,7 @@ import type { ScreenStatus } from '../models/screenStatus'
 import { PAST_YEARS, isWarning, pastYearKind } from '../services/pastSeasonService'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import layout from './layout.module.css'
+import { TelegramCard } from './TelegramCard'
 
 export type PastSeasonViewProps = {
   t: Messages
@@ -32,6 +33,8 @@ export type PastSeasonViewProps = {
   onYear: (year: number) => void
   season: SafraPassada | null
   sampleData: boolean
+  /** P5: link do bot do Telegram; null quando não está configurado. */
+  telegramHref: string | null
 }
 
 const EVENT_ICON: Record<TipoEvento, ReactNode> = {
@@ -45,7 +48,8 @@ const EVENT_ICON: Record<TipoEvento, ReactNode> = {
 }
 
 /** Replay da safra passada (P4): linha do tempo com os avisos de veranico e calor que teriam chegado. */
-export function PastSeasonView({ t, lang, status, onRetry, backTo, year, onYear, season, sampleData }: PastSeasonViewProps) {
+export function PastSeasonView(props: PastSeasonViewProps) {
+  const { t, lang, status, onRetry, backTo, year, onYear, season, sampleData, telegramHref } = props
   const p = t.past
   return (
     <div className={layout.page}>
@@ -80,6 +84,7 @@ export function PastSeasonView({ t, lang, status, onRetry, backTo, year, onYear,
               </p>
             </Card>
           )}
+          {telegramHref && <TelegramCard t={t} href={telegramHref} past />}
           {sampleData && <p className={layout.muted}>{p.note}</p>}
         </>
       )}

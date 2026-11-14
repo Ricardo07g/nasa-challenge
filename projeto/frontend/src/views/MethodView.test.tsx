@@ -18,6 +18,7 @@ function setup(overrides: Partial<MethodViewProps> = {}) {
     onRetry: vi.fn(),
     rows,
     example: true,
+    telegramHref: null,
     ...overrides,
   }
   render(
@@ -97,5 +98,19 @@ describe('MethodView (tela 9)', () => {
     setup({ t: en })
 
     expect(screen.getByRole('table', { name: 'Scores for each option (0 to 100)' })).toBeInTheDocument()
+  })
+
+  it('com o bot configurado, explica como usar pelo Telegram (P5)', () => {
+    setup({ telegramHref: 'https://t.me/BotDoTime' })
+
+    const section = screen.getByRole('region', { name: 'Também no Telegram' })
+    expect(section).toHaveTextContent('Mande a localização da lavoura e diga quando colhe a soja.')
+    expect(screen.getByRole('link', { name: 'Abrir no Telegram' })).toHaveAttribute('href', 'https://t.me/BotDoTime')
+  })
+
+  it('sem o bot configurado, não fala do Telegram', () => {
+    setup()
+
+    expect(screen.queryByText(/Telegram/)).not.toBeInTheDocument()
   })
 })

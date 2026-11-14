@@ -281,6 +281,16 @@ export const en = {
     noWarnings: 'No warnings this season.',
     note: 'Example values. In the app, the year and dates come from real data.',
   },
+  telegram: {
+    title: 'Receive on Telegram',
+    text: 'The answer in audio on your phone, and a warning if your field needs rain.',
+    past: 'Want warnings like these next season? Activate them on Telegram.',
+    open: 'Open in Telegram',
+    home: 'Prefer a conversation? Talk to Raiz Orbital on Telegram',
+    methodTitle: 'Also on Telegram',
+    method:
+      'Send your field location and say when you harvest soybeans. The bot replies in text and audio, with a link to this page. You can opt into low-rainfall and heat warnings. In Portuguese and English.',
+  },
   report: {
     button: 'Report for bank or insurance',
     savePdf: 'Save as PDF',

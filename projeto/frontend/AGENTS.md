@@ -81,6 +81,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
 - **Dados (`VITE_API_MODE`):** `http` usa a API real (padrão no `docker compose`); `mock` usa os dados de
   exemplo de `repositories/mocks/` (sem backend; padrão no `npm run dev` sem a variável). A API só tem
   dados da célula da fazenda de exemplo: fora dela, as telas 4 a 7 mostram "Ainda não chegamos aí".
+- **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
+  não fala do Telegram. Só o link: o token do bot nunca entra no front.
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).
   Nunca coloque segredo, token ou senha em `VITE_*`. Segredos ficam só no backend.
 - **Idioma:** textos da interface em português (produtor) e inglês (juízes), conforme o PRD (RNF-03).

@@ -94,6 +94,14 @@
   margin-bottom: 2px;
 }
 
+/* P5: "Prefere conversar? Fale com o Raiz Orbital no Telegram" */
+.telegram {
+  font-size: var(--font-size-caption);
+  text-align: center;
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
 .orbit {
   position: absolute;
   right: 30px;

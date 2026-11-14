@@ -4,10 +4,12 @@ import type { Recomendacao } from '../models/recomendacao'
 import { buildRecomendacao } from '../repositories/mocks/fixtures'
 import { ApiError } from '../repositories/httpClient'
 import type { FarmService } from '../services/farmService'
+import type { TelegramService } from '../services/telegramService'
 import { providers } from '../test/providers'
 import { useAnswerController } from './useAnswerController'
 
 const flow = 'lat=-18.9543&lon=-48.1993&colheita=meio'
+const telegram: TelegramService = { enabled: true, linkFor: () => 'https://t.me/BotDoTime?start=x' }
 const sample = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
 
 function deps(load: () => Promise<Recomendacao> = () => Promise.resolve(sample), apiMode: 'mock' | 'http' = 'http') {
@@ -83,5 +85,12 @@ describe('useAnswerController (tela 5)', () => {
     const { result } = renderHook(() => useAnswerController(d), { wrapper: providers(`/resposta?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('outside'))
+  })
+
+  it('link do Telegram com a lavoura, quando o bot está configurado (P5)', () => {
+    const d = { ...deps(), telegram }
+    const { result } = renderHook(() => useAnswerController(d), { wrapper: providers(`/resposta?${flow}`) })
+
+    expect(result.current.telegramHref).toBe('https://t.me/BotDoTime?start=x')
   })
 })

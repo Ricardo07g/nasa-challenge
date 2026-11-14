@@ -14,6 +14,7 @@ import { usePlanController } from './controllers/usePlanController'
 import { useSatelliteController } from './controllers/useSatelliteController'
 import { useReportController } from './controllers/useReportController'
 import { useShellController } from './controllers/useShellController'
+import { useTelegramLink } from './controllers/useTelegramLink'
 import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
@@ -47,7 +48,8 @@ export function ShellPage() {
 export function StartPage() {
   const { messages: t } = useI18n()
   useDocumentTitle(t.start.pageTitle)
-  return <StartView t={t} />
+  const telegramHref = useTelegramLink()
+  return <StartView t={t} telegramHref={telegramHref} />
 }
 
 export function WherePage() {
@@ -157,6 +159,7 @@ export function AnswerPage() {
       aviso={state.aviso}
       sampleData={state.sampleData}
       reportTo={state.reportTo}
+      telegramHref={state.telegramHref}
     />
   )
 }
@@ -223,6 +226,7 @@ export function PastSeasonPage() {
       onYear={state.chooseYear}
       season={state.season}
       sampleData={state.sampleData}
+      telegramHref={state.telegramHref}
     />
   )
 }
@@ -283,6 +287,7 @@ export function MethodPage() {
       onRetry={state.retry}
       rows={state.rows}
       example={state.example}
+      telegramHref={state.telegramHref}
     />
   )
 }

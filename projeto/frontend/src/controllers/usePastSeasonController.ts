@@ -7,9 +7,11 @@ import type { ApiMode } from '../repositories/repositoryMode'
 import { isOutsideArea } from '../services/farmService'
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { pastSeasonService, readPastYear, type PastSeasonService } from '../services/pastSeasonService'
+import type { TelegramService } from '../services/telegramService'
 import { useAsync } from './useAsync'
+import { useTelegramLink } from './useTelegramLink'
 
-type Deps = { pastSeason: PastSeasonService; apiMode: ApiMode }
+type Deps = { pastSeason: PastSeasonService; apiMode: ApiMode; telegram?: TelegramService }
 
 const defaultDeps: Deps = { pastSeason: pastSeasonService, apiMode: currentApiMode }
 
@@ -21,6 +23,7 @@ export function usePastSeasonController(deps: Deps = defaultDeps) {
   const params = useMemo(() => readFlowParams(search), [search])
   const year = readPastYear(search.get('ano'))
   const query = keepFlowQuery(search.toString())
+  const telegramHref = useTelegramLink(deps.telegram)
 
   const season = useAsync(
     () =>
@@ -45,5 +48,6 @@ export function usePastSeasonController(deps: Deps = defaultDeps) {
     chooseYear,
     season: season.status === 'ready' ? (season.data ?? null) : null,
     sampleData: deps.apiMode === 'mock',
+    telegramHref,
   }
 }

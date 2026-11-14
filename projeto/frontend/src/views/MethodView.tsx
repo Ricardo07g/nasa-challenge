@@ -1,8 +1,9 @@
+import { Button } from '../design-system/components/Button'
 import { Card, SourceCard } from '../design-system/components/Card'
 import { NumberedSteps, PageHeading, ScoreTable } from '../design-system/components/Content'
 import { ErrorState, LoadingState } from '../design-system/components/Feedback'
 import { BackLink } from '../design-system/components/Navigation'
-import { SatelliteIcon, SproutIcon } from '../design-system/icons'
+import { ArrowUpRightIcon, SatelliteIcon, SendIcon, SproutIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { Opcao } from '../models/recomendacao'
 import layout from './layout.module.css'
@@ -15,12 +16,14 @@ export type MethodViewProps = {
   onRetry: () => void
   rows: { id: string; nome: string; notas: Opcao['notas'] }[]
   example: boolean
+  /** P5: link do bot do Telegram; null quando não está configurado. */
+  telegramHref: string | null
 }
 
 const SOURCES = ['rain', 'heat', 'moisture', 'history', 'climate', 'soil'] as const
 
 /** Tela 9 "Como a conta é feita" (para agrônomos e jurados): método, fontes e notas de 0 a 100. */
-export function MethodView({ t, backTo, status, onRetry, rows, example }: MethodViewProps) {
+export function MethodView({ t, backTo, status, onRetry, rows, example, telegramHref }: MethodViewProps) {
   const m = t.method
   const h = m.scoresHeaders
   return (
@@ -58,6 +61,20 @@ export function MethodView({ t, backTo, status, onRetry, rows, example }: Method
           ))}
         </div>
       </section>
+      {telegramHref && (
+        <Card tone="blue" as="section" aria-label={t.telegram.methodTitle}>
+          <h2 className={layout.iconTitle} data-tone="blue">
+            <SendIcon />
+            {t.telegram.methodTitle}
+          </h2>
+          <p>{t.telegram.method}</p>
+          <div>
+            <Button href={telegramHref} variant="blue" fullWidth={false} iconEnd={<ArrowUpRightIcon size={18} />}>
+              {t.telegram.open}
+            </Button>
+          </div>
+        </Card>
+      )}
       <Card>
         {status === 'loading' && <LoadingState>{t.common.loading}</LoadingState>}
         {status === 'error' && <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={onRetry} />}

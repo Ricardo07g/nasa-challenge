@@ -5,7 +5,9 @@ import { createMockPastSeasonRepository } from '../repositories/pastSeasonReposi
 import type { PastSeasonService } from '../services/pastSeasonService'
 import { providers } from '../test/providers'
 import { usePastSeasonController } from './usePastSeasonController'
+import type { TelegramService } from '../services/telegramService'
 
+const telegram: TelegramService = { enabled: true, linkFor: () => 'https://t.me/BotDoTime?start=x' }
 const flow = 'lat=-18.9543&lon=-48.1993&colheita=meio'
 const repository = createMockPastSeasonRepository(0)
 
@@ -51,5 +53,12 @@ describe('usePastSeasonController (replay da safra passada, P4)', () => {
     const { result } = renderHook(() => usePastSeasonController(d), { wrapper: providers(`/safra-passada?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('outside'))
+  })
+
+  it('link do Telegram para ativar os avisos, quando o bot está configurado (P5)', () => {
+    const d = { ...deps(), telegram }
+    const { result } = renderHook(() => usePastSeasonController(d), { wrapper: providers(`/safra-passada?${flow}`) })
+
+    expect(result.current.telegramHref).toBe('https://t.me/BotDoTime?start=x')
   })
 })

@@ -143,6 +143,13 @@
   }
 }
 
+/* Celular pequeno: o link do Telegram sai do cabeçalho (as telas têm o cartão do Telegram). */
+@media (max-width: 520px) {
+  .telegram {
+    display: none;
+  }
+}
+
 /* Celular: some o slogan e o texto do Ouvir fica só no ícone (o nome acessível continua). */
 @media (max-width: 768px) {
   .slogan {

@@ -5,7 +5,9 @@ import type { AppHeaderProps } from '../design-system/components/Header'
 import { useI18n } from '../i18n/useI18n'
 import { keepFlowQuery } from '../services/flowParams'
 import { speechService, type SpeechService } from '../services/speechService'
+import { telegramService, type TelegramService } from '../services/telegramService'
 import { useListen } from './useListen'
+import { useTelegramLink } from './useTelegramLink'
 
 /** Texto que o "Ouvir" lê: o conteúdo principal da tela atual. */
 function mainText(): string {
@@ -14,7 +16,10 @@ function mainText(): string {
 }
 
 /** Controller da moldura comum a todas as telas: cabeçalho com Ouvir e PT | EN, e o rodapé. */
-export function useShellController(speech: SpeechService = speechService): {
+export function useShellController(
+  speech: SpeechService = speechService,
+  telegram: TelegramService = telegramService,
+): {
   header: AppHeaderProps
   footer: AppFooterProps
 } {
@@ -22,12 +27,14 @@ export function useShellController(speech: SpeechService = speechService): {
   const getText = useCallback(() => mainText(), [])
   const listen = useListen(lang, getText, speech)
   const { search } = useLocation()
+  const telegramHref = useTelegramLink(telegram)
 
   return {
     header: {
       homeLabel: t.header.home,
       slogan: t.header.slogan,
       community: { label: t.header.community, to: `/comunidade${keepFlowQuery(search)}` },
+      telegram: telegramHref ? { href: telegramHref, label: t.telegram.open } : undefined,
       listen: {
         supported: listen.supported,
         speaking: listen.speaking,

@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router'
-import { CommunityIcon, LogoMark, SpeakerIcon, StopIcon } from '../icons'
+import { CommunityIcon, LogoMark, SendIcon, SpeakerIcon, StopIcon } from '../icons'
 import styles from './Header.module.css'
 
 export type AppHeaderProps = {
@@ -7,6 +7,8 @@ export type AppHeaderProps = {
   slogan: string
   /** Link do topo para a Comunidade (leva junto o ponto da lavoura, se houver). */
   community: { label: string; to: string }
+  /** P5: link do bot do Telegram (só quando configurado). */
+  telegram?: { href: string; label: string }
   listen: {
     supported: boolean
     speaking: boolean
@@ -23,7 +25,7 @@ export type AppHeaderProps = {
   }
 }
 
-export function AppHeader({ homeLabel, slogan, community, listen, lang }: AppHeaderProps) {
+export function AppHeader({ homeLabel, slogan, community, telegram, listen, lang }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
@@ -39,6 +41,18 @@ export function AppHeader({ homeLabel, slogan, community, listen, lang }: AppHea
             <CommunityIcon />
             <span className={styles.communityText}>{community.label}</span>
           </NavLink>
+          {telegram && (
+            <a
+              href={telegram.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${styles.community} ${styles.telegram}`}
+              aria-label={telegram.label}
+            >
+              <SendIcon />
+              <span className={styles.communityText}>Telegram</span>
+            </a>
+          )}
           {listen.supported && (
             <button
               type="button"

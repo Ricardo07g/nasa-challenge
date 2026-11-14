@@ -12,6 +12,7 @@ import type { Motivo } from '../models/recomendacao'
 import type { AnswerSummary } from '../services/recomendacaoRules'
 import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
 import { RainLegend, RainYears } from './RainYears'
+import { TelegramCard } from './TelegramCard'
 import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
 
@@ -25,6 +26,8 @@ export type AnswerViewProps = {
   aviso: string
   sampleData: boolean
   reportTo: string
+  /** P5: link do bot do Telegram; null quando não está configurado. */
+  telegramHref: string | null
 }
 
 const MOTIVE_ICON: Record<Motivo, ReactNode> = {
@@ -48,7 +51,7 @@ export function AnswerView(props: AnswerViewProps) {
   )
 }
 
-function Answer({ t, lang, answer, aviso, sampleData, reportTo }: AnswerViewProps & { answer: AnswerSummary }) {
+function Answer({ t, lang, answer, aviso, sampleData, reportTo, telegramHref }: AnswerViewProps & { answer: AnswerSummary }) {
   const a = t.answer
   const { best, late, alternatives } = answer
   const plant = best.data_limite ? `${a.plantUntil} ${formatDayMonth(lang, best.data_limite)}.` : a.plantSoon
@@ -109,6 +112,7 @@ function Answer({ t, lang, answer, aviso, sampleData, reportTo }: AnswerViewProp
           </Button>
         </div>
       </div>
+      {telegramHref && <TelegramCard t={t} href={telegramHref} />}
       {alternatives.length > 0 && (
         <section aria-label={a.prefer} className={layout.stack}>
           <h2 className={layout.sectionTitle}>{a.prefer}</h2>

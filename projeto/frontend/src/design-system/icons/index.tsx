@@ -28,6 +28,7 @@ import {
   Minus,
   Plus,
   Satellite,
+  Send,
   ShieldCheck,
   Sprout,
   Thermometer,
@@ -212,4 +213,8 @@ export function WarningIcon({ size = 16 }: IconProps) {
 
 export function HeatIcon({ size = 16 }: IconProps) {
   return <Thermometer size={size} {...decorative} />
+}
+
+export function SendIcon({ size = 18 }: IconProps) {
+  return <Send size={size} {...decorative} />
 }

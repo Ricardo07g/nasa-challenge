@@ -71,6 +71,21 @@
 }
 
 /* Compacto: verde, 48 px (ações dentro de cartões) */
+/* Azul cheio (ex.: "Abrir no Telegram") */
+.button[data-variant='blue'] {
+  min-height: var(--touch-secondary);
+  padding-inline: 28px;
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-on-primary);
+}
+
+.button[data-variant='blue']:hover:not(:disabled) {
+  background: var(--color-secondary-strong);
+  border-color: var(--color-secondary-strong);
+  color: var(--color-on-primary);
+}
+
 .button[data-variant='compact'] {
   min-height: var(--touch-compact);
   background: var(--color-primary);

@@ -34,8 +34,11 @@ function OrbitIllustration() {
 
 type Step = { icon: ReactNode; title: string; text: string; tone: 'green' | 'blue' }
 
-/** Tela 1 "Início". Só apresentação: não tem controller. */
-export function StartView({ t }: { t: Messages }) {
+/**
+ * Tela 1 "Início". Só apresentação: não tem controller.
+ * `telegramHref` (P5) só vem quando o bot do Telegram está configurado.
+ */
+export function StartView({ t, telegramHref = null }: { t: Messages; telegramHref?: string | null }) {
   const s = t.start
   const steps: Step[] = [
     { icon: <PinIcon />, title: s.stepMark, text: s.stepMarkText, tone: 'green' },
@@ -64,6 +67,11 @@ export function StartView({ t }: { t: Messages }) {
               <Button to="/exemplo" variant="outline" iconEnd={<ArrowUpRightIcon size={20} />}>
                 {s.example}
               </Button>
+              {telegramHref && (
+                <a className={styles.telegram} href={telegramHref} target="_blank" rel="noopener noreferrer">
+                  {t.telegram.home}
+                </a>
+              )}
             </div>
           </div>
           <OrbitIllustration />

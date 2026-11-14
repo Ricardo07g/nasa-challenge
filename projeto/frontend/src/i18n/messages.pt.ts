@@ -283,6 +283,16 @@ export const pt = {
     noWarnings: 'Nenhum aviso nesta safra.',
     note: 'Valores de exemplo. No app, o ano e as datas vêm dos dados reais.',
   },
+  telegram: {
+    title: 'Receber no Telegram',
+    text: 'A resposta em áudio no seu celular e um aviso se faltar chuva na sua lavoura.',
+    past: 'Quer receber avisos assim na próxima safra? Ative no Telegram.',
+    open: 'Abrir no Telegram',
+    home: 'Prefere conversar? Fale com o Raiz Orbital no Telegram',
+    methodTitle: 'Também no Telegram',
+    method:
+      'Mande a localização da lavoura e diga quando colhe a soja. O bot responde em texto e em áudio, com o link desta página. Quem quiser recebe avisos de falta de chuva e calor. Em português e em inglês.',
+  },
   report: {
     button: 'Relatório para banco ou seguro',
     savePdf: 'Salvar em PDF',

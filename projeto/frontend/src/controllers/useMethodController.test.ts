@@ -3,9 +3,11 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Recomendacao } from '../models/recomendacao'
 import { buildRecomendacao } from '../repositories/mocks/fixtures'
 import type { FarmService } from '../services/farmService'
+import type { TelegramService } from '../services/telegramService'
 import { providers } from '../test/providers'
 import { useMethodController } from './useMethodController'
 
+const telegram: TelegramService = { enabled: true, linkFor: () => 'https://t.me/BotDoTime?start=x' }
 const sample = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
 
 function deps(load: () => Promise<Recomendacao> = () => Promise.resolve(sample)) {
@@ -51,5 +53,12 @@ describe('useMethodController (tela 9)', () => {
     await waitFor(() => expect(result.current.status).toBe('error'))
     act(() => result.current.retry())
     await waitFor(() => expect(result.current.status).toBe('ready'))
+  })
+
+  it('link do Telegram, quando o bot está configurado (P5)', () => {
+    const d = { ...deps(), telegram }
+    const { result } = renderHook(() => useMethodController(d), { wrapper: providers('/como-funciona') })
+
+    expect(result.current.telegramHref).toBe('https://t.me/BotDoTime?start=x')
   })
 })

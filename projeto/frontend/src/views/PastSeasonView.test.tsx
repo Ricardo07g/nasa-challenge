@@ -21,6 +21,7 @@ async function setup(overrides: Partial<PastSeasonViewProps> = {}) {
     onYear: vi.fn(),
     season: await repository.get(point, 2024, 'pt'),
     sampleData: true,
+    telegramHref: null,
     ...overrides,
   }
   render(
@@ -79,5 +80,17 @@ describe('PastSeasonView (replay da safra passada, P4)', () => {
     await setup({ t: en, lang: 'en', season: await repository.get(point, 2024, 'en') })
 
     expect(screen.getByRole('heading', { level: 1, name: 'How the 2024 second crop would have gone' })).toBeInTheDocument()
+  })
+
+  it('com o bot configurado, convida a ativar os avisos no Telegram (P5)', async () => {
+    await setup({ telegramHref: 'https://t.me/BotDoTime?start=x' })
+
+    expect(screen.getByText('Quer receber avisos assim na próxima safra? Ative no Telegram.')).toBeInTheDocument()
+  })
+
+  it('sem o bot configurado, não fala do Telegram', async () => {
+    await setup()
+
+    expect(screen.queryByText(/Telegram/)).not.toBeInTheDocument()
   })
 })

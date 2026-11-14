@@ -4,10 +4,12 @@ import type { ApiMode } from '../repositories/repositoryMode'
 import { farmService, type FarmService } from '../services/farmService'
 import { keepFlowQuery } from '../services/flowParams'
 import { buildAnswer } from '../services/recomendacaoRules'
+import type { TelegramService } from '../services/telegramService'
 import { useAnswerNav } from './useAnswerNav'
 import { useFlowRecomendacao } from './useFlowRecomendacao'
+import { useTelegramLink } from './useTelegramLink'
 
-type Deps = { farm: FarmService; apiMode: ApiMode }
+type Deps = { farm: FarmService; apiMode: ApiMode; telegram?: TelegramService }
 
 const defaultDeps: Deps = { farm: farmService, apiMode: currentApiMode }
 
@@ -16,6 +18,7 @@ export function useAnswerController(deps: Deps = defaultDeps) {
   const { redirectTo, recomendacao, status: flowStatus } = useFlowRecomendacao(deps.farm)
   const nav = useAnswerNav()
   const [search] = useSearchParams()
+  const telegramHref = useTelegramLink(deps.telegram)
 
   const answer = recomendacao.data ? buildAnswer(recomendacao.data) : null
   const status = flowStatus === 'ready' && !answer ? 'error' : flowStatus
@@ -30,5 +33,6 @@ export function useAnswerController(deps: Deps = defaultDeps) {
     /** Sem o motor ligado (VITE_API_MODE=mock), os números são de exemplo. */
     sampleData: deps.apiMode === 'mock',
     reportTo: `/relatorio${keepFlowQuery(search.toString())}`,
+    telegramHref,
   }
 }

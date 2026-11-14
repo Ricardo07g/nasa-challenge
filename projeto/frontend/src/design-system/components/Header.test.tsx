@@ -125,4 +125,17 @@ describe('AppHeader', () => {
 
     expect(props.lang.onToggle).toHaveBeenCalled()
   })
+
+  it('sem o Telegram configurado, não mostra o link', () => {
+    setup()
+    expect(screen.queryByRole('link', { name: 'Abrir no Telegram' })).not.toBeInTheDocument()
+  })
+
+  it('com o Telegram configurado, mostra o link', () => {
+    setup({ telegram: { href: 'https://t.me/BotDoTime?start=1', label: 'Abrir no Telegram' } })
+
+    const link = screen.getByRole('link', { name: 'Abrir no Telegram' })
+    expect(link).toHaveAttribute('href', 'https://t.me/BotDoTime?start=1')
+    expect(link).toHaveAttribute('target', '_blank')
+  })
 })
