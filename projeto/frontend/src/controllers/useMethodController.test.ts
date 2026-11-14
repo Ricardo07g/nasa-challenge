@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Recomendacao } from '../models/recomendacao'
+import type { Talhao } from '../models/talhao'
 import { buildRecomendacao } from '../repositories/mocks/fixtures'
 import type { FarmService } from '../services/farmService'
 import type { TelegramService } from '../services/telegramService'
@@ -9,9 +10,21 @@ import { useMethodController } from './useMethodController'
 
 const telegram: TelegramService = { enabled: true, linkFor: () => 'https://t.me/BotDoTime?start=x' }
 const sample = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
+const talhao = {
+  ponto: { lat: -18.9543, lon: -48.1993 },
+  celula_id: '-190_-482',
+  dentro_da_area: true,
+  solo: { textura: 'argiloso', cad_mm: 60, fonte: 'soilgrids' },
+  colheita_sugerida: null,
+  historico: null,
+  dados: [{ fonte: 'nasa_power', periodo: '2005-2024' }],
+} as Talhao
 
-function deps(load: () => Promise<Recomendacao> = () => Promise.resolve(sample)) {
-  const farm: FarmService = { talhao: vi.fn(), recomendacao: vi.fn(load) }
+function deps(
+  load: () => Promise<Recomendacao> = () => Promise.resolve(sample),
+  loadTalhao: () => Promise<Talhao> = () => Promise.resolve(talhao),
+) {
+  const farm: FarmService = { talhao: vi.fn(loadTalhao), recomendacao: vi.fn(load) }
   return { farm }
 }
 
@@ -60,5 +73,46 @@ describe('useMethodController (tela 9)', () => {
     const { result } = renderHook(() => useMethodController(d), { wrapper: providers('/como-funciona') })
 
     expect(result.current.telegramHref).toBe('https://t.me/BotDoTime?start=x')
+  })
+
+  it('de onde vem cada dado: quais fontes estão conectadas, pelo talhão (dados[], solo e histórico)', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useMethodController(d), { wrapper: providers('/como-funciona') })
+
+    await waitFor(() => expect(result.current.sources.status).toBe('ready'))
+    expect(result.current.sources.rows.filter((row) => row.connected).map((row) => row.key)).toEqual([
+      'nasa_power',
+      'soilgrids',
+    ])
+    expect(result.current.sources.rainKm).toBe(50)
+    expect(d.farm.talhao).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993, exemplo: true }, 'pt')
+  })
+
+  it('com o caminho na URL, as fontes são do talhão da pessoa', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useMethodController(d), {
+      wrapper: providers('/como-funciona?lat=-19.1&lon=-48.3&colheita=tarde'),
+    })
+
+    await waitFor(() => expect(result.current.sources.status).toBe('ready'))
+    expect(d.farm.talhao).toHaveBeenCalledWith({ lat: -19.1, lon: -48.3, exemplo: false }, 'pt')
+  })
+
+  it('o período da chuva do passo 1 vem do talhão e dos anos usados', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useMethodController(d), { wrapper: providers('/como-funciona') })
+
+    await waitFor(() => expect(result.current.rain?.period).toEqual({ start: '2005', end: '2024' }))
+    expect(result.current.rain?.years).toBe(20)
+  })
+
+  it('se o talhão não vier, as fontes mostram o erro e tentam de novo', async () => {
+    let calls = 0
+    const d = deps(undefined, () => (++calls === 1 ? Promise.reject(new Error('x')) : Promise.resolve(talhao)))
+    const { result } = renderHook(() => useMethodController(d), { wrapper: providers('/como-funciona') })
+
+    await waitFor(() => expect(result.current.sources.status).toBe('error'))
+    act(() => result.current.retrySources())
+    await waitFor(() => expect(result.current.sources.status).toBe('ready'))
   })
 })

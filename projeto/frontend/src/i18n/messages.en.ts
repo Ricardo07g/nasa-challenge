@@ -365,7 +365,8 @@ export const en = {
   method: {
     title: 'How the score is calculated',
     subtitle: "In three steps, plus what the satellite can't see.",
-    step1: 'We take the rain and heat of each year, from 2006 to 2025, at the point of your field.',
+    step1: (years: string) => `We take the rain and heat of each year (${years}) at the point of your field.`,
+    step1Generic: 'We take the rain and heat of each year at the point of your field.',
     step2: 'For each option, we simulate the water in the soil day by day, from the sowing date.',
     step3: 'We count in how many years water was short or heat was too high when the crop needed it most.',
     noAiTitle: 'No artificial intelligence, open math',
@@ -375,20 +376,18 @@ export const en = {
     validationText:
       'Coming soon: calculated stress years compared with second-crop corn losses in Uberlândia (IBGE).',
     blindTitle: "What the satellite can't see",
-    blindText:
-      "Rain comes in 10 km squares, not from your field: your rain gauge is worth more. The 2050 climate is a range across models, not a forecast. Limits will still be tuned with local agronomists.",
+    blindRain: (km: number) => `Rain comes in squares of about ${km} km, not from your field: your rain gauge is worth more.`,
+    blindRainGeneric: 'Rain comes in squares several kilometers wide, not from your field: your rain gauge is worth more.',
+    blindRest:
+      'The 2041–2060 climate is a range across models, not a forecast. Limits will still be tuned with local agronomists.',
     sourcesTitle: 'Where each piece of data comes from',
     sources: {
-      rain: { what: 'Rain', source: 'GPM IMERG (NASA)', scale: '10 km squares, daily' },
-      heat: { what: 'Heat, wind and sun', source: 'NASA POWER', scale: 'about 50 km, daily' },
-      moisture: { what: 'Soil moisture', source: 'SMAP L4 (NASA)', scale: '9 km, every 3 hours' },
-      history: { what: 'Field history', source: 'MODIS (NASA)', scale: '250 m, every 16 days' },
-      climate: {
-        what: '2050 climate',
-        source: 'NEX-GDDP-CMIP6 (NASA)',
-        scale: 'about 28 km, daily (2041–2060)',
-      },
-      soil: { what: 'Soil type', source: 'SoilGrids (ISRIC)', scale: '250 m' },
+      nasa_power: { what: 'Rain and heat, day by day', source: 'NASA POWER', scale: 'about 50 km, daily' },
+      gpm_imerg: { what: 'More detailed rain', source: 'GPM IMERG (NASA)', scale: '10 km squares, daily' },
+      smap: { what: 'Soil moisture', source: 'SMAP L4 (NASA)', scale: '9 km, every 3 hours' },
+      modis: { what: 'Field history', source: 'MODIS (NASA)', scale: '250 m, every 16 days' },
+      nex_gddp_cmip6: { what: '2041–2060 climate', source: 'NEX-GDDP-CMIP6 (NASA)', scale: 'about 28 km, daily' },
+      soilgrids: { what: 'Soil type', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },
     scoresTitle: 'Scores for each option (0 to 100)',
     scoresHeaders: {

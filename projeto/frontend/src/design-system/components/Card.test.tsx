@@ -128,4 +128,18 @@ describe('SourceCard', () => {
     expect(screen.getByText('GPM IMERG (NASA)')).toBeInTheDocument()
     expect(screen.getByText('quadrados de 10 km, por dia')).toBeInTheDocument()
   })
+
+  it('fonte que a API ainda não manda: borda tracejada e "Ainda não conectado"', () => {
+    render(<SourceCard what="Umidade da terra" source="SMAP L4 (NASA)" scale="9 km" notConnected="Ainda não conectado" />)
+
+    const card = screen.getByRole('heading', { name: 'Umidade da terra' }).closest('[data-status]')
+    expect(card).toHaveAttribute('data-status', 'unavailable')
+    expect(card).toHaveTextContent('Ainda não conectado')
+  })
+
+  it('fonte conectada não leva o aviso', () => {
+    render(<SourceCard what="Chuva" source="NASA POWER" scale="50 km" />)
+
+    expect(screen.queryByText('Ainda não conectado')).not.toBeInTheDocument()
+  })
 })

@@ -378,7 +378,9 @@ export const pt = {
   method: {
     title: 'Como a conta é feita',
     subtitle: 'Em três passos, e o que o satélite não enxerga.',
-    step1: 'Pegamos a chuva e o calor de cada ano, de 2006 a 2025, no ponto do seu talhão.',
+    /** O período vem do talhão (dados[]) e dos anos usados de fato. */
+    step1: (years: string) => `Pegamos a chuva e o calor de cada ano (${years}), no ponto do seu talhão.`,
+    step1Generic: 'Pegamos a chuva e o calor de cada ano no ponto do seu talhão.',
     step2: 'Para cada opção, simulamos a água na terra dia a dia, a partir da data de semeadura.',
     step3: 'Contamos em quantos anos faltou água ou sobrou calor na fase em que a planta mais precisa.',
     noAiTitle: 'Sem inteligência artificial, conta aberta',
@@ -388,20 +390,21 @@ export const pt = {
     validationText:
       'Em breve: os anos de aperto calculados comparados com os anos de quebra do milho 2ª safra em Uberlândia (IBGE).',
     blindTitle: 'O que o satélite não enxerga',
-    blindText:
-      'A chuva vem em quadrados de 10 km, não do seu talhão: seu pluviômetro vale mais. O clima de 2050 é uma faixa entre modelos, não uma previsão. Os limites ainda serão ajustados com agrônomos da região.',
+    /** O tamanho vem da fonte de chuva conectada: IMERG (10 km) ou NASA POWER (~50 km). */
+    blindRain: (km: number) =>
+      `A chuva vem em quadrados de cerca de ${km} km, não do seu talhão: seu pluviômetro vale mais.`,
+    blindRainGeneric: 'A chuva vem de quadrados de vários quilômetros, não do seu talhão: seu pluviômetro vale mais.',
+    blindRest:
+      'O clima de 2041 a 2060 é uma faixa entre modelos, não uma previsão. Os limites ainda serão ajustados com agrônomos da região.',
     sourcesTitle: 'De onde vem cada dado',
+    /** Uma por fonte do produto; a tela marca as que a API ainda não manda como "Ainda não conectado". */
     sources: {
-      rain: { what: 'Chuva', source: 'GPM IMERG (NASA)', scale: 'quadrados de 10 km, por dia' },
-      heat: { what: 'Calor, vento e sol', source: 'NASA POWER', scale: 'cerca de 50 km, por dia' },
-      moisture: { what: 'Umidade da terra', source: 'SMAP L4 (NASA)', scale: '9 km, a cada 3 horas' },
-      history: { what: 'Histórico do talhão', source: 'MODIS (NASA)', scale: '250 m, a cada 16 dias' },
-      climate: {
-        what: 'Clima de 2050',
-        source: 'NEX-GDDP-CMIP6 (NASA)',
-        scale: 'cerca de 28 km, por dia (2041–2060)',
-      },
-      soil: { what: 'Tipo de terra', source: 'SoilGrids (ISRIC)', scale: '250 m' },
+      nasa_power: { what: 'Chuva e calor, dia a dia', source: 'NASA POWER', scale: 'cerca de 50 km, por dia' },
+      gpm_imerg: { what: 'Chuva mais detalhada', source: 'GPM IMERG (NASA)', scale: 'quadrados de 10 km, por dia' },
+      smap: { what: 'Umidade da terra', source: 'SMAP L4 (NASA)', scale: '9 km, a cada 3 horas' },
+      modis: { what: 'Histórico do talhão', source: 'MODIS (NASA)', scale: '250 m, a cada 16 dias' },
+      nex_gddp_cmip6: { what: 'Clima de 2041 a 2060', source: 'NEX-GDDP-CMIP6 (NASA)', scale: 'cerca de 28 km, por dia' },
+      soilgrids: { what: 'Tipo de terra', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },
     scoresTitle: 'Notas de cada opção (0 a 100)',
     scoresHeaders: {

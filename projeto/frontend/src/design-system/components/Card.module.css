@@ -176,3 +176,9 @@
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }
+
+/* Fonte que a API ainda não manda: borda tracejada, como os outros blocos "Ainda não conectado" */
+.source[data-status='unavailable'] {
+  border-style: dashed;
+  border-color: var(--color-border-strong);
+}

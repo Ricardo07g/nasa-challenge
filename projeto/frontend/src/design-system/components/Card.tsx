@@ -147,12 +147,21 @@ export function AlternativeCard({ label, title, text, icon }: AlternativeCardPro
   )
 }
 
-export function SourceCard({ what, source, scale }: { what: string; source: string; scale: string }) {
+type SourceCardProps = {
+  what: string
+  source: string
+  scale: string
+  /** Fonte que a API ainda não manda: o texto do aviso ("Ainda não conectado"); a borda fica tracejada. */
+  notConnected?: string
+}
+
+export function SourceCard({ what, source, scale, notConnected }: SourceCardProps) {
   return (
-    <div className={styles.source}>
+    <div className={styles.source} data-status={notConnected ? 'unavailable' : 'ready'}>
       <h3 className={styles.sourceWhat}>{what}</h3>
       <span className={styles.sourceName}>{source}</span>
       <span className={styles.sourceScale}>{scale}</span>
+      {notConnected && <NotConnected label={notConnected} />}
     </div>
   )
 }

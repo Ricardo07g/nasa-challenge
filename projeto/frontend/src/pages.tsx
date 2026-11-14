@@ -295,6 +295,9 @@ export function MethodPage() {
       rows={state.rows}
       example={state.example}
       telegramHref={state.telegramHref}
+      sources={state.sources}
+      onRetrySources={state.retrySources}
+      rain={state.rain}
     />
   )
 }
