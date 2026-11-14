@@ -2,6 +2,8 @@
 
 Nov 14, 2026 · @Rayanne · **v3 (14/nov, tarde):** fluxo simplificado para o produtor (2 perguntas, 1 resposta), correções de dados e backend detalhado no [plano técnico do backend](Raiz%20Orbital%20–%20plano%20técnico%20do%20backend.md).
 
+> **O que mudou na v3.1 (14/nov, tarde).** (1) Tela de cálculo em forma de missão do satélite entre a pergunta 2 e a tela 4 (RF-19). (2) Tela 7: o produtor não escolhe mais "ano normal" ou "ano seco"; o app mostra o sinal para o outono (GEOS-S2S + SMAP + IMERG) e marca o Plano A ou o Plano B, com a regra do dia de plantar (RF-20). (3) Tela 7: "Quantos hectares quer testar?" com os totais em reais (RF-21). (4) As ideias para depois do MVP estão no [plano de evolução do produto](Raiz%20Orbital%20–%20plano%20de%20evolução%20do%20produto.md), fora deste PRD.
+
 > **O que mudou na v3.** (1) O produtor responde só onde fica a lavoura e quando colhe a soja; solo, histórico, chuva, clima e até a sugestão de data vêm dos dados. (2) Notas de 0 a 100 e controles de peso saíram da tela do produtor: ele vê "deu certo em X de 20 anos", reais por hectare e Bom/Médio/Fraco. (3) A série vira 2006–2025, que são 20 anos de fato (2005–2025 eram 21). (4) O pousio sai do ranking e vira a linha de base. (5) Fator de escala do NDVI do MODIS incluído. (6) Arquitetura alinhada ao repositório (FastAPI em camadas + PostGIS). (7) Site responsivo: a mesma página serve celular e computador. (8) A tela "Mandar para o agrônomo" saiu do MVP.
 
 ## 1. Resumo e mudança de foco
@@ -108,11 +110,13 @@ Segundo o guia de submissão ([Project Submission Guide](https://www.spaceappsch
 | US-06 | produtor | ver planos de rotação de 3 anos | sair da sucessão soja/milho ou soja/pousio | Must |
 | US-07 | produtor | ver o histórico do meu talhão (anos de pousio e de segunda safra) pelo satélite | entender de onde estou partindo | Should |
 | US-08 | produtor ou agrônomo | trocar a textura do solo e informar nematoide, só se eu quiser | ajustar o cálculo sem tornar o caminho principal mais longo | Could |
-| US-09 | produtor | testar o plano num ano seco tipo El Niño e no clima de 2050 | saber se o plano aguenta | Should |
+| US-09 | produtor | saber se vem um outono seco, ter um plano B e ver como o plano se sai no clima de 2050 | não ser pego de surpresa e saber se o plano aguenta | Should |
 | US-10 | agrônomo | editar produtividade, preço e custo na tela "Como a conta é feita" | a renda ficar com a realidade do cliente | Could |
 | US-11 | jurado | abrir uma fazenda de exemplo em Uberlândia com um clique | ver o produto funcionando sem cadastro | Must |
 | US-12 | produtor com pouca leitura | tocar em "Ouvir" e escutar a tela | entender sem depender de ler | Should |
 | US-13 | produtor | usar o mesmo site no celular, no campo, e no computador, no escritório | não precisar de dois aplicativos | Must |
+| US-14 | produtor | ver o que o app está fazendo enquanto calcula, de um jeito que prenda a atenção | não achar que travou e entender de onde vem a resposta | Should |
+| US-15 | produtor | ver em reais quanto deve sobrar e quanto arrisco testando o plano num pedaço da fazenda | decidir quanto da área colocar no teste | Should |
 
 ## 4. Como funciona: fluxo e requisitos funcionais
 
@@ -127,10 +131,11 @@ Princípios: **site responsivo** (cada tela é uma página só, que se ajusta do
 1. **Início:** "O que plantar depois da soja?", três passos com ícone e o botão "Começar" ("2 perguntas · 1 minuto · grátis"). Segundo botão: "Ver um exemplo pronto".
 2. **Onde fica a lavoura (pergunta 1 de 2):** mapa com alfinete e "Usar onde estou agora".
 3. **Quando você colhe a soja (pergunta 2 de 2):** três botões (começo, meio, fim de fevereiro ou março), com a faixa sugerida pelo satélite já marcada.
+   - **Calculando (entre as telas 3 e 4, novo na v3.1):** "Missão: sua lavoura". Enquanto a API busca os dados, o satélite entra em órbita, trava a mira na lavoura e passa por 6 fases (lavoura, terra, 20 anos de chuva e calor, histórico, clima que vem e sinal do outono, conta das 6 opções). Cada fase mostra o dado real que chegou e termina com uma conquista; no fim, "Missão completa" e o botão "Ver o que o satélite viu". Não revela a melhor opção. Tocar no satélite é só brincadeira e não acelera nada. Com `prefers-reduced-motion`, vira uma lista simples com ✓.
 4. **O satélite já viu o resto:** cartões de chuva (20 anos), histórico do talhão (plantou ou ficou parado, 10 anos), terra (do mapa de solos, com "Não é? Trocar") e clima até 2050.
 5. **A resposta:** a melhor opção e até quando plantar; chuva, dinheiro e terra com rótulo Bom/Médio/Fraco; "Por quê?" com o dado da NASA; "Como fazer" em 3 passos; alternativas "Se você prefere…".
 
-**Telas de apoio:** 6. Todas as opções (reordenar por chuva, dinheiro ou terra) · 7. Plano de 3 anos (ano normal e ano seco; começar por 50 ha) · 8. Perto de você (comunidade, simulada) · 9. Como a conta é feita (para agrônomos e jurados).
+**Telas de apoio:** 6. Todas as opções (reordenar por chuva, dinheiro ou terra) · 7. Plano de 3 anos (sinal para o outono, Plano A e Plano B, hectares para testar) · 8. Perto de você (comunidade, simulada) · 9. Como a conta é feita (para agrônomos e jurados).
 
 A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: confundia mais do que ajudava. O produtor pode compartilhar o link do site pelo próprio navegador.
 
@@ -153,6 +158,9 @@ A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: co
 | RF-16 | Colheita sugerida | Estimar a faixa de colheita da soja pela queda do NDVI de janeiro a março (seção 7.9); sem dado, "meio" | US-02 |
 | RF-17 | Ouvir | Ler a tela em voz alta pelo navegador (Web Speech API, pt-BR) | US-12 |
 | RF-18 | Site responsivo | Uma página por tela, layout fluido (flex-wrap e grid automático), sem largura fixa; testado em 390 px e 1280 px; a URL guarda lat, lon e colheita, para recarregar ou compartilhar a mesma resposta | US-13 |
+| RF-19 | Tela de cálculo (missão) | Rota `/calculando`: chama `/api/talhao` e `/api/recomendacao`, mostra 6 fases com os dados reais que chegam, cada fase com no mínimo 1,2 s; avança sozinha para a tela 4; depois de 20 s oferece a fazenda de exemplo; erro com mensagem calma; versão simples com `prefers-reduced-motion` | US-14 |
+| RF-20 | Sinal para o outono e Plano A / Plano B | Nível `normal`, `seco` ou `incerto` com o motivo em uma frase (regra da seção 7.10); botões "Plano A" e "Plano B, se secar" marcados pelo sinal; regra do dia de plantar com data limite; mostra chance, nunca certeza | US-09 |
+| RF-21 | Hectares para testar | Campo numérico (padrão 50 ha) na tela 7; mostra quanto deve sobrar, o custo da semente e o pior caso num ano seco, em reais, para a opção do 1º ano do plano marcado; conta no front-end com os valores por hectare da API | US-15 |
 
 ### Exemplo de saída (números ilustrativos, serão trocados pelos calculados)
 
@@ -221,6 +229,7 @@ Valores na ordem de grandeza das reservas úteis usadas pelo ZARC. Se o produtor
 | MODIS MOD13Q1 (NDVI 16 dias) | Histórico do talhão (segunda safra ou pousio) e estimativa da faixa de colheita da soja | 250 m; desde 2000 | Earth Engine `MODIS/061/MOD13Q1` | Must |
 | HLS (Landsat + Sentinel-2) | O mesmo histórico em talhões pequenos, nas safras recentes | 30 m; a cada 2–3 dias | Earthdata / Earth Engine | Could |
 | NEX-GDDP-CMIP6 | Chuva e temperatura diárias projetadas para 2041–2060 | \~27,8 km; 1950–2100; cenários SSP2-4.5 e SSP5-8.5 | Earth Engine `NASA/GDDP-CMIP6` | Must |
+| GEOS-S2S-2 (NASA GMAO) | Previsão de chuva de março a maio, com a chance de ficar abaixo ou acima do normal, para o sinal do outono (RF-20) | 0,5°; mensal, alguns meses à frente; previsões retrospectivas para validar | Página de downloads do GMAO (conferir o formato dos arquivos) | Should |
 | SoilGrids (ISRIC, não NASA) | Textura do solo quando o produtor não sabe | 250 m | API REST | Should |
 
 O MODIS Terra deve parar de coletar em 2027, mas o histórico continua disponível e é isso que o MVP usa. Para o presente, o caminho é o HLS.
@@ -378,6 +387,21 @@ Para cada ano, olhar o NDVI (já com o fator 0,0001) entre 1º de abril e 31 de 
 
 Em cada ano, a primeira imagem de janeiro a março em que o NDVI cai abaixo de 50% do pico do verão marca a soja secando. A mediana dos anos vira a faixa sugerida (`cedo`, `meio`, `tarde`), que já vem marcada na pergunta 2. Com menos de 5 anos válidos, usar `meio`. Como o MOD13Q1 é de 16 dias, isso estima a faixa, não a data exata.
 
+### 7.10 Sinal para o outono (novo na v3.1)
+
+Hipótese a calibrar antes de publicar (detalhe no plano de evolução, ajuste A2):
+
+- **Seco:** GEOS-S2S com chance de chuva abaixo do normal em março a maio ≥ 50%, **ou** terra seca agora (SMAP `sm_rootzone_pctl` abaixo de 20 e chuva dos últimos 30 dias pelo IMERG abaixo de 60% da média).
+- **Normal:** chance de chuva abaixo do normal < 33% **e** terra sem falta de água.
+- **Incerto:** qualquer outro caso.
+- **Regra do dia de plantar:** se no dia da semeadura (até a data limite da cultura) a terra estiver seca pelo mesmo critério do SMAP, usar o Plano B.
+- **Validação:** rodar a regra nas previsões retrospectivas do GMAO para os anos da série e publicar na tela 9 em quantos anos o sinal teria acertado o ano seco. Com acerto baixo, a tela mostra só a regra do dia de plantar.
+- O Plano B é o melhor plano do cenário de ano seco da seção 7.7. A tela não usa El Niño como sinônimo de ano seco.
+
+### 7.11 Totais para o pedaço de teste (novo na v3.1)
+
+Para a opção do 1º ano do plano marcado: sobra = `margem_ha` × hectares; semente = `custo_semente_ha` × hectares; pior caso = margem do pior ano entre os 4 mais secos da série × hectares. Valores arredondados ("perto de R$ 35 mil"). `custo_semente_ha` entra em `culturas.yaml` como hipótese até o agrônomo conferir.
+
 ## 8. Arquitetura, modelo de dados e requisitos não funcionais
 
 **Ideia central:** baixar e preparar os dados pesados **antes** (pipeline por célula de 0,1° na caixa do Triângulo, gravado no PostGIS) e fazer a conta **na hora**, no service. Assim a demo não depende da velocidade dos servidores da NASA e a resposta muda na hora quando o produtor troca a faixa de colheita. O detalhe (contratos da API, tabelas, camadas, pipeline e plano de horas) está no [plano técnico do backend](Raiz%20Orbital%20–%20plano%20técnico%20do%20backend.md).
@@ -443,6 +467,16 @@ Time: **Rayanne** (produto, parâmetros, pitch e submissão), **Dev 1** (dados e
 **Ordem de corte se o tempo apertar:** T-06 usa 1 modelo só; T-10 só na fazenda de exemplo (fixture); T-04 usa a chuva do POWER; T-09 sem plano seco. **Nunca cortar:** T-05, T-07 (com a fazenda de exemplo), T-08, T-12, T-13 e T-14.
 
 **T-15 (Could):** tela "Na sua região" com dados simulados, só no front-end (Dev 2, 1 h), e 5 segundos dela no vídeo. Entra apenas depois de T-13 pronta.
+
+**Novas na v3.1:**
+
+| # | Tarefa | Quem | Estimativa | Pronto quando |
+| --- | --- | --- | --- | --- |
+| T-16 | Tela de cálculo em forma de missão (RF-19) | Dev 2 | 2 a 3 h | missão roda com o exemplo em uns 9 s e cai na tela 4; versão simples com reduced motion |
+| T-17 | Hectares para testar (RF-21): `custo_semente_ha` e `pior_ano_seco_ha` na API e o campo na tela 7 | Dev 1 + Dev 2 | 2 a 3 h | trocar os hectares muda os três valores na hora |
+| T-18 | Sinal para o outono (RF-20): GEOS-S2S no pipeline, regra da seção 7.10, campo `sinal` na API e o cartão Plano A / Plano B | Dev 1 + Dev 2 | 4 a 6 h | sinal aparece para o exemplo, com o motivo e a regra do dia de plantar |
+
+**Corte das novas:** T-16 vira a lista simples com ✓ (a versão de reduced motion); T-18 fica só com a regra do dia de plantar (SMAP) e o sinal sai da tela; T-17 mostra só a sobra em reais.
 
 ### Plano de horas
 

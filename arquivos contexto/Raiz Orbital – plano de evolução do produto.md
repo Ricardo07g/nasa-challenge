@@ -6,7 +6,7 @@
 
 ## 1. Ajustes no que já existe (fazer primeiro)
 
-Dois ajustes na tela 7 (Plano de 3 anos) vêm antes de qualquer item novo. Hoje a tela pede uma escolha que o produtor não sabe fazer ("Ano normal" ou "Ano seco") e tem botões que não mudam nada (50 ha, 100 ha, Tudo).
+Dois ajustes na tela 7 (Plano de 3 anos) vêm antes de qualquer item novo. **Registrados no PRD v3.1** como RF-20 e RF-21 (tarefas T-17 e T-18), junto com a nova tela de cálculo em forma de missão (RF-19, T-16). Hoje a tela pede uma escolha que o produtor não sabe fazer ("Ano normal" ou "Ano seco") e tem botões que não mudam nada (50 ha, 100 ha, Tudo).
 
 ### A1. "Quantos hectares quer testar?" (2 a 3 h)
 
