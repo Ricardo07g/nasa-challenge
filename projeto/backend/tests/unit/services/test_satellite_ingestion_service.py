@@ -1,5 +1,7 @@
 """Unit tests for SatelliteIngestionService (Sub-task 1.2 & 1.4 of Task 0001)."""
 
+import threading
+import time
 from datetime import date, timedelta
 
 from app.models.climate import (
@@ -33,13 +35,21 @@ def _make_season(cell_id: str, year: int) -> ClimateSeason:
 class FakeNasaPowerClient:
     """Devolve uma série diária completa (valores fixos) para o período pedido."""
 
-    def __init__(self, should_fail: bool = False, days_without_tmax: frozenset[date] = frozenset()):
+    def __init__(
+        self,
+        should_fail: bool = False,
+        days_without_tmax: frozenset[date] = frozenset(),
+        block: threading.Event | None = None,
+    ) -> None:
         self.should_fail = should_fail
         self.days_without_tmax = days_without_tmax
+        self.block = block
         self.calls: list[tuple[float, float, date, date]] = []
 
     def fetch_daily(self, lat: float, lon: float, start: date, end: date) -> PowerDailySeries:
         self.calls.append((lat, lon, start, end))
+        if self.block is not None:
+            self.block.wait(timeout=5.0)
         if self.should_fail:
             raise DomainError("NASA POWER timeout", code="NASA_POWER_UNAVAILABLE")
         days = tuple(
@@ -58,22 +68,35 @@ class FakeNasaPowerClient:
 
 
 class FakeSoilGridsClient:
-    def __init__(self) -> None:
-        self.calls: list[tuple[float, float]] = []
-
-    def fetch_soil(self, lat: float, lon: float) -> SoloInfo:
-        self.calls.append((lat, lon))
-        return SoloInfo(
+    def __init__(
+        self,
+        result: SoloInfo | None = None,
+        should_fail: bool = False,
+        block: threading.Event | None = None,
+    ) -> None:
+        self.result = result or SoloInfo(
             argila_percentual=46.0,
             areia_percentual=32.0,
             textura_solo="argiloso",
             cad_capacidade_agua_mm=60.0,
             fonte="soilgrids",
         )
+        self.should_fail = should_fail
+        self.block = block
+        self.calls: list[tuple[float, float]] = []
+
+    def fetch_soil(self, lat: float, lon: float) -> SoloInfo:
+        self.calls.append((lat, lon))
+        if self.block is not None:
+            self.block.wait(timeout=5.0)
+        if self.should_fail:
+            raise RuntimeError("SoilGrids fora do ar")
+        return self.result
 
 
 class FakeClimateRepository:
-    def __init__(self) -> None:
+    def __init__(self, has_neighbor: bool = True) -> None:
+        self.has_neighbor = has_neighbor
         self.saved_cells: dict[str, list[ClimateSeason]] = {
             "-189_-483": [_make_season("-189_-483", yr) for yr in range(2005, 2025)]
         }
@@ -83,7 +106,7 @@ class FakeClimateRepository:
         return cid if cid in self.saved_cells else None
 
     def find_nearest_cell_id(self, lat: float, lon: float) -> str | None:
-        return "-189_-483"
+        return "-189_-483" if self.has_neighbor else None
 
     def save_cell_seasons(
         self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
@@ -223,3 +246,101 @@ def test_should_save_only_complete_years_when_power_has_days_without_data() -> N
 
     years = [s.year for s in climate_repo.saved_cells[cell_id]]
     assert years == [y for y in range(2005, 2025) if y not in (2010, 2017)]
+
+
+def _ingestion(
+    nasa_client: FakeNasaPowerClient | None = None,
+    soil_client: FakeSoilGridsClient | None = None,
+    climate_repo: FakeClimateRepository | None = None,
+    soil_repo: FakeSoilRepository | None = None,
+    timeout_seconds: float = 9.0,
+) -> SatelliteIngestionService:
+    return SatelliteIngestionService(
+        nasa_client=nasa_client or FakeNasaPowerClient(),
+        soil_client=soil_client or FakeSoilGridsClient(),
+        climate_repo=climate_repo or FakeClimateRepository(),
+        soil_repo=soil_repo or FakeSoilRepository(),
+        timeout_seconds=timeout_seconds,
+    )
+
+
+DEFAULT_SOIL_FALLBACK = SoloInfo(
+    argila_percentual=28.0,
+    areia_percentual=45.0,
+    textura_solo="medio",
+    cad_capacidade_agua_mm=50.0,
+    fonte="padrao",
+)
+
+
+def test_should_not_save_default_soil_when_soilgrids_answers_with_fallback() -> None:
+    # O banco não guarda a fonte do solo: o padrão gravado voltaria como "soilgrids".
+    soil_repo = FakeSoilRepository()
+    climate_repo = FakeClimateRepository()
+    service = _ingestion(
+        soil_client=FakeSoilGridsClient(result=DEFAULT_SOIL_FALLBACK),
+        climate_repo=climate_repo,
+        soil_repo=soil_repo,
+    )
+
+    cell_id = service.ingest_area(lat=-17.78, lon=-50.92)
+
+    assert soil_repo.saved_soils == {}
+    assert cell_id == "-178_-510"
+    assert "-178_-510" in climate_repo.saved_cells
+
+
+def test_should_keep_ingesting_climate_without_saving_soil_when_soilgrids_raises() -> None:
+    soil_repo = FakeSoilRepository()
+    climate_repo = FakeClimateRepository()
+    service = _ingestion(
+        soil_client=FakeSoilGridsClient(should_fail=True),
+        climate_repo=climate_repo,
+        soil_repo=soil_repo,
+    )
+
+    cell_id = service.ingest_area(lat=-17.78, lon=-50.92)
+
+    assert cell_id == "-178_-510"
+    assert len(climate_repo.saved_cells["-178_-510"]) == 20
+    assert soil_repo.saved_soils == {}
+
+
+def test_should_finish_within_the_total_timeout_when_external_apis_hang() -> None:
+    # O `with ThreadPoolExecutor` esperava as threads ao sair: o limite de 9 s não valia.
+    release = threading.Event()
+    soil_repo = FakeSoilRepository()
+    climate_repo = FakeClimateRepository()
+    service = _ingestion(
+        nasa_client=FakeNasaPowerClient(block=release),
+        soil_client=FakeSoilGridsClient(block=release),
+        climate_repo=climate_repo,
+        soil_repo=soil_repo,
+        timeout_seconds=0.2,
+    )
+
+    started = time.monotonic()
+    try:
+        cell_id = service.ingest_area(lat=-17.78, lon=-50.92)
+        elapsed = time.monotonic() - started
+    finally:
+        release.set()
+
+    assert elapsed < 1.0
+    assert cell_id == "-178_-510"
+    # Clima da célula vizinha (reserva da tarefa 0001) e nenhum solo gravado.
+    assert all(s.cell_id == "-178_-510" for s in climate_repo.saved_cells["-178_-510"])
+    assert soil_repo.saved_soils == {}
+
+
+def test_should_not_persist_the_cell_when_no_climate_data_is_available() -> None:
+    # Gravar a célula sem temporadas travaria as próximas buscas: ela "existiria" sem dados.
+    climate_repo = FakeClimateRepository(has_neighbor=False)
+    service = _ingestion(
+        nasa_client=FakeNasaPowerClient(should_fail=True), climate_repo=climate_repo
+    )
+
+    cell_id = service.ingest_area(lat=-17.78, lon=-50.92)
+
+    assert cell_id is None
+    assert "-178_-510" not in climate_repo.saved_cells

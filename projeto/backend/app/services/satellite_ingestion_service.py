@@ -1,21 +1,26 @@
 """On-demand satellite and soil ingestion service (Sub-task 1.2 & 1.4 of Task 0001)."""
 
 import logging
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 
 from app.constants import (
     INGESTION_TOTAL_TIMEOUT_SECONDS,
     INGESTION_WORKERS_COUNT,
 )
 from app.models.climate import ClimateSeason
-from app.repositories.climate_repository import ClimateRepository, cell_id_for
+from app.models.talhao import SoloInfo
+from app.repositories.climate_repository import WritableClimateRepository, cell_id_for
 from app.repositories.external.nasa_power_client import NasaPowerClientProtocol
 from app.repositories.external.soilgrids_client import SoilGridsClientProtocol
-from app.repositories.soil_repository import SoilRepository
+from app.repositories.soil_repository import DEFAULT_SOIL, WritableSoilRepository
 from app.services.climate_season_builder import ClimateSeasonBuilder
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
 logger = logging.getLogger(__name__)
+
+# Só o solo que veio do SoilGrids é gravado: o soil_point não tem coluna de fonte e tudo o que
+# está nele é lido de volta como "soilgrids".
+SOILGRIDS_SOURCE = "soilgrids"
 
 
 class SatelliteIngestionService:
@@ -25,8 +30,8 @@ class SatelliteIngestionService:
         self,
         nasa_client: NasaPowerClientProtocol,
         soil_client: SoilGridsClientProtocol,
-        climate_repo: ClimateRepository,
-        soil_repo: SoilRepository,
+        climate_repo: WritableClimateRepository,
+        soil_repo: WritableSoilRepository,
         timeout_seconds: float = INGESTION_TOTAL_TIMEOUT_SECONDS,
         season_builder: ClimateSeasonBuilder | None = None,
     ) -> None:
@@ -37,15 +42,20 @@ class SatelliteIngestionService:
         self._timeout = timeout_seconds
         self._season_builder = season_builder or ClimateSeasonBuilder(WaterBalanceCalculator())
 
-    def ingest_area(self, lat: float, lon: float) -> str:
-        """Fetches climate and soil data in parallel for a new coordinate and persists to cache/DB.
+    def ingest_area(self, lat: float, lon: float) -> str | None:
+        """Busca clima e solo em paralelo para um ponto novo e grava a célula no banco.
 
-        If NASA POWER is unavailable or times out, falls back to the nearest existing spatial cell.
+        As duas chamadas externas têm, juntas, no máximo `timeout_seconds`. Sem resposta do
+        NASA POWER no limite, usa a célula vizinha já gravada; sem resposta do SoilGrids, não
+        grava solo (o ponto fica com o solo padrão). Devolve o id da célula gravada, ou None
+        quando não há clima nenhum para gravar.
         """
         cell_id = cell_id_for(lat, lon)
         start, end = self._season_builder.request_window()
 
-        with ThreadPoolExecutor(max_workers=INGESTION_WORKERS_COUNT) as executor:
+        # Sem `with`: ele espera as threads ao sair, e o limite total deixaria de valer.
+        executor = ThreadPoolExecutor(max_workers=INGESTION_WORKERS_COUNT)
+        try:
             nasa_future = executor.submit(
                 self._nasa_client.fetch_daily,
                 lat,
@@ -58,33 +68,49 @@ class SatelliteIngestionService:
                 lat,
                 lon,
             )
+            wait([nasa_future, soil_future], timeout=self._timeout)
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
 
-            soil_info = soil_future.result(timeout=self._timeout)
-            if hasattr(self._soil_repo, "save_soil"):
-                self._soil_repo.save_soil(lat, lon, soil_info)
-
-            try:
-                series = nasa_future.result(timeout=self._timeout)
-            except Exception as exc:
-                logger.warning(
-                    "NASA POWER ingestion failed for cell %s (%s, %s); "
-                    "falling back to nearest spatial cell: %s",
-                    cell_id,
-                    lat,
-                    lon,
-                    exc,
-                )
-                seasons = self._load_nearest_neighbor_seasons(cell_id, lat, lon)
-            else:
-                seasons = self._season_builder.build(series, cell_id=cell_id, lat=lat)
-
-        if hasattr(self._climate_repo, "save_cell_seasons"):
-            self._climate_repo.save_cell_seasons(
-                cell_id=cell_id,
-                lat=lat,
-                lon=lon,
-                seasons=seasons,
+        try:
+            soil_info: SoloInfo = soil_future.result(timeout=0)
+        except Exception as exc:
+            logger.warning(
+                "SoilGrids ingestion failed for (%s, %s); keeping default soil: %s",
+                lat,
+                lon,
+                exc,
             )
+            soil_info = DEFAULT_SOIL
+        if soil_info.fonte == SOILGRIDS_SOURCE:
+            self._soil_repo.save_soil(lat, lon, soil_info)
+
+        try:
+            series = nasa_future.result(timeout=0)
+        except Exception as exc:
+            logger.warning(
+                "NASA POWER ingestion failed for cell %s (%s, %s); "
+                "falling back to nearest spatial cell: %s",
+                cell_id,
+                lat,
+                lon,
+                exc,
+            )
+            seasons = self._load_nearest_neighbor_seasons(cell_id, lat, lon)
+        else:
+            # Fora do try: erro de cálculo não pode cair escondido no fallback da célula vizinha.
+            seasons = self._season_builder.build(series, cell_id=cell_id, lat=lat)
+
+        if not seasons:
+            logger.warning("No climate data for cell %s (%s, %s); nothing saved", cell_id, lat, lon)
+            return None
+
+        self._climate_repo.save_cell_seasons(
+            cell_id=cell_id,
+            lat=lat,
+            lon=lon,
+            seasons=seasons,
+        )
         return cell_id
 
     def _load_nearest_neighbor_seasons(

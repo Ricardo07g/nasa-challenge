@@ -24,6 +24,16 @@ class ClimateRepository(Protocol):
     def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]: ...
 
 
+class WritableClimateRepository(ClimateRepository, Protocol):
+    """Clima que também grava células novas (PostGIS). A busca sob demanda só existe com ele."""
+
+    def find_nearest_cell_id(self, lat: float, lon: float) -> str | None: ...
+
+    def save_cell_seasons(
+        self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
+    ) -> None: ...
+
+
 def cell_id_for(lat: float, lon: float) -> str:
     """Id da célula de 0,1° (plano técnico §5): "<floor(lat*10)>_<floor(lon*10)>".
 
@@ -235,11 +245,14 @@ class PostgisClimateRepository:
             rows = cur.fetchall()
             if not rows and self._fallback:
                 return self._fallback.get_seasons(cell_id)
+            # O banco não guarda a latitude da série: usa o centro da célula (a ETo depende dela).
+            center_lat, _ = cell_center(cell_id)
             return [
                 ClimateSeason(
                     cell_id=cell_id,
                     year=int(r[0]),
                     start_date=r[1],
+                    lat=center_lat,
                     rain_mm=tuple(float(v) for v in r[2]),
                     rain_source=str(r[3]),
                     tmax_c=tuple(float(v) for v in r[4]),
