@@ -153,6 +153,11 @@
   line-height: 1;
 }
 
+/* Na faixa grande (histórico do talhão), o "?" acompanha o tamanho do quadrinho */
+.strip[data-size='lg'] .cell[data-state='unknown'] {
+  font-size: var(--font-size-small);
+}
+
 .year {
   font-size: var(--font-size-micro);
   color: var(--color-text-muted);
