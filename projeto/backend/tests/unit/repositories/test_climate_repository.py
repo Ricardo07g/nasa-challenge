@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from app.config import Settings
-from app.models.climate import ClimateSeason
+from app.models.climate import ClimateSeason, Cmip6Delta
 from app.repositories import climate_repository
 from app.repositories.climate_repository import (
     FixtureClimateRepository,
@@ -153,6 +153,113 @@ def test_should_read_monthly_cmip6_deltas_per_model_when_present(tmp_path: Path)
         ("MIROC6", 3, 2.0, 1.1),
     ]
     assert all(d.scenario == "ssp245" for d in deltas)
+
+
+def test_should_read_tmin_delta_from_the_fixture_cmip6_list_when_present(tmp_path: Path) -> None:
+    cmip6 = [
+        {"modelo": "MODELO-TESTE", "cenario": "ssp245", "mes": 2, "chuva_pct": -10.0,
+         "tmax_c": 2.0, "tmin_c": 1.0},
+        {"modelo": "MODELO-TESTE", "cenario": "ssp245", "mes": 3, "chuva_pct": 0.0, "tmax_c": 2.0},
+    ]  # fmt: skip
+    repo = FixtureClimateRepository(_write_fixture(tmp_path / "clima.json", cmip6=cmip6))
+
+    deltas = repo.get_cmip6_deltas("-190_-482")
+
+    assert [d.tmin_c for d in deltas] == [1.0, None]
+
+
+class _FakeCmip6Source:
+    """Fonte de deltas falsa (tabela ou arquivo): devolve o que recebeu e conta as consultas."""
+
+    def __init__(self, deltas: list[Cmip6Delta]) -> None:
+        self._deltas = deltas
+        self.calls: list[str] = []
+
+    def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]:
+        self.calls.append(cell_id)
+        return list(self._deltas)
+
+
+def _test_deltas(model: str) -> list[Cmip6Delta]:
+    return [Cmip6Delta(model, "ssp245", 2, rain_pct=-10.0, tmax_c=2.0, tmin_c=1.0)]
+
+
+FIXTURE_CMIP6 = [
+    {"modelo": "FIXTURE-TESTE", "cenario": "ssp245", "mes": 2, "chuva_pct": 5.0, "tmax_c": 1.0}
+]
+
+
+def test_should_take_deltas_from_the_deltas_file_before_the_fixture_list(tmp_path: Path) -> None:
+    file_repo = _FakeCmip6Source(_test_deltas("ARQUIVO-TESTE"))
+    repo = FixtureClimateRepository(
+        _write_fixture(tmp_path / "clima.json", cmip6=FIXTURE_CMIP6), cmip6_file_repo=file_repo
+    )
+
+    deltas = repo.get_cmip6_deltas("-190_-482")
+
+    assert [d.model for d in deltas] == ["ARQUIVO-TESTE"]
+    assert file_repo.calls == ["-190_-482"]
+
+
+def test_should_use_the_fixture_list_when_the_deltas_file_has_nothing_for_the_cell(
+    tmp_path: Path,
+) -> None:
+    repo = FixtureClimateRepository(
+        _write_fixture(tmp_path / "clima.json", cmip6=FIXTURE_CMIP6),
+        cmip6_file_repo=_FakeCmip6Source([]),
+    )
+
+    assert [d.model for d in repo.get_cmip6_deltas("-190_-482")] == ["FIXTURE-TESTE"]
+
+
+def _postgis_with_sources(
+    table: list[Cmip6Delta], file: list[Cmip6Delta], fixture: list[Cmip6Delta]
+) -> tuple[PostgisClimateRepository, _FakeCmip6Source, _FakeCmip6Source, _FakeCmip6Source]:
+    table_repo, file_repo = _FakeCmip6Source(table), _FakeCmip6Source(file)
+    fallback = _FakeCmip6Source(fixture)
+    repo = PostgisClimateRepository(
+        "postgresql://teste",
+        fallback_repo=fallback,
+        cmip6_repo=table_repo,
+        cmip6_file_repo=file_repo,
+    )
+    return repo, table_repo, file_repo, fallback
+
+
+def test_should_read_cmip6_deltas_from_the_table_first() -> None:
+    repo, _, file_repo, fallback = _postgis_with_sources(
+        table=_test_deltas("TABELA-TESTE"),
+        file=_test_deltas("ARQUIVO-TESTE"),
+        fixture=_test_deltas("FIXTURE-TESTE"),
+    )
+
+    assert [d.model for d in repo.get_cmip6_deltas("-190_-482")] == ["TABELA-TESTE"]
+    assert file_repo.calls == fallback.calls == []
+
+
+def test_should_read_cmip6_deltas_from_the_file_when_the_table_has_none_for_the_cell() -> None:
+    repo, table_repo, _, fallback = _postgis_with_sources(
+        table=[], file=_test_deltas("ARQUIVO-TESTE"), fixture=_test_deltas("FIXTURE-TESTE")
+    )
+
+    assert [d.model for d in repo.get_cmip6_deltas("-190_-482")] == ["ARQUIVO-TESTE"]
+    assert table_repo.calls == ["-190_-482"]
+    assert fallback.calls == []
+
+
+def test_should_read_cmip6_deltas_from_the_fixture_when_table_and_file_have_none() -> None:
+    repo, table_repo, file_repo, _ = _postgis_with_sources(
+        table=[], file=[], fixture=_test_deltas("FIXTURE-TESTE")
+    )
+
+    assert [d.model for d in repo.get_cmip6_deltas("-190_-482")] == ["FIXTURE-TESTE"]
+    assert table_repo.calls == file_repo.calls == ["-190_-482"]
+
+
+def test_should_return_no_cmip6_deltas_when_no_source_has_them() -> None:
+    repo, *_ = _postgis_with_sources(table=[], file=[], fixture=[])
+
+    assert repo.get_cmip6_deltas("-190_-482") == []
 
 
 def test_should_load_shipped_example_farm_fixture_with_twenty_full_seasons() -> None:

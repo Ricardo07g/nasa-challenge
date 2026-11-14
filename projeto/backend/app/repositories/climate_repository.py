@@ -4,12 +4,16 @@ import json
 import math
 from datetime import date
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 import psycopg
 
 from app.constants import DEFAULT_SRID, GRID_CELL_SCALE_FACTOR
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
+
+if TYPE_CHECKING:
+    # Só o tipo: o cmip6_repository importa daqui as funções da célula (sem import circular).
+    from app.repositories.cmip6_repository import Cmip6Repository
 
 
 class ClimateRepository(Protocol):
@@ -106,10 +110,14 @@ class FixtureClimateRepository:
     O arquivo traz a série de um ponto e a área que ela representa (`cobertura`: a célula do
     NASA POWER, que devolve o mesmo valor para qualquer ponto dentro dela). Fora dessa área o
     repositório responde que não há dados, em vez de devolver o clima de outra região.
+
+    Deltas do CMIP6 (sem banco): primeiro o arquivo dos deltas (`cmip6_file_repo`, o `CMIP6_PATH`),
+    depois a lista `cmip6[]` da própria fixture.
     """
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, cmip6_file_repo: "Cmip6Repository | None" = None) -> None:
         self._path = path
+        self._cmip6_file_repo = cmip6_file_repo
         self._payload: dict[str, Any] | None = None
 
     def _load(self) -> dict[str, Any]:
@@ -153,30 +161,33 @@ class FixtureClimateRepository:
         ]
 
     def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]:
+        if self._cmip6_file_repo is not None:
+            deltas = self._cmip6_file_repo.get_cmip6_deltas(cell_id)
+            if deltas:
+                return deltas
         if not self._covers_cell(cell_id):
             return []
-        return [
-            Cmip6Delta(
-                model=str(item["modelo"]),
-                scenario=str(item["cenario"]),
-                month=int(item["mes"]),
-                rain_pct=float(item["chuva_pct"]),
-                tmax_c=float(item["tmax_c"]),
-            )
-            for item in self._load().get("cmip6", [])
-        ]
+        return [cmip6_delta_from_json(item) for item in self._load().get("cmip6", [])]
 
 
 class PostgisClimateRepository:
-    """PostgreSQL + PostGIS repository supporting spatial cache-aside and KNN fallback."""
+    """PostgreSQL + PostGIS repository supporting spatial cache-aside and KNN fallback.
+
+    Deltas do CMIP6 da célula, nesta ordem: tabela `cmip6_delta` (`cmip6_repo`), arquivo dos
+    deltas (`cmip6_file_repo`, o `CMIP6_PATH`) e a reserva (`fallback_repo`, a fixture).
+    """
 
     def __init__(
         self,
         database_url: str,
         fallback_repo: ClimateRepository | None = None,
+        cmip6_repo: "Cmip6Repository | None" = None,
+        cmip6_file_repo: "Cmip6Repository | None" = None,
     ) -> None:
         self._database_url = database_url
         self._fallback = fallback_repo
+        self._cmip6_repo = cmip6_repo
+        self._cmip6_file_repo = cmip6_file_repo
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
         # Pelo id (mesma regra da ingestão): um ponto na borda entre duas células não fica ambíguo.
@@ -296,8 +307,12 @@ class PostgisClimateRepository:
             ]
 
     def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]:
-        if self._fallback:
-            return self._fallback.get_cmip6_deltas(cell_id)
+        for source in (self._cmip6_repo, self._cmip6_file_repo, self._fallback):
+            if source is None:
+                continue
+            deltas = source.get_cmip6_deltas(cell_id)
+            if deltas:
+                return deltas
         return []
 
     def get_latest_smap(self, lat: float, lon: float) -> SmapSoilMoisture | None:
