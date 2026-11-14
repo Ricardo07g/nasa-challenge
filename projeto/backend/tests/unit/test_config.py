@@ -13,6 +13,7 @@ DATA_ENV_VARS = (
 )
 CREDENTIAL_ENV_VARS = (
     "EARTHDATA_TOKEN",
+    "APPEEARS_TOKEN",
     "EARTHDATA_USERNAME",
     "EARTHDATA_PASSWORD",
     "EE_PROJECT",
@@ -106,3 +107,18 @@ def test_earthdata_token_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = Settings(_env_file=None)
 
     assert settings.earthdata_token == "token-de-teste"
+
+
+def test_appeears_token_defaults_to_none() -> None:
+    # O AppEEARS recusa o token da Earthdata: ele tem o próprio, que só os scripts de dados usam.
+    settings = Settings(_env_file=None)
+
+    assert settings.appeears_token is None
+
+
+def test_appeears_token_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APPEEARS_TOKEN", "token-de-teste")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.appeears_token == "token-de-teste"
