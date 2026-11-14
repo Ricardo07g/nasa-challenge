@@ -150,6 +150,22 @@ Segundo o guia de submissão ([Project Submission Guide](https://www.spaceappsch
 
 O semáforo de plantio da soja e os alertas de veranico, calor, chuva forte e fogo descritos no [Doc 5](https://claude.ai/artifact/Ub4x3JemJK2pZ6NnbqLPbh) viram o módulo que acompanha o plano ao longo do ano. No hackathon, eles aparecem só como "próximos passos".
 
+### Comunidade "Na sua região" (Could no hackathon)
+
+A camada comunitária fica, ligada à rotação. Ela faz duas coisas:
+
+- **Choveu aqui:** o produtor com pluviômetro registra a chuva do dia. As leituras corrigem a chuva do GPM IMERG na região e entram no cálculo de risco, o que mostra aos jurados que o dado da NASA é conferido com medição de campo (critério Validade).
+- **O que os vizinhos plantaram:** depois da entressafra, o produtor conta em dois toques o que plantou e se ficou satisfeito. O app mostra, num raio de 30 km, quantos vizinhos fizeram cada opção e quantos gostaram. Junta o dado do satélite com a experiência local e responde à desconfiança do produtor em tecnologia (critérios Impacto e Criatividade).
+
+| ID | Requisito | Detalhe | Prioridade |
+| --- | --- | --- | --- |
+| RF-13 | Registrar chuva | Valor em mm e data, ligado ao ponto do talhão; aparece no mapa da região | Could |
+| RF-14 | Contar a entressafra | Opção plantada e satisfação (sim, mais ou menos, não) | Could |
+| RF-15 | Tela "Na sua região" | Mapa com pluviômetros e escolhas dos vizinhos; resumo por opção | Could |
+| RNF-10 | Privacidade da comunidade | O mapa mostra a região, não a localização exata da fazenda; nome só com autorização | Must se a tela existir |
+
+No hackathon, a tela entra **simulada** no protótipo e no pitch, sem código de backend. O relato de queimada e estrada ruim ("Waze do campo") fica para o módulo 2, junto com os alertas.
+
 ## 5. Opções de entressafra e parâmetros das culturas
 
 Todos os números ficam em `culturas.yaml`, para a agrônoma do time ajustar sem mexer no código. O que está marcado como hipótese precisa ser conferido antes da demo.
@@ -391,6 +407,8 @@ Time: **Rayanne** (produto, parâmetros, pitch e submissão), **Dev 1** (dados e
 | T-14 | Vídeo de 30 s com legenda em inglês e página do projeto | Rayanne | 3 h | submetido |
 
 **Ordem de corte se o tempo apertar:** T-10 (histórico) vira imagem estática; T-06 usa 1 modelo só; T-04 usa a chuva do POWER; T-09 mostra só o melhor plano. **Nunca cortar:** T-05, T-08, T-13 e T-14.
+
+**T-15 (Could):** tela "Na sua região" com dados simulados, só no front-end (Dev 2, 1 h), e 5 segundos dela no vídeo. Entra apenas depois de T-13 pronta.
 
 ### Plano de horas
 

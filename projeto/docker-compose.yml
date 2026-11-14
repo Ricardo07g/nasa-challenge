@@ -1,0 +1,62 @@
+# Ambiente local de desenvolvimento.
+# Uso: cd projeto && docker compose up --build
+#   Front: http://localhost:5173
+#   API:   http://localhost:8000/docs
+#   Banco: localhost:5433 (PostgreSQL + PostGIS)
+# Os valores padrão do banco são só para uso local; para mudar, copie .env.example para .env.
+
+services:
+  db:
+    # PostgreSQL 17 + PostGIS 3.5 (dados geográficos da NASA: pontos, grades, polígonos).
+    # A imagem oficial só tem versão amd64; em Mac com chip Apple ela roda emulada.
+    image: postgis/postgis:17-3.5
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-raiz_orbital}
+      POSTGRES_USER: ${POSTGRES_USER:-raiz}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-raiz_local}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        INSTALL_DEV: "true"
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-raiz}:${POSTGRES_PASSWORD:-raiz_local}@db:5432/${POSTGRES_DB:-raiz_orbital}
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/tests:/app/tests
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      API_PROXY_TARGET: http://backend:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
