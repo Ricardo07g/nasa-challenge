@@ -1,21 +1,25 @@
-# Diagrama de Classes e Modelo de Dados — Raiz Orbital (Backend & `/data`)
+# Diagrama de Classes e Modelo de Dados — Raiz Orbital (Backend e Fontes de Dados)
 
-Este documento apresenta os **Diagramas de Classes (UML)** e o **Diagrama Entidade-Relacionamento (PostGIS)** do backend do **Raiz Orbital**, alinhando a arquitetura **MVC + Service/Repository** (`AGENTS.md`) com os **scripts e estruturas de dados reais obtidos em [`/workspace/data/`](file:///workspace/data)**.
+Este documento apresenta os **Diagramas de Classes (UML)** e o **Diagrama Entidade-Relacionamento (PostGIS)** do backend do **Raiz Orbital**, alinhando a arquitetura **MVC + Service/Repository** (`AGENTS.md`) com as **fontes de dados reais** (scripts de [`data/`](../../../data/README.md), clientes da API e scripts do pipeline).
 
 ---
 
-## 1. Mapeamento: Dados Extraídos em `/data` $\rightarrow$ Classes do Backend
+## 1. Mapeamento: Fontes de Dados $\rightarrow$ Classes do Backend
 
-Cada script e arquivo gerado em [`/workspace/data/`](file:///workspace/data) mapeia diretamente para uma Entidade de Domínio (`app/models/`), um Contrato de Repositório (`app/repositories/`) e um Serviço de Negócio (`app/services/`):
+Cada fonte mapeia para uma Entidade de Domínio (`app/models/`), um Contrato de Repositório
+(`app/repositories/`) e um Serviço de Negócio (`app/services/`). Sem Google Earth Engine no MVP
+([ADR-0005](adr/0005-fontes-diretas-da-nasa-sem-earth-engine.md)); o formato das fontes novas está em
+"Contrato dos dados das fontes", no `AGENTS.md` do backend.
 
-| Origem em `/data` | Campos Reais Extraídos | Model (`app/models/`) | Repository (`app/repositories/`) | Service (`app/services/`) |
+| Origem | Campos | Model (`app/models/`) | Repository (`app/repositories/`) | Service (`app/services/`) |
 | :--- | :--- | :--- | :--- | :--- |
-| **[`culturas.yaml`](file:///workspace/data/culturas.yaml)** | `nome`, `tipo`, `funcao`, `semeadura_limite_mes_dia`, `dias_florescer`, `ciclo_dias`, `kc_pico`, `palhada_score`, `n_deixado_kg`, `nematoide_efeito`, `produtividade_padrao_sc_ha`, `preco_padrao_saca`, `custo_padrao_ha` | `CropOption`<br>`CropParams` | `CropParamsRepository`<br>`YamlCropParamsRepository` | `CropOptionService`<br>`RecommendationService`<br>`RotationPlanService` |
-| **[`extract_nasa_power.py`](file:///workspace/data/extract_nasa_power.py)**<br>**[`extract_historical_20y.py`](file:///workspace/data/extract_historical_20y.py)**<br>([`historico_uberlandia_20anos_diario.json`](file:///workspace/data/output/historico_uberlandia_20anos_diario.json)) | `date`, `PRECTOTCORR` *(mm/dia)*, `T2M_MAX`, `T2M_MIN`, `T2M`, `RH2M`, `WS2M`, `ALLSKY_SFC_SW_DWN` *(MJ/m²/dia)*, `GWETROOT` *(0–1)*;<br>Resumo: `chuva_total_mm`, `chuva_safrinha_fev_mai_mm`, `dias_calor_extremo_ge_35c` | `DailyWeatherRecord`<br>`ClimateSeason`<br>`AnnualClimateSummary` | `ClimateRepository`<br>`PostgisClimateRepository`<br>`JsonOutputClimateRepository` | `WaterBalanceCalculator`<br>`ClimateRiskService` |
-| **[`extract_smap.py`](file:///workspace/data/extract_smap.py)**<br>(`smap_uberlandia_2024_safra.json`) | `date`, `latitude`, `longitude`, `sm_surface_m3_m3` *(0–5 cm)*, `sm_rootzone_m3_m3` *(0–100 cm)*, `sm_rootzone_wetness` *(0–1)* | `SmapSoilMoisture` | `SoilMoistureRepository`<br>`AppeearsSmapRepository` | `WaterBalanceCalculator` *(calibra `arm0` do balde)* |
-| **[`extract_soilgrids.py`](file:///workspace/data/extract_soilgrids.py)**<br>(`soilgrids_talhao.json`) | `argila_percentual` (`clay`), `areia_percentual` (`sand`), `textura_solo` (`arenoso` \| `medio` \| `argiloso`), `cad_capacidade_agua_mm` (`40` \| `50` \| `60`) | `SoloInfo` | `SoilRepository`<br>`CachedSoilGridsRepository` | `TalhaoService`<br>`RecommendationService` |
-| **[`extract_gee_ndvi.py`](file:///workspace/data/extract_gee_ndvi.py)**<br>(`modis_ndvi_historico_10anos.json`) | `serie_ndvi` (`date`, `year`, `month`, `ndvi` $\times 0,0001$), `classificacao_anual` (`ano`, `ndvi_medio_safrinha`, `status_talhao`: `Pousio` \| `Segunda Safra`) | `NdviRecord`<br>`HistoricoAno`<br>`HistoricoTalhao`<br>`ColheitaSugerida` | `NdviRepository`<br>`CachedEarthEngineNdviRepository` | `FieldHistoryService`<br>`TalhaoService` |
-| **[`extract_gee_cmip6.py`](file:///workspace/data/extract_gee_cmip6.py)**<br>(`cmip6_projecao_2050.json`) | `cenario` (`SSP2-4.5`), `modelos_referencia`, `delta_climatico_safrinha` (`aumento_temperatura_media_c`, `variacao_chuva_safrinha_pct`, `aumento_dias_calor_extremo_ge_35c`) | `Cmip6Delta` | `ClimateRepository` | `ClimateRiskService` |
+| **[`app/config_data/culturas.yaml`](../app/config_data/culturas.yaml)** | `nome`, `tipo`, `funcao`, `semeadura_limite_mes_dia`, `dias_florescer`, `ciclo_dias`, `kc_pico`, `nota_solo` (`palhada`, `nitrogenio`, `pragas`), `n_deixado_kg`, `produtividade_padrao_sc_ha`, `preco_padrao_saca`, `custo_padrao_ha` | `CropOption`<br>`CropParams` | `CropParamsRepository`<br>`YamlCropParamsRepository` | `CropOptionService`<br>`RecommendationService`<br>`RotationPlanService` |
+| **NASA POWER:** [`data/extract_nasa_power.py`](../../../data/extract_nasa_power.py) e [`data/extract_historical_20y.py`](../../../data/extract_historical_20y.py) → fixture [`app/fixtures/clima_fazenda_exemplo.json`](../app/fixtures/clima_fazenda_exemplo.json); `NasaPowerClient` na API (busca sob demanda, R1.1) | `date`, `PRECTOTCORR` *(mm/dia)*, `T2M_MAX`, `T2M_MIN`, `T2M`, `RH2M`, `WS2M`, `ALLSKY_SFC_SW_DWN` *(MJ/m²/dia)*, `GWETROOT` *(0–1)* | `DailyWeatherRecord`<br>`ClimateSeason`<br>`AnnualClimateSummary` | `ClimateRepository`<br>`FixtureClimateRepository`<br>`PostgisClimateRepository` | `WaterBalanceCalculator`<br>`ClimateRiskService` |
+| **SMAP L4:** [`data/extract_smap.py`](../../../data/extract_smap.py) (AppEEARS); `pipeline/fetch_smap.py` a fazer (R2.3) | `data`, `latitude`, `longitude`, `sm_rootzone_m3_m3` *(0–100 cm)*, `sm_rootzone_wetness` *(0–1)*, `sm_surface_m3_m3` *(0–5 cm, opcional)* | `SmapSoilMoisture` | `ClimateRepository.get_latest_smap` | `ClimateRiskService` *(balde inicial, R3.3)* |
+| **SoilGrids:** `SoilGridsClient` na API (sem script em `data/`) | `argila_percentual` (`clay`), `areia_percentual` (`sand`), `textura_solo` (`arenoso` \| `medio` \| `argiloso`), `cad_capacidade_agua_mm` (`40` \| `50` \| `60`) | `SoloInfo` | `SoilRepository`<br>`CachedSoilGridsRepository`<br>`PostgisSoilRepository` | `TalhaoService`<br>`RecommendationService` |
+| **MODIS MOD13Q1 + MYD13Q1:** `pipeline/fetch_ndvi.py` a fazer (R2.2), pelo AppEEARS | `data`, `ndvi` *(fator 0,0001)*, `qualidade` *(0 ou 1)*, `produto` | `NdviRecord`<br>`HistoricoAno`<br>`HistoricoTalhao`<br>`ColheitaSugerida` | `NdviRepository`<br>`CachedNdviRepository` | `FieldHistoryService`<br>`TalhaoService` |
+| **NEX-GDDP-CMIP6:** `pipeline/fetch_cmip6_deltas.py` a fazer (R2.1), pelo THREDDS da NCCS | delta mensal por modelo: `model`, `scenario`, `month`, `rain_pct`, `tmax_c`, `tmin_c` *(opcional)* | `Cmip6Delta` | `ClimateRepository.get_cmip6_deltas` | `ClimateRiskService` |
+| **Execução dos scripts de dados** (tabela `data_run`) | `source`, `params`, `finished_at`, `version` | `DataRun` | (R1.6) | `versao_dados` (R3.5) |
 
 ---
 
@@ -40,8 +44,8 @@ flowchart LR
     end
     subgraph Data ["Fontes de Dados (/data & PostGIS)"]
         DB[("PostGIS 17<br/>(Séries, Deltas, Cache)")]
-        DATA_DIR["/data/output/*.json<br/>/data/culturas.yaml"]
-        EXT["APIs NASA / GEE / SoilGrids<br/>(Scripts /data/extract_*.py)"]
+        DATA_DIR["app/fixtures/*.json<br/>app/config_data/culturas.yaml<br/>caches por ponto"]
+        EXT["APIs NASA / SoilGrids<br/>(clientes HTTP e scripts de dados)"]
     end
 
     S <-- "converte" --- C
@@ -58,7 +62,7 @@ flowchart LR
 
 ## 3. Diagrama de Classes — Camada de Domínio (`app/models/`)
 
-As classes abaixo refletem exatamente os campos extraídos nos arquivos de [`/workspace/data/`](file:///workspace/data) e o contrato de resposta do protótipo v3:
+As classes abaixo refletem os models de `app/models/` (os das fontes novas seguem o contrato do `AGENTS.md`) e o contrato de resposta do protótipo v3:
 
 ```mermaid
 classDiagram
@@ -121,20 +125,36 @@ classDiagram
         +date data
         +float latitude
         +float longitude
-        +float sm_surface_m3_m3
         +float sm_rootzone_m3_m3
         +float sm_rootzone_wetness
         +str fonte
+        +float | None sm_surface_m3_m3
     }
 
     class Cmip6Delta {
         <<dataclass>>
-        +str cell_id
-        +str cenario
-        +tuple~str~ modelos_referencia
-        +float aumento_temperatura_media_c
-        +float variacao_chuva_safrinha_pct
-        +float aumento_dias_calor_extremo_ge_35c
+        +str model
+        +str scenario
+        +int month
+        +float rain_pct
+        +float tmax_c
+        +float | None tmin_c
+    }
+
+    class NdviRecord {
+        <<dataclass>>
+        +date data
+        +float ndvi
+        +int | None qualidade
+        +str | None produto
+    }
+
+    class DataRun {
+        <<dataclass>>
+        +str source
+        +Mapping params
+        +datetime finished_at
+        +str version
     }
 
     class SoloInfo {
@@ -267,7 +287,7 @@ classDiagram
 
 ## 4. Diagrama de Classes — Camada Repository (`app/repositories/`)
 
-Os contratos (`Protocol`) permitem que os Services leiam tanto do banco **PostGIS** quanto diretamente dos arquivos JSON/CSV/YAML gerados em [`/workspace/data/output/`](file:///workspace/data/output) e [`/workspace/data/culturas.yaml`](file:///workspace/data/culturas.yaml):
+Os contratos (`Protocol`) permitem que os Services leiam tanto do banco **PostGIS** quanto dos arquivos JSON/YAML que vão com a API ([`app/fixtures/`](../app/fixtures/clima_fazenda_exemplo.json), [`app/config_data/culturas.yaml`](../app/config_data/culturas.yaml) e os caches por ponto apontados no `Settings`):
 
 ```mermaid
 classDiagram
@@ -301,7 +321,7 @@ classDiagram
         <<Protocol>>
         +find_cell_id(lat: float, lon: float) str | None
         +get_seasons(cell_id: str) list~ClimateSeason~
-        +get_cmip6_delta(cell_id: str) Cmip6Delta
+        +get_cmip6_deltas(cell_id: str) list~Cmip6Delta~
         +get_latest_smap(lat: float, lon: float) SmapSoilMoisture | None
     }
 
@@ -309,15 +329,15 @@ classDiagram
         -str _database_url
         +find_cell_id(lat: float, lon: float) str | None
         +get_seasons(cell_id: str) list~ClimateSeason~
-        +get_cmip6_delta(cell_id: str) Cmip6Delta
+        +get_cmip6_deltas(cell_id: str) list~Cmip6Delta~
         +get_latest_smap(lat: float, lon: float) SmapSoilMoisture | None
     }
 
-    class DataOutputClimateRepository {
-        -Path _data_output_dir
+    class FixtureClimateRepository {
+        -Path _path
         +find_cell_id(lat: float, lon: float) str | None
         +get_seasons(cell_id: str) list~ClimateSeason~
-        +get_cmip6_delta(cell_id: str) Cmip6Delta
+        +get_cmip6_deltas(cell_id: str) list~Cmip6Delta~
         +get_latest_smap(lat: float, lon: float) SmapSoilMoisture | None
     }
 
@@ -334,29 +354,27 @@ classDiagram
 
     class NdviRepository {
         <<Protocol>>
-        +get_ndvi_history(lat: float, lon: float) tuple~list~dict~, list~HistoricoAno~~
+        +get_ndvi_history(lat: float, lon: float) list~NdviRecord~
     }
 
-    class CachedEarthEngineNdviRepository {
-        -str _database_url
-        -str _ee_project
-        -Path _fallback_json_path
-        +get_ndvi_history(lat: float, lon: float) tuple~list~dict~, list~HistoricoAno~~
+    class CachedNdviRepository {
+        -Path | None _cache_path
+        +get_ndvi_history(lat: float, lon: float) list~NdviRecord~
     }
 
     CropOptionRepository <|.. InMemoryCropOptionRepository
     CropParamsRepository <|.. YamlCropParamsRepository
     ClimateRepository <|.. PostgisClimateRepository
-    ClimateRepository <|.. DataOutputClimateRepository
+    ClimateRepository <|.. FixtureClimateRepository
     SoilRepository <|.. CachedSoilGridsRepository
-    NdviRepository <|.. CachedEarthEngineNdviRepository
+    NdviRepository <|.. CachedNdviRepository
 ```
 
 ---
 
 ## 5. Diagrama de Classes — Camada Service (`app/services/`)
 
-Os Services implementam as fórmulas biofísicas usando exatamente as variáveis extraídas em `/data` (`PRECTOTCORR`, `T2M_MAX`, `T2M_MIN`, `T2M`, `ALLSKY_SFC_SW_DWN`, `WS2M`, `RH2M`, `GWETROOT`, `sm_rootzone_wetness`, `ndvi` e `delta_climatico_safrinha`):
+Os Services implementam as fórmulas biofísicas usando exatamente as variáveis extraídas em `/data` (`PRECTOTCORR`, `T2M_MAX`, `T2M_MIN`, `T2M`, `ALLSKY_SFC_SW_DWN`, `WS2M`, `RH2M`, `GWETROOT`, `sm_rootzone_wetness`, `ndvi` e os deltas mensais do CMIP6):
 
 ```mermaid
 classDiagram
@@ -386,13 +404,13 @@ classDiagram
     class ClimateRiskService {
         -WaterBalanceCalculator _wb
         +simulate_historical(crop: CropParams, seasons: list~ClimateSeason~, semeadura: date, cad_mm: float, smap_wetness: float | None) list~ResultadoAno~
-        +simulate_future_cmip6(crop: CropParams, seasons: list~ClimateSeason~, delta: Cmip6Delta, semeadura: date, cad_mm: float) tuple~int, int, int~
+        +simulate_future_cmip6(crop: CropParams, seasons: list~ClimateSeason~, deltas: list~Cmip6Delta~, semeadura: date, cad_mm: float) FuturoResultado | None
         +is_within_window(crop: CropParams, semeadura: date) bool
     }
 
     class FieldHistoryService {
-        +classify_entressafra(ndvi_records: list~dict~) HistoricoTalhao
-        +suggest_harvest_band(ndvi_records: list~dict~) ColheitaSugerida
+        +classify_entressafra(ndvi_records: list~NdviRecord~) HistoricoTalhao
+        +suggest_harvest_band(ndvi_records: list~NdviRecord~) ColheitaSugerida
     }
 
     class RotationPlanService {
@@ -507,7 +525,7 @@ classDiagram
 
 ## 7. Diagrama Entidade-Relacionamento — Banco de Dados (`PostGIS 17`)
 
-O esquema do PostGIS persiste os dados extraídos pelos scripts de [`/workspace/data/`](file:///workspace/data) (`extract_nasa_power.py`, `extract_historical_20y.py`, `extract_smap.py`, `extract_soilgrids.py`, `extract_gee_ndvi.py`, `extract_gee_cmip6.py`):
+O esquema abaixo é o da migração inicial (`migrations/versions/cb6b775d83e3_create_initial_postgis_tables.py`). Hoje a busca sob demanda grava `grid_cell`, `climate_season` e `soil_point` (NASA POWER e SoilGrids); as outras tabelas ainda não recebem dados. A migração R1.6 troca `cmip6_delta` pelo formato mensal por modelo, põe qualidade e produto em `ndvi_point`, passa o SMAP para uma tabela por ponto e acrescenta `version` em `data_run` (proposta em "Contrato dos dados das fontes", no `AGENTS.md`):
 
 ```mermaid
 erDiagram
@@ -572,7 +590,7 @@ erDiagram
     DATA_RUN {
         serial id PK "Identificador da carga"
         text source "nasa_power | smap | soilgrids | modis | cmip6"
-        jsonb params "Parametros e arquivos gerados em /data/output"
+        jsonb params "Parametros da carga (produto, versao, modelos, anos)"
         timestamptz finished_at "Timestamp para versao_dados"
     }
 ```

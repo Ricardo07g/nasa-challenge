@@ -1,74 +1,63 @@
-# Diagramas de Sequência — Raiz Orbital (Backend, Protótipo v3 & Scripts `/data`)
+# Diagramas de Sequência — Raiz Orbital (Backend, Protótipo v3 e Scripts de Dados)
 
-Este documento apresenta os **Diagramas de Sequência (UML)** do **Raiz Orbital**, integrando os **scripts reais de extração em [`/workspace/data/`](file:///workspace/data)** com as camadas da API FastAPI e as 9 telas do protótipo v3.
+Este documento apresenta os **Diagramas de Sequência (UML)** do **Raiz Orbital**, integrando os **scripts de dados** ([`data/`](../../../data/README.md) e `pipeline/`) com as camadas da API FastAPI e as 9 telas do protótipo v3.
 
 ---
 
-## 1. Pipeline de Extração de Dados (`/data/extract_*.py` $\rightarrow$ `/data/output/` & PostGIS)
+## 1. Scripts de Dados (`data/` e `projeto/backend/pipeline/`) $\rightarrow$ arquivos e PostGIS
 
-Mostra como cada script implementado em [`/workspace/data/`](file:///workspace/data) obtém, higieniza e armazena os dados da NASA, do SoilGrids e do Google Earth Engine em [`/workspace/data/output/`](file:///workspace/data/output) e no banco PostGIS:
+Mostra o que os scripts de dados fazem hoje e o que falta (roteiro R2.1 a R2.3). Todos os dados vêm
+direto dos serviços da NASA, sem Google Earth Engine no MVP
+([ADR-0005](adr/0005-fontes-diretas-da-nasa-sem-earth-engine.md)). O SoilGrids não tem script: a API
+consulta na hora do pedido (diagrama 3). A saída segue "Contrato dos dados das fontes", no `AGENTS.md`
+do backend.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Dev as Dev / Pipeline (/data)
-    participant Power as extract_nasa_power.py & extract_historical_20y.py
-    participant Smap as extract_smap.py
-    participant Soil as extract_soilgrids.py
-    participant GeeNdvi as extract_gee_ndvi.py
-    participant GeeCmip as extract_gee_cmip6.py
-    participant APIs as APIs Externas (NASA POWER / AppEEARS / SoilGrids / GEE)
-    participant Out as /data/output/*.json & .csv (+ PostGIS)
+    actor Dev as Dev / scripts de dados
+    participant Power as data/extract_nasa_power.py e extract_historical_20y.py
+    participant Smap as data/extract_smap.py
+    participant Fix as pipeline/export_climate_fixture.py
+    participant Novos as pipeline/ (a fazer: fetch_cmip6_deltas, fetch_ndvi, fetch_smap)
+    participant APIs as Serviços da NASA (POWER, AppEEARS, NCCS THREDDS)
+    participant Out as data/output/ (local) e app/fixtures/
 
-    Note over Dev,Out: 1. Série Meteorológica Diária de 20 Anos (2005–2024) — Sem Cadastro
-    Dev->>Power: Executa extração para Fazenda do Glória, UFU (-18.9543, -48.1993)
+    Note over Dev,Out: 1. NASA POWER diário, 2005–2024 (sem login)
+    Dev->>Power: Extração para a Fazenda do Glória, UFU (-18.9543, -48.1993)
     Power->>APIs: GET power.larc.nasa.gov/api/temporal/daily/point (community=AG)
     APIs-->>Power: PRECTOTCORR, T2M_MAX, T2M_MIN, T2M, RH2M, WS2M, ALLSKY_SFC_SW_DWN, GWETROOT
-    Power->>Power: Converte sentinela -999.0 para None e agrega resumo anual (chuva safrinha fev–mai, dias >=35°C)
-    Power->>Out: Salva historico_uberlandia_20anos_diario.json/.csv e resumo_uberlandia_20anos_anual.json/.csv
+    Power->>Power: -999.0 vira None; resumo anual (chuva fev–mai, dias >= 35 °C)
+    Power->>Out: historico_uberlandia_20anos_diario.json e resumo anual em data/output/
+    Dev->>Fix: export_climate_fixture --entrada (data/output) --saida app/fixtures/clima_fazenda_exemplo.json
+    Fix->>Out: Fixture da fazenda de exemplo (o único arquivo de dados que vai para o git)
 
-    Note over Dev,Out: 2. Umidade do Solo na Zona Radicular (NASA SMAP L4 - SPL4SMGP)
-    Dev->>Smap: Executa extract_smap.py (Token Hardcoded, Login Earthdata ou Fallback Calibrado)
-    alt Token ou Credenciais Earthdata configuradas
-        Smap->>APIs: POST appeears.earthdatacloud.nasa.gov/api/task (SPL4SMGP.007: sm_rootzone, sm_surface)
-        APIs-->>Smap: task_id
-        loop Polling a cada 15s (wait_and_download_task)
-            Smap->>APIs: GET /api/task/{task_id}
-            APIs-->>Smap: status = 'processing' -> 'done'
-        end
-        Smap->>APIs: GET /api/bundle/{task_id} & download dos arquivos
-    else Modo Desenvolvimento / Hackathon
-        Smap->>Smap: generate_smap_sample_dataset (sm_surface_m3_m3, sm_rootzone_m3_m3, sm_rootzone_wetness)
+    Note over Dev,Out: 2. SMAP L4 (SPL4SMGP.007) pelo AppEEARS
+    Dev->>Smap: Executa com EARTHDATA_USERNAME e EARTHDATA_PASSWORD
+    Smap->>APIs: POST /api/login (devolve o token do AppEEARS, ~48 h)
+    Smap->>APIs: POST /api/task (sm_rootzone, sm_surface, sm_rootzone_wetness)
+    loop A cada 15 s
+        Smap->>APIs: GET /api/task/{task_id}
+        APIs-->>Smap: status 'processing' -> 'done'
     end
-    Smap->>Out: Salva smap_uberlandia_2024_safra.json/.csv
+    Smap->>APIs: GET /api/bundle/{task_id} e download dos arquivos
+    Smap->>Out: CSV e JSON em data/output/ (sem credencial, para com erro: nunca gera dado sintético)
 
-    Note over Dev,Out: 3. Textura do Solo e CAD (SoilGrids ISRIC 250m) — Sem Cadastro
-    Dev->>Soil: Executa extract_soilgrids.py
-    Soil->>APIs: GET rest.isric.org/soilgrids/v2.0/properties/query (clay, sand 0-30cm)
-    APIs-->>Soil: Valores em g/kg -> converte para % (/ 10.0)
-    Soil->>Soil: Classifica: argila>35% -> argiloso(60mm); areia>70% -> arenoso(40mm); senão medio(50mm)
-    Soil->>Out: Salva soilgrids_talhao.json
-
-    Note over Dev,Out: 4. Histórico de 10 Anos do Talhão (MODIS NDVI via Google Earth Engine)
-    Dev->>GeeNdvi: Executa extract_gee_ndvi.py (GEE_PROJECT_ID)
-    GeeNdvi->>APIs: ee.ImageCollection("MODIS/061/MOD13Q1").select("NDVI").getRegion(ponto, 250)
-    APIs-->>GeeNdvi: Série 16 dias (2015–2025) -> aplica fator * 0.0001
-    GeeNdvi->>GeeNdvi: Avalia mar–mai: NDVI < 0.38 -> 'Pousio' | NDVI >= 0.38 -> 'Segunda Safra'
-    GeeNdvi->>Out: Salva modis_ndvi_historico_10anos.json/.csv
-
-    Note over Dev,Out: 5. Projeções Climáticas 2041–2060 (NEX-GDDP-CMIP6 via Google Earth Engine)
-    Dev->>GeeCmip: Executa extract_gee_cmip6.py (SSP2-4.5)
-    GeeCmip->>APIs: ee.ImageCollection("NASA/GDDP-CMIP6").select(["pr", "tasmax"]).getRegion(ponto, 27830)
-    APIs-->>GeeCmip: pr (kg/m²/s * 86400 -> mm/dia) e tasmax (K - 273.15 -> °C)
-    GeeCmip->>GeeCmip: Calcula delta_climatico_safrinha (-12.5% chuva, +1.8°C, +6.4 dias >=35°C)
-    GeeCmip->>Out: Salva cmip6_projecao_2050.json
+    Note over Dev,Out: 3. A fazer (R2.1 a R2.3), sem Google Earth Engine
+    Dev->>Novos: fetch_cmip6_deltas.py (R2.1)
+    Novos->>APIs: NCCS THREDDS, recorte por ponto em CSV (pr, tasmax; jan–jul)
+    Dev->>Novos: fetch_ndvi.py (R2.2) e fetch_smap.py (R2.3)
+    Novos->>APIs: AppEEARS (MOD13Q1 + MYD13Q1; SPL4SMGP), com a ORNL DAAC de reserva para o NDVI
+    Novos->>Out: Arquivos no formato do contrato; tabelas no PostGIS depois do R1.6
 ```
 
 ---
 
 ## 2. Fazenda de Exemplo Instantânea — Tela 1 para Tela 5 (`GET /api/exemplo`)
 
-Atende à história **US-11 (Jurado)** e ao requisito **RF-11**: serve imediatamente a resposta consolidada a partir dos arquivos reais já extraídos para Uberlândia em [`/workspace/data/output/`](file:///workspace/data/output).
+Atende à história **US-11 (Jurado)** e ao requisito **RF-11**: a resposta sai da fixture
+[`app/fixtures/clima_fazenda_exemplo.json`](../app/fixtures/clima_fazenda_exemplo.json) (NASA POWER,
+2005–2024, célula do POWER da Fazenda do Glória), sem banco nem rede externa.
 
 ```mermaid
 sequenceDiagram
@@ -76,16 +65,21 @@ sequenceDiagram
     actor User as Jurado / Produtor
     participant UI as Frontend (Tela 1 -> Tela 5)
     participant Ctrl as RecomendacaoController
-    participant Repo as DataOutputClimateRepository
-    participant Files as /data/output/* (Uberlândia -18.9543, -48.1993)
+    participant Talhao as TalhaoService
+    participant Rec as RecommendationService
+    participant Repo as FixtureClimateRepository
+    participant Fix as app/fixtures/clima_fazenda_exemplo.json
 
     User->>UI: Toca em "Ver um exemplo pronto" (Tela 1)
     UI->>Ctrl: GET /api/exemplo (Header Accept-Language: pt-BR | en)
-    Ctrl->>Repo: load_uberlandia_example(lang)
-    Repo->>Files: Lê dados pré-extraídos de Uberlândia em /data/output/
-    Files-->>Repo: Histórico 20 anos + Solo + NDVI 10 anos + CMIP6 + Recomendação
-    Repo-->>Ctrl: ExemploResponse
-    Ctrl-->>UI: HTTP 200 OK (~15 KB, gzip, < 50 ms)
+    Ctrl->>Talhao: inspect_talhao(-18.9543, -48.1993)
+    Ctrl->>Rec: recommend(-18.9543, -48.1993, colheita="meio", lang)
+    Rec->>Repo: find_cell_id(), get_seasons(), get_cmip6_deltas()
+    Repo->>Fix: Lê as 20 temporadas (1/jan a 31/jul) da célula do POWER
+    Fix-->>Repo: chuva, máxima e mínima diárias (e cmip6[], quando houver)
+    Repo-->>Rec: list[ClimateSeason]
+    Rec-->>Ctrl: Recomendacao
+    Ctrl-->>UI: HTTP 200 OK (ExemploResponse: talhao + recomendacao)
     UI-->>User: Renderiza direto a Tela 5 (A Resposta) sem esperar rede externa
 ```
 
@@ -93,7 +87,7 @@ sequenceDiagram
 
 ## 3. Marcação do Talhão e Descoberta por Satélite — Tela 2 para Telas 3 e 4 (`GET /api/talhao`)
 
-Atende às histórias **US-01**, **US-02** e **US-07** (RF-01, RF-02, RF-08, RF-16), combinando o cache no PostGIS com a lógica implementada em [`extract_soilgrids.py`](file:///workspace/data/extract_soilgrids.py) e [`extract_gee_ndvi.py`](file:///workspace/data/extract_gee_ndvi.py):
+Atende às histórias **US-01**, **US-02** e **US-07** (RF-01, RF-02, RF-08, RF-16), combinando os caches por ponto (e o PostGIS, quando ligado no R1.1) com o SoilGrids na hora do pedido. O NDVI nunca é buscado na hora: vem do cache preparado pelo script de dados (ADR-0005):
 
 ```mermaid
 sequenceDiagram
@@ -103,10 +97,10 @@ sequenceDiagram
     participant Ctrl as TalhaoController
     participant Svc as TalhaoService
     participant SoilRepo as CachedSoilGridsRepository
-    participant NdviRepo as CachedEarthEngineNdviRepository
+    participant NdviRepo as CachedNdviRepository
     participant HistSvc as FieldHistoryService
-    participant DB as PostGIS / /data/output/
-    participant Ext as SoilGrids API & Google Earth Engine
+    participant DB as Caches por ponto (JSON) / PostGIS
+    participant Ext as SoilGrids API
 
     Produtor->>UI: Marca ponto no mapa ou GPS e toca em "É aqui" (Tela 2)
     UI->>Ctrl: GET /api/talhao?lat=-18.9543&lon=-48.1993
@@ -114,9 +108,9 @@ sequenceDiagram
 
     Ctrl->>Svc: inspect_talhao(lat, lon)
 
-    par Obtém Textura do Solo e CAD (extract_soilgrids.py)
+    par Obtém Textura do Solo e CAD (SoilGrids)
         Svc->>SoilRepo: get_soil(lat, lon)
-        SoilRepo->>DB: Verifica cache em soil_point / soilgrids_talhao.json
+        SoilRepo->>DB: Verifica cache por ponto (SOLO_CACHE_PATH; soil_point no PostGIS)
         alt Não está em cache
             SoilRepo->>Ext: GET SoilGrids v2.0 (clay, sand 0-30cm)
             alt Sucesso na resposta
@@ -128,19 +122,18 @@ sequenceDiagram
             end
         end
         SoilRepo-->>Svc: SoloInfo(textura_solo, cad_capacidade_agua_mm, fonte)
-    and Obtém Histórico de 10 Anos de NDVI (extract_gee_ndvi.py)
+    and Obtém Histórico de 10 Anos de NDVI (cache do pipeline, sem busca na hora)
         Svc->>NdviRepo: get_ndvi_history(lat, lon)
-        NdviRepo->>DB: Verifica cache em ndvi_point / modis_ndvi_historico_10anos.json
-        alt Não está em cache
-            NdviRepo->>Ext: ee.ImageCollection("MODIS/061/MOD13Q1").select("NDVI").getRegion(ponto, 250)
-            Ext-->>NdviRepo: Série 2015–2025 -> multiplica por 0.0001
-            NdviRepo->>DB: Salva no cache
+        NdviRepo->>DB: Lê a série do ponto (NDVI_CACHE_PATH; ndvi_point depois do R1.6)
+        alt Ponto sem NDVI no cache
+            NdviRepo-->>Svc: série vazia (historico: null, colheita "meio" / fonte "padrao")
+        else Ponto com NDVI
+            NdviRepo-->>Svc: list[NdviRecord] (MOD13Q1 + MYD13Q1, qualidade 0 ou 1)
         end
-        NdviRepo-->>Svc: serie_ndvi
     end
 
     Svc->>HistSvc: classify_entressafra(serie_ndvi)
-    HistSvc->>HistSvc: Calcula NDVI na entressafra -> classifica cada ano em Pousio ('parado') ou Segunda Safra ('plantou')
+    HistSvc->>HistSvc: Maior NDVI de 1/abr a 31/jul -> 'plantou' (> 0,60), 'parado' (< 0,45) ou 'incerto' (PRD 7.8)
     HistSvc-->>Svc: HistoricoTalhao (anos, parado, total)
 
     Svc->>HistSvc: suggest_harvest_band(serie_ndvi)
@@ -156,7 +149,7 @@ sequenceDiagram
 
 ## 4. Cálculo da Recomendação, Alternativas e Plano de 3 Anos — Tela 3/4 para Telas 5, 6 e 7 (`GET /api/recomendacao`)
 
-Atende às histórias **US-03 a US-06, US-08 e US-09**, operando sobre os parâmetros de [`/workspace/data/culturas.yaml`](file:///workspace/data/culturas.yaml) e as variáveis extraídas em [`/workspace/data/output/`](file:///workspace/data/output):
+Atende às histórias **US-03 a US-06, US-08 e US-09**, operando sobre os parâmetros de [`app/config_data/culturas.yaml`](../app/config_data/culturas.yaml) e as séries de clima (fixture da fazenda de exemplo; PostGIS depois do R1.1):
 
 ```mermaid
 sequenceDiagram
@@ -165,8 +158,8 @@ sequenceDiagram
     participant UI as Frontend (Telas 4, 5, 6 e 7)
     participant Ctrl as RecomendacaoController
     participant RecSvc as RecommendationService
-    participant CropRepo as YamlCropParamsRepository (/data/culturas.yaml)
-    participant ClimRepo as ClimateRepository (PostGIS / /data/output/)
+    participant CropRepo as YamlCropParamsRepository (app/config_data/culturas.yaml)
+    participant ClimRepo as ClimateRepository (fixture / PostGIS)
     participant RiskSvc as ClimateRiskService
     participant WB as WaterBalanceCalculator
     participant PlanSvc as RotationPlanService
@@ -175,11 +168,11 @@ sequenceDiagram
     UI->>Ctrl: GET /api/recomendacao?lat=-18.9543&lon=-48.1993&colheita=meio[&solo=argiloso][&nematoide=sim]
 
     Ctrl->>RecSvc: recommend(lat, lon, colheita, solo_override, nematoide, lang)
-    RecSvc->>CropRepo: list_all() (lê /data/culturas.yaml)
+    RecSvc->>CropRepo: list_all() (lê app/config_data/culturas.yaml)
     CropRepo-->>RecSvc: 6 culturas (pousio, milho_safrinha, sorgo_granifero, milho_braquiaria, milheto, crotalaria_spectabilis)
 
-    RecSvc->>ClimRepo: get_seasons(), get_latest_smap() & get_cmip6_delta()
-    ClimRepo-->>RecSvc: 20 anos NASA POWER (PRECTOTCORR, T2M_MAX, T2M_MIN, T2M, RH2M, WS2M, ALLSKY_SFC_SW_DWN, GWETROOT) + SMAP (sm_rootzone_wetness) + CMIP6 (delta_climatico_safrinha)
+    RecSvc->>ClimRepo: get_seasons(), get_latest_smap() & get_cmip6_deltas()
+    ClimRepo-->>RecSvc: 20 anos NASA POWER (PRECTOTCORR, T2M_MAX, T2M_MIN, T2M, RH2M, WS2M, ALLSKY_SFC_SW_DWN, GWETROOT) + SMAP (sm_rootzone_wetness, quando houver: R3.3) + CMIP6 (deltas mensais por modelo, quando houver: R3.1)
 
     Note over RecSvc,WB: Semeadura = colheita + 3 dias (cedo=08/fev, meio=18/fev, tarde=03/mar)
 
@@ -198,8 +191,8 @@ sequenceDiagram
             end
             RiskSvc-->>RecSvc: Resultado dos 20 anos (anos_bons, faixa booleana, fator_perda)
 
-            RecSvc->>RiskSvc: simulate_future_cmip6(crop, seasons, cmip6_delta, semeadura, cad_mm)
-            RiskSvc->>RiskSvc: Aplica delta CMIP6 SSP2-4.5 (chuva -12.5%, Tmax +1.8°C) e recalcula anos bons em 2041–2060
+            RecSvc->>RiskSvc: simulate_future_cmip6(crop, seasons, cmip6_deltas, semeadura, cad_mm)
+            RiskSvc->>RiskSvc: Aplica os deltas mensais de cada modelo (SSP2-4.5) e recalcula os anos bons em 2041–2060 (sem deltas: futuro null)
             RiskSvc-->>RecSvc: futuro (anos_bons_media, min, max)
 
             RecSvc->>RecSvc: Calcula Notas (Segurança, Futuro, Solo [palhada_score + n_deixado_kg + nematoide_efeito], Renda)
@@ -254,7 +247,7 @@ sequenceDiagram
 
 ## 6. Listagem de Opções de Cultura e Tradução de Erros (`GET /api/crop-options`)
 
-Mostra o fluxo já implementado em [`app/controllers/crop_option_controller.py`](file:///workspace/projeto/backend/app/controllers/crop_option_controller.py) e a captura de [`NotFoundError`](file:///workspace/projeto/backend/app/services/errors.py#L5-L6) em [`app/main.py`](file:///workspace/projeto/backend/app/main.py#L23-L25):
+Mostra o fluxo já implementado em [`app/controllers/crop_option_controller.py`](../app/controllers/crop_option_controller.py) e a captura de [`NotFoundError`](../app/services/errors.py) em [`app/main.py`](../app/main.py):
 
 ```mermaid
 sequenceDiagram
