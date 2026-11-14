@@ -1,4 +1,4 @@
-"""Reusable HTTP getters (JSON and text) with timeout and exponential backoff, and a generic request."""
+"""Reusable HTTP getters (JSON and text) with retries, and a generic request (POST, download)."""
 
 import json
 import logging
