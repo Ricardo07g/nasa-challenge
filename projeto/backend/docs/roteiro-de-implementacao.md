@@ -142,8 +142,8 @@ Cada linha diz quem decide e qual tarefa fica parada até lá.
 | --- | --- | --- | --- |
 | Id da célula ✅ | **Decidido em 14/11: `floor`** (`cell_id_for`, plano técnico §5, alinhado à grade 0,1° do IMERG) | backend | R1.2 |
 | Ano com dia faltando no POWER ✅ | **Decidido em 14/11: descartar o ano** (como `pipeline/export_climate_fixture.py`) | backend + agrônoma | R1.4 |
-| Anos do histórico NDVI | 2015–2025 (PRD RF-08, 6.3) ou 2016–2025 (plano técnico, guia NDVI, Lovable) | produto | R2.2 |
-| Formato do `historico` | <ul><li>mínimo atual: `anos`, `parado`, `total`, `fonte`</li><li>completo do guia NDVI: `n_obs`, `plantou`, `sem_certeza`, `janela` e o estado `sem_dado`</li></ul> | produto + front | R3.2 |
+| Anos do histórico NDVI ✅ | **Decidido em 14/11: 2016–2025** (plano técnico, guia NDVI, Lovable) | produto | R2.2 |
+| Formato do `historico` ✅ | **Decidido em 14/11: completo do guia NDVI** (`n_obs`, `plantou`, `sem_certeza`, `janela` e o estado `sem_dado`) | produto + front | R3.2 |
 | Delta de Tmin no CMIP6 (padrão adotado, **a revisar**) | Adotado no R2.1: `tasmax` **e** `tasmin` | backend | R2.1 |
 | Modelos do CMIP6 (padrão adotado, **a revisar**) | Adotados no R2.1: ACCESS-CM2, MPI-ESM1-2-HR e MRI-ESM2-0 (`r1i1p1f1`, `_v2.0`, conferidos no THREDDS) | backend + agrônoma | R2.1 |
 | Regra das alternativas (padrão adotado, **a revisar**) | Adotado no R4.2: só aparece se for melhor que a `melhor` no próprio eixo, sem repetir cultura; sem candidata, o eixo some. O produto pode trocar | produto | R4.2 |
@@ -202,7 +202,7 @@ do R0.2: em arquivo antes do R1.6 e em tabela depois. **Nunca gerar dado sintét
 | ID | Tarefa | Onde | Dep. | PRD |
 | --- | --- | --- | --- | --- |
 | [R3.1](tarefas/0021-nota-de-futuro-cmip6.md) ✅ | **Nota de futuro.** `get_cmip6_deltas` passa a ler os deltas (hoje o PostGIS só repassa à fixture). O `TalhaoService` já põe `nex_gddp_cmip6` em `dados[]` quando há deltas | `climate_repository.py` | R2.1 (+R1.6 para ler do banco) | T-06 |
-| R3.2 | **Histórico do talhão** <ul><li>Cache ou tabela de NDVI ligado</li><li>Contrato completo (decisão da seção 5)</li><li>**Frase de histórico no `porque`** (PRD 7.6)</li><li>`/exemplo` usando a `colheita_sugerida`, em vez de `meio` fixo</li></ul> | `field_history_service.py`, `recommendation_service.py`, `schemas/talhao.py`, `recomendacao_controller.py` | R2.2 | T-10 |
+| [R3.2](tarefas/0018-historico-ndvi-na-api.md) ✅ | **Histórico do talhão** <ul><li>Cache ou tabela de NDVI ligado</li><li>Contrato completo (decisão da seção 5)</li><li>**Frase de histórico no `porque`** (PRD 7.6)</li><li>`/exemplo` usando a `colheita_sugerida`, em vez de `meio` fixo</li></ul> | `field_history_service.py`, `recommendation_service.py`, `schemas/talhao.py`, `recomendacao_controller.py` | R2.2 | T-10 |
 | R3.3 | **Balde inicial pelo SMAP:** passar `smap_wetness` para `simulate_historical` (o parâmetro e o `get_latest_smap` já existem) | `climate_risk_service.py`, `recommendation_service.py` | R2.3 | — |
 | R3.4 | **Chuva do IMERG no balde** (`rain_source = imerg_final`), com a mesma chave de fonte no back e no front | `climate_repository.py`, front `satelliteService.ts` | R2.4, decisão da chave | T-04 |
 | R3.5 | **`versao_dados` pelo `data_run`** (hoje é a constante `DATA_VERSION` em `app/constants.py`) | `constants.py`, `recommendation_service.py` | R1.6 | — |

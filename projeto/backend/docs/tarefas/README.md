@@ -28,6 +28,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0020**](0020-pior-ano-seco-na-api.md) | **Margem do pior ano seco em /recomendacao (opcoes[].dinheiro.pior_ano_seco_ha); custo da semente espera o A1.1** | **Concluída** | **Média** | `app/services/recommendation_service.py`, `app/schemas/recomendacao.py` |
 | [**0019**](0019-safra-passada.md) | **/api/safra-passada: replay de uma safra passada com as regras de aviso (veranico, calor, chuva voltou)** | **Concluída** | **Média** | `app/services/past_season_service.py`, `app/services/crop_alert_service.py` |
 | [**0021**](0021-nota-de-futuro-cmip6.md) | **Nota de futuro lendo os deltas do CMIP6 (tabela → arquivo CMIP6_PATH → fixture), com tmin_c** | **Concluída** | **Alta** | `app/repositories/cmip6_repository.py`, `climate_repository.py`, `climate_risk_service.py` |
+| [**0018**](0018-historico-ndvi-na-api.md) | **Histórico do talhão pelo NDVI no formato completo do guia, frase no porque e /exemplo com a colheita sugerida** | **Concluída** | **Alta** | `app/services/field_history_service.py`, `app/repositories/ndvi_repository.py`, `app/schemas/talhao.py` |
 
 ---
 
