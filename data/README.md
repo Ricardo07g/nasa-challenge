@@ -23,8 +23,8 @@ data/
 Só esses três scripts existem. SoilGrids, NDVI do MODIS e CMIP6 **não** têm script nesta pasta:
 
 - **SoilGrids:** a própria API consulta, pelo `SoilGridsClient`
-  (`projeto/backend/app/repositories/external/soilgrids_client.py`). Ele ainda está desligado
-  (tarefa R1.1 do roteiro).
+  (`projeto/backend/app/repositories/external/soilgrids_client.py`). Com `DATABASE_URL`, ele roda na busca
+  sob demanda e o solo vai para o PostGIS (tarefa R1.1 do roteiro).
 - **NDVI do MODIS e CMIP6:** vão virar scripts em `projeto/backend/pipeline/` (R2.2 e R2.1 do
   [roteiro do backend](../projeto/backend/docs/roteiro-de-implementacao.md)), direto dos serviços da
   NASA, sem Google Earth Engine ([ADR-0005](../projeto/backend/docs/adr/0005-fontes-diretas-da-nasa-sem-earth-engine.md)).
@@ -192,7 +192,7 @@ testar código, e marca os registros como `SINTETICO - nao e dado da NASA`.
 ### 4. SoilGrids, NDVI do MODIS e CMIP6 (sem script nesta pasta)
 - **SoilGrids:** sem script. A API consulta direto pelo `SoilGridsClient`
   (`projeto/backend/app/repositories/external/soilgrids_client.py`), que classifica o solo em
-  **arenoso** (CAD 40 mm), **médio** (CAD 50 mm) ou **argiloso** (CAD 60 mm). Ainda desligado (R1.1).
+  **arenoso** (CAD 40 mm), **médio** (CAD 50 mm) ou **argiloso** (CAD 60 mm). Ligado na busca sob demanda desde o R1.1.
 - **NDVI do MODIS:** a fazer em `projeto/backend/pipeline/fetch_ndvi.py` (R2.2), pelo AppEEARS.
 - **CMIP6:** a fazer em `projeto/backend/pipeline/fetch_cmip6_deltas.py` (R2.1), pelo THREDDS da NCCS.
 - O formato de saída dos scripts novos está em "Contrato dos dados das fontes", no `projeto/backend/AGENTS.md`.
@@ -207,7 +207,7 @@ Abaixo está o mapeamento de **todas as fontes de dados** previstas na Seção 6
 | :--- | :--- | :--- | :--- | :--- |
 | **NASA POWER** | Chuva, Tmax, Tmin, umidade, vento, radiação solar (~0.5°) | **Cálculo da ETo (Penman-Monteith) e simulação de risco dos últimos 20 anos**. | ✅ **Implementado** (`extract_nasa_power.py`) | API REST aberta (sem chave) |
 | **NASA SMAP** | Umidade do solo na superfície (0-5 cm) e raiz (0-100 cm) a 9 km | **Calibração da água no solo na data da semeadura** e validação do estresse hídrico real. | ✅ **Script pronto** (`extract_smap.py`); a API ainda não usa (R2.3, R3.3) | API REST AppEEARS (token do AppEEARS) |
-| **SoilGrids (ISRIC)** | Teores de argila e areia no solo a 250 m | **Determina a CAD (40, 50 ou 60 mm)** quando o produtor marca "não sei". | 🟡 **Sem script em `data/`**: cliente na API (`SoilGridsClient`), ainda desligado (R1.1) | API REST aberta (sem chave) |
+| **SoilGrids (ISRIC)** | Teores de argila e areia no solo a 250 m | **Determina a CAD (40, 50 ou 60 mm)** quando o produtor marca "não sei". | 🟡 **Sem script em `data/`**: cliente na API (`SoilGridsClient`), ligado na busca sob demanda (R1.1) | API REST aberta (sem chave) |
 | **MODIS MOD13Q1 / HLS** | NDVI (Índice de Vegetação) a 250 m (16 dias) ou HLS a 30 m | **Histórico do Talhão (10 anos)**: classifica cada entressafra como `parado`, `plantou` ou `incerto` (PRD 7.8). | ⏳ **A fazer** (`pipeline/fetch_ndvi.py`, R2.2) | AppEEARS (token do AppEEARS); ORNL DAAC de reserva |
 | **NEX-GDDP-CMIP6** | Projeções de chuva e temperatura 2041–2060 (~27 km) | **Eixo Clima Futuro**: Avalia se o risco de perda aumenta nas próximas décadas (cenário SSP2-4.5). | ⏳ **A fazer** (`pipeline/fetch_cmip6_deltas.py`, R2.1) | NCCS THREDDS, recorte por ponto (sem login) |
 | **GPM IMERG Final** | Chuva diária de satélite a 0.1° (~10 km) de 2005 a 2025 | Alternativa de maior resolução espacial para a série de 20 anos de chuva. | 💡 *Fallback*: Usando a chuva do NASA POWER (`PRECTOTCORR`); IMERG é a R2.4 | GES DISC (`EARTHDATA_TOKEN`) |

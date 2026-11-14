@@ -25,7 +25,7 @@ Quem pegasse uma tarefa do roteiro partiria de uma premissa errada.
 ### 2.1 `data/README.md`
 - [x] Árvore, seção 4 e tabela de status sem marcar como prontos `extract_soilgrids.py`,
   `extract_gee_ndvi.py` e `extract_gee_cmip6.py`. O texto diz onde cada dado está hoje: SoilGrids pelo
-  `SoilGridsClient` da API (desligado até o R1.1); NDVI e CMIP6 como scripts a fazer em
+  `SoilGridsClient` da API (ligado na busca sob demanda no R1.1); NDVI e CMIP6 como scripts a fazer em
   `projeto/backend/pipeline/` (R2.2 e R2.1).
 - [x] Acesso ao MODIS e ao CMIP6 sem Earth Engine (AppEEARS com a ORNL de reserva; NCCS THREDDS).
 - [x] SMAP na versão que o script usa (`SPL4SMGP.007`, e não "v8"); conferir a 008 fica no R2.3.
