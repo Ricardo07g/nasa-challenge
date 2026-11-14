@@ -92,3 +92,26 @@ def test_should_answer_crop_names_and_how_to_steps_in_the_requested_language(
     for crop_id, steps in steps_pt.items():
         assert len(steps_en[crop_id]) == len(steps)
         assert steps_en[crop_id] != steps
+
+
+AXIS_BY_MOTIVO = {"menos_risco": "seguranca", "mais_dinheiro": "renda", "cuidar_da_terra": "solo"}
+
+
+def test_should_only_offer_alternatives_better_than_the_best_on_their_axis(
+    real_data_client: TestClient,
+) -> None:
+    # Fazenda de exemplo (colheita meio): o milho safrinha tem a maior renda (100). Antes, "mais
+    # dinheiro" era o sorgo, com renda 18, e a crotalária aparecia em dois eixos.
+    rec = real_data_client.get("/api/exemplo").json()["recomendacao"]
+    notas = {o["id"]: o["notas"] for o in rec["opcoes"]}
+    melhor = notas[rec["melhor"]]
+    alternativas = rec["alternativas"]
+
+    assert rec["melhor"] == "milho_safrinha"
+    assert melhor["renda"] == 100.0
+    assert "mais_dinheiro" not in {a["motivo"] for a in alternativas}
+    assert alternativas  # coberturas superam o milho em risco e em terra
+    assert len({a["opcao"] for a in alternativas}) == len(alternativas)
+    for alt in alternativas:
+        axis = AXIS_BY_MOTIVO[alt["motivo"]]
+        assert notas[alt["opcao"]][axis] > melhor[axis]

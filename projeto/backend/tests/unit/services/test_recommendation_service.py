@@ -7,13 +7,13 @@ import pytest
 
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
-from app.models.recomendacao import Recomendacao, ResultadoOpcao
+from app.models.recomendacao import Alternativa, NotasOpcao, Recomendacao, ResultadoOpcao
 from app.models.regras import Regras
 from app.models.talhao import SoloInfo
 from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
-from app.services.recommendation_service import RecommendationService
+from app.services.recommendation_service import RecommendationService, build_alternatives
 from app.services.rotation_plan_service import RotationPlanService
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
@@ -384,3 +384,83 @@ def test_should_write_why_with_phrase_template_and_heat_number_from_injected_rul
     rec = _service(rules=rules).recommend(lat=-18.95, lon=-48.20, colheita="meio")
 
     assert _opcao(rec, "milho_safrinha").porque[0] == "0/20 33 °C"
+
+
+def _option(
+    crop_id: str, seguranca: float, renda: float, solo: float, final: float
+) -> ResultadoOpcao:
+    notas = NotasOpcao(seguranca=seguranca, futuro=None, solo=solo, renda=renda, final=final)
+    return ResultadoOpcao(
+        id=crop_id,
+        nome=crop_id,
+        na_janela=True,
+        data_limite=None,
+        anos_bons_chuva=0,
+        total_anos=20,
+        faixa_anos=(),
+        rotulo_chuva="medio",
+        texto_chuva="",
+        futuro=None,
+        margem_ha=0.0,
+        rotulo_dinheiro="medio",
+        texto_dinheiro="",
+        rotulo_terra="medio",
+        texto_terra="",
+        notas=notas,
+        notas_seco=notas,
+        porque=(),
+        como_fazer=(),
+    )
+
+
+def test_should_offer_alternative_only_when_better_than_best_on_its_axis() -> None:
+    # Caso real (colheita meio): o milho já tem a maior renda, então não há "mais dinheiro";
+    # antes saía o sorgo, com renda 18 contra 100. A crotalária não se repete em dois eixos:
+    # empata com o milheto na segurança (95) e é a única maior na terra (85), então fica na terra.
+    opcoes = [
+        _option("milho_safrinha", seguranca=65.0, renda=100.0, solo=20.0, final=64.1),
+        _option("crotalaria", seguranca=95.0, renda=0.0, solo=85.0, final=58.5),
+        _option("milheto", seguranca=95.0, renda=0.0, solo=55.0, final=49.7),
+        _option("sorgo", seguranca=65.0, renda=18.0, solo=35.0, final=39.6),
+    ]
+
+    assert build_alternatives(opcoes, "milho_safrinha") == (
+        Alternativa(motivo="menos_risco", opcao="milheto"),
+        Alternativa(motivo="cuidar_da_terra", opcao="crotalaria"),
+    )
+
+
+def test_should_break_axis_tie_by_final_score_and_skip_ties_with_the_best() -> None:
+    opcoes = [
+        _option("milho_safrinha", seguranca=80.0, renda=100.0, solo=20.0, final=70.0),
+        _option("milheto", seguranca=95.0, renda=0.0, solo=20.0, final=49.7),
+        _option("crotalaria", seguranca=95.0, renda=0.0, solo=20.0, final=58.5),
+        _option("sorgo", seguranca=80.0, renda=50.0, solo=20.0, final=45.0),
+    ]
+
+    # Empate em 95 na segurança: fica a de maior nota final. Solo empatado com a melhor (20): o eixo
+    # some, porque empatar não é ser melhor.
+    assert build_alternatives(opcoes, "milho_safrinha") == (
+        Alternativa(motivo="menos_risco", opcao="crotalaria"),
+    )
+
+
+def test_should_drop_axis_when_its_only_better_option_was_used_by_another_axis() -> None:
+    opcoes = [
+        _option("milho_safrinha", seguranca=60.0, renda=100.0, solo=20.0, final=65.0),
+        _option("crotalaria", seguranca=90.0, renda=0.0, solo=85.0, final=58.0),
+    ]
+
+    assert build_alternatives(opcoes, "milho_safrinha") == (
+        Alternativa(motivo="menos_risco", opcao="crotalaria"),
+    )
+
+
+def test_should_return_no_alternatives_when_best_wins_every_axis() -> None:
+    opcoes = [
+        _option("milheto", seguranca=100.0, renda=0.0, solo=55.0, final=51.5),
+        _option("sorgo", seguranca=40.0, renda=0.0, solo=35.0, final=24.4),
+    ]
+
+    assert build_alternatives(opcoes, "milheto") == ()
+    assert build_alternatives(opcoes[:1], "milheto") == ()
