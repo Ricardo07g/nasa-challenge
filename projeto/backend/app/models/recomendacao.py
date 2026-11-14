@@ -63,6 +63,8 @@ class ResultadoOpcao:
     notas_seco: NotasOpcao
     porque: tuple[str, ...]
     como_fazer: tuple[str, ...]
+    # Margem por hectare no pior dos anos mais secos (A1.2, PRD 7.11); None sem ano seco na série
+    pior_ano_seco_ha: float | None = None
 
 
 @dataclass(frozen=True)

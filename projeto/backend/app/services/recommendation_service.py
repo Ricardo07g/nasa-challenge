@@ -99,6 +99,13 @@ def expected_margin(crop: CropParams, anos: list[ResultadoAno]) -> float:
     return round(receita - crop.custo_padrao_ha, 2)
 
 
+def worst_dry_year_margin(crop: CropParams, anos_secos: list[ResultadoAno]) -> float | None:
+    """Margem do pior dos anos mais secos (A1.2, PRD 7.11): a mesma conta da margem, ano a ano."""
+    if not anos_secos:
+        return None
+    return min(expected_margin(crop, [ano]) for ano in anos_secos)
+
+
 def income_score(margem: float, maior_margem: float) -> float:
     """Nota de renda (PRD 7.5): 100 x margem / maior margem; margem negativa vale 0."""
     if maior_margem <= 0.0 or margem <= 0.0:
@@ -190,6 +197,7 @@ class _Avaliacao:
     solo: float
     margem: float
     margem_seco: float
+    pior_ano_seco: float | None
 
 
 class RecommendationService:
@@ -393,6 +401,7 @@ class RecommendationService:
             solo=soil_score(crop, nematoide, self._rules.solo),
             margem=expected_margin(crop, anos),
             margem_seco=expected_margin(crop, secos),
+            pior_ano_seco=worst_dry_year_margin(crop, secos),
         )
 
     def _build_option(
@@ -460,6 +469,7 @@ class RecommendationService:
             como_fazer=(
                 a.crop.como_fazer_en if (is_en and a.crop.como_fazer_en) else a.crop.como_fazer
             ),
+            pior_ano_seco_ha=a.pior_ano_seco,
         )
 
     @staticmethod

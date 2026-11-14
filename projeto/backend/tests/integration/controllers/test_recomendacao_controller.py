@@ -57,7 +57,11 @@ def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
         "texto": "Deu certo em 18 de 20 anos",
     }
     assert milho["futuro"] is None
-    assert set(milho["dinheiro"]) == {"margem_ha", "rotulo", "texto"}
+    # A1.2: `pior_ano_seco_ha` (contrato do front, `dinheiro.pior_ano_seco_ha?: number`) entrou no
+    # `dinheiro`. 2007 e 2014 ficam sem chuva: o milho perde 60% (80 x 0,4 x 62 - 3500).
+    assert set(milho["dinheiro"]) == {"margem_ha", "rotulo", "texto", "pior_ano_seco_ha"}
+    assert milho["dinheiro"]["pior_ano_seco_ha"] == pytest.approx(80 * 0.4 * 62 - 3500)
+    assert "custo_semente_ha" not in milho  # espera o valor da agrônoma (A1.1)
     assert milho["terra"] == {
         "nota": 20.0,
         "rotulo": "medio",

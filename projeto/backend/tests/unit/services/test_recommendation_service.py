@@ -411,6 +411,44 @@ def test_should_give_fallow_future_100_when_cmip6_deltas_exist() -> None:
     assert rec.plano_hoje.nota == 45.0
 
 
+def test_should_give_margin_of_the_worst_dry_year_per_hectare() -> None:
+    # A1.2 / PRD 7.11: margem do pior ano entre os 4 mais secos (a base do plano B). Nos anos sem
+    # chuva de fevereiro a junho o milho perde 60% (ISNA abaixo de 0,55, PRD 7.5).
+    rec = _service(FakeClimateRepository(dry_years=(2007, 2010, 2012, 2014))).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert _opcao(rec, "milho_safrinha").pior_ano_seco_ha == pytest.approx(
+        80 * (1 - 0.60) * 62 - 3500
+    )
+    # Cobertura não dá grão: em qualquer ano sobra só o custo (fica negativo, "faltaria" no front).
+    assert _opcao(rec, "crotalaria").pior_ano_seco_ha == pytest.approx(-800.0)
+
+
+def test_should_take_the_worst_dry_year_and_not_the_average_of_the_dry_years() -> None:
+    # Só 2007 sem chuva: entre os 4 anos mais secos, um perde 60% e três não perdem. A média daria
+    # 80 x (1 - 0,15) x 62 - 3500 = 716; o pior ano dá 80 x 0,4 x 62 - 3500 = -1516.
+    rec = _service(FakeClimateRepository(dry_years=(2007,))).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+    milho = _opcao(rec, "milho_safrinha")
+
+    assert milho.pior_ano_seco_ha == pytest.approx(80 * 0.4 * 62 - 3500)
+    assert milho.margem_ha > milho.pior_ano_seco_ha
+
+
+def test_should_take_number_of_dry_years_for_the_worst_year_from_injected_rules() -> None:
+    # Com 1 ano seco no regras.yaml, o "pior ano seco" é o mais seco de todos (2007, sem chuva).
+    base = load_default_rules()
+    rules = replace(base, rotacao=replace(base.rotacao, anos_secos=1))
+
+    rec = _service(FakeClimateRepository(dry_years=(2007,)), rules=rules).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert _opcao(rec, "milho_safrinha").pior_ano_seco_ha == pytest.approx(80 * 0.4 * 62 - 3500)
+
+
 def test_should_leave_autumn_signal_empty_without_signal_data() -> None:
     # Não inventa previsão: sem o service (ou sem dado), `sinal` fica nulo.
     rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
