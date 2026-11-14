@@ -140,7 +140,7 @@ Cada linha diz quem decide e qual tarefa fica parada até lá.
 
 | Decisão | Opções | Quem decide | Bloqueia |
 | --- | --- | --- | --- |
-| Id da célula | `round` (`compute_grid_cell_id`, tarefa 0001) ou `floor` (`cell_id_for`, plano técnico §5). Hoje convivem as duas | backend | R1.2 |
+| Id da célula ✅ | **Decidido em 14/11: `floor`** (`cell_id_for`, plano técnico §5, alinhado à grade 0,1° do IMERG) | backend | R1.2 |
 | Ano com dia faltando no POWER | descartar o ano (como `pipeline/export_climate_fixture.py`), preencher com regra declarada ou guardar nulo | backend + agrônoma | R1.4 |
 | Anos do histórico NDVI | 2015–2025 (PRD RF-08, 6.3) ou 2016–2025 (plano técnico, guia NDVI, Lovable) | produto | R2.2 |
 | Formato do `historico` | <ul><li>mínimo atual: `anos`, `parado`, `total`, `fonte`</li><li>completo do guia NDVI: `n_obs`, `plantou`, `sem_certeza`, `janela` e o estado `sem_dado`</li></ul> | produto + front | R3.2 |
@@ -179,7 +179,7 @@ Cada linha diz quem decide e qual tarefa fica parada até lá.
 | ID | Tarefa | Onde | Dep. | Cred. | PRD |
 | --- | --- | --- | --- | --- | --- |
 | R1.1 | **Ligar a busca sob demanda.** <ul><li>Com `DATABASE_URL`, `dependencies.py` injeta `PostgisClimateRepository` e `PostgisSoilRepository`, com a fixture como reserva (`_fallback`)</li><li>Sem banco, tudo continua como hoje</li><li>`/recomendacao` também encontra (ou busca) a célula de um ponto novo. Ele não aciona a busca: com o PostGIS ligado, um ponto novo daria `OUTSIDE_AREA` se o `/talhao` não tivesse sido chamado antes</li><li>Teste de integração marcado (banco)</li></ul> | `dependencies.py`, `talhao_service.py`, `recommendation_service.py`, `tests/integration/` | R1.2 | não | T-07 |
-| R1.2 | **Um id de célula só.** Hoje `compute_grid_cell_id` usa `round` e `cell_id_for` usa `floor`; para lat −18,92 dão −189 e −190. Escolher um e usar nos dois repositories e na ingestão | `app/repositories/climate_repository.py` | decisão | não | — |
+| [R1.2](tarefas/0002-id-de-celula-unico.md) ✅ | **Um id de célula só.** Hoje `compute_grid_cell_id` usa `round` e `cell_id_for` usa `floor`; para lat −18,92 dão −189 e −190. Escolher um e usar nos dois repositories e na ingestão | `app/repositories/climate_repository.py` | decisão | não | — |
 | R1.3 | **ETo FAO-56 Penman-Monteith** <ul><li>Função pura no service, testada com o exemplo numérico do boletim FAO-56</li><li>Hargreaves-Samani continua como reserva</li><li>Tirar o cálculo de dentro do `NasaPowerClient`: o cliente só traz dados (UR, vento, radiação), o service calcula</li></ul> | `app/services/water_balance_calculator.py`, `app/repositories/external/nasa_power_client.py` | — | não | T-05 |
 | R1.4 | **Não inventar dado.** Hoje o `NasaPowerClient` troca dia faltando (`-999`) por 30 °C, 18 °C, 0 mm e valores padrão de UR, vento e radiação. Seguir a decisão da seção 5 e a regra do `AGENTS.md` | `nasa_power_client.py` | decisão | não | — |
 | R1.5 | **Pré-carregar a caixa piloto e a fazenda de exemplo** <ul><li>Um script chama a ingestão para as células da caixa: 225 células de 0,1° que caem em 9 a 12 células do POWER (0,5°). Agrupar para não repetir a mesma chamada ao POWER</li><li>Registrar em `data_run`</li><li>O primeiro clique na caixa fica instantâneo</li></ul> | `pipeline/` | R1.1 | não | T-03 |
