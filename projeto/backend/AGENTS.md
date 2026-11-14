@@ -26,7 +26,8 @@ app/
   controllers/         Controller: rotas FastAPI, finas (recebem, chamam o service, devolvem schema)
   services/            Service: REGRAS DE NEGÓCIO; errors.py tem os erros de domínio
   repositories/        Repository: ACESSO A DADOS (contrato em Protocol + implementações)
-  config_data/         culturas.yaml: parâmetros das culturas (editável pela agrônoma)
+  config_data/         culturas.yaml (parâmetros das culturas) e regras.yaml (limiares, pesos e
+                       frases do motor), editáveis pela agrônoma
   fixtures/            clima da fazenda de exemplo (gerado pelo pipeline; ver "Dados da API")
 pipeline/              scripts offline que preparam os dados (não entram na imagem da API)
 tests/
@@ -106,9 +107,13 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 
 ## Dados da API
 
-- A API lê **só** o que está em `Settings` (`CULTURAS_PATH`, `CLIMA_PATH`, `SOLO_CACHE_PATH`,
-  `NDVI_CACHE_PATH`). Nunca coloque caminho fixo (como `/workspace/...`) num repository.
+- A API lê **só** o que está em `Settings` (`CULTURAS_PATH`, `REGRAS_PATH`, `CLIMA_PATH`,
+  `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`). Nunca coloque caminho fixo (como `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
+- `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
+  cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
+  negócio nova com número vai para lá, não para `app/constants.py`. Os services recebem as regras
+  por parâmetro (padrão: este arquivo) e `dependencies.py` injeta as do `REGRAS_PATH`.
 - `app/fixtures/clima_fazenda_exemplo.json`: NASA POWER diário (chuva, máxima e mínima),
   1/jan a 31/jul de 2005 a 2024, da célula do POWER da Fazenda do Glória (UFU). Fora dessa célula
   a API responde que ainda não tem dados (`dentro_da_area: false` / 404 `OUTSIDE_AREA`).

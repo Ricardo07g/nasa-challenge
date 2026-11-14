@@ -1,4 +1,8 @@
-"""Domain, agronomic, and spatial constants for the Raiz Orbital backend."""
+"""Domain, agronomic, and spatial constants for the Raiz Orbital backend.
+
+Os limiares, pesos e frases do motor de pontuação (PRD 7) ficam em `app/config_data/regras.yaml`,
+lidos pelo `YamlRulesRepository`. Não volte a colocá-los aqui.
+"""
 
 from typing import Final
 
@@ -49,12 +53,9 @@ SOIL_CAD_BY_TEXTURE: Final[dict[str, float]] = {
     "arenoso": CAD_SANDY_MM,
 }
 
-# MODIS NDVI Classification & Harvest Band Constants (US-02, US-07, ADR-0002)
+# MODIS NDVI Scale & Harvest Band Constants (US-02, US-07, ADR-0002)
+# Limiares do NDVI (plantou/parado, queda da soja, meses da entressafra): regras.yaml, grupo ndvi
 NDVI_SCALE_FACTOR: Final[float] = 0.0001
-NDVI_PLANTED_THRESHOLD: Final[float] = 0.60
-NDVI_FALLOW_THRESHOLD: Final[float] = 0.45
-NDVI_HARVEST_DROP_RATIO: Final[float] = 0.50
-OFFSEASON_MONTHS: Final[frozenset[int]] = frozenset({4, 5, 6, 7})  # 1/abr a 31/jul (PRD 7.8)
 MIN_NDVI_YEARS_FOR_SUGGESTION: Final[int] = 5
 EARLY_HARVEST_DOY_LIMIT: Final[int] = 41  # Feb 10
 MID_HARVEST_DOY_LIMIT: Final[int] = 53  # Feb 22
@@ -79,57 +80,18 @@ MJ_TO_MM_EVAPORATION: Final[float] = 0.408  # FAO-56: 1 MJ/m² evapora 0,408 mm
 MAX_DAILY_ETO_MM: Final[float] = 10.0
 EXAMPLE_CELL_ID: Final[str] = "-189_-483"
 
-# Climate Stress & ISNA Thresholds (US-03)
-ISNA_GRAIN_THRESHOLD: Final[float] = 0.55
-ISNA_COVER_THRESHOLD: Final[float] = 0.50
-GRAIN_CRITICAL_HALF_WINDOW_DAYS: Final[int] = 15
-COVER_CRITICAL_WINDOW_DAYS: Final[int] = 30
-HEAT_STRESS_TEMP_C: Final[float] = 35.0
-HEAT_STRESS_MIN_DAYS: Final[int] = 3
+# Balde inicial: piso de 20% da CAD quando o SMAP vier muito seco (US-03)
+# ISNA, janelas críticas, calor e perda pelo ISNA: regras.yaml, grupo clima
 MIN_INITIAL_ARM_FRACTION: Final[float] = 0.20
-
-# Fator de perda pelo ISNA (PRD 7.5): 0% com ISNA >= 0,65; 30% entre 0,55 e 0,65; 60% abaixo
-LOSS_ISNA_NONE_FROM: Final[float] = 0.65
-LOSS_ISNA_HIGH_BELOW: Final[float] = 0.55
-LOSS_FACTOR_MEDIUM: Final[float] = 0.30
-LOSS_FACTOR_HIGH: Final[float] = 0.60
 
 PERCENT_DIVISOR: Final[float] = 100.0
 
-# Scoring Engine Weights & Thresholds (US-04, US-08, ADR-0004)
-WEIGHT_SAFETY: Final[float] = 0.30
-WEIGHT_SOIL: Final[float] = 0.25
-WEIGHT_INCOME: Final[float] = 0.30
-WEIGHT_FUTURE: Final[float] = 0.15
-
+# Escala das notas. Pesos, rótulos, nota de solo e bônus: regras.yaml (nota_final, rotulos, solo)
 SCORE_MIN: Final[float] = 0.0
 SCORE_MAX: Final[float] = 100.0
 
-# Rótulos para o produtor (plano técnico §4.4; hipótese do time)
-RAIN_LABEL_GOOD_PCT: Final[float] = 85.0  # Bom >= 17 de 20 anos sem aperto
-RAIN_LABEL_MEDIUM_PCT: Final[float] = 60.0  # Médio 12 a 16; Fraco < 12
-SOIL_LABEL_GOOD: Final[float] = 50.0
-SOIL_LABEL_MEDIUM: Final[float] = 20.0
-INCOME_LABEL_GOOD: Final[float] = 70.0
-INCOME_LABEL_MEDIUM: Final[float] = 30.0
-
-# Nota de solo (PRD 7.4): palhada até 40 + nitrogênio até 30 + quebra de pragas até 30
-SOIL_STRAW_MAX: Final[float] = 40.0
-SOIL_NITROGEN_MAX: Final[float] = 30.0
-SOIL_PESTS_MAX: Final[float] = 30.0
-NEMATODE_PEST_WEIGHT: Final[float] = 1.5  # nematoide = sim: pragas valem 1,5 vez
-
-LIVESTOCK_INTERCROP_BONUS: Final[float] = 15.0
-
-# 3-Year Rotation Plan Constants (US-06, US-09)
+# 3-Year Rotation Plan (US-06, US-09). Anos secos, pousio, bônus e supressoras: regras.yaml, rotacao
 ROTATION_HORIZON_YEARS: Final[int] = 3
-DRIEST_YEARS_COUNT: Final[int] = 4
-DRY_SCENARIO_MONTHS: Final[frozenset[int]] = frozenset({2, 3, 4})  # PRD 7.7: fevereiro a abril
-MAX_CONSECUTIVE_FALLOW: Final[int] = 2
-DIVERSITY_BONUS_TWO_ROLES: Final[float] = 5.0
-DIVERSITY_BONUS_THREE_ROLES: Final[float] = 10.0
-MONOCULTURE_CORN_PENALTY: Final[float] = 12.0
-NEMATODE_SUPPRESSOR_CROPS: Final[frozenset[str]] = frozenset({"crotalaria", "milheto"})
 
 # Data Versioning & Problem Details (RFC 7807)
 DATA_VERSION: Final[str] = "2026.11-nasa-power-20y"
