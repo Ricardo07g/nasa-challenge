@@ -34,6 +34,10 @@ describe('rainPeriod', () => {
     expect(rainPeriod([{ fonte: 'gpm_imerg', periodo: '2006-2025' }])).toEqual({ start: '2006', end: '2025' })
   })
 
+  it('sem o IMERG, usa o período da chuva do NASA POWER', () => {
+    expect(rainPeriod([{ fonte: 'nasa_power', periodo: '2005-2024' }])).toEqual({ start: '2005', end: '2024' })
+  })
+
   it('sem a fonte, usa os 20 anos do PRD (2006 a 2025)', () => {
     expect(rainPeriod([])).toEqual({ start: '2006', end: '2025' })
   })

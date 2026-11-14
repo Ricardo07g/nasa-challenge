@@ -204,6 +204,8 @@ function buildOption(seed: CropSeed, lang: Lang): Opcao {
       anos_bons_media: seed.goodYears - 2,
       anos_bons_min: seed.goodYears - 4,
       anos_bons_max: seed.goodYears - 1,
+      modelos: 3,
+      cenario: 'ssp245',
     },
     dinheiro: { margem_ha: seed.margin, rotulo: seed.moneyLabel, texto: moneyText(lang, seed.margin) },
     terra: { nota: seed.soil.nota, rotulo: seed.soil.rotulo, texto: seed.soil.texto[lang] },
@@ -293,11 +295,20 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
           : 'Leaving it fallow: it does not depend on rain, but the soil stays bare from May to September.',
     },
     plano_3_anos: {
-      normal: { anos: ['milho_braquiaria', 'crotalaria', 'sorgo'], nota: 66 },
-      seco: { anos: ['sorgo', 'crotalaria', 'sorgo'], nota: 58 },
+      normal: {
+        anos: ['milho_braquiaria', 'crotalaria', 'sorgo'],
+        nota: 66,
+        descricao: lang === 'pt' ? 'Grão em 2 anos e terra coberta nos 3.' : 'Grain in 2 years and soil covered in all 3.',
+      },
+      seco: {
+        anos: ['sorgo', 'crotalaria', 'sorgo'],
+        nota: 58,
+        descricao: lang === 'pt' ? 'Troca o milho pelo sorgo no ano seco.' : 'Swaps corn for sorghum in the dry year.',
+      },
       hoje: {
-        descricao: lang === 'pt' ? 'Terra descoberta em metade dos anos' : 'Soil bare in half of the years',
+        anos: ['milho_safrinha', 'pousio', 'milho_safrinha'],
         nota: 48,
+        descricao: lang === 'pt' ? 'Terra descoberta em metade dos anos' : 'Soil bare in half of the years',
       },
     },
     versao_dados: '2026-11-14T13:00Z',

@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { useI18n } from '../i18n/useI18n'
-import type { FarmService } from '../services/farmService'
+import type { ScreenStatus } from '../models/screenStatus'
+import { isOutsideArea, type FarmService } from '../services/farmService'
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { useAsync } from './useAsync'
 
@@ -27,5 +28,8 @@ export function useFlowRecomendacao(farm: FarmService) {
 
   const query = keepFlowQuery(search.toString())
   const redirectTo = !params ? '/onde' : !params.colheita ? `/quando${query}` : null
-  return { redirectTo, recomendacao }
+  // 404 OUTSIDE_AREA: o servidor ainda não tem dados para esse ponto (não é falha, é cobertura).
+  const status: ScreenStatus =
+    recomendacao.status === 'error' && isOutsideArea(recomendacao.error) ? 'outside' : recomendacao.status
+  return { redirectTo, recomendacao, status }
 }

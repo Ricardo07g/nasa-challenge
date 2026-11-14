@@ -38,6 +38,21 @@ export function FlowError({ t, message, onRetry }: { t: Messages; message: strin
   )
 }
 
+/** O servidor ainda não tem dados para esse ponto: explica e oferece a fazenda de exemplo (RF-11). */
+export function FlowOutside({ t }: { t: Messages }) {
+  return (
+    <Card tone="orange" as="section" aria-label={t.where.outsideTitle}>
+      <h2 className={layout.cardTitle}>{t.where.outsideTitle}</h2>
+      <p>{t.where.outsideText}</p>
+      <div className={layout.cta}>
+        <Button to="/exemplo" variant="outline">
+          {t.where.seeExample}
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
 /** Aviso laranja do que ficou fora da janela de plantio (colheita tardia). */
 export function LateWarning({ t, late }: { t: Messages; late: LateSummary }) {
   if (late.names.length === 0) return null

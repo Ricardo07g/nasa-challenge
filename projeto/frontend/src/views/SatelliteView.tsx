@@ -8,13 +8,14 @@ import { ClimateIcon, DropIcon, HistoryIcon, SoilIcon } from '../design-system/i
 import type { Messages } from '../i18n/messages.pt'
 import { TEXTURAS, type SituacaoAno, type Textura } from '../models/talhao'
 import type { HistorySummary, SoilSummary } from '../services/satelliteService'
-import { FlowError, FlowLoading } from './FlowStates'
+import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
+import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
 
 export type SatelliteViewProps = {
   t: Messages
   backTo: string
-  status: 'loading' | 'ready' | 'error'
+  status: ScreenStatus
   onRetry: () => void
   history: HistorySummary | null
   rain: { start: string; end: string }
@@ -35,9 +36,10 @@ export function SatelliteView(props: SatelliteViewProps) {
   return (
     <div className={layout.page}>
       <BackLink to={backTo}>{t.nav.back}</BackLink>
-      <PageHeading title={s.title} subtitle={status === 'error' ? undefined : s.subtitle} />
+      <PageHeading title={s.title} subtitle={status === 'ready' || status === 'loading' ? s.subtitle : undefined} />
       {status === 'loading' && <FlowLoading label={s.loading} />}
       {status === 'error' && <FlowError t={t} message={s.error} onRetry={props.onRetry} />}
+      {status === 'outside' && <FlowOutside t={t} />}
       {status === 'ready' && <Cards {...props} />}
     </div>
   )

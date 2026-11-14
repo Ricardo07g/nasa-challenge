@@ -32,4 +32,13 @@ describe('useAsync', () => {
 
     await waitFor(() => expect(result.current.data).toBe('en'))
   })
+
+  it('guarda o erro, para a tela saber o motivo (ex.: fora da área)', async () => {
+    const failure = new Error('fora da área')
+    const load = vi.fn().mockRejectedValue(failure)
+    const { result } = renderHook(() => useAsync(load, []))
+
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(result.current.error).toBe(failure)
+  })
 })

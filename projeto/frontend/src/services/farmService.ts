@@ -68,3 +68,6 @@ export const farmService = createFarmService({
   recomendacaoRepository: defaultRecomendacao,
   exemploRepository: defaultExemplo,
 })
+
+/** O servidor ainda não tem dados para esse ponto (404 OUTSIDE_AREA). */
+export { isOutsideArea } from '../repositories/httpClient'

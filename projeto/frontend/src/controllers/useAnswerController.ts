@@ -11,11 +11,11 @@ const defaultDeps: Deps = { farm: farmService, apiMode: currentApiMode }
 
 /** Tela 5 "A resposta": a melhor opção, os sinais, como fazer e as alternativas. */
 export function useAnswerController(deps: Deps = defaultDeps) {
-  const { redirectTo, recomendacao } = useFlowRecomendacao(deps.farm)
+  const { redirectTo, recomendacao, status: flowStatus } = useFlowRecomendacao(deps.farm)
   const nav = useAnswerNav()
 
   const answer = recomendacao.data ? buildAnswer(recomendacao.data) : null
-  const status = recomendacao.status === 'ready' && !answer ? 'error' : recomendacao.status
+  const status = flowStatus === 'ready' && !answer ? 'error' : flowStatus
 
   return {
     redirectTo,

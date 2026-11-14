@@ -131,4 +131,12 @@ describe('PlanView (tela 7)', () => {
     expect(screen.getByRole('heading', { level: 1, name: '3-year plan' })).toBeInTheDocument()
     expect(screen.getByRole('list', { name: /year/i })).toHaveTextContent('Instead of corn with brachiaria')
   })
+
+  it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {
+    setup({ status: 'outside', plan: null })
+
+    const outside = screen.getByRole('region', { name: 'Ainda não chegamos aí' })
+    expect(outside).toHaveTextContent('Por enquanto, os dados estão prontos só para a região')
+    expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
+  })
 })

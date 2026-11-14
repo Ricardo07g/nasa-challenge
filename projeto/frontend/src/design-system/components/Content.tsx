@@ -165,7 +165,8 @@ export function OptionCompareCard({ rank, name, rows, highlighted = false, unava
 type ScoreTableProps = {
   caption: string
   headers: readonly string[]
-  rows: readonly { name: string; values: readonly number[] }[]
+  /** null = nota que ainda não existe (ex.: futuro sem CMIP6): aparece "—". */
+  rows: readonly { name: string; values: readonly (number | null)[] }[]
 }
 
 /** Tabela simples de notas (só na tela "Como a conta é feita"). Rola para o lado no celular. */
@@ -188,7 +189,7 @@ export function ScoreTable({ caption, headers, rows }: ScoreTableProps) {
             <tr key={row.name}>
               <th scope="row">{row.name}</th>
               {row.values.map((value, index) => (
-                <td key={index}>{value}</td>
+                <td key={index}>{value ?? '—'}</td>
               ))}
             </tr>
           ))}
