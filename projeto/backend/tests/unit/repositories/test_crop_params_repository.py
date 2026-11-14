@@ -2,8 +2,13 @@
 
 from pathlib import Path
 
+import yaml
+
 from app.config import Settings
 from app.repositories.crop_params_repository import YamlCropParamsRepository
+
+# O culturas.yaml que vai junto com a API (caminho padrão, sem ler variável de ambiente).
+SHIPPED_CULTURAS = Settings.model_fields["culturas_path"].default
 
 YAML = """
 culturas:
@@ -96,6 +101,39 @@ def test_should_return_crop_params_when_queried_by_canonical_or_alias_id(tmp_pat
     assert repo.get_by_id("trigo_inverno") is None
 
 
+def test_should_read_how_to_steps_in_portuguese_and_english(tmp_path: Path) -> None:
+    path = tmp_path / "culturas.yaml"
+    path.write_text(
+        YAML
+        + """
+  milheto:
+    nome: "Milheto"
+    nome_en: "Pearl millet"
+    tipo: "cobertura"
+    funcao: "Cobertura"
+    semeadura_limite_mes_dia: "03-15"
+    dias_florescer: 50
+    ciclo_dias: 90
+    kc_pico: 1.0
+    nota_solo: {palhada: 35, nitrogenio: 0, pragas: 20}
+    n_deixado_kg: 0
+    como_fazer: ["Semeie o milheto.", "Deixe formar palha."]
+    como_fazer_en: ["Sow the pearl millet.", "Let it form straw."]
+""",
+        encoding="utf-8",
+    )
+    repo = YamlCropParamsRepository(path)
+
+    milheto = repo.get_by_id("milheto")
+    sorgo = repo.get_by_id("sorgo")
+
+    assert milheto is not None and sorgo is not None
+    assert milheto.como_fazer == ("Semeie o milheto.", "Deixe formar palha.")
+    assert milheto.como_fazer_en == ("Sow the pearl millet.", "Let it form straw.")
+    # Sem tradução no YAML: vazio (o service usa o português).
+    assert sorgo.como_fazer_en == ()
+
+
 def test_should_load_shipped_culturas_yaml_with_prd_soil_points() -> None:
     # O culturas.yaml que vai junto com a API precisa carregar (PRD 7.4: totais da nota de solo).
     repo = YamlCropParamsRepository(Settings(_env_file=None).culturas_path)
@@ -110,3 +148,34 @@ def test_should_load_shipped_culturas_yaml_with_prd_soil_points() -> None:
         "milheto": 55,
         "crotalaria": 85,
     }
+
+
+def test_should_ship_culturas_yaml_keyed_by_canonical_crop_ids() -> None:
+    # ADR-0001: o YAML já usa o id canônico; os aliases longos só servem para entrada antiga.
+    raw = yaml.safe_load(SHIPPED_CULTURAS.read_text(encoding="utf-8"))
+
+    assert list(raw["culturas"]) == [
+        "pousio",
+        "milho_safrinha",
+        "sorgo",
+        "milho_braquiaria",
+        "milheto",
+        "crotalaria",
+    ]
+
+
+def test_should_ship_interface_names_and_how_to_steps_in_both_languages() -> None:
+    # Nomes iguais aos da interface (front: src/i18n/messages.pt.ts e messages.en.ts).
+    crops = YamlCropParamsRepository(SHIPPED_CULTURAS).list_all()
+
+    assert {c.id: (c.nome, c.nome_en) for c in crops} == {
+        "pousio": ("Deixar parado", "Leave it fallow"),
+        "milho_safrinha": ("Milho sozinho", "Corn alone"),
+        "sorgo": ("Sorgo", "Sorghum"),
+        "milho_braquiaria": ("Milho com braquiária", "Corn with brachiaria"),
+        "milheto": ("Milheto", "Pearl millet"),
+        "crotalaria": ("Crotalária", "Crotalaria"),
+    }
+    for crop in crops:
+        assert 3 <= len(crop.como_fazer) <= 5, crop.id
+        assert len(crop.como_fazer_en) == len(crop.como_fazer), crop.id

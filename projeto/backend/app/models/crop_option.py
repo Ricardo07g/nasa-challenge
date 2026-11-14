@@ -35,3 +35,4 @@ class CropParams:
     custo_padrao_ha: float = 0.0
     como_fazer: tuple[str, ...] = ()
     nome_en: str = ""
+    como_fazer_en: tuple[str, ...] = ()  # vazio = sem tradução (o service usa o português)

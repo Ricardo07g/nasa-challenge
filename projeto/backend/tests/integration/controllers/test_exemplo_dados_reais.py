@@ -55,3 +55,40 @@ def test_should_answer_example_farm_with_twenty_years_of_nasa_power(
     assert len(rec["opcoes"]) == 5
     assert all(o["chuva"]["anos"] == 20 for o in rec["opcoes"])
     assert rec["melhor"] != "pousio"
+
+
+# Nomes das culturas como a interface mostra (front: src/i18n/messages.pt.ts e messages.en.ts).
+NAMES_PT = {
+    "milho_braquiaria": "Milho com braquiária",
+    "milho_safrinha": "Milho sozinho",
+    "sorgo": "Sorgo",
+    "milheto": "Milheto",
+    "crotalaria": "Crotalária",
+}
+NAMES_EN = {
+    "milho_braquiaria": "Corn with brachiaria",
+    "milho_safrinha": "Corn alone",
+    "sorgo": "Sorghum",
+    "milheto": "Pearl millet",
+    "crotalaria": "Crotalaria",
+}
+
+
+def _names(rec: dict) -> dict[str, str]:
+    return {o["id"]: o["nome"] for o in rec["opcoes"] + rec["fora_da_janela"]}
+
+
+def test_should_answer_crop_names_and_how_to_steps_in_the_requested_language(
+    real_data_client: TestClient,
+) -> None:
+    pt = real_data_client.get("/api/exemplo", headers={"Accept-Language": "pt-BR"}).json()
+    en = real_data_client.get("/api/exemplo", headers={"Accept-Language": "en-US,en;q=0.9"}).json()
+
+    assert _names(pt["recomendacao"]) == NAMES_PT
+    assert _names(en["recomendacao"]) == NAMES_EN
+    steps_pt = {o["id"]: o["como_fazer"] for o in pt["recomendacao"]["opcoes"]}
+    steps_en = {o["id"]: o["como_fazer"] for o in en["recomendacao"]["opcoes"]}
+    assert all(3 <= len(steps) <= 5 for steps in steps_pt.values())
+    for crop_id, steps in steps_pt.items():
+        assert len(steps_en[crop_id]) == len(steps)
+        assert steps_en[crop_id] != steps

@@ -361,7 +361,9 @@ class RecommendationService:
             notas=notas,
             notas_seco=notas_seco,
             porque=self._why(a, total - anos_bons, total, semeadura, solo, fonte_chuva, is_en),
-            como_fazer=a.crop.como_fazer,
+            como_fazer=(
+                a.crop.como_fazer_en if (is_en and a.crop.como_fazer_en) else a.crop.como_fazer
+            ),
         )
 
     @staticmethod

@@ -25,6 +25,7 @@ def _crop(
     solo: tuple[int, int, int],
     economia: tuple[float, float, float] = (0.0, 0.0, 0.0),
     n_kg: int = 0,
+    steps_en: tuple[str, ...] = ("Step 1",),
 ) -> CropParams:
     palhada, nitrogenio, pragas = solo
     produtividade, preco, custo = economia
@@ -46,6 +47,7 @@ def _crop(
         preco_padrao_saca=preco,
         custo_padrao_ha=custo,
         como_fazer=("Passo 1",),
+        como_fazer_en=steps_en,
     )
 
 
@@ -55,7 +57,8 @@ CROPS = [
     _crop("milho_safrinha", "grao", "02-28", (20, 0, 0), (80.0, 62.0, 3500.0)),
     _crop("sorgo", "grao", "03-20", (20, 0, 15), (60.0, 49.6, 2200.0)),
     _crop("milho_braquiaria", "consorcio", "02-28", (40, 0, 10), (76.0, 62.0, 3800.0)),
-    _crop("milheto", "cobertura", "03-15", (35, 0, 20), (0.0, 0.0, 600.0)),
+    # Milheto sem tradução dos passos: em inglês cai no português.
+    _crop("milheto", "cobertura", "03-15", (35, 0, 20), (0.0, 0.0, 600.0), steps_en=()),
     _crop("crotalaria", "cobertura", "02-28", (25, 30, 30), (0.0, 0.0, 800.0), n_kg=80),
 ]
 
@@ -299,6 +302,16 @@ def test_should_write_texts_in_english_when_language_is_en() -> None:
     assert milho.nome == "milho_safrinha (en)"
     assert milho.texto_chuva == "Worked in 20 of 20 years"
     assert any("NASA POWER" in frase for frase in milho.porque)
+
+
+def test_should_give_how_to_steps_in_the_requested_language() -> None:
+    pt = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="pt-BR")
+    en = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="en-US,en;q=0.9")
+
+    assert _opcao(pt, "milho_safrinha").como_fazer == ("Passo 1",)
+    assert _opcao(en, "milho_safrinha").como_fazer == ("Step 1",)
+    # Sem tradução no culturas.yaml: mostra os passos em português em vez de nada.
+    assert _opcao(en, "milheto").como_fazer == ("Passo 1",)
 
 
 def test_should_use_soil_override_for_water_capacity() -> None:
