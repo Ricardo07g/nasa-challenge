@@ -369,13 +369,15 @@ Todo ano, de dezembro a março, o produtor de soja de sequeiro decide o que faze
 - Milho e soja são hospedeiros do nematoide das lesões, enquanto a crotalária quebra o ciclo; a cigarrinha do milho já é monitorada no Triângulo.
 - O El Niño 2026/27 aumenta a incerteza justamente sobre a safrinha.
 
-### Como funciona
+### Como funciona (protótipo v3)
 
-1. O produtor marca o talhão no mapa e informa a data de colheita da soja, a textura do solo e se tem nematoide.
-2. O app busca 20 anos de chuva e clima da NASA (IMERG, POWER), a umidade do solo (SMAP), o histórico de verde do talhão (MODIS) e o clima projetado para 2041–2060 (NEX-GDDP-CMIP6).
-3. Seis opções de entressafra recebem notas de segurança climática, clima futuro, saúde do solo e renda.
-4. O produtor ajusta o peso de cada eixo, e o app monta os melhores planos de rotação de 3 anos, ao lado da sequência que ele já faz.
-5. Cada nota explica qual dado da NASA levou a ela.
+O público principal tem pouca escolaridade formal (64,2% dos produtores de Minas estudaram até o fundamental) e 76% têm mais de 45 anos. Por isso o fluxo pergunta só o necessário e deixa o satélite responder o resto:
+
+1. O produtor marca a lavoura no mapa ou pelo GPS (pergunta 1 de 2).
+2. Diz quando colhe a soja, escolhendo entre três faixas já sugeridas pelo satélite (pergunta 2 de 2).
+3. O app mostra o que já sabe pelos dados: 20 anos de chuva e clima da NASA (IMERG, POWER), o histórico do talhão (MODIS), o tipo de terra (SoilGrids) e o clima projetado para 2041–2060 (NEX-GDDP-CMIP6).
+4. Entrega uma resposta: o que plantar e até quando, com chuva, dinheiro e terra em palavras (Bom, Médio, Fraco), o "por quê" com o dado da NASA, como fazer em 3 passos e alternativas para quem prefere menos risco, mais dinheiro ou cuidar da terra.
+5. Com um toque, manda tudo para o agrônomo pelo WhatsApp, em texto ou áudio. Todas as telas têm o botão "Ouvir".
 
 O semáforo de plantio da soja e os alertas de veranico, calor, chuva forte e fogo viram o **módulo 2**, que acompanha o plano durante o ano.
 
@@ -387,6 +389,7 @@ O semáforo de plantio da soja e os alertas de veranico, calor, chuva forte e fo
 | Área de pousio trocada por cobertura ou consorcio no piloto | 10% da área dos participantes | NDVI do talhão na entressafra seguinte |
 | Acerto do risco | Anos de aperto calculados batem com os anos de quebra do milho 2ª safra no IBGE | Comparação com a Produção Agrícola Municipal |
 | Confiança | 7 em cada 10 dizem entender o "por quê" da nota | Pergunta de um toque |
+| Facilidade | 8 em cada 10 chegam à resposta sozinhos, sem ajuda, em até 2 minutos | Teste de usabilidade com 5 produtores (de preferência com ensino fundamental) |
 
 **Piloto:** 15 a 20 produtores de Uberlândia e Uberaba, com sindicato rural, Emater ou revenda, na decisão da entressafra de 2027.
 
@@ -471,7 +474,8 @@ Priorizei fontes oficiais (IBGE, Conab, MAPA, Inmet, Inpe, Embrapa, Governo de M
 **Como identificar os eventos e documentos do time**
 
 - [Planejamento, business case e business plan do Raiz Orbital](https://claude.ai/artifact/Ub4x3JemJK2pZ6NnbqLPbh)
-- [PRD – Hoje dá para plantar?](https://claude.ai/artifact/ER9Gmh7FQDvPHkaXjcPeyd)
+- [PRD – Raiz Orbital: o que plantar depois da soja?](PRD%20–%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md)
+- [Plano técnico do backend](Raiz%20Orbital%20–%20plano%20técnico%20do%20backend.md)
 - [Portaria ZARC soja Minas Gerais 2026/27 (MAPA)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/portarias/safra-vigente/minas-gerais/PORTN200SOJAMG.pdf)
 - [Déficit hídrico nas fases da soja (Embrapa Cerrados, via Revista Cultivar)](https://revistacultivar.com.br/artigos/impacto-do-deficit-hidrico-em-diferentes-fases-do-desenvolvimento-da-soja)
 - [Fisiologia da produção de milho (Embrapa Milho e Sorgo)](https://www.alice.cnptia.embrapa.br/bitstream/doc/927283/1/Fisiologiaproducao1.pdf)

@@ -12,7 +12,7 @@ Nov 14, 2026 · @Rayanne
 - **O negócio:** é um mercado regional pequeno se cobrado só por hectare. O plano mira 200 mil hectares no ano 3 e o equilíbrio perto de 280 mil hectares, com subvenção (Centelha, Compete Minas) cobrindo os dois primeiros anos.
 - **Próximo passo:** piloto com 20 produtores de Uberlândia e Uberaba ainda neste plantio e no período crítico de fevereiro e março de 2027.
 - **Como o app detecta os eventos:** com critérios de dissertações, teses, Embrapa e ZARC: dia seco = menos de 5 mm; alerta de veranico com 10 dias secos ou mais na floração e no enchimento; índice de água (ISNA) abaixo de 0,55; calor de 35 °C ou mais por 2 dias; chuva de 50 mm ou mais em 24 h; foco de fogo a menos de 10 km.
-- **Para os devs:** dados, regras, arquitetura e backlog estão no [PRD – Hoje dá para plantar?](https://claude.ai/artifact/ER9Gmh7FQDvPHkaXjcPeyd).
+- **Para os devs:** dados, regras e backlog estão no [PRD – Raiz Orbital: o que plantar depois da soja?](PRD%20–%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md); arquitetura, API e banco no [plano técnico do backend](Raiz%20Orbital%20–%20plano%20técnico%20do%20backend.md).
 
 Todos os números de projeção são hipóteses do time, marcadas como tal, e devem ser revistos depois do piloto. Os termos técnicos estão explicados no glossário logo abaixo.
 
@@ -345,6 +345,7 @@ A soja de Minas deve ocupar 2,52 milhões de hectares em 2026/27, segundo a Safr
 | --- | --- | --- | --- |
 | Hectares pagos | 0 (piloto) | 60 mil | 200 mil |
 | Receita | R$ 0 | R$ 120 mil | R$ 360 mil |
+| Composição da receita (hipótese) | — | R$ 90 mil de licenças (60 mil ha × R$ 1,50) + R$ 30 mil de relatórios | R$ 300 mil de licenças (200 mil ha × R$ 1,50) + R$ 60 mil de relatórios |
 | Custo (time, nuvem, campo) | R$ 120 mil | R$ 300 mil | R$ 480 mil |
 | Resultado | −R$ 120 mil | −R$ 180 mil | −R$ 120 mil |
 
@@ -380,7 +381,7 @@ Confirmar prazos e valores em cada edital antes de submeter.
 
 | Quando | Marco | Critério de sucesso |
 | --- | --- | --- |
-| Nov/2026 | Protótipo no Space Apps | Semáforo de plantio funcionando para Uberlândia |
+| Nov/2026 | Protótipo no Space Apps | "O que plantar depois da soja?" funcionando para Uberlândia e Uberaba, com 20 anos de dados da NASA |
 | Mar/2027 | Backtest das regras | Acerto e falsos alarmes medidos em 10 safras |
 | Out/2027 | Piloto com produtores | 60% abrem o alerta; 1 decisão mudada por produtor |
 | Jun/2028 | Primeiro parceiro pagante | Contrato assinado com revenda ou cooperativa |
