@@ -48,11 +48,6 @@
   }
 }
 
-/* Uma coluna só, na largura de leitura (ex.: resposta sem "Como fazer") */
-.single {
-  max-width: 720px;
-}
-
 .stack {
   display: flex;
   flex-direction: column;

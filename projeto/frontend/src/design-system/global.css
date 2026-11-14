@@ -85,3 +85,16 @@ button {
     scroll-behavior: auto !important;
   }
 }
+
+/* Impressão (relatório): sai o cabeçalho, o rodapé e os botões; fica só a folha. */
+@media print {
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+}

@@ -29,6 +29,7 @@ function setup(overrides: Partial<AnswerViewProps> = {}) {
     answer: buildAnswer(buildRecomendacao(params, 'pt')),
     aviso: 'Ajuda a decidir. Não substitui o agrônomo.',
     sampleData: false,
+    reportTo: '/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio',
     ...overrides,
   }
   render(
@@ -163,5 +164,14 @@ describe('AnswerView (tela 5)', () => {
 
     expect(screen.getByRole('img', { name: '14 anos bons e 6 anos com falta de água' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Ver o ano/ })).not.toBeInTheDocument()
+  })
+
+  it('leva ao relatório para banco ou seguro (P2)', () => {
+    setup()
+
+    expect(screen.getByRole('link', { name: 'Relatório para banco ou seguro' })).toHaveAttribute(
+      'href',
+      '/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio',
+    )
   })
 })

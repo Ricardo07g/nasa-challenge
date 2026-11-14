@@ -156,6 +156,14 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Como a conta é feita')
   })
 
+  it('o relatório abre pela URL com a folha para imprimir', async () => {
+    renderAt('/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    expect(await screen.findByRole('article', { name: 'Relatório da lavoura · Raiz Orbital' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Salvar em PDF' })).toBeInTheDocument()
+    expect(document.title).toBe('Raiz Orbital – Relatório da lavoura · Raiz Orbital')
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 
