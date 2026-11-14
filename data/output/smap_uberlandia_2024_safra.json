@@ -1,0 +1,812 @@
+[
+  {
+    "date": "2024-01-01",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2912,
+    "sm_rootzone_m3_m3": 0.301,
+    "sm_rootzone_wetness": 0.669,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-02",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.262,
+    "sm_rootzone_m3_m3": 0.3089,
+    "sm_rootzone_wetness": 0.686,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-03",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2989,
+    "sm_rootzone_m3_m3": 0.3271,
+    "sm_rootzone_wetness": 0.727,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-04",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3114,
+    "sm_rootzone_m3_m3": 0.3035,
+    "sm_rootzone_wetness": 0.674,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-05",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2738,
+    "sm_rootzone_m3_m3": 0.3012,
+    "sm_rootzone_wetness": 0.669,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-06",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2575,
+    "sm_rootzone_m3_m3": 0.3202,
+    "sm_rootzone_wetness": 0.712,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-07",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2421,
+    "sm_rootzone_m3_m3": 0.308,
+    "sm_rootzone_wetness": 0.684,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-08",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.292,
+    "sm_rootzone_m3_m3": 0.3218,
+    "sm_rootzone_wetness": 0.715,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-09",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2576,
+    "sm_rootzone_m3_m3": 0.3236,
+    "sm_rootzone_wetness": 0.719,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-10",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3048,
+    "sm_rootzone_m3_m3": 0.3003,
+    "sm_rootzone_wetness": 0.667,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-11",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3045,
+    "sm_rootzone_m3_m3": 0.3279,
+    "sm_rootzone_wetness": 0.729,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-12",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2672,
+    "sm_rootzone_m3_m3": 0.3062,
+    "sm_rootzone_wetness": 0.68,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-13",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3166,
+    "sm_rootzone_m3_m3": 0.3135,
+    "sm_rootzone_wetness": 0.697,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-14",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2474,
+    "sm_rootzone_m3_m3": 0.3039,
+    "sm_rootzone_wetness": 0.675,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-15",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3078,
+    "sm_rootzone_m3_m3": 0.3241,
+    "sm_rootzone_wetness": 0.72,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-16",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3046,
+    "sm_rootzone_m3_m3": 0.3292,
+    "sm_rootzone_wetness": 0.732,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-17",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2829,
+    "sm_rootzone_m3_m3": 0.3389,
+    "sm_rootzone_wetness": 0.753,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-18",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2703,
+    "sm_rootzone_m3_m3": 0.3221,
+    "sm_rootzone_wetness": 0.716,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-19",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3064,
+    "sm_rootzone_m3_m3": 0.3247,
+    "sm_rootzone_wetness": 0.722,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-20",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3089,
+    "sm_rootzone_m3_m3": 0.3231,
+    "sm_rootzone_wetness": 0.718,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-21",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2964,
+    "sm_rootzone_m3_m3": 0.3018,
+    "sm_rootzone_wetness": 0.671,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-22",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2582,
+    "sm_rootzone_m3_m3": 0.3116,
+    "sm_rootzone_wetness": 0.692,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-23",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2464,
+    "sm_rootzone_m3_m3": 0.3093,
+    "sm_rootzone_wetness": 0.687,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-24",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2481,
+    "sm_rootzone_m3_m3": 0.3111,
+    "sm_rootzone_wetness": 0.691,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-25",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2909,
+    "sm_rootzone_m3_m3": 0.3146,
+    "sm_rootzone_wetness": 0.699,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-26",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2696,
+    "sm_rootzone_m3_m3": 0.3084,
+    "sm_rootzone_wetness": 0.685,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-27",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2614,
+    "sm_rootzone_m3_m3": 0.3375,
+    "sm_rootzone_wetness": 0.75,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-28",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2918,
+    "sm_rootzone_m3_m3": 0.3244,
+    "sm_rootzone_wetness": 0.721,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-29",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2537,
+    "sm_rootzone_m3_m3": 0.3292,
+    "sm_rootzone_wetness": 0.732,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-30",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2531,
+    "sm_rootzone_m3_m3": 0.3152,
+    "sm_rootzone_wetness": 0.7,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-01-31",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3192,
+    "sm_rootzone_m3_m3": 0.3256,
+    "sm_rootzone_wetness": 0.724,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-01",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2846,
+    "sm_rootzone_m3_m3": 0.3274,
+    "sm_rootzone_wetness": 0.728,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-02",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3074,
+    "sm_rootzone_m3_m3": 0.331,
+    "sm_rootzone_wetness": 0.736,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-03",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2583,
+    "sm_rootzone_m3_m3": 0.3013,
+    "sm_rootzone_wetness": 0.67,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-04",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2652,
+    "sm_rootzone_m3_m3": 0.3107,
+    "sm_rootzone_wetness": 0.69,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-05",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2569,
+    "sm_rootzone_m3_m3": 0.3377,
+    "sm_rootzone_wetness": 0.75,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-06",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3101,
+    "sm_rootzone_m3_m3": 0.3126,
+    "sm_rootzone_wetness": 0.695,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-07",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2924,
+    "sm_rootzone_m3_m3": 0.3158,
+    "sm_rootzone_wetness": 0.702,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-08",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3132,
+    "sm_rootzone_m3_m3": 0.3184,
+    "sm_rootzone_wetness": 0.708,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-09",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2612,
+    "sm_rootzone_m3_m3": 0.3099,
+    "sm_rootzone_wetness": 0.689,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-10",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2849,
+    "sm_rootzone_m3_m3": 0.3105,
+    "sm_rootzone_wetness": 0.69,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-11",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2868,
+    "sm_rootzone_m3_m3": 0.3359,
+    "sm_rootzone_wetness": 0.746,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-12",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.272,
+    "sm_rootzone_m3_m3": 0.3088,
+    "sm_rootzone_wetness": 0.686,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-13",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3198,
+    "sm_rootzone_m3_m3": 0.3204,
+    "sm_rootzone_wetness": 0.712,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-14",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2473,
+    "sm_rootzone_m3_m3": 0.3019,
+    "sm_rootzone_wetness": 0.671,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-15",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2488,
+    "sm_rootzone_m3_m3": 0.3251,
+    "sm_rootzone_wetness": 0.722,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-16",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3034,
+    "sm_rootzone_m3_m3": 0.3169,
+    "sm_rootzone_wetness": 0.704,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-17",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2451,
+    "sm_rootzone_m3_m3": 0.3153,
+    "sm_rootzone_wetness": 0.701,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-18",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3197,
+    "sm_rootzone_m3_m3": 0.3212,
+    "sm_rootzone_wetness": 0.714,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-19",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3177,
+    "sm_rootzone_m3_m3": 0.3344,
+    "sm_rootzone_wetness": 0.743,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-20",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2409,
+    "sm_rootzone_m3_m3": 0.3288,
+    "sm_rootzone_wetness": 0.731,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-21",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2945,
+    "sm_rootzone_m3_m3": 0.3215,
+    "sm_rootzone_wetness": 0.714,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-22",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2613,
+    "sm_rootzone_m3_m3": 0.3256,
+    "sm_rootzone_wetness": 0.724,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-23",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2489,
+    "sm_rootzone_m3_m3": 0.3174,
+    "sm_rootzone_wetness": 0.705,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-24",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2763,
+    "sm_rootzone_m3_m3": 0.3382,
+    "sm_rootzone_wetness": 0.752,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-25",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3101,
+    "sm_rootzone_m3_m3": 0.3105,
+    "sm_rootzone_wetness": 0.69,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-26",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.28,
+    "sm_rootzone_m3_m3": 0.3071,
+    "sm_rootzone_wetness": 0.682,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-27",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.313,
+    "sm_rootzone_m3_m3": 0.3348,
+    "sm_rootzone_wetness": 0.744,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-28",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2639,
+    "sm_rootzone_m3_m3": 0.3256,
+    "sm_rootzone_wetness": 0.724,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-02-29",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2887,
+    "sm_rootzone_m3_m3": 0.3061,
+    "sm_rootzone_wetness": 0.68,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-01",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.301,
+    "sm_rootzone_m3_m3": 0.3216,
+    "sm_rootzone_wetness": 0.715,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-02",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3023,
+    "sm_rootzone_m3_m3": 0.3212,
+    "sm_rootzone_wetness": 0.714,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-03",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.24,
+    "sm_rootzone_m3_m3": 0.313,
+    "sm_rootzone_wetness": 0.696,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-04",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2416,
+    "sm_rootzone_m3_m3": 0.3372,
+    "sm_rootzone_wetness": 0.749,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-05",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3103,
+    "sm_rootzone_m3_m3": 0.3333,
+    "sm_rootzone_wetness": 0.741,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-06",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2646,
+    "sm_rootzone_m3_m3": 0.3023,
+    "sm_rootzone_wetness": 0.672,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-07",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3102,
+    "sm_rootzone_m3_m3": 0.3379,
+    "sm_rootzone_wetness": 0.751,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-08",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2469,
+    "sm_rootzone_m3_m3": 0.3194,
+    "sm_rootzone_wetness": 0.71,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-09",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2455,
+    "sm_rootzone_m3_m3": 0.3304,
+    "sm_rootzone_wetness": 0.734,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-10",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3013,
+    "sm_rootzone_m3_m3": 0.3051,
+    "sm_rootzone_wetness": 0.678,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-11",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.278,
+    "sm_rootzone_m3_m3": 0.322,
+    "sm_rootzone_wetness": 0.716,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-12",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2612,
+    "sm_rootzone_m3_m3": 0.3349,
+    "sm_rootzone_wetness": 0.744,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-13",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2739,
+    "sm_rootzone_m3_m3": 0.3085,
+    "sm_rootzone_wetness": 0.686,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-14",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2831,
+    "sm_rootzone_m3_m3": 0.3292,
+    "sm_rootzone_wetness": 0.732,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-15",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2561,
+    "sm_rootzone_m3_m3": 0.3125,
+    "sm_rootzone_wetness": 0.694,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-16",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3196,
+    "sm_rootzone_m3_m3": 0.326,
+    "sm_rootzone_wetness": 0.724,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-17",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.275,
+    "sm_rootzone_m3_m3": 0.3207,
+    "sm_rootzone_wetness": 0.713,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-18",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2497,
+    "sm_rootzone_m3_m3": 0.309,
+    "sm_rootzone_wetness": 0.687,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-19",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.267,
+    "sm_rootzone_m3_m3": 0.3235,
+    "sm_rootzone_wetness": 0.719,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-20",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2584,
+    "sm_rootzone_m3_m3": 0.3088,
+    "sm_rootzone_wetness": 0.686,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-21",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2457,
+    "sm_rootzone_m3_m3": 0.3252,
+    "sm_rootzone_wetness": 0.723,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-22",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2583,
+    "sm_rootzone_m3_m3": 0.3362,
+    "sm_rootzone_wetness": 0.747,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-23",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3088,
+    "sm_rootzone_m3_m3": 0.3028,
+    "sm_rootzone_wetness": 0.673,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-24",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.259,
+    "sm_rootzone_m3_m3": 0.3268,
+    "sm_rootzone_wetness": 0.726,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-25",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2571,
+    "sm_rootzone_m3_m3": 0.3053,
+    "sm_rootzone_wetness": 0.678,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-26",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3148,
+    "sm_rootzone_m3_m3": 0.3228,
+    "sm_rootzone_wetness": 0.717,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-27",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2778,
+    "sm_rootzone_m3_m3": 0.3314,
+    "sm_rootzone_wetness": 0.736,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-28",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.3046,
+    "sm_rootzone_m3_m3": 0.3076,
+    "sm_rootzone_wetness": 0.684,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-29",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2478,
+    "sm_rootzone_m3_m3": 0.3172,
+    "sm_rootzone_wetness": 0.705,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  },
+  {
+    "date": "2024-03-30",
+    "latitude": -18.9186,
+    "longitude": -48.2772,
+    "sm_surface_m3_m3": 0.2739,
+    "sm_rootzone_m3_m3": 0.3187,
+    "sm_rootzone_wetness": 0.708,
+    "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+  }
+]

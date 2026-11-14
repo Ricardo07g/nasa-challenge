@@ -1,0 +1,90 @@
+# ==============================================================================
+# Parâmetros das 6 Opções de Entressafra (Raiz Orbital - Triângulo Mineiro)
+# Referência: Embrapa, ZARC e Seção 5 do PRD
+# Editável por agrônomos sem necessidade de alterar o código de backend
+# ==============================================================================
+
+culturas:
+  pousio:
+    nome: "Pousio"
+    tipo: "pousio"
+    funcao: "Nenhuma"
+    semeadura_limite_mes_dia: null
+    dias_florescer: 0
+    ciclo_dias: 0
+    kc_pico: 0.0
+    palhada_score: 5        # Escala 0 a 40
+    n_deixado_kg: 0         # Nitrogênio fixado no solo (kg/ha)
+    nematoide_efeito: -10   # Não quebra ciclo e deixa solo desprotegido
+    renda_padrao_ha: 0.0    # Lucro líquido estimado (R$/ha)
+
+  milho_safrinha:
+    nome: "Milho Safrinha"
+    tipo: "grao"
+    funcao: "Grão"
+    semeadura_limite_mes_dia: "02-28" # Limite ZARC Triângulo Mineiro
+    dias_florescer: 60
+    ciclo_dias: 120
+    kc_pico: 1.20
+    palhada_score: 20
+    n_deixado_kg: 0
+    nematoide_efeito: -15   # Altamente suscetível (multiplica Pratylenchus)
+    produtividade_padrao_sc_ha: 80.0
+    preco_padrao_saca: 62.0 # R$ / saca Uberlândia nov/2026
+    custo_padrao_ha: 3500.0
+
+  sorgo_granifero:
+    nome: "Sorgo Granífero"
+    tipo: "grao"
+    funcao: "Grão"
+    semeadura_limite_mes_dia: "03-20" # Mais tolerante ao estresse hídrico
+    dias_florescer: 65
+    ciclo_dias: 115
+    kc_pico: 1.05
+    palhada_score: 25
+    n_deixado_kg: 0
+    nematoide_efeito: 10    # Reduz nematoide reniforme
+    produtividade_padrao_sc_ha: 60.0
+    preco_padrao_saca: 49.6 # ~80% do milho
+    custo_padrao_ha: 2200.0
+
+  milho_braquiaria:
+    nome: "Milho + Braquiária ruziziensis"
+    tipo: "consorcio"
+    funcao: "Grão + Cobertura"
+    semeadura_limite_mes_dia: "02-28"
+    dias_florescer: 60
+    ciclo_dias: 120
+    kc_pico: 1.20
+    palhada_score: 38       # Alta palhada e cobertura verde contínua na seca
+    n_deixado_kg: 0
+    nematoide_efeito: 5     # Reduz reniforme, mas exige rotação com leguminosa
+    produtividade_padrao_sc_ha: 76.0 # Leve desconto pelo consórcio (-5%)
+    preco_padrao_saca: 62.0
+    custo_padrao_ha: 3800.0
+
+  milheto:
+    nome: "Milheto"
+    tipo: "cobertura"
+    funcao: "Cobertura de solo"
+    semeadura_limite_mes_dia: "03-15"
+    dias_florescer: 50
+    ciclo_dias: 90
+    kc_pico: 1.00
+    palhada_score: 35       # Excelente ciclagem de nutrientes e biomassa
+    n_deixado_kg: 0
+    nematoide_efeito: 15    # Supressor de Pratylenchus
+    custo_padrao_ha: 600.0  # Custo de implantação/semente
+
+  crotalaria_spectabilis:
+    nome: "Crotalária spectabilis"
+    tipo: "cobertura"
+    funcao: "Cobertura leguminosa"
+    semeadura_limite_mes_dia: "02-28"
+    dias_florescer: 60
+    ciclo_dias: 100
+    kc_pico: 1.00
+    palhada_score: 30
+    n_deixado_kg: 80        # Fixação biológica de Nitrogênio (60 a 100 kg/ha)
+    nematoide_efeito: 30    # Planta armadilha/altamente resistente (quebra ciclo)
+    custo_padrao_ha: 800.0

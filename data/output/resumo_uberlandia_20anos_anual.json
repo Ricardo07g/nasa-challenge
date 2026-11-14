@@ -1,0 +1,142 @@
+[
+  {
+    "ano": 2005,
+    "chuva_total_mm": 1257.5,
+    "chuva_safrinha_fev_mai_mm": 353.7,
+    "dias_calor_extremo_ge_35c": 3,
+    "tmax_media_c": 27.7
+  },
+  {
+    "ano": 2006,
+    "chuva_total_mm": 1334.6,
+    "chuva_safrinha_fev_mai_mm": 477.7,
+    "dias_calor_extremo_ge_35c": 0,
+    "tmax_media_c": 27.1
+  },
+  {
+    "ano": 2007,
+    "chuva_total_mm": 1094.4,
+    "chuva_safrinha_fev_mai_mm": 278.2,
+    "dias_calor_extremo_ge_35c": 8,
+    "tmax_media_c": 28.3
+  },
+  {
+    "ano": 2008,
+    "chuva_total_mm": 1463.7,
+    "chuva_safrinha_fev_mai_mm": 695.2,
+    "dias_calor_extremo_ge_35c": 2,
+    "tmax_media_c": 27.4
+  },
+  {
+    "ano": 2009,
+    "chuva_total_mm": 1446.5,
+    "chuva_safrinha_fev_mai_mm": 472.1,
+    "dias_calor_extremo_ge_35c": 0,
+    "tmax_media_c": 26.8
+  },
+  {
+    "ano": 2010,
+    "chuva_total_mm": 1104.8,
+    "chuva_safrinha_fev_mai_mm": 317.6,
+    "dias_calor_extremo_ge_35c": 4,
+    "tmax_media_c": 28.1
+  },
+  {
+    "ano": 2011,
+    "chuva_total_mm": 1477.7,
+    "chuva_safrinha_fev_mai_mm": 659.1,
+    "dias_calor_extremo_ge_35c": 0,
+    "tmax_media_c": 26.9
+  },
+  {
+    "ano": 2012,
+    "chuva_total_mm": 1109.7,
+    "chuva_safrinha_fev_mai_mm": 336.4,
+    "dias_calor_extremo_ge_35c": 8,
+    "tmax_media_c": 27.7
+  },
+  {
+    "ano": 2013,
+    "chuva_total_mm": 1323.5,
+    "chuva_safrinha_fev_mai_mm": 490.3,
+    "dias_calor_extremo_ge_35c": 1,
+    "tmax_media_c": 27.6
+  },
+  {
+    "ano": 2014,
+    "chuva_total_mm": 903.8,
+    "chuva_safrinha_fev_mai_mm": 314.6,
+    "dias_calor_extremo_ge_35c": 16,
+    "tmax_media_c": 28.9
+  },
+  {
+    "ano": 2015,
+    "chuva_total_mm": 1132.7,
+    "chuva_safrinha_fev_mai_mm": 506.8,
+    "dias_calor_extremo_ge_35c": 36,
+    "tmax_media_c": 29.0
+  },
+  {
+    "ano": 2016,
+    "chuva_total_mm": 1271.1,
+    "chuva_safrinha_fev_mai_mm": 365.3,
+    "dias_calor_extremo_ge_35c": 4,
+    "tmax_media_c": 28.5
+  },
+  {
+    "ano": 2017,
+    "chuva_total_mm": 1130.1,
+    "chuva_safrinha_fev_mai_mm": 379.7,
+    "dias_calor_extremo_ge_35c": 6,
+    "tmax_media_c": 28.5
+  },
+  {
+    "ano": 2018,
+    "chuva_total_mm": 1383.9,
+    "chuva_safrinha_fev_mai_mm": 404.5,
+    "dias_calor_extremo_ge_35c": 0,
+    "tmax_media_c": 28.0
+  },
+  {
+    "ano": 2019,
+    "chuva_total_mm": 1199.6,
+    "chuva_safrinha_fev_mai_mm": 559.8,
+    "dias_calor_extremo_ge_35c": 9,
+    "tmax_media_c": 28.5
+  },
+  {
+    "ano": 2020,
+    "chuva_total_mm": 1025.8,
+    "chuva_safrinha_fev_mai_mm": 404.6,
+    "dias_calor_extremo_ge_35c": 20,
+    "tmax_media_c": 28.5
+  },
+  {
+    "ano": 2021,
+    "chuva_total_mm": 1041.3,
+    "chuva_safrinha_fev_mai_mm": 390.6,
+    "dias_calor_extremo_ge_35c": 22,
+    "tmax_media_c": 29.4
+  },
+  {
+    "ano": 2022,
+    "chuva_total_mm": 1111.7,
+    "chuva_safrinha_fev_mai_mm": 386.5,
+    "dias_calor_extremo_ge_35c": 3,
+    "tmax_media_c": 28.5
+  },
+  {
+    "ano": 2023,
+    "chuva_total_mm": 1046.9,
+    "chuva_safrinha_fev_mai_mm": 371.3,
+    "dias_calor_extremo_ge_35c": 28,
+    "tmax_media_c": 29.6
+  },
+  {
+    "ano": 2024,
+    "chuva_total_mm": 943.5,
+    "chuva_safrinha_fev_mai_mm": 311.3,
+    "dias_calor_extremo_ge_35c": 37,
+    "tmax_media_c": 30.8
+  }
+]
