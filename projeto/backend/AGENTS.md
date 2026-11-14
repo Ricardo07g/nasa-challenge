@@ -133,6 +133,12 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
   negócio nova com número vai para lá, não para `app/constants.py`. Os services recebem as regras
   por parâmetro (padrão: este arquivo) e `dependencies.py` injeta as do `REGRAS_PATH`.
+- **Avisos da safra** (tarefa 0019): as regras de veranico e calor (grupos `avisos` e
+  `frases_safra` do `regras.yaml`) ficam só no `CropAlertService`, que recebe a série diária, a
+  cultura e a semeadura e devolve a linha do tempo. O replay `GET /api/safra-passada` (P4) usa esse
+  service e o acompanhamento diário (P6) vai usar o mesmo: não repita a regra em outro lugar. A
+  opção do replay é a `melhor` do `RecommendationService`. Ano sem dado num ponto que tem dados =
+  404 `NOT_FOUND`; ponto sem dados continua 404 `OUTSIDE_AREA`.
 - **Com banco** (`DATABASE_URL` preenchida; `DATABASE_URL=` vazia vale como sem banco), o
   `dependencies.py` liga o PostGIS e a **busca sob demanda** (tarefas 0001 e 0003):
   - clima e solo vêm de `PostgisClimateRepository` e `PostgisSoilRepository`, com a fixture de clima
