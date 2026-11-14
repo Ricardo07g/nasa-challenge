@@ -58,8 +58,8 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Etapa | Comando | Tempo | Credencial |
 | --- | --- | --- | --- |
 | Clima e solo da caixa piloto (banco) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.preload_pilot_box` | ~1 h (pausa de 12 s entre pedidos ao SoilGrids); o clima fica pronto nos primeiros minutos | nenhuma |
-| Clima futuro da fazenda de exemplo | `uv run python -m pipeline.fetch_cmip6_deltas --pontos="-18.9543,-48.1993" --saida ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --cache ../../data/baixados/nasa_nex_gddp_cmip6/cache_ncss` | ~40 min (360 pedidos) | nenhuma |
-| Clima futuro da caixa piloto inteira | o mesmo, sem `--pontos` | ~8 h (4.320 pedidos); se parar, rode de novo que continua do cache | nenhuma |
+| Clima futuro da caixa piloto inteira | `uv run python -m pipeline.fetch_cmip6_deltas --area` | ~45 min (378 pedidos ao OPeNDAP, um por arquivo para a caixa toda); se parar, rode de novo que continua do cache | nenhuma |
+| Clima futuro só da fazenda de exemplo | `uv run python -m pipeline.fetch_cmip6_deltas --pontos="-18.9543,-48.1993"` | ~40 min (360 pedidos ao NCSS, um ponto por pedido) | nenhuma |
 | Histórico do talhão (NDVI) | chega com o PR do R2.2 (`pipeline/fetch_ndvi.py`) | depende da fila do AppEEARS (minutos a horas) | `APPEEARS_TOKEN` ou `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` no `projeto/backend/.env` |
 | Carregar os arquivos no banco (`cmip6_delta` e `ndvi_point`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` | segundos | nenhuma |
 
@@ -80,6 +80,11 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
     (ordem tabela → arquivo). Para copiar essas células para a tabela, rode a carga de novo.
   - Quem recebe o pacote do time **não precisa** rodar a carga: a cópia do banco já leva as
     duas tabelas.
+- O CMIP6 grava em `data/baixados/nasa_nex_gddp_cmip6/` (o JSON e o cache `cache_ncss/`) a partir
+  da raiz do repositório, de qualquer pasta que você rode. Antes, veja o plano sem baixar nada:
+  `uv run python -m pipeline.fetch_cmip6_deltas --dry-run --area` (pedidos e tempo nos dois modos).
+  O `--area` cobre as 12 células do POWER da caixa, e cada uma sai igual ao que o modo por ponto
+  daria. O arquivo da caixa substitui o da fazenda de exemplo (a célula da fazenda está nele).
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).
@@ -115,7 +120,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | --- | --- | --- |
 | Chuva | "20 anos de chuva daqui" (ou menos, se algum ano não tinha dado completo) | igual: vem do NASA POWER na hora |
 | Solo | "Terra … · Do mapa de solos" | "Não achamos no mapa de solos; usamos terra média" |
-| Clima dos próximos anos | ✓ pronto (só onde há deltas: hoje, a região da fazenda de exemplo) | "Ainda não disponível para esta área" |
+| Clima dos próximos anos | ✓ pronto (só onde há deltas: a caixa piloto inteira com `--area`; só a região da fazenda de exemplo com `--pontos`) | "Ainda não disponível para esta área" |
 | Histórico do talhão | faixa de 2016 a 2025 | não aparece (ou "Ainda não conectado") |
 
 ## Problemas comuns

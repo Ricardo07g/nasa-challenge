@@ -180,19 +180,29 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   (`-999` vira `None`). O `ClimateSeasonBuilder` monta as temporadas de 212 dias desde 1/jan,
   tira o ano com algum dia sem chuva, máxima ou mínima, e calcula a ETo FAO-56 Penman-Monteith.
   Faltou UR, vento, radiação ou altitude: Hargreaves-Samani na temporada inteira.
-- **Deltas do CMIP6** (R2.1, tarefa 0014): `pipeline/fetch_cmip6_deltas.py` pede ao THREDDS da NCCS
-  (recorte por ponto em CSV, sem credencial) `pr`, `tasmax` e `tasmin` de jan a jul, 1995–2014 contra
-  2041–2060 (SSP2-4.5), de ACCESS-CM2, MPI-ESM1-2-HR e MRI-ESM2-0 (padrão adotado, **a revisar**), e
-  grava o arquivo do contrato CMIP6 (abaixo) em `data/output/cmip6_deltas_nex_gddp.json`. Pontos: as 12
-  células do POWER da caixa piloto, ou `--pontos="lat,lon; lat,lon"`. Cada arquivo do THREDDS tem um
-  ano de uma variável: a caixa inteira dá 4.320 pedidos de ~6 s, **cerca de 8 h**; um ponto só, ~40 min.
-  Os CSV ficam em `data/cache/nex_gddp_cmip6_ncss/`: se parar, rode de novo que ele continua de onde
-  parou. As duas pastas ficam fora do git. A API lê o arquivo pelo `CMIP6_PATH` (abaixo). Para
-  copiar o arquivo para a tabela `cmip6_delta`: "Carga dos arquivos no banco", abaixo.
+- **Deltas do CMIP6** (R2.1, tarefas 0014 e 0023): `pipeline/fetch_cmip6_deltas.py` pede ao THREDDS
+  da NCCS (sem credencial) `pr`, `tasmax` e `tasmin` de jan a jul, 1995–2014 contra 2041–2060
+  (SSP2-4.5), de ACCESS-CM2, MPI-ESM1-2-HR e MRI-ESM2-0 (padrão adotado, **a revisar**), e grava o
+  arquivo do contrato CMIP6 (abaixo). Cada arquivo do THREDDS tem um ano de uma variável, e o custo
+  de um pedido cresce com o número de dias, não com a área. Dois modos:
+  - **por área** (`--area`, use este para a caixa): pelo OPeNDAP em ASCII, um pedido por arquivo com
+    o retângulo de pixels de 0,25° que cobre todas as células do POWER da caixa (caixa piloto por
+    padrão, ou `--area="lat_min,lat_max,lon_min,lon_max"`), mais um DAS por variável e período
+    (confere a unidade e o calendário). Caixa piloto: 378 pedidos de ~7 s, **cerca de 45 min**;
+  - **por ponto** (padrão): pelo NCSS em CSV, um ponto por pedido (as 12 células da caixa piloto ou
+    `--pontos="lat,lon; lat,lon"`). Caixa inteira: 4.320 pedidos, ~8 h; um ponto só, ~40 min.
+
+  Os dois modos dão o mesmo resultado para cada ponto: o modo por área usa o pixel que o NCSS
+  devolveria para o ponto (`ncss_pixel`: centro mais perto, empate para a coordenada maior).
+  Saída padrão `data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json` e cache
+  `data/baixados/nasa_nex_gddp_cmip6/cache_ncss/`, a partir da **raiz do repositório** (calculada
+  pelo caminho do script, não pela pasta atual; fora do git). Se parar, rode de novo que ele
+  continua do cache. A API lê o arquivo pelo `CMIP6_PATH` (abaixo). Para copiar o arquivo para a
+  tabela `cmip6_delta`: "Carga dos arquivos no banco", abaixo.
 
   ```bash
-  uv run python -m pipeline.fetch_cmip6_deltas --dry-run   # quantos pedidos e quanto tempo
-  uv run python -m pipeline.fetch_cmip6_deltas             # caixa piloto, 3 modelos
+  uv run python -m pipeline.fetch_cmip6_deltas --dry-run --area  # pedidos e tempo nos dois modos
+  uv run python -m pipeline.fetch_cmip6_deltas --area            # caixa piloto, 3 modelos
   ```
 
 - **Pré-carga da caixa piloto** (tarefa 0012, R1.5): `pipeline/preload_pilot_box.py` grava no banco
@@ -273,8 +283,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   quando o arquivo traz (o Hargreaves usa máxima e mínima); sem ele, a mínima observada fica.
 
   Para ligar o arquivo gerado pelo `pipeline/fetch_cmip6_deltas.py` (ele não vai para o git sozinho):
-  - **com uv**: `CMIP6_PATH=data/output/cmip6_deltas_nex_gddp.json` no `.env` desta pasta (caminho
-    relativo à pasta de onde a API roda, `projeto/backend`);
+  - **com uv**: `CMIP6_PATH=../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json` no
+    `.env` desta pasta (caminho relativo à pasta de onde a API roda, `projeto/backend`);
   - **no compose**: já ligado. O serviço `backend` monta a pasta local `data/baixados` (fora do git)
     em `/dados_baixados`, só leitura, e aponta `CMIP6_PATH` para
     `/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json` e `NDVI_CACHE_PATH` para

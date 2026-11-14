@@ -18,7 +18,9 @@ from app.models.climate import Cmip6Delta
 from app.models.data_run import DataRun
 from pipeline.export_climate_fixture import power_cell_bounds
 from pipeline.fetch_cmip6_deltas import (
+    DEFAULT_CACHE_DIR,
     DEFAULT_MODELS,
+    DEFAULT_OUTPUT,
     CachedNcssFetcher,
     ModelFiles,
     NcssRequest,
@@ -33,6 +35,7 @@ from pipeline.fetch_cmip6_deltas import (
     parse_points,
     pilot_box_points,
     plan_requests,
+    repo_root,
     to_daily_unit,
     to_thredds_longitude,
 )
@@ -465,6 +468,32 @@ def test_should_only_count_requests_in_dry_run(
     out = capsys.readouterr().out
     assert "4320" in out  # 12 células × 3 modelos × 3 variáveis × 40 anos
     assert not (tmp_path / "cache").exists()
+
+
+def test_should_find_repo_root_from_the_script_path() -> None:
+    script = Path("/repo/projeto/backend/pipeline/fetch_cmip6_deltas.py")
+
+    assert repo_root(script) == Path("/repo")
+
+
+def test_should_use_the_backend_folder_as_root_inside_the_container() -> None:
+    # No Dockerfile o backend vira /app e não existe projeto/backend acima dele
+    assert repo_root(Path("/app/pipeline/fetch_cmip6_deltas.py")) == Path("/app")
+
+
+def test_should_save_output_and_cache_in_the_team_downloads_folder_by_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = repo_root()
+    monkeypatch.chdir(tmp_path)  # a pasta de onde o script roda não muda nada
+
+    assert repo_root() == root
+    # vale no repositório (<raiz>/projeto/backend) e no container (/app)
+    backend = Path(__file__).parents[3]
+    assert repo_root(backend / "pipeline" / "fetch_cmip6_deltas.py") == root
+    folder = root / "data" / "baixados" / "nasa_nex_gddp_cmip6"
+    assert folder / "cmip6_deltas_nex_gddp.json" == DEFAULT_OUTPUT
+    assert folder / "cache_ncss" == DEFAULT_CACHE_DIR
 
 
 def test_should_reject_unknown_model_on_command_line(tmp_path: Path) -> None:
