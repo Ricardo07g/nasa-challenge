@@ -286,4 +286,17 @@ describe('plantingRule (RF-20)', () => {
   it('sem o sinal, monta a regra com a data limite do 1º ano do Plano A e a troca do Plano B', () => {
     expect(plantingRule(rec())).toEqual({ date: '2027-02-28', planA: 'milho_braquiaria', planB: 'sorgo' })
   })
+
+  it('se o Plano B começa igual ao A, não há troca no dia de plantar (nada de "milho no lugar de milho")', () => {
+    const same = {
+      ...rec(),
+      opcoes: [{ ...options[0], id: 'milho_safrinha', data_limite: '2027-02-28' }],
+      plano_3_anos: {
+        normal: { anos: ['milho_safrinha', 'crotalaria', 'milheto'] },
+        seco: { anos: ['milho_safrinha', 'crotalaria', 'milheto'] },
+      },
+    } as unknown as Recomendacao
+
+    expect(plantingRule(same)).toBeNull()
+  })
 })
