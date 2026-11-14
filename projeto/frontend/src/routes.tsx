@@ -5,6 +5,7 @@ import {
   PendingPage,
   ShellPage,
   StartPage,
+  WhenPage,
   WherePage,
 } from './pages'
 
@@ -15,7 +16,7 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/', element: <StartPage /> },
       { path: '/onde', element: <WherePage /> },
-      { path: '/quando', element: <PendingPage screen="when" /> },
+      { path: '/quando', element: <WhenPage /> },
       { path: '/satelite', element: <PendingPage screen="satellite" /> },
       { path: '/resposta', element: <PendingPage screen="answer" /> },
       { path: '/opcoes', element: <PendingPage screen="options" /> },

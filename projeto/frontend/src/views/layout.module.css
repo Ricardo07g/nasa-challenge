@@ -20,6 +20,20 @@
   gap: 12px;
 }
 
+/* Conteúdo principal um pouco maior que o painel ao lado; uma coluna no celular */
+.pageGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--space-grid);
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .pageGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Mapa grande (2/3) e painel ao lado (1/3); uma coluna no celular */
 .mapGrid {
   display: grid;
