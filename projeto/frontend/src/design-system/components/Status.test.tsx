@@ -61,7 +61,16 @@ describe('YearStrip', () => {
 
     const strip = screen.getByRole('img', { name: 'Plantou em 1 de 3 anos' })
     expect(strip).toHaveAttribute('data-size', 'lg')
-    expect(strip).toHaveTextContent('161718')
+    expect(strip).toHaveTextContent('1617?18')
+  })
+
+  it('o ano sem certeza fica cinza com "?" (não depende só da cor)', () => {
+    render(<YearStrip label="Plantou em 1 de 2 anos" cells={['good', 'unknown', 'bad']} />)
+
+    const strip = screen.getByRole('img', { name: 'Plantou em 1 de 2 anos' })
+    expect(strip.querySelector('[data-state="unknown"]')).toHaveTextContent('?')
+    expect(strip.querySelector('[data-state="good"]')).toHaveTextContent('')
+    expect(strip.querySelector('[data-state="bad"]')).toHaveTextContent('')
   })
 })
 
@@ -78,6 +87,14 @@ describe('StripLegend', () => {
 
     expect(screen.getByText('Plantou').querySelector('[data-state="good"]')).not.toBeNull()
     expect(screen.getByText('Ficou parado').querySelector('[data-state="bad"]')).not.toBeNull()
+  })
+
+  it('o quadrinho sem certeza da legenda também tem o "?", escondido do leitor de tela', () => {
+    render(<StripLegend items={[{ state: 'unknown', label: 'Sem certeza' }]} />)
+
+    const cell = screen.getByRole('listitem').querySelector('[data-state="unknown"]')
+    expect(cell).toHaveTextContent('?')
+    expect(cell).toHaveAttribute('aria-hidden', 'true')
   })
 })
 

@@ -55,7 +55,13 @@ type YearStripProps = {
   years?: readonly string[]
 }
 
-/** Um quadrinho por ano: cheio = deu certo / plantou; contorno laranja = faltou água / ficou parado. */
+/** O ano sem certeza leva um "?" além do cinza, para o significado não depender só da cor. */
+const UNKNOWN_MARK = '?'
+
+/**
+ * Um quadrinho por ano: cheio = deu certo / plantou; contorno laranja = faltou água / ficou parado;
+ * cinza com "?" = o satélite não teve certeza.
+ */
 export function YearStrip({ label, cells, size = 'sm', years }: YearStripProps) {
   return (
     <div
@@ -67,7 +73,9 @@ export function YearStrip({ label, cells, size = 'sm', years }: YearStripProps) 
     >
       {cells.map((state, index) => (
         <span key={index} className={styles.cellWrap}>
-          <span className={styles.cell} data-state={state} />
+          <span className={styles.cell} data-state={state}>
+            {state === 'unknown' ? UNKNOWN_MARK : null}
+          </span>
           {years && <span className={styles.year}>{years[index]}</span>}
         </span>
       ))}
@@ -91,7 +99,9 @@ export function StripLegend({ items, markers = [], note }: StripLegendProps) {
     <ul className={styles.legend}>
       {items.map((item) => (
         <li key={item.state} className={styles.legendItem}>
-          <span className={styles.legendCell} data-state={item.state} aria-hidden="true" />
+          <span className={styles.legendCell} data-state={item.state} aria-hidden="true">
+            {item.state === 'unknown' ? UNKNOWN_MARK : null}
+          </span>
           {item.label}
         </li>
       ))}
