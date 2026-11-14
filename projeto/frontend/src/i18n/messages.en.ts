@@ -308,7 +308,8 @@ export const en = {
     table: 'All options',
     headers: { crop: 'Option', years: 'Years it worked (of 20)', margin: 'Left per hectare', soil: 'Soil' },
     history: 'Field history',
-    idle: (idle: number, total: number) => `Left idle in ${idle} of ${total} years`,
+    idle: (idle: number, known: number, uncertain: number) =>
+      `Left idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,
     sources: 'Sources',
     footer: 'Helps you decide. Not a technical report; it does not replace the official ZARC or the responsible agronomist.',
   },
@@ -316,8 +317,8 @@ export const en = {
     title: 'In your region',
     regionSubtitle: (km: number) => `Within ${km} km of the field · seen by satellite`,
     regionBig: (year: number, pct: number) => `In ${year}, ${pct}% of the cropland was left idle after soybeans.`,
-    regionCompare: (idle: number, total: number, average: number) =>
-      `Your field: idle in ${idle} of ${total} years. In the region, on average ${average}% of the area stays idle.`,
+    regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
+      `Your field: idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}. In the region, on average ${average}% of the area stays idle.`,
     regionAverage: (average: number) => `In the region, on average ${average}% of the area stays idle after soybeans.`,
     regionChart: '% of the area left idle after soybeans, year by year.',
     regionNote: (pct: number) =>

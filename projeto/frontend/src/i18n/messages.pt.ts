@@ -311,7 +311,8 @@ export const pt = {
     table: 'Todas as opções',
     headers: { crop: 'Opção', years: 'Anos que deram certo (de 20)', margin: 'Sobra por hectare', soil: 'Terra' },
     history: 'Histórico da área',
-    idle: (idle: number, total: number) => `Ficou parada em ${idle} de ${total} anos`,
+    idle: (idle: number, known: number, uncertain: number) =>
+      `Ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
     sources: 'Fontes',
     footer: 'Ajuda a decidir. Não é laudo técnico, não substitui o ZARC oficial nem o agrônomo responsável.',
   },
@@ -319,8 +320,8 @@ export const pt = {
     title: 'Na sua região',
     regionSubtitle: (km: number) => `Até ${km} km da lavoura · visto pelo satélite`,
     regionBig: (year: number, pct: number) => `Em ${year}, ${pct}% da área de lavoura ficou parada depois da soja.`,
-    regionCompare: (idle: number, total: number, average: number) =>
-      `Sua área: parada em ${idle} de ${total} anos. Na região, em média ${average}% da área fica parada.`,
+    regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
+      `Sua área: parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}. Na região, em média ${average}% da área fica parada.`,
     regionAverage: (average: number) => `Na região, em média ${average}% da área fica parada depois da soja.`,
     regionChart: '% da área parada depois da soja, ano a ano.',
     regionNote: (pct: number) =>

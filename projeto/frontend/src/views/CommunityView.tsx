@@ -25,8 +25,8 @@ export type CommunityViewProps = {
   /** P3: área parada na região pelo satélite (null sem o dado na API). */
   region: RegionSummary | null
   regionRadius: number | null
-  /** Histórico da própria lavoura, para comparar com a região. */
-  history: { parado: number; total: number } | null
+  /** Histórico da própria lavoura, para comparar com a região (só os anos certos; os sem certeza à parte). */
+  history: { idle: number; known: number; uncertain: number } | null
 }
 
 /**
@@ -57,7 +57,11 @@ function SatelliteRegion({ t, region, history }: CommunityViewProps & { region: 
           <Card tone="orange">
             <p className={layout.bigStat}>{c.regionBig(region.last.ano, region.last.pct)}</p>
           </Card>
-          <p>{history ? c.regionCompare(history.parado, history.total, region.average) : c.regionAverage(region.average)}</p>
+          <p>
+            {history
+              ? c.regionCompare(history.idle, history.known, history.uncertain, region.average)
+              : c.regionAverage(region.average)}
+          </p>
         </div>
         <Card>
           <RainBarChart

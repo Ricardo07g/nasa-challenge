@@ -25,7 +25,7 @@ function setup(overrides: Partial<CommunityViewProps> = {}) {
     onDemo: vi.fn(),
     region,
     regionRadius: 30,
-    history: { parado: 5, total: 10 },
+    history: { idle: 5, known: 9, uncertain: 1 },
     ...overrides,
   }
   render(
@@ -43,7 +43,9 @@ describe('CommunityView (tela 8)', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
     expect(screen.getByText('Até 30 km da lavoura · visto pelo satélite')).toBeInTheDocument()
     expect(screen.getByText('Em 2025, 62% da área de lavoura ficou parada depois da soja.')).toBeInTheDocument()
-    expect(screen.getByText('Sua área: parada em 5 de 10 anos. Na região, em média 65% da área fica parada.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Sua área: parada em 5 de 9 anos (1 sem certeza). Na região, em média 65% da área fica parada.'),
+    ).toBeInTheDocument()
     expect(screen.getByRole('img', { name: '% da área parada depois da soja, ano a ano.' })).toHaveTextContent('62%')
     expect(screen.getByText(/Em 9% da área o satélite não conseguiu dizer/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
@@ -58,6 +60,12 @@ describe('CommunityView (tela 8)', () => {
     const community = screen.getByRole('region', { name: 'O que os vizinhos contam' })
     expect(community).toHaveTextContent('Valores ilustrativos')
     expect(community).toHaveTextContent('Até 30 km de Uberlândia · 18 produtores participando')
+  })
+
+  it('sem ano sem certeza na lavoura, a comparação fica sem o parêntese', () => {
+    setup({ history: { idle: 5, known: 10, uncertain: 0 } })
+
+    expect(screen.getByText('Sua área: parada em 5 de 10 anos. Na região, em média 65% da área fica parada.')).toBeInTheDocument()
   })
 
   it('sem a região na API, o bloco do satélite some e a comunidade continua', () => {

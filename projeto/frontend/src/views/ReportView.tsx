@@ -3,7 +3,7 @@ import { Button } from '../design-system/components/Button'
 import { BackLink } from '../design-system/components/Navigation'
 import { ToneBadge, YearStrip } from '../design-system/components/Status'
 import { ClimateIcon, DryIcon, UncertainIcon } from '../design-system/icons'
-import { formatCoordinates, formatCurrency, formatDayMonth, formatFullDate } from '../i18n/format'
+import { formatCoordinates, formatCurrency, formatDayMonth, formatFullDate, formatMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { NivelSinal, Recomendacao } from '../models/recomendacao'
@@ -11,6 +11,7 @@ import type { ScreenStatus } from '../models/screenStatus'
 import type { SituacaoAno, Talhao } from '../models/talhao'
 import { harvestYear } from '../services/recomendacaoRules'
 import { reportSources } from '../services/reportService'
+import { historySummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import layout from './layout.module.css'
 import styles from './ReportView.module.css'
@@ -132,18 +133,21 @@ function Sheet({ t, lang, talhao, recomendacao: rec, example, place, today }: Re
       ),
     })
   }
-  if (talhao.historico) {
+  const history = historySummary(talhao.historico)
+  if (history) {
+    const idle = r.idle(history.idle, history.known, history.uncertain)
     sections.push({
       title: r.history,
       body: (
         <>
           <YearStrip
             size="lg"
-            label={r.idle(talhao.historico.parado, talhao.historico.total)}
-            cells={talhao.historico.anos.map((year) => CELL[year.situacao])}
-            years={talhao.historico.anos.map((year) => String(year.ano))}
+            label={idle}
+            cells={history.situations.map((situation) => CELL[situation])}
+            years={history.years}
           />
-          <p>{r.idle(talhao.historico.parado, talhao.historico.total)}</p>
+          <p>{idle}</p>
+          <p>{t.satellite.historySource(formatMonth(lang, history.window.from), formatMonth(lang, history.window.to))}</p>
         </>
       ),
     })
