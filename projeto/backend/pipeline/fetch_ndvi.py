@@ -748,7 +748,11 @@ def _subset_values(payload: Any, block: OrnlBlock) -> dict[tuple[str, str], floa
             raise OrnlError(
                 f"O recorte da ORNL trouxe {band} de {modis_date} sem um pixel: {data!r}"
             )
-        values[(modis_date, band)] = float(data[0])
+        value = float(data[0])
+        if not value.is_integer():
+            # A ORNL entrega o inteiro bruto; um valor já escalado levaria a escala duas vezes.
+            raise OrnlError(f"O recorte trouxe {band} de {modis_date} fora do bruto: {value}")
+        values[(modis_date, band)] = value
     missing = [f"{d} {b}" for d in block.dates for b in ORNL_BANDS if (d, b) not in values]
     if missing:
         raise OrnlError(f"O recorte {block.label} veio sem {', '.join(missing)}.")

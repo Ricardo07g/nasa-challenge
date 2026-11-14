@@ -355,6 +355,7 @@ def test_should_turn_the_fill_value_into_no_data() -> None:
         lambda p: p["subset"][1].update(data=[]),  # sem valor
         lambda p: p["subset"][1].update(data=[3253, 3300]),  # mais de um pixel
         lambda p: p["subset"][1].update(data=["x"]),  # valor que não é número
+        lambda p: p["subset"][1].update(data=[0.3253]),  # NDVI já escalado: a escala dobraria
         lambda p: p.pop("subset"),
     ],
 )
