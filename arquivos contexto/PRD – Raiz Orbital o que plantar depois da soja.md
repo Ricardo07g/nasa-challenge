@@ -2,7 +2,7 @@
 
 Nov 14, 2026 · @Rayanne · **v3 (14/nov, tarde):** fluxo simplificado para o produtor (2 perguntas, 1 resposta), correções de dados e backend detalhado no [plano técnico do backend](Raiz%20Orbital%20–%20plano%20técnico%20do%20backend.md).
 
-> **O que mudou na v3.** (1) O produtor responde só onde fica a lavoura e quando colhe a soja; solo, histórico, chuva, clima e até a sugestão de data vêm dos dados. (2) Notas de 0 a 100 e controles de peso saíram da tela do produtor: ele vê "deu certo em X de 20 anos", reais por hectare e Bom/Médio/Fraco. (3) A série vira 2006–2025, que são 20 anos de fato (2005–2025 eram 21). (4) O pousio sai do ranking e vira a linha de base. (5) Fator de escala do NDVI do MODIS incluído. (6) Arquitetura alinhada ao repositório (FastAPI em camadas + PostGIS).
+> **O que mudou na v3.** (1) O produtor responde só onde fica a lavoura e quando colhe a soja; solo, histórico, chuva, clima e até a sugestão de data vêm dos dados. (2) Notas de 0 a 100 e controles de peso saíram da tela do produtor: ele vê "deu certo em X de 20 anos", reais por hectare e Bom/Médio/Fraco. (3) A série vira 2006–2025, que são 20 anos de fato (2005–2025 eram 21). (4) O pousio sai do ranking e vira a linha de base. (5) Fator de escala do NDVI do MODIS incluído. (6) Arquitetura alinhada ao repositório (FastAPI em camadas + PostGIS). (7) Site responsivo: a mesma página serve celular e computador. (8) A tela "Mandar para o agrônomo" saiu do MVP.
 
 ## 1. Resumo e mudança de foco
 
@@ -109,10 +109,10 @@ Segundo o guia de submissão ([Project Submission Guide](https://www.spaceappsch
 | US-07 | produtor | ver o histórico do meu talhão (anos de pousio e de segunda safra) pelo satélite | entender de onde estou partindo | Should |
 | US-08 | produtor ou agrônomo | trocar a textura do solo e informar nematoide, só se eu quiser | ajustar o cálculo sem tornar o caminho principal mais longo | Could |
 | US-09 | produtor | testar o plano num ano seco tipo El Niño e no clima de 2050 | saber se o plano aguenta | Should |
-| US-10 | agrônomo | editar produtividade, preço e custo pelo link recebido | a renda ficar com a realidade do cliente | Could |
+| US-10 | agrônomo | editar produtividade, preço e custo na tela "Como a conta é feita" | a renda ficar com a realidade do cliente | Could |
 | US-11 | jurado | abrir uma fazenda de exemplo em Uberlândia com um clique | ver o produto funcionando sem cadastro | Must |
 | US-12 | produtor com pouca leitura | tocar em "Ouvir" e escutar a tela | entender sem depender de ler | Should |
-| US-13 | produtor | mandar a resposta para meu agrônomo no WhatsApp, por texto ou áudio | decidir junto com quem eu confio | Must |
+| US-13 | produtor | usar o mesmo site no celular, no campo, e no computador, no escritório | não precisar de dois aplicativos | Must |
 
 ## 4. Como funciona: fluxo e requisitos funcionais
 
@@ -120,7 +120,7 @@ Segundo o guia de submissão ([Project Submission Guide](https://www.spaceappsch
 
 ### Telas do MVP (protótipo v3)
 
-Princípios: uma pergunta por tela, botões grandes (mínimo 48 px, principais 60 px), texto a partir de 15 px, frase curta, ícone + palavra + cor em cada sinal, botão "Ouvir" em todas as telas do caminho principal, nenhum número sem explicação.
+Princípios: **site responsivo** (cada tela é uma página só, que se ajusta do celular de 360 px ao computador de 1440 px; no computador ganha duas colunas, no celular empilha na ordem de leitura), uma pergunta por tela, botões grandes (mínimo 48 px, principais 60 px), texto a partir de 15 px, frase curta, ícone + palavra + cor em cada sinal, botão "Ouvir" em todas as telas do caminho principal, nenhum número sem explicação.
 
 **Caminho principal (5 telas):**
 
@@ -130,7 +130,9 @@ Princípios: uma pergunta por tela, botões grandes (mínimo 48 px, principais 6
 4. **O satélite já viu o resto:** cartões de chuva (20 anos), histórico do talhão (plantou ou ficou parado, 10 anos), terra (do mapa de solos, com "Não é? Trocar") e clima até 2050.
 5. **A resposta:** a melhor opção e até quando plantar; chuva, dinheiro e terra com rótulo Bom/Médio/Fraco; "Por quê?" com o dado da NASA; "Como fazer" em 3 passos; alternativas "Se você prefere…".
 
-**Telas de apoio:** 6. Todas as opções (reordenar por chuva, dinheiro ou terra) · 7. Plano de 3 anos (ano normal e ano seco; começar por 50 ha) · 8. Mandar para o agrônomo (mensagem pronta, texto ou áudio) · 9. Perto de você (comunidade, simulada) · 10. Como a conta é feita (para agrônomos e jurados).
+**Telas de apoio:** 6. Todas as opções (reordenar por chuva, dinheiro ou terra) · 7. Plano de 3 anos (ano normal e ano seco; começar por 50 ha) · 8. Perto de você (comunidade, simulada) · 9. Como a conta é feita (para agrônomos e jurados).
+
+A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: confundia mais do que ajudava. O produtor pode compartilhar o link do site pelo próprio navegador.
 
 ### Requisitos funcionais
 
@@ -150,7 +152,7 @@ Princípios: uma pergunta por tela, botões grandes (mínimo 48 px, principais 6
 | RF-12 | Idioma | Interface em inglês (para os juízes) com botão para português; textos da API nas duas línguas | — |
 | RF-16 | Colheita sugerida | Estimar a faixa de colheita da soja pela queda do NDVI de janeiro a março (seção 7.9); sem dado, "meio" | US-02 |
 | RF-17 | Ouvir | Ler a tela em voz alta pelo navegador (Web Speech API, pt-BR) | US-12 |
-| RF-18 | Mandar ao agrônomo | Mensagem pronta para WhatsApp com link do front contendo lat, lon e colheita (sem guardar nada no servidor) | US-13 |
+| RF-18 | Site responsivo | Uma página por tela, layout fluido (flex-wrap e grid automático), sem largura fixa; testado em 390 px e 1280 px; a URL guarda lat, lon e colheita, para recarregar ou compartilhar a mesma resposta | US-13 |
 
 ### Exemplo de saída (números ilustrativos, serão trocados pelos calculados)
 
@@ -384,7 +386,7 @@ Em cada ano, a primeira imagem de janeiro a março em que o NDVI cai abaixo de 5
 | --- | --- | --- |
 | Pipeline (offline) | Scripts Python em `projeto/backend/pipeline/` (earthaccess, xarray, pyet, earthengine-api), grupo de dependências separado | Gera as séries por célula e os deltas do CMIP6 sem pesar a imagem da API |
 | Banco | PostgreSQL 17 + PostGIS 3.5 (já no docker compose); uma linha por célula e ano, com arrays diários | Consulta única por talhão; ~15 MB para a caixa de Uberlândia e Uberaba |
-| API | FastAPI em camadas (MVC + service/repository, TDD): `GET /api/talhao`, `GET /api/recomendacao`, `GET /api/exemplo` | Regra de negócio testável no service; GET com parâmetros na URL vira o link para o agrônomo |
+| API | FastAPI em camadas (MVC + service/repository, TDD): `GET /api/talhao`, `GET /api/recomendacao`, `GET /api/exemplo` | Regra de negócio testável no service; GET com parâmetros na URL permite recarregar e compartilhar a resposta |
 | Front-end | React + TypeScript + Vite, mapa com Leaflet e OpenStreetMap | Só desenha o que a API devolve; reordenar opções é no navegador |
 | Hospedagem | Vercel (front), Render ou Railway (API), Neon ou Render (Postgres com PostGIS) | Link público, sem senha, no plano grátis |
 | Código | GitHub público, licença MIT | Exigência da entrega e transparência |
@@ -408,7 +410,7 @@ Em cada ano, a primeira imagem de janeiro a março em que o NDVI cai abaixo de 5
 | RNF-01 | Tempo da primeira resposta | recomendação em menos de 1 s; dados do talhão (NDVI, solo) em até 10 s, buscados enquanto o produtor responde a pergunta 2; fazenda de exemplo instantânea |
 | RNF-02 | Recálculo ao mexer nos pesos | menos de 1 s, no navegador |
 | RNF-03 | Idioma | inglês para os juízes, português para o produtor |
-| RNF-04 | Celular e leitura | funciona em tela de celular; uma pergunta por tela; texto a partir de 15 px; botões de 48 px ou mais; botão "Ouvir"; resposta da API pequena (gzip) para sinal fraco |
+| RNF-04 | Responsivo e leitura | mesmo site no celular (a partir de 360 px) e no computador (até 1440 px, conteúdo limitado a 1120 px); uma pergunta por tela; texto a partir de 15 px; botões de 48 px ou mais; botão "Ouvir"; resposta da API pequena (gzip) para sinal fraco |
 | RNF-05 | Transparência | toda nota com fórmula, fonte e incerteza visíveis; aviso "apoio à decisão, não substitui o agrônomo" |
 | RNF-06 | Privacidade | sem cadastro e sem dado pessoal; o talhão fica só na sessão |
 | RNF-07 | Atribuição | citar NASA POWER, GPM IMERG, SMAP, MODIS, NEX-GDDP-CMIP6 e SoilGrids na tela "Sobre os dados"; não usar logotipo da NASA |
@@ -430,8 +432,8 @@ Time: **Rayanne** (produto, parâmetros, pitch e submissão), **Dev 1** (dados e
 | T-05 | Motor (services): balde, ISNA da janela crítica, aperto por ano, notas, rótulos, ranking sem pousio, alternativas e frases | Dev 1 + Dev 2 | 4 h | testes da seção 11 passam |
 | T-06 | Deltas do CMIP6 (3 modelos, SSP2-4.5) e nota de futuro | Dev 1 | 2 h | nota de futuro para as 6 opções |
 | T-07 | API: `/api/talhao`, `/api/recomendacao`, `/api/exemplo` (fixture) | Dev 2 | 2 h | JSON do plano técnico do backend para o exemplo |
-| T-08 | Front: as 5 telas do caminho principal (mapa, colheita, satélite, resposta) + "Ouvir" | Dev 2 | 4 h | caminho completo no celular com a fazenda de exemplo |
-| T-09 | Plano de 3 anos (normal e seco), todas as opções e mensagem para o agrônomo | Dev 2 | 2 h | telas 6, 7 e 8 ligadas na API |
+| T-08 | Front responsivo: as 5 telas do caminho principal (mapa, colheita, satélite, resposta) + "Ouvir" | Dev 2 | 4 h | caminho completo no celular (390 px) e no computador (1280 px) com a fazenda de exemplo |
+| T-09 | Plano de 3 anos (normal e seco) e todas as opções | Dev 2 | 2 h | telas 6 e 7 ligadas na API |
 | T-10 | Histórico do talhão e faixa de colheita sugerida pelo NDVI do MODIS | Dev 1 | 2 h | `/api/talhao` devolve histórico e colheita sugerida |
 | T-11 | Textos de explicação e tela "Sobre os dados" em inglês e português | Rayanne | 2 h | todas as frases da seção 7.6 |
 | T-12 | Validação: comparar o risco calculado com a produtividade do milho 2ª safra de Uberlândia no IBGE (PAM) | Dev 1 + Rayanne | 1,5 h | gráfico "anos de aperto x anos de quebra" para o pitch |
@@ -528,7 +530,7 @@ Segue a divisão de tempo sugerida pelo guia de submissão.
 | Parâmetros das culturas errados | Fonte ao lado de cada número; marcar hipóteses na tela; validar com agrônomo da região |
 | Escala do satélite maior que o talhão (chuva \~10 km, CMIP6 \~28 km) | Dizer isso na tela; o NDVI de 250 m ou 30 m é o único dado no nível do talhão |
 | Jurado não entender o Cerrado | Primeiros 10 s do vídeo explicam o problema com uma imagem |
-| Pesos parecem arbitrários | Mostrar a conta na tela "Como a conta é feita" e no link do agrônomo; os pesos padrão são hipótese do time, a validar nas entrevistas |
+| Pesos parecem arbitrários | Mostrar a conta na tela "Como a conta é feita"; os pesos padrão são hipótese do time, a validar nas entrevistas |
 | Produtor com pouca leitura não entende a tela | Uma pergunta por tela, ícone + palavra + cor, botão "Ouvir", resposta antes dos detalhes |
 
 ### Fontes

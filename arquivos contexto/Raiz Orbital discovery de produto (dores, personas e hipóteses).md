@@ -377,7 +377,7 @@ O público principal tem pouca escolaridade formal (64,2% dos produtores de Mina
 2. Diz quando colhe a soja, escolhendo entre três faixas já sugeridas pelo satélite (pergunta 2 de 2).
 3. O app mostra o que já sabe pelos dados: 20 anos de chuva e clima da NASA (IMERG, POWER), o histórico do talhão (MODIS), o tipo de terra (SoilGrids) e o clima projetado para 2041–2060 (NEX-GDDP-CMIP6).
 4. Entrega uma resposta: o que plantar e até quando, com chuva, dinheiro e terra em palavras (Bom, Médio, Fraco), o "por quê" com o dado da NASA, como fazer em 3 passos e alternativas para quem prefere menos risco, mais dinheiro ou cuidar da terra.
-5. Com um toque, manda tudo para o agrônomo pelo WhatsApp, em texto ou áudio. Todas as telas têm o botão "Ouvir".
+5. Todas as telas têm o botão "Ouvir". É um site responsivo: o mesmo endereço funciona no celular, no campo, e no computador do escritório ou da revenda.
 
 O semáforo de plantio da soja e os alertas de veranico, calor, chuva forte e fogo viram o **módulo 2**, que acompanha o plano durante o ano.
 
