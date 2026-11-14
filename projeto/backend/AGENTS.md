@@ -81,16 +81,26 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
 - Conexão só por `DATABASE_URL` (em `Settings`). No compose ela já aponta para `db:5432`.
   Fora do Docker: `postgresql://raiz:raiz_local@localhost:5433/raiz_orbital`.
 - Só repositories falam com o banco. Coordenadas em SRID 4326, `ST_MakePoint(lon, lat)`.
-- Testes unitários não usam o banco real. Testes que precisarem do banco ficam em
-  `tests/integration/` e devem ser marcados e documentados quando forem criados.
-- Migrações gerenciadas via **Alembic** (`migrations/`).
+- Testes unitários não usam o banco real. Testes que precisam do banco ficam em
+  `tests/integration/db/`, com o marker `db` (ver "Testes com banco" em "Dados da API").
+- Migrações gerenciadas via **Alembic** (`migrations/`). O esquema só muda por migração (com
+  `downgrade`): nada de DDL solto nem script de carga fora do `pipeline/`.
   No compose: o serviço `migration` executa automaticamente `alembic upgrade head` antes de iniciar a API.
   Para aplicar manualmente com Docker: `docker compose run --rm migration`
   Para aplicar com uv (fora do Docker): `uv run alembic upgrade head`
   Para ver SQL gerado sem rodar: `uv run alembic upgrade head --sql`
   Para criar nova migração: `uv run alembic revision -m "descricao"`
-  Para popular dados iniciais dos satélites: `uv run python -m scripts.seed_db`
-- Script DDL standalone também disponível em `scripts/init_db.sql`.
+- Tabelas (migração inicial `cb6b775d83e3` + R1.6 `6e961f333ddc`):
+  - `grid_cell`, `climate_season` e `soil_point`: gravadas pela busca sob demanda (ver "Dados da API");
+  - `cmip6_delta`, `ndvi_point`, `smap_point` e `data_run` (com `version`): no formato do "Contrato
+    dos dados das fontes", abaixo. `PostgisCmip6Repository`, `PostgisNdviRepository`,
+    `PostgisSmapRepository` e `PostgisDataRunRepository` gravam e leem, mas a API ainda não lê
+    essas tabelas (R3.1, R3.2, R3.3 e R3.5 do roteiro). O `cmip6_delta` exige a célula em
+    `grid_cell`.
+- Banco criado antes do R1.6: rode `uv run alembic upgrade head` (ou
+  `docker compose run --rm migration`). A migração recria `cmip6_delta` e `ndvi_point`, troca
+  `smap_moisture` por `smap_point` (o que houver nelas é apagado) e marca as cargas antigas de
+  `data_run` com `version = 'sem-versao'`.
 
 ## Comandos
 
@@ -196,7 +206,7 @@ Regras gerais:
 | `fonte` | `source` | `source text` | `nex_gddp_cmip6` |
 | `parametros` | `params` | `params jsonb` | produto e versão, modelos, cenário, anos, pontos |
 | `fim` | `finished_at` (com fuso) | `finished_at timestamptz` | `2026-11-14T13:00:00Z` |
-| `versao` | `version` | `version text` (coluna nova no R1.6) | `2026.11-nex-gddp-cmip6` |
+| `versao` | `version` | `version text` (criada no R1.6) | `2026.11-nex-gddp-cmip6` |
 
 Hoje o `versao_dados` da resposta é a constante `DATA_VERSION` (`app/constants.py`). O R3.5 passa a
 montá-lo a partir das linhas de `data_run`.
@@ -232,10 +242,9 @@ formato da `cmip6[]` da fixture, que o `FixtureClimateRepository` já lê.
 | `tmin_c` | `tmin_c` | `tmin_c real` (pode ser nulo) | opcional: só com o `tasmin` (decisão pendente) |
 
 - Conversões no script: `pr` × 86.400 → mm/dia; `tasmax` e `tasmin` − 273,15 → °C.
-- Tabela (R1.6): `cmip6_delta (cell_id, model, scenario, month, rain_pct, tmax_c, tmin_c)`, chave
-  `(cell_id, model, scenario, month)`. Substitui a tabela agregada da migração inicial.
-- Hoje o `FixtureClimateRepository` ainda não lê `tmin_c` (fica para o R3.1). O `scripts/seed_db.py`
-  ainda grava o formato agregado antigo e sai no R1.6.
+- Tabela criada no R1.6: `cmip6_delta (cell_id, model, scenario, month, rain_pct, tmax_c,
+  tmin_c)`, chave `(cell_id, model, scenario, month)`. Substitui a tabela agregada da migração inicial.
+- Hoje o `FixtureClimateRepository` ainda não lê `tmin_c` (fica para o R3.1).
 
 ### NDVI: `NdviRecord` (`app/models/talhao.py`)
 
@@ -264,7 +273,8 @@ Uma observação de 16 dias por ponto, já sem neve e sem nuvem. O arquivo é o 
 | `qualidade` | `qualidade` | `quality smallint` | `pixel_reliability` (ORNL e AppEEARS) ou `SummaryQA`: só 0 (bom) e 1 (aceitável) |
 | `produto` | `produto` | `product text` | `MOD13Q1` (Terra) ou `MYD13Q1` (Aqua), coleção 061 |
 
-- Tabela (R1.6): `ndvi_point (key, date, product, ndvi, quality)`, chave `(key, date, product)`.
+- Tabela criada no R1.6: `ndvi_point (key, date, product, ndvi, quality)`, chave
+  `(key, date, product)`.
 - `qualidade` e `produto` são opcionais no model só por causa do cache antigo (`data` e `ndvi`).
   Arquivo novo traz os quatro campos. O `CachedNdviRepository` passa a lê-los no R3.2.
 
@@ -296,7 +306,7 @@ produto (007 ou 008) vai em `versao_dados.parametros`, não em cada linha.
 | `sm_surface_m3_m3` | `sm_surface_m3_m3` | `sm_surface_m3_m3 real` (pode ser nulo) | m³/m³, 0 a 1; opcional |
 | `versao_dados.fonte` | `fonte` | — | `smap` |
 
-- Tabela (R1.6): `smap_point (key, geom, date, sm_rootzone_wetness, sm_rootzone_m3_m3,
+- Tabela criada no R1.6: `smap_point (key, geom, date, sm_rootzone_wetness, sm_rootzone_m3_m3,
   sm_surface_m3_m3)`, chave `(key, date)`. Substitui a `smap_moisture` por célula da migração inicial.
 - Antes de 2015 não há SMAP. O percentil (`sm_rootzone_pctl`, A2.2) é calculado depois e não faz
   parte deste registro.
