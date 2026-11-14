@@ -96,6 +96,39 @@ def test_should_return_crop_params_when_queried_by_canonical_or_alias_id(tmp_pat
     assert repo.get_by_id("trigo_inverno") is None
 
 
+def test_should_read_how_to_steps_in_portuguese_and_english(tmp_path: Path) -> None:
+    path = tmp_path / "culturas.yaml"
+    path.write_text(
+        YAML
+        + """
+  milheto:
+    nome: "Milheto"
+    nome_en: "Pearl millet"
+    tipo: "cobertura"
+    funcao: "Cobertura"
+    semeadura_limite_mes_dia: "03-15"
+    dias_florescer: 50
+    ciclo_dias: 90
+    kc_pico: 1.0
+    nota_solo: {palhada: 35, nitrogenio: 0, pragas: 20}
+    n_deixado_kg: 0
+    como_fazer: ["Semeie o milheto.", "Deixe formar palha."]
+    como_fazer_en: ["Sow the pearl millet.", "Let it form straw."]
+""",
+        encoding="utf-8",
+    )
+    repo = YamlCropParamsRepository(path)
+
+    milheto = repo.get_by_id("milheto")
+    sorgo = repo.get_by_id("sorgo")
+
+    assert milheto is not None and sorgo is not None
+    assert milheto.como_fazer == ("Semeie o milheto.", "Deixe formar palha.")
+    assert milheto.como_fazer_en == ("Sow the pearl millet.", "Let it form straw.")
+    # Sem tradução no YAML: vazio (o service usa o português).
+    assert sorgo.como_fazer_en == ()
+
+
 def test_should_load_shipped_culturas_yaml_with_prd_soil_points() -> None:
     # O culturas.yaml que vai junto com a API precisa carregar (PRD 7.4: totais da nota de solo).
     repo = YamlCropParamsRepository(Settings(_env_file=None).culturas_path)

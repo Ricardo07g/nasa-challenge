@@ -55,6 +55,7 @@ class YamlCropParamsRepository:
                     preco_padrao_saca=float(data.get("preco_padrao_saca", 0.0)),
                     custo_padrao_ha=float(data.get("custo_padrao_ha", 0.0)),
                     como_fazer=tuple(str(item) for item in data.get("como_fazer", [])),
+                    como_fazer_en=tuple(str(item) for item in data.get("como_fazer_en", [])),
                 )
             )
 
