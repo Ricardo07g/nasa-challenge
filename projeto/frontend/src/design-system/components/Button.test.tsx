@@ -64,6 +64,17 @@ describe('Button', () => {
     expect(button.lastElementChild).toBe(screen.getByTestId('fim'))
   })
 
+  it('pode ter uma segunda linha (ex.: "Próximo passo" / "Ver a resposta")', () => {
+    render(
+      <Button detail="Ver a resposta" arrow>
+        Próximo passo
+      </Button>,
+    )
+
+    const button = screen.getByRole('button', { name: 'Próximo passo Ver a resposta' })
+    expect(button).toHaveAttribute('data-detail', 'true')
+  })
+
   it('pode ficar desabilitado', () => {
     render(<Button disabled>É aqui</Button>)
 

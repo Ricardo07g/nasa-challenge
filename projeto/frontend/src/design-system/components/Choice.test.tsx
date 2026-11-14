@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { ChipGroup, RadioCard } from './Choice'
+import { ChipGroup, DateField, RadioCard } from './Choice'
 
 const options = [
   { value: 'chuva', label: 'Chuva' },
@@ -59,5 +59,44 @@ describe('RadioCard', () => {
     expect(card).toHaveTextContent('dia 11 a 20')
     await userEvent.click(card)
     expect(onSelect).toHaveBeenCalled()
+  })
+})
+
+describe('RadioCard que abre mais campos', () => {
+  it('avisa se o que ela abre está aberto', () => {
+    render(<RadioCard title="Colocar a data exata" sub="Se você já sabe o dia" selected={false} expanded onSelect={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: /Colocar a data exata/ })).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('sem esse uso, não tem aria-expanded', () => {
+    render(<RadioCard title="Meio de fevereiro" sub="dia 11 a 20" selected onSelect={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: /Meio de fevereiro/ })).not.toHaveAttribute('aria-expanded')
+  })
+})
+
+describe('DateField', () => {
+  it('campo de data com rótulo, limites e aviso', async () => {
+    const onChange = vi.fn()
+    render(
+      <DateField
+        label="Dia da colheita"
+        value=""
+        min="2027-01-15"
+        max="2027-03-31"
+        status="Escolha um dia dentro da época de colheita."
+        onChange={onChange}
+      />,
+    )
+
+    const input = screen.getByLabelText('Dia da colheita')
+    expect(input).toHaveAttribute('type', 'date')
+    expect(input).toHaveAttribute('min', '2027-01-15')
+    expect(input).toHaveAttribute('max', '2027-03-31')
+    expect(screen.getByRole('status')).toHaveTextContent('Escolha um dia dentro da época de colheita.')
+
+    await userEvent.type(input, '2027-02-18')
+    expect(onChange).toHaveBeenLastCalledWith('2027-02-18')
   })
 })

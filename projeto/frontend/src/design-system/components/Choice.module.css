@@ -121,3 +121,34 @@
 .radioSub {
   font-size: var(--font-size-small);
 }
+
+/* Campo de data */
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dateLabel,
+.dateStatus {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.dateInput {
+  width: 100%;
+  min-height: var(--touch-primary);
+  padding: 14px 18px;
+  font: inherit;
+  font-size: 19px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.dateInput:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(31 107 71 / 22%);
+}
