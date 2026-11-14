@@ -166,8 +166,8 @@ avisos:
   # evolução 4.4. A janela crítica e a temperatura do calor são as do grupo clima (mesma conta do
   # aperto). Um aviso de veranico por sequência seca e um de calor por sequência quente.
   dia_seco_abaixo_mm:
-    valor: 5.0
-    fonte: "Plano de evolução 4.1 (P1): dia seco = chuva abaixo de 5 mm. A revisar com a agrônoma (há quem use 1 mm)"
+    valor: 1.0
+    fonte: "Hipótese do time, a revisar com a agrônoma: dia seco = chuva abaixo de 1 mm, como o índice CDD do ETCCDI (OMM). O plano de evolução 4.4 não define o dia seco do aviso; com os 5 mm do P1 (4.1), a fazenda de exemplo teria aviso de veranico em 19 de 20 anos; com 1 mm, em 11, incluindo os 7 anos com aperto do motor"
   veranico_min_dias:
     valor: 10
     fonte: "Plano de evolução 4.4 (regras do Doc 5, no PRD): 10 ou mais dias secos na fase crítica"

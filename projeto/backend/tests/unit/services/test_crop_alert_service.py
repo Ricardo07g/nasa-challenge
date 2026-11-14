@@ -16,7 +16,7 @@ from app.services.crop_alert_service import CropAlertService
 SOWING = date(2024, 2, 18)
 CYCLE_DAYS = 100
 WET_MM = 8.0
-DRY_MM = 4.9  # abaixo de 5 mm: conta como dia sem chuva
+DRY_MM = 0.9  # abaixo de 1 mm: conta como dia sem chuva
 MILD_C = 30.0
 HOT_C = 35.0
 
@@ -109,8 +109,8 @@ def test_should_warn_on_the_tenth_dry_day_inside_the_critical_stage() -> None:
 
 def test_should_count_only_days_below_the_dry_threshold_as_dry() -> None:
     series = _series(dry=range(48, 62))
-    # 5 mm no dia 52 já é chuva: a seca quebra em duas de 4 e 9 dias, nenhuma chega a 10.
-    series[52] = replace(series[52], chuva_mm=5.0)
+    # 1 mm no dia 52 já é chuva: a seca quebra em duas de 4 e 9 dias, nenhuma chega a 10.
+    series[52] = replace(series[52], chuva_mm=1.0)
 
     assert "aviso_veranico" not in {e.tipo for e in _timeline(series)}
 
@@ -221,14 +221,11 @@ def test_should_take_the_thresholds_from_the_rules() -> None:
     base = load_default_rules()
     rules = replace(
         base,
-        avisos=replace(base.avisos, veranico_min_dias=5, dia_seco_abaixo_mm=1.0),
+        avisos=replace(base.avisos, veranico_min_dias=5, dia_seco_abaixo_mm=5.0),
         clima=replace(base.clima, calor_temp_c=33.0),
     )
-    # 4,9 mm não é mais dia seco com o limiar de 1 mm: só os dias de 0 mm contam.
-    series = [
-        replace(d, chuva_mm=0.0) if _day(50) <= d.data <= _day(54) else d
-        for d in _series(dry=range(40, 50))
-    ]
+    # Com o limiar de 5 mm, os dias de 4,9 mm (50 a 54) também contam como secos.
+    series = [replace(d, chuva_mm=4.9) if _day(50) <= d.data <= _day(54) else d for d in _series()]
     series[60] = replace(series[60], tmax_c=33.0)
     series[61] = replace(series[61], tmax_c=33.0)
 

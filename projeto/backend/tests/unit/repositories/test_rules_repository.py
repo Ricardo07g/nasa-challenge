@@ -107,11 +107,11 @@ def test_should_load_phrase_templates_in_portuguese_and_english() -> None:
 
 
 def test_should_load_shipped_alert_rules_for_the_season_replay() -> None:
-    # Plano de evolução 4.4 (P4 e P6): 10 dias secos na fase crítica, no máximo 2 avisos por
-    # semana; 4.1 (P1): dia seco = menos de 5 mm; 2 dias seguidos de calor
+    # Plano de evolução 4.4 (P4 e P6): 10 dias secos na fase crítica, 2 dias seguidos de calor,
+    # no máximo 2 avisos por semana. Dia seco = menos de 1 mm (hipótese do time, índice CDD)
     avisos = YamlRulesRepository(SHIPPED).get_rules().avisos
 
-    assert avisos.dia_seco_abaixo_mm == 5.0
+    assert avisos.dia_seco_abaixo_mm == 1.0
     assert avisos.veranico_min_dias == 10
     assert avisos.calor_dias_seguidos == 2
     assert (avisos.max_avisos, avisos.janela_limite_dias) == (2, 7)
