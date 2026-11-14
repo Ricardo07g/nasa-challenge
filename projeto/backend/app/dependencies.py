@@ -12,6 +12,7 @@ from app.repositories.climate_repository import (
     FixtureClimateRepository,
     PostgisClimateRepository,
 )
+from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6Repository
 from app.repositories.crop_option_repository import (
     CropOptionRepository,
     YamlCropOptionRepository,
@@ -75,6 +76,7 @@ def get_crop_params_repository() -> CropParamsRepository:
 
 # Com DATABASE_URL (não vazia: `DATABASE_URL=` do .env.example chega como ""), clima e solo vêm do
 # PostGIS, com os arquivos como reserva, e a busca sob demanda fica ligada. Sem banco, só arquivos.
+# Deltas do CMIP6: tabela `cmip6_delta` (com banco), arquivo do CMIP6_PATH e a fixture, nessa ordem.
 
 
 @lru_cache
@@ -89,10 +91,15 @@ def get_rules(repository: Annotated[RulesRepository, Depends(get_rules_repositor
 @lru_cache
 def get_climate_repository() -> ClimateRepository:
     settings = get_settings()
-    fixture = FixtureClimateRepository(settings.clima_path)
+    cmip6_file = FileCmip6Repository(settings.cmip6_path)
     if settings.database_url:
-        return PostgisClimateRepository(settings.database_url, fallback_repo=fixture)
-    return fixture
+        return PostgisClimateRepository(
+            settings.database_url,
+            fallback_repo=FixtureClimateRepository(settings.clima_path),
+            cmip6_repo=PostgisCmip6Repository(settings.database_url),
+            cmip6_file_repo=cmip6_file,
+        )
+    return FixtureClimateRepository(settings.clima_path, cmip6_file_repo=cmip6_file)
 
 
 @lru_cache
