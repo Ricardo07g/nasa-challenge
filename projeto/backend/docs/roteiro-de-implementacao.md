@@ -144,8 +144,8 @@ Cada linha diz quem decide e qual tarefa fica parada até lá.
 | Ano com dia faltando no POWER ✅ | **Decidido em 14/11: descartar o ano** (como `pipeline/export_climate_fixture.py`) | backend + agrônoma | R1.4 |
 | Anos do histórico NDVI | 2015–2025 (PRD RF-08, 6.3) ou 2016–2025 (plano técnico, guia NDVI, Lovable) | produto | R2.2 |
 | Formato do `historico` | <ul><li>mínimo atual: `anos`, `parado`, `total`, `fonte`</li><li>completo do guia NDVI: `n_obs`, `plantou`, `sem_certeza`, `janela` e o estado `sem_dado`</li></ul> | produto + front | R3.2 |
-| Delta de Tmin no CMIP6 | só `tasmax` (PRD 7.3) ou também `tasmin` (Hargreaves-Samani usa as duas) | backend | R2.1 |
-| Modelos do CMIP6 | 3 modelos do NEX-GDDP com `pr` e `tasmax` (e `tasmin`) em `historical` e `ssp245`. O PRD cita ACCESS-CM2 como exemplo | backend + agrônoma | R2.1 |
+| Delta de Tmin no CMIP6 (padrão adotado, **a revisar**) | Adotado no R2.1: `tasmax` **e** `tasmin` | backend | R2.1 |
+| Modelos do CMIP6 (padrão adotado, **a revisar**) | Adotados no R2.1: ACCESS-CM2, MPI-ESM1-2-HR e MRI-ESM2-0 (`r1i1p1f1`, `_v2.0`, conferidos no THREDDS) | backend + agrônoma | R2.1 |
 | Regra das alternativas (padrão adotado, **a revisar**) | Adotado no R4.2: só aparece se for melhor que a `melhor` no próprio eixo, sem repetir cultura; sem candidata, o eixo some. O produto pode trocar | produto | R4.2 |
 | Reescala do nematoide | como levar a nota de solo de volta a 0–100 com pragas × 1,5 (o PRD 7.4 não define) | agrônoma | R4.3 (teste) |
 | Plano "hoje" | de onde vem a sequência atual (histórico NDVI do talhão, PRD 7.7) e o que fazer sem histórico | produto | R4.3 |
@@ -192,7 +192,7 @@ do R0.2: em arquivo antes do R1.6 e em tabela depois. **Nunca gerar dado sintét
 
 | ID | Tarefa | Onde | Dep. | Cred. | PRD |
 | --- | --- | --- | --- | --- | --- |
-| R2.1 | **Deltas do CMIP6** <ul><li>Por célula do POWER: 3 modelos, SSP2-4.5, deltas mensais 2041–2060 × 1995–2014</li><li>Pelo THREDDS, com recorte por ponto, só jan–jul</li><li>Conversões: `pr` × 86.400 → mm/dia; `tasmax` − 273,15 → °C</li></ul> | `pipeline/fetch_cmip6_deltas.py` | R0.2, R0.3, decisões de Tmin e modelos | não | T-06 |
+| [R2.1](tarefas/0014-deltas-cmip6.md) ✅ | **Deltas do CMIP6** <ul><li>Por célula do POWER: 3 modelos, SSP2-4.5, deltas mensais 2041–2060 × 1995–2014</li><li>Pelo THREDDS, com recorte por ponto, só jan–jul</li><li>Conversões: `pr` × 86.400 → mm/dia; `tasmax` − 273,15 → °C</li></ul> | `pipeline/fetch_cmip6_deltas.py` | R0.2, R0.3, decisões de Tmin e modelos | não | T-06 |
 | R2.2 | **NDVI do MODIS** <ul><li>Série MOD13Q1 (+MYD13Q1) de jan–jul de cada ano, com qualidade ≤ 1</li><li>Para a fazenda de exemplo e os talhões de calibração (o PRD fala em 5 talhões conhecidos)</li><li>Pelo **AppEEARS**, numa tarefa por ponto, reaproveitando o cliente de `data/extract_smap.py`; a ORNL fica de reserva</li><li>A caixa inteira a 250 m (~360 mil pixels) fica para o P3</li></ul> | `pipeline/fetch_ndvi.py` | R0.1, R0.2, R0.3, decisão dos anos | **token** (ORNL: não) | T-10 |
 | R2.3 | **SMAP L4** (`SPL4SMGP`, `sm_rootzone`) <ul><li>Na data de semeadura de cada ano, de 2015 a 2024</li><li>Pelo AppEEARS, reaproveitando `data/extract_smap.py`</li><li>Conferir a versão (007 × 008) e os nomes das camadas em `GET /api/product/SPL4SMGP.<versão>`</li><li>Antes de 2015 não há SMAP: o balde fica em 50% da CAD</li></ul> | `pipeline/fetch_smap.py` | R0.1, R0.2, R0.3 | **token** | — |
 | R2.4 | **IMERG Final diário** (`GPM_3IMERGDF` v07) <ul><li>Na caixa, de 2005 a 2024, jan–jul, por célula de 0,1°</li><li>Preferir recorte (OPeNDAP) a baixar o arquivo global</li><li>É refinamento (ADR-0003) e fica fora do caminho crítico</li></ul> | `pipeline/fetch_imerg.py` | R0.1, R0.3, R1.1 | **token** | T-04 |
