@@ -12,6 +12,15 @@ describe('getJson', () => {
     expect(data).toEqual({ status: 'ok' })
   })
 
+  it('pede os textos no idioma da interface (Accept-Language)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await getJson('/api/recomendacao', { lang: 'en' })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/recomendacao', { headers: { 'Accept-Language': 'en' } })
+  })
+
   it('lança erro quando a resposta não é 2xx', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 500 })))
 

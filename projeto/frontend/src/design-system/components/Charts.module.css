@@ -1,0 +1,139 @@
+.figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.bars {
+  display: grid;
+  gap: var(--space-3);
+  height: 176px;
+}
+
+.barColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.barTrack {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar {
+  display: block;
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+}
+
+.bar[data-tone='strong'] {
+  background: var(--color-secondary);
+}
+
+.bar[data-tone='soft'] {
+  background: var(--color-secondary-soft);
+}
+
+.barLabel {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+
+.caption {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-muted);
+}
+
+.dots {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+}
+
+.dot[data-liked='true'] {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.reading {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-divider);
+  font-size: var(--font-size-small);
+  flex-wrap: wrap;
+}
+
+.readingPlace {
+  font-weight: var(--font-weight-semibold);
+}
+
+.readingValue {
+  color: var(--color-text-secondary);
+}
+
+.region {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.regionSvg {
+  display: block;
+  width: 100%;
+  height: 190px;
+}
+
+.legend {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: var(--radius-2xs);
+  background: var(--color-surface);
+  font-size: var(--font-size-tiny);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendGauge {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-secondary);
+}
+
+.legendPlanted {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--color-primary);
+}
+
+.legendIdle {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--color-risk-soft);
+  border: 2px solid var(--color-risk);
+}

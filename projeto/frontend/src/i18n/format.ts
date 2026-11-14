@@ -1,0 +1,26 @@
+import { htmlLang, type Lang } from './language'
+
+export function formatNumber(lang: Lang, value: number): string {
+  return new Intl.NumberFormat(htmlLang(lang), { maximumFractionDigits: 0 }).format(value)
+}
+
+/** Valores em reais, sem centavos (o produtor pensa em "R$ 700 por hectare"). */
+export function formatCurrency(lang: Lang, value: number): string {
+  return new Intl.NumberFormat(htmlLang(lang), {
+    style: 'currency',
+    currency: 'BRL',
+    currencyDisplay: 'symbol',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+/** "2027-02-18" → "18 de fevereiro" / "February 18", sem depender do fuso do navegador. */
+export function formatDayMonth(lang: Lang, isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return new Intl.DateTimeFormat(htmlLang(lang), {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(date)
+}

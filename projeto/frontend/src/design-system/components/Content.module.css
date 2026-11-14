@@ -1,0 +1,204 @@
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.eyebrow {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.4px;
+}
+
+.subtitle {
+  font-size: var(--font-size-lead);
+  color: var(--color-text-secondary);
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: var(--font-size-body);
+}
+
+.stepNumber {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.disclosure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.disclosureButton {
+  min-height: var(--touch-toggle);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-xs);
+  border: 1.5px solid var(--color-border-control);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-body);
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.disclosurePanel {
+  background: var(--color-page);
+  border-radius: var(--radius-xs);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--font-size-small);
+}
+
+.disclaimer {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
+.hero {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.heroLabel {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-on-primary-muted);
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: var(--font-size-best);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.08;
+  margin: 0;
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-4);
+}
+
+.timelineItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.yearTile {
+  flex: 0 0 62px;
+  width: 62px;
+  height: 62px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timelineText {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+
+.timelineTitle {
+  font-size: var(--font-size-title);
+  color: var(--color-text);
+}
+
+.compare {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.compare[data-highlighted='true'] {
+  border: 2px solid var(--color-primary);
+}
+
+.compareHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.rank {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: 18px;
+  color: var(--color-text-muted);
+}
+
+.compareName {
+  font-size: 19px;
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+}
+
+.compareRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-divider);
+}
+
+.compareLabel {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
+.compareValue {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}

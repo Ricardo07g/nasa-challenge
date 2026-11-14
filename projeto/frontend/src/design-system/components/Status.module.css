@@ -1,0 +1,117 @@
+.pill {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+}
+
+.pill[data-rotulo='bom'] {
+  background: var(--color-good-bg);
+  color: var(--color-good-text);
+}
+
+.pill[data-rotulo='medio'] {
+  background: var(--color-fair-bg);
+  color: var(--color-fair-text);
+}
+
+.pill[data-rotulo='fraco'] {
+  background: var(--color-weak-bg);
+  color: var(--color-weak-text);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.metric + .metric {
+  border-top: 1px solid var(--color-divider);
+}
+
+.metricHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.metricIcon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-page);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metricText {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.metricLabel {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
+.metricValue {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.3;
+}
+
+.strip {
+  display: grid;
+  gap: 3px;
+}
+
+.strip[data-size='lg'] {
+  gap: var(--space-2);
+  max-width: 420px;
+}
+
+.cellWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.cell {
+  display: block;
+  width: 100%;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.strip[data-size='lg'] .cell {
+  height: 22px;
+  border-radius: var(--radius-cell);
+}
+
+.cell[data-state='good'] {
+  background: var(--color-primary);
+}
+
+.cell[data-state='bad'] {
+  background: var(--color-surface);
+  border: 2px solid var(--color-risk);
+}
+
+.cell[data-state='unknown'] {
+  background: var(--color-divider);
+  border: 2px dashed var(--color-border-strong);
+}
+
+.year {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-muted);
+}

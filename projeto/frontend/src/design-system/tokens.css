@@ -1,0 +1,104 @@
+/*
+ * Tokens do design system do Raiz Orbital (valores do protótipo v3).
+ * Regra: componentes e telas usam SEMPRE estas variáveis, nunca hex solto.
+ */
+:root {
+  /* Marca e ação */
+  --color-primary: #1f6b47;
+  --color-primary-strong: #164e34;
+  --color-on-primary: #ffffff;
+  --color-on-primary-muted: #d5e8dd;
+  --color-secondary: #1d5fa8;
+  --color-secondary-soft: #6e9bcb;
+
+  /* Texto */
+  --color-text: #14211c;
+  --color-text-secondary: #2e3a35;
+  --color-text-muted: #45524c;
+  --color-text-on-green-tint: #1e3a2c;
+  --color-text-on-blue-tint: #1f3550;
+  --color-title-on-blue-tint: #123f73;
+  --color-title-on-orange-tint: #6b3009;
+
+  /* Superfícies */
+  --color-page: #f4f6f5;
+  --color-surface: #ffffff;
+  --color-tint-green: #e6f0ea;
+  --color-tint-blue: #eaf1fa;
+  --color-tint-orange: #fff4ec;
+
+  /* Bordas */
+  --color-border-control: #c9d2ce;
+  --color-border: #dde3e0;
+  --color-divider: #edf1ef;
+  --color-border-strong: #7c8984;
+
+  /* Status (rótulos Bom/Médio/Fraco e risco) */
+  --color-good-bg: #d9ecdf;
+  --color-good-text: #164e34;
+  --color-fair-bg: #ffefc9;
+  --color-fair-text: #5c4000;
+  --color-weak-bg: #fbe3d0; /* "Fraco" não existe no protótipo: laranja de risco */
+  --color-weak-text: #6b3009;
+  --color-risk: #b5551a;
+  --color-risk-soft: #fbe3d0;
+  --color-soil: #8a5a1c;
+  --color-selected-ring: #9fd0b5;
+
+  /* Ilustrações e mapas */
+  --color-map-bg: #dce6e0;
+  --color-map-grid: #c5d3cb;
+  --color-map-river: #9ec0d6;
+  --color-map-road: #e8e2d2;
+  --color-hero-bg: #e3ece7;
+  --color-hero-field: #b8d1c2;
+
+  /* Tipografia */
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-size-hero: clamp(36px, 4.6vw, 56px);
+  --font-size-h1: clamp(30px, 3.4vw, 40px);
+  --font-size-best: clamp(32px, 3.4vw, 42px);
+  --font-size-section: 20px;
+  --font-size-title: 17px;
+  --font-size-lead: 18px;
+  --font-size-body: 16px;
+  --font-size-small: 15px;
+  --font-size-caption: 14px;
+  --font-size-tiny: 13px;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.1;
+  --line-height-body: 1.45;
+
+  /* Raios */
+  --radius-hero: 24px;
+  --radius-xl: 20px;
+  --radius-lg: 18px;
+  --radius-md: 16px;
+  --radius-sm: 14px;
+  --radius-xs: 12px;
+  --radius-2xs: 10px;
+  --radius-cell: 4px;
+  --radius-pill: 999px;
+
+  /* Espaços */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 10px;
+  --space-4: 14px;
+  --space-5: 18px;
+  --space-6: 28px;
+  --page-gutter: clamp(16px, 4vw, 40px);
+  --page-max-width: 1240px;
+
+  /* Alvos de toque (PRD: mínimo 48 px nos botões, 60 px nos principais) */
+  --touch-min: 44px;
+  --touch-toggle: 48px;
+  --touch-compact: 50px;
+  --touch-chip: 52px;
+  --touch-secondary: 54px;
+  --touch-primary: 60px;
+  --touch-radio-card: 84px;
+}

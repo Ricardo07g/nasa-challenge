@@ -1,0 +1,37 @@
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--touch-min);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  align-self: flex-start;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.stepperLabel {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
+.bars {
+  display: flex;
+  gap: 4px;
+}
+
+.bar {
+  width: 28px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border-control);
+}
+
+.bar[data-done='true'] {
+  background: var(--color-primary);
+}

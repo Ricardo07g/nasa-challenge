@@ -1,0 +1,105 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: center;
+  padding-top: 8px;
+}
+
+.text {
+  flex: 1 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.eyebrow {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-hero);
+  line-height: 1.05;
+  letter-spacing: -0.8px;
+}
+
+.lead {
+  font-size: var(--font-size-lead);
+  color: var(--color-text-secondary);
+  max-width: 520px;
+}
+
+.actions {
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.meta {
+  font-size: var(--font-size-small);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.illustration {
+  flex: 1 1 340px;
+  min-width: 0;
+  border-radius: var(--radius-hero);
+  background: var(--color-hero-bg);
+  overflow: hidden;
+}
+
+.illustration svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--space-3);
+}
+
+.step {
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.25;
+  color: var(--color-primary);
+}
+
+.step span {
+  color: var(--color-text);
+}
+
+.disclaimer {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
+.disclaimer a {
+  font-weight: var(--font-weight-semibold);
+}

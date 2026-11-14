@@ -1,0 +1,118 @@
+import { useId, useState, type ReactNode } from 'react'
+import styles from './Content.module.css'
+
+export function PageHeading({ title, subtitle, eyebrow }: { title: string; subtitle?: string; eyebrow?: string }) {
+  return (
+    <div className={styles.heading}>
+      {eyebrow && <span className={styles.eyebrow}>{eyebrow}</span>}
+      <h1 className={styles.title}>{title}</h1>
+      {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+    </div>
+  )
+}
+
+export function NumberedSteps({ steps }: { steps: readonly string[] }) {
+  return (
+    <ol className={styles.steps}>
+      {steps.map((step, index) => (
+        <li key={step} className={styles.step}>
+          <span className={styles.stepNumber} aria-hidden="true">
+            {index + 1}
+          </span>
+          <span>{step}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+type DisclosureProps = {
+  openLabel: string
+  closeLabel: string
+  children: ReactNode
+}
+
+export function Disclosure({ openLabel, closeLabel, children }: DisclosureProps) {
+  const [open, setOpen] = useState(false)
+  const panelId = useId()
+  return (
+    <div className={styles.disclosure}>
+      <button
+        type="button"
+        className={styles.disclosureButton}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {open ? closeLabel : openLabel}
+      </button>
+      {open && (
+        <div id={panelId} className={styles.disclosurePanel}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function Disclaimer({ children }: { children: ReactNode }) {
+  return <p className={styles.disclaimer}>{children}</p>
+}
+
+export function RecommendationHero({ label, title, children }: { label: string; title: string; children?: ReactNode }) {
+  return (
+    <div className={styles.hero}>
+      <span className={styles.heroLabel}>{label}</span>
+      <h2 className={styles.heroTitle}>{title}</h2>
+      {children}
+    </div>
+  )
+}
+
+type TimelineItem = { year: number; title: string; text: string }
+
+export function YearTimeline({ label, items }: { label: string; items: readonly TimelineItem[] }) {
+  return (
+    <ol className={styles.timeline} aria-label={label}>
+      {items.map((item) => (
+        <li key={item.year} className={styles.timelineItem}>
+          <span className={styles.yearTile}>{item.year}</span>
+          <span className={styles.timelineText}>
+            <strong className={styles.timelineTitle}>{item.title}</strong>
+            <span>{item.text}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+type CompareRow = { label: string; value: string; extra?: ReactNode }
+
+type OptionCompareCardProps = {
+  rank: string
+  name: string
+  rows: readonly CompareRow[]
+  highlighted?: boolean
+}
+
+export function OptionCompareCard({ rank, name, rows, highlighted = false }: OptionCompareCardProps) {
+  const titleId = useId()
+  return (
+    <article className={styles.compare} data-highlighted={highlighted} aria-labelledby={titleId}>
+      <div className={styles.compareHead}>
+        <span className={styles.rank}>{rank}</span>
+        <h3 id={titleId} className={styles.compareName}>
+          {name}
+        </h3>
+      </div>
+      {rows.map((row) => (
+        <div key={row.label} className={styles.compareRow}>
+          <span className={styles.compareLabel}>{row.label}</span>
+          <span className={styles.compareValue}>{row.value}</span>
+          {row.extra}
+        </div>
+      ))}
+    </article>
+  )
+}
