@@ -179,6 +179,11 @@ export const pt = {
       `${good} anos bons e ${total - good} anos com falta de água`,
     why: 'Por quê?',
     close: 'Fechar',
+    lateWarning: (crops: string, count: number) =>
+      `Já não dá tempo: ${crops} ${count === 1 ? 'fica' : 'ficam'} fora da janela de plantio.`,
+    rainEnough: 'Choveu o bastante',
+    rainShort: 'Faltou chuva',
+    rainYears: '2006–2025',
     howTitle: 'Como fazer',
     howNote: 'Dose de semente e herbicida: combine com o seu agrônomo.',
     seePlan: 'Ver plano de 3 anos',

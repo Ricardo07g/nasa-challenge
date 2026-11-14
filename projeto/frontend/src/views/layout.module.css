@@ -99,6 +99,23 @@
   line-height: var(--line-height-tight);
 }
 
+.lead {
+  font-size: var(--font-size-lead);
+  color: var(--color-text-muted);
+}
+
+/* Título de cartão com ícone na frente (ex.: "Como fazer") */
+.iconTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-primary);
+}
+
 .muted {
   font-size: var(--font-size-small);
   color: var(--color-text-muted);

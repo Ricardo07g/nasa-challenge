@@ -1,5 +1,6 @@
 import { Navigate, type RouteObject } from 'react-router'
 import {
+  AnswerPage,
   DesignSystemPage,
   ExamplePage,
   PendingPage,
@@ -19,7 +20,7 @@ export const routes: RouteObject[] = [
       { path: '/onde', element: <WherePage /> },
       { path: '/quando', element: <WhenPage /> },
       { path: '/satelite', element: <SatellitePage /> },
-      { path: '/resposta', element: <PendingPage screen="answer" /> },
+      { path: '/resposta', element: <AnswerPage /> },
       { path: '/opcoes', element: <PendingPage screen="options" /> },
       { path: '/plano', element: <PendingPage screen="plan" /> },
       { path: '/comunidade', element: <PendingPage screen="community" /> },

@@ -83,6 +83,22 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
   })
 
+  it('"Ver o que plantar" na tela 4 abre a resposta com a melhor opção', async () => {
+    renderAt('/satelite?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver o que plantar' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Milho com braquiária' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Resposta' })).toHaveAttribute('aria-current', 'page')
+    expect(document.title).toBe('Raiz Orbital – A melhor opção')
+  })
+
+  it('a resposta sem a colheita volta para a pergunta 2', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 

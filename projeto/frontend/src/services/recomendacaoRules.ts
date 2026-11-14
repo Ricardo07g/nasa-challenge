@@ -1,4 +1,12 @@
-import { COVER_CROPS, GRAIN_CROPS, type CropId, type Eixo, type Motivo, type Opcao } from '../models/recomendacao'
+import {
+  COVER_CROPS,
+  GRAIN_CROPS,
+  type CropId,
+  type Eixo,
+  type Motivo,
+  type Opcao,
+  type Recomendacao,
+} from '../models/recomendacao'
 
 const byFinal = (a: Opcao, b: Opcao) => b.notas.final - a.notas.final
 
@@ -57,4 +65,32 @@ export function planSwaps(
   return normal.flatMap((from, index) =>
     dry[index] !== undefined && dry[index] !== from ? [{ year: firstYear + index, from, to: dry[index] }] : [],
   )
+}
+
+const sentence = (text: string) => (/[.!?]$/.test(text) ? text : `${text}.`)
+
+export type AnswerSummary = {
+  /** Ano da soja que vem antes da entressafra ("Depois da soja de 2027…"). */
+  year: number
+  best: Opcao
+  alternatives: { motivo: Motivo; option: Opcao; text: string }[]
+  late: { names: string[]; texts: string[] }
+}
+
+/** Tela 5: o que a resposta mostra. Sem a melhor opção na lista, não há resposta. */
+export function buildAnswer(recomendacao: Recomendacao): AnswerSummary | null {
+  const best = findOption(recomendacao.opcoes, recomendacao.melhor)
+  if (!best) return null
+  return {
+    year: harvestYear(recomendacao.entrada.semeadura),
+    best,
+    alternatives: recomendacao.alternativas.flatMap(({ motivo, opcao }) => {
+      const option = findOption(recomendacao.opcoes, opcao)
+      return option ? [{ motivo, option, text: alternativeSummary(motivo, option).map(sentence).join(' ') }] : []
+    }),
+    late: {
+      names: recomendacao.fora_da_janela.map((item) => item.nome),
+      texts: recomendacao.fora_da_janela.map((item) => item.texto),
+    },
+  }
 }
