@@ -31,6 +31,7 @@ app/
   fixtures/            clima da fazenda de exemplo (gerado pelo pipeline; ver "Dados da API")
 pipeline/              scripts offline que preparam os dados (não entram na imagem da API)
 tests/
+  unit/models/         contrato e validação dos models (ver "Contrato dos dados das fontes")
   unit/services/       service com repository falso (sem banco, sem HTTP)
   unit/repositories/   repository isolado
   unit/pipeline/       funções do pipeline
@@ -169,11 +170,147 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   uv run pytest -m "not db"     # só os testes sem banco
   ```
 
+## Contrato dos dados das fontes
+
+Formato que os scripts de dados gravam e a API lê: em arquivo JSON agora, em tabela depois da
+migração R1.6 (`docs/roteiro-de-implementacao.md`). Os models de `app/models/` validam cada registro
+e recusam o que sai do contrato com `ValueError` (testes em `tests/unit/models/`).
+
+Regras gerais:
+
+- JSON em UTF-8 com chaves em português, como a fixture do clima. Colunas do banco em inglês.
+- Datas `AAAA-MM-DD`. Horas em ISO 8601 com fuso (`2026-11-14T13:00:00Z`).
+- Coordenadas WGS 84 em graus decimais. O ponto vira chave de cache com `point_key` (0,0025°,
+  `app/repositories/point_cache.py`); na tabela, `key` + `geom`.
+- Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1` e `smap`.
+  A do IMERG (`gpm_imerg` ou `imerg_final`) espera a decisão da seção 5 do roteiro.
+- Todo arquivo traz `versao_dados`, a execução que o gerou.
+- Sem valor: campo ausente ou `null`. Nunca `-999`, zero ou número inventado, e nunca dado
+  sintético com uma dessas chaves de fonte.
+
+### Versão dos dados: `DataRun` (`app/models/data_run.py`)
+
+| JSON (`versao_dados`) | Model | Tabela `data_run` | Exemplo |
+| --- | --- | --- | --- |
+| `fonte` | `source` | `source text` | `nex_gddp_cmip6` |
+| `parametros` | `params` | `params jsonb` | produto e versão, modelos, cenário, anos, pontos |
+| `fim` | `finished_at` (com fuso) | `finished_at timestamptz` | `2026-11-14T13:00:00Z` |
+| `versao` | `version` | `version text` (coluna nova no R1.6) | `2026.11-nex-gddp-cmip6` |
+
+Hoje o `versao_dados` da resposta é a constante `DATA_VERSION` (`app/constants.py`). O R3.5 passa a
+montá-lo a partir das linhas de `data_run`.
+
+### CMIP6: `Cmip6Delta` (`app/models/climate.py`)
+
+Um registro por modelo e mês: média de 2041–2060 contra 1995–2014, SSP2-4.5. `cobertura` é a área
+a que os deltas valem (a célula do POWER, como na fixture do clima). A lista `cmip6` tem o mesmo
+formato da `cmip6[]` da fixture, que o `FixtureClimateRepository` já lê.
+
+```json
+{
+  "versao_dados": {"fonte": "nex_gddp_cmip6", "parametros": {"cenario": "ssp245"}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-nex-gddp-cmip6"},
+  "pontos": [
+    {
+      "lat": -18.9543, "lon": -48.1993,
+      "cobertura": {"lat_min": -19.25, "lat_max": -18.75, "lon_min": -48.4375, "lon_max": -47.8125},
+      "cmip6": [
+        {"modelo": "ACCESS-CM2", "cenario": "ssp245", "mes": 3, "chuva_pct": -8.5, "tmax_c": 1.6, "tmin_c": 1.2}
+      ]
+    }
+  ]
+}
+```
+
+| JSON | Model | Coluna | Regra |
+| --- | --- | --- | --- |
+| `modelo` | `model` | `model text` | nome do NEX-GDDP (ex.: `ACCESS-CM2`) |
+| `cenario` | `scenario` | `scenario text` | `ssp245` |
+| `mes` | `month` | `month smallint` | 1 a 12 (o MVP usa jan–jul) |
+| `chuva_pct` | `rain_pct` | `rain_pct real` | (futuro ÷ base − 1) × 100; nunca menor que −100 |
+| `tmax_c` | `tmax_c` | `tmax_c real` | futuro − base, em °C |
+| `tmin_c` | `tmin_c` | `tmin_c real` (pode ser nulo) | opcional: só com o `tasmin` (decisão pendente) |
+
+- Conversões no script: `pr` × 86.400 → mm/dia; `tasmax` e `tasmin` − 273,15 → °C.
+- Tabela (R1.6): `cmip6_delta (cell_id, model, scenario, month, rain_pct, tmax_c, tmin_c)`, chave
+  `(cell_id, model, scenario, month)`. Substitui a tabela agregada da migração inicial.
+- Hoje o `FixtureClimateRepository` ainda não lê `tmin_c` (fica para o R3.1). O `scripts/seed_db.py`
+  ainda grava o formato agregado antigo e sai no R1.6.
+
+### NDVI: `NdviRecord` (`app/models/talhao.py`)
+
+Uma observação de 16 dias por ponto, já sem neve e sem nuvem. O arquivo é o que o
+`CachedNdviRepository` lê (`NDVI_CACHE_PATH`).
+
+```json
+{
+  "versao_dados": {"fonte": "modis_mod13q1", "parametros": {"produtos": ["MOD13Q1", "MYD13Q1"]}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-modis-ndvi"},
+  "pontos": [
+    {
+      "lat": -18.9543, "lon": -48.1993,
+      "serie": [
+        {"data": "2016-04-06", "ndvi": 0.71, "qualidade": 0, "produto": "MOD13Q1"},
+        {"data": "2016-04-14", "ndvi": 0.69, "qualidade": 1, "produto": "MYD13Q1"}
+      ]
+    }
+  ]
+}
+```
+
+| JSON | Model | Coluna | Regra |
+| --- | --- | --- | --- |
+| `data` | `data` | `date date` | data da composição de 16 dias |
+| `ndvi` | `ndvi` | `ndvi real` | físico, com o fator 0,0001 já aplicado (−0,2 a 1). O model ainda aceita o bruto do cache antigo; −3000 (sem dado) é recusado |
+| `qualidade` | `qualidade` | `quality smallint` | `pixel_reliability` (ORNL e AppEEARS) ou `SummaryQA`: só 0 (bom) e 1 (aceitável) |
+| `produto` | `produto` | `product text` | `MOD13Q1` (Terra) ou `MYD13Q1` (Aqua), coleção 061 |
+
+- Tabela (R1.6): `ndvi_point (key, date, product, ndvi, quality)`, chave `(key, date, product)`.
+- `qualidade` e `produto` são opcionais no model só por causa do cache antigo (`data` e `ndvi`).
+  Arquivo novo traz os quatro campos. O `CachedNdviRepository` passa a lê-los no R3.2.
+
+### SMAP: `SmapSoilMoisture` (`app/models/climate.py`)
+
+Uma linha por ponto e data, com a média do dia do SMAP L4 (`SPL4SMGP`, de 3 em 3 horas). A versão do
+produto (007 ou 008) vai em `versao_dados.parametros`, não em cada linha.
+
+```json
+{
+  "versao_dados": {"fonte": "smap", "parametros": {"produto": "SPL4SMGP.007"}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-smap-l4"},
+  "pontos": [
+    {
+      "lat": -18.9543, "lon": -48.1993,
+      "serie": [
+        {"data": "2024-02-18", "sm_rootzone_wetness": 0.62, "sm_rootzone_m3_m3": 0.31, "sm_surface_m3_m3": 0.27}
+      ]
+    }
+  ]
+}
+```
+
+| JSON | Model | Coluna | Regra |
+| --- | --- | --- | --- |
+| `data` | `data` | `date date` | dia |
+| `lat`, `lon` (do ponto) | `latitude`, `longitude` | `key` + `geom` | WGS 84 |
+| `sm_rootzone_wetness` | `sm_rootzone_wetness` | `sm_rootzone_wetness real` | 0 a 1; o motor usa para o balde inicial (PRD 7.2) |
+| `sm_rootzone_m3_m3` | `sm_rootzone_m3_m3` | `sm_rootzone_m3_m3 real` | m³/m³, 0 a 1 |
+| `sm_surface_m3_m3` | `sm_surface_m3_m3` | `sm_surface_m3_m3 real` (pode ser nulo) | m³/m³, 0 a 1; opcional |
+| `versao_dados.fonte` | `fonte` | — | `smap` |
+
+- Tabela (R1.6): `smap_point (key, geom, date, sm_rootzone_wetness, sm_rootzone_m3_m3,
+  sm_surface_m3_m3)`, chave `(key, date)`. Substitui a `smap_moisture` por célula da migração inicial.
+- Antes de 2015 não há SMAP. O percentil (`sm_rootzone_pctl`, A2.2) é calculado depois e não faz
+  parte deste registro.
+
 ## Configuração e segredos
 
 - Variável nova → campo em `Settings` (`app/config.py`) **e** o nome (sem valor real) em `.env.example`.
   Nunca leia `os.environ` espalhado pelo código; use `get_settings()`.
 - Nunca escreva credencial no código, nem em teste.
+- Credenciais da NASA: só os scripts de dados usam. A API não precisa de nenhuma (ADR-0005).
+  - `EARTHDATA_TOKEN`: token da Earthdata Login (urs.earthdata.nasa.gov, vale 60 dias). Serve para a
+    NSIDC (SMAP) e o GES DISC (IMERG). O AppEEARS recusa esse token (403).
+  - `APPEEARS_TOKEN`: token próprio do AppEEARS, de `POST /api/login` (vale cerca de 48 h). Sem ele, o
+    script faz o login com `EARTHDATA_USERNAME` e `EARTHDATA_PASSWORD`.
+  - `EE_PROJECT` é legado (Earth Engine fora do MVP) e sai quando a ADR-0005 for aceita.
 
 ## Dependências
 
