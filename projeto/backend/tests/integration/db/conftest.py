@@ -24,7 +24,7 @@ from tests.integration.db.support import (
     run_alembic,
 )
 
-DATA_ENV_VARS = ("CULTURAS_PATH", "CLIMA_PATH", "SOLO_CACHE_PATH", "NDVI_CACHE_PATH")
+DATA_ENV_VARS = ("CULTURAS_PATH", "CLIMA_PATH", "SOLO_CACHE_PATH", "NDVI_CACHE_PATH", "CMIP6_PATH")
 
 
 @pytest.fixture(scope="session")
