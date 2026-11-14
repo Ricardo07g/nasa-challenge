@@ -39,6 +39,7 @@ describe('useAnswerController (tela 5)', () => {
 
     expect(result.current.nav.tabs[0]).toMatchObject({ label: 'Resposta', current: true })
     expect(result.current.nav.backTo).toBe(`/quando?${flow}`)
+    expect(result.current.reportTo).toBe(`/relatorio?${flow}`)
   })
 
   it('com os dados de exemplo (sem o motor ligado), avisa que os valores são de exemplo', async () => {

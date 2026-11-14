@@ -11,6 +11,7 @@ import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useOptionsController } from './controllers/useOptionsController'
 import { usePlanController } from './controllers/usePlanController'
 import { useSatelliteController } from './controllers/useSatelliteController'
+import { useReportController } from './controllers/useReportController'
 import { useShellController } from './controllers/useShellController'
 import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
@@ -24,6 +25,7 @@ import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
 import { OptionsView } from './views/OptionsView'
 import { PlanView } from './views/PlanView'
+import { ReportView } from './views/ReportView'
 import { SatelliteView } from './views/SatelliteView'
 import { ShellView } from './views/ShellView'
 import { StartView } from './views/StartView'
@@ -152,6 +154,7 @@ export function AnswerPage() {
       answer={state.answer}
       aviso={state.aviso}
       sampleData={state.sampleData}
+      reportTo={state.reportTo}
     />
   )
 }
@@ -197,6 +200,28 @@ export function PlanPage() {
       rule={state.rule}
       plan={state.plan}
       communityTo={state.communityTo}
+    />
+  )
+}
+
+export function ReportPage() {
+  const { lang, messages: t } = useI18n()
+  useDocumentTitle(t.report.title)
+  const state = useReportController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <ReportView
+      t={t}
+      lang={lang}
+      status={state.status}
+      onRetry={state.retry}
+      backTo={state.backTo}
+      talhao={state.talhao}
+      recomendacao={state.recomendacao}
+      example={state.example}
+      place={state.place}
+      today={state.today}
+      onPrint={state.print}
     />
   )
 }

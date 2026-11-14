@@ -17,6 +17,7 @@ import {
   CloudSun,
   DropletOff,
   Droplets,
+  FileText,
   History,
   Layers,
   Leaf,
@@ -191,4 +192,8 @@ export function SeedIcon({ size = 24 }: IconProps) {
 
 export function CloseIcon({ size = 18 }: IconProps) {
   return <X size={size} {...decorative} />
+}
+
+export function ReportIcon({ size = 20 }: IconProps) {
+  return <FileText size={size} {...decorative} />
 }

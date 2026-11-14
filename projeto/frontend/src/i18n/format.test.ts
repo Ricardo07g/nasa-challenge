@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { formatApproxMoney, formatCoordinates, formatCurrency, formatDayMonth, formatDecimal, formatNumber } from './format'
+import {
+  formatApproxMoney,
+  formatCoordinates,
+  formatCurrency,
+  formatDayMonth,
+  formatDecimal,
+  formatFullDate,
+  formatNumber,
+} from './format'
 
 const normalize = (text: string) => text.replace(/\s/g, ' ')
 
@@ -25,6 +33,11 @@ describe('format', () => {
     expect(normalize(formatApproxMoney('pt', 25600))).toBe('26 mil')
     expect(normalize(formatApproxMoney('en', 25600))).toBe('26 thousand')
     expect(normalize(formatApproxMoney('en', 3440))).toBe('3,400')
+  })
+
+  it('data por extenso, com o ano, sem depender do fuso', () => {
+    expect(formatFullDate('pt', '2026-11-14')).toBe('14 de novembro de 2026')
+    expect(formatFullDate('en', '2026-11-14')).toBe('November 14, 2026')
   })
 
   it('formata números com o separador do idioma', () => {

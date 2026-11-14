@@ -1,9 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
-import { useI18n } from '../i18n/useI18n'
-import type { ScreenStatus } from '../models/screenStatus'
-import { farmService, isOutsideArea, type FarmService } from '../services/farmService'
-import { keepFlowQuery, readFlowParams } from '../services/flowParams'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { farmService, type FarmService } from '../services/farmService'
 import { nearestPlace } from '../services/locationService'
 import {
   FINISH_DELAY_MS,
@@ -12,7 +9,7 @@ import {
   missionFacts,
   phaseWait,
 } from '../services/missionService'
-import { useAsync } from './useAsync'
+import { useFlowFarm } from './useFlowFarm'
 import { usePrefersReducedMotion } from './usePrefersReducedMotion'
 
 type Deps = { farm: FarmService }
@@ -24,42 +21,9 @@ const defaultDeps: Deps = { farm: farmService }
  * recomendação (quase sempre já no cache), passa pelas 6 fases (mínimo de 1,2 s cada) e segue sozinha.
  */
 export function useMissionController(deps: Deps = defaultDeps) {
-  const { lang } = useI18n()
   const navigate = useNavigate()
-  const [search] = useSearchParams()
-  const params = useMemo(() => readFlowParams(search), [search])
-  const query = keepFlowQuery(search.toString())
   const reducedMotion = usePrefersReducedMotion()
-
-  const talhao = useAsync(
-    () =>
-      params
-        ? deps.farm.talhao({ lat: params.lat, lon: params.lon, exemplo: params.exemplo }, lang)
-        : Promise.reject(new Error('sem ponto na URL')),
-    [params?.lat, params?.lon, params?.exemplo, lang, deps.farm],
-  )
-  const recomendacao = useAsync(
-    () =>
-      params?.colheita
-        ? deps.farm.recomendacao(
-            { lat: params.lat, lon: params.lon, colheita: params.colheita, solo: params.solo, exemplo: params.exemplo },
-            lang,
-          )
-        : Promise.reject(new Error('sem colheita na URL')),
-    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, lang, deps.farm],
-  )
-
-  const outside =
-    (talhao.status === 'ready' && talhao.data?.dentro_da_area === false) ||
-    isOutsideArea(talhao.error) ||
-    isOutsideArea(recomendacao.error)
-  const status: ScreenStatus = outside
-    ? 'outside'
-    : talhao.status === 'error' || recomendacao.status === 'error'
-      ? 'error'
-      : talhao.status === 'ready' && recomendacao.status === 'ready'
-        ? 'ready'
-        : 'loading'
+  const { params, query, redirectTo, talhao, recomendacao, status } = useFlowFarm(deps.farm)
 
   // Fases: só avançam com os dados prontos, e cada uma dura no mínimo 1,2 s.
   const [phase, setPhase] = useState(0)
@@ -110,7 +74,7 @@ export function useMissionController(deps: Deps = defaultDeps) {
   const facts = status === 'ready' && talhao.data && recomendacao.data ? missionFacts(talhao.data, recomendacao.data) : null
 
   return {
-    redirectTo: !params ? '/onde' : !params.colheita ? `/quando${query}` : null,
+    redirectTo,
     backTo: `/quando${query}`,
     continueTo: `/satelite${query}`,
     status,

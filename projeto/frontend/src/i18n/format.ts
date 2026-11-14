@@ -46,3 +46,11 @@ export function formatApproxMoney(lang: Lang, value: number): string {
     Math.round(abs / 1000) * 1000,
   )
 }
+
+/** "2026-11-14" → "14 de novembro de 2026" / "November 14, 2026", sem depender do fuso do navegador. */
+export function formatFullDate(lang: Lang, isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return new Intl.DateTimeFormat(htmlLang(lang), { dateStyle: 'long', timeZone: 'UTC' }).format(
+    new Date(Date.UTC(year, month - 1, day)),
+  )
+}
