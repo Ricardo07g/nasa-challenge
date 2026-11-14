@@ -1,8 +1,9 @@
 """JSON de GET /api/recomendacao e GET /api/exemplo (plano técnico §3.2 e §3.3)."""
 
 from datetime import date
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, SerializerFunctionWrapHandler, model_serializer
 
 from app.models.recomendacao import NotasOpcao, PlanoRotacao, Recomendacao, ResultadoOpcao
 from app.models.sinal_outono import NivelSinal, SinalOutono
@@ -42,6 +43,18 @@ class DinheiroSchema(_Frozen):
     margem_ha: float
     rotulo: str
     texto: str
+    # A1.2: margem do pior dos anos mais secos (a conta x hectares fica no front)
+    pior_ano_seco_ha: float | None = None
+
+    # Sem tipo de retorno de propósito: com ele, o OpenAPI (/docs) perde os campos do `dinheiro`.
+    @model_serializer(mode="wrap")
+    def _omit_missing_worst_dry_year(self, handler: SerializerFunctionWrapHandler):
+        # Sem valor, a chave não vai: o front (`dinheiro.pior_ano_seco_ha?: number`) testa
+        # `=== undefined`, e um null viraria R$ 0 na conta x hectares.
+        data: dict[str, Any] = handler(self)
+        if data.get("pior_ano_seco_ha") is None:
+            data.pop("pior_ano_seco_ha", None)
+        return data
 
 
 class TerraSchema(_Frozen):
@@ -107,7 +120,10 @@ class OpcaoSchema(_Frozen):
                 else None
             ),
             dinheiro=DinheiroSchema(
-                margem_ha=o.margem_ha, rotulo=o.rotulo_dinheiro, texto=o.texto_dinheiro
+                margem_ha=o.margem_ha,
+                rotulo=o.rotulo_dinheiro,
+                texto=o.texto_dinheiro,
+                pior_ano_seco_ha=o.pior_ano_seco_ha,
             ),
             terra=TerraSchema(nota=o.notas.solo, rotulo=o.rotulo_terra, texto=o.texto_terra),
             notas=NotasSchema.from_model(o.notas),

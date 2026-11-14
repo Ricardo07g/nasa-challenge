@@ -238,7 +238,7 @@ O backend deve seguir esse contrato.
 | ID | Tarefa | Onde | Dep. | Cred. | PRD |
 | --- | --- | --- | --- | --- | --- |
 | A1.1 | `custo_padrao_ha` e `custo_semente_ha` por cultura no `culturas.yaml`, com a fonte de cada valor | `culturas.yaml` | decisão dos valores | — | T-17 |
-| A1.2 | **Custo e pior ano na API** <ul><li>`opcoes[].custo_semente_ha`</li><li>`opcoes[].dinheiro.pior_ano_seco_ha`: a margem do pior dos 4 anos mais secos, reaproveitando `RotationPlanService.select_driest_years`</li><li>A conta × hectares fica no front</li></ul> | `recommendation_service.py`, `schemas/recomendacao.py` | A1.1 | — | T-17 |
+| [A1.2](tarefas/0020-pior-ano-seco-na-api.md) 🟡 (só o pior ano; a semente espera o A1.1) | **Custo e pior ano na API** <ul><li>`opcoes[].custo_semente_ha`</li><li>`opcoes[].dinheiro.pior_ano_seco_ha`: a margem do pior dos 4 anos mais secos, reaproveitando `RotationPlanService.select_driest_years`</li><li>A conta × hectares fica no front</li></ul> | `recommendation_service.py`, `schemas/recomendacao.py` | A1.1 | — | T-17 |
 | A2.1 | **`previsao_sazonal`:** com o GEOS-S2S, a chance de chuva abaixo do normal em mar–mai por célula. Conferir o formato e se o produto já traz a probabilidade | `pipeline/` | R0.3 | não | T-18 |
 | A2.2 | **SMAP recente + percentil.** `sm_rootzone_pctl` pode não vir pronto: calcular pela climatologia de 2015 em diante | `pipeline/` | R2.3 | **token** | T-18 |
 | A2.3 | **Chuva dos últimos 30 dias** pelo IMERG Late, comparada com a média | `pipeline/` | R0.1 | **token** | T-18 |
