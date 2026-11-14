@@ -319,6 +319,19 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - `porque` da recomendação: frase do histórico (modelo `frases.<língua>.historico` do `regras.yaml`,
     PRD 7.6), contando só os anos certos (parado + plantou). Sem série ou sem ano certo, não há frase.
   - `/exemplo` recomenda com a `colheita_sugerida` do talhão (PRD 7.9), não mais com `meio` fixo.
+- **NDVI do MODIS** (tarefa 0017): `pipeline/fetch_ndvi.py` pede ao AppEEARS uma tarefa por ponto
+  (MOD13Q1 e MYD13Q1 061, jan–jul de 2016 a 2025), espera terminar, baixa os CSVs e grava o arquivo do
+  contrato do NDVI (qualidade 0 ou 1, fator 0,0001 aplicado) em `data/output/ndvi_modis_appeears.json`
+  (fora do git; a API lê pelo `NDVI_CACHE_PATH`). Credencial pelo `Settings`: `APPEEARS_TOKEN` e, se
+  faltar ou vencer, `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` (o `EARTHDATA_TOKEN` não serve).
+  Estourou o limite de espera: código 2 e a dica para retomar com `--tarefa-existente <id>`. Os CSVs
+  brutos ficam em `appeears_<id>/`, ao lado da saída, e podem ser convertidos de novo com `--csv`.
+
+  ```bash
+  uv run python -m pipeline.fetch_ndvi --dry-run          # mostra o pedido, sem rede
+  uv run python -m pipeline.fetch_ndvi                    # fazenda de exemplo
+  uv run python -m pipeline.fetch_ndvi --pontos "-18.9543,-48.1993;-17.5,-47.25"
+  ```
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
   ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre

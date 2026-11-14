@@ -1,11 +1,13 @@
-"""Reusable HTTP getters (JSON and text) with timeout and exponential backoff."""
+"""Reusable HTTP getters (JSON and text) with retries, and a generic request (POST, download)."""
 
 import json
 import logging
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from typing import Any
 
 from app.constants import (
@@ -19,6 +21,69 @@ logger = logging.getLogger(__name__)
 HttpGetter = Callable[[str, dict[str, Any], float], dict[str, Any]]
 TextHttpGetter = Callable[[str, dict[str, Any], float], str]
 USER_AGENT = "RaizOrbital/1.0"
+
+
+@dataclass(frozen=True)
+class HttpRequest:
+    """Pedido HTTP genérico (GET, POST, download).
+
+    `authorization` vai como cabeçalho que **não** segue redirecionamento: o download do AppEEARS
+    redireciona para uma URL assinada do S3, que recusa um segundo meio de autenticação.
+    """
+
+    method: str
+    url: str
+    params: Mapping[str, Any] = field(default_factory=dict)
+    json_body: Any = None
+    authorization: str | None = None
+    headers: Mapping[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class HttpResponse:
+    """Resposta crua: o status volta mesmo em 4xx/5xx, para quem chamou decidir o que fazer."""
+
+    status: int
+    body: bytes
+
+    def json(self) -> Any:
+        return json.loads(self.body.decode("utf-8")) if self.body else None
+
+    def text(self) -> str:
+        return self.body.decode("utf-8-sig")
+
+
+HttpTransport = Callable[[HttpRequest, float], HttpResponse]
+
+
+def _build_url(url: str, params: Mapping[str, Any]) -> str:
+    return _url_with_query(url, dict(params))
+
+
+def default_http_request(
+    request: HttpRequest,
+    timeout: float = EXTERNAL_API_TIMEOUT_SECONDS,
+    opener: Callable[..., Any] = urllib.request.urlopen,
+) -> HttpResponse:
+    """Faz o pedido e devolve status + corpo. Erro HTTP vira `HttpResponse`; erro de rede sobe."""
+    data: bytes | None = None
+    headers = {"Accept": "application/json", "User-Agent": USER_AGENT, **request.headers}
+    if request.json_body is not None:
+        data = json.dumps(request.json_body).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(
+        _build_url(request.url, request.params),
+        data=data,
+        headers=headers,
+        method=request.method,
+    )
+    if request.authorization is not None:
+        req.add_unredirected_header("Authorization", request.authorization)
+    try:
+        with opener(req, timeout=timeout) as response:
+            return HttpResponse(status=int(response.status), body=response.read())
+    except urllib.error.HTTPError as exc:
+        return HttpResponse(status=exc.code, body=exc.read() if exc.fp is not None else b"")
 
 
 def _url_with_query(url: str, params: dict[str, Any]) -> str:
