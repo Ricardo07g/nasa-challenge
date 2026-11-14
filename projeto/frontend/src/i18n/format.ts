@@ -4,6 +4,11 @@ export function formatNumber(lang: Lang, value: number): string {
   return new Intl.NumberFormat(htmlLang(lang), { maximumFractionDigits: 0 }).format(value)
 }
 
+/** Número com casas decimais fixas no jeito do idioma ("-18,95" / "-18.95"). */
+export function formatDecimal(lang: Lang, value: number, digits: number): string {
+  return new Intl.NumberFormat(htmlLang(lang), { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value)
+}
+
 /** Valores em reais, sem centavos (o produtor pensa em "R$ 700 por hectare"). */
 export function formatCurrency(lang: Lang, value: number): string {
   return new Intl.NumberFormat(htmlLang(lang), {

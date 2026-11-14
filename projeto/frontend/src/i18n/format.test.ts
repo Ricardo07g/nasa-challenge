@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatCoordinates, formatCurrency, formatDayMonth, formatNumber } from './format'
+import { formatCoordinates, formatCurrency, formatDayMonth, formatDecimal, formatNumber } from './format'
 
 const normalize = (text: string) => text.replace(/\s/g, ' ')
 
@@ -12,6 +12,11 @@ describe('format', () => {
 
   it('mostra as coordenadas do ponto com 4 casas, latitude primeiro', () => {
     expect(formatCoordinates({ lat: -18.92, lon: -48.28 })).toBe('-18.9200, -48.2800')
+  })
+
+  it('número com casas decimais no jeito de cada idioma', () => {
+    expect(formatDecimal('pt', -18.9543, 2)).toBe('-18,95')
+    expect(formatDecimal('en', -48.1993, 2)).toBe('-48.20')
   })
 
   it('formata números com o separador do idioma', () => {

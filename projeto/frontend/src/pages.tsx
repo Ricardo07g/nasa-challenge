@@ -6,6 +6,7 @@ import { useAnswerController } from './controllers/useAnswerController'
 import { useCommunityController } from './controllers/useCommunityController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useMethodController } from './controllers/useMethodController'
+import { useMissionController } from './controllers/useMissionController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useOptionsController } from './controllers/useOptionsController'
 import { usePlanController } from './controllers/usePlanController'
@@ -20,6 +21,7 @@ import { AnswerView } from './views/AnswerView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { MethodView } from './views/MethodView'
+import { MissionView } from './views/MissionView'
 import { OptionsView } from './views/OptionsView'
 import { PlanView } from './views/PlanView'
 import { SatelliteView } from './views/SatelliteView'
@@ -83,6 +85,32 @@ export function WhenPage() {
       onOpenDate={state.openDate}
       onDateChange={state.changeDate}
       onConfirm={state.confirm}
+    />
+  )
+}
+
+export function MissionPage() {
+  const { lang, messages: t } = useI18n()
+  useDocumentTitle(t.mission.title)
+  const state = useMissionController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <MissionView
+      t={t}
+      lang={lang}
+      status={state.status}
+      phase={state.phase}
+      complete={state.complete}
+      facts={state.facts}
+      place={state.place}
+      weak={state.weak}
+      reducedMotion={state.reducedMotion}
+      spins={state.spins}
+      backTo={state.backTo}
+      continueTo={state.continueTo}
+      onSpin={state.spin}
+      onWait={state.waitMore}
+      onRetry={state.retry}
     />
   )
 }

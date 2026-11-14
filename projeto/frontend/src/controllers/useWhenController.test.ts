@@ -70,14 +70,14 @@ describe('useWhenController (tela 3)', () => {
     expect(result.current.selected).toBe('cedo')
   })
 
-  it('"Próximo passo" leva a faixa na URL para a tela 4 e já pede a recomendação', async () => {
+  it('"Próximo passo" leva a faixa na URL para a missão (RF-19) e já pede a recomendação', async () => {
     const d = deps()
     const { result } = renderHook(() => useWhenController(d), { wrapper: providers(`/quando?${point}`) })
     await waitFor(() => expect(result.current.suggestion).not.toBeNull())
 
     act(() => result.current.confirm())
 
-    expect(screen.getByTestId('location')).toHaveTextContent(`/satelite?${point}&colheita=cedo`)
+    expect(screen.getByTestId('location')).toHaveTextContent(`/calculando?${point}&colheita=cedo`)
     expect(d.farm.recomendacao).toHaveBeenCalledWith(
       { lat: -18.9543, lon: -48.1993, colheita: 'cedo', solo: undefined, exemplo: false },
       'pt',

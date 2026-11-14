@@ -16,14 +16,17 @@ import {
   CloudSun,
   Droplets,
   History,
+  Layers,
   Leaf,
   LocateFixed,
+  LockKeyhole,
   MapPin,
   Minus,
   Satellite,
   ShieldCheck,
   Sprout,
   Square,
+  Star,
   Users,
   Volume2,
 } from 'lucide-react'
@@ -149,4 +152,17 @@ export function MoneyIcon({ size = 24 }: IconProps) {
 
 export function LeafIcon({ size = 24 }: IconProps) {
   return <Leaf size={size} {...decorative} />
+}
+
+// Missão (tela de cálculo)
+export function LockIcon({ size = 21 }: IconProps) {
+  return <LockKeyhole size={size} {...decorative} />
+}
+
+export function StarIcon({ size = 28 }: IconProps) {
+  return <Star size={size} {...decorative} />
+}
+
+export function LayersIcon({ size = 24 }: IconProps) {
+  return <Layers size={size} {...decorative} />
 }

@@ -35,6 +35,18 @@ export type Opcao = {
 
 export type Plano = { anos: CropId[]; nota: number; descricao: string }
 
+export type NivelSinal = 'normal' | 'seco' | 'incerto'
+
+/** Sinal para o outono (RF-20, PRD §7.10): GEOS-S2S + SMAP + IMERG. Chance, nunca certeza. */
+export type SinalOutono = {
+  nivel: NivelSinal
+  motivo: string
+  fonte: string[]
+  /** Data da previsão usada (ISO). */
+  data: string
+  regra_dia_plantar: { data_limite: string; texto: string }
+}
+
 export type Recomendacao = {
   entrada: {
     celula_id: string | null
@@ -52,6 +64,8 @@ export type Recomendacao = {
   plano_3_anos: { normal: Plano; seco: Plano; hoje: Plano }
   versao_dados: string
   aviso: string
+  /** RF-20: ainda não vem da API (contrato proposto); só os dados de exemplo trazem. */
+  sinal?: SinalOutono
 }
 
 export type RecomendacaoParams = {
