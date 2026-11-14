@@ -123,3 +123,43 @@ describe('RecommendationHero como título da página', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Sorgo' })).toBeInTheDocument()
   })
 })
+
+describe('OptionCompareCard no formato do Lovable', () => {
+  it('cada linha pode ter ícone e o rótulo Bom/Médio/Fraco', () => {
+    render(
+      <OptionCompareCard
+        rank="1º"
+        name="Sorgo"
+        rows={[
+          {
+            label: 'Chuva',
+            value: 'Deu certo em 17 de 20 anos',
+            icon: <svg data-testid="gota" />,
+            iconTone: 'blue',
+            pill: <span>Bom</span>,
+          },
+        ]}
+      />,
+    )
+
+    const card = screen.getByRole('article', { name: 'Sorgo' })
+    expect(card).toHaveTextContent('ChuvaDeu certo em 17 de 20 anosBom')
+    expect(screen.getByTestId('gota').parentElement).toHaveAttribute('data-tone', 'blue')
+  })
+
+  it('fora da janela de plantio, mostra o aviso no lugar das linhas', () => {
+    render(
+      <OptionCompareCard
+        rank="4º"
+        name="Milho sozinho"
+        unavailable="Fora da janela de plantio"
+        rows={[{ label: 'Chuva', value: 'Deu certo em 14 de 20 anos' }]}
+      />,
+    )
+
+    const card = screen.getByRole('article', { name: 'Milho sozinho' })
+    expect(card).toHaveAttribute('data-unavailable', 'true')
+    expect(card).toHaveTextContent('Fora da janela de plantio')
+    expect(card).not.toHaveTextContent('Deu certo')
+  })
+})
