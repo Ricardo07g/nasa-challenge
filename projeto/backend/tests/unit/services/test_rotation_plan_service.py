@@ -1,11 +1,13 @@
 """Unit tests for RotationPlanService (anos mais secos e planos de 3 anos)."""
 
+from dataclasses import replace
 from datetime import date, timedelta
 
 import pytest
 
 from app.models.climate import ClimateSeason
 from app.models.recomendacao import NotasOpcao, ResultadoOpcao
+from app.repositories.rules_repository import load_default_rules
 from app.services.rotation_plan_service import RotationPlanService
 
 DAYS = 212
@@ -109,3 +111,16 @@ def test_should_build_dry_plan_from_dry_year_scores_when_they_differ_from_normal
     # média das notas do ano seco (70, 60, 70) + 5 de diversidade (2 culturas diferentes)
     assert seco.nota == pytest.approx(round((70.0 + 60.0 + 70.0) / 3 + 5.0, 1))
     assert "2007, 2010, 2012, 2014" in seco.descricao
+
+
+def test_should_take_number_of_dry_years_from_injected_rules() -> None:
+    base = load_default_rules()
+    service = RotationPlanService(rules=replace(base, rotacao=replace(base.rotacao, anos_secos=2)))
+    seasons = [
+        _make_season(2005, {}),
+        _make_season(2007, {2: 1.2, 3: 1.2, 4: 1.2}),
+        _make_season(2010, {2: 1.5, 3: 1.5, 4: 1.5}),
+        _make_season(2016, {2: 1.0, 3: 1.0, 4: 1.0}),
+    ]
+
+    assert service.select_driest_years(seasons) == [2016, 2007]

@@ -1,6 +1,13 @@
 """Integration tests for GET /api/talhao (contrato do plano técnico §3.1)."""
 
+from dataclasses import replace
+
 from fastapi.testclient import TestClient
+
+from app.dependencies import get_rules_repository
+from app.main import app
+from app.models.regras import Regras
+from app.repositories.rules_repository import load_default_rules
 
 
 def test_should_return_field_inspection_in_the_contract_shape(client: TestClient) -> None:
@@ -30,3 +37,24 @@ def test_should_return_dentro_da_area_false_when_point_has_no_data(client: TestC
     assert body["dentro_da_area"] is False
     assert body["celula_id"] is None
     assert body["dados"] == []
+
+
+class FakeRulesRepository:
+    def __init__(self, regras: Regras) -> None:
+        self._regras = regras
+
+    def get_rules(self) -> Regras:
+        return self._regras
+
+
+def test_should_classify_history_with_rules_from_the_injected_repository(
+    client: TestClient,
+) -> None:
+    base = load_default_rules()
+    regras = replace(base, ndvi=replace(base.ndvi, plantou_acima=0.80))
+    app.dependency_overrides[get_rules_repository] = lambda: FakeRulesRepository(regras)
+
+    response = client.get("/api/talhao", params={"lat": -18.9543, "lon": -48.1993})
+
+    assert response.status_code == 200
+    assert response.json()["historico"]["anos"][0]["situacao"] == "incerto"  # 0,71 < 0,80

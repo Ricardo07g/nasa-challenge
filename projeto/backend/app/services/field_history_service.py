@@ -8,13 +8,11 @@ from app.constants import (
     EARLY_HARVEST_DOY_LIMIT,
     MID_HARVEST_DOY_LIMIT,
     MIN_NDVI_YEARS_FOR_SUGGESTION,
-    NDVI_FALLOW_THRESHOLD,
-    NDVI_HARVEST_DROP_RATIO,
-    NDVI_PLANTED_THRESHOLD,
     NDVI_SCALE_FACTOR,
-    OFFSEASON_MONTHS,
 )
+from app.models.regras import Regras
 from app.models.talhao import ColheitaSugerida, HistoricoAno, HistoricoTalhao, NdviRecord
+from app.repositories.rules_repository import load_default_rules
 
 
 def scaled_ndvi(value: float) -> float:
@@ -25,19 +23,22 @@ def scaled_ndvi(value: float) -> float:
 class FieldHistoryService:
     """Lê a série de NDVI do talhão: uso na entressafra e quando a soja seca."""
 
+    def __init__(self, rules: Regras | None = None) -> None:
+        self._ndvi = (rules if rules is not None else load_default_rules()).ndvi
+
     def classify_entressafra(self, ndvi_records: list[NdviRecord]) -> HistoricoTalhao:
         """Maior NDVI de 1/abr a 31/jul: > 0,6 plantou, < 0,45 parado, senão incerto."""
         by_year: dict[int, list[float]] = defaultdict(list)
         for rec in ndvi_records:
-            if rec.data.month in OFFSEASON_MONTHS:
+            if rec.data.month in self._ndvi.meses_entressafra:
                 by_year[rec.data.year].append(scaled_ndvi(rec.ndvi))
 
         anos: list[HistoricoAno] = []
         for year in sorted(by_year):
             ndvi_max = round(max(by_year[year]), 2)
-            if ndvi_max > NDVI_PLANTED_THRESHOLD:
+            if ndvi_max > self._ndvi.plantou_acima:
                 situacao = "plantou"
-            elif ndvi_max < NDVI_FALLOW_THRESHOLD:
+            elif ndvi_max < self._ndvi.parado_abaixo:
                 situacao = "parado"
             else:
                 situacao = "incerto"
@@ -60,7 +61,7 @@ class FieldHistoryService:
         drop_doys: list[int] = []
         for year in sorted(by_year):
             pts = sorted(by_year[year])
-            threshold = max(val for _, val in pts) * NDVI_HARVEST_DROP_RATIO
+            threshold = max(val for _, val in pts) * self._ndvi.queda_colheita
             harvest_day = next(
                 (day for day, val in pts if day.month >= 2 and val <= threshold), None
             )

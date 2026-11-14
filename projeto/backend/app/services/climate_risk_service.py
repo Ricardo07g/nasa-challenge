@@ -5,31 +5,24 @@ from datetime import date, timedelta
 from statistics import mean
 
 from app.constants import (
-    COVER_CRITICAL_WINDOW_DAYS,
     DEFAULT_INITIAL_ARM_FRACTION,
-    GRAIN_CRITICAL_HALF_WINDOW_DAYS,
-    HEAT_STRESS_MIN_DAYS,
-    HEAT_STRESS_TEMP_C,
-    ISNA_COVER_THRESHOLD,
-    ISNA_GRAIN_THRESHOLD,
-    LOSS_FACTOR_HIGH,
-    LOSS_FACTOR_MEDIUM,
-    LOSS_ISNA_HIGH_BELOW,
-    LOSS_ISNA_NONE_FROM,
     MIN_INITIAL_ARM_FRACTION,
     PERCENT_DIVISOR,
 )
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
 from app.models.recomendacao import FuturoResultado, ResultadoAno
+from app.models.regras import Regras
+from app.repositories.rules_repository import load_default_rules
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
 
 class ClimateRiskService:
     """Avalia a janela de plantio, o aperto de água e calor por ano e o clima futuro (CMIP6)."""
 
-    def __init__(self, wb_calculator: WaterBalanceCalculator) -> None:
+    def __init__(self, wb_calculator: WaterBalanceCalculator, rules: Regras | None = None) -> None:
         self._wb = wb_calculator
+        self._clima = (rules if rules is not None else load_default_rules()).clima
 
     def is_within_window(self, crop: CropParams, semeadura: date) -> bool:
         """A semeadura respeita a data limite (ZARC) da cultura?"""
@@ -40,11 +33,11 @@ class ClimateRiskService:
 
     def loss_factor(self, isna: float) -> float:
         """Perda de produtividade pelo ISNA (PRD 7.5): 0% (>= 0,65), 30% (0,55 a 0,65), 60%."""
-        if isna >= LOSS_ISNA_NONE_FROM:
+        if isna >= self._clima.perda_isna_sem_perda:
             return 0.0
-        if isna >= LOSS_ISNA_HIGH_BELOW:
-            return LOSS_FACTOR_MEDIUM
-        return LOSS_FACTOR_HIGH
+        if isna >= self._clima.perda_isna_alta_abaixo:
+            return self._clima.perda_fator_media
+        return self._clima.perda_fator_alta
 
     def reference_eto(self, season: ClimateSeason) -> tuple[float, ...]:
         """ETo diária da temporada: a da fonte, ou Hargreaves-Samani com a latitude da célula."""
@@ -84,14 +77,15 @@ class ClimateRiskService:
         wetness = smap_wetness if smap_wetness is not None else DEFAULT_INITIAL_ARM_FRACTION
         arm0 = cad_mm * max(MIN_INITIAL_ARM_FRACTION, min(1.0, wetness))
 
+        clima = self._clima
         if crop.tipo == "cobertura":
             ini_crit = 0
-            fim_crit = min(COVER_CRITICAL_WINDOW_DAYS, crop.ciclo_dias)
-            isna_threshold = ISNA_COVER_THRESHOLD
+            fim_crit = min(clima.janela_cobertura_dias, crop.ciclo_dias)
+            isna_threshold = clima.isna_cobertura
         else:
-            ini_crit = max(0, crop.dias_florescer - GRAIN_CRITICAL_HALF_WINDOW_DAYS)
-            fim_crit = min(crop.ciclo_dias, crop.dias_florescer + GRAIN_CRITICAL_HALF_WINDOW_DAYS)
-            isna_threshold = ISNA_GRAIN_THRESHOLD
+            ini_crit = max(0, crop.dias_florescer - clima.janela_grao_meia_dias)
+            fim_crit = min(crop.ciclo_dias, crop.dias_florescer + clima.janela_grao_meia_dias)
+            isna_threshold = clima.isna_grao
 
         resultados: list[ResultadoAno] = []
         for season in seasons:
@@ -109,9 +103,9 @@ class ClimateRiskService:
             isna_val = self._wb.isna(etr_l=etr_l, etc_l=etc_l, ini=ini_crit, fim=fim_crit)
 
             tmax_ciclo = season.tmax_c[start:end]
-            dias_calor = sum(1 for t in tmax_ciclo[ini_crit:fim_crit] if t >= HEAT_STRESS_TEMP_C)
+            dias_calor = sum(1 for t in tmax_ciclo[ini_crit:fim_crit] if t >= clima.calor_temp_c)
 
-            aperto = isna_val < isna_threshold or dias_calor >= HEAT_STRESS_MIN_DAYS
+            aperto = isna_val < isna_threshold or dias_calor >= clima.calor_min_dias
             resultados.append(
                 ResultadoAno(
                     ano=season.year,
