@@ -14,6 +14,7 @@ A fonte de verdade do produto está em `arquivos contexto/`:
 - `PRD – Raiz Orbital o que plantar depois da soja.md`: requisitos, motor de pontuação, arquitetura, backlog.
 - `Raiz Orbital – Protótipo das telas.html`: protótipo das telas (v3: 2 perguntas, 1 resposta).
 - `Raiz Orbital – plano técnico do backend.md`: contratos da API, banco, pipeline de dados e motor (leia antes de mexer no backend).
+- `Raiz Orbital – prompt do Lovable.md`: prompt completo para gerar o protótipo no Lovable (telas, visual, dados de exemplo, contrato da API).
 - `Raiz Orbital discovery de produto (dores, personas e hipóteses).md`
 - `Raiz Orbital planejamento de produto, business case e business plan.md`
 

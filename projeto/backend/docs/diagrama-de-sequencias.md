@@ -21,7 +21,7 @@ sequenceDiagram
     participant Out as /data/output/*.json & .csv (+ PostGIS)
 
     Note over Dev,Out: 1. Série Meteorológica Diária de 20 Anos (2005–2024) — Sem Cadastro
-    Dev->>Power: Executa extração para Uberlândia (-18.9186, -48.2772)
+    Dev->>Power: Executa extração para Fazenda do Glória, UFU (-18.9543, -48.1993)
     Power->>APIs: GET power.larc.nasa.gov/api/temporal/daily/point (community=AG)
     APIs-->>Power: PRECTOTCORR, T2M_MAX, T2M_MIN, T2M, RH2M, WS2M, ALLSKY_SFC_SW_DWN, GWETROOT
     Power->>Power: Converte sentinela -999.0 para None e agrega resumo anual (chuva safrinha fev–mai, dias >=35°C)
@@ -77,7 +77,7 @@ sequenceDiagram
     participant UI as Frontend (Tela 1 -> Tela 5)
     participant Ctrl as RecomendacaoController
     participant Repo as DataOutputClimateRepository
-    participant Files as /data/output/* (Uberlândia -18.9186, -48.2772)
+    participant Files as /data/output/* (Uberlândia -18.9543, -48.1993)
 
     User->>UI: Toca em "Ver um exemplo pronto" (Tela 1)
     UI->>Ctrl: GET /api/exemplo (Header Accept-Language: pt-BR | en)
@@ -109,7 +109,7 @@ sequenceDiagram
     participant Ext as SoilGrids API & Google Earth Engine
 
     Produtor->>UI: Marca ponto no mapa ou GPS e toca em "É aqui" (Tela 2)
-    UI->>Ctrl: GET /api/talhao?lat=-18.9186&lon=-48.2772
+    UI->>Ctrl: GET /api/talhao?lat=-18.9543&lon=-48.1993
     UI-->>Produtor: Avança imediatamente para a Tela 3 (Pergunta 2/2)
 
     Ctrl->>Svc: inspect_talhao(lat, lon)
@@ -172,7 +172,7 @@ sequenceDiagram
     participant PlanSvc as RotationPlanService
 
     Produtor->>UI: Confirma faixa de colheita (cedo | meio | tarde) e toca em ver recomendação
-    UI->>Ctrl: GET /api/recomendacao?lat=-18.9186&lon=-48.2772&colheita=meio[&solo=argiloso][&nematoide=sim]
+    UI->>Ctrl: GET /api/recomendacao?lat=-18.9543&lon=-48.1993&colheita=meio[&solo=argiloso][&nematoide=sim]
 
     Ctrl->>RecSvc: recommend(lat, lon, colheita, solo_override, nematoide, lang)
     RecSvc->>CropRepo: list_all() (lê /data/culturas.yaml)
