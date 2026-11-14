@@ -18,6 +18,7 @@ export const pt = {
   header: {
     home: 'Raiz Orbital, voltar ao início',
     slogan: 'Do espaço até a raiz.',
+    community: 'Comunidade',
     listen: 'Ouvir',
     stop: 'Parar',
     listenLabel: 'Ouvir esta tela',
@@ -32,6 +33,12 @@ export const pt = {
     back: 'Voltar',
     backToAnswer: 'Resposta',
     backToPlan: 'Plano',
+  },
+  answerTabs: {
+    label: 'Telas da resposta',
+    answer: 'Resposta',
+    plan: 'Plano de 3 anos',
+    options: 'Todas as opções',
   },
   stepper: {
     label: (current: number, total: number) => `Pergunta ${current} de ${total}`,

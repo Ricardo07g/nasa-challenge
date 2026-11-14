@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Sprout,
   Square,
+  Users,
   Volume2,
 } from 'lucide-react'
 
@@ -78,6 +79,10 @@ export function ArrowUpRightIcon({ size = 14 }: IconProps) {
 
 export function ChevronDownIcon({ size = 18 }: IconProps) {
   return <ChevronDown size={size} {...decorative} />
+}
+
+export function CommunityIcon({ size = 18 }: IconProps) {
+  return <Users size={size} {...decorative} />
 }
 
 export function CrosshairIcon({ size = 20 }: IconProps) {

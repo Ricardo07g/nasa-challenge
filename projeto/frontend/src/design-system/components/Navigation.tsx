@@ -12,6 +12,26 @@ export function BackLink({ to, children }: { to: string; children: ReactNode }) 
   )
 }
 
+export type AnswerTab = { to: string; label: string; current: boolean }
+
+/** Abas das telas da resposta (Resposta · Plano de 3 anos · Todas as opções). */
+export function AnswerTabs({ label, tabs }: { label: string; tabs: readonly AnswerTab[] }) {
+  return (
+    <nav aria-label={label} className={styles.tabs}>
+      {tabs.map((tab) => (
+        <Link
+          key={tab.to}
+          to={tab.to}
+          className={styles.tab}
+          aria-current={tab.current ? 'page' : undefined}
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </nav>
+  )
+}
+
 export function QuestionStepper({ current, total, label }: { current: number; total: number; label: string }) {
   return (
     <div role="img" aria-label={label} className={styles.stepper}>

@@ -41,3 +41,9 @@ export function buildFlowQuery(params: FlowParams): string {
   if (params.exemplo) query.set('exemplo', '1')
   return `?${query.toString()}`
 }
+
+/** Query da URL atual que segue para o próximo link ("" se ainda não tem ponto marcado). */
+export function keepFlowQuery(search: string): string {
+  const params = readFlowParams(new URLSearchParams(search))
+  return params ? buildFlowQuery(params) : ''
+}

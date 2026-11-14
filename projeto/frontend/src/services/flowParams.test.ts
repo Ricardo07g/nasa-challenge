@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildFlowQuery, readFlowParams } from './flowParams'
+import { buildFlowQuery, keepFlowQuery, readFlowParams } from './flowParams'
 
 describe('readFlowParams', () => {
   it('lê ponto, colheita e solo da URL', () => {
@@ -35,5 +35,18 @@ describe('buildFlowQuery', () => {
 
   it('arredonda o ponto em 4 casas (cerca de 10 m)', () => {
     expect(buildFlowQuery({ lat: -18.923456789, lon: -48.2812345 })).toBe('?lat=-18.9235&lon=-48.2812')
+  })
+})
+
+describe('keepFlowQuery', () => {
+  it('repassa o ponto, a colheita e o exemplo da URL atual para o próximo link', () => {
+    expect(keepFlowQuery('?lat=-18.9543&lon=-48.1993&colheita=meio&exemplo=1&x=lixo')).toBe(
+      '?lat=-18.9543&lon=-48.1993&colheita=meio&exemplo=1',
+    )
+  })
+
+  it('sem ponto na URL, não repassa nada', () => {
+    expect(keepFlowQuery('')).toBe('')
+    expect(keepFlowQuery('?colheita=meio')).toBe('')
   })
 })
