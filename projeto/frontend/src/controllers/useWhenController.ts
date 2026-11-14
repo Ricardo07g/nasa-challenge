@@ -2,14 +2,16 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useI18n } from '../i18n/useI18n'
 import type { Colheita } from '../models/talhao'
+import { apiMode as currentApiMode } from '../repositories'
+import type { ApiMode } from '../repositories/repositoryMode'
 import { farmService, type FarmService } from '../services/farmService'
 import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { harvestFromDate, harvestSuggestion, harvestWindow } from '../services/harvestService'
 import { useAsync } from './useAsync'
 
-type Deps = { farm: FarmService; today: () => Date }
+type Deps = { farm: FarmService; today: () => Date; apiMode: ApiMode }
 
-const defaultDeps: Deps = { farm: farmService, today: () => new Date() }
+const defaultDeps: Deps = { farm: farmService, today: () => new Date(), apiMode: currentApiMode }
 
 /**
  * Tela 3 "Quando você colhe a soja?" (pergunta 2 de 2): a faixa sugerida pelo satélite já vem marcada;
@@ -58,6 +60,8 @@ export function useWhenController(deps: Deps = defaultDeps) {
   }, [params, selected, deps.farm, lang, navigate])
 
   return {
+    /** O desenho da chuva por mês é de exemplo (não vem da API): só com os dados de exemplo. */
+    rainChart: deps.apiMode === 'mock',
     missingPoint: params === null,
     backTo: `/onde${keepFlowQuery(search.toString())}`,
     suggestion,

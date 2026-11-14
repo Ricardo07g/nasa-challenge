@@ -54,6 +54,14 @@ describe('PastSeasonView (replay da safra passada, P4)', () => {
     expect(props.onYear).toHaveBeenCalledWith(2023)
   })
 
+  it('com a API real, os botões mostram só o ano (o "seco"/"bom" fixo não vem de dado)', async () => {
+    await setup({ sampleData: false })
+
+    expect(screen.getByRole('button', { name: '2024' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '2023' })).toBeInTheDocument()
+    expect(screen.queryByText(/ano seco|ano bom/)).not.toBeInTheDocument()
+  })
+
   it('safra sem avisos diz isso', async () => {
     await setup({ year: 2023, season: await repository.get(point, 2023, 'pt') })
 

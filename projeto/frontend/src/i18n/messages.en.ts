@@ -88,7 +88,7 @@ export const en = {
     pageTitle: 'Home',
     eyebrow: 'For soybean growers in the Triângulo Mineiro, Brazil',
     title: 'What to plant after soybeans?',
-    lead: 'NASA satellites looked at 20 years of rain on your field. See the best option.',
+    lead: 'NASA satellites look at many years of rain on your field. See the best option.',
     start: 'Start',
     meta: '2 questions · 1 minute · free, no sign-up',
     example: 'See a ready-made example',
@@ -137,6 +137,7 @@ export const en = {
       'Rain fades after March. The earlier you harvest your soybeans, the more rain is left for the next crop.',
     chartLabel: 'Average rain per month: a lot in January, little in June',
     chartCaption: 'Rain in each month in the region. Illustrative drawing.',
+    chartTitle: 'Rain in each month in the region',
     months: { jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun' },
   },
   mission: {
@@ -413,6 +414,6 @@ export const en = {
     apiMode: (mode: string) => `Data mode: ${mode}`,
     backendStatus: (status: string) => `Backend: ${status}`,
     cropOptions: 'Off-season options (real API)',
-    sampleText: 'NASA satellites looked at 20 years of rain on your field.',
+    sampleText: 'NASA satellites look at many years of rain on your field.',
   },
 } satisfies Messages

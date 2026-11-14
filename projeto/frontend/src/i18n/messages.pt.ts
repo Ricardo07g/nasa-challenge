@@ -91,7 +91,7 @@ export const pt = {
     pageTitle: 'Início',
     eyebrow: 'Para quem planta soja no Triângulo Mineiro',
     title: 'O que plantar depois da soja?',
-    lead: 'O satélite da NASA olhou 20 anos de chuva na sua lavoura. Veja a melhor opção.',
+    lead: 'O satélite da NASA olha a chuva de muitos anos na sua lavoura. Veja a melhor opção.',
     start: 'Começar',
     meta: '2 perguntas · 1 minuto · grátis, sem cadastro',
     example: 'Ver um exemplo pronto',
@@ -140,6 +140,8 @@ export const pt = {
       'A chuva vai acabando depois de março. Quanto mais cedo você colhe a soja, mais chuva sobra para a próxima planta.',
     chartLabel: 'Chuva média por mês: muita em janeiro, pouca em junho',
     chartCaption: 'Chuva de cada mês na região. Desenho de exemplo.',
+    /** Com a API real o desenho de exemplo sai e fica "Ainda não conectado". */
+    chartTitle: 'Chuva de cada mês na região',
     months: { jan: 'Jan', feb: 'Fev', mar: 'Mar', apr: 'Abr', may: 'Mai', jun: 'Jun' },
   },
   mission: {
@@ -430,7 +432,7 @@ export const pt = {
     apiMode: (mode: string) => `Modo dos dados: ${mode}`,
     backendStatus: (status: string) => `Backend: ${status}`,
     cropOptions: 'Opções de entressafra (API real)',
-    sampleText: 'O satélite da NASA olhou 20 anos de chuva na sua lavoura.',
+    sampleText: 'O satélite da NASA olha a chuva de muitos anos na sua lavoura.',
   },
 }
 

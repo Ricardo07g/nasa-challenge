@@ -91,6 +91,7 @@ export function WhenPage() {
       onOpenDate={state.openDate}
       onDateChange={state.changeDate}
       onConfirm={state.confirm}
+      rainChart={state.rainChart}
     />
   )
 }
