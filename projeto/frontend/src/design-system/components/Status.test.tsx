@@ -79,3 +79,11 @@ describe('StripLegend', () => {
     expect(screen.getByText('Ficou parado').querySelector('[data-state="bad"]')).not.toBeNull()
   })
 })
+
+describe('StripLegend com nota', () => {
+  it('mostra uma nota no fim (ex.: o período)', () => {
+    render(<StripLegend items={[{ state: 'good', label: 'Choveu o bastante' }]} note="2006–2025" />)
+
+    expect(screen.getByText('2006–2025')).toBeInTheDocument()
+  })
+})
