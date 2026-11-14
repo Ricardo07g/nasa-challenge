@@ -20,6 +20,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0009**](0009-token-earthdata-e-contrato-dados-fontes.md) | **Tokens da Earthdata e do AppEEARS no `Settings` e contrato tipado dos dados das fontes (CMIP6, NDVI, SMAP, `data_run`)** | **Concluída** | **Alta** | `app/config.py`, `app/models/`, `AGENTS.md` |
 | [**0010**](0010-docs-backend-em-dia.md) | **Docs em dia: scripts que existem, ADRs com a Fazenda do Glória, status das histórias, diagramas sem GEE (e R0.3 adiado)** | **Concluída** | **Média** | `docs/`, `data/README.md`, `AGENTS.md` |
 | [**0011**](0011-http-cache-e-422-problem-json.md) | **HTTP: `Cache-Control` de um dia em `/recomendacao` e 422 em problem+json** | **Concluída** | **Média** | `app/main.py`, `app/controllers/recomendacao_controller.py` |
+| [**0013**](0013-migracao-fontes-novas.md) | **Migração das fontes novas: `cmip6_delta` mensal por modelo, `ndvi_point` com qualidade, `smap_point`, `data_run.version`; aposenta `scripts/`** | **Concluída** | **Alta** | `migrations/versions/`, `app/repositories/` |
 
 ---
 
