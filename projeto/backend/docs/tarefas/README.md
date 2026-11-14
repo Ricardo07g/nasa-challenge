@@ -10,6 +10,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | ID | Título | Status | Prioridade | Responsável / Módulo |
 | :---: | :--- | :---: | :---: | :--- |
 | [**0001**](0001-ingestao-on-demand-dados-satelite.md) | **Pipeline de Ingestão On-Demand de Dados de Satélite e Solo (Cache-Aside Espacial)** | **Concluída** | **Alta** | `app/repositories/external/`, `app/services/` |
+| [**0008**](0008-conteudo-das-culturas.md) | **Conteúdo das culturas (ids canônicos, nome_en, como fazer pt/en, /crop-options pelo YAML)** | **Concluída** | **Média** | `app/config_data/culturas.yaml`, `app/repositories/` |
 
 ---
 
