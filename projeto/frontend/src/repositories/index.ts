@@ -1,3 +1,4 @@
+import { createHttpCommunityRepository } from './communityRepository'
 import { createHttpExemploRepository } from './exemploRepository'
 import {
   createMockCommunityRepository,
@@ -23,6 +24,6 @@ export const recomendacaoRepository = useHttp
   ? createHttpRecomendacaoRepository()
   : createMockRecomendacaoRepository()
 export const exemploRepository = useHttp ? createHttpExemploRepository() : createMockExemploRepository()
-export const communityRepository = createMockCommunityRepository()
+export const communityRepository = useHttp ? createHttpCommunityRepository() : createMockCommunityRepository()
 export const regionRepository = useHttp ? createHttpRegionRepository() : createMockRegionRepository()
 export const pastSeasonRepository = useHttp ? createHttpPastSeasonRepository() : createMockPastSeasonRepository()

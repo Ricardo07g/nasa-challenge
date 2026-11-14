@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ApiError, getJson, isOutsideArea } from './httpClient'
+import { ApiError, NotConnectedError, getJson, isNotConnected, isOutsideArea } from './httpClient'
 
 describe('getJson', () => {
   it('faz GET no caminho e devolve o JSON', async () => {
@@ -48,5 +48,26 @@ describe('ApiError', () => {
     expect(error).toMatchObject({ status: 500, code: null })
     expect(isOutsideArea(error)).toBe(false)
     expect(isOutsideArea(new Error('rede'))).toBe(false)
+  })
+})
+
+describe('isNotConnected (dado que a API ainda não manda)', () => {
+  it('endpoint que ainda não existe no backend (404 sem código) não é falha: é "ainda não conectado"', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ detail: 'Not Found' }, { status: 404 })))
+
+    const error = await getJson('/api/regiao?lat=-18.9&lon=-48.2').catch((e: unknown) => e)
+
+    expect(isNotConnected(error)).toBe(true)
+    expect(isOutsideArea(error)).toBe(false)
+  })
+
+  it('repository sem versão http (NotConnectedError) também é "ainda não conectado"', () => {
+    expect(isNotConnected(new NotConnectedError('comunidade'))).toBe(true)
+  })
+
+  it('fora da área, erro do servidor ou da rede não contam como "ainda não conectado"', () => {
+    expect(isNotConnected(new ApiError('/api/talhao', 404, 'OUTSIDE_AREA'))).toBe(false)
+    expect(isNotConnected(new ApiError('/api/talhao', 500, null))).toBe(false)
+    expect(isNotConnected(new Error('rede'))).toBe(false)
   })
 })

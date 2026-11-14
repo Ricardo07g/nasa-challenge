@@ -324,6 +324,7 @@ export const en = {
   },
   community: {
     title: 'In your region',
+    regionTitle: 'Idle cropland in the region, by satellite',
     regionSubtitle: (km: number) => `Within ${km} km of the field · seen by satellite`,
     regionBig: (year: number, pct: number) => `In ${year}, ${pct}% of the cropland was left idle after soybeans.`,
     regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
@@ -338,6 +339,7 @@ export const en = {
     subtitle: (km: number, place: string, count: number) =>
       `Within ${km} km of ${place} · ${count} growers taking part`,
     neighborsTitle: (year: number) => `What neighbors planted after soybeans in ${year}`,
+    neighborsTitleGeneric: 'What neighbors planted after soybeans',
     liked: (liked: number, total: number) => `${liked} of ${total} liked it`,
     dotsLabel: (liked: number, total: number) => `${liked} of ${total} neighbors liked it`,
     dotsCaption: 'Each dot is a neighbor. Filled = liked the result.',

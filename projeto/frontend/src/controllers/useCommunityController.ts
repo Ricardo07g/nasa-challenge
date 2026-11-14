@@ -1,18 +1,33 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useI18n } from '../i18n/useI18n'
-import { communityService, regionPoints, regionSummary, type CommunityService } from '../services/communityService'
+import type { BlockStatus } from '../models/screenStatus'
+import {
+  communityService,
+  isNotConnected,
+  regionPoints,
+  regionSummary,
+  type CommunityService,
+} from '../services/communityService'
 import { farmService, type FarmService } from '../services/farmService'
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { EXAMPLE_FARM } from '../services/locationService'
 import { historySummary } from '../services/satelliteService'
-import { useAsync } from './useAsync'
+import { useAsync, type AsyncState } from './useAsync'
 
 type Deps = { community: CommunityService; farm: FarmService }
 
 const defaultDeps: Deps = { community: communityService, farm: farmService }
 
-/** Tela 8 "Perto de você" (simulada no hackathon, PRD RF-13 a RF-15): os botões só avisam que é demonstração. */
+function blockStatus(state: AsyncState<unknown>): BlockStatus {
+  return state.status === 'error' && isNotConnected(state.error) ? 'not-connected' : state.status
+}
+
+/**
+ * Tela 8 "Na sua região": a área parada na região pelo satélite (P3) e o que os vizinhos contam. Com
+ * a API real, a comunidade e a região (sem endpoint ainda) ficam "Ainda não conectado"; os vizinhos
+ * simulados e os botões de demonstração só existem com os dados de exemplo.
+ */
 export function useCommunityController(deps: Deps = defaultDeps) {
   const { lang } = useI18n()
   const [search] = useSearchParams()
@@ -20,12 +35,14 @@ export function useCommunityController(deps: Deps = defaultDeps) {
   const [demo, showDemo] = useState<'tell' | 'rain' | null>(null)
 
   const community = useAsync(() => deps.community.get(lang), [lang, deps.community])
+  const status = blockStatus(community)
 
   const center = useMemo(() => (params ? { lat: params.lat, lon: params.lon } : EXAMPLE_FARM), [params])
-  const points = useMemo(() => regionPoints(center), [center])
+  const points = useMemo(() => (status === 'ready' ? regionPoints(center) : []), [center, status])
 
-  // P3: área parada na região, pelo satélite; sem o dado na API, o bloco some.
+  // P3: área parada na região, pelo satélite.
   const region = useAsync(() => deps.community.region(center, lang), [center, lang, deps.community])
+  const regionStatus = blockStatus(region)
   // Histórico da própria lavoura, para comparar com a região (quase sempre já no cache).
   const talhao = useAsync(
     () => deps.farm.talhao({ ...center, exemplo: params ? params.exemplo : true }, lang),
@@ -33,15 +50,18 @@ export function useCommunityController(deps: Deps = defaultDeps) {
   )
 
   const history = historySummary(talhao.data?.historico ?? null)
+  const regionReady = regionStatus === 'ready' && region.data ? region.data : null
 
   return {
-    status: community.status,
+    status,
     retry: community.retry,
-    community: community.data ?? null,
+    community: status === 'ready' ? (community.data ?? null) : null,
     center,
     points,
-    region: region.status === 'ready' && region.data ? regionSummary(region.data) : null,
-    regionRadius: region.data?.raio_km ?? null,
+    regionStatus,
+    retryRegion: region.retry,
+    region: regionReady ? regionSummary(regionReady) : null,
+    regionRadius: regionReady?.raio_km ?? null,
     history: history ? { idle: history.idle, known: history.known, uncertain: history.uncertain } : null,
     // A Comunidade abre de qualquer tela pelo cabeçalho: volta para a resposta se o caminho estiver na URL.
     backTo: params?.colheita ? `/resposta${keepFlowQuery(search.toString())}` : '/',

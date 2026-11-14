@@ -332,6 +332,7 @@ export const pt = {
   },
   community: {
     title: 'Na sua região',
+    regionTitle: 'Área parada na região, pelo satélite',
     regionSubtitle: (km: number) => `Até ${km} km da lavoura · visto pelo satélite`,
     regionBig: (year: number, pct: number) => `Em ${year}, ${pct}% da área de lavoura ficou parada depois da soja.`,
     regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
@@ -346,6 +347,7 @@ export const pt = {
     subtitle: (km: number, place: string, count: number) =>
       `Até ${km} km de ${place} · ${count} produtores participando`,
     neighborsTitle: (year: number) => `O que os vizinhos plantaram depois da soja em ${year}`,
+    neighborsTitleGeneric: 'O que os vizinhos plantaram depois da soja',
     liked: (liked: number, total: number) =>
       total === 1 ? `${liked} de 1 gostou` : `${liked} de ${total} gostaram`,
     dotsLabel: (liked: number, total: number) => `${liked} de ${total} vizinhos gostaram`,

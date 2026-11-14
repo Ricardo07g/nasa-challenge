@@ -75,3 +75,6 @@ export function regionSummary(region: RegiaoSatelite): RegionSummary | null {
 }
 
 export const communityService = createCommunityService()
+
+/** A API ainda não manda esse dado (sem endpoint ou sem versão http): "Ainda não conectado". */
+export { isNotConnected } from '../repositories/httpClient'

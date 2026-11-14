@@ -271,6 +271,8 @@ export function CommunityPage() {
       demo={state.demo}
       onDemo={state.showDemo}
       region={state.region}
+      regionStatus={state.regionStatus}
+      onRegionRetry={state.retryRegion}
       regionRadius={state.regionRadius}
       history={state.history}
     />
