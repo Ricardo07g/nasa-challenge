@@ -1,12 +1,12 @@
 """Falsos e ajudantes dos testes `db` (importados pelo conftest e pelos testes)."""
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 
 import psycopg
 from fastapi.testclient import TestClient
 
-from app.models.climate import ClimateSeason
+from app.models.climate import DailyWeatherRecord, PowerDailySeries
 from app.models.talhao import SoloInfo
 
 TABLES = (
@@ -22,30 +22,33 @@ SEASON_DAYS = 212
 
 
 class FakeNasaPowerClient:
-    """Faz o papel do POWER com valores de teste (não é dado real) e conta as chamadas."""
+    """Faz o papel do POWER com valores de teste (não é dado real) e conta as chamadas.
+
+    Devolve a série diária bruta, como o `NasaPowerClient.fetch_daily` (tarefa 0004): a ingestão
+    monta as temporadas e calcula a ETo no service.
+    """
 
     def __init__(self) -> None:
-        self.calls: list[tuple[float, float, str]] = []
+        self.calls: list[tuple[float, float, date, date]] = []
         self.should_fail = False
 
-    def fetch_seasons(
-        self, lat: float, lon: float, cell_id: str, start_year: int = 2005, end_year: int = 2024
-    ) -> list[ClimateSeason]:
-        self.calls.append((lat, lon, cell_id))
+    def fetch_daily(self, lat: float, lon: float, start: date, end: date) -> PowerDailySeries:
+        self.calls.append((lat, lon, start, end))
         if self.should_fail:
             raise RuntimeError("POWER fora do ar (teste)")
-        return [
-            ClimateSeason(
-                cell_id=cell_id,
-                year=year,
-                start_date=date(year, 1, 1),
-                rain_mm=tuple([6.0] * SEASON_DAYS),
-                rain_source="teste",
-                tmax_c=tuple([30.0] * SEASON_DAYS),
-                tmin_c=tuple([18.0] * SEASON_DAYS),
+        days = tuple(
+            DailyWeatherRecord(
+                data=start + timedelta(days=i),
+                prectotcorr=6.0,
+                t2m_max=30.0,
+                t2m_min=18.0,
+                rh2m=70.0,
+                ws2m=2.0,
+                allsky_sfc_sw_dwn=18.0,
             )
-            for year in range(start_year, end_year + 1)
-        ]
+            for i in range((end - start).days + 1)
+        )
+        return PowerDailySeries(elevation_m=850.0, days=days)
 
 
 class FakeSoilGridsClient:
