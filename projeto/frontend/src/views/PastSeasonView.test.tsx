@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
-import { createMockPastSeasonRepository } from '../repositories/pastSeasonRepository'
+import { createMockPastSeasonRepository } from '../repositories/mocks/mockRepositories'
 import { PastSeasonView, type PastSeasonViewProps } from './PastSeasonView'
 
 const repository = createMockPastSeasonRepository(0)

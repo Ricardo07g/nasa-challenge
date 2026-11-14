@@ -1,7 +1,7 @@
 import { act, renderHook, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../repositories/httpClient'
-import { createMockPastSeasonRepository } from '../repositories/pastSeasonRepository'
+import { createMockPastSeasonRepository } from '../repositories/mocks/mockRepositories'
 import type { PastSeasonService } from '../services/pastSeasonService'
 import { providers } from '../test/providers'
 import { usePastSeasonController } from './usePastSeasonController'

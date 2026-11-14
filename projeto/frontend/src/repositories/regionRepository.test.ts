@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createHttpRegionRepository, createMockRegionRepository } from './regionRepository'
+import { createMockRegionRepository } from './mocks/mockRepositories'
+import { createHttpRegionRepository } from './regionRepository'
 
 describe('regionRepository (região pelo satélite, P3)', () => {
   it('http chama /api/regiao com lat e lon', async () => {

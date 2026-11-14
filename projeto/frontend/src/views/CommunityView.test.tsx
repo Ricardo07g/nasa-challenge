@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
 import { buildCommunity } from '../repositories/mocks/fixtures'
-import { createMockRegionRepository } from '../repositories/regionRepository'
+import { createMockRegionRepository } from '../repositories/mocks/mockRepositories'
 import { regionPoints, regionSummary } from '../services/communityService'
 import { CommunityView, type CommunityViewProps } from './CommunityView'
 

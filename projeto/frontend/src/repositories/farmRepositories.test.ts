@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createHttpExemploRepository, createMockExemploRepository } from './exemploRepository'
-import { createHttpRecomendacaoRepository, createMockRecomendacaoRepository } from './recomendacaoRepository'
-import { createHttpTalhaoRepository, createMockTalhaoRepository } from './talhaoRepository'
+import { createHttpExemploRepository } from './exemploRepository'
+import {
+  createMockExemploRepository,
+  createMockRecomendacaoRepository,
+  createMockTalhaoRepository,
+} from './mocks/mockRepositories'
+import { createHttpRecomendacaoRepository } from './recomendacaoRepository'
+import { createHttpTalhaoRepository } from './talhaoRepository'
 
 const UBERLANDIA = { lat: -18.92, lon: -48.28 }
 

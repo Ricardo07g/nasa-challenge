@@ -1,12 +1,19 @@
-import { createMockCommunityRepository } from './communityRepository'
-import { createHttpExemploRepository, createMockExemploRepository } from './exemploRepository'
-import { createHttpPastSeasonRepository, createMockPastSeasonRepository } from './pastSeasonRepository'
-import { createHttpRecomendacaoRepository, createMockRecomendacaoRepository } from './recomendacaoRepository'
-import { createHttpRegionRepository, createMockRegionRepository } from './regionRepository'
+import { createHttpExemploRepository } from './exemploRepository'
+import {
+  createMockCommunityRepository,
+  createMockExemploRepository,
+  createMockPastSeasonRepository,
+  createMockRecomendacaoRepository,
+  createMockRegionRepository,
+  createMockTalhaoRepository,
+} from './mocks/mockRepositories'
+import { createHttpPastSeasonRepository } from './pastSeasonRepository'
+import { createHttpRecomendacaoRepository } from './recomendacaoRepository'
+import { createHttpRegionRepository } from './regionRepository'
 import { resolveApiMode } from './repositoryMode'
-import { createHttpTalhaoRepository, createMockTalhaoRepository } from './talhaoRepository'
+import { createHttpTalhaoRepository } from './talhaoRepository'
 
-/** Único lugar que decide entre API real e dados de exemplo. */
+/** Único lugar que decide entre API real e dados de exemplo (e o único que importa `mocks/`). */
 export const apiMode = resolveApiMode(import.meta.env.VITE_API_MODE)
 
 const useHttp = apiMode === 'http'
