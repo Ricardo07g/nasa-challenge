@@ -42,7 +42,9 @@ python-dotenv==1.2.4
     #   pydantic-settings
     #   uvicorn
 pyyaml==6.0.3
-    # via uvicorn
+    # via
+    #   raiz-orbital-api
+    #   uvicorn
 sqlalchemy==2.1.8
     # via
     #   alembic

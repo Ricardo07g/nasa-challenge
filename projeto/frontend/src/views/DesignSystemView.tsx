@@ -1,4 +1,4 @@
-import { Button } from '../design-system/components/Button'
+import { Button, TextButton } from '../design-system/components/Button'
 import { AlternativeCard, Card, DataSourceCard, InfoBanner, SourceCard } from '../design-system/components/Card'
 import { NeighborDots, RainBarChart, RainReadingRow, RegionMap } from '../design-system/components/Charts'
 import { ChipGroup, DateField, RadioCard } from '../design-system/components/Choice'
@@ -11,9 +11,9 @@ import {
   RecommendationHero,
   YearTimeline,
 } from '../design-system/components/Content'
-import { ErrorState, LoadingState } from '../design-system/components/Feedback'
+import { ErrorState, LoadingState, SkeletonCard } from '../design-system/components/Feedback'
 import { AnswerTabs, BackLink, QuestionStepper } from '../design-system/components/Navigation'
-import { MetricRow, StatusPill, YearStrip, type CellState } from '../design-system/components/Status'
+import { MetricRow, StatusPill, StripLegend, YearStrip, type CellState } from '../design-system/components/Status'
 import {
   CalendarIcon,
   CheckIcon,
@@ -261,6 +261,16 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
               cells={['bad', 'good', 'bad', 'good', 'bad', 'good', 'good', 'bad', 'unknown', 'good']}
               years={['16', '17', '18', '19', '20', '21', '22', '23', '24', '25']}
             />
+            <StripLegend
+              items={[
+                { state: 'good', label: t.satellite.planted },
+                { state: 'bad', label: t.satellite.idle },
+                { state: 'unknown', label: t.satellite.uncertain },
+              ]}
+            />
+            <TextButton expanded={false} onClick={noop}>
+              {t.satellite.soilChange}
+            </TextButton>
           </Card>
           <RecommendationHero label={t.answer.best} title={t.crops.names.milho_braquiaria}>
             <p>{t.answer.plantSoon}</p>
@@ -343,6 +353,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
           />
           <Card>
             <LoadingState>{t.common.loading}</LoadingState>
+            <SkeletonCard />
             <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={noop} />
           </Card>
         </div>

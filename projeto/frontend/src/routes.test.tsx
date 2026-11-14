@@ -65,6 +65,84 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })).toBeInTheDocument()
   })
 
+  it('"Próximo passo" na pergunta 2 abre a tela 4 com o que o satélite viu', async () => {
+    renderAt('/quando?lat=-18.9543&lon=-48.1993')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Próximo passo Ver a resposta' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Pronto. O satélite já viu o resto.' }),
+    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Terra média' })).toBeInTheDocument()
+    expect(document.title).toBe('Raiz Orbital – Pronto. O satélite já viu o resto.')
+  })
+
+  it('a tela 4 sem a colheita volta para a pergunta 2', async () => {
+    renderAt('/satelite?lat=-18.9543&lon=-48.1993')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
+  })
+
+  it('"Ver o que plantar" na tela 4 abre a resposta com a melhor opção', async () => {
+    renderAt('/satelite?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver o que plantar' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Milho com braquiária' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Resposta' })).toHaveAttribute('aria-current', 'page')
+    expect(document.title).toBe('Raiz Orbital – A melhor opção')
+  })
+
+  it('a resposta sem a colheita volta para a pergunta 2', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
+  })
+
+  it('a aba "Todas as opções" abre a tela 6 mantendo o caminho', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Todas as opções' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Todas as opções' })).toBeInTheDocument()
+    expect(await screen.findByRole('article', { name: 'Milho com braquiária' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Todas as opções' })).toHaveAttribute('aria-current', 'page')
+    expect(document.title).toBe('Raiz Orbital – Todas as opções')
+  })
+
+  it('a aba "Plano de 3 anos" abre a linha do tempo do plano', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Plano de 3 anos' }))
+
+    expect(await screen.findByRole('list', { name: 'Plano ano a ano' })).toHaveTextContent('2027Milho com braquiária')
+    expect(document.title).toBe('Raiz Orbital – Plano de 3 anos')
+  })
+
+  it('"Comunidade" no cabeçalho abre a tela 8 levando o caminho', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Comunidade' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Perto de você' })).toBeInTheDocument()
+    expect(await screen.findByText('Até 30 km de Uberlândia · 18 produtores participando')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
+      'href',
+      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
+    )
+    expect(document.title).toBe('Raiz Orbital – Perto de você')
+  })
+
+  it('"Sou agrônomo(a)" no rodapé abre a tela 9 com as notas da lavoura', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('link', { name: /Sou agrônomo\(a\)/ }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Como a conta é feita' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Notas de cada opção (0 a 100)' })).toBeInTheDocument()
+    expect(document.title).toBe('Raiz Orbital – Como a conta é feita')
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 

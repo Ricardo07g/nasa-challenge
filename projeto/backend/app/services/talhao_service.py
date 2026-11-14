@@ -1,12 +1,12 @@
-"""Service for field inspection (Talhao): bounding box, soil texture, and MODIS NDVI history."""
+"""Olhar o talhão: área com dados, solo, histórico pelo NDVI e fontes (plano técnico §3.1)."""
 
-from typing import Protocol
-
-from app.models.talhao import Talhao
+from app.models.talhao import FonteDado, Talhao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.ndvi_repository import NdviRepository
 from app.repositories.soil_repository import SoilRepository
 from app.services.field_history_service import FieldHistoryService
+
+CMIP6_PERIOD = "2041-2060"
 
 
 class IngestionServiceProtocol(Protocol):
@@ -16,7 +16,7 @@ class IngestionServiceProtocol(Protocol):
 
 
 class TalhaoService:
-    """Inspects a field coordinate combining spatial grid, SoilGrids, and MODIS NDVI history."""
+    """Junta solo, histórico do NDVI, colheita sugerida e as fontes de clima de um ponto."""
 
     def __init__(
         self,
@@ -33,11 +33,8 @@ class TalhaoService:
         self._ingestion_service = ingestion_service
 
     def inspect_talhao(self, lat: float, lon: float) -> Talhao:
-        """Returns complete field metadata for the given coordinates with Cache-Aside ingestion."""
+        """Returns complete field metadata for the given coordinates (US-01, US-02, US-07)."""
         cell_id = self._climate_repo.find_cell_id(lat, lon)
-        if cell_id is None and self._ingestion_service is not None:
-            cell_id = self._ingestion_service.ingest_area(lat, lon)
-
         dentro_da_area = cell_id is not None
 
         solo = self._soil_repo.get_soil(lat, lon)
@@ -53,10 +50,7 @@ class TalhaoService:
                 "fonte": "SoilGrids ISRIC 250m",
                 "status": "ok" if solo.fonte == "soilgrids" else "fallback",
             },
-            {
-                "fonte": "MODIS MOD13Q1 (NDVI 10a)",
-                "status": "ok" if historico else "indisponivel",
-            },
+            {"fonte": "MODIS MOD13Q1 (NDVI 10a)", "status": "ok" if historico else "indisponivel"},
             {"fonte": "NEX-GDDP-CMIP6 (SSP2-4.5)", "status": "ok"},
         )
 
@@ -70,7 +64,3 @@ class TalhaoService:
             historico=historico,
             dados_fontes=dados_fontes,
         )
-
-    def obter_talhao(self, lat: float, lon: float) -> Talhao:
-        """Alias for inspect_talhao matching Task 0001 Sub-task 1.3 specification."""
-        return self.inspect_talhao(lat=lat, lon=lon)

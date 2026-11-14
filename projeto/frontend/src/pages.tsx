@@ -2,17 +2,27 @@
  * Ligação de cada rota: controller (estado) → view (desenho). Sem lógica aqui.
  */
 import { Navigate, Outlet, ScrollRestoration } from 'react-router'
-import { useAnswerNav } from './controllers/useAnswerNav'
+import { useAnswerController } from './controllers/useAnswerController'
+import { useCommunityController } from './controllers/useCommunityController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
+import { useMethodController } from './controllers/useMethodController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
+import { useOptionsController } from './controllers/useOptionsController'
+import { usePlanController } from './controllers/usePlanController'
+import { useSatelliteController } from './controllers/useSatelliteController'
 import { useShellController } from './controllers/useShellController'
 import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
 import { EXAMPLE_FARM } from './services/locationService'
 import { buildFlowQuery } from './services/flowParams'
-import { ComingSoonView } from './views/ComingSoonView'
+import { AnswerView } from './views/AnswerView'
+import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
+import { MethodView } from './views/MethodView'
+import { OptionsView } from './views/OptionsView'
+import { PlanView } from './views/PlanView'
+import { SatelliteView } from './views/SatelliteView'
 import { ShellView } from './views/ShellView'
 import { StartView } from './views/StartView'
 import { WhenView } from './views/WhenView'
@@ -77,6 +87,120 @@ export function WhenPage() {
   )
 }
 
+export function SatellitePage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.satellite.title)
+  const state = useSatelliteController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <SatelliteView
+      t={t}
+      backTo={state.backTo}
+      status={state.status}
+      onRetry={state.retry}
+      history={state.history}
+      rain={state.rain}
+      soil={state.soil}
+      soilOpen={state.soilOpen}
+      onToggleSoil={state.toggleSoil}
+      onChooseSoil={state.chooseSoil}
+      onConfirm={state.confirm}
+    />
+  )
+}
+
+export function AnswerPage() {
+  const { lang, messages: t } = useI18n()
+  useDocumentTitle(t.answer.best)
+  const state = useAnswerController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <AnswerView
+      t={t}
+      lang={lang}
+      nav={state.nav}
+      status={state.status}
+      onRetry={state.retry}
+      answer={state.answer}
+      aviso={state.aviso}
+      sampleData={state.sampleData}
+    />
+  )
+}
+
+export function OptionsPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.options.title)
+  const state = useOptionsController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <OptionsView
+      t={t}
+      nav={state.nav}
+      status={state.status}
+      onRetry={state.retry}
+      axis={state.axis}
+      onAxis={state.chooseAxis}
+      summary={state.summary}
+    />
+  )
+}
+
+export function PlanPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.plan.title)
+  const state = usePlanController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <PlanView
+      t={t}
+      nav={state.nav}
+      status={state.status}
+      onRetry={state.retry}
+      scenario={state.scenario}
+      onScenario={state.chooseScenario}
+      area={state.area}
+      onArea={state.chooseArea}
+      plan={state.plan}
+    />
+  )
+}
+
+export function CommunityPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.community.title)
+  const state = useCommunityController()
+  return (
+    <CommunityView
+      t={t}
+      backTo={state.backTo}
+      status={state.status}
+      onRetry={state.retry}
+      community={state.community}
+      center={state.center}
+      points={state.points}
+      demo={state.demo}
+      onDemo={state.showDemo}
+    />
+  )
+}
+
+export function MethodPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.method.title)
+  const state = useMethodController()
+  return (
+    <MethodView
+      t={t}
+      backTo={state.backTo}
+      status={state.status}
+      onRetry={state.retry}
+      rows={state.rows}
+      example={state.example}
+    />
+  )
+}
+
 /** "Ver um exemplo pronto": abre a resposta da fazenda de exemplo (RF-11). */
 export function ExamplePage() {
   return <Navigate to={`/resposta${buildFlowQuery({ ...EXAMPLE_FARM, colheita: 'meio', exemplo: true })}`} replace />
@@ -87,31 +211,4 @@ export function DesignSystemPage() {
   useDocumentTitle(t.designSystem.title)
   const state = useDesignSystemController()
   return <DesignSystemView t={t} {...state} />
-}
-
-type PendingScreen = 'satellite' | 'answer' | 'options' | 'plan' | 'community' | 'method'
-
-/** Telas da resposta: navegam entre si pelas abas. */
-const ANSWER_SCREENS: readonly PendingScreen[] = ['answer', 'plan', 'options']
-
-/** Provisório até cada tela ficar pronta. */
-export function PendingPage({ screen }: { screen: PendingScreen }) {
-  const { messages: t } = useI18n()
-  const answerNav = useAnswerNav()
-  const titles: Record<PendingScreen, string> = {
-    satellite: t.satellite.title,
-    answer: t.answer.best,
-    options: t.options.title,
-    plan: t.plan.title,
-    community: t.community.title,
-    method: t.method.title,
-  }
-  useDocumentTitle(titles[screen])
-  return (
-    <ComingSoonView
-      t={t}
-      title={titles[screen]}
-      answerNav={ANSWER_SCREENS.includes(screen) ? answerNav : undefined}
-    />
-  )
 }

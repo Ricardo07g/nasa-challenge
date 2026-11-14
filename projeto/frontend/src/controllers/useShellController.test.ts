@@ -38,8 +38,17 @@ describe('useShellController', () => {
     expect(result.current.footer).toEqual({
       disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
       agronomist: 'Sou agrônomo(a): como a conta é feita',
+      agronomistTo: '/como-funciona',
       project: 'NASA Space Apps Challenge 2026 · Field Shift',
     })
+  })
+
+  it('o link do agrônomo leva junto o caminho, para as notas serem da lavoura da pessoa', () => {
+    const { result } = renderHook(() => useShellController(speech), {
+      wrapper: providers('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio', 'pt'),
+    })
+
+    expect(result.current.footer.agronomistTo).toBe('/como-funciona?lat=-18.9543&lon=-48.1993&colheita=meio')
   })
 
   it('troca o idioma pelo botão PT | EN', () => {

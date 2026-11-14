@@ -16,8 +16,22 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner {
+  .spinner,
+  .skeleton {
     animation: none;
+  }
+}
+
+.skeleton {
+  height: 180px;
+  border-radius: var(--radius-lg);
+  background: var(--color-divider);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
   }
 }
 

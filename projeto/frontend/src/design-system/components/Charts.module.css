@@ -74,6 +74,35 @@
   background: var(--color-primary);
 }
 
+/* Linha de um vizinho (tela 8) */
+.neighbor {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding-block: 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.neighbor:last-of-type {
+  border-bottom: 0;
+}
+
+.neighborName {
+  font-weight: var(--font-weight-bold);
+}
+
+.neighborDots {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.neighborLiked {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
 .reading {
   display: flex;
   justify-content: space-between;

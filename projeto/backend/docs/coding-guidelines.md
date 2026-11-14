@@ -1,8 +1,8 @@
 # Diretrizes e Boas Práticas de Codificação (Coding Guidelines — Python + FastAPI + PostgreSQL / PostGIS)
 
-**Versão:** 1.0  
-**Data:** Novembro de 2026  
-**Escopo:** Python 3.12, FastAPI, Pydantic v2, pytest, ruff, PostgreSQL 17 + PostGIS 3.5  
+**Versão:** 1.0
+**Data:** Novembro de 2026
+**Escopo:** Python 3.12, FastAPI, Pydantic v2, pytest, ruff, PostgreSQL 17 + PostGIS 3.5
 **Documentos Relacionados:** [AGENTS.md](file:///workspace/AGENTS.md), documentações em [docs/](file:///workspace/docs/)
 
 ---

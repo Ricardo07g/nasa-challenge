@@ -12,9 +12,9 @@ export function PageHeading({ title, subtitle, eyebrow }: { title: string; subti
   )
 }
 
-export function NumberedSteps({ steps }: { steps: readonly string[] }) {
+export function NumberedSteps({ steps, size = 'md' }: { steps: readonly string[]; size?: 'md' | 'lg' }) {
   return (
-    <ol className={styles.steps}>
+    <ol className={styles.steps} data-size={size}>
       {steps.map((step, index) => (
         <li key={step} className={styles.step}>
           <span className={styles.stepNumber} aria-hidden="true">
@@ -61,7 +61,15 @@ export function Disclaimer({ children }: { children: ReactNode }) {
   return <p className={styles.disclaimer}>{children}</p>
 }
 
-export function RecommendationHero({ label, title, children }: { label: string; title: string; children?: ReactNode }) {
+type RecommendationHeroProps = {
+  label: string
+  title: string
+  children?: ReactNode
+  /** Na tela da resposta, o nome da cultura é o título principal da página (h1). */
+  as?: 'h1' | 'h2'
+}
+
+export function RecommendationHero({ label, title, children, as: Heading = 'h2' }: RecommendationHeroProps) {
   return (
     <div className={styles.hero}>
       <span className={styles.heroDecor}>
@@ -71,7 +79,7 @@ export function RecommendationHero({ label, title, children }: { label: string; 
         <ShieldIcon size={20} />
         {label}
       </span>
-      <h2 className={styles.heroTitle}>{title}</h2>
+      <Heading className={styles.heroTitle}>{title}</Heading>
       {children}
     </div>
   )
@@ -95,32 +103,97 @@ export function YearTimeline({ label, items }: { label: string; items: readonly 
   )
 }
 
-type CompareRow = { label: string; value: string; extra?: ReactNode }
+type CompareRow = {
+  label: string
+  value: string
+  /** Ícone do eixo (gota, nota, broto); azul para dado de satélite. */
+  icon?: ReactNode
+  iconTone?: 'green' | 'blue'
+  /** Rótulo Bom/Médio/Fraco, embaixo da frase. */
+  pill?: ReactNode
+  /** Conteúdo extra embaixo da frase (ex.: os 20 quadrinhos da chuva). */
+  extra?: ReactNode
+}
 
 type OptionCompareCardProps = {
   rank: string
   name: string
   rows: readonly CompareRow[]
   highlighted?: boolean
+  /** Fora da janela de plantio: cartão laranja com este aviso no lugar das linhas. */
+  unavailable?: string
 }
 
-export function OptionCompareCard({ rank, name, rows, highlighted = false }: OptionCompareCardProps) {
+export function OptionCompareCard({ rank, name, rows, highlighted = false, unavailable }: OptionCompareCardProps) {
   const titleId = useId()
   return (
-    <article className={styles.compare} data-highlighted={highlighted} aria-labelledby={titleId}>
+    <article
+      className={styles.compare}
+      data-highlighted={highlighted}
+      data-unavailable={unavailable !== undefined}
+      aria-labelledby={titleId}
+    >
       <div className={styles.compareHead}>
         <span className={styles.rank}>{rank}</span>
         <h3 id={titleId} className={styles.compareName}>
           {name}
         </h3>
       </div>
-      {rows.map((row) => (
-        <div key={row.label} className={styles.compareRow}>
-          <span className={styles.compareLabel}>{row.label}</span>
-          <span className={styles.compareValue}>{row.value}</span>
-          {row.extra}
-        </div>
-      ))}
+      {unavailable !== undefined ? (
+        <p>{unavailable}</p>
+      ) : (
+        rows.map((row) => (
+          <div key={row.label} className={styles.compareRow} data-icon={row.icon !== undefined}>
+            {row.icon && (
+              <span className={styles.compareIcon} data-tone={row.iconTone ?? 'green'}>
+                {row.icon}
+              </span>
+            )}
+            <span className={styles.compareText}>
+              <span className={styles.compareLabel}>{row.label}</span>
+              <span className={styles.compareValue}>{row.value}</span>
+              {row.extra && <span className={styles.compareExtra}>{row.extra}</span>}
+              {row.pill && <span className={styles.comparePill}>{row.pill}</span>}
+            </span>
+          </div>
+        ))
+      )}
     </article>
+  )
+}
+
+type ScoreTableProps = {
+  caption: string
+  headers: readonly string[]
+  rows: readonly { name: string; values: readonly number[] }[]
+}
+
+/** Tabela simples de notas (só na tela "Como a conta é feita"). Rola para o lado no celular. */
+export function ScoreTable({ caption, headers, rows }: ScoreTableProps) {
+  return (
+    <div className={styles.tableWrap}>
+      <table className={styles.table}>
+        <caption className={styles.tableCaption}>{caption}</caption>
+        <thead>
+          <tr>
+            {headers.map((header) => (
+              <th key={header} scope="col">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.name}>
+              <th scope="row">{row.name}</th>
+              {row.values.map((value, index) => (
+                <td key={index}>{value}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

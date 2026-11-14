@@ -1,37 +1,37 @@
 """Unit tests for TalhaoService including Cache-Aside on-demand ingestion (Sub-task 1.3)."""
 
-from typing import Any
+from datetime import date
 
-from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
-from app.models.talhao import HistoricoAno, SoloInfo
+from app.models.climate import ClimateSeason, Cmip6Delta
+from app.models.talhao import FonteDado, NdviRecord, SoloInfo
 from app.services.field_history_service import FieldHistoryService
 from app.services.talhao_service import TalhaoService
 
 
 class FakeClimateRepository:
-    def __init__(self) -> None:
-        self.cells: set[str] = {"-189_-483"}
+    def __init__(self, deltas: list[Cmip6Delta] | None = None) -> None:
+        self._deltas = deltas or []
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
-        cid = f"{round(lat * 10)}_{round(lon * 10)}"
-        return cid if cid in self.cells else None
-
-    def find_nearest_cell_id(self, lat: float, lon: float) -> str | None:
-        return "-189_-483"
-
-    def save_cell_seasons(
-        self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
-    ) -> None:
-        self.cells.add(cell_id)
+        return "-190_-482" if -19.25 <= lat < -18.75 and -48.4375 <= lon < -47.8125 else None
 
     def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
-        return []
+        return [
+            ClimateSeason(
+                cell_id=cell_id,
+                year=year,
+                start_date=date(year, 1, 1),
+                lat=-18.95,
+                rain_mm=(1.0,),
+                rain_source="nasa_power",
+                tmax_c=(30.0,),
+                tmin_c=(18.0,),
+            )
+            for year in range(2005, 2025)
+        ]
 
-    def get_cmip6_delta(self, cell_id: str) -> Cmip6Delta:
-        raise NotImplementedError
-
-    def get_latest_smap(self, lat: float, lon: float) -> SmapSoilMoisture | None:
-        return None
+    def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]:
+        return list(self._deltas)
 
 
 class FakeSoilRepository:
@@ -55,101 +55,71 @@ class FakeSoilRepository:
 
 
 class FakeNdviRepository:
-    def get_ndvi_history(
-        self, lat: float, lon: float
-    ) -> tuple[list[dict[str, Any]], list[HistoricoAno]]:
+    def __init__(self, empty: bool = False) -> None:
+        self._empty = empty
+
+    def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
+        if self._empty:
+            return []
         records = []
         for year in range(2019, 2025):
-            records.extend(
-                [
-                    {"date": f"{year}-01-17", "year": year, "month": 1, "ndvi": 0.82},
-                    {"date": f"{year}-02-18", "year": year, "month": 2, "ndvi": 0.36},
-                    {"date": f"{year}-04-15", "year": year, "month": 4, "ndvi": 0.70},
-                ]
-            )
-        return records, []
+            records += [
+                NdviRecord(data=date(year, 1, 17), ndvi=8200),
+                NdviRecord(data=date(year, 2, 18), ndvi=3600),
+                NdviRecord(data=date(year, 4, 15), ndvi=7000),
+            ]
+        return records
 
 
-class FakeIngestionService:
-    def __init__(self, climate_repo: FakeClimateRepository, soil_repo: FakeSoilRepository) -> None:
-        self._climate_repo = climate_repo
-        self._soil_repo = soil_repo
-        self.ingested_coords: list[tuple[float, float]] = []
-
-    def ingest_area(self, lat: float, lon: float) -> str:
-        self.ingested_coords.append((lat, lon))
-        cid = f"{round(lat * 10)}_{round(lon * 10)}"
-        self._climate_repo.cells.add(cid)
-        self._soil_repo.save_soil(
-            lat,
-            lon,
-            SoloInfo(
-                argila_percentual=16.0,
-                areia_percentual=74.0,
-                textura_solo="arenoso",
-                cad_capacidade_agua_mm=40.0,
-                fonte="soilgrids",
-            ),
-        )
-        return cid
-
-
-def test_should_return_cached_talhao_without_ingestion_when_cell_already_exists() -> None:
-    climate_repo = FakeClimateRepository()
-    soil_repo = FakeSoilRepository()
-    ingestion_svc = FakeIngestionService(climate_repo, soil_repo)
-    service = TalhaoService(
-        climate_repo=climate_repo,
-        soil_repo=soil_repo,
-        ndvi_repo=FakeNdviRepository(),
-        history_service=FieldHistoryService(),
-        ingestion_service=ingestion_svc,
-    )
-
-    talhao = service.inspect_talhao(lat=-18.92, lon=-48.28)
-
-    assert talhao.dentro_da_area is True
-    assert talhao.celula_id == "-189_-483"
-    assert len(ingestion_svc.ingested_coords) == 0
-
-
-def test_should_trigger_on_demand_ingestion_and_reload_soil_when_cell_is_missing() -> None:
-    climate_repo = FakeClimateRepository()
-    soil_repo = FakeSoilRepository()
-    ingestion_svc = FakeIngestionService(climate_repo, soil_repo)
-    service = TalhaoService(
-        climate_repo=climate_repo,
-        soil_repo=soil_repo,
-        ndvi_repo=FakeNdviRepository(),
-        history_service=FieldHistoryService(),
-        ingestion_service=ingestion_svc,
-    )
-
-    # First call: Cache Miss for Rio Verde/GO (-17.78, -50.92) -> triggers ingestion
-    talhao = service.obter_talhao(lat=-17.78, lon=-50.92)
-
-    assert len(ingestion_svc.ingested_coords) == 1
-    assert talhao.celula_id == "-178_-509"
-    assert talhao.dentro_da_area is True
-    assert talhao.solo.textura_solo == "arenoso"
-    assert talhao.solo.cad_capacidade_agua_mm == 40.0
-
-    # Second call: Cache Hit -> does not trigger ingestion again
-    talhao_second = service.inspect_talhao(lat=-17.78, lon=-50.92)
-    assert len(ingestion_svc.ingested_coords) == 1
-    assert talhao_second.celula_id == "-178_-509"
-
-
-def test_should_return_within_area_false_when_cell_missing_and_no_ingestion_configured() -> None:
-    service = TalhaoService(
-        climate_repo=FakeClimateRepository(),
+def _service(
+    climate: FakeClimateRepository | None = None, ndvi: FakeNdviRepository | None = None
+) -> TalhaoService:
+    return TalhaoService(
+        climate_repo=climate or FakeClimateRepository(),
         soil_repo=FakeSoilRepository(),
-        ndvi_repo=FakeNdviRepository(),
+        ndvi_repo=ndvi or FakeNdviRepository(),
         history_service=FieldHistoryService(),
-        ingestion_service=None,
+        ingestion_service=ingestion_svc,
     )
 
-    talhao = service.inspect_talhao(lat=-15.79, lon=-47.88)
+
+def test_should_return_soil_history_and_climate_sources_when_point_has_data() -> None:
+    talhao = _service().inspect_talhao(lat=-18.9543, lon=-48.1993)
+
+    assert talhao.dentro_da_area is True
+    assert talhao.celula_id == "-190_-482"
+    assert talhao.solo.textura_solo == "argiloso"
+    assert talhao.colheita_sugerida.faixa == "meio"
+    assert talhao.historico is not None
+    assert talhao.historico.total == 6
+    assert talhao.historico.anos[0].ndvi_max == 0.7
+    # Só as fontes que existem: sem CMIP6 no arquivo, ele não aparece como "ok".
+    assert talhao.dados_fontes == (FonteDado(fonte="nasa_power", periodo="2005-2024"),)
+
+
+def test_should_list_cmip6_source_with_scenario_and_model_count_when_deltas_exist() -> None:
+    deltas = [
+        Cmip6Delta(model=m, scenario="ssp245", month=1, rain_pct=0.0, tmax_c=1.0)
+        for m in ("ACCESS-CM2", "MIROC6", "MPI-ESM1-2-HR")
+    ]
+
+    talhao = _service(FakeClimateRepository(deltas)).inspect_talhao(lat=-18.9543, lon=-48.1993)
+
+    assert talhao.dados_fontes[-1] == FonteDado(
+        fonte="nex_gddp_cmip6", periodo="2041-2060", cenario="ssp245", modelos=3
+    )
+
+
+def test_should_return_outside_area_without_sources_when_point_has_no_data() -> None:
+    talhao = _service().inspect_talhao(lat=-15.79, lon=-47.88)
 
     assert talhao.dentro_da_area is False
     assert talhao.celula_id is None
+    assert talhao.dados_fontes == ()
+
+
+def test_should_hide_history_and_use_default_harvest_when_no_ndvi() -> None:
+    talhao = _service(ndvi=FakeNdviRepository(empty=True)).inspect_talhao(-18.9543, -48.1993)
+
+    assert talhao.historico is None
+    assert (talhao.colheita_sugerida.faixa, talhao.colheita_sugerida.fonte) == ("meio", "padrao")

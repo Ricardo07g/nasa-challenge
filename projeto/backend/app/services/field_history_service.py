@@ -1,9 +1,8 @@
-"""Service for analyzing 10-year MODIS NDVI field history and harvest band suggestion."""
+"""Histórico do talhão pelo NDVI do MODIS e faixa de colheita sugerida (PRD 7.8 e 7.9)."""
 
 from collections import defaultdict
 from datetime import date
 from statistics import median
-from typing import Any
 
 from app.constants import (
     EARLY_HARVEST_DOY_LIMIT,
@@ -12,85 +11,61 @@ from app.constants import (
     NDVI_FALLOW_THRESHOLD,
     NDVI_HARVEST_DROP_RATIO,
     NDVI_PLANTED_THRESHOLD,
+    NDVI_SCALE_FACTOR,
+    OFFSEASON_MONTHS,
 )
-from app.models.talhao import ColheitaSugerida, HistoricoAno, HistoricoTalhao
+from app.models.talhao import ColheitaSugerida, HistoricoAno, HistoricoTalhao, NdviRecord
+
+
+def scaled_ndvi(value: float) -> float:
+    """NDVI físico (-1 a 1). O MOD13Q1 bruto vem inteiro com fator 0,0001 (7100 = 0,71)."""
+    return value * NDVI_SCALE_FACTOR if abs(value) > 1.0 else value
 
 
 class FieldHistoryService:
-    """Analyzes MODIS MOD13Q1 NDVI time series to infer off-season land use and harvest timing."""
+    """Lê a série de NDVI do talhão: uso na entressafra e quando a soja seca."""
 
-    def classify_entressafra(self, ndvi_records: list[dict[str, Any]]) -> HistoricoTalhao:
-        """Classifies each year (Mar-May) as 'plantou', 'parado', or 'incerto' (ADR-0002, US-07)."""
+    def classify_entressafra(self, ndvi_records: list[NdviRecord]) -> HistoricoTalhao:
+        """Maior NDVI de 1/abr a 31/jul: > 0,6 plantou, < 0,45 parado, senão incerto."""
         by_year: dict[int, list[float]] = defaultdict(list)
         for rec in ndvi_records:
-            month = int(rec.get("month", 0))
-            year = int(rec.get("year", 0))
-            if 3 <= month <= 5 and year > 0:
-                by_year[year].append(float(rec.get("ndvi", 0.0)))
+            if rec.data.month in OFFSEASON_MONTHS:
+                by_year[rec.data.year].append(scaled_ndvi(rec.ndvi))
 
-        anos_list: list[HistoricoAno] = []
-        parado_count = 0
-
-        for year in sorted(by_year.keys()):
-            values = by_year[year]
-            ndvi_max = round(max(values), 2) if values else 0.0
-            ndvi_med = round(sum(values) / len(values), 2) if values else 0.0
-
-            if ndvi_max >= NDVI_PLANTED_THRESHOLD:
+        anos: list[HistoricoAno] = []
+        for year in sorted(by_year):
+            ndvi_max = round(max(by_year[year]), 2)
+            if ndvi_max > NDVI_PLANTED_THRESHOLD:
                 situacao = "plantou"
-                status = "Segunda Safra"
             elif ndvi_max < NDVI_FALLOW_THRESHOLD:
                 situacao = "parado"
-                status = "Pousio"
-                parado_count += 1
             else:
                 situacao = "incerto"
-                status = "Incerto"
-
-            anos_list.append(
-                HistoricoAno(
-                    ano=year,
-                    situacao=situacao,
-                    ndvi_max=ndvi_max,
-                    ndvi_medio_safrinha=ndvi_med,
-                    status_talhao=status,
-                )
-            )
+            anos.append(HistoricoAno(ano=year, situacao=situacao, ndvi_max=ndvi_max))
 
         return HistoricoTalhao(
-            anos=tuple(anos_list),
-            parado=parado_count,
-            total=len(anos_list),
+            anos=tuple(anos),
+            parado=sum(1 for a in anos if a.situacao == "parado"),
+            total=len(anos),
             fonte="modis_mod13q1",
         )
 
-    def suggest_harvest_band(self, ndvi_records: list[dict[str, Any]]) -> ColheitaSugerida:
-        """Suggests soybean harvest window ('cedo' | 'meio' | 'tarde') from NDVI drop (US-02)."""
+    def suggest_harvest_band(self, ndvi_records: list[NdviRecord]) -> ColheitaSugerida:
+        """Primeira imagem de jan a mar abaixo de 50% do pico; mediana dos anos vira a faixa."""
         by_year: dict[int, list[tuple[date, float]]] = defaultdict(list)
         for rec in ndvi_records:
-            dt_str = str(rec.get("date", ""))
-            month = int(rec.get("month", 0))
-            year = int(rec.get("year", 0))
-            if dt_str and 1 <= month <= 3 and year > 0:
-                by_year[year].append((date.fromisoformat(dt_str), float(rec.get("ndvi", 0.0))))
-
-        if len(by_year) < MIN_NDVI_YEARS_FOR_SUGGESTION:
-            return ColheitaSugerida(faixa="meio", fonte="padrao", anos_usados=0)
+            if 1 <= rec.data.month <= 3:
+                by_year[rec.data.year].append((rec.data, scaled_ndvi(rec.ndvi)))
 
         drop_doys: list[int] = []
-        for year in sorted(by_year.keys()):
-            pts = sorted(by_year[year], key=lambda x: x[0])
-            peak_ndvi = max((val for _, val in pts), default=0.0)
-            threshold = peak_ndvi * NDVI_HARVEST_DROP_RATIO
-
-            harvest_doy: int | None = None
-            for dt_val, ndvi_val in pts:
-                if dt_val.month >= 2 and ndvi_val <= threshold:
-                    harvest_doy = dt_val.timetuple().tm_yday
-                    break
-
-            if harvest_doy is not None:
-                drop_doys.append(harvest_doy)
+        for year in sorted(by_year):
+            pts = sorted(by_year[year])
+            threshold = max(val for _, val in pts) * NDVI_HARVEST_DROP_RATIO
+            harvest_day = next(
+                (day for day, val in pts if day.month >= 2 and val <= threshold), None
+            )
+            if harvest_day is not None:
+                drop_doys.append(harvest_day.timetuple().tm_yday)
 
         if len(drop_doys) < MIN_NDVI_YEARS_FOR_SUGGESTION:
             return ColheitaSugerida(faixa="meio", fonte="padrao", anos_usados=0)
@@ -102,9 +77,4 @@ class FieldHistoryService:
             faixa = "meio"
         else:
             faixa = "tarde"
-
-        return ColheitaSugerida(
-            faixa=faixa,
-            fonte="ndvi_modis",
-            anos_usados=len(drop_doys),
-        )
+        return ColheitaSugerida(faixa=faixa, fonte="ndvi_modis", anos_usados=len(drop_doys))

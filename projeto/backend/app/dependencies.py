@@ -5,9 +5,10 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from app.config import get_settings
 from app.repositories.climate_repository import (
     ClimateRepository,
-    DataOutputClimateRepository,
+    FixtureClimateRepository,
 )
 from app.repositories.crop_option_repository import (
     CropOptionRepository,
@@ -26,7 +27,7 @@ from app.repositories.external.soilgrids_client import (
     SoilGridsClientProtocol,
 )
 from app.repositories.ndvi_repository import (
-    CachedEarthEngineNdviRepository,
+    CachedNdviRepository,
     NdviRepository,
 )
 from app.repositories.soil_repository import (
@@ -55,22 +56,22 @@ def get_crop_option_service(
 
 @lru_cache
 def get_crop_params_repository() -> CropParamsRepository:
-    return YamlCropParamsRepository()
+    return YamlCropParamsRepository(get_settings().culturas_path)
 
 
 @lru_cache
 def get_climate_repository() -> ClimateRepository:
-    return DataOutputClimateRepository()
+    return FixtureClimateRepository(get_settings().clima_path)
 
 
 @lru_cache
 def get_soil_repository() -> SoilRepository:
-    return CachedSoilGridsRepository()
+    return CachedSoilGridsRepository(get_settings().solo_cache_path)
 
 
 @lru_cache
 def get_ndvi_repository() -> NdviRepository:
-    return CachedEarthEngineNdviRepository()
+    return CachedNdviRepository(get_settings().ndvi_cache_path)
 
 
 def get_nasa_power_client() -> NasaPowerClientProtocol:

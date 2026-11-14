@@ -8,6 +8,7 @@ import {
   OptionCompareCard,
   PageHeading,
   RecommendationHero,
+  ScoreTable,
   YearTimeline,
 } from './Content'
 
@@ -107,5 +108,87 @@ describe('OptionCompareCard', () => {
     expect(card).toHaveAttribute('data-highlighted', 'true')
     expect(card).toHaveTextContent('Nº 1')
     expect(card).toHaveTextContent('ChuvaDeu certo em 14 de 20 anos')
+  })
+})
+
+describe('RecommendationHero como título da página', () => {
+  it('pode ser o h1 (na resposta, o nome da cultura é o título principal)', () => {
+    render(<RecommendationHero as="h1" label="A melhor opção" title="Milho com braquiária" />)
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Milho com braquiária' })).toBeInTheDocument()
+  })
+
+  it('por padrão é h2', () => {
+    render(<RecommendationHero label="A melhor opção" title="Sorgo" />)
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Sorgo' })).toBeInTheDocument()
+  })
+})
+
+describe('OptionCompareCard no formato do Lovable', () => {
+  it('cada linha pode ter ícone e o rótulo Bom/Médio/Fraco', () => {
+    render(
+      <OptionCompareCard
+        rank="1º"
+        name="Sorgo"
+        rows={[
+          {
+            label: 'Chuva',
+            value: 'Deu certo em 17 de 20 anos',
+            icon: <svg data-testid="gota" />,
+            iconTone: 'blue',
+            pill: <span>Bom</span>,
+          },
+        ]}
+      />,
+    )
+
+    const card = screen.getByRole('article', { name: 'Sorgo' })
+    expect(card).toHaveTextContent('ChuvaDeu certo em 17 de 20 anosBom')
+    expect(screen.getByTestId('gota').parentElement).toHaveAttribute('data-tone', 'blue')
+  })
+
+  it('fora da janela de plantio, mostra o aviso no lugar das linhas', () => {
+    render(
+      <OptionCompareCard
+        rank="4º"
+        name="Milho sozinho"
+        unavailable="Fora da janela de plantio"
+        rows={[{ label: 'Chuva', value: 'Deu certo em 14 de 20 anos' }]}
+      />,
+    )
+
+    const card = screen.getByRole('article', { name: 'Milho sozinho' })
+    expect(card).toHaveAttribute('data-unavailable', 'true')
+    expect(card).toHaveTextContent('Fora da janela de plantio')
+    expect(card).not.toHaveTextContent('Deu certo')
+  })
+})
+
+describe('ScoreTable', () => {
+  it('tabela com cabeçalho e uma linha por opção', () => {
+    render(
+      <ScoreTable
+        caption="Notas da demonstração"
+        headers={['Opção', 'Segurança', 'Final']}
+        rows={[
+          { name: 'Milho com braquiária', values: [70, 66] },
+          { name: 'Sorgo', values: [85, 62] },
+        ]}
+      />,
+    )
+
+    const table = screen.getByRole('table', { name: 'Notas da demonstração' })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3)
+    expect(screen.getAllByRole('row')).toHaveLength(3)
+    expect(table).toHaveTextContent('Sorgo8562')
+  })
+})
+
+describe('NumberedSteps grandes', () => {
+  it('tem a versão grande (como funciona)', () => {
+    render(<NumberedSteps size="lg" steps={['Pegamos a chuva.']} />)
+
+    expect(screen.getByRole('list')).toHaveAttribute('data-size', 'lg')
   })
 })

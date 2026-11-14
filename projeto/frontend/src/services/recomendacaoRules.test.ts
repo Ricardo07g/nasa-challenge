@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import type { Opcao } from '../models/recomendacao'
+import type { Opcao, Recomendacao } from '../models/recomendacao'
 import {
   alternativeSummary,
+  buildAnswer,
+  buildPlan,
   findOption,
+  optionsSummary,
   harvestYear,
   planSummary,
   planSwaps,
+  scoreRows,
   sortOptions,
 } from './recomendacaoRules'
 
@@ -96,5 +100,122 @@ describe('planSwaps', () => {
     expect(planSwaps(['milho_braquiaria', 'crotalaria', 'sorgo'], ['sorgo', 'crotalaria', 'sorgo'], 2027)).toEqual([
       { year: 2027, from: 'milho_braquiaria', to: 'sorgo' },
     ])
+  })
+})
+
+describe('buildAnswer (tela 5)', () => {
+  const recomendacao = (overrides: Partial<Recomendacao> = {}) =>
+    ({
+      entrada: { celula_id: null, colheita: 'meio', semeadura: '2027-02-18', solo: 'medio', nematoide: null },
+      melhor: 'milho_braquiaria',
+      alternativas: [
+        { motivo: 'menos_risco', opcao: 'sorgo' },
+        { motivo: 'cuidar_da_terra', opcao: 'crotalaria' },
+        { motivo: 'mais_dinheiro', opcao: 'milheto' },
+      ],
+      opcoes: options,
+      fora_da_janela: [],
+      ...overrides,
+    }) as Recomendacao
+
+  it('traz a melhor opção e o ano da soja', () => {
+    const answer = buildAnswer(recomendacao())
+
+    expect(answer?.best.id).toBe('milho_braquiaria')
+    expect(answer?.year).toBe(2027)
+  })
+
+  it('cada alternativa vem com a frase do seu motivo; opção que não existe é ignorada', () => {
+    expect(buildAnswer(recomendacao())?.alternatives).toEqual([
+      { motivo: 'menos_risco', option: options[0], text: 'chuva sorgo. dinheiro sorgo.' },
+      { motivo: 'cuidar_da_terra', option: options[3], text: 'terra crotalaria.' },
+    ])
+  })
+
+  it('junta os nomes e os textos do que ficou fora da janela de plantio', () => {
+    const answer = buildAnswer(
+      recomendacao({
+        fora_da_janela: [{ id: 'milho_safrinha', nome: 'Milho sozinho', texto: 'Passa da data do ZARC.' }],
+      }),
+    )
+
+    expect(answer?.late).toEqual({ names: ['Milho sozinho'], texts: ['Passa da data do ZARC.'] })
+  })
+
+  it('sem a melhor opção na lista, não há resposta para mostrar', () => {
+    expect(buildAnswer(recomendacao({ melhor: 'pousio' }))).toBeNull()
+  })
+})
+
+describe('optionsSummary (tela 6)', () => {
+  const late = { ...opcao('milho_safrinha', 14, 950, 10, 58), na_janela: false }
+  const rec = {
+    opcoes: [options[0], options[1], late, options[3]],
+    fora_da_janela: [{ id: 'milho_safrinha', nome: 'Milho sozinho', texto: 'Passa da data do ZARC.' }],
+  } as Recomendacao
+
+  it('sem eixo, ordena pela nota final; quem está fora da janela vai para o fim', () => {
+    expect(optionsSummary(rec, null).options.map((o) => o.id)).toEqual([
+      'milho_braquiaria',
+      'sorgo',
+      'crotalaria',
+      'milho_safrinha',
+    ])
+  })
+
+  it('com um eixo, coloca na frente quem é melhor nele', () => {
+    expect(optionsSummary(rec, 'dinheiro').options.map((o) => o.id)).toEqual([
+      'milho_braquiaria',
+      'sorgo',
+      'crotalaria',
+      'milho_safrinha',
+    ])
+    expect(optionsSummary(rec, 'terra').options[0].id).toBe('crotalaria')
+  })
+
+  it('traz o aviso do que ficou fora da janela de plantio', () => {
+    expect(optionsSummary(rec, null).late).toEqual({ names: ['Milho sozinho'], texts: ['Passa da data do ZARC.'] })
+  })
+})
+
+describe('buildPlan (tela 7)', () => {
+  const rec = {
+    entrada: { celula_id: null, colheita: 'meio', semeadura: '2027-02-18', solo: 'medio', nematoide: null },
+    plano_3_anos: {
+      normal: { anos: ['milho_braquiaria', 'crotalaria', 'sorgo'], nota: 66 },
+      seco: { anos: ['sorgo', 'crotalaria', 'sorgo'], nota: 58 },
+      hoje: { descricao: 'Terra descoberta em metade dos anos', nota: 48 },
+    },
+  } as Recomendacao
+
+  it('ano normal: um ano por bloco, a partir da soja de 2027, sem trocas', () => {
+    expect(buildPlan(rec, 'normal')).toEqual({
+      years: [
+        { year: 2027, crop: 'milho_braquiaria', swappedFrom: null },
+        { year: 2028, crop: 'crotalaria', swappedFrom: null },
+        { year: 2029, crop: 'sorgo', swappedFrom: null },
+      ],
+      summary: { grain: 2, covered: 3, total: 3 },
+      swaps: [],
+      today: 'Terra descoberta em metade dos anos',
+    })
+  })
+
+  it('ano seco: mostra o que troca e de onde veio', () => {
+    const plan = buildPlan(rec, 'seco')
+
+    expect(plan.years[0]).toEqual({ year: 2027, crop: 'sorgo', swappedFrom: 'milho_braquiaria' })
+    expect(plan.years[1].swappedFrom).toBeNull()
+    expect(plan.swaps).toEqual([{ year: 2027, from: 'milho_braquiaria', to: 'sorgo' }])
+    expect(plan.summary).toEqual({ grain: 2, covered: 3, total: 3 })
+  })
+})
+
+describe('scoreRows (tela 9)', () => {
+  it('as notas de 0 a 100 de cada opção, da maior nota final para a menor', () => {
+    const rows = scoreRows({ opcoes: options } as Recomendacao)
+
+    expect(rows.map((row) => row.id)).toEqual(['milho_braquiaria', 'sorgo', 'milho_safrinha', 'crotalaria'])
+    expect(rows[0]).toEqual({ id: 'milho_braquiaria', nome: 'milho_braquiaria', notas: options[1].notas })
   })
 })

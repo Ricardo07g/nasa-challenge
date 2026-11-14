@@ -1,7 +1,7 @@
 # ADR-0001: Padronização dos Identificadores de Culturas (`CropId`)
 
-**Status:** Decidido  
-**Data:** 14 de Novembro de 2026  
+**Status:** Decidido
+**Data:** 14 de Novembro de 2026
 **Contexto Técnico:** Frontend (`projeto/frontend`), Backend (`projeto/backend`) e Dados (`data/culturas.yaml`)
 
 ---

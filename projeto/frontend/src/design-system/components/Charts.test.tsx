@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { NeighborDots, RainBarChart, RainReadingRow, RegionMap } from './Charts'
+import { NeighborDots, NeighborRow, RainBarChart, RainReadingRow, RegionMap } from './Charts'
 
 describe('RainBarChart', () => {
   it('desenha uma barra por mês com descrição acessível', () => {
@@ -47,5 +47,16 @@ describe('RegionMap', () => {
     expect(screen.getByRole('img', { name: 'Mapa da região' })).toBeInTheDocument()
     expect(screen.getByText('Pluviômetro')).toBeInTheDocument()
     expect(screen.getByText('Parado')).toBeInTheDocument()
+  })
+})
+
+describe('NeighborRow', () => {
+  it('mostra a opção, uma bolinha por vizinho e quantos gostaram', () => {
+    render(<NeighborRow name="Sorgo" liked={2} total={3} dotsLabel="2 de 3 vizinhos gostaram" likedText="2 de 3 gostaram" />)
+
+    expect(screen.getByText('Sorgo')).toBeInTheDocument()
+    const dots = screen.getByRole('img', { name: '2 de 3 vizinhos gostaram' })
+    expect(dots.querySelectorAll('[data-liked]')).toHaveLength(3)
+    expect(screen.getByText('2 de 3 gostaram')).toBeInTheDocument()
   })
 })

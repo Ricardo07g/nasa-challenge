@@ -1,0 +1,71 @@
+.wrapper {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-tint-green);
+}
+
+.map {
+  width: 100%;
+  height: clamp(280px, 30vw, 360px);
+  font-family: var(--font-body);
+}
+
+/* Cores dos pontos: o CSS vale mais que os atributos que o Leaflet põe no SVG. */
+.gauge {
+  fill: var(--color-secondary);
+  stroke: var(--color-surface);
+}
+
+.planted {
+  fill: var(--color-primary);
+  stroke: var(--color-surface);
+}
+
+.idle {
+  fill: var(--color-risk-soft);
+  stroke: var(--color-risk);
+}
+
+.legend {
+  position: absolute;
+  right: 12px;
+  bottom: 24px;
+  z-index: 500;
+  list-style: none;
+  margin: 0;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: var(--radius-tag);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  font-size: var(--font-size-tiny);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.legendDot[data-kind='gauge'] {
+  background: var(--color-secondary);
+}
+
+.legendDot[data-kind='planted'] {
+  background: var(--color-primary);
+}
+
+.legendDot[data-kind='idle'] {
+  background: var(--color-risk-soft);
+  border: 2px solid var(--color-risk);
+}

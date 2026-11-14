@@ -18,9 +18,9 @@ class CropParamsRepository(Protocol):
 
 
 class YamlCropParamsRepository:
-    """Loads agronomic crop parameters from data/culturas.yaml."""
+    """Lê os parâmetros das culturas do `culturas.yaml` (caminho vem de Settings)."""
 
-    def __init__(self, yaml_path: Path = Path("/workspace/data/culturas.yaml")) -> None:
+    def __init__(self, yaml_path: Path) -> None:
         self._yaml_path = yaml_path
         self._crops_cache: list[CropParams] | None = None
 
@@ -33,28 +33,27 @@ class YamlCropParamsRepository:
 
         loaded: list[CropParams] = []
         for raw_id, data in culturas_map.items():
-            canonical_id = CROP_ID_ALIASES.get(raw_id, raw_id)
+            nota_solo: dict[str, Any] = data["nota_solo"]
+            limite = data.get("semeadura_limite_mes_dia")
             loaded.append(
                 CropParams(
-                    id=canonical_id,
+                    id=CROP_ID_ALIASES.get(raw_id, raw_id),
                     nome=str(data["nome"]),
                     nome_en=str(data.get("nome_en", data["nome"])),
                     tipo=str(data["tipo"]),
                     funcao=str(data["funcao"]),
-                    semeadura_limite_mes_dia=(
-                        str(data["semeadura_limite_mes_dia"])
-                        if data.get("semeadura_limite_mes_dia") is not None
-                        else None
-                    ),
+                    semeadura_limite_mes_dia=str(limite) if limite is not None else None,
                     dias_florescer=int(data["dias_florescer"]),
                     ciclo_dias=int(data["ciclo_dias"]),
                     kc_pico=float(data["kc_pico"]),
-                    palhada_score=int(data["palhada_score"]),
+                    solo_palhada=int(nota_solo["palhada"]),
+                    solo_nitrogenio=int(nota_solo["nitrogenio"]),
+                    solo_pragas=int(nota_solo["pragas"]),
                     n_deixado_kg=int(data["n_deixado_kg"]),
-                    nematoide_efeito=int(data["nematoide_efeito"]),
-                    produtividade_padrao_sc_ha=float(data["produtividade_padrao_sc_ha"]),
-                    preco_padrao_saca=float(data["preco_padrao_saca"]),
-                    custo_padrao_ha=float(data["custo_padrao_ha"]),
+                    # Coberturas e pousio não têm grão: sem produtividade e preço no YAML.
+                    produtividade_padrao_sc_ha=float(data.get("produtividade_padrao_sc_ha", 0.0)),
+                    preco_padrao_saca=float(data.get("preco_padrao_saca", 0.0)),
+                    custo_padrao_ha=float(data.get("custo_padrao_ha", 0.0)),
                     como_fazer=tuple(str(item) for item in data.get("como_fazer", [])),
                 )
             )
@@ -67,7 +66,4 @@ class YamlCropParamsRepository:
 
     def get_by_id(self, crop_id: str) -> CropParams | None:
         canonical_id = CROP_ID_ALIASES.get(crop_id, crop_id)
-        return next(
-            (crop for crop in self._load() if crop.id == canonical_id),
-            None,
-        )
+        return next((crop for crop in self._load() if crop.id == canonical_id), None)

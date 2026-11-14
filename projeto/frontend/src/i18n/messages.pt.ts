@@ -12,8 +12,6 @@ export const pt = {
     mockNotice: 'Dados de exemplo: o motor de cálculo ainda não está ligado.',
     disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
     ready: 'Pronto',
-    comingSoonTitle: 'Tela em construção',
-    comingSoonText: 'Esta tela do protótipo ainda está sendo feita.',
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',
@@ -158,6 +156,14 @@ export const pt = {
     soilDefault: 'Não achamos no mapa de solos; usamos terra média.',
     soilChange: 'Não é? Trocar',
     soilChoose: 'Qual é a sua terra?',
+    soilOptions: {
+      arenoso: { title: 'Arenosa', sub: 'Solta, seca rápido' },
+      medio: { title: 'Média', sub: 'Nem muito solta, nem pesada' },
+      argiloso: { title: 'Argilosa', sub: 'Pesada, gruda na bota' },
+    },
+    close: 'Fechar',
+    loading: 'Buscando dados do satélite…',
+    error: 'Não conseguimos buscar os dados agora. Tente de novo ou veja a fazenda de exemplo.',
     climateTitle: 'Clima dos próximos anos',
     climateSubtitle: 'Como a chuva e o calor devem mudar até 2050.',
     cta: 'Ver o que plantar',
@@ -171,6 +177,11 @@ export const pt = {
       `${good} anos bons e ${total - good} anos com falta de água`,
     why: 'Por quê?',
     close: 'Fechar',
+    lateWarning: (crops: string, count: number) =>
+      `Já não dá tempo: ${crops} ${count === 1 ? 'fica' : 'ficam'} fora da janela de plantio.`,
+    rainEnough: 'Choveu o bastante',
+    rainShort: 'Faltou chuva',
+    rainYears: '2006–2025',
     howTitle: 'Como fazer',
     howNote: 'Dose de semente e herbicida: combine com o seu agrônomo.',
     seePlan: 'Ver plano de 3 anos',
@@ -180,7 +191,7 @@ export const pt = {
   options: {
     title: 'Todas as opções',
     sortLabel: 'Colocar na frente quem é melhor em:',
-    rank: (position: number) => `Nº ${position}`,
+    rank: (position: number) => `${position}º`,
     fallowRain: 'Não depende de chuva',
     fallowMoney: 'Não rende nem custa',
     fallowSoil: 'Fica descoberta',
@@ -199,6 +210,7 @@ export const pt = {
     normalText: 'Chuva parecida com a média dos últimos 20 anos.',
     dryText: 'Repetimos os anos mais secos dos últimos 20, parecido com El Niño forte.',
     swap: (from: string, year: number, to: string) => `O plano troca ${from} de ${year} por ${to}.`,
+    swapTagline: (from: string) => `No lugar de ${from}: aguenta mais a seca.`,
     withPlan: 'Com plano',
     today: 'Como é hoje',
     coveredAll: (total: number) => `Terra coberta nos ${total} anos`,
@@ -214,10 +226,12 @@ export const pt = {
     gainTitle: 'O ganho vem na soja seguinte',
     gainText:
       'Num estudo no Cerrado, a soja depois de grão com braquiária rendeu 11% a mais do que depois de terra parada.',
+    gainNote: 'Referência ilustrativa; estudo a confirmar.',
     backToAnswer: 'Voltar para a resposta',
     seeNeighbors: 'Ver o que os vizinhos plantaram',
   },
   community: {
+    eyebrow: 'Comunidade simulada',
     title: 'Perto de você',
     subtitle: (km: number, place: string, count: number) =>
       `Até ${km} km de ${place} · ${count} produtores participando`,
@@ -240,6 +254,7 @@ export const pt = {
     privacy:
       'O mapa mostra a região, nunca a posição exata das fazendas. Nome só aparece com autorização. Valores ilustrativos.',
     simulated: 'Tela simulada: o registro ainda não está ligado.',
+    demoOnly: 'Esta é uma demonstração. Nenhum dado será enviado ou guardado.',
   },
   method: {
     title: 'Como a conta é feita',
@@ -269,6 +284,16 @@ export const pt = {
       },
       soil: { what: 'Tipo de terra', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },
+    scoresTitle: 'Notas de cada opção (0 a 100)',
+    scoresHeaders: {
+      crop: 'Opção',
+      safety: 'Segurança',
+      future: 'Futuro',
+      soil: 'Terra',
+      income: 'Renda',
+      final: 'Final',
+    },
+    exampleFarm: 'Fazenda de exemplo: área experimental da UFU, Uberlândia (MG).',
     disclaimer: 'Apoio à decisão: confirme com o seu agrônomo antes de comprar a semente.',
   },
   designSystem: {

@@ -55,6 +55,26 @@
   min-width: 0;
 }
 
+/* Cartões de opção: 3 por linha no computador, 2 no tablet, 1 no celular */
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-stack);
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .optionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .optionGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .columns {
   display: flex;
   flex-wrap: wrap;
@@ -97,6 +117,31 @@
   font-size: var(--font-size-section);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
+}
+
+.lead {
+  font-size: var(--font-size-lead);
+  color: var(--color-text-muted);
+}
+
+/* Título de cartão com ícone na frente (ex.: "Como fazer") */
+.iconTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-primary);
+}
+
+.iconTitle[data-tone='blue'] {
+  color: var(--color-title-on-blue-tint);
+}
+
+.iconTitle[data-tone='blue'] svg {
+  color: var(--color-secondary);
 }
 
 .muted {

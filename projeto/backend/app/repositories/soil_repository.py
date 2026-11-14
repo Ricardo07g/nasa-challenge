@@ -1,6 +1,5 @@
-"""Repository contract and implementations for SoilGrids 250m soil properties."""
+"""Contrato e implementação do acesso à textura do solo (SoilGrids) por ponto."""
 
-import json
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -18,15 +17,11 @@ from app.constants import (
     SOIL_POINT_ROUND_DECIMALS,
 )
 from app.models.talhao import SoloInfo
-
-
-def compute_soil_point_key(lat: float, lon: float) -> str:
-    """Computes rounded spatial cache key (~250m resolution) for a soil point."""
-    return f"{round(lat, SOIL_POINT_ROUND_DECIMALS)}_{round(lon, SOIL_POINT_ROUND_DECIMALS)}"
+from app.repositories.point_cache import load_points, point_key
 
 
 class SoilRepository(Protocol):
-    """Data access contract for soil texture and water holding capacity (CAD)."""
+    """Acesso à textura do solo e à água disponível (CAD) de um ponto."""
 
     def get_soil(self, lat: float, lon: float) -> SoloInfo: ...
 
@@ -34,15 +29,7 @@ class SoilRepository(Protocol):
 
 
 def classify_soil_texture(argila_pct: float, areia_pct: float) -> tuple[str, float]:
-    """Classifies soil texture and available water capacity (CAD in mm) from clay and sand %.
-
-    Args:
-        argila_pct: Clay content percentage (0-100) in the 0-30cm layer.
-        areia_pct: Sand content percentage (0-100) in the 0-30cm layer.
-
-    Returns:
-        A tuple of (textura_solo, cad_capacidade_agua_mm).
-    """
+    """Textura e CAD (mm) pela argila e areia de 0-30 cm (PRD 6.4)."""
     if argila_pct > CLAY_THRESHOLD_PCT:
         return "argiloso", CAD_CLAYEY_MM
     if areia_pct > SAND_THRESHOLD_PCT:
@@ -50,51 +37,41 @@ def classify_soil_texture(argila_pct: float, areia_pct: float) -> tuple[str, flo
     return "medio", CAD_MEDIUM_MM
 
 
+DEFAULT_SOIL = SoloInfo(
+    argila_percentual=DEFAULT_CLAY_PCT,
+    areia_percentual=DEFAULT_SAND_PCT,
+    textura_solo="medio",
+    cad_capacidade_agua_mm=CAD_MEDIUM_MM,
+    fonte="padrao",
+)
+
+
 class CachedSoilGridsRepository:
-    """Reads SoilGrids soil properties from local cache JSON and in-memory ingested points."""
+    """Lê a argila e a areia do SoilGrids de um cache JSON por ponto.
 
-    def __init__(
-        self,
-        fallback_json_path: Path = Path("/workspace/data/output/soilgrids_talhao.json"),
-    ) -> None:
-        self._fallback_json_path = fallback_json_path
-        self._cached_soil: SoloInfo | None = None
-        self._ingested_soils: dict[str, SoloInfo] = {}
+    Ponto fora do cache (ou sem cache configurado) recebe solo médio com `fonte: padrao`,
+    como manda o plano técnico §3.1, e nunca o solo de outro talhão.
+    """
 
-    def save_soil(self, lat: float, lon: float, soil: SoloInfo) -> None:
-        key = compute_soil_point_key(lat, lon)
-        self._ingested_soils[key] = soil
+    def __init__(self, cache_path: Path | None) -> None:
+        self._cache_path = cache_path
+        self._points: dict[str, dict[str, Any]] | None = None
 
     def get_soil(self, lat: float, lon: float) -> SoloInfo:
-        key = compute_soil_point_key(lat, lon)
-        if key in self._ingested_soils:
-            return self._ingested_soils[key]
-
-        if self._cached_soil is not None:
-            return self._cached_soil
-
-        if self._fallback_json_path.exists():
-            payload: dict[str, Any] = json.loads(
-                self._fallback_json_path.read_text(encoding="utf-8")
-            )
-            argila = float(payload.get("argila_percentual", DEFAULT_CLAY_PCT))
-            areia = float(payload.get("areia_percentual", DEFAULT_SAND_PCT))
-            textura, cad = classify_soil_texture(argila, areia)
-            self._cached_soil = SoloInfo(
-                argila_percentual=argila,
-                areia_percentual=areia,
-                textura_solo=str(payload.get("textura_solo", textura)),
-                cad_capacidade_agua_mm=float(payload.get("cad_capacidade_agua_mm", cad)),
-                fonte=str(payload.get("fonte", "soilgrids")),
-            )
-            return self._cached_soil
-
+        if self._points is None:
+            self._points = load_points(self._cache_path)
+        point = self._points.get(point_key(lat, lon))
+        if point is None:
+            return DEFAULT_SOIL
+        argila = float(point["argila_pct"])
+        areia = float(point["areia_pct"])
+        textura, cad = classify_soil_texture(argila, areia)
         return SoloInfo(
-            argila_percentual=DEFAULT_CLAY_PCT,
-            areia_percentual=DEFAULT_SAND_PCT,
-            textura_solo="medio",
-            cad_capacidade_agua_mm=CAD_MEDIUM_MM,
-            fonte="padrao",
+            argila_percentual=argila,
+            areia_percentual=areia,
+            textura_solo=textura,
+            cad_capacidade_agua_mm=cad,
+            fonte="soilgrids",
         )
 
 

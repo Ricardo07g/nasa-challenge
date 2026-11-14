@@ -1,63 +1,37 @@
-"""Repository contract and implementation for MODIS MOD13Q1 10-year NDVI series."""
+"""Contrato e implementação do acesso à série de NDVI (MODIS MOD13Q1) por ponto."""
 
-import json
+from datetime import date
 from pathlib import Path
 from typing import Any, Protocol
 
-from app.models.talhao import HistoricoAno
+from app.models.talhao import NdviRecord
+from app.repositories.point_cache import load_points, point_key
 
 
 class NdviRepository(Protocol):
-    """Data access contract for MODIS NDVI time series."""
+    """Acesso à série de NDVI de 16 dias de um ponto."""
 
-    def get_ndvi_history(
-        self, lat: float, lon: float
-    ) -> tuple[list[dict[str, Any]], list[HistoricoAno]]: ...
+    def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]: ...
 
 
-class CachedEarthEngineNdviRepository:
-    """Loads 10-year MODIS MOD13Q1 NDVI history from cached JSON."""
+class CachedNdviRepository:
+    """Lê a série de NDVI de um cache JSON por ponto (valores brutos do MOD13Q1 ou já escalados).
 
-    def __init__(
-        self,
-        fallback_json_path: Path = Path("/workspace/data/output/modis_ndvi_historico_10anos.json"),
-    ) -> None:
-        self._fallback_json_path = fallback_json_path
-        self._cache: tuple[list[dict[str, Any]], list[HistoricoAno]] | None = None
+    Ponto fora do cache (ou sem cache configurado): série vazia, e o `/talhao` devolve
+    `historico: null` (plano técnico §3.1).
+    """
 
-    def get_ndvi_history(
-        self, lat: float, lon: float
-    ) -> tuple[list[dict[str, Any]], list[HistoricoAno]]:
-        if self._cache is not None:
-            return list(self._cache[0]), list(self._cache[1])
+    def __init__(self, cache_path: Path | None) -> None:
+        self._cache_path = cache_path
+        self._points: dict[str, dict[str, Any]] | None = None
 
-        if not self._fallback_json_path.exists():
-            return [], []
-
-        payload: dict[str, Any] = json.loads(self._fallback_json_path.read_text(encoding="utf-8"))
-        serie_ndvi: list[dict[str, Any]] = list(payload.get("serie_ndvi", []))
-        classificacao_raw: list[dict[str, Any]] = list(payload.get("classificacao_anual", []))
-
-        anos: list[HistoricoAno] = []
-        for item in classificacao_raw:
-            status = str(item.get("status_talhao", ""))
-            ndvi_med = float(item.get("ndvi_medio_safrinha", 0.0))
-            ndvi_max = float(item.get("ndvi_max", ndvi_med))
-            situacao = str(
-                item.get(
-                    "situacao",
-                    "parado" if status.lower() == "pousio" else "plantou",
-                )
-            )
-            anos.append(
-                HistoricoAno(
-                    ano=int(item["ano"]),
-                    situacao=situacao,
-                    ndvi_max=ndvi_max,
-                    ndvi_medio_safrinha=ndvi_med,
-                    status_talhao=status,
-                )
-            )
-
-        self._cache = (serie_ndvi, anos)
-        return list(serie_ndvi), list(anos)
+    def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
+        if self._points is None:
+            self._points = load_points(self._cache_path)
+        point = self._points.get(point_key(lat, lon))
+        if point is None:
+            return []
+        return [
+            NdviRecord(data=date.fromisoformat(str(item["data"])), ndvi=float(item["ndvi"]))
+            for item in point.get("serie", [])
+        ]

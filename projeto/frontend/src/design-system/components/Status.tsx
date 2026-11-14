@@ -74,3 +74,24 @@ export function YearStrip({ label, cells, size = 'sm', years }: YearStripProps) 
     </div>
   )
 }
+
+/** Legenda dos quadrinhos (ex.: cheio = Plantou, contorno = Ficou parado). */
+type StripLegendProps = {
+  items: readonly { state: CellState; label: string }[]
+  /** Nota no fim da legenda (ex.: o período "2006–2025"). */
+  note?: string
+}
+
+export function StripLegend({ items, note }: StripLegendProps) {
+  return (
+    <ul className={styles.legend}>
+      {items.map((item) => (
+        <li key={item.state} className={styles.legendItem}>
+          <span className={styles.legendCell} data-state={item.state} aria-hidden="true" />
+          {item.label}
+        </li>
+      ))}
+      {note && <li>{note}</li>}
+    </ul>
+  )
+}

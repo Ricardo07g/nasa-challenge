@@ -1,4 +1,12 @@
-import { COVER_CROPS, GRAIN_CROPS, type CropId, type Eixo, type Motivo, type Opcao } from '../models/recomendacao'
+import {
+  COVER_CROPS,
+  GRAIN_CROPS,
+  type CropId,
+  type Eixo,
+  type Motivo,
+  type Opcao,
+  type Recomendacao,
+} from '../models/recomendacao'
 
 const byFinal = (a: Opcao, b: Opcao) => b.notas.final - a.notas.final
 
@@ -57,4 +65,83 @@ export function planSwaps(
   return normal.flatMap((from, index) =>
     dry[index] !== undefined && dry[index] !== from ? [{ year: firstYear + index, from, to: dry[index] }] : [],
   )
+}
+
+const sentence = (text: string) => (/[.!?]$/.test(text) ? text : `${text}.`)
+
+export type LateSummary = { names: string[]; texts: string[] }
+
+/** Opções que já passaram da janela de plantio (colheita tardia), para o aviso laranja. */
+function lateSummary(recomendacao: Recomendacao): LateSummary {
+  return {
+    names: recomendacao.fora_da_janela.map((item) => item.nome),
+    texts: recomendacao.fora_da_janela.map((item) => item.texto),
+  }
+}
+
+export type AnswerSummary = {
+  /** Ano da soja que vem antes da entressafra ("Depois da soja de 2027…"). */
+  year: number
+  best: Opcao
+  alternatives: { motivo: Motivo; option: Opcao; text: string }[]
+  late: LateSummary
+}
+
+/** Tela 5: o que a resposta mostra. Sem a melhor opção na lista, não há resposta. */
+export function buildAnswer(recomendacao: Recomendacao): AnswerSummary | null {
+  const best = findOption(recomendacao.opcoes, recomendacao.melhor)
+  if (!best) return null
+  return {
+    year: harvestYear(recomendacao.entrada.semeadura),
+    best,
+    alternatives: recomendacao.alternativas.flatMap(({ motivo, opcao }) => {
+      const option = findOption(recomendacao.opcoes, opcao)
+      return option ? [{ motivo, option, text: alternativeSummary(motivo, option).map(sentence).join(' ') }] : []
+    }),
+    late: lateSummary(recomendacao),
+  }
+}
+
+/**
+ * Tela 6: todas as opções. As que cabem na janela de plantio vêm na ordem do eixo escolhido (sem eixo,
+ * nota final); as que não cabem vão para o fim.
+ */
+export function optionsSummary(recomendacao: Recomendacao, axis: Eixo | null): { options: Opcao[]; late: LateSummary } {
+  const inWindow = recomendacao.opcoes.filter((option) => option.na_janela)
+  const outOfWindow = recomendacao.opcoes.filter((option) => !option.na_janela)
+  return { options: [...sortOptions(inWindow, axis), ...outOfWindow], late: lateSummary(recomendacao) }
+}
+
+export type PlanScenario = 'normal' | 'seco'
+
+/** Pedaço da lavoura para começar o plano ("Comece por um pedaço"). */
+export type PlanArea = '50' | '100' | 'all'
+
+export type PlanView = {
+  years: { year: number; crop: CropId; swappedFrom: CropId | null }[]
+  summary: { grain: number; covered: number; total: number }
+  swaps: { year: number; from: CropId; to: CropId }[]
+  today: string
+}
+
+/** Tela 7: o plano de 3 anos no cenário escolhido (ano normal ou ano seco), a partir da soja que vem. */
+export function buildPlan(recomendacao: Recomendacao, scenario: PlanScenario): PlanView {
+  const { normal, seco, hoje } = recomendacao.plano_3_anos
+  const firstYear = harvestYear(recomendacao.entrada.semeadura)
+  const anos = scenario === 'seco' ? seco.anos : normal.anos
+  return {
+    years: anos.map((crop, index) => ({
+      year: firstYear + index,
+      crop,
+      swappedFrom: scenario === 'seco' && normal.anos[index] !== crop ? normal.anos[index] : null,
+    })),
+    summary: planSummary(anos),
+    swaps: scenario === 'seco' ? planSwaps(normal.anos, seco.anos, firstYear) : [],
+    today: hoje.descricao,
+  }
+}
+
+/** Tela 9 (para o agrônomo): as notas de 0 a 100 de cada opção, da maior nota final para a menor. */
+export function scoreRows(recomendacao: Recomendacao): { id: CropId; nome: string; notas: Opcao['notas'] }[] {
+  return [...recomendacao.opcoes].sort(byFinal).map(({ id, nome, notas }) => ({ id, nome, notas }))
 }

@@ -36,6 +36,21 @@ export function NeighborDots({ liked, total, label }: { liked: number; total: nu
   )
 }
 
+type NeighborRowProps = { name: string; liked: number; total: number; dotsLabel: string; likedText: string }
+
+/** Uma opção que os vizinhos plantaram: uma bolinha por vizinho (cheia = gostou) e quantos gostaram. */
+export function NeighborRow({ name, liked, total, dotsLabel, likedText }: NeighborRowProps) {
+  return (
+    <div className={styles.neighbor}>
+      <strong className={styles.neighborName}>{name}</strong>
+      <span className={styles.neighborDots}>
+        <NeighborDots liked={liked} total={total} label={dotsLabel} />
+        <span className={styles.neighborLiked}>{likedText}</span>
+      </span>
+    </div>
+  )
+}
+
 export function RainReadingRow({ place, reading }: { place: string; reading: string }) {
   return (
     <div className={styles.reading}>

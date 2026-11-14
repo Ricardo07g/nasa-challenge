@@ -24,10 +24,14 @@ app/
   controllers/         Controller: rotas FastAPI, finas (recebem, chamam o service, devolvem schema)
   services/            Service: REGRAS DE NEGÓCIO; errors.py tem os erros de domínio
   repositories/        Repository: ACESSO A DADOS (contrato em Protocol + implementações)
+  config_data/         culturas.yaml: parâmetros das culturas (editável pela agrônoma)
+  fixtures/            clima da fazenda de exemplo (gerado pelo pipeline; ver "Dados da API")
+pipeline/              scripts offline que preparam os dados (não entram na imagem da API)
 tests/
   unit/services/       service com repository falso (sem banco, sem HTTP)
   unit/repositories/   repository isolado
-  integration/controllers/  rotas via TestClient, com dependency_overrides
+  unit/pipeline/       funções do pipeline
+  integration/controllers/  rotas via TestClient, com dependency_overrides (conftest.py tem os falsos)
 pyproject.toml         dependências e configuração do ruff/pytest
 uv.lock                versões exatas (sempre commitado)
 requirements.txt       GERADO do uv.lock: não editar à mão
@@ -97,6 +101,27 @@ docker compose run --rm backend pytest
 docker compose run --rm backend ruff check .
 docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 ```
+
+## Dados da API
+
+- A API lê **só** o que está em `Settings` (`CULTURAS_PATH`, `CLIMA_PATH`, `SOLO_CACHE_PATH`,
+  `NDVI_CACHE_PATH`). Nunca coloque caminho fixo (como `/workspace/...`) num repository.
+- `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
+- `app/fixtures/clima_fazenda_exemplo.json`: NASA POWER diário (chuva, máxima e mínima),
+  1/jan a 31/jul de 2005 a 2024, da célula do POWER da Fazenda do Glória (UFU). Fora dessa célula
+  a API responde que ainda não tem dados (`dentro_da_area: false` / 404 `OUTSIDE_AREA`).
+  Para gerar de novo a partir da saída do `data/extract_historical_20y.py`:
+
+  ```bash
+  uv run python -m pipeline.export_climate_fixture \
+    --entrada ../../data/output/historico_uberlandia_20anos_diario.json \
+    --saida app/fixtures/clima_fazenda_exemplo.json
+  ```
+
+- A pasta `data/output/` (dados brutos) **não vai para o git**. Só a fixture pequena e derivada
+  acima fica no repositório (exceção prevista no plano técnico §5 e §11).
+- **Nunca** use dado sintético com rótulo de fonte real (ex.: "NASA SMAP"). Sem dado real, a
+  conta segue o PRD sem aquela fonte (balde começa em 50% da CAD; futuro `null` sem CMIP6).
 
 ## Configuração e segredos
 

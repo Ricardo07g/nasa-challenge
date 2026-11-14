@@ -1,7 +1,7 @@
 # ADR-0002: Alinhamento dos Contratos de API (`/talhao` e `/recomendacao`)
 
-**Status:** Decidido  
-**Data:** 14 de Novembro de 2026  
+**Status:** Decidido
+**Data:** 14 de Novembro de 2026
 **Contexto Técnico:** Frontend (`projeto/frontend/src/models/`), Backend (`projeto/backend/app/schemas/`), Plano Técnico (§3.1 e §3.2)
 
 ---
@@ -84,3 +84,26 @@ O `TalhaoService` e o schema `HistoricoTalhao` mapearão a saída do satélite p
 - **Compatibilidade Total:** Elimina riscos de `TypeError` ou campos `undefined` no cliente React.
 - **Transparência Agronômica:** O produtor tem acesso à data limite do ZARC em cada opção.
 - **Resiliência:** Se o satélite Earth Engine estiver instável, `historico` virá como `null` e o frontend já está programado para esconder o cartão graciosamente sem quebrar a tela.
+
+---
+
+## 4. Atualização (PR de correções do code review do backend)
+
+A implementação anterior não seguia o formato aninhado do plano técnico §3.2, que é o que o
+frontend lê (`models/recomendacao.ts` e `models/talhao.ts`). Com isso, a "compatibilidade total"
+acima não valia na prática. O schema passou a seguir o plano:
+
+- **`opcoes[]`:** objetos `chuva {anos_bons, anos, faixa, rotulo, texto}`,
+  `futuro {anos_bons_media, anos_bons_min, anos_bons_max, modelos, cenario} | null`,
+  `dinheiro {margem_ha, rotulo, texto}` e `terra {nota, rotulo, texto}`, além de `notas`,
+  `porque` e `como_fazer`. Os campos planos (`anos_bons_chuva`, `rotulo_chuva` etc.) saíram.
+- **`alternativas[]`:** `{motivo, opcao}` (era `opcao_id`).
+- **`futuro` e `notas.futuro`:** vêm `null` quando não há deltas do NEX-GDDP-CMIP6 para a célula.
+  Nesse caso a nota final usa só segurança, solo e renda (pesos 30/25/30 reescalados), em vez de
+  inventar uma faixa de modelos.
+- **`/talhao`:** `solo {textura, cad_mm, fonte}`, `historico.anos[] {ano, situacao, ndvi_max}` e
+  `dados[] {fonte, periodo, cenario, modelos}`, listando só as fontes que existem para o ponto.
+- **Ponto sem dados:** `/talhao` responde 200 com `dentro_da_area: false`; `/recomendacao`
+  responde 404 com `code: "OUTSIDE_AREA"` (antes devolvia, sem aviso, a resposta de Uberlândia).
+- **Parâmetros:** `colheita`, `solo`, `nematoide` e `gado` são validados; valor fora da lista
+  dá 422 em vez de ser ignorado.

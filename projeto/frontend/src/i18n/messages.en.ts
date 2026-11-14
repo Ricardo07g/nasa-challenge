@@ -11,8 +11,6 @@ export const en = {
     mockNotice: 'Sample data: the scoring engine is not connected yet.',
     disclaimer: 'It helps you decide. It does not replace your agronomist.',
     ready: 'Done',
-    comingSoonTitle: 'Screen under construction',
-    comingSoonText: 'This prototype screen is still being built.',
   },
   header: {
     home: 'Raiz Orbital, back to start',
@@ -157,6 +155,14 @@ export const en = {
     soilDefault: 'Not found on the soil map; we assumed medium soil.',
     soilChange: 'Not right? Change',
     soilChoose: 'What is your soil like?',
+    soilOptions: {
+      arenoso: { title: 'Sandy', sub: 'Loose, dries quickly' },
+      medio: { title: 'Medium', sub: 'Neither loose nor heavy' },
+      argiloso: { title: 'Clayey', sub: 'Heavy, sticks to your boots' },
+    },
+    close: 'Close',
+    loading: 'Getting satellite data…',
+    error: 'We could not get the data right now. Try again or see the example farm.',
     climateTitle: 'Climate in the coming years',
     climateSubtitle: 'How rain and heat are expected to change by 2050.',
     cta: 'See what to plant',
@@ -170,6 +176,11 @@ export const en = {
       `${good} good years and ${total - good} years short of water`,
     why: 'Why?',
     close: 'Close',
+    lateWarning: (crops: string, count: number) =>
+      `Too late to plant: ${crops} ${count === 1 ? 'is' : 'are'} outside the planting window.`,
+    rainEnough: 'Enough rain',
+    rainShort: 'Not enough rain',
+    rainYears: '2006–2025',
     howTitle: 'How to do it',
     howNote: 'Seed rate and herbicide: agree on them with your agronomist.',
     seePlan: 'See the 3-year plan',
@@ -179,7 +190,7 @@ export const en = {
   options: {
     title: 'All options',
     sortLabel: 'Put first the best at:',
-    rank: (position: number) => `No. ${position}`,
+    rank: (position: number) => `${position}.`,
     fallowRain: 'Does not depend on rain',
     fallowMoney: 'No income, no cost',
     fallowSoil: 'Soil stays bare',
@@ -198,6 +209,7 @@ export const en = {
     normalText: 'Rain similar to the average of the last 20 years.',
     dryText: 'We repeat the driest years of the last 20, similar to a strong El Niño.',
     swap: (from: string, year: number, to: string) => `The plan swaps ${from} in ${year} for ${to}.`,
+    swapTagline: (from: string) => `Instead of ${from}: handles drought better.`,
     withPlan: 'With the plan',
     today: 'How it is today',
     coveredAll: (total: number) => `Soil covered in all ${total} years`,
@@ -213,10 +225,12 @@ export const en = {
     gainTitle: 'The gain shows up in the next soybean crop',
     gainText:
       'In a study in the Cerrado, soybeans after grain with brachiaria yielded 11% more than after idle land.',
+    gainNote: 'Illustrative reference; study to be confirmed.',
     backToAnswer: 'Back to the answer',
     seeNeighbors: 'See what the neighbors planted',
   },
   community: {
+    eyebrow: 'Simulated community',
     title: 'Near you',
     subtitle: (km: number, place: string, count: number) =>
       `Within ${km} km of ${place} · ${count} growers taking part`,
@@ -238,6 +252,7 @@ export const en = {
     privacy:
       'The map shows the region, never the exact location of farms. Names only appear with permission. Illustrative values.',
     simulated: 'Simulated screen: recording is not connected yet.',
+    demoOnly: 'This is a demonstration. No data will be sent or saved.',
   },
   method: {
     title: 'How the score is calculated',
@@ -267,6 +282,16 @@ export const en = {
       },
       soil: { what: 'Soil type', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },
+    scoresTitle: 'Scores for each option (0 to 100)',
+    scoresHeaders: {
+      crop: 'Option',
+      safety: 'Safety',
+      future: 'Future',
+      soil: 'Soil',
+      income: 'Income',
+      final: 'Final',
+    },
+    exampleFarm: 'Example farm: UFU experimental area, Uberlândia (MG).',
     disclaimer: 'Decision support: check with your agronomist before buying seed.',
   },
   designSystem: {
