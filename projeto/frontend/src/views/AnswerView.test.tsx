@@ -59,7 +59,7 @@ describe('AnswerView (tela 5)', () => {
     expect(screen.getByText('Fica coberta na seca')).toBeInTheDocument()
     expect(screen.getByText('Médio')).toBeInTheDocument()
     expect(screen.getAllByText('Bom')).toHaveLength(2)
-    expect(screen.getByRole('img', { name: '14 anos bons e 6 anos com falta de água' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: '14 anos bons e 6 anos com falta de água' })).toBeInTheDocument()
     expect(screen.getByText('Choveu o bastante')).toBeInTheDocument()
     expect(screen.getByText('Faltou chuva')).toBeInTheDocument()
     expect(screen.getByText('2006–2025')).toBeInTheDocument()
@@ -143,5 +143,25 @@ describe('AnswerView (tela 5)', () => {
     setup({ answer: { ...answer, best: { ...answer.best, como_fazer: [] } } })
 
     expect(screen.queryByRole('region', { name: 'Como fazer' })).not.toBeInTheDocument()
+  })
+
+  it('tocar num ano da chuva mostra o que aconteceu naquele ano, com El Niño / La Niña (P1)', async () => {
+    setup()
+
+    expect(screen.getByText('La Niña (NOAA)')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Ver o ano 2007: Faltou chuva' }))
+
+    expect(screen.getByRole('region', { name: '2007' })).toHaveTextContent(
+      'Em 2007, a planta chegou na fase que mais precisa de água por volta de 15 de abril e ficou',
+    )
+    expect(screen.getByRole('region', { name: '2007' })).toHaveTextContent('Ano de El Niño.')
+  })
+
+  it('sem os detalhes dos anos na API, a faixa continua estática', () => {
+    const answer = buildAnswer(buildRecomendacao(params, 'pt'))!
+    setup({ answer: { ...answer, best: { ...answer.best, anos_detalhe: undefined } } })
+
+    expect(screen.getByRole('img', { name: '14 anos bons e 6 anos com falta de água' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Ver o ano/ })).not.toBeInTheDocument()
   })
 })

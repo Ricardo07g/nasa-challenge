@@ -10,6 +10,17 @@ export type Motivo = 'menos_risco' | 'mais_dinheiro' | 'cuidar_da_terra'
 
 export type CropId = 'milho_braquiaria' | 'milho_safrinha' | 'sorgo' | 'milheto' | 'crotalaria' | 'pousio'
 
+/** P1: o que aconteceu em cada ano da série (ainda não vem da API; contrato proposto). */
+export type AnoDetalhe = {
+  ano: number
+  bom: boolean
+  /** Data em que a planta chega na fase que mais precisa de água (ISO). */
+  fase_critica: string
+  dias_sem_chuva: number
+  enso: 'el_nino' | 'la_nina' | null
+  texto: string
+}
+
 export type Opcao = {
   id: CropId
   nome: string
@@ -34,6 +45,8 @@ export type Opcao = {
   como_fazer: string[]
   /** RF-21: custo da semente por hectare; ainda não vem da API (contrato proposto). */
   custo_semente_ha?: number
+  /** P1: um item por ano da faixa de chuva, para tocar e ver o que aconteceu. */
+  anos_detalhe?: AnoDetalhe[]
 }
 
 export type Plano = { anos: CropId[]; nota: number; descricao: string }

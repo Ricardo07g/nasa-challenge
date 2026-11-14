@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { MetricRow, StatusPill, StripLegend, ToneBadge, YearStrip } from './Status'
+import { MetricRow, StatusPill, StripLegend, TappableYearStrip, ToneBadge, YearStrip } from './Status'
 
 describe('StatusPill', () => {
   it('mostra o rótulo com o tom certo', () => {
@@ -95,5 +96,69 @@ describe('ToneBadge', () => {
     const badge = screen.getByText('Sinal de ano seco').closest('[data-tone]')
     expect(badge).toHaveAttribute('data-tone', 'orange')
     expect(screen.getByTestId('icone')).toBeInTheDocument()
+  })
+})
+
+describe('TappableYearStrip (tocar num ano, P1)', () => {
+  const years = [
+    { year: 2006, state: 'good' as const, marker: null, text: 'Em 2006, choveu o bastante.' },
+    { year: 2007, state: 'bad' as const, marker: 'el_nino' as const, text: 'Em 2007, ficou 18 dias sem chuva. Ano de El Niño.' },
+  ]
+  const renderStrip = () =>
+    render(
+      <TappableYearStrip
+        label="Anos de chuva"
+        years={years}
+        openLabel={(year) => `Ver o ano ${year}`}
+        stateLabel={(state) => (state === 'good' ? 'Choveu o bastante' : 'Faltou chuva')}
+        closeLabel="Fechar"
+      />,
+    )
+
+  it('cada ano é um botão; tocar abre o que aconteceu naquele ano', async () => {
+    renderStrip()
+
+    const year = screen.getByRole('button', { name: 'Ver o ano 2007: Faltou chuva' })
+    expect(year).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(year)
+
+    expect(year).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('region', { name: '2007' })).toHaveTextContent('ficou 18 dias sem chuva. Ano de El Niño.')
+  })
+
+  it('tocar de novo ou em "Fechar" fecha o painel', async () => {
+    renderStrip()
+    const year = screen.getByRole('button', { name: 'Ver o ano 2006: Choveu o bastante' })
+
+    await userEvent.click(year)
+    await userEvent.click(year)
+    expect(screen.queryByRole('region', { name: '2006' })).not.toBeInTheDocument()
+
+    await userEvent.click(year)
+    await userEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+    expect(screen.queryByRole('region', { name: '2006' })).not.toBeInTheDocument()
+  })
+
+  it('marca o ano de El Niño ou La Niña com um ponto', () => {
+    renderStrip()
+
+    expect(screen.getByRole('button', { name: /2007/ }).querySelector('[data-marker="el_nino"]')).not.toBeNull()
+  })
+})
+
+describe('StripLegend com os pontos de El Niño e La Niña', () => {
+  it('mostra os pontos na legenda', () => {
+    render(
+      <StripLegend
+        items={[{ state: 'good', label: 'Choveu o bastante' }]}
+        markers={[
+          { kind: 'el_nino', label: 'El Niño' },
+          { kind: 'la_nina', label: 'La Niña (NOAA)' },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('El Niño').querySelector('[data-marker="el_nino"]')).not.toBeNull()
+    expect(screen.getByText('La Niña (NOAA)').querySelector('[data-marker="la_nina"]')).not.toBeNull()
   })
 })

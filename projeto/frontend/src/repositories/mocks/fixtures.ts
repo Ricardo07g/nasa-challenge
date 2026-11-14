@@ -5,7 +5,7 @@
  */
 import type { Lang } from '../../i18n/language'
 import type { Community } from '../../models/community'
-import type { CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo } from '../../models/recomendacao'
+import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo } from '../../models/recomendacao'
 import { PREPARED_AREA } from '../../models/area'
 import type { Colheita, Ponto, Talhao } from '../../models/talhao'
 
@@ -200,6 +200,38 @@ function rainText(lang: Lang, good: number): string {
   return lang === 'pt' ? `Deu certo em ${good} de 20 anos` : `Worked in ${good} of 20 years`
 }
 
+/** Anos de El Niño e La Niña no verão antes da safrinha (ilustrativo, NOAA). */
+const ENSO: Record<number, AnoDetalhe['enso']> = {
+  2007: 'el_nino',
+  2008: 'la_nina',
+  2010: 'el_nino',
+  2011: 'la_nina',
+  2012: 'la_nina',
+  2016: 'el_nino',
+  2021: 'la_nina',
+  2022: 'la_nina',
+  2024: 'el_nino',
+}
+
+/** P1: uma frase por ano da faixa de chuva (dados de exemplo). */
+function yearDetails(strip: boolean[], lang: Lang): AnoDetalhe[] {
+  return strip.map((bom, index) => {
+    const ano = 2006 + index
+    const dias = 10 + ((index * 7) % 9)
+    const enso = ENSO[ano] ?? null
+    const ensoText = enso === null ? '' : lang === 'pt' ? (enso === 'el_nino' ? ' Ano de El Niño.' : ' Ano de La Niña.') : enso === 'el_nino' ? ' El Niño year.' : ' La Niña year.'
+    const texto =
+      lang === 'pt'
+        ? bom
+          ? `Em ${ano}, a fase que mais precisa de água foi por volta de 15 de abril e choveu o bastante.`
+          : `Em ${ano}, a planta chegou na fase que mais precisa de água por volta de 15 de abril e ficou ${dias} dias sem chuva.`
+        : bom
+          ? `In ${ano}, the stage that needs water most was around April 15 and there was enough rain.`
+          : `In ${ano}, the crop reached the stage that needs water most around April 15 and went ${dias} days without rain.`
+    return { ano, bom, fase_critica: `${ano}-04-15`, dias_sem_chuva: bom ? 0 : dias, enso, texto: texto + ensoText }
+  })
+}
+
 function buildOption(seed: CropSeed, lang: Lang): Opcao {
   return {
     id: seed.id,
@@ -231,6 +263,7 @@ function buildOption(seed: CropSeed, lang: Lang): Opcao {
     porque: seed.why[lang],
     como_fazer: seed.how[lang],
     custo_semente_ha: seed.seedCost,
+    anos_detalhe: yearDetails(rainStrip(seed.goodYears), lang),
   }
 }
 

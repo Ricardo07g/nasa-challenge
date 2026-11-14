@@ -36,7 +36,7 @@
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr) auto;
   gap: 12px;
-  align-items: center;
+  align-items: start;
   padding-block: 20px;
   border-bottom: 1px solid var(--color-border);
 }
@@ -52,6 +52,7 @@
 
 .metricIcon {
   display: flex;
+  padding-top: 6px;
   color: var(--color-primary);
 }
 
@@ -83,6 +84,7 @@
 
 .metricPill {
   display: flex;
+  padding-top: 10px;
 }
 
 /* Tela estreita: o rótulo desce para baixo do texto */
@@ -234,4 +236,117 @@
   background: var(--color-tint-orange);
   border-color: var(--color-border-orange-tint);
   color: var(--color-title-on-orange-tint);
+}
+
+/* Pontos de El Niño (azul) e La Niña (laranja) */
+.marker {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.marker[data-marker='el_nino'] {
+  background: var(--color-secondary);
+}
+
+.marker[data-marker='la_nina'] {
+  background: var(--color-risk);
+}
+
+/* Quadrinhos tocáveis (P1) */
+.tappable {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-block: 13px;
+}
+
+.tappableStrip {
+  display: grid;
+  gap: 2px;
+}
+
+.tappableCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.yearButton {
+  width: 100%;
+  max-width: 44px;
+  min-height: 44px;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: var(--radius-2xs);
+  border: 1.5px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+
+.yearButton:hover,
+.yearButton[aria-expanded='true'] {
+  border-color: var(--color-border);
+  background: var(--color-divider);
+}
+
+.yearButton .cell {
+  width: min(20px, 100%);
+  height: auto;
+}
+
+.yearTick {
+  min-height: 11px;
+  font-size: var(--font-size-micro);
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.yearPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-tint-blue);
+  border: 1px solid var(--color-border-blue-tint);
+  color: var(--color-text-on-blue-tint);
+}
+
+.yearPanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.yearPanelTitle {
+  font-family: var(--font-display);
+  font-size: var(--font-size-title);
+}
+
+.yearPanelClose {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--touch-min);
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: var(--radius-2xs);
+  background: transparent;
+  color: inherit;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+.yearPanelClose:hover {
+  background: rgb(255 255 255 / 60%);
 }
