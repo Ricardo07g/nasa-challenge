@@ -178,6 +178,11 @@ export const en = {
       `${good} good years and ${total - good} years short of water`,
     why: 'Why?',
     close: 'Close',
+    lateWarning: (crops: string, count: number) =>
+      `Too late to plant: ${crops} ${count === 1 ? 'is' : 'are'} outside the planting window.`,
+    rainEnough: 'Enough rain',
+    rainShort: 'Not enough rain',
+    rainYears: '2006–2025',
     howTitle: 'How to do it',
     howNote: 'Seed rate and herbicide: agree on them with your agronomist.',
     seePlan: 'See the 3-year plan',

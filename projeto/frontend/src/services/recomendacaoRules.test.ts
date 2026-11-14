@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import type { Opcao } from '../models/recomendacao'
+import type { Opcao, Recomendacao } from '../models/recomendacao'
 import {
   alternativeSummary,
+  buildAnswer,
   findOption,
   harvestYear,
   planSummary,
@@ -96,5 +97,49 @@ describe('planSwaps', () => {
     expect(planSwaps(['milho_braquiaria', 'crotalaria', 'sorgo'], ['sorgo', 'crotalaria', 'sorgo'], 2027)).toEqual([
       { year: 2027, from: 'milho_braquiaria', to: 'sorgo' },
     ])
+  })
+})
+
+describe('buildAnswer (tela 5)', () => {
+  const recomendacao = (overrides: Partial<Recomendacao> = {}) =>
+    ({
+      entrada: { celula_id: null, colheita: 'meio', semeadura: '2027-02-18', solo: 'medio', nematoide: null },
+      melhor: 'milho_braquiaria',
+      alternativas: [
+        { motivo: 'menos_risco', opcao: 'sorgo' },
+        { motivo: 'cuidar_da_terra', opcao: 'crotalaria' },
+        { motivo: 'mais_dinheiro', opcao: 'milheto' },
+      ],
+      opcoes: options,
+      fora_da_janela: [],
+      ...overrides,
+    }) as Recomendacao
+
+  it('traz a melhor opção e o ano da soja', () => {
+    const answer = buildAnswer(recomendacao())
+
+    expect(answer?.best.id).toBe('milho_braquiaria')
+    expect(answer?.year).toBe(2027)
+  })
+
+  it('cada alternativa vem com a frase do seu motivo; opção que não existe é ignorada', () => {
+    expect(buildAnswer(recomendacao())?.alternatives).toEqual([
+      { motivo: 'menos_risco', option: options[0], text: 'chuva sorgo. dinheiro sorgo.' },
+      { motivo: 'cuidar_da_terra', option: options[3], text: 'terra crotalaria.' },
+    ])
+  })
+
+  it('junta os nomes e os textos do que ficou fora da janela de plantio', () => {
+    const answer = buildAnswer(
+      recomendacao({
+        fora_da_janela: [{ id: 'milho_safrinha', nome: 'Milho sozinho', texto: 'Passa da data do ZARC.' }],
+      }),
+    )
+
+    expect(answer?.late).toEqual({ names: ['Milho sozinho'], texts: ['Passa da data do ZARC.'] })
+  })
+
+  it('sem a melhor opção na lista, não há resposta para mostrar', () => {
+    expect(buildAnswer(recomendacao({ melhor: 'pousio' }))).toBeNull()
   })
 })

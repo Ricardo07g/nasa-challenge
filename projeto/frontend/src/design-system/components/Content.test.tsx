@@ -109,3 +109,17 @@ describe('OptionCompareCard', () => {
     expect(card).toHaveTextContent('ChuvaDeu certo em 14 de 20 anos')
   })
 })
+
+describe('RecommendationHero como título da página', () => {
+  it('pode ser o h1 (na resposta, o nome da cultura é o título principal)', () => {
+    render(<RecommendationHero as="h1" label="A melhor opção" title="Milho com braquiária" />)
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Milho com braquiária' })).toBeInTheDocument()
+  })
+
+  it('por padrão é h2', () => {
+    render(<RecommendationHero label="A melhor opção" title="Sorgo" />)
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Sorgo' })).toBeInTheDocument()
+  })
+})

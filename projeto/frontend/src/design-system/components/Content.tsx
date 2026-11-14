@@ -61,7 +61,15 @@ export function Disclaimer({ children }: { children: ReactNode }) {
   return <p className={styles.disclaimer}>{children}</p>
 }
 
-export function RecommendationHero({ label, title, children }: { label: string; title: string; children?: ReactNode }) {
+type RecommendationHeroProps = {
+  label: string
+  title: string
+  children?: ReactNode
+  /** Na tela da resposta, o nome da cultura é o título principal da página (h1). */
+  as?: 'h1' | 'h2'
+}
+
+export function RecommendationHero({ label, title, children, as: Heading = 'h2' }: RecommendationHeroProps) {
   return (
     <div className={styles.hero}>
       <span className={styles.heroDecor}>
@@ -71,7 +79,7 @@ export function RecommendationHero({ label, title, children }: { label: string; 
         <ShieldIcon size={20} />
         {label}
       </span>
-      <h2 className={styles.heroTitle}>{title}</h2>
+      <Heading className={styles.heroTitle}>{title}</Heading>
       {children}
     </div>
   )
