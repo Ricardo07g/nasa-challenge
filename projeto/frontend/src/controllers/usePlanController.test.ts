@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { ApiError } from '../repositories/httpClient'
 import { buildRecomendacao } from '../repositories/mocks/fixtures'
 import type { FarmService } from '../services/farmService'
 import { providers } from '../test/providers'
@@ -67,5 +68,12 @@ describe('usePlanController (tela 7)', () => {
 
     expect(plan.result.current.nav.tabs[1]).toMatchObject({ label: 'Plano de 3 anos', current: true })
     expect(noHarvest.result.current.redirectTo).toBe('/quando?lat=-18.9543&lon=-48.1993')
+  })
+
+  it('ponto sem dados no servidor vira o estado "fora da área"', async () => {
+    const d = { farm: { talhao: vi.fn(), recomendacao: vi.fn(() => Promise.reject(new ApiError('/api/recomendacao', 404, 'OUTSIDE_AREA'))) } }
+    const { result } = renderHook(() => usePlanController(d), { wrapper: providers(`/plano?${flow}`) })
+
+    await waitFor(() => expect(result.current.status).toBe('outside'))
   })
 })

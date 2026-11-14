@@ -5,13 +5,14 @@ import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/component
 import type { Messages } from '../i18n/messages.pt'
 import type { CropId } from '../models/recomendacao'
 import type { PlanArea, PlanScenario, PlanView as Plan } from '../services/recomendacaoRules'
-import { FlowError, FlowLoading } from './FlowStates'
+import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
+import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
 
 export type PlanViewProps = {
   t: Messages
   nav: { label: string; tabs: AnswerTab[]; backTo: string }
-  status: 'loading' | 'ready' | 'error'
+  status: ScreenStatus
   onRetry: () => void
   scenario: PlanScenario
   onScenario: (value: PlanScenario | null) => void
@@ -31,6 +32,7 @@ export function PlanView(props: PlanViewProps) {
       <PageHeading title={p.title} subtitle={p.subtitle} />
       {status === 'loading' && <FlowLoading label={t.common.loading} />}
       {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={onRetry} />}
+      {status === 'outside' && <FlowOutside t={t} />}
       {status === 'ready' && plan && <Plan {...props} plan={plan} />}
     </div>
   )

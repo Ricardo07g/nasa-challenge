@@ -20,10 +20,13 @@ export function historySummary(historico: Talhao['historico']): HistorySummary |
   }
 }
 
-/** Tela 4, cartão 2: período da chuva do IMERG ("2006-2025"); sem a fonte, os 20 anos do PRD. */
+/**
+ * Tela 4, cartão 2: período da chuva ("2006-2025"). Vale o IMERG; sem ele, o NASA POWER (que também
+ * traz a chuva diária); sem nenhum dos dois, os 20 anos do PRD.
+ */
 export function rainPeriod(dados: Talhao['dados']): { start: string; end: string } {
-  const imerg = dados.find((dado) => dado.fonte === 'gpm_imerg')
-  const match = imerg?.periodo.match(/^(\d{4})-(\d{4})$/)
+  const source = dados.find((dado) => dado.fonte === 'gpm_imerg') ?? dados.find((dado) => dado.fonte === 'nasa_power')
+  const match = source?.periodo.match(/^(\d{4})-(\d{4})$/)
   return match ? { start: match[1], end: match[2] } : { start: '2006', end: '2025' }
 }
 

@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Recomendacao } from '../models/recomendacao'
 import { buildRecomendacao } from '../repositories/mocks/fixtures'
+import { ApiError } from '../repositories/httpClient'
 import type { FarmService } from '../services/farmService'
 import { providers } from '../test/providers'
 import { useAnswerController } from './useAnswerController'
@@ -74,5 +75,12 @@ describe('useAnswerController (tela 5)', () => {
 
     expect(noPoint.result.current.redirectTo).toBe('/onde')
     expect(noHarvest.result.current.redirectTo).toBe('/quando?lat=-18.9543&lon=-48.1993')
+  })
+
+  it('ponto sem dados no servidor (404 OUTSIDE_AREA) vira o estado "fora da área"', async () => {
+    const d = deps(() => Promise.reject(new ApiError('/api/recomendacao', 404, 'OUTSIDE_AREA')))
+    const { result } = renderHook(() => useAnswerController(d), { wrapper: providers(`/resposta?${flow}`) })
+
+    await waitFor(() => expect(result.current.status).toBe('outside'))
   })
 })

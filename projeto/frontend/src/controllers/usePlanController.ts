@@ -10,7 +10,7 @@ const defaultDeps: Deps = { farm: farmService }
 
 /** Tela 7 "Plano de 3 anos": linha do tempo, ano normal ou seco e por onde começar. */
 export function usePlanController(deps: Deps = defaultDeps) {
-  const { redirectTo, recomendacao } = useFlowRecomendacao(deps.farm)
+  const { redirectTo, recomendacao, status } = useFlowRecomendacao(deps.farm)
   const nav = useAnswerNav()
   const [scenario, setScenario] = useState<PlanScenario>('normal')
   const [area, setArea] = useState<PlanArea>('50')
@@ -27,7 +27,7 @@ export function usePlanController(deps: Deps = defaultDeps) {
   return {
     redirectTo,
     nav,
-    status: recomendacao.status,
+    status,
     retry: recomendacao.retry,
     scenario,
     chooseScenario,

@@ -118,4 +118,12 @@ describe('OptionsView (tela 6)', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'All options' })).toBeInTheDocument()
     expect(screen.getAllByRole('article')[0]).toHaveTextContent('1.')
   })
+
+  it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {
+    setup({ status: 'outside', summary: null })
+
+    const outside = screen.getByRole('region', { name: 'Ainda não chegamos aí' })
+    expect(outside).toHaveTextContent('Por enquanto, os dados estão prontos só para a região')
+    expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
+  })
 })

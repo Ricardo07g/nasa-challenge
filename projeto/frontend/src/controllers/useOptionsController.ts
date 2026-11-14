@@ -11,7 +11,7 @@ const defaultDeps: Deps = { farm: farmService }
 
 /** Tela 6 "Todas as opções": reordenar por Chuva, Dinheiro ou Terra é no navegador (RF-05). */
 export function useOptionsController(deps: Deps = defaultDeps) {
-  const { redirectTo, recomendacao } = useFlowRecomendacao(deps.farm)
+  const { redirectTo, recomendacao, status } = useFlowRecomendacao(deps.farm)
   const nav = useAnswerNav()
   const [axis, chooseAxis] = useState<Eixo | null>(null)
 
@@ -20,5 +20,5 @@ export function useOptionsController(deps: Deps = defaultDeps) {
     [recomendacao.data, axis],
   )
 
-  return { redirectTo, nav, status: recomendacao.status, retry: recomendacao.retry, axis, chooseAxis, summary }
+  return { redirectTo, nav, status, retry: recomendacao.retry, axis, chooseAxis, summary }
 }

@@ -14,18 +14,26 @@ export type Opcao = {
   id: CropId
   nome: string
   na_janela: boolean
-  /** Proposta do front para o backend: data limite de plantio (ZARC). Opcional. */
-  data_limite?: string
+  /** Data limite de plantio do ZARC (ADR 0002); null quando não houver. */
+  data_limite: string | null
   chuva: { anos_bons: number; anos: number; faixa: boolean[]; rotulo: Rotulo; texto: string }
-  futuro: { anos_bons_media: number; anos_bons_min: number; anos_bons_max: number }
+  /** Clima de 2041–2060 (NEX-GDDP-CMIP6); null enquanto não houver o dado. */
+  futuro: {
+    anos_bons_media: number
+    anos_bons_min: number
+    anos_bons_max: number
+    modelos: number
+    cenario: string
+  } | null
   dinheiro: { margem_ha: number; rotulo: Rotulo; texto: string }
   terra: { nota: number; rotulo: Rotulo; texto: string }
-  notas: { seguranca: number; futuro: number; solo: number; renda: number; final: number }
+  /** Notas de 0 a 100 (só na tela 9). `futuro` é null sem o CMIP6. */
+  notas: { seguranca: number; futuro: number | null; solo: number; renda: number; final: number }
   porque: string[]
   como_fazer: string[]
 }
 
-export type Plano = { anos: CropId[]; nota: number }
+export type Plano = { anos: CropId[]; nota: number; descricao: string }
 
 export type Recomendacao = {
   entrada: {
@@ -34,13 +42,14 @@ export type Recomendacao = {
     semeadura: string
     solo: Textura
     nematoide: boolean | null
+    gado?: boolean | null
   }
   melhor: CropId
   alternativas: { motivo: Motivo; opcao: CropId }[]
   opcoes: Opcao[]
   fora_da_janela: { id: CropId; nome: string; texto: string }[]
   pousio: { texto: string }
-  plano_3_anos: { normal: Plano; seco: Plano; hoje: { descricao: string; nota: number } }
+  plano_3_anos: { normal: Plano; seco: Plano; hoje: Plano }
   versao_dados: string
   aviso: string
 }

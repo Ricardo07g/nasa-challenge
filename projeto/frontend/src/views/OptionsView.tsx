@@ -6,13 +6,14 @@ import { DropIcon, MoneyIcon, SoilIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { Eixo, Opcao } from '../models/recomendacao'
 import type { LateSummary } from '../services/recomendacaoRules'
-import { FlowError, FlowLoading, LateWarning } from './FlowStates'
+import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
+import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
 
 export type OptionsViewProps = {
   t: Messages
   nav: { label: string; tabs: AnswerTab[]; backTo: string }
-  status: 'loading' | 'ready' | 'error'
+  status: ScreenStatus
   onRetry: () => void
   axis: Eixo | null
   onAxis: (axis: Eixo | null) => void
@@ -31,6 +32,7 @@ export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary }: 
       <PageHeading title={o.title} />
       {status === 'loading' && <FlowLoading label={t.common.loading} />}
       {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={onRetry} />}
+      {status === 'outside' && <FlowOutside t={t} />}
       {status === 'ready' && summary && (
         <>
           <div className={layout.stack}>

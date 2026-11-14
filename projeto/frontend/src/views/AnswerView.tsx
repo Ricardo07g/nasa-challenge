@@ -9,14 +9,15 @@ import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { Motivo } from '../models/recomendacao'
 import type { AnswerSummary } from '../services/recomendacaoRules'
-import { FlowError, FlowLoading, LateWarning } from './FlowStates'
+import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
+import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
 
 export type AnswerViewProps = {
   t: Messages
   lang: Lang
   nav: { label: string; tabs: AnswerTab[]; backTo: string }
-  status: 'loading' | 'ready' | 'error'
+  status: ScreenStatus
   onRetry: () => void
   answer: AnswerSummary | null
   aviso: string
@@ -38,6 +39,7 @@ export function AnswerView(props: AnswerViewProps) {
       <AnswerTabs label={nav.label} tabs={nav.tabs} />
       {status === 'loading' && <FlowLoading label={t.common.loading} />}
       {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={props.onRetry} />}
+      {status === 'outside' && <FlowOutside t={t} />}
       {status === 'ready' && answer && <Answer {...props} answer={answer} />}
     </div>
   )
@@ -51,7 +53,7 @@ function Answer({ t, lang, answer, aviso, sampleData }: AnswerViewProps & { answ
     <>
       <p className={layout.lead}>{a.lead(answer.year)}</p>
       <LateWarning t={t} late={late} />
-      <div className={layout.pageGrid}>
+      <div className={best.como_fazer.length > 0 ? layout.pageGrid : layout.single}>
         <div className={layout.stack}>
           <RecommendationHero as="h1" label={a.best} title={best.nome}>
             <p>{plant}</p>
@@ -97,14 +99,16 @@ function Answer({ t, lang, answer, aviso, sampleData }: AnswerViewProps & { answ
             </Disclosure>
           </Card>
         </div>
-        <Card tone="green" as="section" aria-label={a.howTitle}>
-          <h2 className={layout.iconTitle}>
-            <SproutIcon />
-            {a.howTitle}
-          </h2>
-          <NumberedSteps steps={best.como_fazer} />
-          <p className={layout.muted}>{a.howNote}</p>
-        </Card>
+        {best.como_fazer.length > 0 && (
+          <Card tone="green" as="section" aria-label={a.howTitle}>
+            <h2 className={layout.iconTitle}>
+              <SproutIcon />
+              {a.howTitle}
+            </h2>
+            <NumberedSteps steps={best.como_fazer} />
+            <p className={layout.muted}>{a.howNote}</p>
+          </Card>
+        )}
       </div>
       {alternatives.length > 0 && (
         <section aria-label={a.prefer} className={layout.stack}>

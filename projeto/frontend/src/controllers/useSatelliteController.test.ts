@@ -109,4 +109,11 @@ describe('useSatelliteController (tela 4)', () => {
     expect(noPoint.result.current.redirectTo).toBe('/onde')
     expect(noHarvest.result.current.redirectTo).toBe('/quando?lat=-18.9543&lon=-48.1993')
   })
+
+  it('talhão fora da área com dados preparados vira o estado "fora da área"', async () => {
+    const d = deps(() => Promise.resolve({ ...talhao, dentro_da_area: false }))
+    const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+
+    await waitFor(() => expect(result.current.status).toBe('outside'))
+  })
 })

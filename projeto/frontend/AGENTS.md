@@ -78,6 +78,9 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
 
 - **Chamadas à API:** sempre caminho relativo `/api/...`. O proxy do Vite encaminha para o backend
   (`API_PROXY_TARGET`, padrão `http://localhost:8000`). Não escreva URL do backend fixa no código.
+- **Dados (`VITE_API_MODE`):** `http` usa a API real (padrão no `docker compose`); `mock` usa os dados de
+  exemplo de `repositories/mocks/` (sem backend; padrão no `npm run dev` sem a variável). A API só tem
+  dados da célula da fazenda de exemplo: fora dela, as telas 4 a 7 mostram "Ainda não chegamos aí".
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).
   Nunca coloque segredo, token ou senha em `VITE_*`. Segredos ficam só no backend.
 - **Idioma:** textos da interface em português (produtor) e inglês (juízes), conforme o PRD (RNF-03).

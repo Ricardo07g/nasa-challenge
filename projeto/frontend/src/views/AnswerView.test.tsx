@@ -129,4 +129,19 @@ describe('AnswerView (tela 5)', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Corn with brachiaria' })).toBeInTheDocument()
     expect(screen.getByText('Plant right after the soybean harvest, by February 28.')).toBeInTheDocument()
   })
+
+  it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {
+    setup({ status: 'outside', answer: null })
+
+    const outside = screen.getByRole('region', { name: 'Ainda não chegamos aí' })
+    expect(outside).toHaveTextContent('Por enquanto, os dados estão prontos só para a região')
+    expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
+  })
+
+  it('sem passos de "Como fazer" na API, o cartão não aparece vazio', () => {
+    const answer = buildAnswer(buildRecomendacao(params, 'pt'))!
+    setup({ answer: { ...answer, best: { ...answer.best, como_fazer: [] } } })
+
+    expect(screen.queryByRole('region', { name: 'Como fazer' })).not.toBeInTheDocument()
+  })
 })

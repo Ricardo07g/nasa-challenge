@@ -2,7 +2,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useI18n } from '../i18n/useI18n'
 import type { Textura } from '../models/talhao'
-import { farmService, type FarmService } from '../services/farmService'
+import type { ScreenStatus } from '../models/screenStatus'
+import { farmService, isOutsideArea, type FarmService } from '../services/farmService'
 import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { historySummary, rainPeriod, soilSummary } from '../services/satelliteService'
 import { useAsync } from './useAsync'
@@ -51,12 +52,16 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
   }, [params, deps.farm, lang, navigate])
 
   const query = keepFlowQuery(search.toString())
+  const outside =
+    (talhao.status === 'ready' && talhao.data?.dentro_da_area === false) ||
+    (talhao.status === 'error' && isOutsideArea(talhao.error))
+  const status: ScreenStatus = outside ? 'outside' : talhao.status
   const redirectTo = !params ? '/onde' : !params.colheita ? `/quando${query}` : null
 
   return {
     redirectTo,
     backTo: `/quando${query}`,
-    status: talhao.status,
+    status,
     retry: talhao.retry,
     history: historySummary(talhao.data?.historico ?? null),
     rain: rainPeriod(talhao.data?.dados ?? []),

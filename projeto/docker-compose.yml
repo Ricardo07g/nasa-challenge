@@ -76,6 +76,8 @@ services:
       - "5173:5173"
     environment:
       API_PROXY_TARGET: http://backend:8000
+      # http = API real (o backend deste compose); mock = dados de exemplo, sem backend.
+      VITE_API_MODE: ${VITE_API_MODE:-http}
     volumes:
       - ./frontend:/app
       - /app/node_modules

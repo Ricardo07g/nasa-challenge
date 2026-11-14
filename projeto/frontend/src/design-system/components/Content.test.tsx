@@ -192,3 +192,11 @@ describe('NumberedSteps grandes', () => {
     expect(screen.getByRole('list')).toHaveAttribute('data-size', 'lg')
   })
 })
+
+describe('ScoreTable com nota que ainda não existe', () => {
+  it('mostra "—" no lugar de nota nula (ex.: futuro sem CMIP6)', () => {
+    render(<ScoreTable caption="Notas" headers={['Opção', 'Futuro']} rows={[{ name: 'Sorgo', values: [null] }]} />)
+
+    expect(screen.getByRole('table', { name: 'Notas' })).toHaveTextContent('Sorgo—')
+  })
+})
