@@ -74,3 +74,17 @@ export function YearStrip({ label, cells, size = 'sm', years }: YearStripProps) 
     </div>
   )
 }
+
+/** Legenda dos quadrinhos (ex.: cheio = Plantou, contorno = Ficou parado). */
+export function StripLegend({ items }: { items: readonly { state: CellState; label: string }[] }) {
+  return (
+    <ul className={styles.legend}>
+      {items.map((item) => (
+        <li key={item.state} className={styles.legendItem}>
+          <span className={styles.legendCell} data-state={item.state} aria-hidden="true" />
+          {item.label}
+        </li>
+      ))}
+    </ul>
+  )
+}
