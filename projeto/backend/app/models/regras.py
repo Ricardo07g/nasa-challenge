@@ -74,8 +74,10 @@ class RegrasRotacao:
     max_pousios: int
     bonus_diversidade_2: float
     bonus_diversidade_3: float
-    penalidade_monocultura_milho: float
     culturas_supressoras_nematoide: frozenset[str]
+    # Funções de cada cultura para o bônus de diversidade: grao, cobertura_graminea,
+    # cobertura_leguminosa (PRD 5 e 7.7). Cultura sem função (pousio) fica com o conjunto vazio.
+    funcoes: dict[str, frozenset[str]]
 
 
 @dataclass(frozen=True)

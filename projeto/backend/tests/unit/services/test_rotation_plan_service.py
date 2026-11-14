@@ -113,6 +113,60 @@ def test_should_build_dry_plan_from_dry_year_scores_when_they_differ_from_normal
     assert "2007, 2010, 2012, 2014" in seco.descricao
 
 
+def test_should_not_give_diversity_bonus_when_every_year_is_a_grain_crop() -> None:
+    # PRD 7.7: o bônus conta funções (grão, cobertura gramínea, cobertura leguminosa), não culturas.
+    # Milho e sorgo são os dois grão: alternar entre eles não vale os +5.
+    service = RotationPlanService()
+    opcoes = [
+        _make_option("milho_safrinha", 80.0),
+        _make_option("sorgo", 80.0),
+        _make_option("milheto", 50.0),
+    ]
+
+    normal, _, _ = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007])
+
+    assert normal.nota == 80.0
+
+
+def test_should_count_brachiaria_as_grain_and_grass_cover_for_diversity() -> None:
+    # PRD 5: milho + braquiária é "grão + cobertura" (a braquiária é gramínea). Com a crotalária
+    # (leguminosa), o plano tem as 3 funções: +10.
+    service = RotationPlanService()
+    opcoes = [_make_option("milho_braquiaria", 50.0), _make_option("crotalaria", 50.0)]
+
+    normal, _, _ = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007])
+
+    assert normal.nota == 60.0
+    assert set(normal.anos) == {"milho_braquiaria", "crotalaria"}
+
+
+def test_should_still_plan_and_say_so_when_nematoide_and_no_suppressor_fits_the_window() -> None:
+    # Antes: com nematoide = sim e sem crotalária nem milheto na janela, todas as sequências eram
+    # puladas e o plano saía com nota -1,0. Agora o plano sai e a descrição avisa.
+    service = RotationPlanService()
+    opcoes = [_make_option("milho_safrinha", 70.0), _make_option("sorgo", 60.0)]
+
+    normal, seco, _ = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007], nematoide=True)
+
+    assert normal.nota == 70.0
+    assert seco.nota == 70.0
+    assert set(normal.anos) <= {"milho_safrinha", "sorgo", "pousio"}
+    assert "nematoide" in normal.descricao
+    assert "nematoide" in seco.descricao
+
+
+def test_should_score_today_corn_sequence_with_the_plan_formula_and_no_extra_penalty() -> None:
+    # PRD 7.7: nota do plano = média das notas finais + bônus de diversidade. Antes o "hoje"
+    # (milho safrinha nos 3 anos) perdia 12 pontos de uma penalidade que não está no PRD.
+    service = RotationPlanService()
+    opcoes = [_make_option("sorgo", 60.0), _make_option("milho_safrinha", 70.0)]
+
+    _, _, hoje = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007])
+
+    assert hoje.anos == ("milho_safrinha", "milho_safrinha", "milho_safrinha")
+    assert hoje.nota == 70.0
+
+
 def test_should_take_number_of_dry_years_from_injected_rules() -> None:
     base = load_default_rules()
     service = RotationPlanService(rules=replace(base, rotacao=replace(base.rotacao, anos_secos=2)))

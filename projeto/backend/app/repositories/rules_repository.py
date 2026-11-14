@@ -38,6 +38,9 @@ def _convert(value: Any, target: Any) -> Any:
     if get_origin(target) is frozenset:
         (item_type,) = get_args(target)
         return frozenset(item_type(item) for item in value)
+    if get_origin(target) is dict:
+        key_type, value_type = get_args(target)
+        return {key_type(key): _convert(item, value_type) for key, item in value.items()}
     return target(value)
 
 
