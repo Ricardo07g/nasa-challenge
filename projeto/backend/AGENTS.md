@@ -96,7 +96,8 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
     dos dados das fontes", abaixo. `PostgisCmip6Repository`, `PostgisNdviRepository`,
     `PostgisSmapRepository` e `PostgisDataRunRepository` gravam e leem. A API já lê o `cmip6_delta`
     (R3.1, ver "Deltas do CMIP6 na API"), mas ainda não lê as outras (R3.2, R3.3 e R3.5 do
-    roteiro). O `cmip6_delta` exige a célula em `grid_cell`.
+    roteiro). O `cmip6_delta` exige a célula em `grid_cell`. O `cmip6_delta` e o `ndvi_point`
+    são preenchidos pela carga dos arquivos (`pipeline/load_files_to_db.py`, ver "Dados da API").
 - Banco criado antes do R1.6: rode `uv run alembic upgrade head` (ou
   `docker compose run --rm migration`). A migração recria `cmip6_delta` e `ndvi_point`, troca
   `smap_moisture` por `smap_point` (o que houver nelas é apagado) e marca as cargas antigas de
@@ -186,8 +187,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   células do POWER da caixa piloto, ou `--pontos="lat,lon; lat,lon"`. Cada arquivo do THREDDS tem um
   ano de uma variável: a caixa inteira dá 4.320 pedidos de ~6 s, **cerca de 8 h**; um ponto só, ~40 min.
   Os CSV ficam em `data/cache/nex_gddp_cmip6_ncss/`: se parar, rode de novo que ele continua de onde
-  parou. As duas pastas ficam fora do git. A API lê o arquivo pelo `CMIP6_PATH` (abaixo). Ainda não
-  há script que carregue o arquivo na tabela `cmip6_delta`.
+  parou. As duas pastas ficam fora do git. A API lê o arquivo pelo `CMIP6_PATH` (abaixo). Para
+  copiar o arquivo para a tabela `cmip6_delta`: "Carga dos arquivos no banco", abaixo.
 
   ```bash
   uv run python -m pipeline.fetch_cmip6_deltas --dry-run   # quantos pedidos e quanto tempo
@@ -224,6 +225,34 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - Depois da pré-carga, a célula da fazenda de exemplo (`-190_-482`) sai do banco (POWER de agora,
     com Penman-Monteith), não mais da fixture.
 
+- **Carga dos arquivos no banco** (tarefa 0022): `pipeline/load_files_to_db.py` copia o arquivo do
+  CMIP6 para o `cmip6_delta` e o do NDVI para o `ndvi_point`. Não busca nada na rede. Rode depois da
+  pré-carga (o `cmip6_delta` só aceita célula que já está em `grid_cell`).
+
+  ```bash
+  # da pasta projeto/backend, com DATABASE_URL apontando para o banco que recebe a carga
+  uv run python -m pipeline.load_files_to_db --cmip6 <arquivo> --ndvi <arquivo> --dry-run
+  uv run python -m pipeline.load_files_to_db --cmip6 <arquivo> --ndvi <arquivo>
+  ```
+
+  - **CMIP6:** cada célula de `grid_cell` recebe os deltas do ponto do arquivo cuja `cobertura`
+    contém o centro dela, pela própria leitura do `FileCmip6Repository` (mesma regra de borda da
+    API). Uma linha por célula × modelo × cenário × mês. Célula sem cobertura: nada.
+  - **NDVI:** a série de cada ponto, lida pelo `CachedNdviRepository` (sem neve, nuvem nem NDVI
+    vazio) e gravada pelo `PostgisNdviRepository.save_ndvi_history`. Registro sem `produto` ou
+    `qualidade` (cache antigo) ou com o NDVI bruto não cabe na tabela e conta como pulado.
+  - **Conferência antes de gravar:** os dois arquivos são lidos primeiro. Arquivo ausente, sem
+    `versao_dados`, de outra fonte (o `versao_dados.fonte` tem de ser `nex_gddp_cmip6` /
+    `modis_mod13q1`) ou fora do contrato: nada é gravado (saída 1).
+  - **Idempotente** (upsert). **`data_run`:** uma linha por fonte com linhas gravadas, com a
+    `version` do `versao_dados` do arquivo e, em `params`, o nome do arquivo (sem a pasta), as
+    contagens e o `versao_dados.parametros` do arquivo (`parametros_do_arquivo`).
+  - **Células novas:** a busca sob demanda cria células depois da carga. Elas ficam sem linha no
+    `cmip6_delta`, mas a API acha os deltas no arquivo (ordem tabela → arquivo, abaixo). Rodar a
+    carga de novo copia essas células. A ingestão não muda.
+  - O pacote do time leva a cópia do banco com as duas tabelas: quem recebe não roda a carga.
+    Caminho dos arquivos e comando completo: `docs/como-preparar-os-dados-locais.md`.
+
 - **Sinal para o outono** (`sinal` de `/recomendacao`, RF-20, tarefa 0015): o `SinalOutonoService` aplica a
   regra do PRD 7.10 (limiares em `regras.yaml`, grupo `sinal_outono`) a três fontes, uma por repository
   (`app/repositories/sinal_outono_repository.py`): GEOS-S2S (A2.1), SMAP recente com percentil (A2.2) e
@@ -253,7 +282,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     Como baixar ou receber esses arquivos: `docs/como-preparar-os-dados-locais.md`.
 
 - **NDVI do MODIS e histórico do talhão** (R3.2, tarefa 0018). Com ou sem banco, a série vem do arquivo
-  do `NDVI_CACHE_PATH` (a tabela `ndvi_point` já existe desde o R1.6, mas a API ainda não lê dela). O arquivo vem do
+  do `NDVI_CACHE_PATH` (a tabela `ndvi_point` existe desde o R1.6 e a carga da tarefa 0022 a preenche,
+  mas a API ainda não lê dela). O arquivo vem do
   script do R2.2 (`pipeline/fetch_ndvi.py`); sem ele, a API responde `historico: null` e colheita `meio` / `padrao`.
   - `CachedNdviRepository`: lê o formato do contrato (seção NDVI abaixo) e ainda aceita o cache antigo
     (`data`, `ndvi` bruto). Usa o ponto do arquivo **mais perto** do talhão, a até 250 m

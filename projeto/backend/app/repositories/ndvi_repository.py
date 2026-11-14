@@ -1,6 +1,7 @@
 """Contrato e implementação do acesso à série de NDVI (MODIS MOD13Q1 e MYD13Q1) por ponto."""
 
 import json
+from dataclasses import dataclass
 from datetime import date
 from math import asin, cos, radians, sin, sqrt
 from pathlib import Path
@@ -9,7 +10,9 @@ from typing import Any, Protocol
 import psycopg
 
 from app.constants import DEFAULT_SRID, EARTH_RADIUS_M, NDVI_POINT_MAX_DISTANCE_M
+from app.models.data_run import DataRun
 from app.models.talhao import NDVI_WORST_ACCEPTED_QUALITY, NdviRecord
+from app.repositories.data_run_repository import data_run_from_json
 from app.repositories.point_cache import point_key
 
 
@@ -23,6 +26,19 @@ class WritableNdviRepository(NdviRepository, Protocol):
     """NDVI que também grava a série de um ponto (tabela `ndvi_point`)."""
 
     def save_ndvi_history(self, lat: float, lon: float, records: list[NdviRecord]) -> None: ...
+
+
+@dataclass(frozen=True)
+class NdviPointSeries:
+    """A série de um ponto do arquivo, lida como o `get_ndvi_history` lê.
+
+    `discarded` = linhas que a leitura deixou de fora (sem NDVI, neve ou nuvem).
+    """
+
+    lat: float
+    lon: float
+    records: tuple[NdviRecord, ...]
+    discarded: int
 
 
 def _distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -62,20 +78,44 @@ class CachedNdviRepository:
     ) -> None:
         self._cache_path = cache_path
         self._max_distance_m = max_distance_m
-        self._points: list[dict[str, Any]] | None = None
+        self._payload: dict[str, Any] | None = None
 
-    def _load(self) -> list[dict[str, Any]]:
-        if self._points is None:
+    def _load(self) -> dict[str, Any]:
+        if self._payload is None:
             path = self._cache_path
             if path is None or not path.is_file():
-                self._points = []
+                self._payload = {}
             else:
-                payload: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
-                self._points = list(payload.get("pontos", []))
-        return self._points
+                self._payload = json.loads(path.read_text(encoding="utf-8"))
+        return self._payload
+
+    def _points(self) -> list[dict[str, Any]]:
+        points: list[dict[str, Any]] = self._load().get("pontos", [])
+        return points
+
+    def get_data_run(self) -> DataRun | None:
+        """A execução que gerou o arquivo (`versao_dados`); None sem arquivo ou no cache antigo."""
+        versao_dados = self._load().get("versao_dados")
+        return None if versao_dados is None else data_run_from_json(versao_dados)
+
+    def list_point_series(self) -> list[NdviPointSeries]:
+        """Todos os pontos do arquivo, na ordem dele, com a série lida (para a carga no banco)."""
+        series: list[NdviPointSeries] = []
+        for point in self._points():
+            items = point.get("serie", [])
+            records = tuple(rec for rec in (_record(item) for item in items) if rec is not None)
+            series.append(
+                NdviPointSeries(
+                    lat=float(point["lat"]),
+                    lon=float(point["lon"]),
+                    records=records,
+                    discarded=len(items) - len(records),
+                )
+            )
+        return series
 
     def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
-        points = self._load()
+        points = self._points()
         nearest = min(
             (
                 (_distance_m(lat, lon, float(p["lat"]), float(p["lon"])), i)

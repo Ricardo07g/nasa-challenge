@@ -4,12 +4,13 @@ Os valores são de teste, não do MODIS: por isso o `versao_dados` não usa a ch
 """
 
 import json
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from app.models.data_run import DataRun
 from app.models.talhao import NdviRecord
-from app.repositories.ndvi_repository import CachedNdviRepository
+from app.repositories.ndvi_repository import CachedNdviRepository, NdviPointSeries
 
 UFU = (-18.9543, -48.1993)
 TEST_RUN = {"fonte": "teste", "parametros": {}, "fim": "2026-11-14T13:00:00Z", "versao": "teste"}
@@ -110,3 +111,59 @@ def test_should_accept_a_smaller_max_distance(tmp_path: Path) -> None:
 
     assert repo.get_ndvi_history(-18.9550, -48.1990) == []  # ~85 m
     assert len(repo.get_ndvi_history(*UFU)) == 1
+
+
+def test_should_list_every_point_with_its_series_and_the_discarded_count(tmp_path: Path) -> None:
+    # Mesma leitura do get_ndvi_history (sem neve, nuvem nem NDVI vazio), mas de todos os pontos.
+    ufu = [
+        {"data": "2016-04-06", "ndvi": 0.71, "qualidade": 0, "produto": "MOD13Q1"},
+        {"data": "2016-04-14", "ndvi": 0.88, "qualidade": 3, "produto": "MYD13Q1"},
+        {"data": "2016-04-22", "ndvi": None, "qualidade": 0, "produto": "MOD13Q1"},
+    ]
+    other = [{"data": "2016-04-06", "ndvi": 0.20, "qualidade": 1, "produto": "MYD13Q1"}]
+    pontos = [_ponto(*UFU, ufu), _ponto(-19.5, -48.6, other)]
+    repo = CachedNdviRepository(_new_file(tmp_path, pontos))
+
+    assert repo.list_point_series() == [
+        NdviPointSeries(
+            lat=UFU[0],
+            lon=UFU[1],
+            records=(NdviRecord(date(2016, 4, 6), 0.71, qualidade=0, produto="MOD13Q1"),),
+            discarded=2,
+        ),
+        NdviPointSeries(
+            lat=-19.5,
+            lon=-48.6,
+            records=(NdviRecord(date(2016, 4, 6), 0.20, qualidade=1, produto="MYD13Q1"),),
+            discarded=0,
+        ),
+    ]
+
+
+def test_should_list_old_cache_records_without_product_and_quality(tmp_path: Path) -> None:
+    [point] = CachedNdviRepository(_old_cache(tmp_path)).list_point_series()
+
+    assert [(r.ndvi, r.qualidade, r.produto) for r in point.records] == [
+        (7100.0, None, None),
+        (6800.0, None, None),
+    ]
+
+
+def test_should_list_no_point_without_the_file() -> None:
+    assert CachedNdviRepository(None).list_point_series() == []
+
+
+def test_should_read_the_data_version_of_the_ndvi_file(tmp_path: Path) -> None:
+    repo = CachedNdviRepository(_new_file(tmp_path, []))
+
+    assert repo.get_data_run() == DataRun(
+        source="teste",
+        params={},
+        finished_at=datetime(2026, 11, 14, 13, 0, tzinfo=UTC),
+        version="teste",
+    )
+
+
+def test_should_have_no_data_version_in_the_old_cache_or_without_file(tmp_path: Path) -> None:
+    assert CachedNdviRepository(_old_cache(tmp_path)).get_data_run() is None
+    assert CachedNdviRepository(None).get_data_run() is None

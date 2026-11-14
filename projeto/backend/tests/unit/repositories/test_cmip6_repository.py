@@ -5,10 +5,12 @@ Os valores e o modelo `MODELO-TESTE` são de teste, não dado real.
 """
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
+from app.models.data_run import DataRun
 from app.repositories.cmip6_repository import FileCmip6Repository
 
 # Célula do POWER (0,5° × 0,625°) da Fazenda do Glória (UFU) e a de baixo dela.
@@ -139,3 +141,23 @@ def test_should_refuse_a_delta_outside_the_contract(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="rain_pct"):
         FileCmip6Repository(path).get_cmip6_deltas(UFU_CELL_ID)
+
+
+def test_should_read_the_data_version_of_the_file(tmp_path: Path) -> None:
+    path = _write(tmp_path / "cmip6.json", [])
+
+    assert FileCmip6Repository(path).get_data_run() == DataRun(
+        source="nex_gddp_cmip6",
+        params={"cenario": "ssp245"},
+        finished_at=datetime(2026, 11, 14, 13, 0, tzinfo=UTC),
+        version="2026.11-teste",
+    )
+
+
+def test_should_have_no_data_version_without_the_file_or_its_versao_dados(tmp_path: Path) -> None:
+    without_version = tmp_path / "sem_versao.json"
+    without_version.write_text(json.dumps({"pontos": []}), encoding="utf-8")
+
+    assert FileCmip6Repository(None).get_data_run() is None
+    assert FileCmip6Repository(tmp_path / "nao-existe.json").get_data_run() is None
+    assert FileCmip6Repository(without_version).get_data_run() is None
