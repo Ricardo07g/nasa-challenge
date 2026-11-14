@@ -34,10 +34,11 @@ O protótipo v3 pede ao produtor só **duas coisas**: onde fica a lavoura (um po
 | 5. Resposta | Lê; abre "Por quê?" | `GET /api/recomendacao?lat&lon&colheita` | Uma resposta + 3 alternativas |
 | 6. Todas as opções | Reordena por chuva, dinheiro ou terra | (mesma resposta) | Reordenar é no navegador |
 | 7. Plano de 3 anos | Alterna ano normal / ano seco | (mesma resposta) | Os dois cenários vêm juntos |
-| 8. Agrônomo | Toca em "Mandar pelo WhatsApp" | nenhuma | O link é a URL do front com `lat`, `lon` e `colheita`: sem banco, sem cadastro |
 | "Ouvir" | Toca no botão | nenhuma | Leitura em voz pelo navegador (Web Speech API, pt-BR) |
 
-Ter tudo em **GET com parâmetros na URL** dá três coisas de graça: o link para o agrônomo, cache HTTP e nenhum dado pessoal guardado (RNF-06).
+Ter tudo em **GET com parâmetros na URL** dá três coisas de graça: a resposta pode ser recarregada ou compartilhada pelo navegador, cache HTTP e nenhum dado pessoal guardado (RNF-06).
+
+**Responsivo:** o mesmo front serve celular e computador. Para o backend isso não muda nada: as mesmas rotas e o mesmo JSON. Por isso a API devolve dados e textos, nunca layout (nada de "coluna da esquerda").
 
 ## 3. Contratos da API
 
@@ -73,7 +74,7 @@ Todas as rotas ficam sob `/api` (já é a convenção do repositório). Nomes de
 
 ### 3.2 `GET /api/recomendacao?lat&lon&colheita=meio[&solo=argiloso][&nematoide=sim]`
 
-`colheita` ∈ `cedo | meio | tarde`. `solo`, `nematoide` e `gado` são opcionais (só aparecem para quem toca em "Trocar", ou no link do agrônomo).
+`colheita` ∈ `cedo | meio | tarde`. `solo`, `nematoide` e `gado` são opcionais (só aparecem para quem toca em "Trocar", ou na tela "Como a conta é feita").
 
 **`gado=sim` (pecuária, proposta para depois do MVP):** quem tem gado ganha valor no pasto da seca. Com `gado=sim`, as opções que viram pasto de maio a setembro (milho com braquiária e milheto) somam o valor do pastejo na margem e ganham a frase "Vira pasto para o gado na seca". O cálculo precisa de um parâmetro novo por cultura em `culturas.yaml` (dias de pastejo e lotação, a definir com a agrônoma) e de um aviso: tirar o gado a tempo de a palhada se refazer antes da soja.
 
