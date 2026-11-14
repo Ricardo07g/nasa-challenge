@@ -3,6 +3,7 @@ import type { Eixo } from '../models/recomendacao'
 import { farmService, type FarmService } from '../services/farmService'
 import { optionsSummary } from '../services/recomendacaoRules'
 import { useAnswerNav } from './useAnswerNav'
+import { useFlowRain } from './useFlowRain'
 import { useFlowRecomendacao } from './useFlowRecomendacao'
 
 type Deps = { farm: FarmService }
@@ -20,5 +21,7 @@ export function useOptionsController(deps: Deps = defaultDeps) {
     [recomendacao.data, axis],
   )
 
-  return { redirectTo, nav, status, retry: recomendacao.retry, axis, chooseAxis, summary }
+  const rain = useFlowRain(deps.farm, recomendacao.data?.opcoes ?? null)
+
+  return { redirectTo, nav, status, retry: recomendacao.retry, axis, chooseAxis, summary, rain }
 }

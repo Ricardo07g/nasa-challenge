@@ -32,6 +32,7 @@ function setup(overrides: Partial<OptionsViewProps> = {}) {
     axis: null,
     onAxis: vi.fn(),
     summary: summary(),
+    rain: { years: 20, period: { start: '2005', end: '2024' }, skipped: 0 },
     ...overrides,
   }
   render(
@@ -57,9 +58,18 @@ describe('OptionsView (tela 6)', () => {
     const fallow = cards[cards.length - 1]
     expect(fallow).toHaveTextContent('Deixar parado')
     expect(fallow).toHaveTextContent('Não depende de chuva')
-    expect(fallow).toHaveTextContent('Não rende nem custa')
+    expect(fallow).toHaveTextContent('Não rende nada')
     expect(fallow).toHaveTextContent('Fica descoberta')
-    expect(screen.getByText(/Cada quadrinho é um ano, de 2006 a 2025/)).toBeInTheDocument()
+    expect(screen.getByText(/Cada quadrinho é um ano \(20 anos entre 2005 e 2024\)/)).toBeInTheDocument()
+    expect(screen.queryByText(/de 2006 a 2025/)).not.toBeInTheDocument()
+  })
+
+  it('sem os detalhes dos anos na API, a legenda marca o que falta como "Ainda não conectado"', () => {
+    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
+    setup({ summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, anos_detalhe: undefined })) }) })
+
+    const note = screen.getByText('Ainda não conectado').closest('[data-status="not-connected"]')
+    expect(note).toHaveTextContent('O que aconteceu em cada ano: Ainda não conectado')
   })
 
   it('"Colocar na frente quem é melhor em": tocar escolhe; tocar de novo volta à ordem padrão', async () => {
@@ -100,7 +110,7 @@ describe('OptionsView (tela 6)', () => {
   it('enquanto carrega e quando dá erro', async () => {
     const { unmount } = render(
       <MemoryRouter>
-        <OptionsView t={pt} nav={nav} status="loading" onRetry={vi.fn()} axis={null} onAxis={vi.fn()} summary={null} />
+        <OptionsView t={pt} nav={nav} status="loading" onRetry={vi.fn()} axis={null} onAxis={vi.fn()} summary={null} rain={null} />
       </MemoryRouter>,
     )
     expect(screen.getByRole('status')).toHaveTextContent('Carregando…')

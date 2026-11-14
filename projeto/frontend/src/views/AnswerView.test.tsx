@@ -31,6 +31,7 @@ function setup(overrides: Partial<AnswerViewProps> = {}) {
     sampleData: false,
     reportTo: '/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio',
     telegramHref: null,
+    rain: { years: 20, period: { start: '2005', end: '2024' }, skipped: 0 },
     ...overrides,
   }
   render(
@@ -64,7 +65,14 @@ describe('AnswerView (tela 5)', () => {
     expect(screen.getByRole('group', { name: '14 anos bons e 6 anos com falta de água' })).toBeInTheDocument()
     expect(screen.getByText('Choveu o bastante')).toBeInTheDocument()
     expect(screen.getByText('Faltou chuva')).toBeInTheDocument()
-    expect(screen.getByText('2006–2025')).toBeInTheDocument()
+    expect(screen.getByText('20 anos entre 2005 e 2024')).toBeInTheDocument()
+    expect(screen.queryByText('2006–2025')).not.toBeInTheDocument()
+  })
+
+  it('sem o período da chuva no talhão, a legenda diz só quantos anos (sem inventar datas)', () => {
+    setup({ rain: { years: 20, period: null, skipped: 0 } })
+
+    expect(screen.getByText('20 anos')).toBeInTheDocument()
   })
 
   it('"Por quê?" abre as frases que citam os dados da NASA', async () => {
@@ -165,6 +173,14 @@ describe('AnswerView (tela 5)', () => {
 
     expect(screen.getByRole('img', { name: '14 anos bons e 6 anos com falta de água' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Ver o ano/ })).not.toBeInTheDocument()
+    const note = screen.getByText('Ainda não conectado').closest('[data-status="not-connected"]')
+    expect(note).toHaveTextContent('O que aconteceu em cada ano: Ainda não conectado')
+  })
+
+  it('com os detalhes dos anos, não há aviso de "Ainda não conectado"', () => {
+    setup()
+
+    expect(screen.queryByText('Ainda não conectado')).not.toBeInTheDocument()
   })
 
   it('leva ao relatório para banco ou seguro (P2)', () => {

@@ -6,9 +6,11 @@ import { DropIcon, MoneyIcon, SoilIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { Eixo, Opcao } from '../models/recomendacao'
 import type { LateSummary } from '../services/recomendacaoRules'
+import type { RainSummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
 import type { ScreenStatus } from '../models/screenStatus'
-import { RainYears } from './RainYears'
+import { rainPeriodText } from './rainPeriod'
+import { RainYears, YearDetailNotConnected } from './RainYears'
 import layout from './layout.module.css'
 
 export type OptionsViewProps = {
@@ -19,12 +21,14 @@ export type OptionsViewProps = {
   axis: Eixo | null
   onAxis: (axis: Eixo | null) => void
   summary: { options: Opcao[]; late: LateSummary } | null
+  /** Anos e período da chuva (do talhão), para a legenda dos quadrinhos. */
+  rain: RainSummary | null
 }
 
 const AXES: readonly Eixo[] = ['chuva', 'dinheiro', 'terra']
 
 /** Tela 6 "Todas as opções": reordenar, um cartão por opção e "Deixar parado" como linha de base. */
-export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary }: OptionsViewProps) {
+export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary, rain }: OptionsViewProps) {
   const o = t.options
   return (
     <div className={layout.page}>
@@ -89,7 +93,10 @@ export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary }: 
               ]}
             />
           </div>
-          <p className={layout.muted}>{o.legend}</p>
+          <p className={layout.muted}>
+            {o.legend(rainPeriodText(t, rain?.years ?? summary.options[0]?.chuva.anos ?? 0, rain))}
+          </p>
+          {!summary.options.some((option) => option.anos_detalhe?.length) && <YearDetailNotConnected t={t} />}
         </>
       )}
     </div>

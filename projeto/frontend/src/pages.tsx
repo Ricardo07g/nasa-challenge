@@ -162,6 +162,7 @@ export function AnswerPage() {
       sampleData={state.sampleData}
       reportTo={state.reportTo}
       telegramHref={state.telegramHref}
+      rain={state.rain}
     />
   )
 }
@@ -180,6 +181,7 @@ export function OptionsPage() {
       axis={state.axis}
       onAxis={state.chooseAxis}
       summary={state.summary}
+      rain={state.rain}
     />
   )
 }

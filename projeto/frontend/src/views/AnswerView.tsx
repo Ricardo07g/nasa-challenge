@@ -10,6 +10,7 @@ import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { Motivo } from '../models/recomendacao'
 import type { AnswerSummary } from '../services/recomendacaoRules'
+import type { RainSummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
 import { RainLegend, RainYears } from './RainYears'
 import { TelegramCard } from './TelegramCard'
@@ -28,6 +29,8 @@ export type AnswerViewProps = {
   reportTo: string
   /** P5: link do bot do Telegram; null quando não está configurado. */
   telegramHref: string | null
+  /** Anos e período da chuva (do talhão), para a legenda dos quadrinhos. */
+  rain: RainSummary | null
 }
 
 const MOTIVE_ICON: Record<Motivo, ReactNode> = {
@@ -51,7 +54,7 @@ export function AnswerView(props: AnswerViewProps) {
   )
 }
 
-function Answer({ t, lang, answer, aviso, sampleData, reportTo, telegramHref }: AnswerViewProps & { answer: AnswerSummary }) {
+function Answer({ t, lang, answer, aviso, sampleData, reportTo, telegramHref, rain }: AnswerViewProps & { answer: AnswerSummary }) {
   const a = t.answer
   const { best, late, alternatives } = answer
   const plant = best.data_limite ? `${a.plantUntil} ${formatDayMonth(lang, best.data_limite)}.` : a.plantSoon
@@ -88,7 +91,7 @@ function Answer({ t, lang, answer, aviso, sampleData, reportTo, telegramHref }: 
                 pill={<StatusPill rotulo={best.terra.rotulo}>{t.labels[best.terra.rotulo]}</StatusPill>}
               />
             </div>
-            <RainLegend t={t} option={best} />
+            <RainLegend t={t} option={best} rain={rain} />
             <Disclosure openLabel={a.why} closeLabel={a.close}>
               {best.porque.map((reason) => (
                 <p key={reason}>{reason}</p>

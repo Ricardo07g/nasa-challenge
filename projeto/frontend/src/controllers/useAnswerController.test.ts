@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Recomendacao } from '../models/recomendacao'
+import type { Talhao } from '../models/talhao'
 import { buildRecomendacao } from '../repositories/mocks/fixtures'
 import { ApiError } from '../repositories/httpClient'
 import type { FarmService } from '../services/farmService'
@@ -11,9 +12,22 @@ import { useAnswerController } from './useAnswerController'
 const flow = 'lat=-18.9543&lon=-48.1993&colheita=meio'
 const telegram: TelegramService = { enabled: true, linkFor: () => 'https://t.me/BotDoTime?start=x' }
 const sample = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
+const talhao = {
+  ponto: { lat: -18.9543, lon: -48.1993 },
+  celula_id: '-190_-482',
+  dentro_da_area: true,
+  solo: { textura: 'argiloso', cad_mm: 60, fonte: 'soilgrids' },
+  colheita_sugerida: { faixa: 'meio', fonte: 'padrao', anos_usados: 0 },
+  historico: null,
+  dados: [{ fonte: 'nasa_power', periodo: '2005-2024' }],
+} as Talhao
 
-function deps(load: () => Promise<Recomendacao> = () => Promise.resolve(sample), apiMode: 'mock' | 'http' = 'http') {
-  const farm: FarmService = { talhao: vi.fn(), recomendacao: vi.fn(load) }
+function deps(
+  load: () => Promise<Recomendacao> = () => Promise.resolve(sample),
+  apiMode: 'mock' | 'http' = 'http',
+  loadTalhao: () => Promise<Talhao> = () => Promise.resolve(talhao),
+) {
+  const farm: FarmService = { talhao: vi.fn(loadTalhao), recomendacao: vi.fn(load) }
   return { farm, apiMode }
 }
 
@@ -92,5 +106,23 @@ describe('useAnswerController (tela 5)', () => {
     const { result } = renderHook(() => useAnswerController(d), { wrapper: providers(`/resposta?${flow}`) })
 
     expect(result.current.telegramHref).toBe('https://t.me/BotDoTime?start=x')
+  })
+
+  it('o período da chuva vem do talhão (dados[]), não de um ano fixo', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useAnswerController(d), { wrapper: providers(`/resposta?${flow}`) })
+
+    await waitFor(() => expect(result.current.rain?.period).toEqual({ start: '2005', end: '2024' }))
+    expect(result.current.rain?.years).toBe(20)
+    expect(d.farm.talhao).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993, exemplo: false }, 'pt')
+  })
+
+  it('se o talhão falhar, a resposta continua e a chuva fica só com o número de anos', async () => {
+    const d = deps(undefined, 'http', () => Promise.reject(new Error('rede')))
+    const { result } = renderHook(() => useAnswerController(d), { wrapper: providers(`/resposta?${flow}`) })
+
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    await waitFor(() => expect(d.farm.talhao).toHaveBeenCalled())
+    expect(result.current.rain).toEqual({ years: 20, period: null, skipped: 0 })
   })
 })

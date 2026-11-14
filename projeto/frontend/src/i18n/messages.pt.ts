@@ -229,7 +229,11 @@ export const pt = {
       `Já não dá tempo: ${crops} ${count === 1 ? 'fica' : 'ficam'} fora da janela de plantio.`,
     rainEnough: 'Choveu o bastante',
     rainShort: 'Faltou chuva',
-    rainYears: '2006–2025',
+    /** O período vem do talhão (dados[]); o backend pode descartar ano com dia faltando. */
+    rainYears: (years: number, start: string, end: string) => `${years} anos entre ${start} e ${end}`,
+    rainYearsCount: (years: number) => `${years} anos`,
+    /** P1: o detalhe de cada ano da faixa (ainda não vem da API). */
+    yearDetail: 'O que aconteceu em cada ano',
     yearOpen: (year: number) => `Ver o ano ${year}`,
     ensoNino: 'El Niño',
     ensoNina: 'La Niña (NOAA)',
@@ -244,10 +248,10 @@ export const pt = {
     sortLabel: 'Colocar na frente quem é melhor em:',
     rank: (position: number) => `${position}º`,
     fallowRain: 'Não depende de chuva',
-    fallowMoney: 'Não rende nem custa',
+    fallowMoney: 'Não rende nada',
     fallowSoil: 'Fica descoberta',
-    legend:
-      'Cada quadrinho é um ano, de 2006 a 2025. Cheio: choveu o bastante. Vazio: faltou chuva na hora que a planta mais precisa.',
+    legend: (period: string) =>
+      `Cada quadrinho é um ano (${period}). Cheio: choveu o bastante. Vazio: faltou chuva na hora que a planta mais precisa.`,
     outOfWindowTitle: 'Fora da janela de plantio',
     seePlan: 'Ver plano de 3 anos',
   },
