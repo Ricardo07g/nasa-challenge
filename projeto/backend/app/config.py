@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     # Lista separada por vírgula, ex.: CORS_ORIGINS=http://localhost:5173,https://meu-front.vercel.app
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
+    # PostgreSQL + PostGIS. No docker compose: postgresql://<user>:<senha>@db:5432/<banco>
+    database_url: str | None = None
+
     # Credenciais dos dados da NASA / Google. Só via ambiente, nunca no código.
     earthdata_username: str | None = None
     earthdata_password: str | None = None
