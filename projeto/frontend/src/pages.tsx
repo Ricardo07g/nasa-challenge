@@ -3,10 +3,10 @@
  */
 import { Navigate, Outlet, ScrollRestoration } from 'react-router'
 import { useAnswerController } from './controllers/useAnswerController'
-import { useAnswerNav } from './controllers/useAnswerNav'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useOptionsController } from './controllers/useOptionsController'
+import { usePlanController } from './controllers/usePlanController'
 import { useSatelliteController } from './controllers/useSatelliteController'
 import { useShellController } from './controllers/useShellController'
 import { useWhenController } from './controllers/useWhenController'
@@ -18,6 +18,7 @@ import { AnswerView } from './views/AnswerView'
 import { ComingSoonView } from './views/ComingSoonView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { OptionsView } from './views/OptionsView'
+import { PlanView } from './views/PlanView'
 import { SatelliteView } from './views/SatelliteView'
 import { ShellView } from './views/ShellView'
 import { StartView } from './views/StartView'
@@ -142,6 +143,26 @@ export function OptionsPage() {
   )
 }
 
+export function PlanPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.plan.title)
+  const state = usePlanController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <PlanView
+      t={t}
+      nav={state.nav}
+      status={state.status}
+      onRetry={state.retry}
+      scenario={state.scenario}
+      onScenario={state.chooseScenario}
+      area={state.area}
+      onArea={state.chooseArea}
+      plan={state.plan}
+    />
+  )
+}
+
 /** "Ver um exemplo pronto": abre a resposta da fazenda de exemplo (RF-11). */
 export function ExamplePage() {
   return <Navigate to={`/resposta${buildFlowQuery({ ...EXAMPLE_FARM, colheita: 'meio', exemplo: true })}`} replace />
@@ -154,26 +175,15 @@ export function DesignSystemPage() {
   return <DesignSystemView t={t} {...state} />
 }
 
-type PendingScreen = 'plan' | 'community' | 'method'
-
-/** Telas da resposta: navegam entre si pelas abas. */
-const ANSWER_SCREENS: readonly PendingScreen[] = ['plan']
+type PendingScreen = 'community' | 'method'
 
 /** Provisório até cada tela ficar pronta. */
 export function PendingPage({ screen }: { screen: PendingScreen }) {
   const { messages: t } = useI18n()
-  const answerNav = useAnswerNav()
   const titles: Record<PendingScreen, string> = {
-    plan: t.plan.title,
     community: t.community.title,
     method: t.method.title,
   }
   useDocumentTitle(titles[screen])
-  return (
-    <ComingSoonView
-      t={t}
-      title={titles[screen]}
-      answerNav={ANSWER_SCREENS.includes(screen) ? answerNav : undefined}
-    />
-  )
+  return <ComingSoonView t={t} title={titles[screen]} />
 }

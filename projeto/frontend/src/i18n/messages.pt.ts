@@ -212,6 +212,7 @@ export const pt = {
     normalText: 'Chuva parecida com a média dos últimos 20 anos.',
     dryText: 'Repetimos os anos mais secos dos últimos 20, parecido com El Niño forte.',
     swap: (from: string, year: number, to: string) => `O plano troca ${from} de ${year} por ${to}.`,
+    swapTagline: (from: string) => `No lugar de ${from}: aguenta mais a seca.`,
     withPlan: 'Com plano',
     today: 'Como é hoje',
     coveredAll: (total: number) => `Terra coberta nos ${total} anos`,
@@ -227,6 +228,7 @@ export const pt = {
     gainTitle: 'O ganho vem na soja seguinte',
     gainText:
       'Num estudo no Cerrado, a soja depois de grão com braquiária rendeu 11% a mais do que depois de terra parada.',
+    gainNote: 'Referência ilustrativa; estudo a confirmar.',
     backToAnswer: 'Voltar para a resposta',
     seeNeighbors: 'Ver o que os vizinhos plantaram',
   },

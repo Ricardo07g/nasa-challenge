@@ -111,3 +111,32 @@ export function optionsSummary(recomendacao: Recomendacao, axis: Eixo | null): {
   const outOfWindow = recomendacao.opcoes.filter((option) => !option.na_janela)
   return { options: [...sortOptions(inWindow, axis), ...outOfWindow], late: lateSummary(recomendacao) }
 }
+
+export type PlanScenario = 'normal' | 'seco'
+
+/** Pedaço da lavoura para começar o plano ("Comece por um pedaço"). */
+export type PlanArea = '50' | '100' | 'all'
+
+export type PlanView = {
+  years: { year: number; crop: CropId; swappedFrom: CropId | null }[]
+  summary: { grain: number; covered: number; total: number }
+  swaps: { year: number; from: CropId; to: CropId }[]
+  today: string
+}
+
+/** Tela 7: o plano de 3 anos no cenário escolhido (ano normal ou ano seco), a partir da soja que vem. */
+export function buildPlan(recomendacao: Recomendacao, scenario: PlanScenario): PlanView {
+  const { normal, seco, hoje } = recomendacao.plano_3_anos
+  const firstYear = harvestYear(recomendacao.entrada.semeadura)
+  const anos = scenario === 'seco' ? seco.anos : normal.anos
+  return {
+    years: anos.map((crop, index) => ({
+      year: firstYear + index,
+      crop,
+      swappedFrom: scenario === 'seco' && normal.anos[index] !== crop ? normal.anos[index] : null,
+    })),
+    summary: planSummary(anos),
+    swaps: scenario === 'seco' ? planSwaps(normal.anos, seco.anos, firstYear) : [],
+    today: hoje.descricao,
+  }
+}
