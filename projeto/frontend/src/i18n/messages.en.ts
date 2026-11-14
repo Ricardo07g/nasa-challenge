@@ -172,12 +172,15 @@ export const en = {
   satellite: {
     title: 'Done. The satellite saw the rest.',
     subtitle: "You don't need to fill in anything else.",
-    historyTitle: (idle: number, total: number) => `Your field was left idle in ${idle} of ${total} years`,
+    historyTitle: (idle: number, known: number, uncertain: number) =>
+      `Your field was left idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,
     historySubtitle: 'What grew after soybeans, year by year:',
-    historyStripLabel: (planted: number, total: number) => `Planted in ${planted} of ${total} years`,
+    historyStripLabel: (planted: number, known: number, uncertain: number) =>
+      `Planted in ${planted} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,
+    historySource: (from: string, to: string) => `Seen by the MODIS satellite (NASA), from ${from} to ${to} each year`,
     planted: 'Planted',
     idle: 'Left idle',
-    uncertain: 'Could not tell',
+    uncertain: 'Uncertain',
     rainTitle: '20 years of rain right here',
     rainSubtitle: (start: string, end: string) => `From ${start} to ${end}, day by day.`,
     soilTitle: (texture: string) => `${texture} soil`,

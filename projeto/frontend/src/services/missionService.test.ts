@@ -17,10 +17,20 @@ describe('tempos da missão (RF-19)', () => {
 })
 
 describe('missionFacts', () => {
+  type Situacao = NonNullable<Talhao['historico']>['anos'][number]['situacao']
+  const historico = (situacoes: Situacao[]) => ({
+    anos: situacoes.map((situacao, index) => ({ ano: 2016 + index, situacao, ndvi_max: null, n_obs: 12 })),
+    parado: situacoes.filter((s) => s === 'parado').length,
+    plantou: situacoes.filter((s) => s === 'plantou').length,
+    sem_certeza: situacoes.filter((s) => s === 'incerto' || s === 'sem_dado').length,
+    total: situacoes.length,
+    fonte: 'MODIS MOD13Q1 + MYD13Q1',
+    janela: '04-01 a 07-31',
+  })
   const talhao = {
     ponto: { lat: -18.9543, lon: -48.1993 },
     solo: { textura: 'argiloso', cad_mm: 75, fonte: 'soilgrids' },
-    historico: { anos: [], parado: 5, total: 10, fonte: 'modis' },
+    historico: historico(['parado', 'plantou', 'parado', 'plantou', 'parado', 'plantou', 'parado', 'plantou', 'parado', 'plantou']),
   } as unknown as Talhao
 
   it('o que cada fase mostra: ponto, terra, anos de histórico e o sinal do outono', () => {
@@ -32,6 +42,18 @@ describe('missionFacts', () => {
       historyYears: 10,
       signal: 'seco',
     })
+  })
+
+  it('os anos de histórico contam só os anos em que o satélite teve certeza', () => {
+    const uncertain = historico(['parado', 'plantou', 'incerto', 'sem_dado', 'parado'])
+
+    expect(missionFacts({ ...talhao, historico: uncertain }, {} as Recomendacao).historyYears).toBe(3)
+  })
+
+  it('sem nenhum ano certo, a fase diz que não há histórico', () => {
+    const none = historico(['incerto', 'sem_dado'])
+
+    expect(missionFacts({ ...talhao, historico: none }, {} as Recomendacao).historyYears).toBeNull()
   })
 
   it('sem histórico, sem mapa de solos e sem sinal na API, não inventa', () => {

@@ -11,12 +11,16 @@ const talhao: Partial<Talhao> = {
   solo: { textura: 'argiloso', cad_mm: 75, fonte: 'soilgrids' },
   historico: {
     anos: [
-      { ano: 2024, situacao: 'parado', ndvi_max: 0.42 },
-      { ano: 2025, situacao: 'plantou', ndvi_max: 0.71 },
+      { ano: 2023, situacao: 'sem_dado', ndvi_max: null, n_obs: 1 },
+      { ano: 2024, situacao: 'parado', ndvi_max: 0.42, n_obs: 12 },
+      { ano: 2025, situacao: 'plantou', ndvi_max: 0.71, n_obs: 13 },
     ],
     parado: 1,
-    total: 2,
-    fonte: 'modis_mod13q1',
+    plantou: 1,
+    sem_certeza: 1,
+    total: 3,
+    fonte: 'MODIS MOD13Q1 + MYD13Q1',
+    janela: '04-01 a 07-31',
   },
   dados: [{ fonte: 'gpm_imerg', periodo: '2006-2025' }],
 }
@@ -36,7 +40,8 @@ describe('useSatelliteController (tela 4)', () => {
 
     expect(result.current.status).toBe('loading')
     await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(result.current.history).toMatchObject({ idle: 1, planted: 1, total: 2 })
+    expect(result.current.history).toMatchObject({ idle: 1, planted: 1, uncertain: 1, known: 2, total: 3 })
+    expect(result.current.history?.window).toEqual({ from: 4, to: 7 })
     expect(result.current.rain).toEqual({ start: '2006', end: '2025' })
     expect(result.current.soil).toEqual({ textura: 'argiloso', source: 'map' })
     expect(d.farm.talhao).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993, exemplo: false }, 'pt')

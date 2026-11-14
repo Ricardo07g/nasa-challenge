@@ -3,20 +3,46 @@ import type { SituacaoAno, Talhao, Textura } from '../models/talhao'
 export type HistorySummary = {
   idle: number
   planted: number
+  /** Anos em que o satélite não teve certeza (`incerto` + `sem_dado`). */
+  uncertain: number
+  /** Anos certos (parado + plantou): a frase do cartão conta só esses. */
+  known: number
   total: number
   situations: SituacaoAno[]
   years: string[]
+  /** Meses olhados em cada ano (1 = janeiro), para a linha da fonte embaixo da faixa. */
+  window: { from: number; to: number }
 }
 
-/** Tela 4, cartão 1: o que cresceu depois da soja, ano a ano (NDVI do MODIS). Sem dado, o cartão some. */
+/** Janela do guia do NDVI (1º de abril a 31 de julho), para quando a API não manda a dela. */
+const DEFAULT_WINDOW = { from: 4, to: 7 }
+
+function historyWindow(janela: string | undefined): HistorySummary['window'] {
+  const match = /^(\d{2})-\d{2} a (\d{2})-\d{2}$/.exec(janela ?? '')
+  return match ? { from: Number(match[1]), to: Number(match[2]) } : DEFAULT_WINDOW
+}
+
+/**
+ * Tela 4, cartão 1: o que cresceu depois da soja, ano a ano (NDVI do MODIS). A frase conta só os anos
+ * certos ("parada em 5 de 9 anos (1 sem certeza)"). As contas saem dos próprios anos da faixa, para a
+ * frase nunca discordar dos quadrinhos. Sem dado, ou sem nenhum ano certo, o cartão some.
+ */
 export function historySummary(historico: Talhao['historico']): HistorySummary | null {
   if (!historico) return null
+  const count = (situacao: SituacaoAno) => historico.anos.filter((ano) => ano.situacao === situacao).length
+  const idle = count('parado')
+  const planted = count('plantou')
+  const known = idle + planted
+  if (known === 0) return null
   return {
-    idle: historico.parado,
-    planted: historico.anos.filter((ano) => ano.situacao === 'plantou').length,
-    total: historico.total,
+    idle,
+    planted,
+    uncertain: historico.anos.length - known,
+    known,
+    total: historico.anos.length,
     situations: historico.anos.map((ano) => ano.situacao),
     years: historico.anos.map((ano) => String(ano.ano)),
+    window: historyWindow(historico.janela),
   }
 }
 

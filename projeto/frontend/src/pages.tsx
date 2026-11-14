@@ -122,13 +122,14 @@ export function MissionPage() {
 }
 
 export function SatellitePage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.satellite.title)
   const state = useSatelliteController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
   return (
     <SatelliteView
       t={t}
+      lang={lang}
       backTo={state.backTo}
       status={state.status}
       onRetry={state.retry}
