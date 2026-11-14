@@ -32,7 +32,12 @@ class Settings(BaseSettings):
     solo_cache_path: Path | None = None
     ndvi_cache_path: Path | None = None
 
-    # Credenciais dos dados da NASA / Google. Só via ambiente, nunca no código.
+    # Credenciais dos dados da NASA. Só via ambiente, nunca no código.
+    # Token da Earthdata (urs.earthdata.nasa.gov): só os scripts de dados de IMERG, SMAP e
+    # AppEEARS usam. A API não precisa dele (ADR-0005).
+    earthdata_token: str | None = None
+    # Legado: login da Earthdata e projeto do Google Earth Engine. Saem quando a ADR-0005 for
+    # aceita (o token substitui o login; o Earth Engine fica fora do MVP).
     earthdata_username: str | None = None
     earthdata_password: str | None = None
     ee_project: str | None = None
