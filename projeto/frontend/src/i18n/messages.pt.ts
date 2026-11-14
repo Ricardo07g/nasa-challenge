@@ -12,6 +12,8 @@ export const pt = {
     mockNotice: 'Dados de exemplo: o motor de cálculo ainda não está ligado.',
     disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
     ready: 'Pronto',
+    comingSoonTitle: 'Tela em construção',
+    comingSoonText: 'Esta tela do protótipo ainda está sendo feita.',
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',

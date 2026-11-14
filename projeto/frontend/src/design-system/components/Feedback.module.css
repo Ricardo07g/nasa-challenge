@@ -1,0 +1,42 @@
+.loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) 0;
+  color: var(--color-text-muted);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid var(--color-border-control);
+  border-top-color: var(--color-primary);
+  animation: spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-tint-orange);
+  color: var(--color-title-on-orange-tint);
+}
+
+.retry {
+  max-width: 280px;
+}

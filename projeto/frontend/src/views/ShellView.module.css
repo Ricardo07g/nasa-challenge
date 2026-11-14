@@ -1,0 +1,25 @@
+.shell {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.main {
+  width: 100%;
+  max-width: var(--page-max-width);
+  padding: 16px var(--page-gutter) 40px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  flex: 1 0 auto;
+}
+
+.notice {
+  width: 100%;
+  max-width: var(--page-max-width);
+  padding: 0 var(--page-gutter) 24px;
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-muted);
+}

@@ -1,9 +1,15 @@
-import { useHomeController } from './controllers/useHomeController'
-import { HomeView } from './views/HomeView'
+import { createBrowserRouter, RouterProvider } from 'react-router'
+import { I18nProvider } from './i18n/I18nProvider'
+import { routes } from './routes'
+
+const router = createBrowserRouter(routes)
 
 function App() {
-  const state = useHomeController()
-  return <HomeView {...state} />
+  return (
+    <I18nProvider>
+      <RouterProvider router={router} />
+    </I18nProvider>
+  )
 }
 
 export default App

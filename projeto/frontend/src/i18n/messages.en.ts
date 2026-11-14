@@ -11,6 +11,8 @@ export const en = {
     mockNotice: 'Sample data: the scoring engine is not connected yet.',
     disclaimer: 'It helps you decide. It does not replace your agronomist.',
     ready: 'Done',
+    comingSoonTitle: 'Screen under construction',
+    comingSoonText: 'This prototype screen is still being built.',
   },
   header: {
     home: 'Raiz Orbital, back to start',
