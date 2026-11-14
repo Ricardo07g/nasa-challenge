@@ -33,6 +33,12 @@ from app.repositories.ndvi_repository import (
     NdviRepository,
 )
 from app.repositories.rules_repository import RulesRepository, YamlRulesRepository
+from app.repositories.sinal_outono_repository import (
+    NoAutumnSignalDataRepository,
+    RecentRainRepository,
+    RecentSoilMoistureRepository,
+    SeasonalForecastRepository,
+)
 from app.repositories.soil_repository import (
     CachedSoilGridsRepository,
     PostgisSoilRepository,
@@ -44,6 +50,7 @@ from app.services.field_history_service import FieldHistoryService
 from app.services.recommendation_service import RecommendationService
 from app.services.rotation_plan_service import RotationPlanService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
+from app.services.sinal_outono_service import SinalOutonoService
 from app.services.talhao_service import TalhaoService
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
@@ -148,6 +155,36 @@ def get_rotation_plan_service(rules: Annotated[Regras, Depends(get_rules)]) -> R
     return RotationPlanService(rules)
 
 
+# Sinal para o outono (RF-20): GEOS-S2S, SMAP e chuva recente chegam nas tarefas A2.1 a A2.3.
+# Até lá, nenhuma fonte tem dado e o `sinal` de /recomendacao sai nulo.
+
+
+@lru_cache
+def get_seasonal_forecast_repository() -> SeasonalForecastRepository:
+    return NoAutumnSignalDataRepository()
+
+
+@lru_cache
+def get_recent_soil_moisture_repository() -> RecentSoilMoistureRepository:
+    return NoAutumnSignalDataRepository()
+
+
+@lru_cache
+def get_recent_rain_repository() -> RecentRainRepository:
+    return NoAutumnSignalDataRepository()
+
+
+def get_sinal_outono_service(
+    forecast_repo: Annotated[SeasonalForecastRepository, Depends(get_seasonal_forecast_repository)],
+    soil_moisture_repo: Annotated[
+        RecentSoilMoistureRepository, Depends(get_recent_soil_moisture_repository)
+    ],
+    rain_repo: Annotated[RecentRainRepository, Depends(get_recent_rain_repository)],
+    rules: Annotated[Regras, Depends(get_rules)],
+) -> SinalOutonoService:
+    return SinalOutonoService(forecast_repo, soil_moisture_repo, rain_repo, rules)
+
+
 def get_talhao_service(
     climate_repo: Annotated[ClimateRepository, Depends(get_climate_repository)],
     soil_repo: Annotated[SoilRepository, Depends(get_soil_repository)],
@@ -176,6 +213,7 @@ def get_recommendation_service(
     ingestion_service: Annotated[
         SatelliteIngestionService | None, Depends(get_satellite_ingestion_service)
     ],
+    sinal_service: Annotated[SinalOutonoService, Depends(get_sinal_outono_service)],
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=crop_repo,
@@ -185,4 +223,5 @@ def get_recommendation_service(
         plan_service=plan_service,
         rules=rules,
         ingestion_service=ingestion_service,
+        sinal_service=sinal_service,
     )

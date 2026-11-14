@@ -35,6 +35,7 @@ from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_ce
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
+from app.services.sinal_outono_service import SinalOutonoService
 
 RAIN_SOURCE_NAMES = {"nasa_power": "NASA POWER", "imerg_final": "GPM IMERG + NASA POWER"}
 SOIL_SOURCE_PT = {
@@ -203,6 +204,7 @@ class RecommendationService:
         plan_service: RotationPlanService,
         rules: Regras | None = None,
         ingestion_service: IngestionServiceProtocol | None = None,
+        sinal_service: SinalOutonoService | None = None,
     ) -> None:
         self._crop_repo = crop_repo
         self._climate_repo = climate_repo
@@ -211,6 +213,7 @@ class RecommendationService:
         self._plan_service = plan_service
         self._rules = rules if rules is not None else load_default_rules()
         self._ingestion_service = ingestion_service
+        self._sinal_service = sinal_service
 
     def recommend(
         self,
@@ -331,6 +334,19 @@ class RecommendationService:
                 "Decision support only. It does not replace an agronomist."
                 if is_en
                 else "Ajuda a decidir. Não substitui o agrônomo."
+            ),
+            sinal=(
+                self._sinal_service.evaluate(
+                    lat=lat,
+                    lon=lon,
+                    plano_a=plano_normal,
+                    plano_b=plano_seco,
+                    opcoes=opcoes,
+                    semeadura=semeadura,
+                    lang=lang,
+                )
+                if self._sinal_service is not None
+                else None
             ),
         )
 

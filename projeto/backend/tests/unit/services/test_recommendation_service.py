@@ -9,6 +9,7 @@ from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
 from app.models.recomendacao import Alternativa, NotasOpcao, Recomendacao, ResultadoOpcao
 from app.models.regras import Regras
+from app.models.sinal_outono import RecentRain, RecentSoilMoisture, SeasonalForecast
 from app.models.talhao import SoloInfo
 from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
@@ -19,6 +20,7 @@ from app.services.recommendation_service import (
     soil_score,
 )
 from app.services.rotation_plan_service import RotationPlanService
+from app.services.sinal_outono_service import SinalOutonoService
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
 DAYS = 212
@@ -147,6 +149,7 @@ def _service(
     climate: FakeClimateRepository | None = None,
     rules: Regras | None = None,
     ingestion: FakeIngestionService | None = None,
+    sinal: SinalOutonoService | None = None,
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=FakeCropParamsRepository(),
@@ -156,7 +159,21 @@ def _service(
         plan_service=RotationPlanService(),
         rules=rules,
         ingestion_service=ingestion,
+        sinal_service=sinal,
     )
+
+
+class FakeForecastOnly:
+    """Só a previsão do GEOS-S2S (60% de chance de chuva abaixo do normal); sem dado da terra."""
+
+    def get_seasonal_forecast(self, lat: float, lon: float) -> SeasonalForecast | None:
+        return SeasonalForecast(chance_abaixo_normal=0.6, data=date(2027, 2, 1))
+
+    def get_recent_soil_moisture(self, lat: float, lon: float) -> RecentSoilMoisture | None:
+        return None
+
+    def get_recent_rain(self, lat: float, lon: float) -> RecentRain | None:
+        return None
 
 
 def _opcao(rec: Recomendacao, crop_id: str) -> ResultadoOpcao:
@@ -392,6 +409,29 @@ def test_should_give_fallow_future_100_when_cmip6_deltas_exist() -> None:
 
     assert rec.plano_hoje.anos == ("pousio", "pousio", "pousio")
     assert rec.plano_hoje.nota == 45.0
+
+
+def test_should_leave_autumn_signal_empty_without_signal_data() -> None:
+    # Não inventa previsão: sem o service (ou sem dado), `sinal` fica nulo.
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert rec.sinal is None
+
+
+def test_should_add_autumn_signal_with_plan_a_and_plan_b_of_the_recommendation() -> None:
+    # PRD 7.10: o Plano A é o melhor plano do ano normal e o Plano B, o do ano seco
+    data = FakeForecastOnly()
+    sinal_service = SinalOutonoService(data, data, data)
+
+    rec = _service(sinal=sinal_service).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert rec.sinal is not None
+    assert rec.sinal.nivel == "seco"
+    assert rec.sinal.fonte == ("GEOS-S2S",)
+    primeira_a = _opcao(rec, rec.plano_normal.anos[0])
+    assert rec.sinal.regra_dia_plantar.data_limite == date.fromisoformat(
+        primeira_a.data_limite or ""
+    )
 
 
 def test_should_write_texts_in_english_when_language_is_en() -> None:

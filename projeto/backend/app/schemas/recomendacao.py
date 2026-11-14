@@ -5,6 +5,7 @@ from datetime import date
 from pydantic import BaseModel, ConfigDict
 
 from app.models.recomendacao import NotasOpcao, PlanoRotacao, Recomendacao, ResultadoOpcao
+from app.models.sinal_outono import NivelSinal, SinalOutono
 from app.schemas.talhao import TalhaoResponse
 
 
@@ -146,6 +147,34 @@ class Plano3AnosSchema(_Frozen):
     hoje: PlanoSchema
 
 
+class RegraDiaPlantarSchema(_Frozen):
+    data_limite: date
+    texto: str
+
+
+class SinalSchema(_Frozen):
+    """Sinal para o outono (RF-20): `SinalOutono` do front (`src/models/recomendacao.ts`)."""
+
+    nivel: NivelSinal
+    motivo: str
+    fonte: list[str]
+    data: date
+    regra_dia_plantar: RegraDiaPlantarSchema
+
+    @classmethod
+    def from_model(cls, sinal: SinalOutono) -> "SinalSchema":
+        return cls(
+            nivel=sinal.nivel,
+            motivo=sinal.motivo,
+            fonte=list(sinal.fonte),
+            data=sinal.data,
+            regra_dia_plantar=RegraDiaPlantarSchema(
+                data_limite=sinal.regra_dia_plantar.data_limite,
+                texto=sinal.regra_dia_plantar.texto,
+            ),
+        )
+
+
 class RecomendacaoResponse(_Frozen):
     """Resposta de /api/recomendacao."""
 
@@ -158,6 +187,8 @@ class RecomendacaoResponse(_Frozen):
     plano_3_anos: Plano3AnosSchema
     versao_dados: str
     aviso: str
+    # Nulo enquanto não houver previsão nem dado da terra (nada de previsão inventada)
+    sinal: SinalSchema | None = None
 
     @classmethod
     def from_model(cls, rec: Recomendacao) -> "RecomendacaoResponse":
@@ -186,6 +217,7 @@ class RecomendacaoResponse(_Frozen):
             ),
             versao_dados=rec.versao_dados,
             aviso=rec.aviso,
+            sinal=SinalSchema.from_model(rec.sinal) if rec.sinal is not None else None,
         )
 
 

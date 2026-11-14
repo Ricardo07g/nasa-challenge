@@ -8,10 +8,13 @@ Entradas, uma por fonte (tarefas A2.1 a A2.3 do roteiro):
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Literal
 
 from app.models.validation import require_between, require_finite
 
 MAX_PERCENTILE = 100.0
+
+NivelSinal = Literal["normal", "seco", "incerto"]
 
 
 @dataclass(frozen=True)
@@ -72,7 +75,7 @@ class RegraDiaPlantar:
 class SinalOutono:
     """Sinal para o outono: `seco`, `normal` ou `incerto`, com o motivo e as fontes (RF-20)."""
 
-    nivel: str
+    nivel: NivelSinal
     motivo: str
     fonte: tuple[str, ...]
     data: date  # data do dado mais importante usado (a previsão, ou o dado da terra sem ela)

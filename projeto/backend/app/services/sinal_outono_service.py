@@ -16,6 +16,7 @@ from datetime import date
 from app.models.recomendacao import PlanoRotacao, ResultadoOpcao
 from app.models.regras import Regras, RegrasSinalOutono
 from app.models.sinal_outono import (
+    NivelSinal,
     RecentRain,
     RecentSoilMoisture,
     RegraDiaPlantar,
@@ -29,7 +30,9 @@ from app.repositories.sinal_outono_repository import (
     SeasonalForecastRepository,
 )
 
-SECO, NORMAL, INCERTO = "seco", "normal", "incerto"
+SECO: NivelSinal = "seco"
+NORMAL: NivelSinal = "normal"
+INCERTO: NivelSinal = "incerto"
 SOURCE_FORECAST, SOURCE_SOIL, SOURCE_RAIN = "GEOS-S2S", "SMAP", "GPM IMERG"
 FALLOW_NAME = {"pt": "pousio", "en": "fallow"}
 MONTHS_PT = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
@@ -117,7 +120,7 @@ class SinalOutonoService:
             regra_dia_plantar=self._planting_rule(plano_a, plano_b, opcoes, semeadura, lang_key),
         )
 
-    def _level(self, forecast: SeasonalForecast | None, soil: _Soil | None) -> str:
+    def _level(self, forecast: SeasonalForecast | None, soil: _Soil | None) -> NivelSinal:
         regras = self._regras
         chance = forecast.chance_abaixo_normal if forecast else None
         if (chance is not None and chance >= regras.chance_seco_min) or (
