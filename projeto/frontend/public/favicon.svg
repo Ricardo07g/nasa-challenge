@@ -1,10 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <!-- Símbolo do Raiz Orbital (mesmo do cabeçalho): terra verde, órbita azul e broto.
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 64 64">
+  <!-- Símbolo do Raiz Orbital (mesmo do cabeçalho): Terra verde, órbita azul e broto.
+       Traço mais grosso que no cabeçalho para continuar legível em 16-32 px.
        Fundo branco arredondado para ficar legível em abas claras e escuras. -->
-  <rect width="32" height="32" rx="7" fill="#FFFFFF"/>
-  <g transform="translate(1 1)">
-    <circle cx="15" cy="15" r="12.6" fill="none" stroke="#1F6B47" stroke-width="2.4"/>
-    <ellipse cx="15" cy="15" rx="13" ry="5" fill="none" stroke="#1D5FA8" stroke-width="2" transform="rotate(-25 15 15)"/>
-    <path d="M15 8.5v13M15 15c-3 0-5-2-5-5M15 17.2c3 0 5-2 5-5" fill="none" stroke="#1F6B47" stroke-width="2.3" stroke-linecap="round"/>
+  <rect width="64" height="64" rx="14" fill="#FFFFFF"/>
+  <g transform="translate(3.2 3.2) scale(0.9)">
+    <circle cx="32" cy="32" r="24" fill="none" stroke="#1F6B47" stroke-width="3.6"/>
+    <ellipse cx="32" cy="32" rx="31" ry="13" transform="rotate(-32 32 32)" fill="none" stroke="#1D5FA8" stroke-width="3.4"/>
+    <path d="M32 36C20 37 18 29 19 24C27 24 31 27 32 36ZM32 32C32 22 39 18 45 20C45 28 40 33 32 32ZM31 28C25 23 26 17 30 13C35 18 36 22 31 28Z" fill="#1F6B47"/>
   </g>
 </svg>

@@ -7,6 +7,7 @@ import { AppHeader, type AppHeaderProps } from './Header'
 function setup(overrides: Partial<AppHeaderProps> = {}) {
   const props: AppHeaderProps = {
     homeLabel: 'Raiz Orbital, voltar ao início',
+    slogan: 'Do espaço até a raiz.',
     listen: {
       supported: true,
       speaking: false,
@@ -32,6 +33,12 @@ describe('AppHeader', () => {
     setup()
 
     expect(screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })).toHaveAttribute('href', '/')
+  })
+
+  it('mostra o slogan ao lado do nome', () => {
+    setup()
+
+    expect(screen.getByText('Do espaço até a raiz.')).toBeInTheDocument()
   })
 
   it('o botão Ouvir chama o controller e mostra quando está falando', async () => {

@@ -1,15 +1,50 @@
-/* Layouts compartilhados pelas telas (fluido como o protótipo: flex-wrap + clamp, sem media queries). */
+/* Layouts compartilhados pelas telas (fluido: flex-wrap + clamp, sem media queries). */
 
+/* Contêiner padrão das telas: centralizado, até 1240 px, com respiro em cima e embaixo. */
 .page {
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  padding: clamp(20px, 3vw, 32px) var(--page-gutter) clamp(36px, 5vw, 64px);
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-stack);
+}
+
+/* Topo das perguntas: "← Voltar" à esquerda e "Pergunta 1 de 2" à direita */
+.topLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Mapa grande (2/3) e painel ao lado (1/3); uma coluna no celular */
+.mapGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-grid);
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .mapGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack);
+  min-width: 0;
 }
 
 .columns {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-5);
+  gap: var(--space-grid);
   align-items: flex-start;
 }
 
@@ -18,7 +53,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-stack);
 }
 
 .wide {
@@ -30,30 +65,43 @@
 }
 
 .cta {
-  max-width: 420px;
+  max-width: 340px;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 15px;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-stack);
 }
 
 .sectionTitle {
+  font-family: var(--font-display);
   font-size: var(--font-size-section);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
 }
 
 .muted {
   font-size: var(--font-size-small);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .cardTitle {
+  font-family: var(--font-display);
   font-size: var(--font-size-title);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+/* Aviso curto dentro de um cartão (ex.: GPS falhou) */
+.notice {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-tint-blue);
+  color: var(--color-text-on-blue-tint);
+  font-size: var(--font-size-small);
 }

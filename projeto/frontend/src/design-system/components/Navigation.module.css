@@ -1,35 +1,47 @@
+/* "← Voltar": botão fantasma verde; a margem negativa alinha a seta com o conteúdo */
 .back {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-height: var(--touch-min);
+  padding: 0 20px;
+  margin-left: -16px;
+  border-radius: var(--radius-md);
   font-size: var(--font-size-body);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
   text-decoration: none;
   align-self: flex-start;
+  transition: background-color 0.15s ease;
 }
 
+.back:hover {
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+}
+
+/* "Pergunta 1 de 2" com as barrinhas */
 .stepper {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: clamp(7px, 1vw, 12px);
 }
 
 .stepperLabel {
-  font-size: var(--font-size-caption);
+  font-size: clamp(13px, 1.4vw, 15px);
   color: var(--color-text-muted);
 }
 
 .bars {
   display: flex;
-  gap: 4px;
+  gap: 5px;
 }
 
 .bar {
-  width: 28px;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--color-border-control);
+  width: clamp(22px, 3vw, 34px);
+  height: 5px;
+  border-radius: 4px;
+  background: var(--color-border);
 }
 
 .bar[data-done='true'] {

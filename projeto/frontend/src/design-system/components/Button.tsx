@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { ArrowRightIcon } from '../icons'
 import styles from './Button.module.css'
 
 export type ButtonVariant = 'primary' | 'outline' | 'outline-blue' | 'compact'
@@ -10,6 +11,10 @@ type CommonProps = {
   icon?: ReactNode
   /** Ocupa a largura toda do contêiner (padrão nos CTAs das telas). */
   fullWidth?: boolean
+  /** Seta → no fim: a ação avança no fluxo (Começar, É aqui, Ver a resposta). */
+  arrow?: boolean
+  /** Outro ícone no fim (ex.: ↗ quando abre um exemplo). */
+  iconEnd?: ReactNode
 }
 
 type AsButton = CommonProps & {
@@ -26,12 +31,14 @@ type AsLink = CommonProps & {
 export type ButtonProps = AsButton | AsLink
 
 export function Button(props: ButtonProps) {
-  const { children, variant = 'primary', icon, fullWidth = true } = props
+  const { children, variant = 'primary', icon, iconEnd, fullWidth = true, arrow = false } = props
   const className = styles.button
   const content = (
     <>
       {icon}
       <span>{children}</span>
+      {arrow && <ArrowRightIcon />}
+      {iconEnd}
     </>
   )
 

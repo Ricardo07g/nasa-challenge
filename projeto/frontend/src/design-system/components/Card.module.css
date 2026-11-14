@@ -1,69 +1,78 @@
-.card {
+/* Cartão base: branco, borda fina, raio 18 e bastante respiro (28 px; 22 px no celular). */
+.card,
+.dataSource,
+.alternative,
+.source {
   border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  border: 1px solid transparent;
+  padding: var(--space-panel);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  min-width: 0;
 }
 
-.card[data-tone='white'] {
-  background: var(--color-surface);
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .card[data-tone='green'] {
   background: var(--color-tint-green);
+  border-color: var(--color-border-green-tint);
   color: var(--color-text-on-green-tint);
 }
 
 .card[data-tone='blue'] {
   background: var(--color-tint-blue);
+  border-color: var(--color-border-blue-tint);
   color: var(--color-text-on-blue-tint);
 }
 
 .card[data-tone='orange'] {
   background: var(--color-tint-orange);
+  border-color: var(--color-border-orange-tint);
+  color: var(--color-title-on-orange-tint);
 }
 
 .card[data-highlighted='true'] {
   border: 2px solid var(--color-primary);
 }
 
+/* Aviso do satélite: cartão azul com o ícone ao lado */
 .banner {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-4);
   align-items: flex-start;
-  padding: var(--space-4);
-  border-radius: var(--radius-sm);
+  padding: var(--space-panel);
+  border-radius: var(--radius-lg);
   background: var(--color-tint-blue);
+  border: 1px solid var(--color-border-blue-tint);
   color: var(--color-text-on-blue-tint);
-  font-size: var(--font-size-small);
 }
 
 .bannerIcon {
   color: var(--color-secondary);
   flex: 0 0 auto;
+  display: flex;
 }
 
+/* Fonte de dado (tela 4): bolinha com ícone, título, subtítulo e o ✓ de pronto */
 .dataSource {
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .dataSourceHead {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  align-items: flex-start;
+  gap: 16px;
 }
 
 .bubble {
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
+  flex: 0 0 auto;
+  width: clamp(38px, 4vw, 48px);
+  height: clamp(38px, 4vw, 48px);
   border-radius: 50%;
   background: var(--color-tint-green);
   display: flex;
@@ -73,31 +82,35 @@
 }
 
 .bubble[data-tone='blue'] {
+  background: var(--color-tint-blue);
   color: var(--color-secondary);
 }
 
 .bubble[data-tone='soil'] {
+  background: var(--color-tint-orange);
   color: var(--color-soil);
 }
 
 .bubble[data-tone='risk'] {
+  background: var(--color-tint-orange);
   color: var(--color-risk);
 }
 
 .dataSourceText {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .dataSourceTitle {
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-bold);
-  line-height: 1.3;
+  font-size: clamp(19px, 1.8vw, 22px);
 }
 
 .dataSourceSubtitle {
   font-size: var(--font-size-small);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .ready {
@@ -106,54 +119,54 @@
   display: flex;
 }
 
+/* Alternativa ("Se você prefere…") */
 .alternative {
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 12px;
 }
 
 .alternativeLabel {
-  font-size: var(--font-size-caption);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: var(--font-size-tiny);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
 }
 
+.alternativeLabel svg {
+  width: 17px;
+  height: 17px;
+}
+
 .alternativeTitle {
-  font-size: 19px;
-  font-weight: var(--font-weight-bold);
-  margin: 0;
+  font-size: var(--font-size-title);
 }
 
 .alternativeText {
   font-size: var(--font-size-small);
-  color: var(--color-text-secondary);
 }
 
+/* Fonte de dados (como funciona) */
 .source {
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2);
 }
 
 .sourceWhat {
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-bold);
-  margin: 0;
+  font-size: 18px;
 }
 
 .sourceName {
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-semibold);
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
   color: var(--color-primary);
 }
 
 .sourceScale {
-  font-size: var(--font-size-caption);
+  font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }

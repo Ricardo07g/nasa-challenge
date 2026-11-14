@@ -45,6 +45,13 @@ describe('WhereView (tela 2)', () => {
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('href', '/')
   })
 
+  it('mostra no painel o lugar e as coordenadas do ponto escolhido', () => {
+    setup()
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Perto de Uberlândia (MG)' })).toBeInTheDocument()
+    expect(screen.getByText('Local escolhido: -18.9200, -48.2800')).toBeInTheDocument()
+  })
+
   it('usa o GPS e confirma o ponto', async () => {
     const props = setup()
 

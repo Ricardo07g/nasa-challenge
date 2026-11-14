@@ -16,11 +16,16 @@ export const en = {
   },
   header: {
     home: 'Raiz Orbital, back to start',
+    slogan: 'From space to your roots.',
     listen: 'Listen',
     stop: 'Stop',
     listenLabel: 'Read this screen aloud',
     stopLabel: 'Stop reading',
     langToggleLabel: 'Switch language: Portuguese or English',
+  },
+  footer: {
+    agronomist: "I'm an agronomist: how the score is calculated",
+    project: 'NASA Space Apps Challenge 2026 · Field Shift',
   },
   nav: {
     back: 'Back',
@@ -84,7 +89,14 @@ export const en = {
     stepMark: '1. Mark your field',
     stepHarvest: '2. Tell us when you harvest',
     stepAnswer: '3. See the answer',
-    agronomist: "I'm an agronomist: how the score is calculated",
+    stepMarkText: 'One point on the map. That is all.',
+    stepHarvestText: 'Your soybean harvest time.',
+    stepAnswerText: 'The best path for your land.',
+    stepsTitle: 'A good next harvest starts with a good choice.',
+    stepsEyebrow: 'From NASA to your field',
+    photoAlt: 'Crop rows in the Brazilian Cerrado',
+    nasaData: 'NASA data',
+    region: 'Triângulo Mineiro · MG',
   },
   where: {
     title: 'Where is your field?',
@@ -94,6 +106,7 @@ export const en = {
     locating: 'Finding your location…',
     locationError: 'We could not find your location. Drag the map to your field.',
     help: 'Or drag the map until the pin is on your field.',
+    selected: (coordinates: string) => `Selected location: ${coordinates}`,
     confirm: "It's here",
     outsideTitle: "We're not there yet",
     outsideText:
@@ -249,6 +262,7 @@ export const en = {
     colors: 'Colors',
     typography: 'Typography',
     shapes: 'Radii and spacing',
+    icons: 'Icons',
     components: 'Components',
     environment: 'Environment',
     apiMode: (mode: string) => `Data mode: ${mode}`,

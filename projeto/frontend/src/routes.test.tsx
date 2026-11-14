@@ -28,6 +28,17 @@ describe('rotas', () => {
     expect(screen.getByRole('main')).toBeInTheDocument()
   })
 
+  it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
+    renderAt('/onde')
+
+    const footer = await screen.findByRole('contentinfo')
+    expect(footer).toHaveTextContent('Ajuda a decidir. Não substitui o seu agrônomo.')
+    expect(screen.getByRole('link', { name: 'Sou agrônomo(a): como a conta é feita' })).toHaveAttribute(
+      'href',
+      '/como-funciona',
+    )
+  })
+
   it('o início fica igual ao protótipo: sem aviso de dados de exemplo e com o título da aba dele', async () => {
     renderAt('/')
 

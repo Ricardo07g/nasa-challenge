@@ -1,9 +1,10 @@
 import { Link } from 'react-router'
-import { LogoMark, SpeakerIcon } from '../icons'
+import { LogoMark, SpeakerIcon, StopIcon } from '../icons'
 import styles from './Header.module.css'
 
 export type AppHeaderProps = {
   homeLabel: string
+  slogan: string
   listen: {
     supported: boolean
     speaking: boolean
@@ -20,14 +21,15 @@ export type AppHeaderProps = {
   }
 }
 
-export function AppHeader({ homeLabel, listen, lang }: AppHeaderProps) {
+export function AppHeader({ homeLabel, slogan, listen, lang }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link to="/" className={styles.logo} aria-label={homeLabel}>
           <LogoMark />
-          <span className={styles.logoText} aria-hidden="true">
-            Raiz Orbital
+          <span className={styles.brand} aria-hidden="true">
+            <span className={styles.brandName}>Raiz Orbital</span>
+            <span className={styles.slogan}>{slogan}</span>
           </span>
         </Link>
         <div className={styles.actions}>
@@ -39,13 +41,15 @@ export function AppHeader({ homeLabel, listen, lang }: AppHeaderProps) {
               aria-pressed={listen.speaking}
               onClick={listen.onToggle}
             >
-              <SpeakerIcon />
-              {listen.speaking ? listen.stopText : listen.text}
+              {listen.speaking ? <StopIcon /> : <SpeakerIcon />}
+              <span className={styles.listenText}>{listen.speaking ? listen.stopText : listen.text}</span>
             </button>
           )}
           <button type="button" className={styles.lang} aria-label={lang.label} onClick={lang.onToggle}>
             <span data-active={lang.current === 'pt'}>PT</span>
-            <span aria-hidden="true"> | </span>
+            <span className={styles.divider} aria-hidden="true">
+              |
+            </span>
             <span data-active={lang.current === 'en'}>EN</span>
           </button>
         </div>

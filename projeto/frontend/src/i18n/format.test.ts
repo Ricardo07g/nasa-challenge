@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatCurrency, formatDayMonth, formatNumber } from './format'
+import { formatCoordinates, formatCurrency, formatDayMonth, formatNumber } from './format'
 
 const normalize = (text: string) => text.replace(/\s/g, ' ')
 
@@ -8,6 +8,10 @@ describe('format', () => {
     expect(normalize(formatCurrency('pt', 700))).toBe('R$ 700')
     expect(normalize(formatCurrency('pt', 1250))).toBe('R$ 1.250')
     expect(normalize(formatCurrency('en', 1250))).toBe('R$1,250')
+  })
+
+  it('mostra as coordenadas do ponto com 4 casas, latitude primeiro', () => {
+    expect(formatCoordinates({ lat: -18.92, lon: -48.28 })).toBe('-18.9200, -48.2800')
   })
 
   it('formata números com o separador do idioma', () => {

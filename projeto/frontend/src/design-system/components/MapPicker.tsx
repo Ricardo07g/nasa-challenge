@@ -56,10 +56,13 @@ export function MapPicker({ label, center, placeLabel, onMove }: MapPickerProps)
         <FollowCenter center={center} />
         <ReportMoves onMove={onMove} />
       </MapContainer>
-      <span className={styles.pin} aria-hidden="true">
-        <PinIcon size={44} />
-      </span>
-      {placeLabel && <span className={styles.place}>{placeLabel}</span>}
+      <span className={styles.pin} aria-hidden="true" />
+      {placeLabel && (
+        <span className={styles.place}>
+          <PinIcon size={16} />
+          {placeLabel}
+        </span>
+      )}
     </section>
   )
 }

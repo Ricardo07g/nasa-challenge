@@ -1,5 +1,6 @@
 /*
- * Tokens do design system do Raiz Orbital (valores do protótipo v3).
+ * Tokens do design system do Raiz Orbital.
+ * Cores do protótipo v3; forma, tipografia e espaços da interface nova (Lovable, nov/2026).
  * Regra: componentes e telas usam SEMPRE estas variáveis, nunca hex solto.
  */
 :root {
@@ -32,6 +33,9 @@
   --color-border: #dde3e0;
   --color-divider: #edf1ef;
   --color-border-strong: #7c8984;
+  --color-border-green-tint: #d9ecdf;
+  --color-border-blue-tint: #dbe5f1;
+  --color-border-orange-tint: #fbe3d0;
 
   /* Status (rótulos Bom/Médio/Fraco e risco) */
   --color-good-bg: #d9ecdf;
@@ -53,34 +57,60 @@
   --color-hero-bg: #e3ece7;
   --color-hero-field: #b8d1c2;
 
-  /* Tipografia */
+  /* Foto do início: base quase branca e degradê que clareia o lado do texto */
+  --color-hero-light: #fbfefc;
+  --hero-wash: linear-gradient(
+    90deg,
+    var(--color-hero-light) 0%,
+    rgb(251 254 252 / 98%) 28%,
+    rgb(251 254 252 / 88%) 45%,
+    rgb(251 254 252 / 20%) 68%,
+    transparent 100%
+  );
+  --hero-wash-mobile: linear-gradient(
+    90deg,
+    var(--color-hero-light) 0%,
+    rgb(251 254 252 / 97%) 45%,
+    rgb(251 254 252 / 70%) 100%
+  );
+
+  /* Sombra suave (legendas sobre o mapa, selos flutuantes) */
+  --shadow-soft: 0 8px 30px rgb(20 33 28 / 6%);
+
+  /* Tipografia: Inter no texto, Space Grotesk nos títulos */
   --font-body: 'Inter', system-ui, sans-serif;
   --font-display: 'Space Grotesk', 'Inter', sans-serif;
-  --font-size-hero: clamp(36px, 4.6vw, 56px);
+  --font-size-hero: clamp(40px, 4.6vw, 56px);
   --font-size-h1: clamp(30px, 3.4vw, 40px);
-  --font-size-best: clamp(32px, 3.4vw, 42px);
-  --font-size-section: 20px;
-  --font-size-title: 17px;
+  --font-size-best: clamp(32px, 3vw, 38px);
+  --font-size-section: clamp(22px, 2vw, 25px);
+  --font-size-title: clamp(19px, 1.6vw, 21px);
+  --font-size-brand: clamp(20px, 2.2vw, 25px);
   --font-size-lead: 18px;
-  --font-size-body: 16px;
+  --font-size-body: 17px;
   --font-size-small: 15px;
   --font-size-caption: 14px;
   --font-size-tiny: 13px;
+  --font-size-micro: 11px;
   --font-weight-regular: 400;
+  --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  --line-height-tight: 1.1;
-  --line-height-body: 1.45;
+  --line-height-tight: 1.18;
+  --line-height-body: 1.6;
 
   /* Raios */
   --radius-hero: 24px;
   --radius-xl: 20px;
-  --radius-lg: 18px;
-  --radius-md: 16px;
-  --radius-sm: 14px;
+  --radius-lg: 18px; /* cartões e mapa */
+  --radius-md: 16px; /* botões */
+  --radius-sm: 14px; /* opções de rádio, campos */
   --radius-xs: 12px;
   --radius-2xs: 10px;
-  --radius-cell: 4px;
+  --radius-tag: 8px; /* legendas sobre o mapa */
+  --radius-badge: 7px; /* rótulos Bom/Médio/Fraco */
+  --radius-year: 6px; /* ano na linha do tempo */
+  --radius-cell: 3px; /* quadrinhos dos anos */
   --radius-pill: 999px;
 
   /* Espaços */
@@ -90,15 +120,19 @@
   --space-4: 14px;
   --space-5: 18px;
   --space-6: 28px;
-  --page-gutter: clamp(16px, 4vw, 40px);
+  --space-stack: 22px; /* entre cartões de uma coluna */
+  --space-grid: 28px; /* entre colunas */
+  --space-panel: clamp(22px, 3vw, 28px); /* respiro interno dos cartões */
+  --page-gutter: clamp(20px, 3vw, 32px);
   --page-max-width: 1240px;
+  --header-height: clamp(82px, 8vw, 100px);
 
   /* Alvos de toque (PRD: mínimo 48 px nos botões, 60 px nos principais) */
-  --touch-min: 44px;
+  --touch-min: 48px;
   --touch-toggle: 48px;
-  --touch-compact: 50px;
-  --touch-chip: 52px;
-  --touch-secondary: 54px;
+  --touch-compact: 48px;
+  --touch-chip: 48px;
+  --touch-secondary: 60px;
   --touch-primary: 60px;
-  --touch-radio-card: 84px;
+  --touch-radio-card: 88px;
 }

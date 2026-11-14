@@ -1,35 +1,70 @@
 .wrapper {
   position: relative;
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--color-border-control);
-  background: var(--color-map-bg);
+  border: 1px solid var(--color-border);
+  background: var(--color-tint-green);
 }
 
 .map {
   width: 100%;
-  height: clamp(320px, 44vw, 560px);
+  height: clamp(400px, 40vw, 460px);
+  font-family: var(--font-body);
 }
 
+/* Alfinete fixo no centro (gota verde com borda branca); a ponta marca o ponto. */
 .pin {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -100%);
-  color: var(--color-primary);
+  width: 34px;
+  height: 34px;
+  margin: -41px 0 0 -17px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--color-primary);
+  border: 3px solid var(--color-surface);
+  box-shadow: var(--shadow-soft);
   pointer-events: none;
   z-index: 500;
-  filter: drop-shadow(0 1px 0 var(--color-surface));
 }
 
+.pin::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+/* Legenda "Perto de …" no canto, ao lado do zoom do mapa */
 .place {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 18px;
+  left: 64px;
+  max-width: calc(100% - 85px);
   z-index: 500;
-  padding: 6px 12px;
-  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-tag);
   background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
   font-size: var(--font-size-small);
-  font-weight: var(--font-weight-semibold);
+}
+
+.place svg {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+  .place {
+    font-size: var(--font-size-tiny);
+    padding: 9px 12px;
+  }
 }

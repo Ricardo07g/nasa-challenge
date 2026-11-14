@@ -14,7 +14,23 @@ import {
 import { ErrorState, LoadingState } from '../design-system/components/Feedback'
 import { BackLink, QuestionStepper } from '../design-system/components/Navigation'
 import { MetricRow, StatusPill, YearStrip, type CellState } from '../design-system/components/Status'
-import { CoinIcon, CrosshairIcon, DropIcon, LeafIcon, SoilIcon, SunIcon } from '../design-system/icons'
+import {
+  CalendarIcon,
+  CheckIcon,
+  ClimateIcon,
+  CrosshairIcon,
+  DropIcon,
+  HistoryIcon,
+  LeafIcon,
+  MoneyIcon,
+  PinIcon,
+  RainIcon,
+  SatelliteIcon,
+  ShieldIcon,
+  SoilIcon,
+  SpeakerIcon,
+  SproutIcon,
+} from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { ApiStatus } from '../models/apiStatus'
 import type { CropOption } from '../models/cropOption'
@@ -37,6 +53,9 @@ const COLOR_TOKENS = [
   'border-control',
   'border',
   'divider',
+  'border-green-tint',
+  'border-blue-tint',
+  'border-orange-tint',
   'good-bg',
   'fair-bg',
   'weak-bg',
@@ -44,7 +63,24 @@ const COLOR_TOKENS = [
   'soil',
 ]
 
-const RADII = ['hero', 'xl', 'lg', 'md', 'sm', 'xs', '2xs']
+const RADII = ['hero', 'lg', 'md', 'sm', 'xs', 'tag', 'badge', 'cell']
+
+const ICONS = [
+  PinIcon,
+  CalendarIcon,
+  SatelliteIcon,
+  DropIcon,
+  RainIcon,
+  ClimateIcon,
+  HistoryIcon,
+  SproutIcon,
+  MoneyIcon,
+  LeafIcon,
+  ShieldIcon,
+  CheckIcon,
+  CrosshairIcon,
+  SpeakerIcon,
+]
 
 const noop = () => {}
 
@@ -128,6 +164,13 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             </li>
           ))}
         </ul>
+        <ul className={styles.icons} aria-label={d.icons}>
+          {ICONS.map((Icon, index) => (
+            <li key={index} className={styles.icon}>
+              <Icon />
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className={styles.section} aria-labelledby="ds-components">
@@ -138,7 +181,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
           <Card>
             <BackLink to="/design-system">{t.nav.back}</BackLink>
             <QuestionStepper current={1} total={2} label={t.stepper.label(1, 2)} />
-            <Button>{t.start.start}</Button>
+            <Button arrow>{t.start.start}</Button>
             <Button variant="outline">{t.start.example}</Button>
             <Button variant="outline-blue" icon={<CrosshairIcon />}>
               {t.where.useLocation}
@@ -173,6 +216,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
           <Card>
             <MetricRow
               icon={<DropIcon />}
+              iconTone="blue"
               label={t.axes.chuva}
               value="14 / 20"
               pill={<StatusPill rotulo="medio">{t.labels.medio}</StatusPill>}
@@ -180,13 +224,13 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
               <YearStrip label={t.answer.rainStripLabel(14, 20)} cells={rainCells} />
             </MetricRow>
             <MetricRow
-              icon={<CoinIcon />}
+              icon={<MoneyIcon />}
               label={t.axes.dinheiro}
               value="R$ 700"
               pill={<StatusPill rotulo="bom">{t.labels.bom}</StatusPill>}
             />
             <MetricRow
-              icon={<LeafIcon />}
+              icon={<SoilIcon />}
               label={t.axes.terra}
               value="10"
               pill={<StatusPill rotulo="fraco">{t.labels.fraco}</StatusPill>}
@@ -220,13 +264,18 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             readyLabel={t.common.ready}
           />
           <DataSourceCard
-            icon={<SunIcon />}
-            iconTone="risk"
+            icon={<ClimateIcon />}
+            iconTone="blue"
             title={t.satellite.climateTitle}
             subtitle={t.satellite.climateSubtitle}
             readyLabel={t.common.ready}
           />
-          <AlternativeCard label={t.motives.menos_risco} title={t.crops.names.sorgo} text={t.crops.taglines.sorgo} />
+          <AlternativeCard
+            icon={<ShieldIcon />}
+            label={t.motives.menos_risco}
+            title={t.crops.names.sorgo}
+            text={t.crops.taglines.sorgo}
+          />
           <OptionCompareCard
             rank={t.options.rank(1)}
             name={t.crops.names.milho_braquiaria}

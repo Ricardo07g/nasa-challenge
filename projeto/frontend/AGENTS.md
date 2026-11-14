@@ -23,6 +23,7 @@ src/
   services/             Service: REGRAS DE NEGÓCIO do front (ex.: aplicar pesos ao ranking, RNF-02)
   controllers/          Controller: hooks use<Tela>Controller, guardam estado e chamam services
   views/                View: componentes que só desenham props, sem fetch e sem regra
+  design-system/        tokens.css (cores, tipografia, raios, espaços), componentes e ícones
   test/setup.ts         configuração dos testes (jest-dom, limpeza)
   index.css             estilos globais
 vite.config.ts          dev server, proxy /api -> backend e config do Vitest
@@ -83,3 +84,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
 - **Celular:** a interface precisa funcionar em tela de celular (RNF-04).
 - **Dependências:** `npm install <pacote>` (ou `-D` para dev). Biblioteca nova grande (mapa, gráficos,
   UI kit) → justifique na descrição do PR.
+- **Visual:** cores, tamanhos e raios só por variável de `design-system/tokens.css` (nunca hex solto).
+  A referência visual é a interface nova feita no Lovable (cabeçalho com slogan, rodapé com o aviso,
+  cartões com borda). Veja tudo junto em `/design-system` (só no ambiente local).
+- **Ícones:** sempre de `design-system/icons` (lucide por baixo, sempre `aria-hidden`). Não importe
+  `lucide-react` direto nas telas: precisa de um ícone novo, adicione lá.

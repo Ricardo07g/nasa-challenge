@@ -1,46 +1,80 @@
+/* Botões de escolha lado a lado (ordenar, cenário, área) */
 .chips {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
-  max-width: 560px;
 }
 
 .chip {
   min-height: var(--touch-chip);
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-xs);
-  border: 1.5px solid var(--color-border-control);
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary);
   background: var(--color-surface);
-  color: var(--color-text);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-small);
+  color: var(--color-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.chip:hover {
+  background: var(--color-tint-green);
+}
+
+.chips[data-tone='blue'] .chip {
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+.chips[data-tone='blue'] .chip:hover {
+  background: var(--color-tint-blue);
 }
 
 .chips[data-tone='green'] .chip[aria-pressed='true'] {
   background: var(--color-primary);
-  border-color: var(--color-primary);
   color: var(--color-on-primary);
+}
+
+.chips[data-tone='green'] .chip[aria-pressed='true']:hover {
+  background: var(--color-primary-strong);
 }
 
 .chips[data-tone='blue'] .chip[aria-pressed='true'] {
   background: var(--color-secondary);
-  border-color: var(--color-secondary);
   color: var(--color-on-primary);
 }
 
+@media (max-width: 768px) {
+  .chips {
+    gap: 7px;
+  }
+
+  .chip {
+    flex: 1 1 0;
+  }
+}
+
+/* Opção de rádio grande (época da colheita): texto à esquerda, bolinha à direita */
 .radioCard {
   width: 100%;
   min-height: var(--touch-radio-card);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-md);
-  border: 2px solid var(--color-border-control);
+  padding: clamp(17px, 2vw, 20px) clamp(20px, 2.4vw, 24px);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
   text-align: left;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.radioCard:hover {
+  background: var(--color-tint-green);
 }
 
 .radioCard[aria-pressed='true'] {
@@ -49,28 +83,39 @@
   color: var(--color-on-primary);
 }
 
-.mark {
-  flex: 0 0 26px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 2px solid var(--color-border-strong);
-  background: var(--color-surface);
+.radioCard[aria-pressed='true']:hover {
+  background: var(--color-primary-strong);
 }
 
-.radioCard[aria-pressed='true'] .mark {
-  border: 8px solid var(--color-selected-ring);
+.mark {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radioCard[aria-pressed='true'] .mark::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .radioText {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .radioTitle {
-  font-size: var(--font-size-lead);
+  font-size: clamp(18px, 1.8vw, 20px);
   font-weight: var(--font-weight-bold);
+  line-height: 1.3;
 }
 
 .radioSub {

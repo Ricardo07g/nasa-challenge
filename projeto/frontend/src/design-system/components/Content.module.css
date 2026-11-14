@@ -1,42 +1,42 @@
+/* Título da tela */
 .heading {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-4);
 }
 
 .eyebrow {
-  font-size: var(--font-size-small);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: var(--font-size-caption);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
 }
 
 .title {
-  font-family: var(--font-display);
   font-size: var(--font-size-h1);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  letter-spacing: -0.4px;
 }
 
 .subtitle {
   font-size: var(--font-size-lead);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
+/* Passos numerados ("Como fazer") */
 .steps {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 20px;
 }
 
 .step {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3);
-  font-size: var(--font-size-body);
+  gap: var(--space-4);
 }
 
 .stepNumber {
@@ -46,120 +46,148 @@
   border-radius: 50%;
   background: var(--color-primary);
   color: var(--color-on-primary);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* "Por que essa?" */
 .disclosure {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 20px;
 }
 
 .disclosureButton {
+  width: 100%;
   min-height: var(--touch-toggle);
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-xs);
-  border: 1.5px solid var(--color-border-control);
+  padding: var(--space-3) 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary);
   background: var(--color-surface);
-  color: var(--color-text);
-  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
   font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  align-self: flex-start;
+  transition: background-color 0.15s ease;
+}
+
+.disclosureButton:hover {
+  background: var(--color-tint-green);
+}
+
+.disclosureButton svg {
+  transition: transform 0.15s ease;
+}
+
+.disclosureButton[aria-expanded='true'] svg {
+  transform: rotate(180deg);
 }
 
 .disclosurePanel {
-  background: var(--color-page);
-  border-radius: var(--radius-xs);
-  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  font-size: var(--font-size-small);
+  gap: var(--space-4);
 }
 
 .disclaimer {
-  font-size: var(--font-size-caption);
+  font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }
 
+/* Resposta principal: faixa verde com o nome da cultura */
 .hero {
+  position: relative;
+  overflow: hidden;
   background: var(--color-primary);
   color: var(--color-on-primary);
-  border-radius: var(--radius-xl);
-  padding: var(--space-5) 20px;
+  border-radius: var(--radius-lg);
+  padding: clamp(24px, 3vw, 30px);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 13px;
+}
+
+.heroDecor {
+  position: absolute;
+  right: 24px;
+  top: 25px;
+  opacity: 0.25;
+  display: flex;
 }
 
 .heroLabel {
-  font-size: var(--font-size-small);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-on-primary-muted);
 }
 
 .heroTitle {
-  font-family: var(--font-display);
   font-size: var(--font-size-best);
   font-weight: var(--font-weight-bold);
-  line-height: 1.08;
-  margin: 0;
+  max-width: 400px;
 }
 
+/* Plano de 3 anos: um cartão por ano */
 .timeline {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(15px, 2vw, 22px);
 }
 
 .timelineItem {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  padding: var(--space-panel);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 
 .yearTile {
-  flex: 0 0 62px;
-  width: 62px;
-  height: 62px;
-  border-radius: var(--radius-sm);
+  display: inline-flex;
+  padding: 6px 13px;
+  border-radius: var(--radius-year);
   background: var(--color-primary);
   color: var(--color-on-primary);
   font-family: var(--font-display);
-  font-weight: var(--font-weight-bold);
-  font-size: 19px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
 }
 
 .timelineText {
   display: flex;
   flex-direction: column;
-  font-size: var(--font-size-small);
-  color: var(--color-text-secondary);
+  gap: var(--space-3);
 }
 
 .timelineTitle {
-  font-size: var(--font-size-title);
-  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--font-size-section);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
 }
 
+/* Comparar opções (tela 6) */
 .compare {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  padding: clamp(22px, 2.4vw, 24px);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
 }
 
 .compare[data-highlighted='true'] {
@@ -168,37 +196,42 @@
 
 .compareHead {
   display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .rank {
   font-family: var(--font-display);
-  font-weight: var(--font-weight-bold);
-  font-size: 18px;
-  color: var(--color-text-muted);
+  font-size: var(--font-size-section);
+  color: var(--color-primary);
 }
 
 .compareName {
-  font-size: 19px;
-  font-weight: var(--font-weight-bold);
-  margin: 0;
+  font-size: var(--font-size-title);
 }
 
 .compareRow {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
-  padding: var(--space-2) 0;
-  border-top: 1px solid var(--color-divider);
+  padding: 15px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.compareRow:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .compareLabel {
-  font-size: var(--font-size-caption);
+  font-size: var(--font-size-tiny);
   color: var(--color-text-muted);
 }
 
 .compareValue {
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-semibold);
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.4;
 }
