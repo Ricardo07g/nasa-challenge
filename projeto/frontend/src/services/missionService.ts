@@ -1,6 +1,6 @@
 import type { NivelSinal, Recomendacao } from '../models/recomendacao'
 import type { Ponto, Talhao, Textura } from '../models/talhao'
-import { historySummary } from './satelliteService'
+import { historySummary, rainSummary } from './satelliteService'
 
 /** RF-19: a missão tem 6 fases (lavoura, terra, chuva e calor, histórico, clima que vem, conta). */
 export const MISSION_PHASES = 6
@@ -22,6 +22,8 @@ export function phaseWait(elapsedMs: number): number {
 export type MissionFacts = {
   point: Ponto
   soil: Textura
+  /** Anos de chuva que a conta leu (null sem dado de chuva). */
+  rainYears: number | null
   historyYears: number | null
   signal: NivelSinal | null
 }
@@ -33,7 +35,8 @@ export type MissionFacts = {
 export function missionFacts(talhao: Talhao, recomendacao: Recomendacao): MissionFacts {
   return {
     point: talhao.ponto,
-    soil: talhao.solo?.textura ?? 'medio',
+    soil: talhao.solo?.textura ?? recomendacao.entrada?.solo ?? 'medio',
+    rainYears: rainSummary(talhao.dados ?? [], recomendacao.opcoes ?? null)?.years ?? null,
     historyYears: historySummary(talhao.historico)?.known ?? null,
     signal: recomendacao.sinal?.nivel ?? null,
   }
