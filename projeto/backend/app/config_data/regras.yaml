@@ -122,19 +122,28 @@ rotacao:
     fonte: "PRD 7.7: ano seco = menor chuva de fevereiro a abril"
   max_pousios:
     valor: 2
-    fonte: "PRD 7.7: descartar mais de 2 pousios seguidos (o filtro fiel ao PRD vem no R4.3)"
+    fonte: "PRD 7.7: descartar mais de 2 pousios seguidos (o pousio entra nas 216 combinações)"
   bonus_diversidade_2:
     valor: 5.0
     fonte: "PRD 7.7: +5 com 2 funções diferentes"
   bonus_diversidade_3:
     valor: 10.0
     fonte: "PRD 7.7: +10 com 3 funções diferentes (grão, cobertura gramínea, cobertura leguminosa)"
-  penalidade_monocultura_milho:
-    valor: 12.0
-    fonte: "Hipótese do time (não está no PRD): milho safrinha nos 3 anos e plano 'hoje' perdem 12 pontos; revisar no R4.3"
+  # A penalidade de 12 pontos para milho safrinha nos 3 anos saiu no R4.3 (tarefa 0016): não está no
+  # PRD 7.7, e o bônus por função já deixa o milho repetido sem os +5/+10.
   culturas_supressoras_nematoide:
     valor: [crotalaria, milheto]
-    fonte: "PRD 7.7: com nematoide = sim, descartar 3 anos sem crotalária ou milheto"
+    fonte: "PRD 7.7: com nematoide = sim, descartar 3 anos sem crotalária ou milheto (só quando uma delas cabe na janela; sem nenhuma, o plano sai e a descrição avisa)"
+  funcoes:
+    # O bônus de diversidade conta as funções diferentes do plano, não as culturas.
+    valor:
+      pousio: []
+      milho_safrinha: [grao]
+      sorgo: [grao]
+      milho_braquiaria: [grao, cobertura_graminea]
+      milheto: [cobertura_graminea]
+      crotalaria: [cobertura_leguminosa]
+    fonte: "PRD 5 (coluna Função) e 7.7 (grão, cobertura gramínea, cobertura leguminosa). Milho + braquiária conta grão e cobertura gramínea, porque o PRD 5 diz 'Grão + cobertura' e a braquiária é gramínea (hipótese do time, revisar com a agrônoma)"
 
 # Modelos de frase do "Por quê?" (PRD 7.6, plano técnico §4.8), sem IA generativa.
 # Os campos entre chaves são preenchidos pela conta; o número da frase é o mesmo da conta.

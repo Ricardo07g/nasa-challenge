@@ -205,8 +205,8 @@ sequenceDiagram
     RecSvc->>RecSvc: Define 'melhor' (maior nota final ponderada: 30% seg, 25% solo, 30% renda, 15% futuro)
     RecSvc->>RecSvc: Define 'alternativas' (menos_risco, mais_dinheiro, cuidar_da_terra sem repetir a 'melhor')
 
-    RecSvc->>PlanSvc: build_3_year_plans(opcoes, seasons, nematoide)
-    PlanSvc->>PlanSvc: Avalia 216 sequências trienais + bônus de diversidade (+5/+10) e filtro de nematoide
+    RecSvc->>PlanSvc: build_3_year_plans(opcoes, anos_secos, pousio, nematoide)
+    PlanSvc->>PlanSvc: 216 sequências com pousio; descarta mais de 2 pousios seguidos e (nematoide) sem crotalária ou milheto; média + bônus por função (+5/+10)
     PlanSvc->>PlanSvc: Cenário 'normal' (20 anos) vs Cenário 'seco' (4 anos de menor chuva_safrinha_fev_mai_mm: 2007, 2010, 2012, 2014)
     PlanSvc-->>RecSvc: plano_normal, plano_seco, plano_hoje
 

@@ -67,8 +67,23 @@ def test_should_load_shipped_ndvi_and_rotation_rules() -> None:
     assert rotacao.meses_seco == frozenset({2, 3, 4})
     assert rotacao.max_pousios == 2
     assert (rotacao.bonus_diversidade_2, rotacao.bonus_diversidade_3) == (5.0, 10.0)
-    assert rotacao.penalidade_monocultura_milho == 12.0
+    # R4.3: a penalidade de monocultura de milho (12, sem fonte no PRD) saiu do regras.yaml.
+    assert not hasattr(rotacao, "penalidade_monocultura_milho")
     assert rotacao.culturas_supressoras_nematoide == frozenset({"crotalaria", "milheto"})
+
+
+def test_should_load_crop_functions_for_rotation_diversity() -> None:
+    # PRD 5 (coluna Função) e 7.7: grão, cobertura gramínea e cobertura leguminosa
+    funcoes = YamlRulesRepository(SHIPPED).get_rules().rotacao.funcoes
+
+    assert funcoes == {
+        "pousio": frozenset(),
+        "milho_safrinha": frozenset({"grao"}),
+        "sorgo": frozenset({"grao"}),
+        "milho_braquiaria": frozenset({"grao", "cobertura_graminea"}),
+        "milheto": frozenset({"cobertura_graminea"}),
+        "crotalaria": frozenset({"cobertura_leguminosa"}),
+    }
 
 
 def test_should_load_phrase_templates_in_portuguese_and_english() -> None:

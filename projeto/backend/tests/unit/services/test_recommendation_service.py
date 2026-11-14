@@ -13,7 +13,11 @@ from app.models.talhao import SoloInfo
 from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
-from app.services.recommendation_service import RecommendationService, build_alternatives
+from app.services.recommendation_service import (
+    RecommendationService,
+    build_alternatives,
+    soil_score,
+)
 from app.services.rotation_plan_service import RotationPlanService
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
@@ -250,6 +254,17 @@ def test_should_weight_pests_one_and_half_times_when_nematoide_is_true() -> None
     assert _opcao(rec, "milho_safrinha").notas.solo == pytest.approx(round(100 * 20 / 115, 1))
 
 
+def test_should_rescale_soil_by_theoretical_maximum_when_nematoide_is_true() -> None:
+    # Padrão a revisar com a agrônoma (R4.3, roteiro §5 "Reescala do nematoide"): com pragas x 1,5,
+    # a nota volta a 0-100 dividindo pelo máximo teórico (40 + 30 + 30 x 1,5 = 115). Só a cultura
+    # com todos os pontos no máximo chega a 100.
+    regras = load_default_rules().solo
+    topo = _crop("topo", "cobertura", None, (40, 30, 30))
+
+    assert soil_score(topo, True, regras) == 100.0
+    assert soil_score(topo, None, regras) == 100.0
+
+
 def test_should_score_income_relative_to_best_margin_when_no_losses() -> None:
     # PRD 7.5: margem = produtividade x fator x preço - custo; nota = 100 x margem / maior margem
     rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
@@ -354,6 +369,29 @@ def test_should_score_dry_scenario_only_with_the_four_driest_years() -> None:
     assert milho.notas.seguranca == 80.0
     assert milho.notas_seco.seguranca == 0.0
     assert "2007, 2010, 2012, 2014" in rec.plano_seco.descricao
+
+
+def test_should_score_fallow_in_the_plan_with_safety_100_and_no_soil_or_income() -> None:
+    # PRD 7.2 e 7.6: o pousio tem segurança 100, solo 0 e renda 0. Sem CMIP6, os pesos são
+    # reescalados: 30 / 0,85 = 35,3. Colheita tarde: o milho sai da janela e o "hoje" é o pousio.
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="tarde")
+
+    assert rec.plano_hoje.anos == ("pousio", "pousio", "pousio")
+    assert rec.plano_hoje.nota == pytest.approx(round(0.30 * 100 / 0.85, 1))
+
+
+def test_should_give_fallow_future_100_when_cmip6_deltas_exist() -> None:
+    # PRD 7.6: o pousio tem segurança e futuro 100 -> 0,30 x 100 + 0,15 x 100 = 45
+    deltas = [
+        Cmip6Delta(model="IGUAL", scenario="ssp245", month=m, rain_pct=0.0, tmax_c=0.0)
+        for m in range(1, 13)
+    ]
+    rec = _service(FakeClimateRepository(deltas=deltas)).recommend(
+        lat=-18.95, lon=-48.20, colheita="tarde"
+    )
+
+    assert rec.plano_hoje.anos == ("pousio", "pousio", "pousio")
+    assert rec.plano_hoje.nota == 45.0
 
 
 def test_should_write_texts_in_english_when_language_is_en() -> None:
