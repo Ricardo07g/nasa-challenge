@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Opcao } from '../models/recomendacao'
 import type { Talhao } from '../models/talhao'
-import { climateReady, historySummary, rainSummary, soilSummary } from './satelliteService'
+import { climateSummary, historySummary, rainSummary, soilSummary } from './satelliteService'
 
 type Historico = NonNullable<Talhao['historico']>
 type Ano = Historico['anos'][number]
@@ -122,14 +122,20 @@ describe('rainSummary', () => {
   })
 })
 
-describe('climateReady', () => {
-  it('pronto só quando o talhão traz o NEX-GDDP-CMIP6 em dados[]', () => {
-    expect(climateReady([{ fonte: 'nasa_power', periodo: '2005-2024' }, { fonte: 'nex_gddp_cmip6', periodo: '2041-2060' }])).toBe(true)
+describe('climateSummary', () => {
+  it('pronto só quando o talhão traz o NEX-GDDP-CMIP6 em dados[], com o período dele', () => {
+    expect(
+      climateSummary([{ fonte: 'nasa_power', periodo: '2005-2024' }, { fonte: 'nex_gddp_cmip6', periodo: '2041-2060' }]),
+    ).toEqual({ period: { start: '2041', end: '2060' } })
   })
 
-  it('sem o CMIP6, o clima dos próximos anos não está pronto', () => {
-    expect(climateReady([{ fonte: 'nasa_power', periodo: '2005-2024' }])).toBe(false)
-    expect(climateReady([])).toBe(false)
+  it('com o CMIP6 mas sem um período que dê para ler, não inventa as datas', () => {
+    expect(climateSummary([{ fonte: 'nex_gddp_cmip6', periodo: '' }])).toEqual({ period: null })
+  })
+
+  it('sem o CMIP6, o clima dos próximos anos não está conectado', () => {
+    expect(climateSummary([{ fonte: 'nasa_power', periodo: '2005-2024' }])).toBeNull()
+    expect(climateSummary([])).toBeNull()
   })
 })
 

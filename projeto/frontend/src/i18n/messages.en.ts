@@ -11,7 +11,7 @@ export const en = {
     mockNotice: 'Sample data: the scoring engine is not connected yet.',
     disclaimer: 'It helps you decide. It does not replace your agronomist.',
     ready: 'Done',
-    unavailable: 'Not available yet',
+    notConnected: 'Not connected yet',
   },
   header: {
     home: 'Raiz Orbital, back to start',
@@ -176,6 +176,7 @@ export const en = {
     historyTitle: (idle: number, known: number, uncertain: number) =>
       `Your field was left idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,
     historySubtitle: 'What grew after soybeans, year by year:',
+    historyUnavailableTitle: 'What grew after soybeans',
     historyStripLabel: (planted: number, known: number, uncertain: number) =>
       `Planted in ${planted} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,
     historySource: (from: string, to: string) => `Seen by the MODIS satellite (NASA), from ${from} to ${to} each year`,
@@ -189,7 +190,6 @@ export const en = {
       }`,
     rainDaily: 'Day by day.',
     rainUnavailableTitle: 'Rain right here',
-    notAvailable: 'Not available yet for this area.',
     soilTitle: (texture: string) => `${texture} soil`,
     soilFromMap: 'From the soil map.',
     soilFromUser: 'You chose it.',
@@ -205,7 +205,8 @@ export const en = {
     loading: 'Getting satellite data…',
     error: 'We could not get the data right now. Try again or see the example farm.',
     climateTitle: 'Climate in the coming years',
-    climateSubtitle: 'How rain and heat are expected to change by 2050.',
+    climateSubtitle: (start: string, end: string) => `How rain and heat are expected to change from ${start} to ${end}.`,
+    climateSubtitleGeneric: 'How rain and heat are expected to change in the coming years.',
     cta: 'See what to plant',
   },
   answer: {
@@ -270,6 +271,7 @@ export const en = {
     increaseArea: 'Increase by 10 hectares',
     areaMargin: (value: string) => `About R$ ${value} should remain`,
     areaSeed: (value: string) => `Seeds cost about R$ ${value}`,
+    seedCost: 'Seed cost',
     areaDryNegative: (value: string) => `In the worst dry year, you would be short by about R$ ${value}`,
     areaDryPositive: (value: string) => `In the worst dry year, about R$ ${value} would remain`,
     areaRest: 'Keep the rest of the farm as it is, so you can compare.',

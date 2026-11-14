@@ -12,7 +12,8 @@ export const pt = {
     mockNotice: 'Dados de exemplo: o motor de cálculo ainda não está ligado.',
     disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
     ready: 'Pronto',
-    unavailable: 'Ainda não disponível',
+    /** Dado que a API ainda não manda: o mesmo texto em todas as telas. */
+    notConnected: 'Ainda não conectado',
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',
@@ -178,6 +179,8 @@ export const pt = {
     historyTitle: (idle: number, known: number, uncertain: number) =>
       `Sua área ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
     historySubtitle: 'O que cresceu depois da soja, ano a ano:',
+    /** Título do cartão quando o histórico ainda não vem da API. */
+    historyUnavailableTitle: 'O que cresceu depois da soja',
     historyStripLabel: (planted: number, known: number, uncertain: number) =>
       `Plantou em ${planted} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
     historySource: (from: string, to: string) => `Visto pelo satélite MODIS (NASA), de ${from} a ${to} de cada ano`,
@@ -192,7 +195,6 @@ export const pt = {
       }`,
     rainDaily: 'Dia por dia.',
     rainUnavailableTitle: 'Chuva daqui',
-    notAvailable: 'Ainda não disponível para esta área.',
     soilTitle: (texture: string) => `Terra ${texture}`,
     soilFromMap: 'Do mapa de solos.',
     soilFromUser: 'Você escolheu.',
@@ -208,7 +210,9 @@ export const pt = {
     loading: 'Buscando dados do satélite…',
     error: 'Não conseguimos buscar os dados agora. Tente de novo ou veja a fazenda de exemplo.',
     climateTitle: 'Clima dos próximos anos',
-    climateSubtitle: 'Como a chuva e o calor devem mudar até 2050.',
+    /** O período vem do NEX-GDDP-CMIP6 em dados[] (2041–2060). */
+    climateSubtitle: (start: string, end: string) => `Como a chuva e o calor devem mudar de ${start} a ${end}.`,
+    climateSubtitleGeneric: 'Como a chuva e o calor devem mudar nos próximos anos.',
     cta: 'Ver o que plantar',
   },
   answer: {
@@ -274,6 +278,7 @@ export const pt = {
     increaseArea: 'Aumentar 10 hectares',
     areaMargin: (value: string) => `Deve sobrar perto de R$ ${value}`,
     areaSeed: (value: string) => `A semente custa perto de R$ ${value}`,
+    seedCost: 'Custo da semente',
     areaDryNegative: (value: string) => `No pior ano seco, faltaria perto de R$ ${value}`,
     areaDryPositive: (value: string) => `No pior ano seco, sobraria perto de R$ ${value}`,
     areaRest: 'O resto da fazenda fica como hoje, para você comparar.',

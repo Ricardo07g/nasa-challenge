@@ -9,7 +9,7 @@ import { formatMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import { TEXTURAS, type SituacaoAno, type Textura } from '../models/talhao'
-import type { HistorySummary, RainSummary, SoilSummary } from '../services/satelliteService'
+import type { ClimateSummary, HistorySummary, RainSummary, SoilSummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
@@ -23,8 +23,8 @@ export type SatelliteViewProps = {
   history: HistorySummary | null
   /** Anos de chuva usados de fato; null sem dado de chuva. */
   rain: RainSummary | null
-  /** O NEX-GDDP-CMIP6 veio no talhão (só assim o clima dos próximos anos fica pronto). */
-  climate: boolean
+  /** NEX-GDDP-CMIP6 no talhão; null sem ele (o clima dos próximos anos fica "Ainda não conectado"). */
+  climate: ClimateSummary | null
   soil: SoilSummary
   soilOpen: boolean
   onToggleSoil: () => void
@@ -57,7 +57,7 @@ function Cards({ t, lang, history, rain, climate, soil, soilOpen, onToggleSoil, 
   return (
     <div className={layout.pageGrid}>
       <div className={layout.stack}>
-        {history && (
+        {history ? (
           <DataSourceCard
             icon={<HistoryIcon />}
             title={s.historyTitle(history.idle, history.known, history.uncertain)}
@@ -81,17 +81,24 @@ function Cards({ t, lang, history, rain, climate, soil, soilOpen, onToggleSoil, 
               {s.historySource(formatMonth(lang, history.window.from), formatMonth(lang, history.window.to))}
             </p>
           </DataSourceCard>
+        ) : (
+          <DataSourceCard
+            icon={<HistoryIcon />}
+            title={s.historyUnavailableTitle}
+            subtitle={null}
+            readyLabel={t.common.ready}
+            status="unavailable"
+            unavailableLabel={t.common.notConnected}
+          />
         )}
         <DataSourceCard
           icon={<DropIcon />}
           iconTone="blue"
           title={rain ? s.rainTitle(rain.years) : s.rainUnavailableTitle}
-          subtitle={
-            !rain ? s.notAvailable : rain.period ? s.rainSubtitle(rain.period.start, rain.period.end, rain.skipped) : s.rainDaily
-          }
+          subtitle={rain?.period ? s.rainSubtitle(rain.period.start, rain.period.end, rain.skipped) : s.rainDaily}
           readyLabel={t.common.ready}
           status={rain ? 'ready' : 'unavailable'}
-          unavailableLabel={t.common.unavailable}
+          unavailableLabel={t.common.notConnected}
         />
       </div>
       <div className={layout.stack}>
@@ -122,10 +129,10 @@ function Cards({ t, lang, history, rain, climate, soil, soilOpen, onToggleSoil, 
           icon={<ClimateIcon />}
           iconTone="blue"
           title={s.climateTitle}
-          subtitle={climate ? s.climateSubtitle : s.notAvailable}
+          subtitle={climate?.period ? s.climateSubtitle(climate.period.start, climate.period.end) : s.climateSubtitleGeneric}
           readyLabel={t.common.ready}
           status={climate ? 'ready' : 'unavailable'}
-          unavailableLabel={t.common.unavailable}
+          unavailableLabel={t.common.notConnected}
         />
         <Button onClick={onConfirm} arrow>
           {s.cta}

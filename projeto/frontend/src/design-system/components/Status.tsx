@@ -116,6 +116,29 @@ export function StripLegend({ items, markers = [], note }: StripLegendProps) {
   )
 }
 
+type NotConnectedProps = {
+  /** O texto do estado, sempre o mesmo: "Ainda não conectado" / "Not connected yet". */
+  label: string
+  /** O que ainda não está conectado (ex.: "Custo da semente"), quando o contexto não diz. */
+  what?: string
+}
+
+/**
+ * Dado que a API ainda não manda: um traço no lugar do número e o aviso, com borda tracejada (como o
+ * ano sem certeza). Igual em todo lugar, para o time ver o que falta conectar. Nunca número de exemplo.
+ */
+export function NotConnected({ label, what }: NotConnectedProps) {
+  return (
+    <span className={styles.notConnected} data-status="not-connected">
+      <MinusIcon size={16} />
+      <span>
+        {what && `${what}: `}
+        <strong>{label}</strong>
+      </span>
+    </span>
+  )
+}
+
 /** Selo com ícone e texto num tom (ex.: sinal do outono: seco laranja, normal verde, incerto azul). */
 export function ToneBadge({ tone, icon, children }: { tone: 'green' | 'blue' | 'orange'; icon: ReactNode; children: ReactNode }) {
   return (

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { MetricRow, StatusPill, StripLegend, TappableYearStrip, ToneBadge, YearStrip } from './Status'
+import { MetricRow, NotConnected, StatusPill, StripLegend, TappableYearStrip, ToneBadge, YearStrip } from './Status'
 
 describe('StatusPill', () => {
   it('mostra o rótulo com o tom certo', () => {
@@ -177,5 +177,23 @@ describe('StripLegend com os pontos de El Niño e La Niña', () => {
 
     expect(screen.getByText('El Niño').querySelector('[data-marker="el_nino"]')).not.toBeNull()
     expect(screen.getByText('La Niña (NOAA)').querySelector('[data-marker="la_nina"]')).not.toBeNull()
+  })
+})
+
+describe('NotConnected (dado que a API ainda não manda)', () => {
+  it('mostra o aviso com um traço no lugar do dado, marcado como não conectado', () => {
+    render(<NotConnected label="Ainda não conectado" />)
+
+    const note = screen.getByText('Ainda não conectado').closest('[data-status]')
+    expect(note).toHaveAttribute('data-status', 'not-connected')
+    expect(note?.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
+  })
+
+  it('pode dizer o que ainda não está conectado', () => {
+    render(<NotConnected label="Ainda não conectado" what="Custo da semente" />)
+
+    expect(screen.getByText('Ainda não conectado').closest('[data-status]')).toHaveTextContent(
+      'Custo da semente: Ainda não conectado',
+    )
   })
 })
