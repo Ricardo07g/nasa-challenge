@@ -7,7 +7,7 @@ Este documento explica os conceitos geográficos e a arquitetura de dados do **R
 ## 1. Desmistificando o PostGIS
 
 > [!IMPORTANT]
-> **O PostGIS NÃO vem com mapas, cidades ou dados da NASA pré-carregados.**  
+> **O PostGIS NÃO vem com mapas, cidades ou dados da NASA pré-carregados.**
 > O PostGIS é uma extensão do PostgreSQL que adiciona **suporte a tipos e funções geométricas/espaciais**. Ele é como uma calculadora geométrica e uma gaveta vazia com índice espacial (R-Tree / GiST).
 
 - **O que o PostGIS faz:** sabe responder instantaneamente perguntas como:
@@ -85,7 +85,7 @@ sequenceDiagram
 
     Produtor->>API: GET /api/talhao?lat=-17.78&lon=-50.92
     API->>DB: Busca célula que contém o ponto (ST_Contains)
-    
+
     alt Cenário 1: Célula já existe (Área Piloto / Consulta Anterior)
         DB-->>API: Retorna cell_id, 20 anos de clima e solo
         API-->>Produtor: Resposta instantânea (< 100 milissegundos)
