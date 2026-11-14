@@ -60,8 +60,6 @@ services:
       - ./backend/app:/app/app
       - ./backend/tests:/app/tests
       - ./backend/pipeline:/app/pipeline
-      # scripts/ tem teste (tests/unit/scripts/); sem montar, o pytest do container falha na coleta.
-      - ./backend/scripts:/app/scripts
       - ./backend/migrations:/app/migrations
       - ./backend/alembic.ini:/app/alembic.ini
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

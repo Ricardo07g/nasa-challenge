@@ -1,7 +1,11 @@
 """Falsos e ajudantes dos testes `db` (importados pelo conftest e pelos testes)."""
 
+import os
+import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import date, timedelta
+from pathlib import Path
 
 import psycopg
 from fastapi.testclient import TestClient
@@ -11,7 +15,7 @@ from app.models.talhao import SoloInfo
 
 TABLES = (
     "climate_season",
-    "smap_moisture",
+    "smap_point",
     "cmip6_delta",
     "grid_cell",
     "soil_point",
@@ -19,6 +23,22 @@ TABLES = (
     "data_run",
 )
 SEASON_DAYS = 212
+BACKEND_DIR = Path(__file__).resolve().parents[3]
+
+
+def run_alembic(url: str, *args: str) -> subprocess.CompletedProcess[str]:
+    """Roda o alembic num subprocesso apontando para `url`.
+
+    Subprocesso porque o migrations/env.py lê DATABASE_URL pelo Settings e mexe no logging.
+    """
+    return subprocess.run(
+        [sys.executable, "-m", "alembic", *args],
+        cwd=BACKEND_DIR,
+        env={**os.environ, "DATABASE_URL": url},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
 
 class FakeNasaPowerClient:
