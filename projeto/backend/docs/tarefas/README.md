@@ -13,6 +13,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0002**](0002-id-de-celula-unico.md) | **Um id de célula só (`floor`) na ingestão, no PostGIS e no seed** | **Concluída** | **Alta** | `app/repositories/climate_repository.py`, `app/services/satellite_ingestion_service.py` |
 | [**0004**](0004-eto-penman-monteith.md) | **ETo FAO-56 Penman-Monteith no service (o cliente do POWER só traz dados)** | **Concluída** | **Alta** | `app/services/water_balance_calculator.py`, `app/services/climate_season_builder.py`, `nasa_power_client.py` |
 | [**0005**](0005-power-sem-dado-inventado.md) | **NASA POWER sem dado inventado: ano com dia faltando sai da série** | **Concluída** | **Alta** | `nasa_power_client.py`, `app/services/climate_season_builder.py` |
+| [**0006**](0006-regras-yaml-e-yaml-rules-repository.md) | **`regras.yaml` + `YamlRulesRepository`: limiares, pesos e frases do motor com fonte** | **Concluída** | **Alta** | `app/config_data/regras.yaml`, `app/repositories/rules_repository.py`, services do motor |
 | [**0008**](0008-conteudo-das-culturas.md) | **Conteúdo das culturas (ids canônicos, nome_en, como fazer pt/en, /crop-options pelo YAML)** | **Concluída** | **Média** | `app/config_data/culturas.yaml`, `app/repositories/` |
 
 ---
