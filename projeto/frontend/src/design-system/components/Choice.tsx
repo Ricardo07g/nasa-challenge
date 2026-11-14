@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { MinusIcon, PlusIcon } from '../icons'
 import styles from './Choice.module.css'
 
 export type ChipOption<T extends string> = { value: T; label: string }
@@ -103,6 +104,52 @@ export function DateField({ label, value, min, max, onChange, status }: DateFiel
           {status}
         </p>
       )}
+    </div>
+  )
+}
+
+type NumberStepperProps = {
+  label: string
+  value: string
+  unit: string
+  step: number
+  decreaseLabel: string
+  increaseLabel: string
+  onChange: (value: string) => void
+  /** Botões − e +: recebem -step ou +step. */
+  onStep: (delta: number) => void
+  /** Ao sair do campo (para normalizar o valor). */
+  onCommit: () => void
+}
+
+/** Campo numérico grande com botões de menos e mais (ex.: hectares para testar). */
+export function NumberStepper(props: NumberStepperProps) {
+  const id = useId()
+  return (
+    <div className={styles.stepperField}>
+      <label htmlFor={id} className={styles.stepperLabel}>
+        {props.label}
+      </label>
+      <div className={styles.stepper}>
+        <button type="button" className={styles.stepperButton} aria-label={props.decreaseLabel} onClick={() => props.onStep(-props.step)}>
+          <MinusIcon size={20} />
+        </button>
+        <input
+          id={id}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          className={styles.stepperInput}
+          value={props.value}
+          onChange={(event) => props.onChange(event.target.value)}
+          onBlur={props.onCommit}
+        />
+        <span className={styles.stepperUnit}>{props.unit}</span>
+        <button type="button" className={styles.stepperButton} aria-label={props.increaseLabel} onClick={() => props.onStep(props.step)}>
+          <PlusIcon size={20} />
+        </button>
+      </div>
     </div>
   )
 }

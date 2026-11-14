@@ -55,3 +55,19 @@
 .retry {
   max-width: 280px;
 }
+
+.progress {
+  height: 18px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-divider);
+}
+
+.progressFill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--color-primary);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}

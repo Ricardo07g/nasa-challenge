@@ -4,6 +4,10 @@ import {
   alternativeSummary,
   buildAnswer,
   buildPlan,
+  initialScenario,
+  normalizeHectares,
+  plantingRule,
+  testAreaTotals,
   findOption,
   optionsSummary,
   harvestYear,
@@ -218,5 +222,63 @@ describe('scoreRows (tela 9)', () => {
 
     expect(rows.map((row) => row.id)).toEqual(['milho_braquiaria', 'sorgo', 'milho_safrinha', 'crotalaria'])
     expect(rows[0]).toEqual({ id: 'milho_braquiaria', nome: 'milho_braquiaria', notas: options[1].notas })
+  })
+})
+
+describe('initialScenario (RF-20)', () => {
+  it('sinal de ano seco já marca o Plano B; normal, incerto ou sem sinal marcam o Plano A', () => {
+    expect(initialScenario({ nivel: 'seco' } as Recomendacao['sinal'])).toBe('seco')
+    expect(initialScenario({ nivel: 'incerto' } as Recomendacao['sinal'])).toBe('normal')
+    expect(initialScenario(undefined)).toBe('normal')
+  })
+})
+
+describe('normalizeHectares (RF-21)', () => {
+  it('padrão de 50 ha para valor vazio, zero ou inválido; sempre inteiro e no mínimo 1', () => {
+    expect(normalizeHectares('')).toBe(50)
+    expect(normalizeHectares('0')).toBe(50)
+    expect(normalizeHectares('abc')).toBe(50)
+    expect(normalizeHectares('12.7')).toBe(12)
+    expect(normalizeHectares(120)).toBe(120)
+  })
+})
+
+describe('testAreaTotals (RF-21, PRD §7.11)', () => {
+  const option = (extra: Partial<Opcao['dinheiro']> = {}, seed?: number) =>
+    ({ ...options[1], custo_semente_ha: seed, dinheiro: { ...options[1].dinheiro, ...extra } }) as Opcao
+
+  it('quanto sobra, a semente e o pior ano seco, multiplicados pelos hectares', () => {
+    expect(testAreaTotals(option({ pior_ano_seco_ha: -180 }, 260), 50)).toEqual({
+      margin: 700 * 50,
+      seed: 260 * 50,
+      worstDry: -180 * 50,
+    })
+  })
+
+  it('sem o custo da semente ou o pior ano na API, esses totais ficam de fora', () => {
+    expect(testAreaTotals(option(), 10)).toEqual({ margin: 7000, seed: null, worstDry: null })
+    expect(testAreaTotals(undefined, 10)).toEqual({ margin: null, seed: null, worstDry: null })
+  })
+})
+
+describe('plantingRule (RF-20)', () => {
+  const rec = (sinal?: Recomendacao['sinal']) =>
+    ({
+      opcoes: [{ ...options[1], data_limite: '2027-02-28' }, options[0]],
+      plano_3_anos: {
+        normal: { anos: ['milho_braquiaria', 'crotalaria', 'sorgo'] },
+        seco: { anos: ['sorgo', 'crotalaria', 'sorgo'] },
+      },
+      sinal,
+    }) as unknown as Recomendacao
+
+  it('com o texto da API, usa ele', () => {
+    const sinal = { regra_dia_plantar: { data_limite: '2027-02-28', texto: 'Regra da API.' } } as Recomendacao['sinal']
+
+    expect(plantingRule(rec(sinal))).toEqual({ text: 'Regra da API.' })
+  })
+
+  it('sem o sinal, monta a regra com a data limite do 1º ano do Plano A e a troca do Plano B', () => {
+    expect(plantingRule(rec())).toEqual({ date: '2027-02-28', planA: 'milho_braquiaria', planB: 'sorgo' })
   })
 })

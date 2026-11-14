@@ -65,16 +65,29 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })).toBeInTheDocument()
   })
 
-  it('"Próximo passo" na pergunta 2 abre a tela 4 com o que o satélite viu', async () => {
+  it('"Próximo passo" na pergunta 2 abre a missão do satélite (RF-19)', async () => {
     renderAt('/quando?lat=-18.9543&lon=-48.1993')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Próximo passo Ver a resposta' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Missão: sua lavoura' })).toBeInTheDocument()
+    expect(await screen.findByRole('progressbar', { name: 'Missão: sua lavoura' })).toBeInTheDocument()
+    expect(document.title).toBe('Raiz Orbital – Missão: sua lavoura')
+  })
+
+  it('a tela 4 abre direto pela URL com o que o satélite viu', async () => {
+    renderAt('/satelite?lat=-18.9543&lon=-48.1993&colheita=meio')
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Pronto. O satélite já viu o resto.' }),
     ).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Terra média' })).toBeInTheDocument()
-    expect(document.title).toBe('Raiz Orbital – Pronto. O satélite já viu o resto.')
+  })
+
+  it('a missão sem a colheita volta para a pergunta 2', async () => {
+    renderAt('/calculando?lat=-18.9543&lon=-48.1993')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
   })
 
   it('a tela 4 sem a colheita volta para a pergunta 2', async () => {

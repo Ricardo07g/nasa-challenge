@@ -12,20 +12,27 @@ import {
   Check,
   ChevronDown,
   CircleCheck,
+  CircleHelp,
   CloudRain,
   CloudSun,
+  DropletOff,
   Droplets,
   History,
+  Layers,
   Leaf,
   LocateFixed,
+  LockKeyhole,
   MapPin,
   Minus,
+  Plus,
   Satellite,
   ShieldCheck,
   Sprout,
   Square,
+  Star,
   Users,
   Volume2,
+  Wheat,
 } from 'lucide-react'
 
 type IconProps = { size?: number }
@@ -149,4 +156,34 @@ export function MoneyIcon({ size = 24 }: IconProps) {
 
 export function LeafIcon({ size = 24 }: IconProps) {
   return <Leaf size={size} {...decorative} />
+}
+
+// Missão (tela de cálculo)
+export function LockIcon({ size = 21 }: IconProps) {
+  return <LockKeyhole size={size} {...decorative} />
+}
+
+export function StarIcon({ size = 28 }: IconProps) {
+  return <Star size={size} {...decorative} />
+}
+
+export function LayersIcon({ size = 24 }: IconProps) {
+  return <Layers size={size} {...decorative} />
+}
+
+// Plano de 3 anos (sinal do outono e hectares)
+export function PlusIcon({ size = 24 }: IconProps) {
+  return <Plus size={size} {...decorative} />
+}
+
+export function DryIcon({ size = 24 }: IconProps) {
+  return <DropletOff size={size} {...decorative} />
+}
+
+export function UncertainIcon({ size = 24 }: IconProps) {
+  return <CircleHelp size={size} {...decorative} />
+}
+
+export function SeedIcon({ size = 24 }: IconProps) {
+  return <Wheat size={size} {...decorative} />
 }

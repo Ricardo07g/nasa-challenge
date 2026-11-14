@@ -95,3 +95,13 @@ export function StripLegend({ items, note }: StripLegendProps) {
     </ul>
   )
 }
+
+/** Selo com ícone e texto num tom (ex.: sinal do outono: seco laranja, normal verde, incerto azul). */
+export function ToneBadge({ tone, icon, children }: { tone: 'green' | 'blue' | 'orange'; icon: ReactNode; children: ReactNode }) {
+  return (
+    <span className={styles.toneBadge} data-tone={tone}>
+      {icon}
+      <strong>{children}</strong>
+    </span>
+  )
+}

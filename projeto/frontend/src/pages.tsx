@@ -6,6 +6,7 @@ import { useAnswerController } from './controllers/useAnswerController'
 import { useCommunityController } from './controllers/useCommunityController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useMethodController } from './controllers/useMethodController'
+import { useMissionController } from './controllers/useMissionController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useOptionsController } from './controllers/useOptionsController'
 import { usePlanController } from './controllers/usePlanController'
@@ -20,6 +21,7 @@ import { AnswerView } from './views/AnswerView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { MethodView } from './views/MethodView'
+import { MissionView } from './views/MissionView'
 import { OptionsView } from './views/OptionsView'
 import { PlanView } from './views/PlanView'
 import { SatelliteView } from './views/SatelliteView'
@@ -87,6 +89,32 @@ export function WhenPage() {
   )
 }
 
+export function MissionPage() {
+  const { lang, messages: t } = useI18n()
+  useDocumentTitle(t.mission.title)
+  const state = useMissionController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <MissionView
+      t={t}
+      lang={lang}
+      status={state.status}
+      phase={state.phase}
+      complete={state.complete}
+      facts={state.facts}
+      place={state.place}
+      weak={state.weak}
+      reducedMotion={state.reducedMotion}
+      spins={state.spins}
+      backTo={state.backTo}
+      continueTo={state.continueTo}
+      onSpin={state.spin}
+      onWait={state.waitMore}
+      onRetry={state.retry}
+    />
+  )
+}
+
 export function SatellitePage() {
   const { messages: t } = useI18n()
   useDocumentTitle(t.satellite.title)
@@ -147,21 +175,28 @@ export function OptionsPage() {
 }
 
 export function PlanPage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.plan.title)
   const state = usePlanController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
   return (
     <PlanView
       t={t}
+      lang={lang}
       nav={state.nav}
       status={state.status}
       onRetry={state.retry}
+      signal={state.signal}
       scenario={state.scenario}
       onScenario={state.chooseScenario}
-      area={state.area}
-      onArea={state.chooseArea}
+      areaInput={state.areaInput}
+      onAreaChange={state.changeArea}
+      onAreaCommit={state.commitArea}
+      onAreaStep={state.stepArea}
+      totals={state.totals}
+      rule={state.rule}
       plan={state.plan}
+      communityTo={state.communityTo}
     />
   )
 }

@@ -30,3 +30,19 @@ export function ErrorState({ message, retryLabel, onRetry }: ErrorStateProps) {
 export function SkeletonCard() {
   return <div className={styles.skeleton} aria-hidden="true" />
 }
+
+/** Barra de progresso (ex.: fases da missão). A largura acompanha `value / max`. */
+export function ProgressBar({ label, value, max }: { label: string; value: number; max: number }) {
+  return (
+    <div
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-valuenow={value}
+      className={styles.progress}
+    >
+      <span className={styles.progressFill} style={{ transform: `scaleX(${max > 0 ? value / max : 0})` }} />
+    </div>
+  )
+}

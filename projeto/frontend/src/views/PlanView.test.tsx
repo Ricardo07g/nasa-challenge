@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -22,14 +22,21 @@ const nav = {
 function setup(overrides: Partial<PlanViewProps> = {}) {
   const props: PlanViewProps = {
     t: pt,
+    lang: 'pt',
     nav,
     status: 'ready',
     onRetry: vi.fn(),
+    signal: rec.sinal ?? null,
     scenario: 'normal',
     onScenario: vi.fn(),
-    area: '50',
-    onArea: vi.fn(),
+    areaInput: '50',
+    onAreaChange: vi.fn(),
+    onAreaCommit: vi.fn(),
+    onAreaStep: vi.fn(),
+    totals: { margin: 35000, seed: 26000, worstDry: -9000 },
+    rule: { text: 'No dia de plantar (até 28/fev), se a terra estiver seca, use o plano B: sorgo no lugar do milho.' },
     plan: buildPlan(rec, 'normal'),
+    communityTo: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
     ...overrides,
   }
   render(
@@ -41,102 +48,107 @@ function setup(overrides: Partial<PlanViewProps> = {}) {
 }
 
 describe('PlanView (tela 7)', () => {
-  it('linha do tempo com um ano por bloco', () => {
+  it('sinal para o outono com o nível, o motivo e a fonte (RF-20)', () => {
     setup()
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Plano de 3 anos' })).toBeInTheDocument()
-    expect(screen.getByText('O que plantar depois da soja, um ano de cada vez.')).toBeInTheDocument()
-    const timeline = screen.getByRole('list', { name: 'Plano ano a ano' })
-    expect(timeline.querySelectorAll('li')).toHaveLength(3)
-    expect(timeline).toHaveTextContent('2027Milho com braquiáriaDá grão e cobre a terra.')
-    expect(timeline).toHaveTextContent('2029SorgoDá grão com menos risco de seca.')
+    const signal = screen.getByRole('region', { name: 'Sinal para o outono de 2027' })
+    expect(within(signal).getByText('Sem sinal claro')).toBeInTheDocument()
+    expect(signal).toHaveTextContent('40% de chance de chover menos')
+    expect(signal).toHaveTextContent('Previsão da NASA (GEOS-S2S) e umidade da terra (SMAP), atualizado em 10 de novembro.')
+    expect(signal).toHaveTextContent('Deixe o plano B na manga.')
   })
 
-  it('ano normal marcado, com o resumo do plano e como é hoje', () => {
-    setup()
+  it('Plano A e Plano B, com o marcado pelo controller', async () => {
+    const props = setup()
 
-    expect(screen.getByRole('button', { name: 'Ano normal' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByText('Chuva parecida com a média dos últimos 20 anos.')).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Com plano' })).toHaveTextContent(
-      'Terra coberta nos 3 anos · Grão em 2 de 3 anos',
-    )
-    expect(screen.getByRole('region', { name: 'Como é hoje' })).toHaveTextContent('Terra descoberta em metade dos anos')
+    expect(screen.getByRole('button', { name: 'Plano A' })).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(screen.getByRole('button', { name: 'Plano B, se secar' }))
+    expect(props.onScenario).toHaveBeenCalledWith('seco')
   })
 
-  it('ano seco: a troca aparece na linha do tempo e é explicada', () => {
+  it('no Plano B, diz que ele foi testado nos anos mais secos e mostra a troca na linha do tempo', () => {
     setup({ scenario: 'seco', plan: buildPlan(rec, 'seco') })
 
+    expect(screen.getByText('O plano B foi testado nos anos mais secos dos últimos 20.')).toBeInTheDocument()
     expect(screen.getByRole('list', { name: 'Plano ano a ano' })).toHaveTextContent(
       '2027SorgoNo lugar de milho com braquiária: aguenta mais a seca.',
     )
-    expect(screen.getByText(/Repetimos os anos mais secos dos últimos 20/)).toHaveTextContent(
-      'O plano troca milho com braquiária de 2027 por sorgo.',
+  })
+
+  it('sem o sinal na API, diz que a previsão ainda não está disponível', () => {
+    setup({ signal: null })
+
+    expect(screen.getByText('A previsão do outono ainda não está disponível para esta área.')).toBeInTheDocument()
+  })
+
+  it('hectares para testar com os totais em reais (RF-21)', async () => {
+    const props = setup()
+
+    const area = screen.getByRole('region', { name: 'Comece por um pedaço' })
+    expect(within(area).getByLabelText('Quantos hectares quer testar?')).toHaveValue(50)
+    expect(area).toHaveTextContent('Deve sobrar perto de R$ 35 mil')
+    expect(area).toHaveTextContent('A semente custa perto de R$ 26 mil')
+    expect(area).toHaveTextContent('No pior ano seco, faltaria perto de R$ 9.000')
+    await userEvent.click(within(area).getByRole('button', { name: 'Aumentar 10 hectares' }))
+    expect(props.onAreaStep).toHaveBeenCalledWith(10)
+  })
+
+  it('sem o custo da semente e o pior ano na API, essas linhas não aparecem', () => {
+    setup({ totals: { margin: 35000, seed: null, worstDry: null } })
+
+    const area = screen.getByRole('region', { name: 'Comece por um pedaço' })
+    expect(area).toHaveTextContent('Deve sobrar perto de R$ 35 mil')
+    expect(area).not.toHaveTextContent('semente')
+    expect(area).not.toHaveTextContent('pior ano seco')
+  })
+
+  it('pior ano seco que ainda sobra dinheiro', () => {
+    setup({ totals: { margin: 35000, seed: 8000, worstDry: 6000 } })
+
+    expect(screen.getByText('No pior ano seco, sobraria perto de R$ 6.000')).toBeInTheDocument()
+  })
+
+  it('regra do dia de plantar: o texto da API ou montada com a data limite', () => {
+    setup({ rule: { date: '2027-02-28', planA: 'milho_braquiaria', planB: 'sorgo' } })
+
+    expect(
+      screen.getByText(
+        'No dia de plantar (até 28 de fevereiro), se a terra estiver seca, use o plano B: sorgo no lugar de milho com braquiária.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('O satélite mede a água na raiz. Você não precisa adivinhar.')).toBeInTheDocument()
+  })
+
+  it('resumo do plano, como é hoje, o ganho na soja e o link para a região', () => {
+    setup()
+
+    expect(screen.getByRole('region', { name: 'Com plano' })).toHaveTextContent('Terra coberta nos 3 anos · Grão em 2 de 3 anos')
+    expect(screen.getByRole('region', { name: 'Como é hoje' })).toHaveTextContent('Terra descoberta em metade dos anos')
+    expect(screen.getByText('Referência ilustrativa; estudo a confirmar.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ver o que acontece na sua região' })).toHaveAttribute(
+      'href',
+      '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
     )
   })
 
-  it('tocar em "Ano seco" e em "100 ha" chama o controller', async () => {
-    const props = setup()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Ano seco' }))
-    await userEvent.click(screen.getByRole('button', { name: '100 ha' }))
-
-    expect(props.onScenario).toHaveBeenCalledWith('seco')
-    expect(props.onArea).toHaveBeenCalledWith('100')
-  })
-
-  it('"Comece por um pedaço": a frase acompanha a área', () => {
-    setup()
-    expect(screen.getByText('O plano em 50 hectares. O resto fica como hoje, para você comparar.')).toBeInTheDocument()
-  })
-
-  it('"Tudo" é o plano na área toda', () => {
-    setup({ area: 'all' })
-    expect(screen.getByText('O plano na área toda.')).toBeInTheDocument()
-  })
-
-  it('o ganho na soja seguinte, com a nota de que a referência é ilustrativa', () => {
-    setup()
-
-    expect(screen.getByRole('heading', { name: 'O ganho vem na soja seguinte' })).toBeInTheDocument()
-    expect(screen.getByText('Referência ilustrativa; estudo a confirmar.')).toBeInTheDocument()
-  })
-
-  it('enquanto carrega e quando dá erro', async () => {
+  it('enquanto carrega e fora da área', () => {
     const { unmount } = render(
       <MemoryRouter>
-        <PlanView
-          t={pt}
-          nav={nav}
-          status="loading"
-          onRetry={vi.fn()}
-          scenario="normal"
-          onScenario={vi.fn()}
-          area="50"
-          onArea={vi.fn()}
-          plan={null}
-        />
+        <PlanView {...({ t: pt, lang: 'pt', nav, status: 'loading', plan: null } as unknown as PlanViewProps)} />
       </MemoryRouter>,
     )
     expect(screen.getByRole('status')).toHaveTextContent('Carregando…')
     unmount()
 
-    const props = setup({ status: 'error', plan: null })
-    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
-    expect(props.onRetry).toHaveBeenCalled()
+    setup({ status: 'outside', plan: null })
+    expect(screen.getByRole('region', { name: 'Ainda não chegamos aí' })).toBeInTheDocument()
   })
 
   it('em inglês', () => {
-    setup({ t: en, scenario: 'seco', plan: buildPlan(rec, 'seco') })
+    setup({ t: en, lang: 'en', signal: { ...rec.sinal!, nivel: 'seco' } })
 
     expect(screen.getByRole('heading', { level: 1, name: '3-year plan' })).toBeInTheDocument()
-    expect(screen.getByRole('list', { name: /year/i })).toHaveTextContent('Instead of corn with brachiaria')
-  })
-
-  it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {
-    setup({ status: 'outside', plan: null })
-
-    const outside = screen.getByRole('region', { name: 'Ainda não chegamos aí' })
-    expect(outside).toHaveTextContent('Por enquanto, os dados estão prontos só para a região')
-    expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
+    expect(screen.getByText('Dry-year signal')).toBeInTheDocument()
+    expect(screen.getByText('About R$ 35 thousand should remain')).toBeInTheDocument()
   })
 })

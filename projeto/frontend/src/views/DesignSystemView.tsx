@@ -11,7 +11,7 @@ import {
   RecommendationHero,
   YearTimeline,
 } from '../design-system/components/Content'
-import { ErrorState, LoadingState, SkeletonCard } from '../design-system/components/Feedback'
+import { ErrorState, LoadingState, ProgressBar, SkeletonCard } from '../design-system/components/Feedback'
 import { AnswerTabs, BackLink, QuestionStepper } from '../design-system/components/Navigation'
 import { MetricRow, StatusPill, StripLegend, YearStrip, type CellState } from '../design-system/components/Status'
 import {
@@ -212,13 +212,13 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
               ]}
             />
             <ChipGroup
-              label={t.plan.dryQuestion}
+              label={t.plan.planChoice}
               tone="blue"
               value="seco"
               onChange={noop}
               options={[
-                { value: 'normal', label: t.plan.normal },
-                { value: 'seco', label: t.plan.dry },
+                { value: 'normal', label: t.plan.planA },
+                { value: 'seco', label: t.plan.planB },
               ]}
             />
             <RadioCard title={t.harvest.meio.title} sub={t.harvest.meio.sub} selected onSelect={noop} />
@@ -353,6 +353,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
           />
           <Card>
             <LoadingState>{t.common.loading}</LoadingState>
+            <ProgressBar label={t.mission.title} value={2} max={6} />
             <SkeletonCard />
             <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={noop} />
           </Card>

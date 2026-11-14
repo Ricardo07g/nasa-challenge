@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { ErrorState, LoadingState, SkeletonCard } from './Feedback'
+import { ErrorState, LoadingState, ProgressBar, SkeletonCard } from './Feedback'
 
 describe('LoadingState', () => {
   it('avisa leitores de tela que está carregando', () => {
@@ -27,5 +27,16 @@ describe('SkeletonCard', () => {
     const { container } = render(<SkeletonCard />)
 
     expect(container.firstElementChild).toHaveAttribute('aria-hidden', 'true')
+  })
+})
+
+describe('ProgressBar', () => {
+  it('barra de progresso acessível (quanto já foi de quanto)', () => {
+    render(<ProgressBar label="Missão: sua lavoura" value={2} max={6} />)
+
+    const bar = screen.getByRole('progressbar', { name: 'Missão: sua lavoura' })
+    expect(bar).toHaveAttribute('aria-valuenow', '2')
+    expect(bar).toHaveAttribute('aria-valuemin', '0')
+    expect(bar).toHaveAttribute('aria-valuemax', '6')
   })
 })

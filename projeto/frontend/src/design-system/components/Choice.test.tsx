@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { ChipGroup, DateField, RadioCard } from './Choice'
+import { ChipGroup, DateField, NumberStepper, RadioCard } from './Choice'
 
 const options = [
   { value: 'chuva', label: 'Chuva' },
@@ -98,5 +98,38 @@ describe('DateField', () => {
 
     await userEvent.type(input, '2027-02-18')
     expect(onChange).toHaveBeenLastCalledWith('2027-02-18')
+  })
+})
+
+describe('NumberStepper', () => {
+  it('campo numérico com rótulo, unidade e botões de menos e mais', async () => {
+    const onChange = vi.fn()
+    const onStep = vi.fn()
+    const onCommit = vi.fn()
+    render(
+      <NumberStepper
+        label="Quantos hectares quer testar?"
+        value="50"
+        unit="ha"
+        step={10}
+        decreaseLabel="Diminuir 10 hectares"
+        increaseLabel="Aumentar 10 hectares"
+        onChange={onChange}
+        onStep={onStep}
+        onCommit={onCommit}
+      />,
+    )
+
+    const input = screen.getByLabelText('Quantos hectares quer testar?')
+    expect(input).toHaveValue(50)
+    await userEvent.type(input, '5')
+    expect(onChange).toHaveBeenLastCalledWith('505')
+    await userEvent.tab()
+    expect(onCommit).toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Diminuir 10 hectares' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Aumentar 10 hectares' }))
+    expect(onStep).toHaveBeenNthCalledWith(1, -10)
+    expect(onStep).toHaveBeenNthCalledWith(2, 10)
+    expect(screen.getByText('ha')).toBeInTheDocument()
   })
 })

@@ -149,6 +149,29 @@
   color: var(--color-secondary);
 }
 
+/* Linha com ícone na frente (ex.: totais do pedaço de teste) */
+.iconLine {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.iconLine svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+/* Link de texto com ícone (ex.: "Ver o que acontece na sua região") */
+.iconLink {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--touch-min);
+  font-weight: var(--font-weight-semibold);
+}
+
 .muted {
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
