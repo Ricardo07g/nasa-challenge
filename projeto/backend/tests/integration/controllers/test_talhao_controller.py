@@ -1,6 +1,5 @@
 """Integration tests for GET /api/talhao (contrato do plano técnico §3.1)."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 

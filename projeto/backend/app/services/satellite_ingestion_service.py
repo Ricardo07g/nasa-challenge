@@ -54,7 +54,8 @@ class SatelliteIngestionService:
             )
 
             soil_info = soil_future.result(timeout=self._timeout)
-            self._soil_repo.save_soil(lat, lon, soil_info)
+            if hasattr(self._soil_repo, "save_soil"):
+                self._soil_repo.save_soil(lat, lon, soil_info)
 
             try:
                 seasons = nasa_future.result(timeout=self._timeout)
@@ -69,12 +70,13 @@ class SatelliteIngestionService:
                 )
                 seasons = self._load_nearest_neighbor_seasons(cell_id, lat, lon)
 
-        self._climate_repo.save_cell_seasons(
-            cell_id=cell_id,
-            lat=lat,
-            lon=lon,
-            seasons=seasons,
-        )
+        if hasattr(self._climate_repo, "save_cell_seasons"):
+            self._climate_repo.save_cell_seasons(
+                cell_id=cell_id,
+                lat=lat,
+                lon=lon,
+                seasons=seasons,
+            )
         return cell_id
 
     def _load_nearest_neighbor_seasons(

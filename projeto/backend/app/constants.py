@@ -76,6 +76,12 @@ KC_DEV_STAGE_FRACTION: Final[float] = 0.45
 KC_MID_STAGE_FRACTION: Final[float] = 0.75
 SOLAR_CONSTANT_MJ_M2_MIN: Final[float] = 0.0820  # FAO-56, Gsc
 MJ_TO_MM_EVAPORATION: Final[float] = 0.408  # FAO-56: 1 MJ/m² evapora 0,408 mm
+MIN_DAILY_ETO_MM: Final[float] = 0.5
+MAX_DAILY_ETO_MM: Final[float] = 10.0
+RH_DEFAULT_PCT: Final[float] = 65.0
+WIND_SPEED_DEFAULT_MS: Final[float] = 2.0
+SOLAR_RAD_DEFAULT_MJ: Final[float] = 18.5
+EXAMPLE_CELL_ID: Final[str] = "-189_-483"
 
 # Climate Stress & ISNA Thresholds (US-03)
 ISNA_GRAIN_THRESHOLD: Final[float] = 0.55

@@ -14,7 +14,6 @@ from app.constants import (
     DEFAULT_SAND_PCT,
     DEFAULT_SRID,
     SAND_THRESHOLD_PCT,
-    SOIL_POINT_ROUND_DECIMALS,
 )
 from app.models.talhao import SoloInfo
 from app.repositories.point_cache import load_points, point_key
@@ -85,7 +84,7 @@ class PostgisSoilRepository:
         self._fallback = fallback or CachedSoilGridsRepository()
 
     def save_soil(self, lat: float, lon: float, soil: SoloInfo) -> None:
-        key = compute_soil_point_key(lat, lon)
+        key = point_key(lat, lon)
         with psycopg.connect(self._database_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -115,7 +114,7 @@ class PostgisSoilRepository:
             conn.commit()
 
     def get_soil(self, lat: float, lon: float) -> SoloInfo:
-        key = compute_soil_point_key(lat, lon)
+        key = point_key(lat, lon)
         with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
             cur.execute(
                 """

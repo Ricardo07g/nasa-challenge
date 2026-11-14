@@ -1,5 +1,7 @@
 """Olhar o talhão: área com dados, solo, histórico pelo NDVI e fontes (plano técnico §3.1)."""
 
+from typing import Any, Protocol
+
 from app.models.talhao import FonteDado, Talhao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.ndvi_repository import NdviRepository
@@ -35,24 +37,41 @@ class TalhaoService:
     def inspect_talhao(self, lat: float, lon: float) -> Talhao:
         """Returns complete field metadata for the given coordinates (US-01, US-02, US-07)."""
         cell_id = self._climate_repo.find_cell_id(lat, lon)
-        dentro_da_area = cell_id is not None
+        if (
+            cell_id is None
+            and self._ingestion_service is not None
+            and hasattr(self._climate_repo, "save_cell_seasons")
+        ):
+            cell_id = self._ingestion_service.ingest_area(lat, lon)
 
+        dentro_da_area = cell_id is not None
         solo = self._soil_repo.get_soil(lat, lon)
-        serie_ndvi, _ = self._ndvi_repo.get_ndvi_history(lat, lon)
+
+        ndvi_res: Any = self._ndvi_repo.get_ndvi_history(lat, lon)
+        serie_ndvi = ndvi_res[0] if isinstance(ndvi_res, tuple) else ndvi_res
 
         historico = self._history_service.classify_entressafra(serie_ndvi) if serie_ndvi else None
         colheita_sugerida = self._history_service.suggest_harvest_band(serie_ndvi)
 
-        dados_fontes = (
-            {"fonte": "NASA POWER (2005-2024)", "status": "ok"},
-            {"fonte": "NASA SMAP L4 (SPL4SMGP)", "status": "ok"},
-            {
-                "fonte": "SoilGrids ISRIC 250m",
-                "status": "ok" if solo.fonte == "soilgrids" else "fallback",
-            },
-            {"fonte": "MODIS MOD13Q1 (NDVI 10a)", "status": "ok" if historico else "indisponivel"},
-            {"fonte": "NEX-GDDP-CMIP6 (SSP2-4.5)", "status": "ok"},
-        )
+        dados_fontes: list[FonteDado] = []
+        if dentro_da_area and cell_id is not None:
+            dados_fontes.append(FonteDado(fonte="nasa_power", periodo="2005-2024"))
+            deltas = (
+                self._climate_repo.get_cmip6_deltas(cell_id)
+                if hasattr(self._climate_repo, "get_cmip6_deltas")
+                else []
+            )
+            if deltas:
+                scenario = deltas[0].scenario
+                model_count = len({d.model for d in deltas})
+                dados_fontes.append(
+                    FonteDado(
+                        fonte="nex_gddp_cmip6",
+                        periodo=CMIP6_PERIOD,
+                        cenario=scenario,
+                        modelos=model_count,
+                    )
+                )
 
         return Talhao(
             lat=lat,
@@ -62,5 +81,9 @@ class TalhaoService:
             solo=solo,
             colheita_sugerida=colheita_sugerida,
             historico=historico,
-            dados_fontes=dados_fontes,
+            dados_fontes=tuple(dados_fontes),
         )
+
+    def obter_talhao(self, lat: float, lon: float) -> Talhao:
+        """Alias for inspect_talhao matching Task 0001 Sub-task 1.3 specification."""
+        return self.inspect_talhao(lat=lat, lon=lon)
