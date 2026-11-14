@@ -2,14 +2,19 @@
 
 from dataclasses import replace
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.constants import PROBLEM_BASE_URI, PROBLEM_JSON_MEDIA_TYPE
 from app.dependencies import get_rules_repository
 from app.main import app
 from app.models.regras import Regras
 from app.repositories.rules_repository import load_default_rules
 
 UFU = {"lat": -18.9543, "lon": -48.1993}
+# Plano técnico §8: os dados só mudam quando o pipeline roda, então o navegador e a CDN podem
+# guardar a resposta por um dia.
+ONE_DAY_PUBLIC_CACHE = "public, max-age=86400"
 
 
 class FakeRulesRepository:
@@ -103,6 +108,62 @@ def test_should_return_422_instead_of_ignoring_invalid_nematoide(client: TestCli
     response = client.get("/api/recomendacao", params={**UFU, "nematoide": "talvez"})
 
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    ("params", "invalid_field"),
+    [
+        ({**UFU, "colheita": "invalida"}, "colheita"),
+        ({"lat": -91.0, "lon": UFU["lon"]}, "lat"),
+        ({**UFU, "nematoide": "talvez"}, "nematoide"),
+    ],
+)
+def test_should_answer_invalid_request_as_problem_json_with_the_invalid_field(
+    client: TestClient, params: dict[str, object], invalid_field: str
+) -> None:
+    response = client.get("/api/recomendacao", params=params)
+
+    assert response.status_code == 422
+    assert response.headers["content-type"] == PROBLEM_JSON_MEDIA_TYPE
+    body = response.json()
+    assert body["type"] == f"{PROBLEM_BASE_URI}/INVALID_REQUEST"
+    assert body["title"] == "Unprocessable Entity"
+    assert body["status"] == 422
+    assert body["code"] == "INVALID_REQUEST"
+    assert body["detail"] == f"Parâmetro inválido: {invalid_field}"
+    assert [(p["name"], p["in"]) for p in body["invalid_params"]] == [(invalid_field, "query")]
+    assert all(p["reason"] for p in body["invalid_params"])
+
+
+def test_should_list_every_invalid_field_in_the_problem_json(client: TestClient) -> None:
+    params = {"lat": 100.0, "lon": UFU["lon"], "colheita": "invalida"}
+
+    response = client.get("/api/recomendacao", params=params)
+
+    body = response.json()
+    assert {p["name"] for p in body["invalid_params"]} == {"lat", "colheita"}
+    assert body["detail"].startswith("Parâmetros inválidos: ")
+
+
+def test_should_send_one_day_public_cache_header_when_recommendation_succeeds(
+    client: TestClient,
+) -> None:
+    response = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"})
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == ONE_DAY_PUBLIC_CACHE
+    # Os textos mudam com o idioma: um cache público não pode servir pt a quem pediu en.
+    assert "Accept-Language" in response.headers["vary"]
+
+
+def test_should_not_cache_errors(client: TestClient) -> None:
+    outside = client.get("/api/recomendacao", params={"lat": -23.55, "lon": -46.63})
+    invalid = client.get("/api/recomendacao", params={**UFU, "colheita": "invalida"})
+
+    assert outside.status_code == 404
+    assert invalid.status_code == 422
+    assert "cache-control" not in outside.headers
+    assert "cache-control" not in invalid.headers
 
 
 def test_should_return_example_farm_at_ufu_point_when_get_exemplo_called(
