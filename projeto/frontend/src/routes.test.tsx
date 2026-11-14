@@ -99,6 +99,17 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
   })
 
+  it('a aba "Todas as opções" abre a tela 6 mantendo o caminho', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Todas as opções' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Todas as opções' })).toBeInTheDocument()
+    expect(await screen.findByRole('article', { name: 'Milho com braquiária' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Todas as opções' })).toHaveAttribute('aria-current', 'page')
+    expect(document.title).toBe('Raiz Orbital – Todas as opções')
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 

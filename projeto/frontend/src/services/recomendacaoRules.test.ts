@@ -4,6 +4,7 @@ import {
   alternativeSummary,
   buildAnswer,
   findOption,
+  optionsSummary,
   harvestYear,
   planSummary,
   planSwaps,
@@ -141,5 +142,36 @@ describe('buildAnswer (tela 5)', () => {
 
   it('sem a melhor opção na lista, não há resposta para mostrar', () => {
     expect(buildAnswer(recomendacao({ melhor: 'pousio' }))).toBeNull()
+  })
+})
+
+describe('optionsSummary (tela 6)', () => {
+  const late = { ...opcao('milho_safrinha', 14, 950, 10, 58), na_janela: false }
+  const rec = {
+    opcoes: [options[0], options[1], late, options[3]],
+    fora_da_janela: [{ id: 'milho_safrinha', nome: 'Milho sozinho', texto: 'Passa da data do ZARC.' }],
+  } as Recomendacao
+
+  it('sem eixo, ordena pela nota final; quem está fora da janela vai para o fim', () => {
+    expect(optionsSummary(rec, null).options.map((o) => o.id)).toEqual([
+      'milho_braquiaria',
+      'sorgo',
+      'crotalaria',
+      'milho_safrinha',
+    ])
+  })
+
+  it('com um eixo, coloca na frente quem é melhor nele', () => {
+    expect(optionsSummary(rec, 'dinheiro').options.map((o) => o.id)).toEqual([
+      'milho_braquiaria',
+      'sorgo',
+      'crotalaria',
+      'milho_safrinha',
+    ])
+    expect(optionsSummary(rec, 'terra').options[0].id).toBe('crotalaria')
+  })
+
+  it('traz o aviso do que ficou fora da janela de plantio', () => {
+    expect(optionsSummary(rec, null).late).toEqual({ names: ['Milho sozinho'], texts: ['Passa da data do ZARC.'] })
   })
 })

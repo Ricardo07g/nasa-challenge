@@ -6,6 +6,7 @@ import { useAnswerController } from './controllers/useAnswerController'
 import { useAnswerNav } from './controllers/useAnswerNav'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
+import { useOptionsController } from './controllers/useOptionsController'
 import { useSatelliteController } from './controllers/useSatelliteController'
 import { useShellController } from './controllers/useShellController'
 import { useWhenController } from './controllers/useWhenController'
@@ -16,6 +17,7 @@ import { buildFlowQuery } from './services/flowParams'
 import { AnswerView } from './views/AnswerView'
 import { ComingSoonView } from './views/ComingSoonView'
 import { DesignSystemView } from './views/DesignSystemView'
+import { OptionsView } from './views/OptionsView'
 import { SatelliteView } from './views/SatelliteView'
 import { ShellView } from './views/ShellView'
 import { StartView } from './views/StartView'
@@ -122,6 +124,24 @@ export function AnswerPage() {
   )
 }
 
+export function OptionsPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.options.title)
+  const state = useOptionsController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <OptionsView
+      t={t}
+      nav={state.nav}
+      status={state.status}
+      onRetry={state.retry}
+      axis={state.axis}
+      onAxis={state.chooseAxis}
+      summary={state.summary}
+    />
+  )
+}
+
 /** "Ver um exemplo pronto": abre a resposta da fazenda de exemplo (RF-11). */
 export function ExamplePage() {
   return <Navigate to={`/resposta${buildFlowQuery({ ...EXAMPLE_FARM, colheita: 'meio', exemplo: true })}`} replace />
@@ -134,17 +154,16 @@ export function DesignSystemPage() {
   return <DesignSystemView t={t} {...state} />
 }
 
-type PendingScreen = 'options' | 'plan' | 'community' | 'method'
+type PendingScreen = 'plan' | 'community' | 'method'
 
 /** Telas da resposta: navegam entre si pelas abas. */
-const ANSWER_SCREENS: readonly PendingScreen[] = ['plan', 'options']
+const ANSWER_SCREENS: readonly PendingScreen[] = ['plan']
 
 /** Provisório até cada tela ficar pronta. */
 export function PendingPage({ screen }: { screen: PendingScreen }) {
   const { messages: t } = useI18n()
   const answerNav = useAnswerNav()
   const titles: Record<PendingScreen, string> = {
-    options: t.options.title,
     plan: t.plan.title,
     community: t.community.title,
     method: t.method.title,
