@@ -100,8 +100,30 @@ def test_should_return_raw_daily_series_with_elevation_and_no_eto() -> None:
         ws2m=2.1,
         allsky_sfc_sw_dwn=21.0,
     )
-    # Dia 2 tinha a sentinela -999 na chuva
-    assert series.days[1].prectotcorr == 0.0
+
+
+def test_should_return_none_instead_of_inventing_value_when_power_has_no_data() -> None:
+    payload = _sample_nasa_power_payload()
+    params = payload["properties"]["parameter"]
+    params["T2M_MAX"]["20230102"] = -999.0
+    params["RH2M"]["20230102"] = None
+    del params["ALLSKY_SFC_SW_DWN"]["20230102"]
+    client = NasaPowerClient(http_get=FakeHttpGetter([payload]))
+
+    series = client.fetch_daily(
+        lat=-17.78, lon=-50.92, start=date(2023, 1, 1), end=date(2024, 1, 1)
+    )
+
+    # Dia 2: sentinela -999 na chuva e na máxima, UR nula e radiação ausente -> "sem dado"
+    day_2 = series.days[1]
+    assert day_2.data == date(2023, 1, 2)
+    assert (day_2.prectotcorr, day_2.t2m_max, day_2.rh2m, day_2.allsky_sfc_sw_dwn) == (
+        None,
+        None,
+        None,
+        None,
+    )
+    assert (day_2.t2m_min, day_2.ws2m) == (18.0, 2.0)
 
 
 def test_should_leave_elevation_empty_when_response_has_no_geometry() -> None:

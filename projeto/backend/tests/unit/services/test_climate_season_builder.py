@@ -81,21 +81,46 @@ def test_should_compute_penman_monteith_eto_when_all_inputs_are_present() -> Non
         )
 
 
-def test_should_use_hargreaves_for_the_whole_season_when_a_day_lacks_humidity() -> None:
-    wb = WaterBalanceCalculator()
-    series = _series(date(2023, 1, 1), date(2024, 7, 30))
-    gap = date(2023, 3, 10)
-    days = tuple(replace(d, rh2m=None) if d.data == gap else d for d in series.days)
+def _without(series: PowerDailySeries, field: str, day: date) -> PowerDailySeries:
+    """A mesma série com o parâmetro `field` "sem dado" (None) no dia `day`."""
+    days = tuple(replace(d, **{field: None}) if d.data == day else d for d in series.days)
+    return replace(series, days=days)
 
-    seasons = _builder().build(replace(series, days=days), cell_id=CELL_ID, lat=LAT)
+
+@pytest.mark.parametrize(
+    ("field", "season_series"),
+    [("rh2m", "rh2m_pct"), ("ws2m", "ws2m_ms"), ("allsky_sfc_sw_dwn", "solar_rad_mj")],
+)
+def test_should_use_hargreaves_for_the_whole_season_when_a_day_lacks_a_penman_input(
+    field: str, season_series: str
+) -> None:
+    wb = WaterBalanceCalculator()
+    series = _without(_series(date(2023, 1, 1), date(2024, 7, 30)), field, date(2023, 3, 10))
+
+    seasons = _builder().build(series, cell_id=CELL_ID, lat=LAT)
 
     hargreaves_2023 = tuple(
         wb.hargreaves_eto(t_max=30.0, t_min=19.0, lat_deg=LAT, day_of_year=i + 1)
         for i in range(SEASON_DAYS)
     )
+    assert [s.year for s in seasons] == [2023, 2024]
     assert seasons[0].eto_mm == hargreaves_2023
+    # A série com o buraco não é gravada pela metade (nem com valor inventado)
+    assert getattr(seasons[0], season_series) == ()
+    assert len(seasons[0].rain_mm) == SEASON_DAYS
     # O outro ano tem tudo: continua no Penman-Monteith
     assert seasons[1].eto_mm[0] != pytest.approx(hargreaves_2023[0])
+    assert len(getattr(seasons[1], season_series)) == SEASON_DAYS
+
+
+@pytest.mark.parametrize("field", ["prectotcorr", "t2m_max", "t2m_min"])
+def test_should_drop_the_year_when_a_day_lacks_rain_or_temperature(field: str) -> None:
+    # Decisão do time (tarefa 0005): ano com dia faltando sai da conta, como no export da fixture
+    series = _without(_series(date(2022, 1, 1), date(2024, 7, 30)), field, date(2023, 7, 31))
+
+    seasons = _builder(2022, 2024).build(series, cell_id=CELL_ID, lat=LAT)
+
+    assert [s.year for s in seasons] == [2022, 2024]
 
 
 def test_should_use_hargreaves_when_power_gives_no_elevation() -> None:
