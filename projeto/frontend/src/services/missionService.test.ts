@@ -30,6 +30,7 @@ describe('missionFacts', () => {
   const talhao = {
     ponto: { lat: -18.9543, lon: -48.1993 },
     solo: { textura: 'argiloso', cad_mm: 75, fonte: 'soilgrids' },
+    dados: [{ fonte: 'nasa_power', periodo: '2005-2024' }],
     historico: historico(['parado', 'plantou', 'parado', 'plantou', 'parado', 'plantou', 'parado', 'plantou', 'parado', 'plantou']),
   } as unknown as Talhao
 
@@ -39,6 +40,7 @@ describe('missionFacts', () => {
     expect(missionFacts(talhao, rec)).toEqual({
       point: { lat: -18.9543, lon: -48.1993 },
       soil: 'argiloso',
+      rainYears: 20,
       historyYears: 10,
       signal: 'seco',
     })
@@ -60,5 +62,21 @@ describe('missionFacts', () => {
     const fact = missionFacts({ ...talhao, solo: null, historico: null } as Talhao, {} as Recomendacao)
 
     expect(fact).toMatchObject({ soil: 'medio', historyYears: null, signal: null })
+  })
+
+  it('os anos de chuva lidos vêm da conta (anos usados das opções), não de um 20 fixo', () => {
+    const rec = { opcoes: [{ chuva: { anos: 17 } }, { chuva: { anos: 17 } }] } as unknown as Recomendacao
+
+    expect(missionFacts(talhao, rec).rainYears).toBe(17)
+  })
+
+  it('sem nenhum dado de chuva, a fase não inventa os anos', () => {
+    expect(missionFacts({ ...talhao, dados: [] }, {} as Recomendacao).rainYears).toBeNull()
+  })
+
+  it('sem o mapa de solos, a terra é a que a recomendação usou', () => {
+    const rec = { entrada: { solo: 'arenoso' } } as unknown as Recomendacao
+
+    expect(missionFacts({ ...talhao, solo: null }, rec).soil).toBe('arenoso')
   })
 })

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Button } from '../design-system/components/Button'
 import { ProgressBar } from '../design-system/components/Feedback'
+import { NotConnected } from '../design-system/components/Status'
 import { BackLink } from '../design-system/components/Navigation'
 import {
   CheckIcon,
@@ -49,17 +50,25 @@ const PHASE_ICONS: ReactNode[] = [
   <LayersIcon key="options" />,
 ]
 
-/** O dado real que cada fase mostra quando termina. A última não revela a melhor opção. */
-function phaseResults(t: Messages, lang: Lang, facts: MissionFacts | null): string[] {
+/** Resultado de uma fase: o dado real, ou o que ainda não está conectado (`what`). */
+type PhaseResult = { text: string; what: string | null }
+
+/**
+ * O dado real que cada fase mostra quando termina. Sem o dado na API, "Ainda não conectado" (o mesmo
+ * aviso das outras telas). A última não revela a melhor opção.
+ */
+function phaseResults(t: Messages, lang: Lang, facts: MissionFacts | null): PhaseResult[] {
   const m = t.mission
   if (!facts) return []
+  const ready = (text: string): PhaseResult => ({ text, what: null })
+  const missing = (what: string): PhaseResult => ({ text: `${what}: ${t.common.notConnected}`, what })
   return [
-    m.found(formatDecimal(lang, facts.point.lat, 2), formatDecimal(lang, facts.point.lon, 2)),
-    t.satellite.soilTitle(t.soil[facts.soil]),
-    m.rain,
-    facts.historyYears !== null ? m.history(facts.historyYears) : m.noHistory,
-    facts.signal ? m.forecast(t.signal[facts.signal].toLocaleLowerCase(lang)) : m.noForecast,
-    m.ready,
+    ready(m.found(formatDecimal(lang, facts.point.lat, 2), formatDecimal(lang, facts.point.lon, 2))),
+    ready(t.satellite.soilTitle(t.soil[facts.soil])),
+    facts.rainYears !== null ? ready(m.rain(facts.rainYears)) : missing(m.rainWhat),
+    facts.historyYears !== null ? ready(m.history(facts.historyYears)) : missing(m.historyWhat),
+    facts.signal ? ready(m.forecast(t.signal[facts.signal].toLocaleLowerCase(lang))) : missing(m.forecastWhat),
+    ready(m.ready),
   ]
 }
 
@@ -103,14 +112,14 @@ export function MissionView(props: MissionViewProps) {
                   </span>
                   <span>
                     <span>{label}</span>
-                    {state === 'done' && results[index] && <strong className={styles.logResult}>{results[index]}</strong>}
+                    {state === 'done' && results[index] && <PhaseResultLine t={t} result={results[index]} />}
                   </span>
                 </li>
               )
             })}
           </ol>
           <p className="visually-hidden" aria-live="polite" aria-atomic="true">
-            {complete ? m.complete : `${m.phases[phase] ?? ''}. ${phase > 0 ? (results[phase - 1] ?? '') : m.intro}`}
+            {complete ? m.complete : `${m.phases[phase] ?? ''}. ${phase > 0 ? (results[phase - 1]?.text ?? '') : m.intro}`}
           </p>
           {(weak || status === 'error') && (
             <div className={styles.status}>
@@ -148,8 +157,20 @@ export function MissionView(props: MissionViewProps) {
   )
 }
 
+/** O resultado de uma fase no diário: o dado em negrito, ou o aviso "Ainda não conectado". */
+function PhaseResultLine({ t, result }: { t: Messages; result: PhaseResult }) {
+  if (result.what) {
+    return (
+      <span className={styles.logResult}>
+        <NotConnected label={t.common.notConnected} what={result.what} />
+      </span>
+    )
+  }
+  return <strong className={styles.logResult}>{result.text}</strong>
+}
+
 /** Cena animada (só CSS). Mostra o que cada fase está fazendo; tocar no satélite só faz ele girar. */
-function MissionScene({ t, phase, complete, spins, onSpin, status, results }: MissionViewProps & { results: string[] }) {
+function MissionScene({ t, phase, complete, spins, onSpin, status, results }: MissionViewProps & { results: PhaseResult[] }) {
   const m = t.mission
   return (
     <div className={styles.scene} data-phase={phase} data-error={status === 'error'}>
@@ -210,7 +231,7 @@ function MissionScene({ t, phase, complete, spins, onSpin, status, results }: Mi
       {phase > 0 && !complete && results[phase - 1] && (
         <p key={phase} className={styles.achievement} aria-hidden="true">
           <CheckIcon />
-          <strong>{results[phase - 1]}</strong>
+          <strong>{results[phase - 1].text}</strong>
         </p>
       )}
       <p className={styles.tip} aria-hidden="true">

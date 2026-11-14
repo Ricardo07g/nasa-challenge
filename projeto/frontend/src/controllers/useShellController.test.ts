@@ -88,3 +88,23 @@ describe('useShellController', () => {
     expect(result.current.header.telegram).toEqual({ href: 'https://t.me/BotDoTime?start=x', label: 'Abrir no Telegram' })
   })
 })
+
+describe('useShellController: modo dos dados', () => {
+  it('com os dados de exemplo (VITE_API_MODE=mock), avisa em todas as telas que não são da NASA', () => {
+    const { result } = renderHook(() => useShellController(speech, telegram, 'mock'), { wrapper: providers('/', 'pt') })
+
+    expect(result.current.demoNotice).toBe('Modo de demonstração: dados de exemplo, não são da NASA')
+  })
+
+  it('o aviso acompanha o idioma', () => {
+    const { result } = renderHook(() => useShellController(speech, telegram, 'mock'), { wrapper: providers('/', 'en') })
+
+    expect(result.current.demoNotice).toBe('Demo mode: sample data, not from NASA')
+  })
+
+  it('com a API real, não há aviso de demonstração', () => {
+    const { result } = renderHook(() => useShellController(speech, telegram, 'http'), { wrapper: providers('/', 'pt') })
+
+    expect(result.current.demoNotice).toBeNull()
+  })
+})

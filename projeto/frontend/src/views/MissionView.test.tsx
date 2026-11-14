@@ -9,8 +9,9 @@ import { MissionView, type MissionViewProps } from './MissionView'
 const facts = {
   point: { lat: -18.9543, lon: -48.1993 },
   soil: 'medio' as const,
-  historyYears: 10,
-  signal: 'seco' as const,
+  rainYears: 20 as number | null,
+  historyYears: 10 as number | null,
+  signal: 'seco' as 'seco' | null,
 }
 
 function setup(overrides: Partial<MissionViewProps> = {}) {
@@ -84,12 +85,23 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(6)
   })
 
-  it('sem histórico nem previsão do outono na API, diz isso em vez de inventar', () => {
-    setup({ phase: 6, complete: true, facts: { ...facts, historyYears: null, signal: null } })
+  it('a fase da chuva diz quantos anos a conta leu, sem número fixo', () => {
+    setup({ phase: 6, complete: true, facts: { ...facts, rainYears: 17 } })
 
     const phases = screen.getAllByRole('listitem')
-    expect(phases[3]).toHaveTextContent('Sem histórico do satélite para esta área')
-    expect(phases[4]).toHaveTextContent('Previsão do outono ainda não disponível')
+    expect(phases[2]).toHaveTextContent('Chuva e calor de cada ano')
+    expect(phases[2]).toHaveTextContent('Chuva e calor de 17 anos lidos, dia a dia')
+    expect(screen.queryByText(/20 anos/)).not.toBeInTheDocument()
+  })
+
+  it('sem chuva, histórico nem previsão do outono na API: "Ainda não conectado", igual às outras telas', () => {
+    setup({ phase: 6, complete: true, facts: { ...facts, rainYears: null, historyYears: null, signal: null } })
+
+    const phases = screen.getAllByRole('listitem')
+    expect(phases[2]).toHaveTextContent('Chuva e calor: Ainda não conectado')
+    expect(phases[3]).toHaveTextContent('Histórico do satélite: Ainda não conectado')
+    expect(phases[4]).toHaveTextContent('Previsão do outono: Ainda não conectado')
+    expect(phases[3].querySelector('[data-status="not-connected"]')).not.toBeNull()
   })
 
   it('sinal fraco: deixa esperar mais ou ver a fazenda de exemplo', async () => {

@@ -57,7 +57,11 @@ export function PastSeasonView(props: PastSeasonViewProps) {
       <PageHeading title={p.title(year)} subtitle={p.text(year)} />
       <ChipGroup
         label={p.choose}
-        options={PAST_YEARS.map((value) => ({ value: String(value), label: p[pastYearKind(value)](value) }))}
+        // "Ano seco"/"ano bom" é fixo (não vem da API): só com os dados de exemplo; com a API real, só o ano.
+        options={PAST_YEARS.map((value) => ({
+          value: String(value),
+          label: sampleData ? p[pastYearKind(value)](value) : String(value),
+        }))}
         value={String(year)}
         onChange={(value) => value && onYear(Number(value))}
       />

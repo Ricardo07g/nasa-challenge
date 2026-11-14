@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { WarningIcon } from '../icons'
 import { Button } from './Button'
 import styles from './Feedback.module.css'
 
@@ -23,6 +24,19 @@ export function ErrorState({ message, retryLabel, onRetry }: ErrorStateProps) {
         </Button>
       </div>
     </div>
+  )
+}
+
+/**
+ * Aviso fixo do modo de demonstração (VITE_API_MODE=mock): fica no topo de todas as telas, para
+ * ninguém confundir os dados de exemplo com os da NASA.
+ */
+export function DemoBanner({ children }: { children: ReactNode }) {
+  return (
+    <p role="note" className={styles.demo}>
+      <WarningIcon size={18} />
+      <strong>{children}</strong>
+    </p>
   )
 }
 

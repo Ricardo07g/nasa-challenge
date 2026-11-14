@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
-import { createMockPastSeasonRepository } from '../repositories/pastSeasonRepository'
+import { createMockPastSeasonRepository } from '../repositories/mocks/mockRepositories'
 import { PastSeasonView, type PastSeasonViewProps } from './PastSeasonView'
 
 const repository = createMockPastSeasonRepository(0)
@@ -52,6 +52,14 @@ describe('PastSeasonView (replay da safra passada, P4)', () => {
     expect(screen.getByRole('button', { name: '2024 · ano seco' })).toHaveAttribute('aria-pressed', 'true')
     await userEvent.click(screen.getByRole('button', { name: '2023 · ano bom' }))
     expect(props.onYear).toHaveBeenCalledWith(2023)
+  })
+
+  it('com a API real, os botões mostram só o ano (o "seco"/"bom" fixo não vem de dado)', async () => {
+    await setup({ sampleData: false })
+
+    expect(screen.getByRole('button', { name: '2024' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '2023' })).toBeInTheDocument()
+    expect(screen.queryByText(/ano seco|ano bom/)).not.toBeInTheDocument()
   })
 
   it('safra sem avisos diz isso', async () => {

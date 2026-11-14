@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createHttpPastSeasonRepository, createMockPastSeasonRepository } from './pastSeasonRepository'
+import { createMockPastSeasonRepository } from './mocks/mockRepositories'
+import { createHttpPastSeasonRepository } from './pastSeasonRepository'
 
 describe('pastSeasonRepository (replay da safra passada, P4)', () => {
   it('http chama /api/safra-passada com lat, lon e o ano', async () => {

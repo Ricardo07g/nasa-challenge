@@ -79,4 +79,15 @@ describe('StartView (tela 1)', () => {
 
     expect(screen.queryByText(/Telegram/)).not.toBeInTheDocument()
   })
+
+  it('a promessa do produto não traz número que pareça medido (nada de "20 anos")', () => {
+    render(
+      <MemoryRouter>
+        <StartView t={pt} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('O satélite da NASA olha a chuva de muitos anos na sua lavoura. Veja a melhor opção.')).toBeInTheDocument()
+    expect(screen.queryByText(/20 anos/)).not.toBeInTheDocument()
+  })
 })

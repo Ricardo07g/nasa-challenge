@@ -7,9 +7,12 @@ import { useWhenController } from './useWhenController'
 
 const point = 'lat=-18.9543&lon=-48.1993'
 
-function deps(talhao: Promise<Partial<Talhao>> = Promise.resolve({ colheita_sugerida: { faixa: 'cedo', fonte: 'ndvi_modis', anos_usados: 9 } })) {
+function deps(
+  talhao: Promise<Partial<Talhao>> = Promise.resolve({ colheita_sugerida: { faixa: 'cedo', fonte: 'ndvi_modis', anos_usados: 9 } }),
+  apiMode: 'mock' | 'http' = 'mock',
+) {
   const farm: FarmService = { talhao: vi.fn().mockReturnValue(talhao), recomendacao: vi.fn().mockResolvedValue({}) }
-  return { farm, today: () => new Date(2026, 10, 14) }
+  return { farm, today: () => new Date(2026, 10, 14), apiMode }
 }
 
 describe('useWhenController (tela 3)', () => {
@@ -96,5 +99,15 @@ describe('useWhenController (tela 3)', () => {
     const { result } = renderHook(() => useWhenController(d), { wrapper: providers('/quando') })
 
     expect(result.current.missingPoint).toBe(true)
+  })
+
+  it('o desenho de exemplo da chuva por mês só aparece com os dados de exemplo', () => {
+    const mockDeps = deps(undefined, 'mock')
+    const httpDeps = deps(undefined, 'http')
+    const mock = renderHook(() => useWhenController(mockDeps), { wrapper: providers(`/quando?${point}`) })
+    expect(mock.result.current.rainChart).toBe(true)
+
+    const http = renderHook(() => useWhenController(httpDeps), { wrapper: providers(`/quando?${point}`) })
+    expect(http.result.current.rainChart).toBe(false)
   })
 })

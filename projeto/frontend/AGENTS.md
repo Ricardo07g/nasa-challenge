@@ -78,9 +78,16 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
 
 - **Chamadas à API:** sempre caminho relativo `/api/...`. O proxy do Vite encaminha para o backend
   (`API_PROXY_TARGET`, padrão `http://localhost:8000`). Não escreva URL do backend fixa no código.
-- **Dados (`VITE_API_MODE`):** `http` usa a API real (padrão no `docker compose`); `mock` usa os dados de
-  exemplo de `repositories/mocks/` (sem backend; padrão no `npm run dev` sem a variável). A API só tem
-  dados da célula da fazenda de exemplo: fora dela, as telas 4 a 7 mostram "Ainda não chegamos aí".
+- **Dados (`VITE_API_MODE`):** a **API real é o padrão** (variável vazia ou `http`, inclusive no
+  `npm run dev` e no `docker compose`). Os dados de exemplo de `repositories/mocks/` só entram com
+  `VITE_API_MODE=mock` explícito, e aí todas as telas mostram o aviso fixo "Modo de demonstração: dados de
+  exemplo, não são da NASA". Só `repositories/index.ts` decide o modo e importa `repositories/mocks/`
+  (um teste confere). Os testes rodam com `mock` (`test.env` do `vite.config.ts`), sem rede. A API só tem
+  dados da área preparada: fora dela, as telas 4 a 7 mostram "Ainda não chegamos aí".
+- **Dado que a API ainda não manda:** com a API real, nenhuma tela mostra número de exemplo nem esconde o
+  bloco. Use o estado único "Ainda não conectado" (`t.common.notConnected`): `NotConnected` (em linha),
+  `NotConnectedCard` (bloco) ou `DataSourceCard status="unavailable"`. Um endpoint que ainda não existe
+  (404 sem `code`) ou um repository sem versão http (`NotConnectedError`) vira esse estado, não erro.
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front.
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).

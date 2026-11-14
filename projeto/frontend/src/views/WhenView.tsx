@@ -4,6 +4,7 @@ import { RainBarChart } from '../design-system/components/Charts'
 import { DateField, RadioCard } from '../design-system/components/Choice'
 import { PageHeading } from '../design-system/components/Content'
 import { BackLink, QuestionStepper } from '../design-system/components/Navigation'
+import { NotConnected } from '../design-system/components/Status'
 import { formatDayMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
@@ -26,6 +27,8 @@ export type WhenViewProps = {
   onOpenDate: () => void
   onDateChange: (value: string) => void
   onConfirm: () => void
+  /** Desenho de exemplo da chuva por mês: só com os dados de exemplo; com a API real, "Ainda não conectado". */
+  rainChart: boolean
 }
 
 /** Chuva média por mês na região (desenho de exemplo): muita em janeiro, quase nada em junho. */
@@ -47,6 +50,7 @@ export function WhenView({
   onOpenDate,
   onDateChange,
   onConfirm,
+  rainChart,
 }: WhenViewProps) {
   const w = t.when
   return (
@@ -105,11 +109,15 @@ export function WhenView({
         <Card as="aside" aria-label={w.whyTitle}>
           <h2 className={layout.cardTitle}>{w.whyTitle}</h2>
           <p>{w.whyText}</p>
-          <RainBarChart
-            label={w.chartLabel}
-            caption={w.chartCaption}
-            bars={MONTHS.map((month, index) => ({ label: w.months[month], value: RAIN_BARS[index], tone: 'strong' }))}
-          />
+          {rainChart ? (
+            <RainBarChart
+              label={w.chartLabel}
+              caption={w.chartCaption}
+              bars={MONTHS.map((month, index) => ({ label: w.months[month], value: RAIN_BARS[index], tone: 'strong' }))}
+            />
+          ) : (
+            <NotConnected label={t.common.notConnected} what={w.chartTitle} />
+          )}
         </Card>
       </div>
     </div>

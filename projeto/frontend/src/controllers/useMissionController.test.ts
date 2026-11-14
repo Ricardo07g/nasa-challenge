@@ -12,6 +12,7 @@ const talhao = {
   ponto: { lat: -18.9543, lon: -48.1993 },
   dentro_da_area: true,
   solo: { textura: 'medio', cad_mm: 50, fonte: 'soilgrids' },
+  dados: [{ fonte: 'nasa_power', periodo: '2005-2024' }],
   historico: {
     anos: [
       { ano: 2024, situacao: 'parado', ndvi_max: 0.42, n_obs: 12 },
@@ -64,7 +65,7 @@ describe('useMissionController (tela de cálculo, RF-19)', () => {
     expect(screen.getByTestId('location')).toHaveTextContent(`/satelite?${flow}`)
   })
 
-  it('mostra os dados reais que chegaram (ponto, terra, histórico, sinal)', async () => {
+  it('mostra os dados reais que chegaram (ponto, terra, anos de chuva, histórico, sinal)', async () => {
     const d = deps()
     const { result } = renderHook(() => useMissionController(d), { wrapper: providers(`/calculando?${flow}`) })
 
@@ -72,6 +73,7 @@ describe('useMissionController (tela de cálculo, RF-19)', () => {
     expect(result.current.facts).toEqual({
       point: { lat: -18.9543, lon: -48.1993 },
       soil: 'medio',
+      rainYears: 20,
       historyYears: 1,
       signal: 'incerto',
     })

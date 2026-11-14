@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Button } from '../design-system/components/Button'
 import { BackLink } from '../design-system/components/Navigation'
-import { ToneBadge, YearStrip } from '../design-system/components/Status'
+import { NotConnected, ToneBadge, YearStrip } from '../design-system/components/Status'
 import { ClimateIcon, DryIcon, UncertainIcon } from '../design-system/icons'
 import { formatCoordinates, formatCurrency, formatDayMonth, formatFullDate, formatMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
@@ -108,7 +108,7 @@ function Sheet({ t, lang, talhao, recomendacao: rec, example, place, today }: Re
             {rec.opcoes.map((option) => (
               <tr key={option.id}>
                 <th scope="row">{option.nome}</th>
-                <td>{option.na_janela ? option.chuva.anos_bons : t.options.outOfWindowTitle}</td>
+                <td>{option.na_janela ? r.yearsOf(option.chuva.anos_bons, option.chuva.anos) : t.options.outOfWindowTitle}</td>
                 <td>{formatCurrency(lang, option.dinheiro.margem_ha)}</td>
                 <td>{option.terra.texto}</td>
               </tr>
@@ -118,40 +118,42 @@ function Sheet({ t, lang, talhao, recomendacao: rec, example, place, today }: Re
       ),
     },
   ]
-  if (rec.sinal) {
-    const look = SIGNAL_LOOK[rec.sinal.nivel]
-    sections.push({
-      title: t.plan.signalTitle(harvestYear(rec.entrada.semeadura)),
-      body: (
-        <>
-          <ToneBadge tone={look.tone} icon={look.icon}>
-            {t.signal[rec.sinal.nivel]}
-          </ToneBadge>
-          <p>{rec.sinal.motivo}</p>
-          <p>{t.plan.signalSource(formatDayMonth(lang, rec.sinal.data))}</p>
-        </>
-      ),
-    })
-  }
+  // Sinal e histórico: sem o dado na API, a seção fica com "Ainda não conectado" (não some).
+  const notConnected = <NotConnected label={t.common.notConnected} />
+  const signal = rec.sinal
+  sections.push({
+    title: t.plan.signalTitle(harvestYear(rec.entrada.semeadura)),
+    body: signal ? (
+      <>
+        <ToneBadge tone={SIGNAL_LOOK[signal.nivel].tone} icon={SIGNAL_LOOK[signal.nivel].icon}>
+          {t.signal[signal.nivel]}
+        </ToneBadge>
+        <p>{signal.motivo}</p>
+        <p>{t.plan.signalSource(formatDayMonth(lang, signal.data))}</p>
+      </>
+    ) : (
+      notConnected
+    ),
+  })
   const history = historySummary(talhao.historico)
-  if (history) {
-    const idle = r.idle(history.idle, history.known, history.uncertain)
-    sections.push({
-      title: r.history,
-      body: (
-        <>
-          <YearStrip
-            size="lg"
-            label={idle}
-            cells={history.situations.map((situation) => CELL[situation])}
-            years={history.years}
-          />
-          <p>{idle}</p>
-          <p>{t.satellite.historySource(formatMonth(lang, history.window.from), formatMonth(lang, history.window.to))}</p>
-        </>
-      ),
-    })
-  }
+  const idle = history ? r.idle(history.idle, history.known, history.uncertain) : ''
+  sections.push({
+    title: r.history,
+    body: history ? (
+      <>
+        <YearStrip
+          size="lg"
+          label={idle}
+          cells={history.situations.map((situation) => CELL[situation])}
+          years={history.years}
+        />
+        <p>{idle}</p>
+        <p>{t.satellite.historySource(formatMonth(lang, history.window.from), formatMonth(lang, history.window.to))}</p>
+      </>
+    ) : (
+      notConnected
+    ),
+  })
   sections.push({ title: r.sources, body: <p>{reportSources(talhao, rec).join(' · ')}</p> })
 
   return (

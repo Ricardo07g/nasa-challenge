@@ -5,7 +5,7 @@ import type { Textura } from '../models/talhao'
 import type { ScreenStatus } from '../models/screenStatus'
 import { farmService, isOutsideArea, type FarmService } from '../services/farmService'
 import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
-import { climateReady, historySummary, rainSummary, soilSummary } from '../services/satelliteService'
+import { climateSummary, historySummary, rainSummary, soilSummary } from '../services/satelliteService'
 import { useAsync } from './useAsync'
 
 type Deps = { farm: FarmService }
@@ -14,8 +14,8 @@ const defaultDeps: Deps = { farm: farmService }
 
 /**
  * Tela 4 "Pronto. O satélite já viu o resto.": histórico do talhão, chuva, terra (com "Não é? Trocar")
- * e clima. A terra escolhida fica na URL (RF-18) e segue para a resposta. Chuva e clima só aparecem
- * prontos com o dado de verdade (anos usados pela conta; CMIP6 no talhão).
+ * e clima. A terra escolhida fica na URL (RF-18) e segue para a resposta. Histórico, chuva e clima só
+ * aparecem prontos com o dado de verdade; sem ele, "Ainda não conectado".
  */
 export function useSatelliteController(deps: Deps = defaultDeps) {
   const { lang } = useI18n()
@@ -78,7 +78,7 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
     retry: talhao.retry,
     history: historySummary(talhao.data?.historico ?? null),
     rain: rainSummary(talhao.data?.dados ?? [], recomendacao.data?.opcoes ?? null),
-    climate: climateReady(talhao.data?.dados ?? []),
+    climate: climateSummary(talhao.data?.dados ?? []),
     soil: soilSummary(talhao.data?.solo ?? null, params?.solo),
     soilOpen,
     toggleSoil,

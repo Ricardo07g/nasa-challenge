@@ -2,10 +2,14 @@ import { Button } from '../design-system/components/Button'
 import { Card, SourceCard } from '../design-system/components/Card'
 import { NumberedSteps, PageHeading, ScoreTable } from '../design-system/components/Content'
 import { ErrorState, LoadingState } from '../design-system/components/Feedback'
+import { NotConnected } from '../design-system/components/Status'
 import { BackLink } from '../design-system/components/Navigation'
 import { ArrowUpRightIcon, SatelliteIcon, SendIcon, SproutIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { Opcao } from '../models/recomendacao'
+import type { RainSummary } from '../services/satelliteService'
+import type { SourceStatus } from '../services/sourceService'
+import { rainPeriodText } from './rainPeriod'
 import layout from './layout.module.css'
 
 export type MethodViewProps = {
@@ -18,20 +22,26 @@ export type MethodViewProps = {
   example: boolean
   /** P5: link do bot do Telegram; null quando não está configurado. */
   telegramHref: string | null
+  /** Fontes conectadas de fato (pelo talhão) e o tamanho do quadrado da chuva usada. */
+  sources: { status: 'loading' | 'ready' | 'error'; rows: SourceStatus[]; rainKm: number | null }
+  onRetrySources: () => void
+  /** Anos e período da chuva (do talhão), para o passo 1; null enquanto o talhão não chega. */
+  rain: RainSummary | null
 }
 
-const SOURCES = ['rain', 'heat', 'moisture', 'history', 'climate', 'soil'] as const
-
 /** Tela 9 "Como a conta é feita" (para agrônomos e jurados): método, fontes e notas de 0 a 100. */
-export function MethodView({ t, backTo, status, onRetry, rows, example, telegramHref }: MethodViewProps) {
+export function MethodView(props: MethodViewProps) {
+  const { t, backTo, status, onRetry, rows, example, telegramHref, sources, rain } = props
   const m = t.method
   const h = m.scoresHeaders
+  const years = rain ? rainPeriodText(t, rain.years, rain) : null
+  const noFuture = rows.length > 0 && rows.every(({ notas }) => notas.futuro === null)
   return (
     <div className={layout.page}>
       <BackLink to={backTo}>{t.nav.back}</BackLink>
       <PageHeading title={m.title} subtitle={m.subtitle} />
       <div className={layout.pageGrid}>
-        <NumberedSteps size="lg" steps={[m.step1, m.step2, m.step3]} />
+        <NumberedSteps size="lg" steps={[years ? m.step1(years) : m.step1Generic, m.step2, m.step3]} />
         <div className={layout.stack}>
           <Card tone="green" as="section" aria-label={m.noAiTitle}>
             <h2 className={layout.iconTitle}>
@@ -51,15 +61,29 @@ export function MethodView({ t, backTo, status, onRetry, rows, example, telegram
           <SatelliteIcon />
           {m.blindTitle}
         </h2>
-        <p>{m.blindText}</p>
+        <p>
+          {sources.rainKm ? m.blindRain(sources.rainKm) : m.blindRainGeneric} {m.blindRest}
+        </p>
       </Card>
       <section aria-label={m.sourcesTitle} className={layout.stack}>
         <h2 className={layout.sectionTitle}>{m.sourcesTitle}</h2>
-        <div className={layout.optionGrid}>
-          {SOURCES.map((key) => (
-            <SourceCard key={key} what={m.sources[key].what} source={m.sources[key].source} scale={m.sources[key].scale} />
-          ))}
-        </div>
+        {sources.status === 'loading' && <LoadingState>{t.common.loading}</LoadingState>}
+        {sources.status === 'error' && (
+          <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={props.onRetrySources} />
+        )}
+        {sources.status === 'ready' && (
+          <div className={layout.optionGrid}>
+            {sources.rows.map(({ key, connected }) => (
+              <SourceCard
+                key={key}
+                what={m.sources[key].what}
+                source={m.sources[key].source}
+                scale={m.sources[key].scale}
+                notConnected={connected ? undefined : t.common.notConnected}
+              />
+            ))}
+          </div>
+        )}
       </section>
       {telegramHref && (
         <Card tone="blue" as="section" aria-label={t.telegram.methodTitle}>
@@ -88,6 +112,7 @@ export function MethodView({ t, backTo, status, onRetry, rows, example, telegram
                 values: [notas.seguranca, notas.futuro, notas.solo, notas.renda, notas.final],
               }))}
             />
+            {noFuture && <NotConnected label={t.common.notConnected} what={h.future} />}
             {example && <p className={layout.muted}>{m.exampleFarm}</p>}
           </>
         )}

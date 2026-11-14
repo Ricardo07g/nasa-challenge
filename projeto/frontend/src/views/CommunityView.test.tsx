@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
 import { buildCommunity } from '../repositories/mocks/fixtures'
-import { createMockRegionRepository } from '../repositories/regionRepository'
+import { createMockRegionRepository } from '../repositories/mocks/mockRepositories'
 import { regionPoints, regionSummary } from '../services/communityService'
 import { CommunityView, type CommunityViewProps } from './CommunityView'
 
@@ -24,6 +24,8 @@ function setup(overrides: Partial<CommunityViewProps> = {}) {
     demo: null,
     onDemo: vi.fn(),
     region,
+    regionStatus: 'ready',
+    onRegionRetry: vi.fn(),
     regionRadius: 30,
     history: { idle: 5, known: 9, uncertain: 1 },
     ...overrides,
@@ -68,11 +70,47 @@ describe('CommunityView (tela 8)', () => {
     expect(screen.getByText('Sua área: parada em 5 de 10 anos. Na região, em média 65% da área fica parada.')).toBeInTheDocument()
   })
 
-  it('sem a região na API, o bloco do satélite some e a comunidade continua', () => {
-    setup({ region: null, regionRadius: null })
+  it('sem a região na API, o bloco do satélite não some: diz "Ainda não conectado" e a comunidade continua', () => {
+    setup({ region: null, regionStatus: 'not-connected', regionRadius: null })
 
     expect(screen.queryByText(/da área de lavoura ficou parada/)).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Área parada na região, pelo satélite' })).toHaveTextContent(
+      'Ainda não conectado',
+    )
     expect(screen.getByRole('region', { name: 'O que os vizinhos contam' })).toBeInTheDocument()
+  })
+
+  it('se a região falhar por outro motivo, dá para tentar de novo', async () => {
+    const props = setup({ region: null, regionStatus: 'error', regionRadius: null, status: 'not-connected', community: null })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+    expect(props.onRegionRetry).toHaveBeenCalled()
+  })
+
+  it('comunidade ainda não conectada (API real): sem vizinho simulado, sem mapa e sem botão de demonstração', () => {
+    setup({ status: 'not-connected', community: null, points: [] })
+
+    const community = screen.getByRole('region', { name: 'O que os vizinhos contam' })
+    expect(within(community).getByRole('region', { name: 'O que os vizinhos plantaram depois da soja' })).toHaveTextContent(
+      'Ainda não conectado',
+    )
+    expect(within(community).getByRole('region', { name: 'Choveu aqui' })).toHaveTextContent('Ainda não conectado')
+    expect(community).not.toHaveTextContent('Valores ilustrativos')
+    expect(screen.queryByRole('button', { name: 'Contar como foi a minha' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Registrar a chuva de hoje' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('region', { name: 'Mapa da região com pluviômetros e o que cada vizinho plantou' }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/mm · satélite/)).not.toBeInTheDocument()
+  })
+
+  it('comunidade e região ainda não conectadas, em inglês', () => {
+    setup({ t: en, status: 'not-connected', community: null, region: null, regionStatus: 'not-connected', regionRadius: null })
+
+    expect(screen.getByRole('region', { name: 'Idle cropland in the region, by satellite' })).toHaveTextContent(
+      'Not connected yet',
+    )
+    expect(screen.getByRole('region', { name: 'It rained here' })).toHaveTextContent('Not connected yet')
   })
 
   it('o que os vizinhos plantaram: uma linha por opção, com as bolinhas', () => {
@@ -129,6 +167,8 @@ describe('CommunityView (tela 8)', () => {
           demo={null}
           onDemo={vi.fn()}
           region={null}
+          regionStatus="loading"
+          onRegionRetry={vi.fn()}
           regionRadius={null}
           history={null}
         />

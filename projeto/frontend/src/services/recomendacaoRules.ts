@@ -120,6 +120,8 @@ export type PlanView = {
   summary: { grain: number; covered: number; total: number }
   swaps: { year: number; from: CropId; to: CropId }[]
   today: string
+  /** No ano seco, como o plano B foi testado: a descrição do plano seco que a API manda. */
+  dryNote: string | null
 }
 
 /** Tela 7: o plano de 3 anos no cenário escolhido (ano normal ou ano seco), a partir da soja que vem. */
@@ -136,6 +138,7 @@ export function buildPlan(recomendacao: Recomendacao, scenario: PlanScenario): P
     summary: planSummary(anos),
     swaps: scenario === 'seco' ? planSwaps(normal.anos, seco.anos, firstYear) : [],
     today: hoje.descricao,
+    dryNote: scenario === 'seco' ? seco.descricao || null : null,
   }
 }
 
@@ -174,13 +177,13 @@ export type PlantingRule = { text: string } | { date: string; planA: CropId; pla
 
 /**
  * RF-20: regra do dia de plantar. Vale o texto da API; sem ele, monta com a data limite da cultura do
- * 1º ano do Plano A e a troca que o Plano B faz nesse ano.
+ * 1º ano do Plano A e a troca que o Plano B faz nesse ano. Se o Plano B começa igual ao A, não há troca.
  */
 export function plantingRule(recomendacao: Recomendacao): PlantingRule | null {
   if (recomendacao.sinal) return { text: recomendacao.sinal.regra_dia_plantar.texto }
   const planA = recomendacao.plano_3_anos.normal.anos[0]
   const planB = recomendacao.plano_3_anos.seco.anos[0]
   const date = planA ? findOption(recomendacao.opcoes, planA)?.data_limite : null
-  if (!planA || !planB || !date) return null
+  if (!planA || !planB || planA === planB || !date) return null
   return { date, planA, planB }
 }

@@ -1,13 +1,15 @@
 import { Button } from '../design-system/components/Button'
 import { AreaMap, type AreaPoint } from '../design-system/components/AreaMap'
-import { Card } from '../design-system/components/Card'
+import { Card, NotConnectedCard } from '../design-system/components/Card'
 import { NeighborRow, RainBarChart, RainReadingRow } from '../design-system/components/Charts'
 import { PageHeading } from '../design-system/components/Content'
+import { ErrorState } from '../design-system/components/Feedback'
 import { BackLink } from '../design-system/components/Navigation'
 import { ToneBadge } from '../design-system/components/Status'
-import { RainIcon, UncertainIcon } from '../design-system/icons'
+import { CommunityIcon, RainIcon, SatelliteIcon, UncertainIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { Community } from '../models/community'
+import type { BlockStatus } from '../models/screenStatus'
 import type { RegionSummary } from '../services/communityService'
 import { FlowError, FlowLoading } from './FlowStates'
 import layout from './layout.module.css'
@@ -15,7 +17,8 @@ import layout from './layout.module.css'
 export type CommunityViewProps = {
   t: Messages
   backTo: string
-  status: 'loading' | 'ready' | 'error'
+  /** Comunidade: "not-connected" com a API real (ainda não há endpoint). */
+  status: BlockStatus
   onRetry: () => void
   community: Community | null
   center: { lat: number; lon: number }
@@ -24,6 +27,9 @@ export type CommunityViewProps = {
   onDemo: (kind: 'tell' | 'rain') => void
   /** P3: área parada na região pelo satélite (null sem o dado na API). */
   region: RegionSummary | null
+  /** P3: "not-connected" enquanto o backend não tem /api/regiao. */
+  regionStatus: BlockStatus
+  onRegionRetry: () => void
   regionRadius: number | null
   /** Histórico da própria lavoura, para comparar com a região (só os anos certos; os sem certeza à parte). */
   history: { idle: number; known: number; uncertain: number } | null
@@ -31,20 +37,48 @@ export type CommunityViewProps = {
 
 /**
  * Tela 8 "Na sua região": em cima, a área parada na região pelo satélite (P3); embaixo, o que os
- * vizinhos contam (comunidade ilustrativa): vizinhos, mapa da região e "Choveu aqui".
+ * vizinhos contam: vizinhos, mapa da região e "Choveu aqui" (ilustrativos, só com os dados de exemplo).
+ * O que a API ainda não manda aparece como "Ainda não conectado", sem sumir.
  */
 export function CommunityView(props: CommunityViewProps) {
-  const { t, backTo, status, onRetry, community, region, regionRadius } = props
+  const { t, backTo, status, onRetry, community, region, regionStatus, regionRadius } = props
   const c = t.community
   return (
     <div className={layout.page}>
       <BackLink to={backTo}>{t.nav.back}</BackLink>
       <PageHeading title={c.title} subtitle={region && regionRadius ? c.regionSubtitle(regionRadius) : undefined} />
-      {region && <SatelliteRegion {...props} region={region} />}
+      {regionStatus === 'ready' && region && <SatelliteRegion {...props} region={region} />}
+      {regionStatus === 'not-connected' && (
+        <NotConnectedCard icon={<SatelliteIcon />} iconTone="soil" title={c.regionTitle} label={t.common.notConnected} />
+      )}
+      {regionStatus === 'error' && (
+        <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={props.onRegionRetry} />
+      )}
       {status === 'loading' && <FlowLoading label={t.common.loading} />}
       {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={onRetry} />}
+      {status === 'not-connected' && <CommunityNotConnected t={t} />}
       {status === 'ready' && community && <Region {...props} community={community} />}
     </div>
+  )
+}
+
+/** Comunidade sem endpoint na API: os blocos ficam, com "Ainda não conectado" (sem vizinho simulado). */
+function CommunityNotConnected({ t }: { t: Messages }) {
+  const c = t.community
+  return (
+    <section aria-label={c.communityTitle} className={layout.stack}>
+      <h2 className={layout.sectionTitle}>{c.communityTitle}</h2>
+      <div className={layout.pageGrid}>
+        <NotConnectedCard icon={<CommunityIcon />} title={c.neighborsTitleGeneric} label={t.common.notConnected} level={3} />
+        <NotConnectedCard
+          icon={<RainIcon />}
+          iconTone="blue"
+          title={c.rainTitle}
+          label={t.common.notConnected}
+          level={3}
+        />
+      </div>
+    </section>
   )
 }
 

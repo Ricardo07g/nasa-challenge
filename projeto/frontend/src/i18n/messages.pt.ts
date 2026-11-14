@@ -9,10 +9,12 @@ export const pt = {
     loadError: 'Não foi possível carregar agora.',
     retry: 'Tentar de novo',
     sampleValues: 'Valores de exemplo.',
-    mockNotice: 'Dados de exemplo: o motor de cálculo ainda não está ligado.',
+    /** Aviso fixo em todas as telas com VITE_API_MODE=mock. */
+    demoMode: 'Modo de demonstração: dados de exemplo, não são da NASA',
     disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
     ready: 'Pronto',
-    unavailable: 'Ainda não disponível',
+    /** Dado que a API ainda não manda: o mesmo texto em todas as telas. */
+    notConnected: 'Ainda não conectado',
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',
@@ -89,7 +91,7 @@ export const pt = {
     pageTitle: 'Início',
     eyebrow: 'Para quem planta soja no Triângulo Mineiro',
     title: 'O que plantar depois da soja?',
-    lead: 'O satélite da NASA olhou 20 anos de chuva na sua lavoura. Veja a melhor opção.',
+    lead: 'O satélite da NASA olha a chuva de muitos anos na sua lavoura. Veja a melhor opção.',
     start: 'Começar',
     meta: '2 perguntas · 1 minuto · grátis, sem cadastro',
     example: 'Ver um exemplo pronto',
@@ -138,6 +140,8 @@ export const pt = {
       'A chuva vai acabando depois de março. Quanto mais cedo você colhe a soja, mais chuva sobra para a próxima planta.',
     chartLabel: 'Chuva média por mês: muita em janeiro, pouca em junho',
     chartCaption: 'Chuva de cada mês na região. Desenho de exemplo.',
+    /** Com a API real o desenho de exemplo sai e fica "Ainda não conectado". */
+    chartTitle: 'Chuva de cada mês na região',
     months: { jan: 'Jan', feb: 'Fev', mar: 'Mar', apr: 'Abr', may: 'Mai', jun: 'Jun' },
   },
   mission: {
@@ -146,17 +150,19 @@ export const pt = {
     phases: [
       'Satélite em órbita',
       'Lendo a terra',
-      '20 anos de chuva e calor',
+      'Chuva e calor de cada ano',
       'O que cresceu na sua área',
       'O clima que vem',
       'Fazendo a conta das 6 opções',
     ],
     found: (lat: string, lon: string) => `Lavoura encontrada: ${lat} / ${lon}`,
-    rain: 'Chuva e calor de 20 anos lidos, dia a dia',
+    /** Os anos vêm da conta (anos de chuva usados de fato). */
+    rain: (years: number) => `Chuva e calor de ${years} anos lidos, dia a dia`,
+    rainWhat: 'Chuva e calor',
     history: (years: number) => `${years} anos de histórico do satélite`,
-    noHistory: 'Sem histórico do satélite para esta área',
+    historyWhat: 'Histórico do satélite',
     forecast: (signal: string) => `Previsão do outono: ${signal}`,
-    noForecast: 'Previsão do outono ainda não disponível',
+    forecastWhat: 'Previsão do outono',
     ready: 'Resposta pronta',
     collected: (count: number) => `Dados coletados ${count}/6`,
     complete: 'Missão completa!',
@@ -178,6 +184,8 @@ export const pt = {
     historyTitle: (idle: number, known: number, uncertain: number) =>
       `Sua área ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
     historySubtitle: 'O que cresceu depois da soja, ano a ano:',
+    /** Título do cartão quando o histórico ainda não vem da API. */
+    historyUnavailableTitle: 'O que cresceu depois da soja',
     historyStripLabel: (planted: number, known: number, uncertain: number) =>
       `Plantou em ${planted} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
     historySource: (from: string, to: string) => `Visto pelo satélite MODIS (NASA), de ${from} a ${to} de cada ano`,
@@ -192,7 +200,6 @@ export const pt = {
       }`,
     rainDaily: 'Dia por dia.',
     rainUnavailableTitle: 'Chuva daqui',
-    notAvailable: 'Ainda não disponível para esta área.',
     soilTitle: (texture: string) => `Terra ${texture}`,
     soilFromMap: 'Do mapa de solos.',
     soilFromUser: 'Você escolheu.',
@@ -208,7 +215,9 @@ export const pt = {
     loading: 'Buscando dados do satélite…',
     error: 'Não conseguimos buscar os dados agora. Tente de novo ou veja a fazenda de exemplo.',
     climateTitle: 'Clima dos próximos anos',
-    climateSubtitle: 'Como a chuva e o calor devem mudar até 2050.',
+    /** O período vem do NEX-GDDP-CMIP6 em dados[] (2041–2060). */
+    climateSubtitle: (start: string, end: string) => `Como a chuva e o calor devem mudar de ${start} a ${end}.`,
+    climateSubtitleGeneric: 'Como a chuva e o calor devem mudar nos próximos anos.',
     cta: 'Ver o que plantar',
   },
   answer: {
@@ -224,7 +233,11 @@ export const pt = {
       `Já não dá tempo: ${crops} ${count === 1 ? 'fica' : 'ficam'} fora da janela de plantio.`,
     rainEnough: 'Choveu o bastante',
     rainShort: 'Faltou chuva',
-    rainYears: '2006–2025',
+    /** O período vem do talhão (dados[]); o backend pode descartar ano com dia faltando. */
+    rainYears: (years: number, start: string, end: string) => `${years} anos entre ${start} e ${end}`,
+    rainYearsCount: (years: number) => `${years} anos`,
+    /** P1: o detalhe de cada ano da faixa (ainda não vem da API). */
+    yearDetail: 'O que aconteceu em cada ano',
     yearOpen: (year: number) => `Ver o ano ${year}`,
     ensoNino: 'El Niño',
     ensoNina: 'La Niña (NOAA)',
@@ -239,10 +252,10 @@ export const pt = {
     sortLabel: 'Colocar na frente quem é melhor em:',
     rank: (position: number) => `${position}º`,
     fallowRain: 'Não depende de chuva',
-    fallowMoney: 'Não rende nem custa',
+    fallowMoney: 'Não rende nada',
     fallowSoil: 'Fica descoberta',
-    legend:
-      'Cada quadrinho é um ano, de 2006 a 2025. Cheio: choveu o bastante. Vazio: faltou chuva na hora que a planta mais precisa.',
+    legend: (period: string) =>
+      `Cada quadrinho é um ano (${period}). Cheio: choveu o bastante. Vazio: faltou chuva na hora que a planta mais precisa.`,
     outOfWindowTitle: 'Fora da janela de plantio',
     seePlan: 'Ver plano de 3 anos',
   },
@@ -253,12 +266,10 @@ export const pt = {
     signalTitle: (year: number) => `Sinal para o outono de ${year}`,
     signalSource: (date: string) =>
       `Previsão da NASA (GEOS-S2S) e umidade da terra (SMAP), atualizado em ${date}.`,
-    noSignal: 'A previsão do outono ainda não está disponível para esta área.',
     planChoice: 'Qual plano seguir',
     planA: 'Plano A',
     planB: 'Plano B, se secar',
     keepPlanB: 'Deixe o plano B na manga.',
-    planBTest: 'O plano B foi testado nos anos mais secos dos últimos 20.',
     swapTagline: (from: string) => `No lugar de ${from}: aguenta mais a seca.`,
     plantingRule: (date: string, planA: string, planB: string) =>
       `No dia de plantar (até ${date}), se a terra estiver seca, use o plano B: ${planB} no lugar de ${planA}.`,
@@ -274,6 +285,8 @@ export const pt = {
     increaseArea: 'Aumentar 10 hectares',
     areaMargin: (value: string) => `Deve sobrar perto de R$ ${value}`,
     areaSeed: (value: string) => `A semente custa perto de R$ ${value}`,
+    seedCost: 'Custo da semente',
+    worstDry: 'Pior ano seco',
     areaDryNegative: (value: string) => `No pior ano seco, faltaria perto de R$ ${value}`,
     areaDryPositive: (value: string) => `No pior ano seco, sobraria perto de R$ ${value}`,
     areaRest: 'O resto da fazenda fica como hoje, para você comparar.',
@@ -317,7 +330,9 @@ export const pt = {
     sowing: (date: string) => `Semeadura em ${date} · dentro da janela de plantio`,
     sowingOut: (date: string) => `Semeadura em ${date} · fora da janela de plantio`,
     table: 'Todas as opções',
-    headers: { crop: 'Opção', years: 'Anos que deram certo (de 20)', margin: 'Sobra por hectare', soil: 'Terra' },
+    headers: { crop: 'Opção', years: 'Anos que deram certo', margin: 'Sobra por hectare', soil: 'Terra' },
+    /** Anos bons de N: os dois números vêm da API (chuva.anos_bons e chuva.anos). */
+    yearsOf: (good: number, total: number) => `${good} de ${total}`,
     history: 'Histórico da área',
     idle: (idle: number, known: number, uncertain: number) =>
       `Ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
@@ -326,6 +341,7 @@ export const pt = {
   },
   community: {
     title: 'Na sua região',
+    regionTitle: 'Área parada na região, pelo satélite',
     regionSubtitle: (km: number) => `Até ${km} km da lavoura · visto pelo satélite`,
     regionBig: (year: number, pct: number) => `Em ${year}, ${pct}% da área de lavoura ficou parada depois da soja.`,
     regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
@@ -340,6 +356,7 @@ export const pt = {
     subtitle: (km: number, place: string, count: number) =>
       `Até ${km} km de ${place} · ${count} produtores participando`,
     neighborsTitle: (year: number) => `O que os vizinhos plantaram depois da soja em ${year}`,
+    neighborsTitleGeneric: 'O que os vizinhos plantaram depois da soja',
     liked: (liked: number, total: number) =>
       total === 1 ? `${liked} de 1 gostou` : `${liked} de ${total} gostaram`,
     dotsLabel: (liked: number, total: number) => `${liked} de ${total} vizinhos gostaram`,
@@ -363,7 +380,9 @@ export const pt = {
   method: {
     title: 'Como a conta é feita',
     subtitle: 'Em três passos, e o que o satélite não enxerga.',
-    step1: 'Pegamos a chuva e o calor de cada ano, de 2006 a 2025, no ponto do seu talhão.',
+    /** O período vem do talhão (dados[]) e dos anos usados de fato. */
+    step1: (years: string) => `Pegamos a chuva e o calor de cada ano (${years}), no ponto do seu talhão.`,
+    step1Generic: 'Pegamos a chuva e o calor de cada ano no ponto do seu talhão.',
     step2: 'Para cada opção, simulamos a água na terra dia a dia, a partir da data de semeadura.',
     step3: 'Contamos em quantos anos faltou água ou sobrou calor na fase em que a planta mais precisa.',
     noAiTitle: 'Sem inteligência artificial, conta aberta',
@@ -373,20 +392,21 @@ export const pt = {
     validationText:
       'Em breve: os anos de aperto calculados comparados com os anos de quebra do milho 2ª safra em Uberlândia (IBGE).',
     blindTitle: 'O que o satélite não enxerga',
-    blindText:
-      'A chuva vem em quadrados de 10 km, não do seu talhão: seu pluviômetro vale mais. O clima de 2050 é uma faixa entre modelos, não uma previsão. Os limites ainda serão ajustados com agrônomos da região.',
+    /** O tamanho vem da fonte de chuva conectada: IMERG (10 km) ou NASA POWER (~50 km). */
+    blindRain: (km: number) =>
+      `A chuva vem em quadrados de cerca de ${km} km, não do seu talhão: seu pluviômetro vale mais.`,
+    blindRainGeneric: 'A chuva vem de quadrados de vários quilômetros, não do seu talhão: seu pluviômetro vale mais.',
+    blindRest:
+      'O clima de 2041 a 2060 é uma faixa entre modelos, não uma previsão. Os limites ainda serão ajustados com agrônomos da região.',
     sourcesTitle: 'De onde vem cada dado',
+    /** Uma por fonte do produto; a tela marca as que a API ainda não manda como "Ainda não conectado". */
     sources: {
-      rain: { what: 'Chuva', source: 'GPM IMERG (NASA)', scale: 'quadrados de 10 km, por dia' },
-      heat: { what: 'Calor, vento e sol', source: 'NASA POWER', scale: 'cerca de 50 km, por dia' },
-      moisture: { what: 'Umidade da terra', source: 'SMAP L4 (NASA)', scale: '9 km, a cada 3 horas' },
-      history: { what: 'Histórico do talhão', source: 'MODIS (NASA)', scale: '250 m, a cada 16 dias' },
-      climate: {
-        what: 'Clima de 2050',
-        source: 'NEX-GDDP-CMIP6 (NASA)',
-        scale: 'cerca de 28 km, por dia (2041–2060)',
-      },
-      soil: { what: 'Tipo de terra', source: 'SoilGrids (ISRIC)', scale: '250 m' },
+      nasa_power: { what: 'Chuva e calor, dia a dia', source: 'NASA POWER', scale: 'cerca de 50 km, por dia' },
+      gpm_imerg: { what: 'Chuva mais detalhada', source: 'GPM IMERG (NASA)', scale: 'quadrados de 10 km, por dia' },
+      smap: { what: 'Umidade da terra', source: 'SMAP L4 (NASA)', scale: '9 km, a cada 3 horas' },
+      modis: { what: 'Histórico do talhão', source: 'MODIS (NASA)', scale: '250 m, a cada 16 dias' },
+      nex_gddp_cmip6: { what: 'Clima de 2041 a 2060', source: 'NEX-GDDP-CMIP6 (NASA)', scale: 'cerca de 28 km, por dia' },
+      soilgrids: { what: 'Tipo de terra', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },
     scoresTitle: 'Notas de cada opção (0 a 100)',
     scoresHeaders: {
@@ -412,7 +432,7 @@ export const pt = {
     apiMode: (mode: string) => `Modo dos dados: ${mode}`,
     backendStatus: (status: string) => `Backend: ${status}`,
     cropOptions: 'Opções de entressafra (API real)',
-    sampleText: 'O satélite da NASA olhou 20 anos de chuva na sua lavoura.',
+    sampleText: 'O satélite da NASA olha a chuva de muitos anos na sua lavoura.',
   },
 }
 

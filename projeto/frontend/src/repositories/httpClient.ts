@@ -17,6 +17,27 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * O dado ainda não existe na API (o repository não tem versão http). A tela mostra
+ * "Ainda não conectado", nunca dado de exemplo.
+ */
+export class NotConnectedError extends Error {
+  constructor(what: string) {
+    super(`${what}: ainda não conectado à API`)
+    this.name = 'NotConnectedError'
+  }
+}
+
+/**
+ * Dado que a API ainda não manda: repository sem versão http, ou endpoint que o backend ainda não tem
+ * (404 sem `code`; o 404 de fora da área vem com `OUTSIDE_AREA`). Não é falha: a tela mostra
+ * "Ainda não conectado".
+ */
+export function isNotConnected(error: unknown): boolean {
+  if (error instanceof NotConnectedError) return true
+  return error instanceof ApiError && error.status === 404 && error.code === null
+}
+
 /** O ponto fica fora da área com dados preparados (404 OUTSIDE_AREA, ADR 0002). */
 export function isOutsideArea(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404 && error.code === 'OUTSIDE_AREA'

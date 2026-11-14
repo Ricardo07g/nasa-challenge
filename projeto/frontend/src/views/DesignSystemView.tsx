@@ -1,5 +1,12 @@
 import { Button, TextButton } from '../design-system/components/Button'
-import { AlternativeCard, Card, DataSourceCard, InfoBanner, SourceCard } from '../design-system/components/Card'
+import {
+  AlternativeCard,
+  Card,
+  DataSourceCard,
+  InfoBanner,
+  NotConnectedCard,
+  SourceCard,
+} from '../design-system/components/Card'
 import { NeighborDots, RainBarChart, RainReadingRow, RegionMap } from '../design-system/components/Charts'
 import { ChipGroup, DateField, RadioCard } from '../design-system/components/Choice'
 import {
@@ -11,9 +18,16 @@ import {
   RecommendationHero,
   YearTimeline,
 } from '../design-system/components/Content'
-import { ErrorState, LoadingState, ProgressBar, SkeletonCard } from '../design-system/components/Feedback'
+import { DemoBanner, ErrorState, LoadingState, ProgressBar, SkeletonCard } from '../design-system/components/Feedback'
 import { AnswerTabs, BackLink, QuestionStepper } from '../design-system/components/Navigation'
-import { MetricRow, StatusPill, StripLegend, YearStrip, type CellState } from '../design-system/components/Status'
+import {
+  MetricRow,
+  NotConnected,
+  StatusPill,
+  StripLegend,
+  YearStrip,
+  type CellState,
+} from '../design-system/components/Status'
 import {
   CalendarIcon,
   CheckIcon,
@@ -277,7 +291,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
           </RecommendationHero>
           <Card tone="green">
             <h3 className={layout.cardTitle}>{t.answer.howTitle}</h3>
-            <NumberedSteps steps={[t.method.step1, t.method.step2, t.method.step3]} />
+            <NumberedSteps steps={[t.method.step1Generic, t.method.step2, t.method.step3]} />
           </Card>
           <Card>
             <Disclosure openLabel={t.answer.why} closeLabel={t.answer.close}>
@@ -297,11 +311,17 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             icon={<ClimateIcon />}
             iconTone="blue"
             title={t.satellite.climateTitle}
-            subtitle={t.satellite.notAvailable}
+            subtitle={t.satellite.climateSubtitleGeneric}
             readyLabel={t.common.ready}
             status="unavailable"
-            unavailableLabel={t.common.unavailable}
+            unavailableLabel={t.common.notConnected}
           />
+          <DemoBanner>{t.common.demoMode}</DemoBanner>
+          <NotConnectedCard icon={<RainIcon />} iconTone="blue" title={t.community.rainTitle} label={t.common.notConnected} />
+          <Card>
+            <NotConnected label={t.common.notConnected} />
+            <NotConnected label={t.common.notConnected} what={t.plan.seedCost} />
+          </Card>
           <AlternativeCard
             icon={<ShieldIcon />}
             label={t.motives.menos_risco}
@@ -349,9 +369,15 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             />
           </Card>
           <SourceCard
-            what={t.method.sources.rain.what}
-            source={t.method.sources.rain.source}
-            scale={t.method.sources.rain.scale}
+            what={t.method.sources.nasa_power.what}
+            source={t.method.sources.nasa_power.source}
+            scale={t.method.sources.nasa_power.scale}
+          />
+          <SourceCard
+            what={t.method.sources.smap.what}
+            source={t.method.sources.smap.source}
+            scale={t.method.sources.smap.scale}
+            notConnected={t.common.notConnected}
           />
           <Card>
             <LoadingState>{t.common.loading}</LoadingState>

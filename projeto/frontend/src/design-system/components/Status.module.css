@@ -373,3 +373,27 @@
 .yearPanelClose:hover {
   background: rgb(255 255 255 / 60%);
 }
+
+/* "Ainda não conectado": traço apagado e borda tracejada, sem número (dado que a API ainda não manda) */
+.notConnected {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 10px;
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: var(--radius-badge);
+  background: var(--color-divider);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-tiny);
+  line-height: 1.3;
+}
+
+.notConnected svg {
+  flex: 0 0 auto;
+}
+
+.notConnected strong {
+  font-weight: var(--font-weight-semibold);
+}

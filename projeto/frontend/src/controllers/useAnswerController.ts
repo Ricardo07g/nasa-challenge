@@ -6,6 +6,7 @@ import { keepFlowQuery } from '../services/flowParams'
 import { buildAnswer } from '../services/recomendacaoRules'
 import type { TelegramService } from '../services/telegramService'
 import { useAnswerNav } from './useAnswerNav'
+import { useFlowRain } from './useFlowRain'
 import { useFlowRecomendacao } from './useFlowRecomendacao'
 import { useTelegramLink } from './useTelegramLink'
 
@@ -21,6 +22,7 @@ export function useAnswerController(deps: Deps = defaultDeps) {
   const telegramHref = useTelegramLink(deps.telegram)
 
   const answer = recomendacao.data ? buildAnswer(recomendacao.data) : null
+  const rain = useFlowRain(deps.farm, recomendacao.data?.opcoes ?? null)
   const status = flowStatus === 'ready' && !answer ? 'error' : flowStatus
 
   return {
@@ -33,6 +35,7 @@ export function useAnswerController(deps: Deps = defaultDeps) {
     /** Sem o motor ligado (VITE_API_MODE=mock), os números são de exemplo. */
     sampleData: deps.apiMode === 'mock',
     reportTo: `/relatorio${keepFlowQuery(search.toString())}`,
+    rain,
     telegramHref,
   }
 }

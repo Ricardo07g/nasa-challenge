@@ -21,6 +21,7 @@ function setup(overrides: Partial<WhenViewProps> = {}) {
     onOpenDate: vi.fn(),
     onDateChange: vi.fn(),
     onConfirm: vi.fn(),
+    rainChart: true,
     ...overrides,
   }
   render(
@@ -88,6 +89,16 @@ describe('WhenView (tela 3)', () => {
     const why = screen.getByRole('complementary', { name: 'Por que perguntamos isso?' })
     expect(why).toHaveTextContent('A chuva vai acabando depois de março.')
     expect(screen.getByRole('img', { name: 'Chuva média por mês: muita em janeiro, pouca em junho' })).toBeInTheDocument()
+  })
+
+  it('com a API real, o desenho de exemplo da chuva por mês sai: "Ainda não conectado"', () => {
+    setup({ rainChart: false })
+
+    const why = screen.getByRole('complementary', { name: 'Por que perguntamos isso?' })
+    expect(why).toHaveTextContent('A chuva vai acabando depois de março.')
+    expect(why).toHaveTextContent('Chuva de cada mês na região: Ainda não conectado')
+    expect(screen.queryByRole('img', { name: /Chuva média por mês/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Desenho de exemplo/)).not.toBeInTheDocument()
   })
 
   it('em inglês', () => {

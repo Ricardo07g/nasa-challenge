@@ -24,7 +24,7 @@ function setup(overrides: Partial<SatelliteViewProps> = {}) {
       window: { from: 4, to: 7 },
     },
     rain: { years: 20, period: { start: '2005', end: '2024' }, skipped: 0 },
-    climate: true,
+    climate: { period: { start: '2041', end: '2060' } },
     soil: { textura: 'argiloso', source: 'map' },
     soilOpen: false,
     onToggleSoil: vi.fn(),
@@ -131,37 +131,47 @@ describe('SatelliteView (tela 4)', () => {
     expect(screen.getByText('Dia por dia.')).toBeInTheDocument()
   })
 
-  it('sem dado de chuva, o cartão da chuva diz que ainda não está disponível (sem o ✓)', () => {
+  it('sem dado de chuva, o cartão da chuva fica tracejado e diz "Ainda não conectado" (sem o ✓)', () => {
     setup({ rain: null })
 
-    expect(screen.getByRole('heading', { name: 'Chuva daqui' })).toBeInTheDocument()
+    const card = screen.getByRole('heading', { name: 'Chuva daqui' }).closest('[data-status]')
+    expect(card).toHaveAttribute('data-status', 'unavailable')
+    expect(card).toHaveTextContent('Ainda não conectado')
     expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
-    expect(screen.getAllByRole('img', { name: 'Ainda não disponível' })).toHaveLength(1)
   })
 
-  it('com o CMIP6, o clima dos próximos anos aparece pronto', () => {
-    setup({ climate: true })
+  it('com o CMIP6, o clima dos próximos anos aparece pronto, com o período do dado', () => {
+    setup()
 
     const title = screen.getByRole('heading', { name: 'Clima dos próximos anos' })
-    expect(screen.getByText('Como a chuva e o calor devem mudar até 2050.')).toBeInTheDocument()
+    expect(screen.getByText('Como a chuva e o calor devem mudar de 2041 a 2060.')).toBeInTheDocument()
     expect(title.closest('[data-status]')).toHaveAttribute('data-status', 'ready')
   })
 
-  it('sem o CMIP6, o clima dos próximos anos não leva o ✓: diz que ainda não está disponível para a área', () => {
-    setup({ climate: false })
+  it('com o CMIP6 mas sem o período, não inventa o ano', () => {
+    setup({ climate: { period: null } })
 
-    const title = screen.getByRole('heading', { name: 'Clima dos próximos anos' })
-    expect(title.closest('[data-status]')).toHaveAttribute('data-status', 'unavailable')
-    expect(screen.getByText('Ainda não disponível para esta área.')).toBeInTheDocument()
-    expect(screen.queryByText('Como a chuva e o calor devem mudar até 2050.')).not.toBeInTheDocument()
-    expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
-    expect(screen.getByRole('img', { name: 'Ainda não disponível' })).toBeInTheDocument()
+    expect(screen.getByText('Como a chuva e o calor devem mudar nos próximos anos.')).toBeInTheDocument()
   })
 
-  it('sem histórico do satélite, o cartão do histórico some', () => {
+  it('sem o CMIP6, o clima dos próximos anos não leva o ✓: diz "Ainda não conectado"', () => {
+    setup({ climate: null })
+
+    const card = screen.getByRole('heading', { name: 'Clima dos próximos anos' }).closest('[data-status]')
+    expect(card).toHaveAttribute('data-status', 'unavailable')
+    expect(card).toHaveTextContent('Ainda não conectado')
+    expect(screen.queryByText(/Como a chuva e o calor devem mudar/)).not.toBeInTheDocument()
+    expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
+  })
+
+  it('sem histórico do satélite, o cartão do histórico não some: diz "Ainda não conectado"', () => {
     setup({ history: null })
 
     expect(screen.queryByRole('heading', { name: /ficou parada/ })).not.toBeInTheDocument()
+    const card = screen.getByRole('heading', { name: 'O que cresceu depois da soja' }).closest('[data-status]')
+    expect(card).toHaveAttribute('data-status', 'unavailable')
+    expect(card).toHaveTextContent('Ainda não conectado')
+    expect(screen.queryByRole('img', { name: /Plantou em/ })).not.toBeInTheDocument()
     expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
   })
 
@@ -230,13 +240,17 @@ describe('SatelliteView (tela 4)', () => {
     expect(screen.getByText('Seen by the MODIS satellite (NASA), from April to July each year')).toBeInTheDocument()
   })
 
-  it('chuva e clima em inglês: 17 anos e sem o CMIP6', () => {
-    setup({ t: en, rain: { years: 17, period: { start: '2005', end: '2024' }, skipped: 3 }, climate: false })
+  it('chuva, clima e histórico em inglês: 17 anos, sem o CMIP6 e sem o histórico', () => {
+    setup({ t: en, rain: { years: 17, period: { start: '2005', end: '2024' }, skipped: 3 }, climate: null, history: null })
 
     expect(screen.getByRole('heading', { name: '17 years of rain right here' })).toBeInTheDocument()
     expect(screen.getByText('From 2005 to 2024, day by day. 3 years were left out for missing data.')).toBeInTheDocument()
-    expect(screen.getByText('Not available yet for this area.')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Not available yet' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Climate in the coming years' }).closest('[data-status]')).toHaveTextContent(
+      'Not connected yet',
+    )
+    expect(screen.getByRole('heading', { name: 'What grew after soybeans' }).closest('[data-status]')).toHaveTextContent(
+      'Not connected yet',
+    )
   })
 
   it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {

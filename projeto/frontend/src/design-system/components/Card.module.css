@@ -119,16 +119,10 @@
   display: flex;
 }
 
-/* Fonte ainda sem dado para a área: traço apagado e borda tracejada, sem o ✓ de pronto */
+/* Dado que a API ainda não manda: borda tracejada e o aviso "Ainda não conectado" no lugar do ✓ */
 .dataSource[data-status='unavailable'] {
   border-style: dashed;
   border-color: var(--color-border-strong);
-}
-
-.unavailable {
-  color: var(--color-text-muted);
-  flex: 0 0 auto;
-  display: flex;
 }
 
 /* Alternativa ("Se você prefere…") */
@@ -181,4 +175,10 @@
 .sourceScale {
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
+}
+
+/* Fonte que a API ainda não manda: borda tracejada, como os outros blocos "Ainda não conectado" */
+.source[data-status='unavailable'] {
+  border-style: dashed;
+  border-color: var(--color-border-strong);
 }

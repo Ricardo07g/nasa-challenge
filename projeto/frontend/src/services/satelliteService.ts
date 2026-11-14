@@ -77,9 +77,17 @@ export function rainSummary(dados: Talhao['dados'], opcoes: readonly Opcao[] | n
   return { years, period, skipped: span === null ? 0 : Math.max(0, span - years) }
 }
 
-/** Tela 4, cartão 4: o clima dos próximos anos só está pronto com o NEX-GDDP-CMIP6 no talhão. */
-export function climateReady(dados: Talhao['dados']): boolean {
-  return dados.some((dado) => dado.fonte === 'nex_gddp_cmip6')
+export type ClimateSummary = {
+  /** Período do NEX-GDDP-CMIP6 ("2041" a "2060"); null quando o talhão não diz. */
+  period: { start: string; end: string } | null
+}
+
+/** Tela 4, cartão 4: o clima dos próximos anos só existe com o NEX-GDDP-CMIP6 no talhão (senão, null). */
+export function climateSummary(dados: Talhao['dados']): ClimateSummary | null {
+  const source = dados.find((dado) => dado.fonte === 'nex_gddp_cmip6')
+  if (!source) return null
+  const match = source.periodo.match(/^(\d{4})-(\d{4})$/)
+  return { period: match ? { start: match[1], end: match[2] } : null }
 }
 
 export type SoilSummary = { textura: Textura; source: 'map' | 'user' | 'default' }

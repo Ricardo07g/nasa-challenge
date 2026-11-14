@@ -36,9 +36,9 @@ import { WhenView } from './views/WhenView'
 import { WhereView } from './views/WhereView'
 
 export function ShellPage() {
-  const { header, footer } = useShellController()
+  const { header, footer, demoNotice } = useShellController()
   return (
-    <ShellView header={header} footer={footer}>
+    <ShellView header={header} footer={footer} demoNotice={demoNotice}>
       <ScrollRestoration />
       <Outlet />
     </ShellView>
@@ -91,6 +91,7 @@ export function WhenPage() {
       onOpenDate={state.openDate}
       onDateChange={state.changeDate}
       onConfirm={state.confirm}
+      rainChart={state.rainChart}
     />
   )
 }
@@ -162,6 +163,7 @@ export function AnswerPage() {
       sampleData={state.sampleData}
       reportTo={state.reportTo}
       telegramHref={state.telegramHref}
+      rain={state.rain}
     />
   )
 }
@@ -180,6 +182,7 @@ export function OptionsPage() {
       axis={state.axis}
       onAxis={state.chooseAxis}
       summary={state.summary}
+      rain={state.rain}
     />
   )
 }
@@ -208,6 +211,7 @@ export function PlanPage() {
       plan={state.plan}
       communityTo={state.communityTo}
       pastTo={state.pastTo}
+      showGainReference={state.showGainReference}
     />
   )
 }
@@ -271,6 +275,8 @@ export function CommunityPage() {
       demo={state.demo}
       onDemo={state.showDemo}
       region={state.region}
+      regionStatus={state.regionStatus}
+      onRegionRetry={state.retryRegion}
       regionRadius={state.regionRadius}
       history={state.history}
     />
@@ -290,6 +296,9 @@ export function MethodPage() {
       rows={state.rows}
       example={state.example}
       telegramHref={state.telegramHref}
+      sources={state.sources}
+      onRetrySources={state.retrySources}
+      rain={state.rain}
     />
   )
 }

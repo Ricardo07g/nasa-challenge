@@ -1,8 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Community } from '../models/community'
+import { ApiError, NotConnectedError } from '../repositories/httpClient'
 import { buildCommunity, buildTalhao } from '../repositories/mocks/fixtures'
-import { createMockRegionRepository } from '../repositories/regionRepository'
+import { createMockRegionRepository } from '../repositories/mocks/mockRepositories'
 import type { FarmService } from '../services/farmService'
 import type { CommunityService } from '../services/communityService'
 import { providers } from '../test/providers'
@@ -82,12 +83,42 @@ describe('useCommunityController (tela 8)', () => {
     expect(d.community.region).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993 }, 'pt')
   })
 
-  it('sem a região na API, o bloco da região some e a comunidade continua', async () => {
+  it('com a região pronta, o estado da região é "ready"', async () => {
     const d = deps()
-    d.community.region = vi.fn().mockRejectedValue(new Error('404'))
     const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
 
-    await waitFor(() => expect(result.current.status).toBe('ready'))
+    await waitFor(() => expect(result.current.regionStatus).toBe('ready'))
+  })
+
+  it('sem o endpoint da região no backend (404 sem código), a região fica "Ainda não conectado"', async () => {
+    const d = deps()
+    d.community.region = vi.fn().mockRejectedValue(new ApiError('/api/regiao', 404, null))
+    const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
+
+    await waitFor(() => expect(result.current.regionStatus).toBe('not-connected'))
     expect(result.current.region).toBeNull()
+    expect(result.current.regionRadius).toBeNull()
+  })
+
+  it('se a região falhar por outro motivo, mostra o erro e tenta de novo', async () => {
+    let calls = 0
+    const d = deps()
+    d.community.region = vi.fn((point, lang) =>
+      ++calls === 1 ? Promise.reject(new ApiError('/api/regiao', 500, null)) : region.get(point, lang),
+    )
+    const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
+
+    await waitFor(() => expect(result.current.regionStatus).toBe('error'))
+    act(() => result.current.retryRegion())
+    await waitFor(() => expect(result.current.regionStatus).toBe('ready'))
+  })
+
+  it('com a API real (comunidade sem versão http): nada de vizinho simulado, fica "Ainda não conectado"', async () => {
+    const d = deps(() => Promise.reject(new NotConnectedError('comunidade')))
+    const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
+
+    await waitFor(() => expect(result.current.status).toBe('not-connected'))
+    expect(result.current.community).toBeNull()
+    expect(result.current.points).toEqual([])
   })
 })

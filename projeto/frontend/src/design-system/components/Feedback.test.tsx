@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { ErrorState, LoadingState, ProgressBar, SkeletonCard } from './Feedback'
+import { DemoBanner, ErrorState, LoadingState, ProgressBar, SkeletonCard } from './Feedback'
 
 describe('LoadingState', () => {
   it('avisa leitores de tela que está carregando', () => {
@@ -38,5 +38,15 @@ describe('ProgressBar', () => {
     expect(bar).toHaveAttribute('aria-valuenow', '2')
     expect(bar).toHaveAttribute('aria-valuemin', '0')
     expect(bar).toHaveAttribute('aria-valuemax', '6')
+  })
+})
+
+describe('DemoBanner (modo de demonstração)', () => {
+  it('deixa claro, num aviso fixo, que os dados são de exemplo', () => {
+    render(<DemoBanner>Modo de demonstração: dados de exemplo, não são da NASA</DemoBanner>)
+
+    const banner = screen.getByRole('note')
+    expect(banner).toHaveTextContent('Modo de demonstração: dados de exemplo, não são da NASA')
+    expect(banner.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
   })
 })

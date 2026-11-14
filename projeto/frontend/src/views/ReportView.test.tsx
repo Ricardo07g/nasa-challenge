@@ -52,7 +52,9 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
 
     const table = screen.getByRole('table', { name: 'Todas as opções' })
     expect(within(table).getAllByRole('row')).toHaveLength(6)
-    expect(table).toHaveTextContent('Milho com braquiária14R$ 700Fica coberta na seca')
+    expect(table).toHaveTextContent('Milho com braquiária14 de 20R$ 700Fica coberta na seca')
+    expect(within(table).getByRole('columnheader', { name: 'Anos que deram certo' })).toBeInTheDocument()
+    expect(table).not.toHaveTextContent('(de 20)')
   })
 
   it('sinal do outono, histórico da área e fontes', () => {
@@ -75,14 +77,15 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
     expect(screen.getByRole('article')).toHaveTextContent('Visto pelo satélite MODIS (NASA), de abril a julho de cada ano')
   })
 
-  it('sem sinal e sem histórico na API, essas seções somem e a numeração segue', () => {
+  it('sem sinal e sem histórico na API, as seções ficam com "Ainda não conectado" (não somem)', () => {
     const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
     setup({ recomendacao: { ...rec, sinal: undefined }, talhao: { ...buildTalhao(point, 'pt'), historico: null } })
 
     const sheet = screen.getByRole('article')
-    expect(sheet).not.toHaveTextContent('Sinal para o outono')
-    expect(sheet).not.toHaveTextContent('Histórico da área')
-    expect(sheet).toHaveTextContent('4. Fontes')
+    expect(sheet).toHaveTextContent('4. Sinal para o outono de 2027Ainda não conectado')
+    expect(sheet).toHaveTextContent('5. Histórico da áreaAinda não conectado')
+    expect(sheet).toHaveTextContent('6. Fontes')
+    expect(sheet).not.toHaveTextContent('Sem sinal claro')
   })
 
   it('outra lavoura mostra o lugar aproximado, não a fazenda de exemplo', () => {

@@ -83,7 +83,7 @@ describe('useSatelliteController (tela 4)', () => {
     const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(result.current.climate).toBe(true)
+    expect(result.current.climate).toEqual({ period: { start: '2041', end: '2060' } })
   })
 
   it('sem o CMIP6 no talhão, o clima dos próximos anos não fica pronto', async () => {
@@ -91,7 +91,7 @@ describe('useSatelliteController (tela 4)', () => {
     const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(result.current.climate).toBe(false)
+    expect(result.current.climate).toBeNull()
   })
 
   it('a terra escolhida pela pessoa fica na URL e vale mais que o mapa', async () => {
