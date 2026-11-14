@@ -29,7 +29,8 @@ app/
   config_data/         culturas.yaml (parâmetros das culturas) e regras.yaml (limiares, pesos e
                        frases do motor), editáveis pela agrônoma
   fixtures/            clima da fazenda de exemplo (gerado pelo pipeline; ver "Dados da API")
-pipeline/              scripts offline que preparam os dados (não entram na imagem da API)
+pipeline/              scripts offline que preparam os dados. O Dockerfile copia a pasta (com tests/)
+                       para o pytest rodar no container; a API não importa nada dela
 tests/
   unit/models/         contrato e validação dos models (ver "Contrato dos dados das fontes")
   unit/services/       service com repository falso (sem banco, sem HTTP)
