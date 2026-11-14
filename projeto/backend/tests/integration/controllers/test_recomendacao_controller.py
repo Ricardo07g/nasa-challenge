@@ -7,10 +7,15 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.constants import PROBLEM_BASE_URI, PROBLEM_JSON_MEDIA_TYPE
-from app.dependencies import get_rules_repository, get_seasonal_forecast_repository
+from app.dependencies import (
+    get_ndvi_repository,
+    get_rules_repository,
+    get_seasonal_forecast_repository,
+)
 from app.main import app
 from app.models.regras import Regras
 from app.models.sinal_outono import SeasonalForecast
+from app.models.talhao import NdviRecord
 from app.repositories.rules_repository import load_default_rules
 
 UFU = {"lat": -18.9543, "lon": -48.1993}
@@ -74,6 +79,16 @@ def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
     assert {"descricao", "nota"} <= set(body["plano_3_anos"]["hoje"])
     assert body["pousio"]["texto"]
     assert body["aviso"]
+
+
+def test_should_explain_the_field_history_from_the_ndvi_repository(client: TestClient) -> None:
+    # PRD 7.6: o NDVI de teste do conftest tem 3 anos parados e 5 plantados em 2016-2025
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"}).json()
+
+    assert {o["porque"][-1] for o in body["opcoes"]} == {
+        "Seu talhão ficou em pousio em 3 de 8 entressafras vistas pelo satélite "
+        "de 2016 a 2025 (NDVI do MODIS)."
+    }
 
 
 def test_should_move_crops_out_of_window_and_parse_nematoide_when_harvest_is_tarde(
@@ -223,6 +238,30 @@ def test_should_send_autumn_signal_in_the_front_contract_when_a_repository_has_d
     )
     assert sinal["regra_dia_plantar"]["data_limite"] == primeira_a["data_limite"]
     assert sinal["regra_dia_plantar"]["texto"].startswith("No dia de plantar")
+
+
+class EarlyHarvestNdviRepository:
+    """NDVI de teste: a soja seca em 2/fev (dia 33) em todos os anos -> colheita "cedo"."""
+
+    def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
+        return [
+            NdviRecord(data=date(year, month, day), ndvi=ndvi, qualidade=0, produto="MOD13Q1")
+            for year in range(2016, 2026)
+            for month, day, ndvi in ((1, 17, 0.84), (2, 2, 0.35))
+        ]
+
+
+def test_should_answer_example_farm_with_the_harvest_band_suggested_by_ndvi(
+    client: TestClient,
+) -> None:
+    # Roteiro R3.2: /exemplo usa a colheita sugerida do talhão, não "meio" fixo
+    app.dependency_overrides[get_ndvi_repository] = EarlyHarvestNdviRepository
+
+    body = client.get("/api/exemplo").json()
+
+    assert body["talhao"]["colheita_sugerida"]["faixa"] == "cedo"
+    assert body["recomendacao"]["entrada"]["colheita"] == "cedo"
+    assert body["recomendacao"]["entrada"]["semeadura"] == "2027-02-08"
 
 
 def test_should_use_rules_from_the_injected_rules_repository(client: TestClient) -> None:

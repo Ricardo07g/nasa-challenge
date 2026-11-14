@@ -1,6 +1,7 @@
 """Histórico do talhão pelo NDVI do MODIS e faixa de colheita sugerida (PRD 7.8 e 7.9)."""
 
 from collections import defaultdict
+from collections.abc import Sequence
 from datetime import date
 from statistics import median
 
@@ -8,50 +9,91 @@ from app.constants import (
     EARLY_HARVEST_DOY_LIMIT,
     MID_HARVEST_DOY_LIMIT,
     MIN_NDVI_YEARS_FOR_SUGGESTION,
+    NDVI_DECIMALS,
     NDVI_SCALE_FACTOR,
 )
 from app.models.regras import Regras
-from app.models.talhao import ColheitaSugerida, HistoricoAno, HistoricoTalhao, NdviRecord
+from app.models.talhao import (
+    ColheitaSugerida,
+    HistoricoAno,
+    HistoricoTalhao,
+    NdviRecord,
+    SituacaoAno,
+)
 from app.repositories.rules_repository import load_default_rules
 
 
 def scaled_ndvi(value: float) -> float:
-    """NDVI físico (-1 a 1). O MOD13Q1 bruto vem inteiro com fator 0,0001 (7100 = 0,71)."""
-    return value * NDVI_SCALE_FACTOR if abs(value) > 1.0 else value
+    """NDVI físico (-1 a 1) na precisão do MOD13Q1. O bruto vem inteiro com fator 0,0001."""
+    physical = value * NDVI_SCALE_FACTOR if abs(value) > 1.0 else value
+    return round(physical, NDVI_DECIMALS)
+
+
+def _month_day(text: str) -> tuple[int, int]:
+    """'04-01' -> (4, 1), para comparar datas de anos diferentes sem montar `date`."""
+    month, day = text.split("-")
+    return int(month), int(day)
+
+
+def _source_label(records: Sequence[NdviRecord]) -> str:
+    """'MODIS MOD13Q1 + MYD13Q1' com os produtos da série; o cache antigo não diz o produto."""
+    produtos = sorted({rec.produto for rec in records if rec.produto})
+    return " ".join(["MODIS", " + ".join(produtos)]) if produtos else "MODIS"
 
 
 class FieldHistoryService:
     """Lê a série de NDVI do talhão: uso na entressafra e quando a soja seca."""
 
     def __init__(self, rules: Regras | None = None) -> None:
-        self._ndvi = (rules if rules is not None else load_default_rules()).ndvi
+        regras = rules if rules is not None else load_default_rules()
+        self._ndvi = regras.ndvi
+        self._historico = regras.historico_ndvi
 
-    def classify_entressafra(self, ndvi_records: list[NdviRecord]) -> HistoricoTalhao:
-        """Maior NDVI de 1/abr a 31/jul: > 0,6 plantou, < 0,45 parado, senão incerto."""
+    def classify_entressafra(self, ndvi_records: Sequence[NdviRecord]) -> HistoricoTalhao:
+        """Cada ano da janela pelo maior NDVI de 1/abr a 31/jul (guia NDVI, "Regra do talhão").
+
+        As observações já chegam com qualidade 0 ou 1 (o repository descarta neve e nuvem).
+        Os anos, a janela, os limites e o mínimo de observações vêm do `regras.yaml`.
+        """
+        regra = self._historico
+        inicio, fim = _month_day(regra.janela_inicio), _month_day(regra.janela_fim)
         by_year: dict[int, list[float]] = defaultdict(list)
         for rec in ndvi_records:
-            if rec.data.month in self._ndvi.meses_entressafra:
+            if inicio <= (rec.data.month, rec.data.day) <= fim:
                 by_year[rec.data.year].append(scaled_ndvi(rec.ndvi))
 
-        anos: list[HistoricoAno] = []
-        for year in sorted(by_year):
-            ndvi_max = round(max(by_year[year]), 2)
-            if ndvi_max > self._ndvi.plantou_acima:
-                situacao = "plantou"
-            elif ndvi_max < self._ndvi.parado_abaixo:
-                situacao = "parado"
-            else:
-                situacao = "incerto"
-            anos.append(HistoricoAno(ano=year, situacao=situacao, ndvi_max=ndvi_max))
-
+        anos = tuple(
+            self._classify_year(ano, by_year.get(ano, []))
+            for ano in range(regra.ano_inicio, regra.ano_fim + 1)
+        )
+        parado = sum(1 for a in anos if a.situacao == "parado")
+        plantou = sum(1 for a in anos if a.situacao == "plantou")
         return HistoricoTalhao(
-            anos=tuple(anos),
-            parado=sum(1 for a in anos if a.situacao == "parado"),
+            anos=anos,
+            parado=parado,
+            plantou=plantou,
+            sem_certeza=len(anos) - parado - plantou,
             total=len(anos),
-            fonte="modis_mod13q1",
+            fonte=_source_label(ndvi_records),
+            janela=f"{regra.janela_inicio} a {regra.janela_fim}",
         )
 
-    def suggest_harvest_band(self, ndvi_records: list[NdviRecord]) -> ColheitaSugerida:
+    def _classify_year(self, ano: int, valores: list[float]) -> HistoricoAno:
+        """Poucas observações: sem_dado; > limite_plantou: plantou; < limite_parado: parado."""
+        regra = self._historico
+        if len(valores) < regra.min_observacoes:
+            return HistoricoAno(ano=ano, situacao="sem_dado", ndvi_max=None, n_obs=len(valores))
+        maior = max(valores)
+        situacao: SituacaoAno
+        if maior > regra.limite_plantou:
+            situacao = "plantou"
+        elif maior < regra.limite_parado:
+            situacao = "parado"
+        else:
+            situacao = "incerto"
+        return HistoricoAno(ano=ano, situacao=situacao, ndvi_max=maior, n_obs=len(valores))
+
+    def suggest_harvest_band(self, ndvi_records: Sequence[NdviRecord]) -> ColheitaSugerida:
         """Primeira imagem de jan a mar abaixo de 50% do pico; mediana dos anos vira a faixa."""
         by_year: dict[int, list[tuple[date, float]]] = defaultdict(list)
         for rec in ndvi_records:

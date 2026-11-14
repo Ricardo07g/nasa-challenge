@@ -4,7 +4,7 @@ from typing import Annotated, Final, Literal
 
 from fastapi import APIRouter, Depends, Header, Query, Response
 
-from app.constants import EXAMPLE_FARM_HARVEST, EXAMPLE_FARM_LAT, EXAMPLE_FARM_LON
+from app.constants import EXAMPLE_FARM_LAT, EXAMPLE_FARM_LON
 from app.dependencies import get_recommendation_service, get_talhao_service
 from app.schemas.recomendacao import ExemploResponse, RecomendacaoResponse
 from app.schemas.talhao import TalhaoResponse
@@ -66,10 +66,11 @@ def get_exemplo(
     accept_language: Annotated[str, Header(alias="Accept-Language")] = "pt-BR",
 ) -> ExemploResponse:
     talhao = talhao_service.inspect_talhao(lat=EXAMPLE_FARM_LAT, lon=EXAMPLE_FARM_LON)
+    # A faixa que a pergunta 2 já traz marcada (PRD 7.9): sem NDVI suficiente, o talhão diz "meio".
     rec = rec_service.recommend(
         lat=EXAMPLE_FARM_LAT,
         lon=EXAMPLE_FARM_LON,
-        colheita=EXAMPLE_FARM_HARVEST,
+        colheita=talhao.colheita_sugerida.faixa,
         lang=accept_language,
     )
     return ExemploResponse(

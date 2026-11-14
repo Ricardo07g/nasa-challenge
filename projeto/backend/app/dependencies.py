@@ -223,6 +223,8 @@ def get_recommendation_service(
         SatelliteIngestionService | None, Depends(get_satellite_ingestion_service)
     ],
     sinal_service: Annotated[SinalOutonoService, Depends(get_sinal_outono_service)],
+    ndvi_repo: Annotated[NdviRepository, Depends(get_ndvi_repository)],
+    history_service: Annotated[FieldHistoryService, Depends(get_field_history_service)],
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=crop_repo,
@@ -233,6 +235,8 @@ def get_recommendation_service(
         rules=rules,
         ingestion_service=ingestion_service,
         sinal_service=sinal_service,
+        ndvi_repo=ndvi_repo,
+        history_service=history_service,
     )
 
 

@@ -15,12 +15,15 @@ PILOT_MAX_LON: Final[float] = -47.5
 GRID_CELL_RESOLUTION_DEG: Final[float] = 0.1
 GRID_CELL_SCALE_FACTOR: Final[int] = 10
 POINT_CACHE_STEP_DEG: Final[float] = 0.0025  # chave dos caches por ponto (~250 m)
+# Série de NDVI: usa o ponto do arquivo mais perto do talhão, se estiver a no máximo um pixel do
+# MOD13Q1 (250 m). Mais longe que isso já é outro pixel, e o /talhao responde `historico: null`.
+NDVI_POINT_MAX_DISTANCE_M: Final[float] = 250.0
+EARTH_RADIUS_M: Final[float] = 6_371_000.0
 
 # Fazenda de exemplo (plano técnico §3.3): campo de soja de 48 ha da Fazenda Experimental do
 # Glória (UFU), Uberlândia. O ponto antigo (-18,92 / -48,28) caía perto do centro urbano.
 EXAMPLE_FARM_LAT: Final[float] = -18.9543
 EXAMPLE_FARM_LON: Final[float] = -48.1993
-EXAMPLE_FARM_HARVEST: Final[str] = "meio"
 
 # Canonical Crop Identifiers & Alias Normalization (ADR-0001)
 CROP_ID_ALIASES: Final[dict[str, str]] = {
@@ -54,8 +57,9 @@ SOIL_CAD_BY_TEXTURE: Final[dict[str, float]] = {
 }
 
 # MODIS NDVI Scale & Harvest Band Constants (US-02, US-07, ADR-0002)
-# Limiares do NDVI (plantou/parado, queda da soja, meses da entressafra): regras.yaml, grupo ndvi
+# Histórico do talhão: regras.yaml, grupo historico_ndvi; queda da soja: grupo ndvi
 NDVI_SCALE_FACTOR: Final[float] = 0.0001
+NDVI_DECIMALS: Final[int] = 4  # precisão do MOD13Q1 (fator 0,0001): tira o ruído do float
 MIN_NDVI_YEARS_FOR_SUGGESTION: Final[int] = 5
 EARLY_HARVEST_DOY_LIMIT: Final[int] = 41  # Feb 10
 MID_HARVEST_DOY_LIMIT: Final[int] = 53  # Feb 22

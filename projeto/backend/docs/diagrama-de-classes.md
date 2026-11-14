@@ -169,16 +169,20 @@ classDiagram
     class HistoricoAno {
         <<dataclass>>
         +int ano
-        +float ndvi_medio_safrinha
-        +str status_talhao
+        +SituacaoAno situacao
+        +float | None ndvi_max
+        +int n_obs
     }
 
     class HistoricoTalhao {
         <<dataclass>>
         +tuple~HistoricoAno~ anos
         +int parado
+        +int plantou
+        +int sem_certeza
         +int total
         +str fonte
+        +str janela
     }
 
     class ColheitaSugerida {
@@ -434,6 +438,8 @@ classDiagram
         -SoilRepository _soil_repo
         -ClimateRiskService _risk_service
         -RotationPlanService _plan_service
+        -NdviRepository | None _ndvi_repo
+        -FieldHistoryService _history_service
         +recommend(lat: float, lon: float, colheita: str, solo_override: str | None, nematoide: str | None, lang: str) Recomendacao
     }
 
@@ -443,6 +449,7 @@ classDiagram
     TalhaoService --> FieldHistoryService : usa
     RecommendationService --> ClimateRiskService : usa
     RecommendationService --> RotationPlanService : usa
+    RecommendationService --> FieldHistoryService : usa (frase do histórico)
 ```
 
 ---

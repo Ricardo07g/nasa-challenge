@@ -133,8 +133,8 @@ sequenceDiagram
     end
 
     Svc->>HistSvc: classify_entressafra(serie_ndvi)
-    HistSvc->>HistSvc: Maior NDVI de 1/abr a 31/jul -> 'plantou' (> 0,60), 'parado' (< 0,45) ou 'incerto' (PRD 7.8)
-    HistSvc-->>Svc: HistoricoTalhao (anos, parado, total)
+    HistSvc->>HistSvc: Cada ano de 2016 a 2025: menos de 3 observações de 1/abr a 31/jul -> 'sem_dado'; maior NDVI > 0,60 'plantou', < 0,45 'parado', senão 'incerto' (PRD 7.8, regras.yaml historico_ndvi)
+    HistSvc-->>Svc: HistoricoTalhao (anos com n_obs, parado, plantou, sem_certeza, total, fonte, janela)
 
     Svc->>HistSvc: suggest_harvest_band(serie_ndvi)
     HistSvc->>HistSvc: Detecta queda de NDVI <50% do pico de verão (jan–mar) -> mediana ('cedo'|'meio'|'tarde')

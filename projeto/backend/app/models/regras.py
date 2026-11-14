@@ -57,12 +57,26 @@ class RegrasSolo:
 
 @dataclass(frozen=True)
 class RegrasNdvi:
-    """Histórico do talhão (PRD 7.8) e queda da soja para a colheita sugerida (PRD 7.9)."""
+    """Queda da soja para a colheita sugerida (PRD 7.9). O histórico fica em RegrasHistoricoNdvi."""
 
-    plantou_acima: float
-    parado_abaixo: float
     queda_colheita: float
-    meses_entressafra: frozenset[int]
+
+
+@dataclass(frozen=True)
+class RegrasHistoricoNdvi:
+    """Histórico do talhão pelo NDVI do MODIS (PRD 7.8 e guia do histórico NDVI).
+
+    `janela_inicio` e `janela_fim` são "MM-DD" (a entressafra de cada ano); os anos vão de
+    `ano_inicio` a `ano_fim`, inclusive.
+    """
+
+    janela_inicio: str
+    janela_fim: str
+    limite_plantou: float
+    limite_parado: float
+    min_observacoes: int
+    ano_inicio: int
+    ano_fim: int
 
 
 @dataclass(frozen=True)
@@ -129,6 +143,7 @@ class FrasesPorque:
     fase_cobertura: str
     futuro: str
     solo: str
+    historico: str
 
 
 @dataclass(frozen=True)
@@ -140,6 +155,7 @@ class Regras:
     rotulos: RegrasRotulos
     solo: RegrasSolo
     ndvi: RegrasNdvi
+    historico_ndvi: RegrasHistoricoNdvi
     rotacao: RegrasRotacao
     sinal_outono: RegrasSinalOutono
     frases: dict[str, FrasesPorque]  # "pt" e "en"

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Final
+from typing import Final, Literal
 
 from app.models.validation import require_between
 
@@ -54,23 +54,38 @@ class NdviRecord:
             raise ValueError(f"produto precisa ser MOD13Q1 ou MYD13Q1, veio {self.produto!r}")
 
 
+# Situação da entressafra de um ano (guia do histórico NDVI): a tela mostra plantou (verde),
+# parado (laranja) e "sem certeza" (cinza, juntando incerto e sem_dado).
+SituacaoAno = Literal["plantou", "parado", "incerto", "sem_dado"]
+
+
 @dataclass(frozen=True)
 class HistoricoAno:
-    """Annual classification of off-season land use from MODIS NDVI."""
+    """Uso da entressafra de um ano pelo NDVI do MODIS (PRD 7.8).
+
+    `n_obs` = observações boas na janela; `ndvi_max` é None quando o ano fica `sem_dado`.
+    """
 
     ano: int
-    situacao: str
-    ndvi_max: float
+    situacao: SituacaoAno
+    ndvi_max: float | None
+    n_obs: int
 
 
 @dataclass(frozen=True)
 class HistoricoTalhao:
-    """10-year historical summary of off-season field usage."""
+    """Resumo das entressafras da janela de anos (guia do histórico NDVI, "Contrato da API").
+
+    `sem_certeza` = incerto + sem_dado; `total` = anos da janela; `janela` = "MM-DD a MM-DD".
+    """
 
     anos: tuple[HistoricoAno, ...]
     parado: int
+    plantou: int
+    sem_certeza: int
     total: int
     fonte: str
+    janela: str
 
 
 @dataclass(frozen=True)

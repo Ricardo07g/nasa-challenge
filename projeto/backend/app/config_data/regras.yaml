@@ -98,19 +98,37 @@ solo:
     fonte: "PRD 7.4: com nematoide = sim, a coluna de pragas vale 1,5 vez e o total é reescalado para 0 a 100"
 
 ndvi:
-  # Histórico do talhão pelo NDVI do MODIS, já com o fator 0,0001 (PRD 7.8)
-  plantou_acima:
-    valor: 0.60
-    fonte: "PRD 7.8: maior NDVI da entressafra acima de 0,6 = segunda safra ou cobertura (Embrapa, 2021; a calibrar com 5 talhões)"
-  parado_abaixo:
-    valor: 0.45
-    fonte: "PRD 7.8: maior NDVI da entressafra abaixo de 0,45 = pousio (Embrapa, 2021; a calibrar com 5 talhões)"
-  meses_entressafra:
-    valor: [4, 5, 6, 7]
-    fonte: "PRD 7.8: entressafra de 1º de abril a 31 de julho"
+  # Colheita sugerida pela série de NDVI do MODIS, já com o fator 0,0001 (PRD 7.9).
+  # Os limites do histórico do talhão (PRD 7.8) ficam em historico_ndvi.
   queda_colheita:
     valor: 0.50
     fonte: "PRD 7.9: soja secando quando o NDVI cai abaixo de 50% do pico do verão"
+
+historico_ndvi:
+  # Histórico do talhão pelo NDVI do MODIS (PRD 7.8 e guia do histórico NDVI, "Regra do talhão").
+  # Por ano: observações boas (qualidade 0 ou 1) da janela; menos de `min_observacoes` = sem_dado;
+  # maior NDVI acima de `limite_plantou` = plantou; abaixo de `limite_parado` = parado; senão incerto.
+  janela_inicio:
+    valor: "04-01"
+    fonte: "PRD 7.8 e guia do histórico NDVI: entressafra de 1º de abril a 31 de julho (a soja do Triângulo é colhida em fevereiro e março)"
+  janela_fim:
+    valor: "07-31"
+    fonte: "PRD 7.8 e guia do histórico NDVI: entressafra de 1º de abril a 31 de julho"
+  limite_plantou:
+    valor: 0.60
+    fonte: "PRD 7.8: maior NDVI da entressafra acima de 0,6 = segunda safra ou cobertura (Embrapa, 2021; a calibrar com 5 talhões)"
+  limite_parado:
+    valor: 0.45
+    fonte: "PRD 7.8: maior NDVI da entressafra abaixo de 0,45 = pousio (Embrapa, 2021; a calibrar com 5 talhões)"
+  min_observacoes:
+    valor: 3
+    fonte: "Guia do histórico NDVI (Regra do talhão): com menos de 3 observações boas na janela, o ano fica sem_dado (hipótese do time, a calibrar)"
+  ano_inicio:
+    valor: 2016
+    fonte: "Decisão do time (roteiro §5, R3.2): entressafras de 2016 a 2025, como o plano técnico, o guia NDVI e o Lovable (o PRD RF-08 dizia 2015)"
+  ano_fim:
+    valor: 2025
+    fonte: "Decisão do time (roteiro §5, R3.2): entressafras de 2016 a 2025, 10 anos"
 
 rotacao:
   # Plano de 3 anos (PRD 7.7)
@@ -187,6 +205,8 @@ avisos:
 #   fase_cobertura: {dias}
 #   futuro: {cenario} {modelos} {anos_bons} {total} {minimo} {maximo}
 #   solo: {textura} {cad_mm} {fonte_solo}
+#   historico: {parado} {plantou} {anos_certos} {sem_certeza} {total} {ano_inicio} {ano_fim}
+#     (anos_certos = parado + plantou; sem_certeza = incerto + sem_dado; total = anos da janela)
 frases:
   pt:
     seguranca: "Semeando em {data}, em {anos_aperto} dos últimos {total} anos faltou água ou fez calor de {calor_c} °C {fase} ({fonte_chuva})."
@@ -194,12 +214,14 @@ frases:
     fase_cobertura: "nos primeiros {dias} dias"
     futuro: "No clima de 2041–2060 (NEX-GDDP-CMIP6, {cenario}, {modelos} modelos), daria certo em {anos_bons} de {total} anos (de {minimo} a {maximo}, conforme o modelo)."
     solo: "Conta feita com solo {textura} ({cad_mm} mm de água disponível; {fonte_solo})."
+    historico: "Seu talhão ficou em pousio em {parado} de {anos_certos} entressafras vistas pelo satélite de {ano_inicio} a {ano_fim} (NDVI do MODIS)."
   en:
     seguranca: "Sowing on {data}, in {anos_aperto} of the last {total} years the crop ran short of water or had {calor_c} °C heat {fase} ({fonte_chuva})."
     fase_grao: "around flowering"
     fase_cobertura: "in the first {dias} days"
     futuro: "In the 2041–2060 climate (NEX-GDDP-CMIP6, {cenario}, {modelos} models), it would work in {anos_bons} of {total} years ({minimo} to {maximo}, depending on the model)."
     solo: "Computed with {textura} soil ({cad_mm} mm of available water; {fonte_solo})."
+    historico: "Your field was left fallow in {parado} of {anos_certos} off-seasons seen by the satellite from {ano_inicio} to {ano_fim} (MODIS NDVI)."
 
 # Textos da linha do tempo da safra (P4 e P6), sem IA generativa. RASCUNHO: agrônoma revisar.
 #   semeadura, colheita_grao, colheita_cobertura: {opcao} (nome da opção)

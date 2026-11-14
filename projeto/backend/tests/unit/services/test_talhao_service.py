@@ -4,7 +4,7 @@ from datetime import date
 from typing import Any
 
 from app.models.climate import ClimateSeason, Cmip6Delta
-from app.models.talhao import FonteDado, NdviRecord, SoloInfo
+from app.models.talhao import FonteDado, HistoricoAno, NdviRecord, SoloInfo
 from app.services.field_history_service import FieldHistoryService
 from app.services.talhao_service import TalhaoService
 
@@ -68,6 +68,8 @@ class FakeNdviRepository:
                 NdviRecord(data=date(year, 1, 17), ndvi=8200),
                 NdviRecord(data=date(year, 2, 18), ndvi=3600),
                 NdviRecord(data=date(year, 4, 15), ndvi=7000),
+                NdviRecord(data=date(year, 5, 1), ndvi=6500),
+                NdviRecord(data=date(year, 6, 2), ndvi=4000),
             ]
         return records
 
@@ -94,8 +96,12 @@ def test_should_return_soil_history_and_climate_sources_when_point_has_data() ->
     assert talhao.solo.textura_solo == "argiloso"
     assert talhao.colheita_sugerida.faixa == "meio"
     assert talhao.historico is not None
-    assert talhao.historico.total == 6
-    assert talhao.historico.anos[0].ndvi_max == 0.7
+    # 2016 a 2025: 2019 a 2024 com 3 observações boas por entressafra, os outros sem dado
+    assert (talhao.historico.plantou, talhao.historico.sem_certeza) == (6, 4)
+    assert talhao.historico.total == 10
+    assert talhao.historico.anos[3] == HistoricoAno(
+        ano=2019, situacao="plantou", ndvi_max=0.7, n_obs=3
+    )
     # Só as fontes que existem: sem CMIP6 no arquivo, ele não aparece como "ok".
     assert talhao.dados_fontes == (FonteDado(fonte="nasa_power", periodo="2005-2024"),)
 
