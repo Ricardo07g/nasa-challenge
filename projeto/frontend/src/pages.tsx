@@ -7,7 +7,6 @@ import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useShellController } from './controllers/useShellController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
-import { apiMode } from './repositories'
 import { EXAMPLE_FARM } from './services/locationService'
 import { buildFlowQuery } from './services/flowParams'
 import { ComingSoonView } from './views/ComingSoonView'
@@ -17,10 +16,9 @@ import { StartView } from './views/StartView'
 import { WhereView } from './views/WhereView'
 
 export function ShellPage() {
-  const { messages: t } = useI18n()
   const { header } = useShellController()
   return (
-    <ShellView header={header} notice={apiMode === 'mock' ? t.common.mockNotice : undefined}>
+    <ShellView header={header}>
       <ScrollRestoration />
       <Outlet />
     </ShellView>
@@ -29,7 +27,7 @@ export function ShellPage() {
 
 export function StartPage() {
   const { messages: t } = useI18n()
-  useDocumentTitle(t.start.title)
+  useDocumentTitle(t.start.pageTitle)
   return <StartView t={t} />
 }
 

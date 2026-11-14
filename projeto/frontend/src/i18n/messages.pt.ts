@@ -75,6 +75,7 @@ export const pt = {
     },
   },
   start: {
+    pageTitle: 'Início',
     eyebrow: 'Para quem planta soja no Triângulo Mineiro',
     title: 'O que plantar depois da soja?',
     lead: 'O satélite da NASA olhou 20 anos de chuva na sua lavoura. Veja a melhor opção.',

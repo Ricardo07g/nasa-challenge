@@ -74,6 +74,7 @@ export const en = {
     },
   },
   start: {
+    pageTitle: 'Home',
     eyebrow: 'For soybean growers in the Triângulo Mineiro, Brazil',
     title: 'What to plant after soybeans?',
     lead: 'NASA satellites looked at 20 years of rain on your field. See the best option.',

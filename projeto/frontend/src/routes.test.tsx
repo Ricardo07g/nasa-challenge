@@ -28,6 +28,21 @@ describe('rotas', () => {
     expect(screen.getByRole('main')).toBeInTheDocument()
   })
 
+  it('o início fica igual ao protótipo: sem aviso de dados de exemplo e com o título da aba dele', async () => {
+    renderAt('/')
+
+    await screen.findByRole('heading', { level: 1, name: 'O que plantar depois da soja?' })
+    expect(screen.queryByText(/Dados de exemplo/)).not.toBeInTheDocument()
+    expect(document.title).toBe('Raiz Orbital – Início')
+  })
+
+  it('o título da aba acompanha o idioma', async () => {
+    renderAt('/', 'en')
+
+    await screen.findByRole('heading', { level: 1, name: 'What to plant after soybeans?' })
+    expect(document.title).toBe('Raiz Orbital – Home')
+  })
+
   it('"Começar" leva para a pergunta 1', async () => {
     renderAt('/')
 

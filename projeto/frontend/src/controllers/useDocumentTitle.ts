@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 
-/** Título da aba por tela (ajuda quem usa leitor de tela e quem compartilha o link). */
+/** Título da aba por tela, no padrão do protótipo: "Raiz Orbital – Início". */
 export function useDocumentTitle(title: string) {
   useEffect(() => {
-    document.title = `${title} · Raiz Orbital`
+    document.title = `Raiz Orbital – ${title}`
   }, [title])
 }
