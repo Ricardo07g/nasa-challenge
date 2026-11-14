@@ -251,6 +251,33 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     serviço `backend`). Commitar esse arquivo derivado (pequeno, como a fixture do clima) é decisão do
     time: ele traz o próprio `versao_dados`.
 
+- **NDVI do MODIS e histórico do talhão** (R3.2, tarefa 0018). Com ou sem banco, a série vem do arquivo
+  do `NDVI_CACHE_PATH` (a tabela `ndvi_point` já existe desde o R1.6, mas a API ainda não lê dela). O arquivo vem do
+  script do R2.2 (`pipeline/fetch_ndvi.py`); sem ele, a API responde `historico: null` e colheita `meio` / `padrao`.
+  - `CachedNdviRepository`: lê o formato do contrato (seção NDVI abaixo) e ainda aceita o cache antigo
+    (`data`, `ndvi` bruto). Usa o ponto do arquivo **mais perto** do talhão, a até 250 m
+    (`NDVI_POINT_MAX_DISTANCE_M`, um pixel do MOD13Q1); mais longe, série vazia. Descarta observação com
+    qualidade 2 ou 3 ou sem `ndvi`.
+  - `FieldHistoryService`: regra do talhão do guia NDVI, com os números do grupo `historico_ndvi` do
+    `regras.yaml` (anos 2016 a 2025, janela `04-01` a `07-31`, mínimo de 3 observações, 0,60 e 0,45).
+    Série vazia: `historico: null` (nada inventado). Com série, sempre os 10 anos:
+
+    ```json
+    "historico": {
+      "anos": [{"ano": 2016, "situacao": "parado", "ndvi_max": 0.31, "n_obs": 3},
+               {"ano": 2018, "situacao": "sem_dado", "ndvi_max": null, "n_obs": 1}],
+      "parado": 5, "plantou": 4, "sem_certeza": 1, "total": 10,
+      "fonte": "MODIS MOD13Q1 + MYD13Q1", "janela": "04-01 a 07-31"
+    }
+    ```
+
+    `situacao`: `plantou`, `parado`, `incerto` ou `sem_dado`; `ndvi_max` (físico, com até 4 casas, a
+    precisão do MOD13Q1) é `null` no `sem_dado`;
+    `sem_certeza` = incerto + sem_dado; `total` = anos da janela; `fonte` lista os produtos que vieram
+    na série (cache antigo, sem produto: só `MODIS`).
+  - `porque` da recomendação: frase do histórico (modelo `frases.<língua>.historico` do `regras.yaml`,
+    PRD 7.6), contando só os anos certos (parado + plantou). Sem série ou sem ano certo, não há frase.
+  - `/exemplo` recomenda com a `colheita_sugerida` do talhão (PRD 7.9), não mais com `meio` fixo.
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
   ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre
@@ -361,7 +388,9 @@ Uma observação de 16 dias por ponto, já sem neve e sem nuvem. O arquivo é o 
 - Tabela criada no R1.6: `ndvi_point (key, date, product, ndvi, quality)`, chave
   `(key, date, product)`.
 - `qualidade` e `produto` são opcionais no model só por causa do cache antigo (`data` e `ndvi`).
-  Arquivo novo traz os quatro campos. O `CachedNdviRepository` passa a lê-los no R3.2.
+  Arquivo novo traz os quatro campos, e o `CachedNdviRepository` lê os quatro desde o R3.2.
+- A série vai de **janeiro a julho** de cada ano: abril a julho para o histórico (PRD 7.8) e janeiro a
+  março para a colheita sugerida (PRD 7.9).
 
 ### SMAP: `SmapSoilMoisture` (`app/models/climate.py`)
 
