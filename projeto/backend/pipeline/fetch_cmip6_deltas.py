@@ -71,8 +71,23 @@ PAUSE_BETWEEN_REQUESTS_SECONDS = 0.5
 # de tempo do arquivo é um bloco global (_ChunkSizes 1 × 600 × 1440), por isso o custo é por dia.
 MEASURED_SECONDS_PER_REQUEST = 6.0
 
-DEFAULT_OUTPUT = Path("data/output/cmip6_deltas_nex_gddp.json")
-DEFAULT_CACHE_DIR = Path("data/cache/nex_gddp_cmip6_ncss")
+
+def repo_root(script: Path = Path(__file__)) -> Path:
+    """Raiz do repositório, achada pelo caminho do script (`<raiz>/projeto/backend/pipeline/`).
+
+    Não depende da pasta de onde o script roda. No container (`/app/pipeline/`) não há
+    `projeto/backend` acima: a raiz fica a pasta do backend (`/app`).
+    """
+    backend = script.resolve().parent.parent
+    if backend.name == "backend" and backend.parent.name == "projeto":
+        return backend.parent.parent
+    return backend
+
+
+# Pasta organizada do time (fora do git): o compose monta `data/baixados` no backend.
+DOWNLOADS_DIR = repo_root() / "data" / "baixados" / "nasa_nex_gddp_cmip6"
+DEFAULT_OUTPUT = DOWNLOADS_DIR / "cmip6_deltas_nex_gddp.json"
+DEFAULT_CACHE_DIR = DOWNLOADS_DIR / "cache_ncss"
 
 
 @dataclass(frozen=True)
