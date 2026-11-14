@@ -10,6 +10,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | ID | Título | Status | Prioridade | Responsável / Módulo |
 | :---: | :--- | :---: | :---: | :--- |
 | [**0001**](0001-ingestao-on-demand-dados-satelite.md) | **Pipeline de Ingestão On-Demand de Dados de Satélite e Solo (Cache-Aside Espacial)** | **Concluída** | **Alta** | `app/repositories/external/`, `app/services/` |
+| [**0002**](0002-id-de-celula-unico.md) | **Um id de célula só (`floor`) na ingestão, no PostGIS e no seed** | **Concluída** | **Alta** | `app/repositories/climate_repository.py`, `app/services/satellite_ingestion_service.py` |
 | [**0008**](0008-conteudo-das-culturas.md) | **Conteúdo das culturas (ids canônicos, nome_en, como fazer pt/en, /crop-options pelo YAML)** | **Concluída** | **Média** | `app/config_data/culturas.yaml`, `app/repositories/` |
 
 ---
