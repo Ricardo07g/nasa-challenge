@@ -24,7 +24,6 @@ EARTH_RADIUS_M: Final[float] = 6_371_000.0
 # Glória (UFU), Uberlândia. O ponto antigo (-18,92 / -48,28) caía perto do centro urbano.
 EXAMPLE_FARM_LAT: Final[float] = -18.9543
 EXAMPLE_FARM_LON: Final[float] = -48.1993
-EXAMPLE_FARM_HARVEST: Final[str] = "meio"
 
 # Canonical Crop Identifiers & Alias Normalization (ADR-0001)
 CROP_ID_ALIASES: Final[dict[str, str]] = {
