@@ -25,3 +25,8 @@ export function ErrorState({ message, retryLabel, onRetry }: ErrorStateProps) {
     </div>
   )
 }
+
+/** Bloco cinza pulsando no lugar de um cartão enquanto os dados chegam (a tela nunca fica em branco). */
+export function SkeletonCard() {
+  return <div className={styles.skeleton} aria-hidden="true" />
+}

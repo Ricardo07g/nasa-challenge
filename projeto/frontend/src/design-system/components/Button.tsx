@@ -78,3 +78,19 @@ export function Button(props: ButtonProps) {
     </button>
   )
 }
+
+type TextButtonProps = {
+  children: ReactNode
+  onClick: () => void
+  /** Quando o botão abre e fecha algo (ex.: "Não é? Trocar"). */
+  expanded?: boolean
+}
+
+/** Botão com cara de link, para ações pequenas dentro de um cartão. */
+export function TextButton({ children, onClick, expanded }: TextButtonProps) {
+  return (
+    <button type="button" className={styles.textButton} aria-expanded={expanded} onClick={onClick}>
+      {children}
+    </button>
+  )
+}

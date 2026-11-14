@@ -105,3 +105,22 @@
   font-weight: var(--font-weight-regular);
   opacity: 0.85;
 }
+
+/* Botão com cara de link (dentro de cartões) */
+.textButton {
+  align-self: flex-start;
+  min-height: var(--touch-min);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.textButton:hover {
+  color: var(--color-primary-strong);
+}

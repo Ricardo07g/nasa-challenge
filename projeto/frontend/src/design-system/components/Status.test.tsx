@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { MetricRow, StatusPill, YearStrip } from './Status'
+import { MetricRow, StatusPill, StripLegend, YearStrip } from './Status'
 
 describe('StatusPill', () => {
   it('mostra o rótulo com o tom certo', () => {
@@ -61,5 +61,21 @@ describe('YearStrip', () => {
     const strip = screen.getByRole('img', { name: 'Plantou em 1 de 3 anos' })
     expect(strip).toHaveAttribute('data-size', 'lg')
     expect(strip).toHaveTextContent('161718')
+  })
+})
+
+describe('StripLegend', () => {
+  it('explica cada tipo de quadrinho', () => {
+    render(
+      <StripLegend
+        items={[
+          { state: 'good', label: 'Plantou' },
+          { state: 'bad', label: 'Ficou parado' },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('Plantou').querySelector('[data-state="good"]')).not.toBeNull()
+    expect(screen.getByText('Ficou parado').querySelector('[data-state="bad"]')).not.toBeNull()
   })
 })

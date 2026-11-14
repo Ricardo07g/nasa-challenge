@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import { Button } from './Button'
+import { Button, TextButton } from './Button'
 
 describe('Button', () => {
   it('é um botão com a variante primária por padrão', async () => {
@@ -79,5 +79,21 @@ describe('Button', () => {
     render(<Button disabled>É aqui</Button>)
 
     expect(screen.getByRole('button', { name: 'É aqui' })).toBeDisabled()
+  })
+})
+
+describe('TextButton', () => {
+  it('botão com cara de link, que avisa se abriu algo', async () => {
+    const onClick = vi.fn()
+    render(
+      <TextButton expanded={false} onClick={onClick}>
+        Não é? Trocar
+      </TextButton>,
+    )
+
+    const button = screen.getByRole('button', { name: 'Não é? Trocar' })
+    expect(button).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(button)
+    expect(onClick).toHaveBeenCalled()
   })
 })
