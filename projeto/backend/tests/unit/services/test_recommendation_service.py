@@ -1,5 +1,6 @@
 """Unit tests for RecommendationService (notas, rótulos, ranking, alternativas e frases)."""
 
+from dataclasses import replace
 from datetime import date, timedelta
 
 import pytest
@@ -7,7 +8,9 @@ import pytest
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
 from app.models.recomendacao import Recomendacao, ResultadoOpcao
+from app.models.regras import Regras
 from app.models.talhao import SoloInfo
+from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.recommendation_service import RecommendationService
@@ -126,13 +129,16 @@ class FakeSoilRepository:
         )
 
 
-def _service(climate: FakeClimateRepository | None = None) -> RecommendationService:
+def _service(
+    climate: FakeClimateRepository | None = None, rules: Regras | None = None
+) -> RecommendationService:
     return RecommendationService(
         crop_repo=FakeCropParamsRepository(),
         climate_repo=climate or FakeClimateRepository(),
         soil_repo=FakeSoilRepository(),
         risk_service=ClimateRiskService(WaterBalanceCalculator()),
         plan_service=RotationPlanService(),
+        rules=rules,
     )
 
 
@@ -339,3 +345,42 @@ def test_should_write_soil_texture_with_accent_in_portuguese_text() -> None:
     rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", solo_override="medio")
 
     assert any("solo médio" in frase for frase in _opcao(rec, "sorgo").porque)
+
+
+def test_should_weight_final_score_with_injected_rules() -> None:
+    # regras.yaml com peso só no solo: a nota final passa a ser a nota de solo
+    base = load_default_rules()
+    nota_final = replace(
+        base.nota_final, peso_seguranca=0.0, peso_solo=1.0, peso_renda=0.0, peso_futuro=0.0
+    )
+    rec = _service(rules=replace(base, nota_final=nota_final)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert rec.melhor == "crotalaria"
+    assert all(o.notas.final == o.notas.solo for o in rec.opcoes)
+
+
+def test_should_label_money_with_thresholds_from_injected_rules() -> None:
+    base = load_default_rules()
+    rotulos = replace(base.rotulos, dinheiro_bom=101.0)
+    rec = _service(rules=replace(base, rotulos=rotulos)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert _opcao(rec, "milho_safrinha").notas.renda == 100.0
+    assert _opcao(rec, "milho_safrinha").rotulo_dinheiro == "medio"
+
+
+def test_should_write_why_with_phrase_template_and_heat_number_from_injected_rules() -> None:
+    # Plano técnico §4.8: a frase vem do modelo do regras.yaml e cita o mesmo número da conta
+    base = load_default_rules()
+    frases = {
+        **base.frases,
+        "pt": replace(base.frases["pt"], seguranca="{anos_aperto}/{total} {calor_c} °C"),
+    }
+    rules = replace(base, clima=replace(base.clima, calor_temp_c=33.0), frases=frases)
+
+    rec = _service(rules=rules).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert _opcao(rec, "milho_safrinha").porque[0] == "0/20 33 °C"

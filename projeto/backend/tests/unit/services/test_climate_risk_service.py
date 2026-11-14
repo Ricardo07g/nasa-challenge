@@ -1,11 +1,14 @@
 """Unit tests for ClimateRiskService (janela, simulação dos 20 anos e clima futuro do CMIP6)."""
 
+from dataclasses import replace
 from datetime import date
 
 import pytest
 
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
+from app.models.regras import Regras
+from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
@@ -61,6 +64,11 @@ def _deltas(model: str, rain_pct: float, tmax_c: float = 0.0) -> list[Cmip6Delta
         Cmip6Delta(model=model, scenario="ssp245", month=m, rain_pct=rain_pct, tmax_c=tmax_c)
         for m in range(1, 13)
     ]
+
+
+def _rules_with_clima(**changes: float) -> Regras:
+    base = load_default_rules()
+    return replace(base, clima=replace(base.clima, **changes))
 
 
 def test_should_accept_sowing_date_when_on_or_before_zarc_deadline() -> None:
@@ -225,3 +233,26 @@ def test_should_raise_eto_when_tmax_rises_in_future_projection() -> None:
     assert projected.eto_mm[0] == pytest.approx(
         wb.hargreaves_eto(t_max=32.0, t_min=18.0, lat_deg=-18.95, day_of_year=1), abs=0.01
     )
+
+
+def test_should_use_heat_threshold_from_injected_rules() -> None:
+    # regras.yaml: calor de 29 °C em vez de 35 °C -> máxima de 30 °C já conta como dia quente
+    service = ClimateRiskService(
+        WaterBalanceCalculator(), rules=_rules_with_clima(calor_temp_c=29.0)
+    )
+    wet_season = _make_season(2021, daily_rain=10.0, daily_tmax=30.0)
+
+    [result] = service.simulate_historical(
+        crop=_make_crop(), seasons=[wet_season], semeadura=date(2027, 2, 18), cad_mm=60.0
+    )
+
+    assert result.dias_calor >= 3
+    assert result.aperto is True
+
+
+def test_should_use_loss_steps_from_injected_rules() -> None:
+    service = ClimateRiskService(
+        WaterBalanceCalculator(), rules=_rules_with_clima(perda_fator_alta=0.90)
+    )
+
+    assert service.loss_factor(0.10) == 0.90

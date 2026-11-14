@@ -1,10 +1,12 @@
 """Unit tests for FieldHistoryService (histórico do talhão pelo NDVI e colheita sugerida)."""
 
+from dataclasses import replace
 from datetime import date
 
 import pytest
 
 from app.models.talhao import NdviRecord
+from app.repositories.rules_repository import load_default_rules
 from app.services.field_history_service import FieldHistoryService
 
 
@@ -88,3 +90,13 @@ def test_should_fallback_to_default_meio_when_fewer_than_five_years_available(
     suggestion = service.suggest_harvest_band(records)
 
     assert (suggestion.faixa, suggestion.fonte, suggestion.anos_usados) == ("meio", "padrao", 0)
+
+
+def test_should_classify_with_ndvi_threshold_from_injected_rules() -> None:
+    # regras.yaml: "plantou" só acima de 0,80 -> o pico de 0,72 vira "incerto"
+    base = load_default_rules()
+    service = FieldHistoryService(rules=replace(base, ndvi=replace(base.ndvi, plantou_acima=0.80)))
+
+    history = service.classify_entressafra([_rec("2022-04-10", 0.72)])
+
+    assert [a.situacao for a in history.anos] == ["incerto"]

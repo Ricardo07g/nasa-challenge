@@ -1,8 +1,23 @@
 """Integration tests for GET /api/recomendacao and GET /api/exemplo (contrato do plano §3.2)."""
 
+from dataclasses import replace
+
 from fastapi.testclient import TestClient
 
+from app.dependencies import get_rules_repository
+from app.main import app
+from app.models.regras import Regras
+from app.repositories.rules_repository import load_default_rules
+
 UFU = {"lat": -18.9543, "lon": -48.1993}
+
+
+class FakeRulesRepository:
+    def __init__(self, regras: Regras) -> None:
+        self._regras = regras
+
+    def get_rules(self) -> Regras:
+        return self._regras
 
 
 def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
@@ -104,3 +119,24 @@ def test_should_return_example_farm_at_ufu_point_when_get_exemplo_called(
     assert body["talhao"]["dentro_da_area"] is True
     assert body["recomendacao"]["entrada"]["colheita"] == "meio"
     assert body["recomendacao"]["opcoes"][0]["chuva"]["texto"].startswith("Worked in")
+
+
+def test_should_use_rules_from_the_injected_rules_repository(client: TestClient) -> None:
+    # dependencies.py entrega as regras do repository a todos os services do motor
+    base = load_default_rules()
+    regras = replace(
+        base,
+        clima=replace(base.clima, calor_temp_c=29.0),
+        rotulos=replace(base.rotulos, dinheiro_bom=101.0),
+        rotacao=replace(base.rotacao, anos_secos=2),
+    )
+    app.dependency_overrides[get_rules_repository] = lambda: FakeRulesRepository(regras)
+
+    response = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"})
+
+    assert response.status_code == 200
+    body = response.json()
+    milho = next(o for o in body["opcoes"] if o["id"] == "milho_safrinha")
+    assert milho["chuva"]["anos_bons"] == 0  # máxima de 30 °C já é calor com o limiar de 29 °C
+    assert milho["dinheiro"]["rotulo"] == "medio"  # renda 100 abaixo do "bom" de 101
+    assert "(2007, 2014)" in body["plano_3_anos"]["seco"]["descricao"]

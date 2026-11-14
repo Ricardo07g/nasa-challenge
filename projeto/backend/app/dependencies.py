@@ -6,6 +6,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.config import get_settings
+from app.models.regras import Regras
 from app.repositories.climate_repository import (
     ClimateRepository,
     FixtureClimateRepository,
@@ -30,6 +31,7 @@ from app.repositories.ndvi_repository import (
     CachedNdviRepository,
     NdviRepository,
 )
+from app.repositories.rules_repository import RulesRepository, YamlRulesRepository
 from app.repositories.soil_repository import (
     CachedSoilGridsRepository,
     SoilRepository,
@@ -58,6 +60,15 @@ def get_crop_option_service(
 @lru_cache
 def get_crop_params_repository() -> CropParamsRepository:
     return YamlCropParamsRepository(get_settings().culturas_path)
+
+
+@lru_cache
+def get_rules_repository() -> RulesRepository:
+    return YamlRulesRepository(get_settings().regras_path)
+
+
+def get_rules(repository: Annotated[RulesRepository, Depends(get_rules_repository)]) -> Regras:
+    return repository.get_rules()
 
 
 @lru_cache
@@ -97,8 +108,8 @@ def get_satellite_ingestion_service(
     )
 
 
-def get_field_history_service() -> FieldHistoryService:
-    return FieldHistoryService()
+def get_field_history_service(rules: Annotated[Regras, Depends(get_rules)]) -> FieldHistoryService:
+    return FieldHistoryService(rules)
 
 
 def get_water_balance_calculator() -> WaterBalanceCalculator:
@@ -107,12 +118,13 @@ def get_water_balance_calculator() -> WaterBalanceCalculator:
 
 def get_climate_risk_service(
     wb: Annotated[WaterBalanceCalculator, Depends(get_water_balance_calculator)],
+    rules: Annotated[Regras, Depends(get_rules)],
 ) -> ClimateRiskService:
-    return ClimateRiskService(wb)
+    return ClimateRiskService(wb, rules)
 
 
-def get_rotation_plan_service() -> RotationPlanService:
-    return RotationPlanService()
+def get_rotation_plan_service(rules: Annotated[Regras, Depends(get_rules)]) -> RotationPlanService:
+    return RotationPlanService(rules)
 
 
 def get_talhao_service(
@@ -139,6 +151,7 @@ def get_recommendation_service(
     soil_repo: Annotated[SoilRepository, Depends(get_soil_repository)],
     risk_service: Annotated[ClimateRiskService, Depends(get_climate_risk_service)],
     plan_service: Annotated[RotationPlanService, Depends(get_rotation_plan_service)],
+    rules: Annotated[Regras, Depends(get_rules)],
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=crop_repo,
@@ -146,4 +159,5 @@ def get_recommendation_service(
         soil_repo=soil_repo,
         risk_service=risk_service,
         plan_service=plan_service,
+        rules=rules,
     )

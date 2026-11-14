@@ -6,27 +6,12 @@ from statistics import mean
 
 from app.constants import (
     DATA_VERSION,
-    INCOME_LABEL_GOOD,
-    INCOME_LABEL_MEDIUM,
-    LIVESTOCK_INTERCROP_BONUS,
-    NEMATODE_PEST_WEIGHT,
     PERCENT_DIVISOR,
-    RAIN_LABEL_GOOD_PCT,
-    RAIN_LABEL_MEDIUM_PCT,
     REFERENCE_SOWING_YEAR,
     SCORE_MAX,
     SCORE_MIN,
     SOIL_CAD_BY_TEXTURE,
-    SOIL_LABEL_GOOD,
-    SOIL_LABEL_MEDIUM,
-    SOIL_NITROGEN_MAX,
-    SOIL_PESTS_MAX,
-    SOIL_STRAW_MAX,
     SOWING_MONTH_DAY_BY_HARVEST,
-    WEIGHT_FUTURE,
-    WEIGHT_INCOME,
-    WEIGHT_SAFETY,
-    WEIGHT_SOIL,
 )
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
@@ -39,8 +24,10 @@ from app.models.recomendacao import (
     ResultadoAno,
     ResultadoOpcao,
 )
+from app.models.regras import Regras, RegrasNotaFinal, RegrasRotulos, RegrasSolo
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.crop_params_repository import CropParamsRepository
+from app.repositories.rules_repository import load_default_rules
 from app.repositories.soil_repository import SoilRepository
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
@@ -66,11 +53,11 @@ def _clamp(score: float) -> float:
     return max(SCORE_MIN, min(SCORE_MAX, score))
 
 
-def rain_label(anos_bons: int, total: int) -> str:
+def rain_label(anos_bons: int, total: int, rotulos: RegrasRotulos) -> str:
     """Bom >= 17 de 20 anos; Médio 12 a 16; Fraco < 12 (plano técnico §4.4)."""
-    if anos_bons * PERCENT_DIVISOR >= RAIN_LABEL_GOOD_PCT * total:
+    if anos_bons * PERCENT_DIVISOR >= rotulos.chuva_bom_pct * total:
         return "bom"
-    if anos_bons * PERCENT_DIVISOR >= RAIN_LABEL_MEDIUM_PCT * total:
+    if anos_bons * PERCENT_DIVISOR >= rotulos.chuva_medio_pct * total:
         return "medio"
     return "fraco"
 
@@ -83,11 +70,12 @@ def _label(score: float, good: float, medium: float) -> str:
     return "fraco"
 
 
-def soil_score(crop: CropParams, nematoide: bool | None) -> float:
+def soil_score(crop: CropParams, nematoide: bool | None, regras: RegrasSolo) -> float:
     """Nota de solo do PRD 7.4; com nematoide = sim, pragas valem 1,5 e o total é reescalado."""
     if nematoide is True:
-        pragas = crop.solo_pragas * NEMATODE_PEST_WEIGHT
-        maximo = SOIL_STRAW_MAX + SOIL_NITROGEN_MAX + SOIL_PESTS_MAX * NEMATODE_PEST_WEIGHT
+        peso = regras.peso_pragas_nematoide
+        pragas = crop.solo_pragas * peso
+        maximo = regras.palhada_max + regras.nitrogenio_max + regras.pragas_max * peso
         total = (crop.solo_palhada + crop.solo_nitrogenio + pragas) / maximo * PERCENT_DIVISOR
     else:
         total = crop.solo_palhada + crop.solo_nitrogenio + crop.solo_pragas
@@ -109,14 +97,19 @@ def income_score(margem: float, maior_margem: float) -> float:
 
 
 def final_score(
-    seguranca: float, solo: float, renda: float, futuro: float | None, bonus: float = 0.0
+    seguranca: float,
+    solo: float,
+    renda: float,
+    futuro: float | None,
+    pesos: RegrasNotaFinal,
+    bonus: float = 0.0,
 ) -> float:
     """Pesos 30/25/30/15. Sem dado do CMIP6, o futuro sai e os outros pesos são reescalados."""
-    soma = WEIGHT_SAFETY * seguranca + WEIGHT_SOIL * solo + WEIGHT_INCOME * renda
+    soma = pesos.peso_seguranca * seguranca + pesos.peso_solo * solo + pesos.peso_renda * renda
     if futuro is None:
-        soma /= WEIGHT_SAFETY + WEIGHT_SOIL + WEIGHT_INCOME
+        soma /= pesos.peso_seguranca + pesos.peso_solo + pesos.peso_renda
     else:
-        soma += WEIGHT_FUTURE * futuro
+        soma += pesos.peso_futuro * futuro
     return round(_clamp(soma + bonus), 1)
 
 
@@ -148,12 +141,14 @@ class RecommendationService:
         soil_repo: SoilRepository,
         risk_service: ClimateRiskService,
         plan_service: RotationPlanService,
+        rules: Regras | None = None,
     ) -> None:
         self._crop_repo = crop_repo
         self._climate_repo = climate_repo
         self._soil_repo = soil_repo
         self._risk_service = risk_service
         self._plan_service = plan_service
+        self._rules = rules if rules is not None else load_default_rules()
 
     def recommend(
         self,
@@ -222,7 +217,7 @@ class RecommendationService:
                 a,
                 maior_margem=maior_margem,
                 maior_margem_seco=maior_margem_seco,
-                bonus=LIVESTOCK_INTERCROP_BONUS
+                bonus=self._rules.nota_final.bonus_gado_milho_braquiaria
                 if (gado is True and a.crop.id == "milho_braquiaria")
                 else 0.0,
                 semeadura=semeadura,
@@ -296,7 +291,7 @@ class RecommendationService:
             anos=anos,
             anos_secos=secos,
             futuro=futuro,
-            solo=soil_score(crop, nematoide),
+            solo=soil_score(crop, nematoide, self._rules.solo),
             margem=expected_margin(crop, anos),
             margem_seco=expected_margin(crop, secos),
         )
@@ -322,19 +317,21 @@ class RecommendationService:
         seguranca_seco = _pct(anos_bons_secos, len(a.anos_secos))
         renda_seco = income_score(a.margem_seco, maior_margem_seco)
 
+        pesos = self._rules.nota_final
+        rotulos = self._rules.rotulos
         notas = NotasOpcao(
             seguranca=seguranca,
             futuro=nota_futuro,
             solo=a.solo,
             renda=renda,
-            final=final_score(seguranca, a.solo, renda, nota_futuro, bonus),
+            final=final_score(seguranca, a.solo, renda, nota_futuro, pesos, bonus),
         )
         notas_seco = NotasOpcao(
             seguranca=seguranca_seco,
             futuro=nota_futuro,
             solo=a.solo,
             renda=renda_seco,
-            final=final_score(seguranca_seco, a.solo, renda_seco, nota_futuro, bonus),
+            final=final_score(seguranca_seco, a.solo, renda_seco, nota_futuro, pesos, bonus),
         )
 
         limite = a.crop.semeadura_limite_mes_dia
@@ -346,7 +343,7 @@ class RecommendationService:
             anos_bons_chuva=anos_bons,
             total_anos=total,
             faixa_anos=tuple(not r.aperto for r in a.anos),
-            rotulo_chuva=rain_label(anos_bons, total),
+            rotulo_chuva=rain_label(anos_bons, total, rotulos),
             texto_chuva=(
                 f"Worked in {anos_bons} of {total} years"
                 if is_en
@@ -354,9 +351,9 @@ class RecommendationService:
             ),
             futuro=a.futuro,
             margem_ha=a.margem,
-            rotulo_dinheiro=_label(renda, INCOME_LABEL_GOOD, INCOME_LABEL_MEDIUM),
+            rotulo_dinheiro=_label(renda, rotulos.dinheiro_bom, rotulos.dinheiro_medio),
             texto_dinheiro=self._money_text(a.margem, is_en),
-            rotulo_terra=_label(a.solo, SOIL_LABEL_GOOD, SOIL_LABEL_MEDIUM),
+            rotulo_terra=_label(a.solo, rotulos.terra_bom, rotulos.terra_medio),
             texto_terra=self._soil_text(a.crop, is_en),
             notas=notas,
             notas_seco=notas_seco,
@@ -401,8 +398,8 @@ class RecommendationService:
         ciclo = "ajuda a quebrar" if quebra else "não quebra"
         return f"Deixa palhada {nivel} e {nitrogenio}; {ciclo} o ciclo do nematoide."
 
-    @staticmethod
     def _why(
+        self,
         a: _Avaliacao,
         anos_aperto: int,
         total: int,
@@ -411,44 +408,48 @@ class RecommendationService:
         fonte_chuva: str,
         is_en: bool,
     ) -> tuple[str, ...]:
+        """Frases do "Por quê?" pelos modelos do regras.yaml, com os mesmos números da conta."""
         textura, cad_mm, solo_fonte = solo
-        cobertura = a.crop.tipo == "cobertura"
-        futuro = a.futuro
+        modelos = self._rules.frases["en" if is_en else "pt"]
+        clima = self._rules.clima
+        fase = (
+            modelos.fase_cobertura.format(dias=clima.janela_cobertura_dias)
+            if a.crop.tipo == "cobertura"
+            else modelos.fase_grao
+        )
         if is_en:
-            fase = "in the first 30 days" if cobertura else "around flowering"
-            dia = f"{MONTHS_EN[semeadura.month - 1]} {semeadura.day}"
-            frases = [
-                f"Sowing on {dia}, in {anos_aperto} of the last {total} years the crop ran "
-                f"short of water or had 35 °C heat {fase} ({fonte_chuva})."
-            ]
-            if futuro:
-                frases.append(
-                    f"In the 2041–2060 climate (NEX-GDDP-CMIP6, {futuro.cenario}, "
-                    f"{futuro.modelos} models), it would work in {futuro.anos_bons_media} of "
-                    f"{total} years ({futuro.anos_bons_min} to {futuro.anos_bons_max}, "
-                    "depending on the model)."
-                )
-            frases.append(
-                f"Computed with {TEXTURE_EN.get(textura, textura)} soil ({cad_mm:.0f} mm of "
-                f"available water; {SOIL_SOURCE_EN.get(solo_fonte, solo_fonte)})."
-            )
-            return tuple(frases)
-
-        fase = "nos primeiros 30 dias" if cobertura else "no florescimento"
+            data = f"{MONTHS_EN[semeadura.month - 1]} {semeadura.day}"
+            texturas, fontes_solo = TEXTURE_EN, SOIL_SOURCE_EN
+        else:
+            data = f"{semeadura:%d/%m}"
+            texturas, fontes_solo = TEXTURE_PT, SOIL_SOURCE_PT
         frases = [
-            f"Semeando em {semeadura:%d/%m}, em {anos_aperto} dos últimos {total} anos faltou "
-            f"água ou fez calor de 35 °C {fase} ({fonte_chuva})."
+            modelos.seguranca.format(
+                data=data,
+                anos_aperto=anos_aperto,
+                total=total,
+                calor_c=f"{clima.calor_temp_c:g}",
+                fase=fase,
+                fonte_chuva=fonte_chuva,
+            )
         ]
-        if futuro:
+        if a.futuro:
             frases.append(
-                f"No clima de 2041–2060 (NEX-GDDP-CMIP6, {futuro.cenario}, {futuro.modelos} "
-                f"modelos), daria certo em {futuro.anos_bons_media} de {total} anos "
-                f"(de {futuro.anos_bons_min} a {futuro.anos_bons_max}, conforme o modelo)."
+                modelos.futuro.format(
+                    cenario=a.futuro.cenario,
+                    modelos=a.futuro.modelos,
+                    anos_bons=a.futuro.anos_bons_media,
+                    total=total,
+                    minimo=a.futuro.anos_bons_min,
+                    maximo=a.futuro.anos_bons_max,
+                )
             )
         frases.append(
-            f"Conta feita com solo {TEXTURE_PT.get(textura, textura)} ({cad_mm:.0f} mm de água "
-            "disponível; "
-            f"{SOIL_SOURCE_PT.get(solo_fonte, solo_fonte)})."
+            modelos.solo.format(
+                textura=texturas.get(textura, textura),
+                cad_mm=f"{cad_mm:.0f}",
+                fonte_solo=fontes_solo.get(solo_fonte, solo_fonte),
+            )
         )
         return tuple(frases)
 

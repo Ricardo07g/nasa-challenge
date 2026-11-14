@@ -3,36 +3,30 @@
 from datetime import timedelta
 from itertools import product
 
-from app.constants import (
-    DIVERSITY_BONUS_THREE_ROLES,
-    DIVERSITY_BONUS_TWO_ROLES,
-    DRIEST_YEARS_COUNT,
-    DRY_SCENARIO_MONTHS,
-    MAX_CONSECUTIVE_FALLOW,
-    MONOCULTURE_CORN_PENALTY,
-    NEMATODE_SUPPRESSOR_CROPS,
-    ROTATION_HORIZON_YEARS,
-    SCORE_MAX,
-    SCORE_MIN,
-)
+from app.constants import ROTATION_HORIZON_YEARS, SCORE_MAX, SCORE_MIN
 from app.models.climate import ClimateSeason
 from app.models.recomendacao import PlanoRotacao, ResultadoOpcao
+from app.models.regras import Regras
+from app.repositories.rules_repository import load_default_rules
 
 
 class RotationPlanService:
     """Evaluates 3-year off-season crop sequences under normal and dry El Nino stress scenarios."""
 
+    def __init__(self, rules: Regras | None = None) -> None:
+        self._rotacao = (rules if rules is not None else load_default_rules()).rotacao
+
     def select_driest_years(self, seasons: list[ClimateSeason]) -> list[int]:
-        """Os 4 anos com menos chuva de fevereiro a abril (PRD 7.7), do mais seco ao menos seco."""
+        """Os anos com menos chuva de fevereiro a abril (PRD 7.7: 4 anos), do mais seco ao menos."""
 
         def _rain_feb_to_apr(season: ClimateSeason) -> float:
             return sum(
                 rain
                 for idx, rain in enumerate(season.rain_mm)
-                if (season.start_date + timedelta(days=idx)).month in DRY_SCENARIO_MONTHS
+                if (season.start_date + timedelta(days=idx)).month in self._rotacao.meses_seco
             )
 
-        driest = sorted(seasons, key=_rain_feb_to_apr)[:DRIEST_YEARS_COUNT]
+        driest = sorted(seasons, key=_rain_feb_to_apr)[: self._rotacao.anos_secos]
         return [s.year for s in driest]
 
     def build_3_year_plans(
@@ -63,20 +57,22 @@ class RotationPlanService:
         best_dry_seq: tuple[str, ...] = best_normal_seq
         best_dry_score = -1.0
 
+        rotacao = self._rotacao
+        suppressors = rotacao.culturas_supressoras_nematoide
         for seq in product(candidate_ids, repeat=ROTATION_HORIZON_YEARS):
-            if sum(1 for c in seq if c == "pousio") >= MAX_CONSECUTIVE_FALLOW:
+            if sum(1 for c in seq if c == "pousio") >= rotacao.max_pousios:
                 continue
-            if nematoide is True and not any(c in NEMATODE_SUPPRESSOR_CROPS for c in seq):
+            if nematoide is True and not any(c in suppressors for c in seq):
                 continue
 
             distinct_crops = len(set(seq))
             diversity_bonus = (
-                DIVERSITY_BONUS_THREE_ROLES
+                rotacao.bonus_diversidade_3
                 if distinct_crops == 3
-                else (DIVERSITY_BONUS_TWO_ROLES if distinct_crops == 2 else 0.0)
+                else (rotacao.bonus_diversidade_2 if distinct_crops == 2 else 0.0)
             )
             monoculture_penalty = (
-                MONOCULTURE_CORN_PENALTY
+                rotacao.penalidade_monocultura_milho
                 if seq == ("milho_safrinha", "milho_safrinha", "milho_safrinha")
                 else 0.0
             )
@@ -106,17 +102,21 @@ class RotationPlanService:
             )
         )
         desc_seco = (
-            f"Resilient sequence stress-tested on the 4 driest historical years ({driest_str})."
+            f"Resilient sequence stress-tested on the {len(anos_secos)} driest historical years "
+            f"({driest_str})."
             if is_en
             else (
-                "Sequência resiliente testada nos 4 anos mais secos "
+                f"Sequência resiliente testada nos {len(anos_secos)} anos mais secos "
                 f"da série histórica ({driest_str})."
             )
         )
 
         baseline_crop = "milho_safrinha" if "milho_safrinha" in opt_by_id else candidate_ids[0]
         baseline_score = round(
-            max(SCORE_MIN, opt_by_id[baseline_crop].notas.final - MONOCULTURE_CORN_PENALTY),
+            max(
+                SCORE_MIN,
+                opt_by_id[baseline_crop].notas.final - rotacao.penalidade_monocultura_milho,
+            ),
             1,
         )
         desc_hoje = (
