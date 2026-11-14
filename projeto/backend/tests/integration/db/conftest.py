@@ -7,10 +7,7 @@ falsos: nada de rede real.
 """
 
 import os
-import subprocess
-import sys
 from collections.abc import Iterator
-from pathlib import Path
 
 import psycopg
 import pytest
@@ -24,9 +21,9 @@ from tests.integration.db.support import (
     Api,
     FakeNasaPowerClient,
     FakeSoilGridsClient,
+    run_alembic,
 )
 
-BACKEND_DIR = Path(__file__).resolve().parents[3]
 DATA_ENV_VARS = ("CULTURAS_PATH", "CLIMA_PATH", "SOLO_CACHE_PATH", "NDVI_CACHE_PATH")
 
 
@@ -35,15 +32,7 @@ def migrated_database_url() -> str:
     url = os.environ.get("TEST_DATABASE_URL")
     if not url:
         pytest.skip("TEST_DATABASE_URL não definida: testes com banco pulados")
-    # Subprocesso: o migrations/env.py lê DATABASE_URL pelo Settings e mexe no logging.
-    result = subprocess.run(
-        [sys.executable, "-m", "alembic", "upgrade", "head"],
-        cwd=BACKEND_DIR,
-        env={**os.environ, "DATABASE_URL": url},
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = run_alembic(url, "upgrade", "head")
     if result.returncode != 0:
         pytest.fail(f"alembic upgrade head falhou no banco de teste:\n{result.stderr}")
     return url
