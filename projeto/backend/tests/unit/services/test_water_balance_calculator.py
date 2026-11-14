@@ -24,6 +24,59 @@ def test_should_use_extraterrestrial_radiation_when_computing_hargreaves_eto() -
     assert eto == pytest.approx(4.38, abs=0.05)
 
 
+def test_should_match_fao56_example_5_when_actual_vapour_pressure_comes_from_mean_rh() -> None:
+    # FAO-56 (Allen et al., 1998, Boletim 56), cap. 3, exemplo 5, caso com só a UR média (eq. 19):
+    # Tmax 25 °C, Tmin 18 °C, UR média 68% -> e°(Tmax) 3,168, e°(Tmin) 2,064 -> ea = 1,78 kPa
+    calc = WaterBalanceCalculator()
+
+    ea = calc.actual_vapour_pressure_from_rh_mean(t_max=25.0, t_min=18.0, rh_mean_pct=68.0)
+
+    assert ea == pytest.approx(1.78, abs=0.005)
+
+
+def test_should_match_fao56_example_18_when_computing_penman_monteith_eto() -> None:
+    # FAO-56 (Allen et al., 1998, Boletim 56), cap. 4, exemplo 18: ETo diária em Bruxelas,
+    # 6 de julho (dia 187), 50°48' N, 100 m de altitude, Tmax 21,5 °C, Tmin 12,3 °C.
+    # As outras entradas são os valores intermediários do próprio exemplo:
+    # - ea = 1,409 kPa (eq. 17, com UR máxima 84% e UR mínima 63%);
+    # - u2 = 2,078 m/s (10 km/h medidos a 10 m, levados a 2 m pela eq. 47);
+    # - Rs = 22,07 MJ/m²/dia (9,25 h de sol, eq. 35).
+    # Resultado do boletim: ETo = 3,9 mm/dia.
+    calc = WaterBalanceCalculator()
+
+    eto = calc.penman_monteith_eto(
+        t_max=21.5,
+        t_min=12.3,
+        actual_vapour_pressure_kpa=1.409,
+        wind_2m_ms=2.078,
+        solar_rad_mj=22.07,
+        lat_deg=50.80,
+        day_of_year=187,
+        elevation_m=100.0,
+    )
+
+    assert eto == pytest.approx(3.9, abs=0.05)
+
+
+def test_should_not_return_negative_eto_when_vapour_pressure_exceeds_saturation() -> None:
+    # Entradas incoerentes (ea acima da saturação, ~1,19 kPa a 9-10 °C), sem sol e com vento:
+    # o termo do vento fica negativo e a conta dá menos de zero. A ETo não pode ser negativa.
+    calc = WaterBalanceCalculator()
+
+    eto = calc.penman_monteith_eto(
+        t_max=10.0,
+        t_min=9.0,
+        actual_vapour_pressure_kpa=1.6,
+        wind_2m_ms=4.0,
+        solar_rad_mj=0.0,
+        lat_deg=-18.95,
+        day_of_year=180,
+        elevation_m=850.0,
+    )
+
+    assert eto == 0.0
+
+
 def test_should_give_typical_cerrado_eto_when_late_summer_in_uberlandia() -> None:
     # Meados de março em Uberlândia: a ETo fica perto de 4 a 5 mm/dia, não perto de 2.
     calc = WaterBalanceCalculator()
