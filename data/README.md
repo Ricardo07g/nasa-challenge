@@ -11,17 +11,23 @@ Estrutura com scripts de extração e salvamento centralizado no subdiretório `
 ```text
 data/
 ├── README.md                  # Contexto do desafio e documentação dos dados da NASA
-├── requirements.txt           # Dependências leves (requests, pandas, pyyaml, earthengine-api)
+├── requirements.txt           # Dependências dos scripts (o earthengine-api ficou sem uso no MVP: ADR-0005)
 ├── extract_nasa_power.py      # Script e função reutilizável para extração da NASA POWER
 ├── extract_historical_20y.py  # Extração da série de 20 anos (2005-2024) com resumo anual
 ├── extract_smap.py            # Extração de umidade do solo do satélite NASA SMAP (AppEEARS API)
-├── extract_soilgrids.py       # Extração de textura do solo e CAD via SoilGrids REST API
-├── extract_gee_ndvi.py        # Extração de histórico de NDVI (MODIS) via Google Earth Engine
-├── extract_gee_cmip6.py       # Projeções climáticas 2041-2060 (NEX-GDDP-CMIP6) via Earth Engine
 └── output/                    # Saída dos scripts (fora do git)
 
 # culturas.yaml mudou para projeto/backend/app/config_data/culturas.yaml (é lido pela API)
 ```
+
+Só esses três scripts existem. SoilGrids, NDVI do MODIS e CMIP6 **não** têm script nesta pasta:
+
+- **SoilGrids:** a própria API consulta, pelo `SoilGridsClient`
+  (`projeto/backend/app/repositories/external/soilgrids_client.py`). Com `DATABASE_URL`, ele roda na busca
+  sob demanda e o solo vai para o PostGIS (tarefa R1.1 do roteiro).
+- **NDVI do MODIS e CMIP6:** vão virar scripts em `projeto/backend/pipeline/` (R2.2 e R2.1 do
+  [roteiro do backend](../projeto/backend/docs/roteiro-de-implementacao.md)), direto dos serviços da
+  NASA, sem Google Earth Engine ([ADR-0005](../projeto/backend/docs/adr/0005-fontes-diretas-da-nasa-sem-earth-engine.md)).
 
 ---
 
@@ -77,7 +83,7 @@ O **NASA POWER** (*Prediction Of Worldwide Energy Resources*) provê séries tem
 
 O satélite **SMAP** é a missão dedicada da NASA para medição de alta precisão da água presente no solo através de radiometria de micro-ondas em Banda L (1.4 GHz).
 - **Acesso:** API REST assíncrona **NASA AppEEARS** (`https://appeears.earthdatacloud.nasa.gov/api`).
-- **Produto Utilizado:** **SMAP L4 Geophysical (SPL4SMGP v8)**, que integra observações orbitais com o modelo de superfície *Catchment Land Surface Model* do NASA GSFC.
+- **Produto Utilizado:** **SMAP L4 Geophysical (`SPL4SMGP`)**, que integra observações orbitais com o modelo de superfície *Catchment Land Surface Model* do NASA GSFC. O `extract_smap.py` pede a **versão 007** (`SPL4SMGP.007`); conferir se o AppEEARS já tem a 008 faz parte da tarefa R2.3 do roteiro.
 - **Resolução:** Grade global de **9 km EASE-Grid**, resolução temporal a cada 3 horas (agregada diariamente) desde 2015.
 
 | Variável | Nome na API | Unidade | Papel no Raiz Orbital |
@@ -111,21 +117,24 @@ O **SoilGrids** provê mapas globais de propriedades do solo a 250 metros de res
 ### D. MODIS MOD13Q1 (NDVI — Histórico de 10 Anos do Talhão)
 
 O sensor **MODIS** a bordo dos satélites Terra e Aqua da NASA monitora o vigor da biomassa vegetal global a cada 16 dias com resolução de 250 metros.
-- **Acesso:** Google Earth Engine (`ee.ImageCollection("MODIS/061/MOD13Q1")`).
-- **Período Coletado:** Série histórica de **2015 a 2025 (10 anos)**.
+- **Acesso no MVP:** AppEEARS (token do AppEEARS), com a API da ORNL DAAC (aberta, mas lenta) de reserva. O Google Earth Engine saiu do MVP ([ADR-0005](../projeto/backend/docs/adr/0005-fontes-diretas-da-nasa-sem-earth-engine.md)).
+- **Período:** 10 anos de entressafra (2015–2025 no PRD ou 2016–2025 no plano técnico: decisão pendente no roteiro).
+- **Status:** ainda **sem script**. Vai ser o `projeto/backend/pipeline/fetch_ndvi.py` (R2.2).
 
 | Variável / Dado | Nome no Satélite | Unidade / Escala | Significado no Raiz Orbital |
 | :--- | :--- | :--- | :--- |
 | **Índice de Vegetação (NDVI)** | `NDVI` | Adimensional (-1.0 a +1.0) | **Vigor da cobertura vegetal**. Valores $< 0.20$ representam solo exposto/palhada morta; valores $> 0.60$ representam lavoura em pleno desenvolvimento fotossintético. |
-| **NDVI Médio da Safrinha** | `ndvi_medio_safrinha` | 0.0 a 1.0 | Média dos índices registrados nos meses de **março, abril e maio** (logo após a colheita da soja). |
-| **Status do Talhão por Ano** | `status_talhao` | Categórico (`Pousio` ou `Segunda Safra`) | **Detecção do histórico real de uso da terra**: se o NDVI médio pós-soja for $< 0.38$, o talhão ficou em **Pousio**; se for $\ge 0.38$, houve **Segunda Safra**. Alimenta o diagnóstico: *"Você deixou seu talhão em pousio em X dos últimos 10 anos"*. |
+| **Qualidade do Pixel** | `pixel_reliability` (`SummaryQA`) | 0 a 3 | Só entram as observações 0 (bom) e 1 (aceitável); neve (2) e nuvem (3) ficam de fora. |
+| **NDVI Máximo da Entressafra** | `ndvi_max` | 0.0 a 1.0 | Maior NDVI de **1º de abril a 31 de julho** (depois da colheita da soja), já com o fator 0,0001. |
+| **Situação do Talhão por Ano** | `situacao` | Categórico (`parado`, `plantou` ou `incerto`) | **Histórico real de uso da terra (PRD 7.8)**: maior NDVI de 1º de abril a 31 de julho; acima de $0.60$ **plantou**, abaixo de $0.45$ **parado**, entre os dois **incerto**. A regra está no `FieldHistoryService` da API. Alimenta a frase *"Sua área ficou parada em X dos últimos 10 anos"*. |
 
 ---
 
 ### E. NEX-GDDP-CMIP6 (Projeções de Clima Futuro 2050)
 
 O **NEX-GDDP-CMIP6** (*NASA Earth Exchange Global Daily Downscaled Projections*) entrega projeções climáticas diárias globais corrigidas para escala local (~27.8 km) baseadas nos modelos do IPCC AR6.
-- **Acesso:** Google Earth Engine (`ee.ImageCollection("NASA/GDDP-CMIP6")`).
+- **Acesso no MVP:** NCCS THREDDS, com recorte por ponto em CSV (aberto, sem login). O Google Earth Engine saiu do MVP ([ADR-0005](../projeto/backend/docs/adr/0005-fontes-diretas-da-nasa-sem-earth-engine.md)).
+- **Status:** ainda **sem script**. Vai ser o `projeto/backend/pipeline/fetch_cmip6_deltas.py` (R2.1), com deltas **mensais por modelo** (formato em "Contrato dos dados das fontes", no `projeto/backend/AGENTS.md`).
 - **Cenário Avaliado:** **SSP2-4.5** (*Middle of the Road* — cenário intermediário realista de emissões).
 - **Janela Temporal:** Projeções futuras de **2041 a 2060 (centro em 2050)** comparadas ao histórico (1995–2014).
 
@@ -133,8 +142,7 @@ O **NEX-GDDP-CMIP6** (*NASA Earth Exchange Global Daily Downscaled Projections*)
 | :--- | :--- | :--- | :--- | :--- |
 | **Precipitação Projetada** | `pr` | kg/m²/s | mm/dia | **Volume diário de chuva previsto em 2050**. Permite calcular a redução percentual da chuva esperada na entressafra (fev a mai). |
 | **Temperatura Máxima Diária** | `tasmax` | Kelvin (K) | Graus Celsius (°C) | **Aumento da temperatura de pico diurna em 2050**. Mede a intensidade das ondas de calor futuras durante o período de floração. |
-| **Dias de Calor Extremo** | `dias_ano_calor_extremo_ge_35c` | Dias / ano | Dias / ano | **Frequência de dias com $T_{max} \ge 35^\circ C$**. No Cerrado, o aumento de veranicos quentes compromete a viabilidade do milho safrinha tardio. |
-| **Delta Climático na Safrinha** | `delta_climatico_safrinha` | % e °C | Variação relativa | **Método do Delta (PRD Seção 7.3)**: Aplica o sinal de mudança climática (+1.8°C e -12.5% de chuva) sobre a série observada para testar a resiliência das culturas recomendadas. |
+| **Delta Mensal por Modelo** | `chuva_pct`, `tmax_c` (e `tmin_c`, opcional) | % e °C | Variação de 2041–2060 contra 1995–2014, mês a mês | **Método do Delta (PRD Seção 7.3)**: a API aplica o delta de cada mês sobre a série observada e conta os anos bons no clima futuro, modelo a modelo. Os dias com $T_{max} \ge 35^\circ C$ saem dessa série projetada, não de um número pronto. |
 
 ---
 
@@ -143,7 +151,7 @@ O **NEX-GDDP-CMIP6** (*NASA Earth Exchange Global Daily Downscaled Projections*)
 Todos os scripts salvam os arquivos `.json` e `.csv` em `data/output/`. Essa pasta **não vai para o git** (dados brutos; regra do `AGENTS.md`). A API não lê daqui: ela usa a fixture derivada `projeto/backend/app/fixtures/clima_fazenda_exemplo.json`, gerada pelo `projeto/backend/pipeline/export_climate_fixture.py` (ver `projeto/backend/AGENTS.md`).
 
 ### 1. Extração NASA POWER Diária
-Script: [`extract_nasa_power.py`](file:///workspace/data/extract_nasa_power.py)
+Script: [`extract_nasa_power.py`](extract_nasa_power.py)
 ```python
 from extract_nasa_power import fetch_nasa_power_data, save_to_json, save_to_csv
 
@@ -161,39 +169,33 @@ save_to_csv(dados, "meu_talhao_weather.csv")
 ```
 
 ### 2. Extração Histórica de 20 Anos da NASA POWER (2005 - 2024)
-Script: [`extract_historical_20y.py`](file:///workspace/data/extract_historical_20y.py)
+Script: [`extract_historical_20y.py`](extract_historical_20y.py)
 - Baixa os últimos 20 anos da série histórica para o ponto do talhão.
 - Salva os dados diários e um resumo anual (`output/resumo_uberlandia_20anos_anual.csv`) com chuva na safrinha (fev-mai) e dias de calor extremo ($\ge 35^\circ C$).
 
 ### 3. Extração NASA SMAP (Umidade do Solo)
-Script: [`extract_smap.py`](file:///workspace/data/extract_smap.py)
+Script: [`extract_smap.py`](extract_smap.py)
 
 Credenciais **só por variável de ambiente** (o repositório é público; nunca escreva token no código):
-1. **Token:** `export EARTHDATA_TOKEN=...` (token bearer do AppEEARS).
-2. **Login:** `export EARTHDATA_USERNAME=...` e `export EARTHDATA_PASSWORD=...`.
+1. **Login (use este):** `export EARTHDATA_USERNAME=...` e `export EARTHDATA_PASSWORD=...`. O script
+   faz `POST /api/login` no AppEEARS e recebe o token do AppEEARS (vale cerca de 48 h).
+2. **Não use o `EARTHDATA_TOKEN` aqui.** O script ainda tenta esse token primeiro, como Bearer, mas o
+   AppEEARS recusa o token da Earthdata Login (403). Deixe a variável vazia ao rodar este script. A
+   correção (ler o `APPEEARS_TOKEN`) fica para as tarefas R2.2/R2.3 do roteiro. O `EARTHDATA_TOKEN`
+   serve para a NSIDC e o GES DISC.
 
 Sem credencial, o script para com erro. Ele **não** gera mais uma série sintética sozinho: a
 versão anterior gravava números aleatórios com o rótulo "NASA SMAP L4" e esse arquivo chegou a
 ser commitado e lido pela API. A função `generate_smap_sample_dataset` continua existindo só para
 testar código, e marca os registros como `SINTETICO - nao e dado da NASA`.
 
-### 4. Extração SoilGrids (Textura e CAD do Solo)
-Script: [`extract_soilgrids.py`](file:///workspace/data/extract_soilgrids.py)
-- Consulta a API REST aberta do SoilGrids (ISRIC) para obter as frações de argila e areia (0-30 cm).
-- Classifica o solo em **Arenoso** (CAD 40 mm), **Médio** (CAD 50 mm) ou **Argiloso** (CAD 60 mm).
-- Atende ao requisito do produtor que marca "não sei" no cadastro do talhão.
-
-### 5. Histórico do Talhão - MODIS NDVI (Google Earth Engine)
-Script: [`extract_gee_ndvi.py`](file:///workspace/data/extract_gee_ndvi.py)
-- Extrai a série de 10 anos (2015-2025) da coleção `MODIS/061/MOD13Q1` (NDVI 250m a cada 16 dias).
-- Classifica cada ano pós-soja (março a maio) em **Pousio** (NDVI < 0.38) ou **Segunda Safra** (NDVI >= 0.38).
-- Salva o histórico em `output/modis_ndvi_historico_10anos.json` e `.csv`.
-
-### 6. Projeções Climáticas 2050 - NEX-GDDP-CMIP6 (Google Earth Engine)
-Script: [`extract_gee_cmip6.py`](file:///workspace/data/extract_gee_cmip6.py)
-- Consulta a coleção `NASA/GDDP-CMIP6` para o cenário **SSP2-4.5** (período 2041–2060).
-- Converte precipitação (`pr` em kg/m²/s) para mm/dia e temperatura máxima (`tasmax` em Kelvin) para °C.
-- Salva os deltas de calor e chuva em `output/cmip6_projecao_2050.json`.
+### 4. SoilGrids, NDVI do MODIS e CMIP6 (sem script nesta pasta)
+- **SoilGrids:** sem script. A API consulta direto pelo `SoilGridsClient`
+  (`projeto/backend/app/repositories/external/soilgrids_client.py`), que classifica o solo em
+  **arenoso** (CAD 40 mm), **médio** (CAD 50 mm) ou **argiloso** (CAD 60 mm). Ligado na busca sob demanda desde o R1.1.
+- **NDVI do MODIS:** a fazer em `projeto/backend/pipeline/fetch_ndvi.py` (R2.2), pelo AppEEARS.
+- **CMIP6:** a fazer em `projeto/backend/pipeline/fetch_cmip6_deltas.py` (R2.1), pelo THREDDS da NCCS.
+- O formato de saída dos scripts novos está em "Contrato dos dados das fontes", no `projeto/backend/AGENTS.md`.
 
 ---
 
@@ -204,15 +206,15 @@ Abaixo está o mapeamento de **todas as fontes de dados** previstas na Seção 6
 | Fonte | O que mede | Para que serve no Raiz Orbital | Status no Projeto | Como Acessar |
 | :--- | :--- | :--- | :--- | :--- |
 | **NASA POWER** | Chuva, Tmax, Tmin, umidade, vento, radiação solar (~0.5°) | **Cálculo da ETo (Penman-Monteith) e simulação de risco dos últimos 20 anos**. | ✅ **Implementado** (`extract_nasa_power.py`) | API REST aberta (sem chave) |
-| **NASA SMAP** | Umidade do solo na superfície (0-5 cm) e raiz (0-100 cm) a 9 km | **Calibração da água no solo na data da semeadura** e validação do estresse hídrico real. | ✅ **Implementado** (`extract_smap.py`) | API REST AppEEARS ou Earth Engine |
-| **SoilGrids (ISRIC)** | Teores de argila e areia no solo a 250 m | **Determina a CAD (40, 50 ou 60 mm)** quando o produtor marca "não sei". | ✅ **Implementado** (`extract_soilgrids.py`) | API REST aberta (sem chave) |
-| **MODIS MOD13Q1 / HLS** | NDVI (Índice de Vegetação) a 250 m (16 dias) ou HLS a 30 m | **Histórico do Talhão (10 anos)**: Classifica cada safra (2015-2025) como "Pousio" ou "Segunda Safra". | ✅ **Implementado** (`extract_gee_ndvi.py`) | Google Earth Engine `MODIS/061/MOD13Q1` |
-| **NEX-GDDP-CMIP6** | Projeções de chuva e temperatura 2041–2060 (~27 km) | **Eixo Clima Futuro**: Avalia se o risco de perda aumenta nas próximas décadas (cenário SSP2-4.5). | ✅ **Implementado** (`extract_gee_cmip6.py`) | Google Earth Engine `NASA/GDDP-CMIP6` |
-| **GPM IMERG Final** | Chuva diária de satélite a 0.1° (~10 km) de 2005 a 2025 | Alternativa de maior resolução espacial para a série de 20 anos de chuva. | 💡 *Fallback*: Usando a chuva do NASA POWER (`PRECTOTCORR`) | `earthaccess` / GES DISC |
+| **NASA SMAP** | Umidade do solo na superfície (0-5 cm) e raiz (0-100 cm) a 9 km | **Calibração da água no solo na data da semeadura** e validação do estresse hídrico real. | ✅ **Script pronto** (`extract_smap.py`); a API ainda não usa (R2.3, R3.3) | API REST AppEEARS (token do AppEEARS) |
+| **SoilGrids (ISRIC)** | Teores de argila e areia no solo a 250 m | **Determina a CAD (40, 50 ou 60 mm)** quando o produtor marca "não sei". | 🟡 **Sem script em `data/`**: cliente na API (`SoilGridsClient`), ligado na busca sob demanda (R1.1) | API REST aberta (sem chave) |
+| **MODIS MOD13Q1 / HLS** | NDVI (Índice de Vegetação) a 250 m (16 dias) ou HLS a 30 m | **Histórico do Talhão (10 anos)**: classifica cada entressafra como `parado`, `plantou` ou `incerto` (PRD 7.8). | ⏳ **A fazer** (`pipeline/fetch_ndvi.py`, R2.2) | AppEEARS (token do AppEEARS); ORNL DAAC de reserva |
+| **NEX-GDDP-CMIP6** | Projeções de chuva e temperatura 2041–2060 (~27 km) | **Eixo Clima Futuro**: Avalia se o risco de perda aumenta nas próximas décadas (cenário SSP2-4.5). | ⏳ **A fazer** (`pipeline/fetch_cmip6_deltas.py`, R2.1) | NCCS THREDDS, recorte por ponto (sem login) |
+| **GPM IMERG Final** | Chuva diária de satélite a 0.1° (~10 km) de 2005 a 2025 | Alternativa de maior resolução espacial para a série de 20 anos de chuva. | 💡 *Fallback*: Usando a chuva do NASA POWER (`PRECTOTCORR`); IMERG é a R2.4 | GES DISC (`EARTHDATA_TOKEN`) |
 | **NASA FIRMS** | Focos ativos de queimadas (375 m / 15 min) | Monitoramento de risco de fogo na palhada durante a seca (módulo pós-MVP). | 💡 *Módulo Futuro*: Alertas em tempo real | API REST FIRMS (`MAP_KEY` gratuita) |
 
 ## Fazenda de exemplo
 
 O ponto usado pelos scripts é o campo de soja de 48 ha da **Fazenda Experimental do Glória (UFU)**, em Uberlândia: `lat -18.9543`, `lon -48.1993` (18°57'15.6"S 48°11'57.4"O, segundo TCC do ICIAG-UFU de 2026). Até 14/11/2026 o ponto era `-18.9186, -48.2772`, que fica no centro urbano de Uberlândia: o NDVI ali mostra a cidade, não uma lavoura.
 
-> **Pendente:** os arquivos em `output/` ainda são do ponto antigo. Rode de novo `extract_historical_20y.py`, `extract_nasa_power.py` e `extract_smap.py` para gerar os dados do ponto novo.
+A pasta `output/` fica fora do repositório: cada pessoa gera a sua. Se a sua cópia é de antes de 14/11/2026, ela é do ponto antigo: rode de novo `extract_historical_20y.py`, `extract_nasa_power.py` e `extract_smap.py`. A fixture que a API usa (`projeto/backend/app/fixtures/clima_fazenda_exemplo.json`) já é do ponto novo.

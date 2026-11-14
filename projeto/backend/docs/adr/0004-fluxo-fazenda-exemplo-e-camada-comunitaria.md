@@ -3,6 +3,7 @@
 - **Status:** Aceito
 - **Data:** 2026-11-14
 - **Decisores:** Time Raiz Orbital (Frontend, Backend, Design de Produto)
+- **Atualizado em:** 2026-11-14 (tarefa R0.4): ponto da fazenda de exemplo e caminhos dos arquivos. A decisão não mudou.
 - **Contexto:** `projeto/frontend/src/routes.tsx`, `projeto/frontend/src/models/community.ts`, `arquivos contexto/Raiz Orbital – Protótipo das telas.html`, `projeto/backend/docs/historias-de-usuario.md`
 
 ---
@@ -15,7 +16,7 @@ Durante a auditoria cruzada entre frontend, backend docs e protótipo, identific
 
 1. **Roteamento e Obtenção da Fazenda Exemplo:**
    - No frontend (`src/routes.tsx` e `src/repositories/exemploRepository.ts`), a rota `/exemplo` foi implementada como um redirecionamento imediato para `/resposta?exemplo=true`, lendo dados das fixtures locais (`src/repositories/mocks/fixtures.ts`).
-   - Nos documentos do backend (`diagrama-de-sequencias.md` e plano técnico), previu-se um endpoint `GET /api/exemplo` que devolveria os dados cadastrais da Fazenda Santa Luzia pré-configurada.
+   - Nos documentos do backend (`diagrama-de-sequencias.md` e plano técnico), previu-se um endpoint `GET /api/exemplo` que devolveria os dados da fazenda de exemplo pré-configurada.
 
 2. **Tela 8 ("Perto de Você" / Dados Comunitários):**
    - O Protótipo HTML (v3) e o arquivo `src/models/community.ts` no frontend exibem estatísticas do tipo: *"68% dos produtores na sua região escolheram Milho + Braquiária na última safra"* e *"Tendência de consórcio cresceu 22%"*.
@@ -36,7 +37,7 @@ Durante a auditoria cruzada entre frontend, backend docs e protótipo, identific
      ```
    - No frontend:
      - A rota `/exemplo` faz o fetch de `GET /api/exemplo` quando a API estiver conectada, e utiliza o fallback offline de `fixtures.ts` caso o backend esteja indisponível.
-     - Redireciona o usuário para `/resposta?exemplo=true`, preenchendo todos os cards com a Fazenda Santa Luzia (Uberlândia/MG - Triângulo Mineiro).
+     - Redireciona o usuário para `/resposta?exemplo=true`, preenchendo todos os cards com a fazenda de exemplo: o campo de soja da Fazenda Experimental do Glória (UFU), em Uberlândia/MG (`-18.9543, -48.1993`).
      - Isso garante demonstração perfeita tanto em ambiente integrado quanto em modo offline/apresentação (pitch dos juízes).
 
 2. **Isolamento da Camada Comunitária ("Perto de Você") como Mock no Frontend no MVP:**
