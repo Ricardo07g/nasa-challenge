@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { AlternativeCard, Card } from '../design-system/components/Card'
 import { Disclosure, NumberedSteps, RecommendationHero } from '../design-system/components/Content'
 import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
-import { MetricRow, StatusPill, StripLegend, YearStrip } from '../design-system/components/Status'
+import { MetricRow, StatusPill } from '../design-system/components/Status'
 import { DropIcon, LeafIcon, MoneyIcon, ShieldIcon, SoilIcon, SproutIcon } from '../design-system/icons'
 import { formatDayMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
@@ -10,6 +10,7 @@ import type { Messages } from '../i18n/messages.pt'
 import type { Motivo } from '../models/recomendacao'
 import type { AnswerSummary } from '../services/recomendacaoRules'
 import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
+import { RainLegend, RainYears } from './RainYears'
 import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
 
@@ -67,10 +68,7 @@ function Answer({ t, lang, answer, aviso, sampleData }: AnswerViewProps & { answ
                 value={best.chuva.texto}
                 pill={<StatusPill rotulo={best.chuva.rotulo}>{t.labels[best.chuva.rotulo]}</StatusPill>}
               >
-                <YearStrip
-                  label={a.rainStripLabel(best.chuva.anos_bons, best.chuva.anos)}
-                  cells={best.chuva.faixa.map((good) => (good ? 'good' : 'bad'))}
-                />
+                <RainYears t={t} option={best} />
               </MetricRow>
               <MetricRow
                 icon={<MoneyIcon />}
@@ -85,13 +83,7 @@ function Answer({ t, lang, answer, aviso, sampleData }: AnswerViewProps & { answ
                 pill={<StatusPill rotulo={best.terra.rotulo}>{t.labels[best.terra.rotulo]}</StatusPill>}
               />
             </div>
-            <StripLegend
-              items={[
-                { state: 'good', label: a.rainEnough },
-                { state: 'bad', label: a.rainShort },
-              ]}
-              note={a.rainYears}
-            />
+            <RainLegend t={t} option={best} />
             <Disclosure openLabel={a.why} closeLabel={a.close}>
               {best.porque.map((reason) => (
                 <p key={reason}>{reason}</p>

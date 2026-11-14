@@ -1,13 +1,14 @@
 import { ChipGroup } from '../design-system/components/Choice'
 import { OptionCompareCard, PageHeading } from '../design-system/components/Content'
 import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
-import { StatusPill, YearStrip } from '../design-system/components/Status'
+import { StatusPill } from '../design-system/components/Status'
 import { DropIcon, MoneyIcon, SoilIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { Eixo, Opcao } from '../models/recomendacao'
 import type { LateSummary } from '../services/recomendacaoRules'
 import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
 import type { ScreenStatus } from '../models/screenStatus'
+import { RainYears } from './RainYears'
 import layout from './layout.module.css'
 
 export type OptionsViewProps = {
@@ -60,12 +61,7 @@ export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary }: 
                     value: option.chuva.texto,
                     icon: <DropIcon />,
                     iconTone: 'blue',
-                    extra: (
-                      <YearStrip
-                        label={t.answer.rainStripLabel(option.chuva.anos_bons, option.chuva.anos)}
-                        cells={option.chuva.faixa.map((good) => (good ? 'good' : 'bad'))}
-                      />
-                    ),
+                    extra: <RainYears t={t} option={option} />,
                     pill: <StatusPill rotulo={option.chuva.rotulo}>{t.labels[option.chuva.rotulo]}</StatusPill>,
                   },
                   {

@@ -33,6 +33,7 @@ import {
   Users,
   Volume2,
   Wheat,
+  X,
 } from 'lucide-react'
 
 type IconProps = { size?: number }
@@ -186,4 +187,8 @@ export function UncertainIcon({ size = 24 }: IconProps) {
 
 export function SeedIcon({ size = 24 }: IconProps) {
   return <Wheat size={size} {...decorative} />
+}
+
+export function CloseIcon({ size = 18 }: IconProps) {
+  return <X size={size} {...decorative} />
 }
