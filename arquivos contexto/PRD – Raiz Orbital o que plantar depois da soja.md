@@ -148,7 +148,7 @@ A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: co
 | RF-08 | Histórico do talhão | Classificar cada entressafra de 2015 a 2025 como pousio ou segunda safra pelo NDVI | US-07 |
 | RF-09 | Testes de estresse | Recalcular com o ano mais seco da série e com o cenário 2041–2060 | US-09 |
 | RF-10 | Edição de economia | Produtividade, preço e custo editáveis por opção | US-10 |
-| RF-11 | Fazenda de exemplo | Talhão em Uberlândia com dados pré-calculados, abre sem esperar | US-11 |
+| RF-11 | Fazenda de exemplo | Campo de soja de 48 ha da Fazenda Experimental do Glória (UFU), em Uberlândia (lat -18,9543, lon -48,1993), com dados pré-calculados; abre sem esperar. Área pública: não expõe dado de produtor. Confirmar com o ICIAG-UFU que o ponto cai em soja de sequeiro | US-11 |
 | RF-12 | Idioma | Interface em inglês (para os juízes) com botão para português; textos da API nas duas línguas | — |
 | RF-16 | Colheita sugerida | Estimar a faixa de colheita da soja pela queda do NDVI de janeiro a março (seção 7.9); sem dado, "meio" | US-02 |
 | RF-17 | Ouvir | Ler a tela em voz alta pelo navegador (Web Speech API, pt-BR) | US-12 |
@@ -236,7 +236,7 @@ O MODIS Terra deve parar de coletar em 2027, mas o histórico continua disponív
 ```
 GET https://power.larc.nasa.gov/api/temporal/daily/point
   ?parameters=PRECTOTCORR,T2M_MAX,T2M_MIN,RH2M,WS2M,ALLSKY_SFC_SW_DWN
-  &community=AG&latitude=-18.92&longitude=-48.28
+  &community=AG&latitude=-18.9543&longitude=-48.1993
   &start=20060101&end=20251231&format=JSON
 ```
 
@@ -251,7 +251,7 @@ res = earthaccess.search_data(short_name="GPM_3IMERGDF", version="07",
                               temporal=("2006-01-01", "2025-12-31"),
                               bounding_box=(-51.0, -20.5, -46.0, -17.5))
 ds = xr.open_mfdataset(earthaccess.open(res))
-chuva = ds["precipitation"].sel(lat=-18.92, lon=-48.28, method="nearest")
+chuva = ds["precipitation"].sel(lat=-18.9543, lon=-48.1993, method="nearest")
 ```
 
 São cerca de 7.300 arquivos diários: **baixar uma vez só para a caixa (pipeline `fetch_imerg.py`) e gravar no PostGIS (`climate_season`)**. Se travar, usar a chuva do POWER (PRECTOTCORR) no hackathon e trocar depois.
@@ -261,7 +261,7 @@ São cerca de 7.300 arquivos diários: **baixar uma vez só para a caixa (pipeli
 ```python
 import ee
 ee.Initialize(project="SEU-PROJETO")
-ponto = ee.Geometry.Point(-48.28, -18.92)
+ponto = ee.Geometry.Point(-48.1993, -18.9543)
 
 # NDVI de 16 dias, 2015-2025
 ndvi = (ee.ImageCollection("MODIS/061/MOD13Q1").filterDate("2015-01-01", "2025-12-31")
@@ -281,7 +281,7 @@ No MOD13Q1, o NDVI vem como inteiro com **fator de escala 0,0001** (7.100 = 0,71
 
 ```
 GET https://rest.isric.org/soilgrids/v2.0/properties/query
-  ?lon=-48.28&lat=-18.92&property=clay&property=sand&depth=0-30cm&value=mean
+  ?lon=-48.1993&lat=-18.9543&property=clay&property=sand&depth=0-30cm&value=mean
 ```
 
 Regra simples: argila acima de 35% = argiloso; areia acima de 70% = arenoso; o resto = médio.

@@ -70,7 +70,7 @@ flowchart LR
 | **US-08** | Produtor ou Agrônomo | Trocar a textura do solo e informar presença de nematoide, só se eu quiser | Ajustar o cálculo sem tornar o caminho principal mais longo | **Could** | `GET /api/recomendacao?solo=...&nematoide=...` (`nematoide_efeito` em `culturas.yaml`) |
 | **US-09** | Produtor | Testar o plano num ano seco (tipo El Niño) e ver o impacto do clima de 2050 | Saber se a escolha e a rotação aguentam anos ruins | **Should** | `GET /api/recomendacao` (`cmip6_projecao_2050.json` + `resumo_uberlandia_20anos_anual.json`) |
 | **US-10** | Agrônomo | Consultar e editar parâmetros de produtividade, preço e custo | Adequar a estimativa de margem financeira à realidade do cliente | **Could** | `culturas.yaml` / `GET /api/crop-options` |
-| **US-11** | Jurado | Abrir uma fazenda de exemplo em Uberlândia com um clique | Ver o produto funcionando em menos de 1 segundo e sem cadastro | **Must** | `GET /api/exemplo` (dados pré-extraídos de Uberlândia `-18.9186, -48.2772`) |
+| **US-11** | Jurado | Abrir uma fazenda de exemplo em Uberlândia com um clique | Ver o produto funcionando em menos de 1 segundo e sem cadastro | **Must** | `GET /api/exemplo` (dados pré-extraídos do campo de soja da Fazenda Experimental do Glória, UFU, `-18.9543, -48.1993`) |
 | **US-12** | Produtor com pouca leitura | Tocar em "Ouvir" e escutar o conteúdo da tela | Entender a recomendação no campo sem depender de leitura | **Should** | Frontend (Web Speech API) + textos curtos da API |
 | **US-13** | Produtor | Usar o mesmo site no celular (no campo) e no computador (no escritório) e compartilhar o link | Não precisar de dois apps nem perder a consulta ao recarregar a página | **Must** | Rotas `GET` idempotentes com query params na URL |
 
@@ -81,7 +81,7 @@ flowchart LR
 ### US-01: Localização do Talhão e Textura Automática do Solo (`Must` · RF-01, RF-02)
 - **Dados de `/data` utilizados:** [`extract_soilgrids.py`](file:///workspace/data/extract_soilgrids.py) (`clay`, `sand` na camada `0-30cm`).
 - **Critérios de Aceite:**
-  1. **Dado** que o produtor informa coordenadas `lat` e `lon` dentro do recorte do Triângulo Mineiro, **quando** o frontend chama `GET /api/talhao?lat=-18.92&lon=-48.28`, **então** a API retorna HTTP 200 com `"dentro_da_area": true`, o `celula_id` e a classificação textural calculada pelo SoilGrids:
+  1. **Dado** que o produtor informa coordenadas `lat` e `lon` dentro do recorte do Triângulo Mineiro, **quando** o frontend chama `GET /api/talhao?lat=-18.9543&lon=-48.1993`, **então** a API retorna HTTP 200 com `"dentro_da_area": true`, o `celula_id` e a classificação textural calculada pelo SoilGrids:
      - `argila_percentual > 35.0%` $\rightarrow$ `textura: "argiloso"`, `cad_mm: 60.0`
      - `areia_percentual > 70.0%` $\rightarrow$ `textura: "arenoso"`, `cad_mm: 40.0`
      - Demais casos (ou fallback offline) $\rightarrow$ `textura: "medio"`, `cad_mm: 50.0`
@@ -139,6 +139,6 @@ flowchart LR
   - [`resumo_uberlandia_20anos_anual.json`](file:///workspace/data/output/resumo_uberlandia_20anos_anual.json) — seleção dos **4 anos mais secos** na safrinha (`chuva_safrinha_fev_mai_mm`, ex.: 2007 com 278.2 mm, 2014 com 314.6 mm, 2010 com 317.6 mm, 2012 com 336.4 mm) para calcular `plano_3_anos.seco`.
 
 ### US-11: Fazenda de Exemplo em Uberlândia (`Must` · RF-11)
-- **Dados de `/data` utilizados:** Datasets reais já extraídos em [`/workspace/data/output/`](file:///workspace/data/output) para as coordenadas de Uberlândia (`lat=-18.9186, lon=-48.2772`).
+- **Dados de `/data` utilizados:** Datasets reais já extraídos em [`/workspace/data/output/`](file:///workspace/data/output) para a fazenda de exemplo, o campo de soja da Fazenda Experimental do Glória, UFU (`lat=-18.9543, lon=-48.1993`). **Pendente:** os arquivos ainda são do ponto antigo (`-18.9543, -48.1993`, centro urbano) e precisam ser extraídos de novo.
 - **Critérios de Aceite:**
   1. `GET /api/exemplo` responde em $< 100\text{ ms}$ usando os dados pré-extraídos de Uberlândia sem depender de banco ou rede externa.

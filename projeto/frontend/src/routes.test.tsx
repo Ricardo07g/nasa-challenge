@@ -64,7 +64,7 @@ describe('rotas', () => {
 
     await vi.waitFor(() =>
       expect(`${router.state.location.pathname}${router.state.location.search}`).toBe(
-        '/resposta?lat=-18.92&lon=-48.28&colheita=meio&exemplo=1',
+        '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&exemplo=1',
       ),
     )
   })

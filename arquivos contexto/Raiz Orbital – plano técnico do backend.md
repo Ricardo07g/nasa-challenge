@@ -44,12 +44,12 @@ Ter tudo em **GET com parâmetros na URL** dá três coisas de graça: a respost
 
 Todas as rotas ficam sob `/api` (já é a convenção do repositório). Nomes de campos em português quando são termos do domínio (`talhao`, `colheita`), como permite o AGENTS.md.
 
-### 3.1 `GET /api/talhao?lat=-18.92&lon=-48.28`
+### 3.1 `GET /api/talhao?lat=-18.9543&lon=-48.1993`
 
 ```json
 {
-  "ponto": {"lat": -18.92, "lon": -48.28},
-  "celula_id": "-190_-483",
+  "ponto": {"lat": -18.9543, "lon": -48.1993},
+  "celula_id": "-190_-482",
   "dentro_da_area": true,
   "solo": {"textura": "medio", "cad_mm": 50, "fonte": "soilgrids"},
   "colheita_sugerida": {"faixa": "meio", "fonte": "ndvi_modis", "anos_usados": 9},
@@ -80,7 +80,7 @@ Todas as rotas ficam sob `/api` (já é a convenção do repositório). Nomes de
 
 ```json
 {
-  "entrada": {"celula_id": "-190_-483", "colheita": "meio", "semeadura": "2027-02-18", "solo": "medio", "nematoide": null},
+  "entrada": {"celula_id": "-190_-482", "colheita": "meio", "semeadura": "2027-02-18", "solo": "medio", "nematoide": null},
   "melhor": "milho_braquiaria",
   "alternativas": [
     {"motivo": "menos_risco", "opcao": "sorgo"},
@@ -123,7 +123,7 @@ Todas as rotas ficam sob `/api` (já é a convenção do repositório). Nomes de
 
 ### 3.3 `GET /api/exemplo`
 
-Mesma forma de `/talhao` + `/recomendacao` juntos, para a fazenda de exemplo (Uberlândia, -18,92 / -48,28, colheita "meio"). Vem de uma fixture JSON gerada pelo pipeline, então funciona mesmo com o banco vazio ou o Earth Engine fora do ar.
+Mesma forma de `/talhao` + `/recomendacao` juntos, para a fazenda de exemplo: o campo de soja de 48 ha da Fazenda Experimental do Glória (UFU), em Uberlândia (-18,9543 / -48,1993), colheita "meio". O ponto antigo (-18,92 / -48,28) caía perto do centro urbano, onde o NDVI mostra a cidade. Vem de uma fixture JSON gerada pelo pipeline, então funciona mesmo com o banco vazio ou o Earth Engine fora do ar.
 
 ### 3.4 Já existentes
 

@@ -66,12 +66,13 @@ def summarize_by_year(daily_records: List[Dict]) -> List[Dict]:
 
 
 def main():
-    # Coordenadas da fazenda de exemplo (Uberlândia - Triângulo Mineiro)
-    latitude = -18.9186
-    longitude = -48.2772
+    # Fazenda de exemplo: campo de soja da Fazenda Experimental do Glória (UFU), Uberlândia (18°57'15.6"S 48°11'57.4"O).
+    # O ponto anterior (-18.9186, -48.2772) caía no centro urbano da cidade.
+    latitude = -18.9543
+    longitude = -48.1993
 
     print(f"=== Extraindo 20 Anos de Dados NASA POWER (2005 - 2024) ===")
-    print(f"Localização: Uberlândia - MG (Lat: {latitude}, Lon: {longitude})")
+    print(f"Localização: Fazenda Experimental do Glória (UFU), Uberlândia - MG (Lat: {latitude}, Lon: {longitude})")
 
     # Extrai série diária histórica de 20 anos
     registros_20_anos = fetch_nasa_power_data(

@@ -190,7 +190,7 @@ def generate_smap_sample_dataset(
 
     for i in range(dias):
         data_atual = (base_dt + timedelta(days=i)).strftime("%Y-%m-%d")
-        
+
         # Simula variação natural (chuvas e secagem do solo)
         oscilacao_sup = (random.random() - 0.5) * 0.08
         oscilacao_raiz = (random.random() - 0.5) * 0.04  # raiz oscila mais lentamente
@@ -241,9 +241,9 @@ def save_smap_data(records: List[Dict[str, Any]], prefix: str = "smap_soil_moist
 
 
 if __name__ == "__main__":
-    # Coordenadas da fazenda em Uberlândia - MG
-    lat = -18.9186
-    lon = -48.2772
+    # Fazenda de exemplo: campo de soja da Fazenda Experimental do Glória (UFU), Uberlândia
+    lat = -18.9543
+    lon = -48.1993
 
     print("=== Extração de Dados NASA SMAP (Soil Moisture Active Passive) ===")
     print(f"Alvo: Lat {lat}, Lon {lon} (Triângulo Mineiro)")
