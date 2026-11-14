@@ -145,6 +145,10 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     ponto fica fora da área (o próximo pedido tenta de novo);
   - SoilGrids com falha ou sem resposta: o ponto fica com o solo padrão (`fonte: padrao`), que **não é
     gravado** (o `soil_point` não tem coluna de fonte e tudo nele é lido como `soilgrids`);
+  - solo de um ponto (`PostgisSoilRepository.get_soil`, tarefa 0012): o ponto exato (chave de
+    0,0025°) no banco; senão, no cache de arquivo; senão, o ponto gravado **mais próximo da mesma
+    célula de 0,1°** (nunca de célula vizinha); senão, o padrão. É o que faz o solo pré-carregado
+    no centro da célula servir para qualquer talhão dela;
   - id da célula: só `cell_id_for` (`floor` de lat/lon × 10, plano técnico §5). O polígono vai de
     `idx/10` a `(idx + 1)/10` e a latitude da série lida do banco é a do centro da célula.
 - **Sem banco**, só arquivos, como antes: nada de busca sob demanda, solo padrão fora do cache e, fora da
@@ -180,6 +184,36 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   uv run python -m pipeline.fetch_cmip6_deltas --dry-run   # quantos pedidos e quanto tempo
   uv run python -m pipeline.fetch_cmip6_deltas             # caixa piloto, 3 modelos
   ```
+
+- **Pré-carga da caixa piloto** (tarefa 0012, R1.5): `pipeline/preload_pilot_box.py` grava no banco
+  o clima e o solo das 225 células de 0,1° da caixa (`PILOT_*` de `app/constants.py`), com a da
+  fazenda de exemplo primeiro, para o primeiro clique na caixa sair do banco, sem busca sob demanda.
+  Só usa **fontes abertas, sem credencial** (NASA POWER e ISRIC SoilGrids).
+
+  ```bash
+  # da pasta projeto/backend, com DATABASE_URL apontando para o banco que recebe a carga
+  uv run python -m pipeline.preload_pilot_box --dry-run    # só o plano: nada é buscado nem gravado
+  uv run python -m pipeline.preload_pilot_box --limite 1   # só a célula da fazenda de exemplo
+  uv run python -m pipeline.preload_pilot_box              # a caixa inteira
+  ```
+
+  - **Tempo:** cerca de 1 hora, quase toda na pausa entre os pedidos ao SoilGrids (226 pedidos;
+    `--pausa-solo 12` s por padrão, porque o ISRIC pede uso moderado, cerca de 5 por minuto). O
+    clima são 20 pedidos ao POWER, de poucos segundos cada. O clima vem antes: a caixa já fica
+    usável (com o solo padrão onde ainda não há solo) nos primeiros minutos.
+  - **POWER:** um pedido por região onde ele responde igual a todos os parâmetros: a célula de
+    meteorologia (0,5° × 0,625°, a `cobertura` da fixture) cruzada com a grade de 1° da radiação,
+    que muda a ETo de Penman-Monteith. As temporadas de cada célula de 0,1° usam a latitude do
+    centro dela. Falhou o pedido: as células dele ficam para a próxima execução (nada de copiar a
+    célula vizinha).
+  - **SoilGrids:** o centro de cada célula, mais o ponto exato da fazenda de exemplo. Solo padrão
+    (falha ou sem dado) não é gravado.
+  - **Idempotente:** pula célula com clima e ponto com solo já no banco; `--forcar` busca de novo.
+    Parou no meio: rode de novo. `--limite N` para depois de N células que ainda precisam de dado.
+  - **`data_run`:** uma linha por fonte chamada (`nasa_power`, `soilgrids`), com o que foi pedido e
+    o resultado em `params` e a versão `<ano>.<mês>-preload-pilot-box`.
+  - Depois da pré-carga, a célula da fazenda de exemplo (`-190_-482`) sai do banco (POWER de agora,
+    com Penman-Monteith), não mais da fixture.
 
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
