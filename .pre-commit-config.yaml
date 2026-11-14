@@ -17,6 +17,8 @@ repos:
       - id: detect-private-key
       - id: check-added-large-files
         args: ["--maxkb=1024"]
+        # Documentos do produto (ex.: protótipo HTML com fontes embutidas) podem passar de 1 MB
+        exclude: ^arquivos contexto/
       - id: check-merge-conflict
       - id: check-yaml
       - id: check-toml
