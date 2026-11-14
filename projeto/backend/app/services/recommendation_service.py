@@ -1,7 +1,9 @@
 """Motor de recomendação: notas, rótulos, ranking, alternativas, frases e planos (PRD 7)."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
+from operator import attrgetter
 from statistics import mean
 
 from app.constants import (
@@ -47,6 +49,12 @@ SOIL_SOURCE_EN = {
 TEXTURE_PT = {"arenoso": "arenoso", "medio": "médio", "argiloso": "argiloso"}
 TEXTURE_EN = {"arenoso": "sandy", "medio": "medium", "argiloso": "clayey"}
 MONTHS_EN = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+# "Se você prefere…": motivo e eixo de cada alternativa, na ordem em que a tela mostra.
+ALTERNATIVE_AXES: tuple[tuple[str, Callable[[NotasOpcao], float]], ...] = (
+    ("menos_risco", attrgetter("seguranca")),
+    ("mais_dinheiro", attrgetter("renda")),
+    ("cuidar_da_terra", attrgetter("solo")),
+)
 
 
 def _clamp(score: float) -> float:
@@ -115,6 +123,57 @@ def final_score(
 
 def _pct(anos_bons: int, total: int) -> float:
     return round(anos_bons / total * PERCENT_DIVISOR, 1) if total else 0.0
+
+
+def _better_than_best(
+    opcoes: list[ResultadoOpcao],
+    melhor: ResultadoOpcao,
+    usadas: set[str],
+    nota_do_eixo: Callable[[NotasOpcao], float],
+) -> list[ResultadoOpcao]:
+    piso = nota_do_eixo(melhor.notas)
+    return [o for o in opcoes if o.id not in usadas and nota_do_eixo(o.notas) > piso]
+
+
+def _single_top(
+    candidatas: list[ResultadoOpcao], nota_do_eixo: Callable[[NotasOpcao], float]
+) -> str | None:
+    """Id da única opção com a maior nota no eixo; None se não houver candidata ou se empatar."""
+    if not candidatas:
+        return None
+    topo = max(nota_do_eixo(o.notas) for o in candidatas)
+    no_topo = [o.id for o in candidatas if nota_do_eixo(o.notas) == topo]
+    return no_topo[0] if len(no_topo) == 1 else None
+
+
+def build_alternatives(opcoes: list[ResultadoOpcao], melhor_id: str) -> tuple[Alternativa, ...]:
+    """Uma alternativa por eixo, só se superar a `melhor` nesse eixo e sem repetir cultura (R4.2).
+
+    Os eixos seguem a ordem da tela (risco, dinheiro, terra). Cada eixo pega, entre as opções ainda
+    não usadas com nota maior que a da `melhor` naquele eixo, a de maior nota no eixo. No empate,
+    a opção que é a única maior de um eixo seguinte fica para ele; depois, vale a maior nota final.
+    Sem candidata, o eixo não aparece.
+    """
+    melhor = next((o for o in opcoes if o.id == melhor_id), None)
+    if melhor is None:
+        return ()
+    usadas = {melhor_id}
+    alternativas: list[Alternativa] = []
+    for idx, (motivo, nota_do_eixo) in enumerate(ALTERNATIVE_AXES):
+        candidatas = _better_than_best(opcoes, melhor, usadas, nota_do_eixo)
+        if not candidatas:
+            continue
+        reservadas = {
+            _single_top(_better_than_best(opcoes, melhor, usadas, nota), nota)
+            for _, nota in ALTERNATIVE_AXES[idx + 1 :]
+        }
+        escolhida = max(
+            candidatas,
+            key=lambda o: (nota_do_eixo(o.notas), o.id not in reservadas, o.notas.final),
+        )
+        usadas.add(escolhida.id)
+        alternativas.append(Alternativa(motivo=motivo, opcao=escolhida.id))
+    return tuple(alternativas)
 
 
 @dataclass(frozen=True)
@@ -244,7 +303,7 @@ class RecommendationService:
             nematoide=nematoide,
             gado=gado,
             melhor=melhor_id,
-            alternativas=self._build_alternatives(opcoes, melhor_id),
+            alternativas=build_alternatives(opcoes, melhor_id),
             opcoes=tuple(opcoes),
             fora_da_janela=tuple(fora_da_janela),
             texto_pousio=(
@@ -462,19 +521,3 @@ class RecommendationService:
                 f"Outside the sowing window for the '{colheita}' harvest (ZARC deadline {limite})."
             )
         return f"Fora da janela de plantio para a colheita '{colheita}' (limite ZARC {dia}/{mes})."
-
-    @staticmethod
-    def _build_alternatives(
-        opcoes: list[ResultadoOpcao], melhor_id: str
-    ) -> tuple[Alternativa, ...]:
-        """A melhor em cada eixo isolado (segurança, renda, solo), sem repetir a melhor."""
-        others = [o for o in opcoes if o.id != melhor_id]
-        if not others:
-            return ()
-        return (
-            Alternativa(
-                motivo="menos_risco", opcao=max(others, key=lambda o: o.notas.seguranca).id
-            ),
-            Alternativa(motivo="mais_dinheiro", opcao=max(others, key=lambda o: o.notas.renda).id),
-            Alternativa(motivo="cuidar_da_terra", opcao=max(others, key=lambda o: o.notas.solo).id),
-        )

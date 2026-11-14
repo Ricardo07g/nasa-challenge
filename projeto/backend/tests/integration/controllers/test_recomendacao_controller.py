@@ -37,12 +37,9 @@ def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
     }
     assert len(body["opcoes"]) == 5
     assert body["melhor"] in {o["id"] for o in body["opcoes"]}
-    assert {a["motivo"] for a in body["alternativas"]} == {
-        "menos_risco",
-        "mais_dinheiro",
-        "cuidar_da_terra",
-    }
-    assert all(set(a) == {"motivo", "opcao"} for a in body["alternativas"])
+    # Só os eixos em que alguma opção supera a melhor (R4.2): aqui todas têm 18 anos bons e o milho
+    # tem a maior renda, então sobra só "cuidar da terra".
+    assert body["alternativas"] == [{"motivo": "cuidar_da_terra", "opcao": "crotalaria"}]
 
     milho = next(o for o in body["opcoes"] if o["id"] == "milho_safrinha")
     assert milho["chuva"] == {
