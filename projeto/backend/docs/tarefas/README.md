@@ -17,6 +17,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0006**](0006-regras-yaml-e-yaml-rules-repository.md) | **`regras.yaml` + `YamlRulesRepository`: limiares, pesos e frases do motor com fonte** | **Concluída** | **Alta** | `app/config_data/regras.yaml`, `app/repositories/rules_repository.py`, services do motor |
 | [**0007**](0007-alternativas-melhores-que-a-melhor.md) | **Alternativas só quando superam a melhor no próprio eixo, sem repetir cultura** | **Concluída** | **Alta** | `app/services/recommendation_service.py` |
 | [**0008**](0008-conteudo-das-culturas.md) | **Conteúdo das culturas (ids canônicos, nome_en, como fazer pt/en, /crop-options pelo YAML)** | **Concluída** | **Média** | `app/config_data/culturas.yaml`, `app/repositories/` |
+| [**0011**](0011-http-cache-e-422-problem-json.md) | **HTTP: `Cache-Control` de um dia em `/recomendacao` e 422 em problem+json** | **Concluída** | **Média** | `app/main.py`, `app/controllers/recomendacao_controller.py` |
 
 ---
 
