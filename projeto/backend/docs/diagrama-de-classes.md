@@ -414,8 +414,10 @@ classDiagram
     }
 
     class RotationPlanService {
-        +build_3_year_plans(opcoes: list~ResultadoOpcao~, seasons: list~ClimateSeason~, nematoide: str | None) tuple~PlanoRotacao, PlanoRotacao, PlanoRotacao~
-        +select_4_driest_years(seasons: list~ClimateSeason~) list~ClimateSeason~
+        +build_3_year_plans(opcoes: list~ResultadoOpcao~, anos_secos: list~int~, pousio: NotasOpcao, nematoide: bool | None, lang: str) tuple~PlanoRotacao, PlanoRotacao, PlanoRotacao~
+        +select_driest_years(seasons: list~ClimateSeason~) list~int~
+        +candidate_sequences(crop_ids: list~str~, nematoide: bool | None) list~tuple~
+        +plan_score(seq: tuple, finals: dict) float
     }
 
     class TalhaoService {
