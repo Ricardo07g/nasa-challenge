@@ -8,19 +8,8 @@ from typing import Any, Protocol
 
 import psycopg
 
-from app.constants import (
-    DEFAULT_SRID,
-    GRID_CELL_HALF_SIZE_DEG,
-    GRID_CELL_SCALE_FACTOR,
-)
+from app.constants import DEFAULT_SRID, GRID_CELL_SCALE_FACTOR
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
-
-
-def compute_grid_cell_id(lat: float, lon: float) -> str:
-    """Computes the canonical 0.1-degree grid cell identifier for a coordinate."""
-    lat_idx = round(lat * GRID_CELL_SCALE_FACTOR)
-    lon_idx = round(lon * GRID_CELL_SCALE_FACTOR)
-    return f"{lat_idx}_{lon_idx}"
 
 
 class ClimateRepository(Protocol):
@@ -36,10 +25,41 @@ class ClimateRepository(Protocol):
 
 
 def cell_id_for(lat: float, lon: float) -> str:
-    """Id da célula de 0,1° (plano técnico §5): "<floor(lat*10)>_<floor(lon*10)>"."""
+    """Id da célula de 0,1° (plano técnico §5): "<floor(lat*10)>_<floor(lon*10)>".
+
+    É a única regra de id do backend: ingestão, repositories e polígono da célula usam esta função.
+    """
     lat_idx = math.floor(round(lat * GRID_CELL_SCALE_FACTOR, 6))
     lon_idx = math.floor(round(lon * GRID_CELL_SCALE_FACTOR, 6))
     return f"{lat_idx}_{lon_idx}"
+
+
+def _cell_indexes(cell_id: str) -> tuple[int, int]:
+    lat_idx, lon_idx = (int(part) for part in cell_id.split("_"))
+    return lat_idx, lon_idx
+
+
+def cell_center(cell_id: str) -> tuple[float, float]:
+    """Centro (lat, lon) da célula: ((idx + 0,5) / 10). Id mal formado dá ValueError."""
+    lat_idx, lon_idx = _cell_indexes(cell_id)
+    return (lat_idx + 0.5) / GRID_CELL_SCALE_FACTOR, (lon_idx + 0.5) / GRID_CELL_SCALE_FACTOR
+
+
+def cell_polygon_wkt(cell_id: str) -> str:
+    """Quadrado da célula em WKT (lon lat), com bordas nos décimos: idx/10 até (idx + 1)/10."""
+    lat_idx, lon_idx = _cell_indexes(cell_id)
+    lat_min, lat_max = lat_idx / GRID_CELL_SCALE_FACTOR, (lat_idx + 1) / GRID_CELL_SCALE_FACTOR
+    lon_min, lon_max = lon_idx / GRID_CELL_SCALE_FACTOR, (lon_idx + 1) / GRID_CELL_SCALE_FACTOR
+    return (
+        f"POLYGON(({lon_min} {lat_min}, {lon_max} {lat_min}, {lon_max} {lat_max}, "
+        f"{lon_min} {lat_max}, {lon_min} {lat_min}))"
+    )
+
+
+def cell_center_wkt(cell_id: str) -> str:
+    """Centro da célula em WKT (lon lat)."""
+    lat, lon = cell_center(cell_id)
+    return f"POINT({lon} {lat})"
 
 
 class FixtureClimateRepository:
@@ -65,11 +85,9 @@ class FixtureClimateRepository:
 
     def _covers_cell(self, cell_id: str) -> bool:
         try:
-            lat_idx, lon_idx = (int(part) for part in cell_id.split("_"))
+            center_lat, center_lon = cell_center(cell_id)
         except ValueError:
             return False
-        center_lat = (lat_idx + 0.5) / GRID_CELL_SCALE_FACTOR
-        center_lon = (lon_idx + 0.5) / GRID_CELL_SCALE_FACTOR
         return self._covers(center_lat, center_lon)
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
@@ -123,15 +141,9 @@ class PostgisClimateRepository:
         self._fallback = fallback_repo
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
+        # Pelo id (mesma regra da ingestão): um ponto na borda entre duas células não fica ambíguo.
         with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id FROM grid_cell
-                WHERE ST_Intersects(geom, ST_SetSRID(ST_MakePoint(%s, %s), %s))
-                LIMIT 1;
-                """,
-                (lon, lat, DEFAULT_SRID),
-            )
+            cur.execute("SELECT id FROM grid_cell WHERE id = %s;", (cell_id_for(lat, lon),))
             row = cur.fetchone()
             if row:
                 return str(row[0])
@@ -158,14 +170,9 @@ class PostgisClimateRepository:
     def save_cell_seasons(
         self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
     ) -> None:
-        lat_c = round(lat * GRID_CELL_SCALE_FACTOR) / GRID_CELL_SCALE_FACTOR
-        lon_c = round(lon * GRID_CELL_SCALE_FACTOR) / GRID_CELL_SCALE_FACTOR
-        h = GRID_CELL_HALF_SIZE_DEG
-        poly_wkt = (
-            f"POLYGON(({lon_c - h} {lat_c - h}, {lon_c + h} {lat_c - h}, "
-            f"{lon_c + h} {lat_c + h}, {lon_c - h} {lat_c + h}, {lon_c - h} {lat_c - h}))"
-        )
-        point_wkt = f"POINT({lon_c} {lat_c})"
+        # A geometria sai do id (floor), não do ponto clicado: o polígono contém o ponto.
+        poly_wkt = cell_polygon_wkt(cell_id)
+        point_wkt = cell_center_wkt(cell_id)
 
         with psycopg.connect(self._database_url) as conn:
             with conn.cursor() as cur:

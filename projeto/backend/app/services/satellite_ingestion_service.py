@@ -8,7 +8,7 @@ from app.constants import (
     INGESTION_WORKERS_COUNT,
 )
 from app.models.climate import ClimateSeason
-from app.repositories.climate_repository import ClimateRepository, compute_grid_cell_id
+from app.repositories.climate_repository import ClimateRepository, cell_id_for
 from app.repositories.external.nasa_power_client import NasaPowerClientProtocol
 from app.repositories.external.soilgrids_client import SoilGridsClientProtocol
 from app.repositories.soil_repository import SoilRepository
@@ -38,7 +38,7 @@ class SatelliteIngestionService:
 
         If NASA POWER is unavailable or times out, falls back to the nearest existing spatial cell.
         """
-        cell_id = compute_grid_cell_id(lat, lon)
+        cell_id = cell_id_for(lat, lon)
 
         with ThreadPoolExecutor(max_workers=INGESTION_WORKERS_COUNT) as executor:
             nasa_future = executor.submit(

@@ -4,6 +4,7 @@ from datetime import date
 
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.talhao import SoloInfo
+from app.repositories.climate_repository import cell_id_for
 from app.services.errors import DomainError
 from app.services.satellite_ingestion_service import SatelliteIngestionService
 
@@ -63,7 +64,7 @@ class FakeClimateRepository:
         }
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
-        cid = f"{round(lat * 10)}_{round(lon * 10)}"
+        cid = cell_id_for(lat, lon)
         return cid if cid in self.saved_cells else None
 
     def find_nearest_cell_id(self, lat: float, lon: float) -> str | None:
@@ -111,11 +112,11 @@ def test_should_ingest_climate_and_soil_in_parallel_and_persist_when_area_is_new
     # Rio Verde / GO coordinates
     cell_id = service.ingest_area(lat=-17.78, lon=-50.92)
 
-    assert cell_id == "-178_-509"
+    assert cell_id == "-178_-510"
     assert len(nasa_client.calls) == 1
     assert len(soil_client.calls) == 1
-    assert "-178_-509" in climate_repo.saved_cells
-    assert len(climate_repo.saved_cells["-178_-509"]) == 20
+    assert "-178_-510" in climate_repo.saved_cells
+    assert len(climate_repo.saved_cells["-178_-510"]) == 20
     assert soil_repo.get_soil(-17.78, -50.92).textura_solo == "argiloso"
 
 
@@ -134,7 +135,24 @@ def test_should_fallback_to_nearest_neighbor_cell_when_nasa_power_api_is_unavail
 
     cell_id = service.ingest_area(lat=-17.78, lon=-50.92)
 
-    assert cell_id == "-178_-509"
-    assert "-178_-509" in climate_repo.saved_cells
-    assert len(climate_repo.saved_cells["-178_-509"]) == 20
-    assert all(s.cell_id == "-178_-509" for s in climate_repo.saved_cells["-178_-509"])
+    assert cell_id == "-178_-510"
+    assert "-178_-510" in climate_repo.saved_cells
+    assert len(climate_repo.saved_cells["-178_-510"]) == 20
+    assert all(s.cell_id == "-178_-510" for s in climate_repo.saved_cells["-178_-510"])
+
+
+def test_should_use_the_same_floor_cell_id_as_the_repositories_when_ingesting() -> None:
+    # R1.2: um id só. Para lat -18,92 o round dava -189 e o floor (plano técnico §5) dá -190.
+    climate_repo = FakeClimateRepository()
+    service = SatelliteIngestionService(
+        nasa_client=FakeNasaPowerClient(),
+        soil_client=FakeSoilGridsClient(),
+        climate_repo=climate_repo,
+        soil_repo=FakeSoilRepository(),
+    )
+
+    cell_id = service.ingest_area(lat=-18.92, lon=-48.27)
+
+    assert cell_id == "-190_-483"
+    assert cell_id == cell_id_for(-18.92, -48.27)
+    assert "-190_-483" in climate_repo.saved_cells
