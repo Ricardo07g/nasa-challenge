@@ -233,6 +233,7 @@ export const pt = {
     seeNeighbors: 'Ver o que os vizinhos plantaram',
   },
   community: {
+    eyebrow: 'Comunidade simulada',
     title: 'Perto de você',
     subtitle: (km: number, place: string, count: number) =>
       `Até ${km} km de ${place} · ${count} produtores participando`,
@@ -255,6 +256,7 @@ export const pt = {
     privacy:
       'O mapa mostra a região, nunca a posição exata das fazendas. Nome só aparece com autorização. Valores ilustrativos.',
     simulated: 'Tela simulada: o registro ainda não está ligado.',
+    demoOnly: 'Esta é uma demonstração. Nenhum dado será enviado ou guardado.',
   },
   method: {
     title: 'Como a conta é feita',

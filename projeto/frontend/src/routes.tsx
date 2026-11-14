@@ -1,6 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router'
 import {
   AnswerPage,
+  CommunityPage,
   DesignSystemPage,
   ExamplePage,
   OptionsPage,
@@ -25,7 +26,7 @@ export const routes: RouteObject[] = [
       { path: '/resposta', element: <AnswerPage /> },
       { path: '/opcoes', element: <OptionsPage /> },
       { path: '/plano', element: <PlanPage /> },
-      { path: '/comunidade', element: <PendingPage screen="community" /> },
+      { path: '/comunidade', element: <CommunityPage /> },
       { path: '/como-funciona', element: <PendingPage screen="method" /> },
       { path: '/exemplo', element: <ExamplePage /> },
       ...(import.meta.env.DEV ? [{ path: '/design-system', element: <DesignSystemPage /> }] : []),

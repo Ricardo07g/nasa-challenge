@@ -232,6 +232,7 @@ export const en = {
     seeNeighbors: 'See what the neighbors planted',
   },
   community: {
+    eyebrow: 'Simulated community',
     title: 'Near you',
     subtitle: (km: number, place: string, count: number) =>
       `Within ${km} km of ${place} · ${count} growers taking part`,
@@ -253,6 +254,7 @@ export const en = {
     privacy:
       'The map shows the region, never the exact location of farms. Names only appear with permission. Illustrative values.',
     simulated: 'Simulated screen: recording is not connected yet.',
+    demoOnly: 'This is a demonstration. No data will be sent or saved.',
   },
   method: {
     title: 'How the score is calculated',

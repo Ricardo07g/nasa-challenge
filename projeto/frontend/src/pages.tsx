@@ -3,6 +3,7 @@
  */
 import { Navigate, Outlet, ScrollRestoration } from 'react-router'
 import { useAnswerController } from './controllers/useAnswerController'
+import { useCommunityController } from './controllers/useCommunityController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useOptionsController } from './controllers/useOptionsController'
@@ -16,6 +17,7 @@ import { EXAMPLE_FARM } from './services/locationService'
 import { buildFlowQuery } from './services/flowParams'
 import { AnswerView } from './views/AnswerView'
 import { ComingSoonView } from './views/ComingSoonView'
+import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { OptionsView } from './views/OptionsView'
 import { PlanView } from './views/PlanView'
@@ -163,6 +165,25 @@ export function PlanPage() {
   )
 }
 
+export function CommunityPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.community.title)
+  const state = useCommunityController()
+  return (
+    <CommunityView
+      t={t}
+      backTo={state.backTo}
+      status={state.status}
+      onRetry={state.retry}
+      community={state.community}
+      center={state.center}
+      points={state.points}
+      demo={state.demo}
+      onDemo={state.showDemo}
+    />
+  )
+}
+
 /** "Ver um exemplo pronto": abre a resposta da fazenda de exemplo (RF-11). */
 export function ExamplePage() {
   return <Navigate to={`/resposta${buildFlowQuery({ ...EXAMPLE_FARM, colheita: 'meio', exemplo: true })}`} replace />
@@ -175,13 +196,12 @@ export function DesignSystemPage() {
   return <DesignSystemView t={t} {...state} />
 }
 
-type PendingScreen = 'community' | 'method'
+type PendingScreen = 'method'
 
 /** Provisório até cada tela ficar pronta. */
 export function PendingPage({ screen }: { screen: PendingScreen }) {
   const { messages: t } = useI18n()
   const titles: Record<PendingScreen, string> = {
-    community: t.community.title,
     method: t.method.title,
   }
   useDocumentTitle(titles[screen])

@@ -136,6 +136,14 @@
   color: var(--color-primary);
 }
 
+.iconTitle[data-tone='blue'] {
+  color: var(--color-title-on-blue-tint);
+}
+
+.iconTitle[data-tone='blue'] svg {
+  color: var(--color-secondary);
+}
+
 .muted {
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
