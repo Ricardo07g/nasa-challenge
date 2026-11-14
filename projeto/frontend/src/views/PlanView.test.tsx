@@ -37,6 +37,7 @@ function setup(overrides: Partial<PlanViewProps> = {}) {
     rule: { text: 'No dia de plantar (até 28/fev), se a terra estiver seca, use o plano B: sorgo no lugar do milho.' },
     plan: buildPlan(rec, 'normal'),
     communityTo: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
+    pastTo: '/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
     ...overrides,
   }
   render(
@@ -150,5 +151,14 @@ describe('PlanView (tela 7)', () => {
     expect(screen.getByRole('heading', { level: 1, name: '3-year plan' })).toBeInTheDocument()
     expect(screen.getByText('Dry-year signal')).toBeInTheDocument()
     expect(screen.getByText('About R$ 35 thousand should remain')).toBeInTheDocument()
+  })
+
+  it('leva ao replay da safra passada (P4)', () => {
+    setup()
+
+    expect(screen.getByRole('link', { name: 'Como teria sido em 2024?' })).toHaveAttribute(
+      'href',
+      '/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
+    )
   })
 })

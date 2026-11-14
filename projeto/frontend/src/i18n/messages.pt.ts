@@ -272,6 +272,17 @@ export const pt = {
     gainNote: 'Referência ilustrativa; estudo a confirmar.',
     regionLink: 'Ver o que acontece na sua região',
   },
+  past: {
+    button: (year: number) => `Como teria sido em ${year}?`,
+    title: (year: number) => `Como teria sido a safrinha de ${year}`,
+    text: (year: number) =>
+      `Repetimos a chuva e o calor de ${year} (dados da NASA) com a melhor opção. Estes são os avisos que você teria recebido.`,
+    choose: 'Escolha o ano',
+    seco: (year: number) => `${year} · ano seco`,
+    bom: (year: number) => `${year} · ano bom`,
+    noWarnings: 'Nenhum aviso nesta safra.',
+    note: 'Valores de exemplo. No app, o ano e as datas vêm dos dados reais.',
+  },
   report: {
     button: 'Relatório para banco ou seguro',
     savePdf: 'Salvar em PDF',

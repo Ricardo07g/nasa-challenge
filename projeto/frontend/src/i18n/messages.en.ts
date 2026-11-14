@@ -270,6 +270,17 @@ export const en = {
     gainNote: 'Illustrative reference; study to be confirmed.',
     regionLink: 'See what happens in your region',
   },
+  past: {
+    button: (year: number) => `How would ${year} have gone?`,
+    title: (year: number) => `How the ${year} second crop would have gone`,
+    text: (year: number) =>
+      `We replayed the rain and heat of ${year} (NASA data) with the best option. These are the warnings you would have received.`,
+    choose: 'Choose the year',
+    seco: (year: number) => `${year} · dry year`,
+    bom: (year: number) => `${year} · good year`,
+    noWarnings: 'No warnings this season.',
+    note: 'Example values. In the app, the year and dates come from real data.',
+  },
   report: {
     button: 'Report for bank or insurance',
     savePdf: 'Save as PDF',

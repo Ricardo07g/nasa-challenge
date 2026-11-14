@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   Disclaimer,
   Disclosure,
+  EventTimeline,
   NumberedSteps,
   OptionCompareCard,
   PageHeading,
@@ -198,5 +199,26 @@ describe('ScoreTable com nota que ainda não existe', () => {
     render(<ScoreTable caption="Notas" headers={['Opção', 'Futuro']} rows={[{ name: 'Sorgo', values: [null] }]} />)
 
     expect(screen.getByRole('table', { name: 'Notas' })).toHaveTextContent('Sorgo—')
+  })
+})
+
+describe('EventTimeline (replay da safra, P4)', () => {
+  it('um evento por linha, com a data; os avisos ficam destacados', () => {
+    render(
+      <EventTimeline
+        label="Safrinha de 2024"
+        events={[
+          { key: '1', date: '18 de fevereiro', icon: <svg />, text: 'Semeadura.', warning: false },
+          { key: '2', date: '15 de abril', icon: <svg />, text: 'Aviso: 10 dias sem chuva.', warning: true },
+        ]}
+      />,
+    )
+
+    const events = screen.getAllByRole('listitem')
+    expect(screen.getByRole('list', { name: 'Safrinha de 2024' })).toBeInTheDocument()
+    expect(events).toHaveLength(2)
+    expect(events[0]).toHaveTextContent('18 de fevereiroSemeadura.')
+    expect(events[0]).toHaveAttribute('data-warning', 'false')
+    expect(events[1]).toHaveAttribute('data-warning', 'true')
   })
 })
