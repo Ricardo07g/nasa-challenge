@@ -10,7 +10,7 @@ from app.models.crop_option import CropParams
 from app.models.recomendacao import Alternativa, NotasOpcao, Recomendacao, ResultadoOpcao
 from app.models.regras import Regras
 from app.models.sinal_outono import RecentRain, RecentSoilMoisture, SeasonalForecast
-from app.models.talhao import SoloInfo
+from app.models.talhao import NdviRecord, SoloInfo
 from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
@@ -145,11 +145,40 @@ class FakeIngestionService:
         return self.cell_id
 
 
+class FakeNdviRepository:
+    """Série de NDVI de teste: 3 observações boas por entressafra, com o maior valor em maio."""
+
+    def __init__(self, peaks: dict[int, float]) -> None:
+        self._peaks = peaks
+
+    def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
+        return [
+            NdviRecord(data=date(year, month, day), ndvi=ndvi, qualidade=0, produto="MOD13Q1")
+            for year, peak in self._peaks.items()
+            for month, day, ndvi in ((4, 7, 0.22), (5, 9, peak), (6, 10, 0.22))
+        ]
+
+
+# 2016 a 2025: 3 parado, 5 plantou, 2020 incerto e 2018 sem dado -> 3 de 8 anos certos parados
+PEAKS = {
+    2016: 0.30,
+    2017: 0.71,
+    2019: 0.71,
+    2020: 0.52,
+    2021: 0.71,
+    2022: 0.30,
+    2023: 0.71,
+    2024: 0.30,
+    2025: 0.71,
+}
+
+
 def _service(
     climate: FakeClimateRepository | None = None,
     rules: Regras | None = None,
     ingestion: FakeIngestionService | None = None,
     sinal: SinalOutonoService | None = None,
+    ndvi: FakeNdviRepository | None = None,
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=FakeCropParamsRepository(),
@@ -160,6 +189,7 @@ def _service(
         rules=rules,
         ingestion_service=ingestion,
         sinal_service=sinal,
+        ndvi_repo=ndvi,
     )
 
 
@@ -541,6 +571,57 @@ def test_should_write_why_with_phrase_template_and_heat_number_from_injected_rul
     rec = _service(rules=rules).recommend(lat=-18.95, lon=-48.20, colheita="meio")
 
     assert _opcao(rec, "milho_safrinha").porque[0] == "0/20 33 °C"
+
+
+def test_should_explain_the_field_history_in_every_option_when_ndvi_exists() -> None:
+    # PRD 7.6: frase do histórico do talhão, contando só os anos que o satélite viu com certeza
+    rec = _service(ndvi=FakeNdviRepository(PEAKS)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert {o.porque[-1] for o in rec.opcoes} == {
+        "Seu talhão ficou em pousio em 3 de 8 entressafras vistas pelo satélite "
+        "de 2016 a 2025 (NDVI do MODIS)."
+    }
+
+
+def test_should_explain_the_field_history_in_english() -> None:
+    rec = _service(ndvi=FakeNdviRepository(PEAKS)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio", lang="en"
+    )
+
+    assert _opcao(rec, "milho_safrinha").porque[-1] == (
+        "Your field was left fallow in 3 of 8 off-seasons seen by the satellite "
+        "from 2016 to 2025 (MODIS NDVI)."
+    )
+
+
+@pytest.mark.parametrize(
+    "ndvi",
+    [None, FakeNdviRepository({}), FakeNdviRepository({2016: 0.52, 2017: 0.50})],
+    ids=["sem-repositorio", "sem-serie", "sem-ano-certo"],
+)
+def test_should_not_explain_history_without_a_year_seen_with_certainty(
+    ndvi: FakeNdviRepository | None,
+) -> None:
+    # Sem NDVI do ponto, ou só com anos incertos e sem dado: nada de frase inventada
+    rec = _service(ndvi=ndvi).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert not any("NDVI" in frase for o in rec.opcoes for frase in o.porque)
+
+
+def test_should_write_history_with_phrase_template_from_injected_rules() -> None:
+    base = load_default_rules()
+    modelo = "{parado}/{anos_certos} ({sem_certeza} sem certeza de {total}; {ano_inicio}-{ano_fim})"
+    frases = {**base.frases, "pt": replace(base.frases["pt"], historico=modelo)}
+    historico_ndvi = replace(base.historico_ndvi, ano_inicio=2017)
+
+    rec = _service(
+        rules=replace(base, frases=frases, historico_ndvi=historico_ndvi),
+        ndvi=FakeNdviRepository(PEAKS),
+    ).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert _opcao(rec, "sorgo").porque[-1] == "2/7 (2 sem certeza de 9; 2017-2025)"
 
 
 def _option(

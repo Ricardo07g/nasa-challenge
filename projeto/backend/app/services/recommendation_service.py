@@ -1,7 +1,7 @@
 """Motor de recomendação: notas, rótulos, ranking, alternativas, frases e planos (PRD 7)."""
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from operator import attrgetter
 from statistics import mean
@@ -29,11 +29,13 @@ from app.models.recomendacao import (
 from app.models.regras import Regras, RegrasNotaFinal, RegrasRotulos, RegrasSolo
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.crop_params_repository import CropParamsRepository
+from app.repositories.ndvi_repository import NdviRepository
 from app.repositories.rules_repository import load_default_rules
 from app.repositories.soil_repository import SoilRepository
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
+from app.services.field_history_service import FieldHistoryService
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
 
@@ -213,6 +215,8 @@ class RecommendationService:
         rules: Regras | None = None,
         ingestion_service: IngestionServiceProtocol | None = None,
         sinal_service: SinalOutonoService | None = None,
+        ndvi_repo: NdviRepository | None = None,
+        history_service: FieldHistoryService | None = None,
     ) -> None:
         self._crop_repo = crop_repo
         self._climate_repo = climate_repo
@@ -222,6 +226,9 @@ class RecommendationService:
         self._rules = rules if rules is not None else load_default_rules()
         self._ingestion_service = ingestion_service
         self._sinal_service = sinal_service
+        # Histórico do talhão pelo NDVI, só para a frase do "Por quê?" (PRD 7.6)
+        self._ndvi_repo = ndvi_repo
+        self._history_service = history_service or FieldHistoryService(self._rules)
 
     def recommend(
         self,
@@ -301,6 +308,9 @@ class RecommendationService:
             )
             for a in avaliacoes
         ]
+        frase_historico = self._history_phrase(lat, lon, is_en)
+        if frase_historico:
+            opcoes = [replace(o, porque=(*o.porque, frase_historico)) for o in opcoes]
         opcoes.sort(key=lambda o: o.notas.final, reverse=True)
         melhor_id = opcoes[0].id if opcoes else FALLOW_ID
 
@@ -561,6 +571,30 @@ class RecommendationService:
             )
         )
         return tuple(frases)
+
+    def _history_phrase(self, lat: float, lon: float, is_en: bool) -> str | None:
+        """Frase do histórico do talhão (PRD 7.6), a mesma em todas as opções.
+
+        Conta só os anos que o satélite viu com certeza (parado + plantou), como o cartão da
+        tela. Sem série de NDVI do ponto, ou sem nenhum ano certo, não há frase.
+        """
+        serie = self._ndvi_repo.get_ndvi_history(lat, lon) if self._ndvi_repo is not None else []
+        if not serie:
+            return None
+        historico = self._history_service.classify_entressafra(serie)
+        anos_certos = historico.parado + historico.plantou
+        if anos_certos == 0:
+            return None
+        janela = self._rules.historico_ndvi
+        return self._rules.frases["en" if is_en else "pt"].historico.format(
+            parado=historico.parado,
+            plantou=historico.plantou,
+            anos_certos=anos_certos,
+            sem_certeza=historico.sem_certeza,
+            total=historico.total,
+            ano_inicio=janela.ano_inicio,
+            ano_fim=janela.ano_fim,
+        )
 
     @staticmethod
     def _out_of_window_text(crop: CropParams, colheita: str, is_en: bool) -> str:

@@ -93,6 +93,8 @@ def test_should_load_autumn_signal_thresholds() -> None:
     assert (sinal.chance_seco_min, sinal.chance_normal_max) == (0.50, 0.33)
     assert sinal.smap_percentil_seco == 20.0
     assert sinal.chuva_fracao_seco == 0.60
+
+
 def test_should_load_shipped_field_history_rules_from_the_ndvi_guide() -> None:
     # PRD 7.8 e guia do histórico NDVI ("Regra do talhão"); anos 2016 a 2025 (decisão do time)
     historico = YamlRulesRepository(SHIPPED).get_rules().historico_ndvi

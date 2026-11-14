@@ -76,6 +76,16 @@ def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
     assert body["aviso"]
 
 
+def test_should_explain_the_field_history_from_the_ndvi_repository(client: TestClient) -> None:
+    # PRD 7.6: o NDVI de teste do conftest tem 3 anos parados e 5 plantados em 2016-2025
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"}).json()
+
+    assert {o["porque"][-1] for o in body["opcoes"]} == {
+        "Seu talhão ficou em pousio em 3 de 8 entressafras vistas pelo satélite "
+        "de 2016 a 2025 (NDVI do MODIS)."
+    }
+
+
 def test_should_move_crops_out_of_window_and_parse_nematoide_when_harvest_is_tarde(
     client: TestClient,
 ) -> None:
