@@ -1,0 +1,51 @@
+.layout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+}
+
+.icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  color: var(--color-secondary);
+}
+
+.body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-section);
+  color: var(--color-title-on-blue-tint);
+}
+
+.body p {
+  margin: 0;
+}
+
+.body a {
+  margin-top: var(--space-3);
+  white-space: normal;
+}
+
+/* Celular: ícone menor e o botão na largura toda. */
+@media (max-width: 640px) {
+  .layout {
+    gap: var(--space-4);
+  }
+
+  .icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .body {
+    align-items: stretch;
+  }
+}

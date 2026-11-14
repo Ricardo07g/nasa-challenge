@@ -13,6 +13,7 @@ import {
   ChevronDown,
   CircleCheck,
   CircleHelp,
+  CloudOff,
   CloudRain,
   CloudSun,
   DropletOff,
@@ -27,8 +28,11 @@ import {
   Minus,
   Plus,
   Satellite,
+  Send,
   ShieldCheck,
   Sprout,
+  Thermometer,
+  TriangleAlert,
   Square,
   Star,
   Users,
@@ -196,4 +200,21 @@ export function CloseIcon({ size = 18 }: IconProps) {
 
 export function ReportIcon({ size = 20 }: IconProps) {
   return <FileText size={size} {...decorative} />
+}
+
+// Replay da safra passada
+export function NoRainIcon({ size = 16 }: IconProps) {
+  return <CloudOff size={size} {...decorative} />
+}
+
+export function WarningIcon({ size = 16 }: IconProps) {
+  return <TriangleAlert size={size} {...decorative} />
+}
+
+export function HeatIcon({ size = 16 }: IconProps) {
+  return <Thermometer size={size} {...decorative} />
+}
+
+export function SendIcon({ size = 18 }: IconProps) {
+  return <Send size={size} {...decorative} />
 }

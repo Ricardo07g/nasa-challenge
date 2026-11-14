@@ -9,10 +9,12 @@ import { useMethodController } from './controllers/useMethodController'
 import { useMissionController } from './controllers/useMissionController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useOptionsController } from './controllers/useOptionsController'
+import { usePastSeasonController } from './controllers/usePastSeasonController'
 import { usePlanController } from './controllers/usePlanController'
 import { useSatelliteController } from './controllers/useSatelliteController'
 import { useReportController } from './controllers/useReportController'
 import { useShellController } from './controllers/useShellController'
+import { useTelegramLink } from './controllers/useTelegramLink'
 import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
@@ -24,6 +26,7 @@ import { DesignSystemView } from './views/DesignSystemView'
 import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
 import { OptionsView } from './views/OptionsView'
+import { PastSeasonView } from './views/PastSeasonView'
 import { PlanView } from './views/PlanView'
 import { ReportView } from './views/ReportView'
 import { SatelliteView } from './views/SatelliteView'
@@ -45,7 +48,8 @@ export function ShellPage() {
 export function StartPage() {
   const { messages: t } = useI18n()
   useDocumentTitle(t.start.pageTitle)
-  return <StartView t={t} />
+  const telegramHref = useTelegramLink()
+  return <StartView t={t} telegramHref={telegramHref} />
 }
 
 export function WherePage() {
@@ -155,6 +159,7 @@ export function AnswerPage() {
       aviso={state.aviso}
       sampleData={state.sampleData}
       reportTo={state.reportTo}
+      telegramHref={state.telegramHref}
     />
   )
 }
@@ -200,6 +205,28 @@ export function PlanPage() {
       rule={state.rule}
       plan={state.plan}
       communityTo={state.communityTo}
+      pastTo={state.pastTo}
+    />
+  )
+}
+
+export function PastSeasonPage() {
+  const { lang, messages: t } = useI18n()
+  const state = usePastSeasonController()
+  useDocumentTitle(t.past.title(state.year))
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <PastSeasonView
+      t={t}
+      lang={lang}
+      status={state.status}
+      onRetry={state.retry}
+      backTo={state.backTo}
+      year={state.year}
+      onYear={state.chooseYear}
+      season={state.season}
+      sampleData={state.sampleData}
+      telegramHref={state.telegramHref}
     />
   )
 }
@@ -260,6 +287,7 @@ export function MethodPage() {
       onRetry={state.retry}
       rows={state.rows}
       example={state.example}
+      telegramHref={state.telegramHref}
     />
   )
 }

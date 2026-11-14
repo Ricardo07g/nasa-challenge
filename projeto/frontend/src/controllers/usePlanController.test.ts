@@ -96,6 +96,7 @@ describe('usePlanController (tela 7)', () => {
 
     expect(plan.result.current.nav.tabs[1]).toMatchObject({ label: 'Plano de 3 anos', current: true })
     expect(plan.result.current.communityTo).toBe(`/comunidade?${flow}`)
+    expect(plan.result.current.pastTo).toBe(`/safra-passada?${flow}&ano=2024`)
     expect(noHarvest.result.current.redirectTo).toBe('/quando?lat=-18.9543&lon=-48.1993')
   })
 

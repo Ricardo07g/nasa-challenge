@@ -30,6 +30,7 @@ function setup(overrides: Partial<AnswerViewProps> = {}) {
     aviso: 'Ajuda a decidir. Não substitui o agrônomo.',
     sampleData: false,
     reportTo: '/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio',
+    telegramHref: null,
     ...overrides,
   }
   render(
@@ -173,5 +174,17 @@ describe('AnswerView (tela 5)', () => {
       'href',
       '/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio',
     )
+  })
+
+  it('sem o bot configurado, não mostra o cartão do Telegram (P5)', () => {
+    setup()
+    expect(screen.queryByRole('region', { name: 'Receber no Telegram' })).not.toBeInTheDocument()
+  })
+
+  it('com o bot configurado, mostra o cartão do Telegram', () => {
+    setup({ telegramHref: 'https://t.me/BotDoTime?start=x' })
+
+    expect(screen.getByRole('region', { name: 'Receber no Telegram' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Abrir no Telegram' })).toHaveAttribute('href', 'https://t.me/BotDoTime?start=x')
   })
 })

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { Button } from '../design-system/components/Button'
 import { Card } from '../design-system/components/Card'
 import { ChipGroup, NumberStepper } from '../design-system/components/Choice'
 import { PageHeading, YearTimeline } from '../design-system/components/Content'
@@ -11,6 +12,7 @@ import {
   CommunityIcon,
   DropIcon,
   DryIcon,
+  HistoryIcon,
   MoneyIcon,
   SeedIcon,
   UncertainIcon,
@@ -20,6 +22,7 @@ import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { CropId, NivelSinal, SinalOutono } from '../models/recomendacao'
 import type { ScreenStatus } from '../models/screenStatus'
+import { PAST_YEARS } from '../services/pastSeasonService'
 import type { PlanScenario, PlanView as Plan, PlantingRule, TestAreaTotals } from '../services/recomendacaoRules'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import layout from './layout.module.css'
@@ -41,6 +44,7 @@ export type PlanViewProps = {
   rule: PlantingRule | null
   plan: Plan | null
   communityTo: string
+  pastTo: string
 }
 
 /** Sinal seco = laranja; normal = verde; incerto = azul. */
@@ -68,7 +72,7 @@ export function PlanView(props: PlanViewProps) {
 }
 
 function Ready(props: PlanViewProps & { plan: Plan }) {
-  const { t, lang, signal, scenario, onScenario, plan, totals, rule, communityTo } = props
+  const { t, lang, signal, scenario, onScenario, plan, totals, rule, communityTo, pastTo } = props
   const p = t.plan
   const name = (crop: CropId) => t.crops.names[crop]
   const lower = (crop: CropId) => name(crop).toLocaleLowerCase(lang)
@@ -164,6 +168,11 @@ function Ready(props: PlanViewProps & { plan: Plan }) {
           <p className={layout.muted}>{p.rootWater}</p>
         </Card>
       )}
+      <div className={layout.cta}>
+        <Button to={pastTo} variant="outline" icon={<HistoryIcon size={20} />}>
+          {t.past.button(PAST_YEARS[0])}
+        </Button>
+      </div>
       <div className={layout.pageGrid}>
         <div className={layout.stack}>
           <Card tone="green" as="section" aria-label={p.withPlan}>

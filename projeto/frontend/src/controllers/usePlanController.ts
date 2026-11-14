@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { farmService, type FarmService } from '../services/farmService'
 import { keepFlowQuery } from '../services/flowParams'
+import { PAST_YEARS } from '../services/pastSeasonService'
 import {
   buildPlan,
   findOption,
@@ -63,5 +64,6 @@ export function usePlanController(deps: Deps = defaultDeps) {
     rule: data ? plantingRule(data) : null,
     plan,
     communityTo: `/comunidade${keepFlowQuery(search.toString())}`,
+    pastTo: `/safra-passada${keepFlowQuery(search.toString())}${search.toString() ? '&' : '?'}ano=${PAST_YEARS[0]}`,
   }
 }

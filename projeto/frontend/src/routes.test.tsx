@@ -164,6 +164,13 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Relatório da lavoura · Raiz Orbital')
   })
 
+  it('o replay da safra passada abre pela URL', async () => {
+    renderAt('/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Como teria sido a safrinha de 2024' })).toBeInTheDocument()
+    expect(await screen.findByRole('list', { name: 'Como teria sido a safrinha de 2024' })).toBeInTheDocument()
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 

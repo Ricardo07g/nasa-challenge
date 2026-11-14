@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { ArrowRightIcon } from '../icons'
 import styles from './Button.module.css'
 
-export type ButtonVariant = 'primary' | 'outline' | 'outline-blue' | 'compact'
+export type ButtonVariant = 'primary' | 'outline' | 'outline-blue' | 'blue' | 'compact'
 
 type CommonProps = {
   children: ReactNode
@@ -21,6 +21,7 @@ type CommonProps = {
 
 type AsButton = CommonProps & {
   to?: undefined
+  href?: undefined
   onClick?: () => void
   disabled?: boolean
   type?: 'button' | 'submit'
@@ -28,9 +29,16 @@ type AsButton = CommonProps & {
 
 type AsLink = CommonProps & {
   to: string
+  href?: undefined
 }
 
-export type ButtonProps = AsButton | AsLink
+/** Link para fora do app (ex.: Telegram): abre em outra aba, com segurança. */
+type AsExternal = CommonProps & {
+  href: string
+  to?: undefined
+}
+
+export type ButtonProps = AsButton | AsLink | AsExternal
 
 export function Button(props: ButtonProps) {
   const { children, variant = 'primary', icon, iconEnd, fullWidth = true, arrow = false, detail } = props
@@ -49,6 +57,22 @@ export function Button(props: ButtonProps) {
       {iconEnd}
     </>
   )
+
+  if (props.href !== undefined) {
+    return (
+      <a
+        href={props.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        data-variant={variant}
+        data-full={fullWidth}
+        data-detail={detail !== undefined}
+      >
+        {content}
+      </a>
+    )
+  }
 
   if (props.to !== undefined) {
     return (

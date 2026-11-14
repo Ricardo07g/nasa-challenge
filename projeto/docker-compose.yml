@@ -78,6 +78,8 @@ services:
       API_PROXY_TARGET: http://backend:8000
       # http = API real (o backend deste compose); mock = dados de exemplo, sem backend.
       VITE_API_MODE: ${VITE_API_MODE:-http}
+      # Link público do bot do Telegram (P5). Vazio = sem Telegram na interface.
+      VITE_TELEGRAM_BOT_URL: ${VITE_TELEGRAM_BOT_URL:-}
     volumes:
       - ./frontend:/app
       - /app/node_modules

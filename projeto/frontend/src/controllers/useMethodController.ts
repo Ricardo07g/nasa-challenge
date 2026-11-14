@@ -5,9 +5,11 @@ import { farmService, type FarmService } from '../services/farmService'
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { EXAMPLE_FARM } from '../services/locationService'
 import { scoreRows } from '../services/recomendacaoRules'
+import type { TelegramService } from '../services/telegramService'
 import { useAsync } from './useAsync'
+import { useTelegramLink } from './useTelegramLink'
 
-type Deps = { farm: FarmService }
+type Deps = { farm: FarmService; telegram?: TelegramService }
 
 const defaultDeps: Deps = { farm: farmService }
 
@@ -20,6 +22,7 @@ export function useMethodController(deps: Deps = defaultDeps) {
   const [search] = useSearchParams()
   const params = useMemo(() => readFlowParams(search), [search])
   const example = !params?.colheita
+  const telegramHref = useTelegramLink(deps.telegram)
 
   const recomendacao = useAsync(
     () =>
@@ -38,5 +41,6 @@ export function useMethodController(deps: Deps = defaultDeps) {
     retry: recomendacao.retry,
     rows: recomendacao.data ? scoreRows(recomendacao.data) : [],
     example,
+    telegramHref,
   }
 }

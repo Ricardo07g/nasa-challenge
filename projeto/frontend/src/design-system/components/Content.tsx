@@ -198,3 +198,24 @@ export function ScoreTable({ caption, headers, rows }: ScoreTableProps) {
     </div>
   )
 }
+
+type TimelineEvent = { key: string; date: string; icon: ReactNode; text: string; warning: boolean }
+
+/** Linha do tempo de eventos (replay da safra): ícone, data e frase; avisos em destaque. */
+export function EventTimeline({ label, events }: { label: string; events: readonly TimelineEvent[] }) {
+  return (
+    <ol className={styles.events} aria-label={label}>
+      {events.map((event) => (
+        <li key={event.key} className={styles.event} data-warning={event.warning}>
+          <span className={styles.eventIcon} aria-hidden="true">
+            {event.icon}
+          </span>
+          <div className={styles.eventBody}>
+            <span className={styles.eventDate}>{event.date}</span>
+            <p>{event.text}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  )
+}

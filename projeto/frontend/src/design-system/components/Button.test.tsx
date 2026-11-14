@@ -75,6 +75,19 @@ describe('Button', () => {
     expect(button).toHaveAttribute('data-detail', 'true')
   })
 
+  it('com href, vira link externo que abre em outra aba com segurança', () => {
+    render(
+      <Button href="https://t.me/BotDoTime" variant="outline-blue">
+        Abrir no Telegram
+      </Button>,
+    )
+
+    const link = screen.getByRole('link', { name: 'Abrir no Telegram' })
+    expect(link).toHaveAttribute('href', 'https://t.me/BotDoTime')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  })
+
   it('pode ficar desabilitado', () => {
     render(<Button disabled>É aqui</Button>)
 

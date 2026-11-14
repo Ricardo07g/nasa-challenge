@@ -1,10 +1,12 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { SpeechService } from '../services/speechService'
+import type { TelegramService } from '../services/telegramService'
 import { providers } from '../test/providers'
 import { useShellController } from './useShellController'
 
 const speech: SpeechService = { isSupported: () => true, speak: vi.fn(), stop: vi.fn() }
+const telegram: TelegramService = { enabled: true, linkFor: () => 'https://t.me/BotDoTime?start=x' }
 
 describe('useShellController', () => {
   it('monta o cabeçalho com os textos do idioma atual', () => {
@@ -70,5 +72,19 @@ describe('useShellController', () => {
 
     expect(speech.speak).toHaveBeenCalledWith('O que plantar depois da soja?', 'pt', expect.any(Function))
     main.remove()
+  })
+
+  it('sem o bot do Telegram configurado, o cabeçalho não mostra o link (P5)', () => {
+    const { result } = renderHook(() => useShellController(speech, { enabled: false, linkFor: () => null }), {
+      wrapper: providers('/', 'pt'),
+    })
+
+    expect(result.current.header.telegram).toBeUndefined()
+  })
+
+  it('com o bot configurado, o cabeçalho leva ao Telegram', () => {
+    const { result } = renderHook(() => useShellController(speech, telegram), { wrapper: providers('/', 'pt') })
+
+    expect(result.current.header.telegram).toEqual({ href: 'https://t.me/BotDoTime?start=x', label: 'Abrir no Telegram' })
   })
 })
