@@ -31,6 +31,7 @@ from app.repositories.climate_repository import ClimateRepository
 from app.repositories.crop_params_repository import CropParamsRepository
 from app.repositories.rules_repository import load_default_rules
 from app.repositories.soil_repository import SoilRepository
+from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.rotation_plan_service import RotationPlanService
@@ -201,6 +202,7 @@ class RecommendationService:
         risk_service: ClimateRiskService,
         plan_service: RotationPlanService,
         rules: Regras | None = None,
+        ingestion_service: IngestionServiceProtocol | None = None,
     ) -> None:
         self._crop_repo = crop_repo
         self._climate_repo = climate_repo
@@ -208,6 +210,7 @@ class RecommendationService:
         self._risk_service = risk_service
         self._plan_service = plan_service
         self._rules = rules if rules is not None else load_default_rules()
+        self._ingestion_service = ingestion_service
 
     def recommend(
         self,
@@ -230,7 +233,7 @@ class RecommendationService:
                 "Use 'arenoso', 'medio' ou 'argiloso'."
             )
 
-        cell_id = self._climate_repo.find_cell_id(lat, lon)
+        cell_id = find_or_ingest_cell(self._climate_repo, self._ingestion_service, lat, lon)
         seasons = self._climate_repo.get_seasons(cell_id) if cell_id is not None else []
         if cell_id is None or not seasons:
             raise OutsideAreaError(

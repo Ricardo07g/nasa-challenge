@@ -128,26 +128,20 @@ def test_should_hide_history_and_use_default_harvest_when_no_ndvi() -> None:
     assert (talhao.colheita_sugerida.faixa, talhao.colheita_sugerida.fonte) == ("meio", "padrao")
 
 
-class FakeWritableClimateRepository(FakeClimateRepository):
-    def save_cell_seasons(
-        self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
-    ) -> None:
-        pass
-
-
 class FakeIngestionService:
-    def __init__(self) -> None:
+    def __init__(self, cell_id: str | None = "-178_-510") -> None:
+        self.cell_id = cell_id
         self.calls: list[tuple[float, float]] = []
 
-    def ingest_area(self, lat: float, lon: float) -> str:
+    def ingest_area(self, lat: float, lon: float) -> str | None:
         self.calls.append((lat, lon))
-        return "-178_-509"
+        return self.cell_id
 
 
 def test_should_trigger_on_demand_ingestion_when_cache_misses() -> None:
-    climate_repo = FakeWritableClimateRepository()
+    # Decisão explícita: com a ingestão injetada, busca (não depende de o repositório saber gravar).
     ingestion_service = FakeIngestionService()
-    service = _service(climate=climate_repo, ingestion_service=ingestion_service)
+    service = _service(climate=FakeClimateRepository(), ingestion_service=ingestion_service)
 
     # Coordenadas de Rio Verde / GO fora da área pré-carregada
     talhao = service.obter_talhao(lat=-17.78, lon=-50.92)
@@ -155,5 +149,25 @@ def test_should_trigger_on_demand_ingestion_when_cache_misses() -> None:
     assert len(ingestion_service.calls) == 1
     assert ingestion_service.calls[0] == (-17.78, -50.92)
     assert talhao.dentro_da_area is True
-    assert talhao.celula_id == "-178_-509"
+    assert talhao.celula_id == "-178_-510"
     assert talhao.dados_fontes == (FonteDado(fonte="nasa_power", periodo="2005-2024"),)
+
+
+def test_should_not_trigger_ingestion_when_point_already_has_data() -> None:
+    ingestion_service = FakeIngestionService()
+    service = _service(ingestion_service=ingestion_service)
+
+    talhao = service.inspect_talhao(lat=-18.9543, lon=-48.1993)
+
+    assert ingestion_service.calls == []
+    assert talhao.celula_id == "-190_-482"
+
+
+def test_should_stay_outside_area_when_ingestion_finds_no_climate() -> None:
+    service = _service(ingestion_service=FakeIngestionService(cell_id=None))
+
+    talhao = service.inspect_talhao(lat=-17.78, lon=-50.92)
+
+    assert talhao.dentro_da_area is False
+    assert talhao.celula_id is None
+    assert talhao.dados_fontes == ()

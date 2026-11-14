@@ -129,8 +129,20 @@ class FakeSoilRepository:
         )
 
 
+class FakeIngestionService:
+    def __init__(self, cell_id: str | None = CELL_ID) -> None:
+        self.cell_id = cell_id
+        self.calls: list[tuple[float, float]] = []
+
+    def ingest_area(self, lat: float, lon: float) -> str | None:
+        self.calls.append((lat, lon))
+        return self.cell_id
+
+
 def _service(
-    climate: FakeClimateRepository | None = None, rules: Regras | None = None
+    climate: FakeClimateRepository | None = None,
+    rules: Regras | None = None,
+    ingestion: FakeIngestionService | None = None,
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=FakeCropParamsRepository(),
@@ -139,6 +151,7 @@ def _service(
         risk_service=ClimateRiskService(WaterBalanceCalculator()),
         plan_service=RotationPlanService(),
         rules=rules,
+        ingestion_service=ingestion,
     )
 
 
@@ -180,6 +193,34 @@ def test_should_raise_outside_area_instead_of_using_other_region_data() -> None:
 
     with pytest.raises(OutsideAreaError):
         service.recommend(lat=-23.55, lon=-46.63, colheita="meio")
+
+
+def test_should_fetch_new_point_on_demand_instead_of_outside_area_when_ingestion_is_on() -> None:
+    # R1.1: com o PostGIS ligado, /recomendacao de um ponto novo não depende do /talhao antes.
+    ingestion = FakeIngestionService()
+    service = _service(FakeClimateRepository(inside=False), ingestion=ingestion)
+
+    rec = service.recommend(lat=-17.78, lon=-50.92, colheita="meio")
+
+    assert ingestion.calls == [(-17.78, -50.92)]
+    assert rec.celula_id == CELL_ID
+    assert len(rec.opcoes) == 5
+
+
+def test_should_not_fetch_on_demand_when_point_already_has_data() -> None:
+    ingestion = FakeIngestionService()
+
+    _service(ingestion=ingestion).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert ingestion.calls == []
+
+
+def test_should_raise_outside_area_when_on_demand_fetch_finds_no_climate() -> None:
+    ingestion = FakeIngestionService(cell_id=None)
+    service = _service(FakeClimateRepository(inside=False), ingestion=ingestion)
+
+    with pytest.raises(OutsideAreaError):
+        service.recommend(lat=-17.78, lon=-50.92, colheita="meio")
 
 
 def test_should_reject_unknown_harvest_band() -> None:

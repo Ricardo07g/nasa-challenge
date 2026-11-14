@@ -14,6 +14,7 @@ from app.dependencies import (
     get_climate_repository,
     get_crop_params_repository,
     get_ndvi_repository,
+    get_satellite_ingestion_service,
     get_soil_repository,
 )
 from app.main import app
@@ -34,6 +35,7 @@ def real_data_client() -> Iterator[TestClient]:
     app.dependency_overrides[get_climate_repository] = lambda: FixtureClimateRepository(clima)
     app.dependency_overrides[get_soil_repository] = lambda: CachedSoilGridsRepository(None)
     app.dependency_overrides[get_ndvi_repository] = lambda: CachedNdviRepository(None)
+    app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)
     app.dependency_overrides.clear()
 

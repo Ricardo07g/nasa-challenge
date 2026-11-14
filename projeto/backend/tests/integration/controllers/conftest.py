@@ -10,6 +10,7 @@ from app.dependencies import (
     get_climate_repository,
     get_crop_params_repository,
     get_ndvi_repository,
+    get_satellite_ingestion_service,
     get_soil_repository,
 )
 from app.main import app
@@ -147,5 +148,7 @@ def client() -> Iterator[TestClient]:
     app.dependency_overrides[get_climate_repository] = FakeClimateRepository
     app.dependency_overrides[get_soil_repository] = FakeSoilRepository
     app.dependency_overrides[get_ndvi_repository] = FakeNdviRepository
+    # Sem busca sob demanda: ponto sem dados fica fora da área (nada de rede real nos testes).
+    app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)
     app.dependency_overrides.clear()
