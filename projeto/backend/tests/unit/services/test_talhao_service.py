@@ -1,6 +1,7 @@
-"""Unit tests for TalhaoService using fake repositories."""
+"""Unit tests for TalhaoService including Cache-Aside on-demand ingestion (Sub-task 1.3)."""
 
 from datetime import date
+from typing import Any
 
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.talhao import FonteDado, NdviRecord, SoloInfo
@@ -35,13 +36,22 @@ class FakeClimateRepository:
 
 
 class FakeSoilRepository:
+    def __init__(self) -> None:
+        self.soils: dict[tuple[float, float], SoloInfo] = {}
+
+    def save_soil(self, lat: float, lon: float, soil: SoloInfo) -> None:
+        self.soils[(round(lat, 3), round(lon, 3))] = soil
+
     def get_soil(self, lat: float, lon: float) -> SoloInfo:
-        return SoloInfo(
-            argila_percentual=42.5,
-            areia_percentual=38.0,
-            textura_solo="argiloso",
-            cad_capacidade_agua_mm=60.0,
-            fonte="soilgrids",
+        return self.soils.get(
+            (round(lat, 3), round(lon, 3)),
+            SoloInfo(
+                argila_percentual=42.5,
+                areia_percentual=38.0,
+                textura_solo="argiloso",
+                cad_capacidade_agua_mm=60.0,
+                fonte="soilgrids",
+            ),
         )
 
 
@@ -63,13 +73,16 @@ class FakeNdviRepository:
 
 
 def _service(
-    climate: FakeClimateRepository | None = None, ndvi: FakeNdviRepository | None = None
+    climate: FakeClimateRepository | None = None,
+    ndvi: FakeNdviRepository | None = None,
+    ingestion_service: Any = None,
 ) -> TalhaoService:
     return TalhaoService(
         climate_repo=climate or FakeClimateRepository(),
         soil_repo=FakeSoilRepository(),
         ndvi_repo=ndvi or FakeNdviRepository(),
         history_service=FieldHistoryService(),
+        ingestion_service=ingestion_service,
     )
 
 
@@ -113,3 +126,34 @@ def test_should_hide_history_and_use_default_harvest_when_no_ndvi() -> None:
 
     assert talhao.historico is None
     assert (talhao.colheita_sugerida.faixa, talhao.colheita_sugerida.fonte) == ("meio", "padrao")
+
+
+class FakeWritableClimateRepository(FakeClimateRepository):
+    def save_cell_seasons(
+        self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
+    ) -> None:
+        pass
+
+
+class FakeIngestionService:
+    def __init__(self) -> None:
+        self.calls: list[tuple[float, float]] = []
+
+    def ingest_area(self, lat: float, lon: float) -> str:
+        self.calls.append((lat, lon))
+        return "-178_-509"
+
+
+def test_should_trigger_on_demand_ingestion_when_cache_misses() -> None:
+    climate_repo = FakeWritableClimateRepository()
+    ingestion_service = FakeIngestionService()
+    service = _service(climate=climate_repo, ingestion_service=ingestion_service)
+
+    # Coordenadas de Rio Verde / GO fora da área pré-carregada
+    talhao = service.obter_talhao(lat=-17.78, lon=-50.92)
+
+    assert len(ingestion_service.calls) == 1
+    assert ingestion_service.calls[0] == (-17.78, -50.92)
+    assert talhao.dentro_da_area is True
+    assert talhao.celula_id == "-178_-509"
+    assert talhao.dados_fontes == (FonteDado(fonte="nasa_power", periodo="2005-2024"),)
