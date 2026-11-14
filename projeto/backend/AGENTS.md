@@ -67,6 +67,12 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
   negócio. Toda implementação segue o `Protocol` do contrato, para o service não saber de onde vem o dado.
 - **Model:** dataclasses do domínio. **Schema:** Pydantic, só formato da API.
 - **Rotas:** todas sob `/api` (o `include_router` usa `prefix="/api"`).
+- **Erros:** sempre `application/problem+json` com `type`, `title`, `status`, `detail` e `code` (o front
+  lê o `code`). O `main.py` traduz os erros de domínio (404 `NOT_FOUND` / `OUTSIDE_AREA`, 422
+  `VALIDATION_ERROR`) e o parâmetro inválido da requisição (422 `INVALID_REQUEST`, com a lista
+  `invalid_params`: `name`, `in`, `reason`). Rota nova não precisa de nada para ganhar esse formato.
+- **Cache HTTP:** só `/recomendacao` manda `Cache-Control: public, max-age=86400` (plano técnico §8),
+  com `Vary: Accept-Language`, e só na resposta 200. Erro nunca vai com cache.
 
 ## Banco (PostgreSQL + PostGIS)
 
