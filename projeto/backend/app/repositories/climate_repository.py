@@ -5,7 +5,12 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Protocol
 
+import psycopg
+
 from app.constants import (
+    DEFAULT_SRID,
+    EXAMPLE_CELL_ID,
+    GRID_CELL_HALF_SIZE_DEG,
     GRID_CELL_SCALE_FACTOR,
     PILOT_MAX_LAT,
     PILOT_MAX_LON,
@@ -18,10 +23,23 @@ from app.constants import (
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 
 
+def compute_grid_cell_id(lat: float, lon: float) -> str:
+    """Computes the canonical 0.1-degree grid cell identifier for a coordinate."""
+    lat_idx = round(lat * GRID_CELL_SCALE_FACTOR)
+    lon_idx = round(lon * GRID_CELL_SCALE_FACTOR)
+    return f"{lat_idx}_{lon_idx}"
+
+
 class ClimateRepository(Protocol):
     """Data access contract for meteorological series, SMAP, and CMIP6 projections."""
 
     def find_cell_id(self, lat: float, lon: float) -> str | None: ...
+
+    def find_nearest_cell_id(self, lat: float, lon: float) -> str | None: ...
+
+    def save_cell_seasons(
+        self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
+    ) -> None: ...
 
     def get_seasons(self, cell_id: str) -> list[ClimateSeason]: ...
 
@@ -31,22 +49,35 @@ class ClimateRepository(Protocol):
 
 
 class DataOutputClimateRepository:
-    """Reads pre-extracted NASA POWER, SMAP, and CMIP6 datasets from data/output/."""
+    """Reads pre-extracted NASA POWER, SMAP, and CMIP6 datasets with in-memory on-demand cache."""
 
     def __init__(self, data_output_dir: Path = Path("/workspace/data/output")) -> None:
         self._data_output_dir = data_output_dir
         self._seasons_cache: list[ClimateSeason] | None = None
         self._cmip6_cache: Cmip6Delta | None = None
         self._smap_cache: SmapSoilMoisture | None = None
+        self._ingested_cells: dict[str, list[ClimateSeason]] = {}
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
-        if not (PILOT_MIN_LAT <= lat <= PILOT_MAX_LAT and PILOT_MIN_LON <= lon <= PILOT_MAX_LON):
-            return None
-        lat_idx = round(lat * GRID_CELL_SCALE_FACTOR)
-        lon_idx = round(lon * GRID_CELL_SCALE_FACTOR)
-        return f"{lat_idx}_{lon_idx}"
+        candidate_id = compute_grid_cell_id(lat, lon)
+        if candidate_id in self._ingested_cells:
+            return candidate_id
+        if PILOT_MIN_LAT <= lat <= PILOT_MAX_LAT and PILOT_MIN_LON <= lon <= PILOT_MAX_LON:
+            return candidate_id
+        return None
+
+    def find_nearest_cell_id(self, lat: float, lon: float) -> str | None:
+        return EXAMPLE_CELL_ID
+
+    def save_cell_seasons(
+        self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
+    ) -> None:
+        self._ingested_cells[cell_id] = list(seasons)
 
     def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
+        if cell_id in self._ingested_cells:
+            return list(self._ingested_cells[cell_id])
+
         if self._seasons_cache is not None:
             return [
                 ClimateSeason(
@@ -192,3 +223,140 @@ class DataOutputClimateRepository:
         )
         self._smap_cache = smap
         return smap
+
+
+class PostgisClimateRepository:
+    """PostgreSQL + PostGIS repository supporting spatial cache-aside and KNN fallback."""
+
+    def __init__(
+        self,
+        database_url: str,
+        fallback_repo: DataOutputClimateRepository | None = None,
+    ) -> None:
+        self._database_url = database_url
+        self._fallback = fallback_repo or DataOutputClimateRepository()
+
+    def find_cell_id(self, lat: float, lon: float) -> str | None:
+        with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id FROM grid_cell
+                WHERE ST_Intersects(geom, ST_SetSRID(ST_MakePoint(%s, %s), %s))
+                LIMIT 1;
+                """,
+                (lon, lat, DEFAULT_SRID),
+            )
+            row = cur.fetchone()
+            return str(row[0]) if row else None
+
+    def find_nearest_cell_id(self, lat: float, lon: float) -> str | None:
+        with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id FROM grid_cell
+                ORDER BY ST_ClosestPoint(geom, ST_SetSRID(ST_MakePoint(%s, %s), %s))
+                         <-> ST_SetSRID(ST_MakePoint(%s, %s), %s)
+                LIMIT 1;
+                """,
+                (lon, lat, DEFAULT_SRID, lon, lat, DEFAULT_SRID),
+            )
+            row = cur.fetchone()
+            return str(row[0]) if row else self._fallback.find_nearest_cell_id(lat, lon)
+
+    def save_cell_seasons(
+        self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
+    ) -> None:
+        lat_c = round(lat * GRID_CELL_SCALE_FACTOR) / GRID_CELL_SCALE_FACTOR
+        lon_c = round(lon * GRID_CELL_SCALE_FACTOR) / GRID_CELL_SCALE_FACTOR
+        h = GRID_CELL_HALF_SIZE_DEG
+        poly_wkt = (
+            f"POLYGON(({lon_c - h} {lat_c - h}, {lon_c + h} {lat_c - h}, "
+            f"{lon_c + h} {lat_c + h}, {lon_c - h} {lat_c + h}, {lon_c - h} {lat_c - h}))"
+        )
+        point_wkt = f"POINT({lon_c} {lat_c})"
+
+        with psycopg.connect(self._database_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO grid_cell (id, geom, center)
+                    VALUES (%s, ST_GeomFromText(%s, %s), ST_GeomFromText(%s, %s))
+                    ON CONFLICT (id) DO UPDATE
+                    SET geom = EXCLUDED.geom, center = EXCLUDED.center;
+                    """,
+                    (cell_id, poly_wkt, DEFAULT_SRID, point_wkt, DEFAULT_SRID),
+                )
+                for s in seasons:
+                    cur.execute(
+                        """
+                        INSERT INTO climate_season (
+                            cell_id, year, start_date, rain_mm, rain_source,
+                            tmax_c, tmin_c, tmean_c, rh2m_pct, ws2m_ms,
+                            solar_rad_mj, gwetroot, eto_mm
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (cell_id, year) DO UPDATE
+                        SET rain_mm = EXCLUDED.rain_mm,
+                            tmax_c = EXCLUDED.tmax_c,
+                            tmin_c = EXCLUDED.tmin_c,
+                            eto_mm = EXCLUDED.eto_mm;
+                        """,
+                        (
+                            cell_id,
+                            s.year,
+                            s.start_date,
+                            list(s.rain_mm),
+                            s.rain_source,
+                            list(s.tmax_c),
+                            list(s.tmin_c),
+                            list(s.tmean_c),
+                            list(s.rh2m_pct),
+                            list(s.ws2m_ms),
+                            list(s.solar_rad_mj),
+                            list(s.gwetroot),
+                            list(s.eto_mm),
+                        ),
+                    )
+            conn.commit()
+
+    def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
+        with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT year, start_date, rain_mm, rain_source, tmax_c, tmin_c,
+                       eto_mm, COALESCE(gwetroot, '{}'), COALESCE(tmean_c, '{}'),
+                       COALESCE(rh2m_pct, '{}'), COALESCE(ws2m_ms, '{}'),
+                       COALESCE(solar_rad_mj, '{}')
+                FROM climate_season
+                WHERE cell_id = %s
+                ORDER BY year ASC;
+                """,
+                (cell_id,),
+            )
+            rows = cur.fetchall()
+            if not rows:
+                return self._fallback.get_seasons(cell_id)
+            return [
+                ClimateSeason(
+                    cell_id=cell_id,
+                    year=int(r[0]),
+                    start_date=r[1],
+                    rain_mm=tuple(float(v) for v in r[2]),
+                    rain_source=str(r[3]),
+                    tmax_c=tuple(float(v) for v in r[4]),
+                    tmin_c=tuple(float(v) for v in r[5]),
+                    eto_mm=tuple(float(v) for v in r[6]),
+                    gwetroot=tuple(float(v) for v in r[7]),
+                    tmean_c=tuple(float(v) for v in r[8]),
+                    rh2m_pct=tuple(float(v) for v in r[9]),
+                    ws2m_ms=tuple(float(v) for v in r[10]),
+                    solar_rad_mj=tuple(float(v) for v in r[11]),
+                )
+                for r in rows
+            ]
+
+    def get_cmip6_delta(self, cell_id: str) -> Cmip6Delta:
+        return self._fallback.get_cmip6_delta(cell_id)
+
+    def get_latest_smap(self, lat: float, lon: float) -> SmapSoilMoisture | None:
+        return self._fallback.get_latest_smap(lat, lon)

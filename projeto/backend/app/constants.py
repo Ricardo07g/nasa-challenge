@@ -128,3 +128,26 @@ NEMATODE_SUPPRESSOR_CROPS: Final[frozenset[str]] = frozenset({"crotalaria", "mil
 DATA_VERSION: Final[str] = "2026.11-nasa-power-20y"
 PROBLEM_JSON_MEDIA_TYPE: Final[str] = "application/problem+json"
 PROBLEM_BASE_URI: Final[str] = "https://api.raizorbital.com/errors"
+
+# External Satellite APIs & On-Demand Ingestion Constants (Task 0001)
+NASA_POWER_DAILY_POINT_URL: Final[str] = "https://power.larc.nasa.gov/api/temporal/daily/point"
+NASA_POWER_COMMUNITY: Final[str] = "AG"
+NASA_POWER_PARAMETERS: Final[str] = (
+    "PRECTOTCORR,T2M_MAX,T2M_MIN,T2M,RH2M,WS2M,ALLSKY_SFC_SW_DWN,GWETROOT"
+)
+NASA_POWER_MISSING_SENTINEL: Final[float] = -999.0
+HISTORICAL_START_YEAR: Final[int] = 2005
+HISTORICAL_END_YEAR: Final[int] = 2024
+
+SOILGRIDS_QUERY_URL: Final[str] = "https://rest.isric.org/soilgrids/v2.0/properties/query"
+SOILGRIDS_DEPTHS: Final[tuple[str, ...]] = ("0-5cm", "5-15cm", "15-30cm")
+SOILGRIDS_PROPERTIES: Final[tuple[str, ...]] = ("clay", "sand")
+SOILGRIDS_G_KG_TO_PCT_DIVISOR: Final[float] = 10.0
+
+EXTERNAL_API_TIMEOUT_SECONDS: Final[float] = 8.0
+INGESTION_TOTAL_TIMEOUT_SECONDS: Final[float] = 9.0
+EXTERNAL_API_MAX_RETRIES: Final[int] = 2
+EXTERNAL_API_BACKOFF_BASE_SECONDS: Final[float] = 0.05
+GRID_CELL_HALF_SIZE_DEG: Final[float] = 0.05
+SOIL_POINT_ROUND_DECIMALS: Final[int] = 3
+INGESTION_WORKERS_COUNT: Final[int] = 2
