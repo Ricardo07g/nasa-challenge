@@ -31,3 +31,6 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "--import-mode=importlib"
+markers = [
+    "db: precisa do PostGIS de teste; roda só com TEST_DATABASE_URL (senão é pulado)",
+]
