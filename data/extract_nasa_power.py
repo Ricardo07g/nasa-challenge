@@ -131,9 +131,9 @@ def save_to_csv(records: List[Dict[str, Any]], filename: str, output_dir: Option
 
 
 if __name__ == "__main__":
-    # Exemplo de extração pontual: safra recente em Uberlândia - MG
-    lat_uberlandia = -18.9186
-    lon_uberlandia = -48.2772
+    # Exemplo de extração pontual: safra recente na  campo de soja da Fazenda Experimental do Glória (UFU), Uberlândia
+    lat_uberlandia = -18.9543
+    lon_uberlandia = -48.1993
 
     dados = fetch_nasa_power_data(
         latitude=lat_uberlandia,

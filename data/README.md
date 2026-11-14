@@ -146,10 +146,10 @@ Script: [`extract_nasa_power.py`](file:///workspace/data/extract_nasa_power.py)
 ```python
 from extract_nasa_power import fetch_nasa_power_data, save_to_json, save_to_csv
 
-# Busca dados de uma fazenda em Uberlândia - MG
+# Busca dados da fazenda de exemplo: campo de soja da Fazenda Experimental do Glória (UFU), Uberlândia - MG
 dados = fetch_nasa_power_data(
-    latitude=-18.9186,
-    longitude=-48.2772,
+    latitude=-18.9543,
+    longitude=-48.1993,
     start_date="20240101",
     end_date="20240331"
 )
@@ -177,8 +177,8 @@ from extract_smap import generate_smap_sample_dataset, save_smap_data
 
 # Gera série representativa da umidade do solo para o talhão
 dados_smap = generate_smap_sample_dataset(
-    latitude=-18.9186,
-    longitude=-48.2772,
+    latitude=-18.9543,
+    longitude=-48.1993,
     start_date="2024-01-01",
     dias=90
 )
@@ -221,3 +221,8 @@ Abaixo está o mapeamento de **todas as fontes de dados** previstas na Seção 6
 | **GPM IMERG Final** | Chuva diária de satélite a 0.1° (~10 km) de 2005 a 2025 | Alternativa de maior resolução espacial para a série de 20 anos de chuva. | 💡 *Fallback*: Usando a chuva do NASA POWER (`PRECTOTCORR`) | `earthaccess` / GES DISC |
 | **NASA FIRMS** | Focos ativos de queimadas (375 m / 15 min) | Monitoramento de risco de fogo na palhada durante a seca (módulo pós-MVP). | 💡 *Módulo Futuro*: Alertas em tempo real | API REST FIRMS (`MAP_KEY` gratuita) |
 
+## Fazenda de exemplo
+
+O ponto usado pelos scripts é o campo de soja de 48 ha da **Fazenda Experimental do Glória (UFU)**, em Uberlândia: `lat -18.9543`, `lon -48.1993` (18°57'15.6"S 48°11'57.4"O, segundo TCC do ICIAG-UFU de 2026). Até 14/11/2026 o ponto era `-18.9186, -48.2772`, que fica no centro urbano de Uberlândia: o NDVI ali mostra a cidade, não uma lavoura.
+
+> **Pendente:** os arquivos em `output/` ainda são do ponto antigo. Rode de novo `extract_historical_20y.py`, `extract_nasa_power.py` e `extract_smap.py` para gerar os dados do ponto novo.
