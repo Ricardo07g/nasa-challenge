@@ -56,12 +56,17 @@ services:
         required: false
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-raiz}:${POSTGRES_PASSWORD:-raiz_local}@db:5432/${POSTGRES_DB:-raiz_orbital}
+      # Dados baixados pelos scripts de pipeline/ (pasta local data/baixados, fora do git; ver
+      # backend/docs/como-preparar-os-dados-locais.md). Sem o arquivo, a API segue sem esse dado.
+      CMIP6_PATH: ${CMIP6_PATH:-/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json}
+      NDVI_CACHE_PATH: ${NDVI_CACHE_PATH:-/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json}
     volumes:
       - ./backend/app:/app/app
       - ./backend/tests:/app/tests
       - ./backend/pipeline:/app/pipeline
       - ./backend/migrations:/app/migrations
       - ./backend/alembic.ini:/app/alembic.ini
+      - ../data/baixados:/dados_baixados:ro
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     depends_on:
       db:
