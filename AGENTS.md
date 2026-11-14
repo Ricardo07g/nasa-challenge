@@ -47,6 +47,9 @@ docker compose down -v           # para tudo e APAGA o banco local
 
 Mudou dependência do frontend? Rode `docker compose up --build -V` para recriar o `node_modules` do container.
 
+Dados locais para testar com dado real (clima, solo, CMIP6, NDVI; pasta `data/baixados`, fora do git):
+veja `projeto/backend/docs/como-preparar-os-dados-locais.md`.
+
 ## TDD é obrigatório
 
 Todo código novo (backend e frontend) é desenvolvido com **TDD**, sem exceção para regra de negócio:

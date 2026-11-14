@@ -125,6 +125,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 
 ## Dados da API
 
+- **Preparar os dados na sua máquina** (pré-carga, CMIP6, NDVI, pacote do time e cópia do banco):
+  `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
   `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`). Nunca coloque caminho fixo (como
   `/workspace/...`) num repository.
@@ -244,12 +246,11 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   Para ligar o arquivo gerado pelo `pipeline/fetch_cmip6_deltas.py` (ele não vai para o git sozinho):
   - **com uv**: `CMIP6_PATH=data/output/cmip6_deltas_nex_gddp.json` no `.env` desta pasta (caminho
     relativo à pasta de onde a API roda, `projeto/backend`);
-  - **no compose**: o container só enxerga as pastas montadas (`app/`, `tests/`, `pipeline/`,
-    `migrations/`), não a `data/`. Copie o arquivo para dentro de uma delas, por exemplo
-    `app/fixtures/cmip6_deltas_nex_gddp.json`, e aponte
-    `CMIP6_PATH=/app/app/fixtures/cmip6_deltas_nex_gddp.json` (no `.env` ou no `environment` do
-    serviço `backend`). Commitar esse arquivo derivado (pequeno, como a fixture do clima) é decisão do
-    time: ele traz o próprio `versao_dados`.
+  - **no compose**: já ligado. O serviço `backend` monta a pasta local `data/baixados` (fora do git)
+    em `/dados_baixados`, só leitura, e aponta `CMIP6_PATH` para
+    `/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json` e `NDVI_CACHE_PATH` para
+    `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json`. Sem o arquivo, segue sem o dado.
+    Como baixar ou receber esses arquivos: `docs/como-preparar-os-dados-locais.md`.
 
 - **NDVI do MODIS e histórico do talhão** (R3.2, tarefa 0018). Com ou sem banco, a série vem do arquivo
   do `NDVI_CACHE_PATH` (a tabela `ndvi_point` já existe desde o R1.6, mas a API ainda não lê dela). O arquivo vem do
