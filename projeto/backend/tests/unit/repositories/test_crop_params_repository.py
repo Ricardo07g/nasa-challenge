@@ -2,8 +2,13 @@
 
 from pathlib import Path
 
+import yaml
+
 from app.config import Settings
 from app.repositories.crop_params_repository import YamlCropParamsRepository
+
+# O culturas.yaml que vai junto com a API (caminho padrão, sem ler variável de ambiente).
+SHIPPED_CULTURAS = Settings.model_fields["culturas_path"].default
 
 YAML = """
 culturas:
@@ -143,3 +148,34 @@ def test_should_load_shipped_culturas_yaml_with_prd_soil_points() -> None:
         "milheto": 55,
         "crotalaria": 85,
     }
+
+
+def test_should_ship_culturas_yaml_keyed_by_canonical_crop_ids() -> None:
+    # ADR-0001: o YAML já usa o id canônico; os aliases longos só servem para entrada antiga.
+    raw = yaml.safe_load(SHIPPED_CULTURAS.read_text(encoding="utf-8"))
+
+    assert list(raw["culturas"]) == [
+        "pousio",
+        "milho_safrinha",
+        "sorgo",
+        "milho_braquiaria",
+        "milheto",
+        "crotalaria",
+    ]
+
+
+def test_should_ship_interface_names_and_how_to_steps_in_both_languages() -> None:
+    # Nomes iguais aos da interface (front: src/i18n/messages.pt.ts e messages.en.ts).
+    crops = YamlCropParamsRepository(SHIPPED_CULTURAS).list_all()
+
+    assert {c.id: (c.nome, c.nome_en) for c in crops} == {
+        "pousio": ("Deixar parado", "Leave it fallow"),
+        "milho_safrinha": ("Milho sozinho", "Corn alone"),
+        "sorgo": ("Sorgo", "Sorghum"),
+        "milho_braquiaria": ("Milho com braquiária", "Corn with brachiaria"),
+        "milheto": ("Milheto", "Pearl millet"),
+        "crotalaria": ("Crotalária", "Crotalaria"),
+    }
+    for crop in crops:
+        assert 3 <= len(crop.como_fazer) <= 5, crop.id
+        assert len(crop.como_fazer_en) == len(crop.como_fazer), crop.id

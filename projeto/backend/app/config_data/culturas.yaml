@@ -3,6 +3,15 @@
 # Referência: Embrapa, ZARC e Seção 5 do PRD
 # Editável por agrônomos sem necessidade de alterar o código de backend
 #
+# Chaves de `culturas`: ids canônicos da ADR-0001 (os mesmos do front). Os ids longos
+#   antigos (sorgo_granifero, crotalaria_spectabilis) ainda são aceitos na entrada
+#   (CROP_ID_ALIASES em app/constants.py). O nome do PRD §5 fica no comentário do id.
+# nome / nome_en: como a interface mostra (front: src/i18n/messages.pt.ts e messages.en.ts).
+# como_fazer / como_fazer_en: os 3 passos do cartão "Como fazer" (PRD §4, tela 5).
+#   RASCUNHO PARA A AGRÔNOMA REVISAR. Texto do protótipo (front:
+#   src/repositories/mocks/fixtures.ts, igual ao plano técnico §3.2 e ao prompt do Lovable);
+#   o do pousio vem do texto do pousio que a API já devolve. Sem número agronômico novo.
+#
 # nota_solo: pontos da tabela 7.4 do PRD (palhada até 40, nitrogênio até 30,
 #   quebra de pragas/nematoide até 30). A nota de solo é a soma (0 a 100).
 # Coberturas e pousio não dão grão: sem produtividade_padrao_sc_ha e preco_padrao_saca
@@ -10,8 +19,9 @@
 # ==============================================================================
 
 culturas:
-  pousio:
-    nome: "Pousio"
+  pousio:  # PRD §5: Pousio
+    nome: "Deixar parado"
+    nome_en: "Leave it fallow"
     tipo: "pousio"
     funcao: "Nenhuma"
     semeadura_limite_mes_dia: null
@@ -20,9 +30,18 @@ culturas:
     kc_pico: 0.0
     nota_solo: {palhada: 0, nitrogenio: 0, pragas: 0}
     n_deixado_kg: 0         # Nitrogênio fixado no solo (kg/ha)
+    como_fazer:  # rascunho: agrônoma revisar
+      - "Colha a soja e deixe a área sem plantar."
+      - "Controle o mato que nascer até a próxima soja."
+      - "Desseque a área antes de plantar a próxima soja."
+    como_fazer_en:
+      - "Harvest the soybeans and leave the area unplanted."
+      - "Control the weeds that come up until the next soybeans."
+      - "Burn down the area before planting the next soybeans."
 
-  milho_safrinha:
-    nome: "Milho Safrinha"
+  milho_safrinha:  # PRD §5: Milho safrinha
+    nome: "Milho sozinho"
+    nome_en: "Corn alone"
     tipo: "grao"
     funcao: "Grão"
     semeadura_limite_mes_dia: "02-28" # Limite ZARC Triângulo Mineiro
@@ -34,9 +53,18 @@ culturas:
     produtividade_padrao_sc_ha: 80.0
     preco_padrao_saca: 62.0 # R$ / saca Uberlândia nov/2026
     custo_padrao_ha: 3500.0
+    como_fazer:  # rascunho: agrônoma revisar
+      - "Semeie o milho logo depois de colher a soja."
+      - "Colha o milho no inverno."
+      - "Se der, cubra a terra antes da próxima soja."
+    como_fazer_en:
+      - "Sow the corn right after the soybean harvest."
+      - "Harvest the corn in winter."
+      - "If you can, cover the soil before the next soybeans."
 
-  sorgo_granifero:
-    nome: "Sorgo Granífero"
+  sorgo:  # PRD §5: Sorgo granífero
+    nome: "Sorgo"
+    nome_en: "Sorghum"
     tipo: "grao"
     funcao: "Grão"
     semeadura_limite_mes_dia: "03-20" # Mais tolerante ao estresse hídrico
@@ -48,9 +76,18 @@ culturas:
     produtividade_padrao_sc_ha: 60.0
     preco_padrao_saca: 49.6 # ~80% do milho
     custo_padrao_ha: 2200.0
+    como_fazer:  # rascunho: agrônoma revisar
+      - "Semeie o sorgo logo depois de colher a soja."
+      - "Colha o grão em junho ou julho."
+      - "Deixe a palhada para a próxima soja."
+    como_fazer_en:
+      - "Sow the sorghum right after the soybean harvest."
+      - "Harvest the grain in June or July."
+      - "Leave the straw for the next soybeans."
 
-  milho_braquiaria:
-    nome: "Milho + Braquiária ruziziensis"
+  milho_braquiaria:  # PRD §5: Milho + braquiária ruziziensis
+    nome: "Milho com braquiária"
+    nome_en: "Corn with brachiaria"
     tipo: "consorcio"
     funcao: "Grão + Cobertura"
     semeadura_limite_mes_dia: "02-28"
@@ -62,9 +99,18 @@ culturas:
     produtividade_padrao_sc_ha: 76.0 # Leve desconto pelo consórcio (-5%)
     preco_padrao_saca: 62.0
     custo_padrao_ha: 3800.0
+    como_fazer:  # rascunho: agrônoma revisar
+      - "Semeie o capim junto com o milho."
+      - "Colha o milho. O capim fica cobrindo a terra."
+      - "Plante a próxima soja em cima da palhada."
+    como_fazer_en:
+      - "Sow the grass together with the corn."
+      - "Harvest the corn. The grass keeps the soil covered."
+      - "Plant the next soybeans on top of the straw."
 
-  milheto:
+  milheto:  # PRD §5: Milheto
     nome: "Milheto"
+    nome_en: "Pearl millet"
     tipo: "cobertura"
     funcao: "Cobertura de solo"
     semeadura_limite_mes_dia: "03-15"
@@ -74,9 +120,18 @@ culturas:
     nota_solo: {palhada: 35, nitrogenio: 0, pragas: 20}
     n_deixado_kg: 0
     custo_padrao_ha: 600.0  # Custo de implantação/semente
+    como_fazer:  # rascunho: agrônoma revisar
+      - "Semeie o milheto logo depois da soja."
+      - "Deixe crescer e formar palha."
+      - "Plante a soja direto sobre a palha."
+    como_fazer_en:
+      - "Sow the pearl millet right after the soybeans."
+      - "Let it grow and form straw."
+      - "Plant the soybeans directly on the straw."
 
-  crotalaria_spectabilis:
-    nome: "Crotalária spectabilis"
+  crotalaria:  # PRD §5: Crotalária spectabilis
+    nome: "Crotalária"
+    nome_en: "Crotalaria"
     tipo: "cobertura"
     funcao: "Cobertura leguminosa"
     semeadura_limite_mes_dia: "02-28"
@@ -86,3 +141,11 @@ culturas:
     nota_solo: {palhada: 25, nitrogenio: 30, pragas: 30}
     n_deixado_kg: 80        # Fixação biológica de Nitrogênio (60 a 100 kg/ha)
     custo_padrao_ha: 800.0
+    como_fazer:  # rascunho: agrônoma revisar
+      - "Semeie a crotalária a lanço ou em linha."
+      - "Deixe crescer até florescer."
+      - "Roce e plante a soja em cima da palhada."
+    como_fazer_en:
+      - "Sow the crotalaria broadcast or in rows."
+      - "Let it grow until it flowers."
+      - "Mow it and plant the soybeans on top of the straw."
