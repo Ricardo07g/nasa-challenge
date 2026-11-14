@@ -167,6 +167,20 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   (`-999` vira `None`). O `ClimateSeasonBuilder` monta as temporadas de 212 dias desde 1/jan,
   tira o ano com algum dia sem chuva, máxima ou mínima, e calcula a ETo FAO-56 Penman-Monteith.
   Faltou UR, vento, radiação ou altitude: Hargreaves-Samani na temporada inteira.
+- **Deltas do CMIP6** (R2.1, tarefa 0014): `pipeline/fetch_cmip6_deltas.py` pede ao THREDDS da NCCS
+  (recorte por ponto em CSV, sem credencial) `pr`, `tasmax` e `tasmin` de jan a jul, 1995–2014 contra
+  2041–2060 (SSP2-4.5), de ACCESS-CM2, MPI-ESM1-2-HR e MRI-ESM2-0 (padrão adotado, **a revisar**), e
+  grava o arquivo do contrato CMIP6 (abaixo) em `data/output/cmip6_deltas_nex_gddp.json`. Pontos: as 12
+  células do POWER da caixa piloto, ou `--pontos="lat,lon; lat,lon"`. Cada arquivo do THREDDS tem um
+  ano de uma variável: a caixa inteira dá 4.320 pedidos de ~6 s, **cerca de 8 h**; um ponto só, ~40 min.
+  Os CSV ficam em `data/cache/nex_gddp_cmip6_ncss/`: se parar, rode de novo que ele continua de onde
+  parou. As duas pastas ficam fora do git. Nada vai para o banco ainda (tabela no R1.6, leitura no R3.1).
+
+  ```bash
+  uv run python -m pipeline.fetch_cmip6_deltas --dry-run   # quantos pedidos e quanto tempo
+  uv run python -m pipeline.fetch_cmip6_deltas             # caixa piloto, 3 modelos
+  ```
+
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
   ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre
