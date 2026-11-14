@@ -3,6 +3,7 @@ import type { Opcao, Recomendacao } from '../models/recomendacao'
 import {
   alternativeSummary,
   buildAnswer,
+  buildPlan,
   findOption,
   optionsSummary,
   harvestYear,
@@ -173,5 +174,38 @@ describe('optionsSummary (tela 6)', () => {
 
   it('traz o aviso do que ficou fora da janela de plantio', () => {
     expect(optionsSummary(rec, null).late).toEqual({ names: ['Milho sozinho'], texts: ['Passa da data do ZARC.'] })
+  })
+})
+
+describe('buildPlan (tela 7)', () => {
+  const rec = {
+    entrada: { celula_id: null, colheita: 'meio', semeadura: '2027-02-18', solo: 'medio', nematoide: null },
+    plano_3_anos: {
+      normal: { anos: ['milho_braquiaria', 'crotalaria', 'sorgo'], nota: 66 },
+      seco: { anos: ['sorgo', 'crotalaria', 'sorgo'], nota: 58 },
+      hoje: { descricao: 'Terra descoberta em metade dos anos', nota: 48 },
+    },
+  } as Recomendacao
+
+  it('ano normal: um ano por bloco, a partir da soja de 2027, sem trocas', () => {
+    expect(buildPlan(rec, 'normal')).toEqual({
+      years: [
+        { year: 2027, crop: 'milho_braquiaria', swappedFrom: null },
+        { year: 2028, crop: 'crotalaria', swappedFrom: null },
+        { year: 2029, crop: 'sorgo', swappedFrom: null },
+      ],
+      summary: { grain: 2, covered: 3, total: 3 },
+      swaps: [],
+      today: 'Terra descoberta em metade dos anos',
+    })
+  })
+
+  it('ano seco: mostra o que troca e de onde veio', () => {
+    const plan = buildPlan(rec, 'seco')
+
+    expect(plan.years[0]).toEqual({ year: 2027, crop: 'sorgo', swappedFrom: 'milho_braquiaria' })
+    expect(plan.years[1].swappedFrom).toBeNull()
+    expect(plan.swaps).toEqual([{ year: 2027, from: 'milho_braquiaria', to: 'sorgo' }])
+    expect(plan.summary).toEqual({ grain: 2, covered: 3, total: 3 })
   })
 })

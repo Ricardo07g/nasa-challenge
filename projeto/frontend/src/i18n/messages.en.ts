@@ -211,6 +211,7 @@ export const en = {
     normalText: 'Rain similar to the average of the last 20 years.',
     dryText: 'We repeat the driest years of the last 20, similar to a strong El Niño.',
     swap: (from: string, year: number, to: string) => `The plan swaps ${from} in ${year} for ${to}.`,
+    swapTagline: (from: string) => `Instead of ${from}: handles drought better.`,
     withPlan: 'With the plan',
     today: 'How it is today',
     coveredAll: (total: number) => `Soil covered in all ${total} years`,
@@ -226,6 +227,7 @@ export const en = {
     gainTitle: 'The gain shows up in the next soybean crop',
     gainText:
       'In a study in the Cerrado, soybeans after grain with brachiaria yielded 11% more than after idle land.',
+    gainNote: 'Illustrative reference; study to be confirmed.',
     backToAnswer: 'Back to the answer',
     seeNeighbors: 'See what the neighbors planted',
   },

@@ -110,6 +110,15 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Todas as opções')
   })
 
+  it('a aba "Plano de 3 anos" abre a linha do tempo do plano', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Plano de 3 anos' }))
+
+    expect(await screen.findByRole('list', { name: 'Plano ano a ano' })).toHaveTextContent('2027Milho com braquiária')
+    expect(document.title).toBe('Raiz Orbital – Plano de 3 anos')
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 
