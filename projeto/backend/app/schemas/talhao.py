@@ -1,8 +1,8 @@
-"""JSON de GET /api/talhao (plano técnico §3.1)."""
+"""JSON de GET /api/talhao (plano técnico §3.1; `historico` no formato do guia do NDVI)."""
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.talhao import Talhao
+from app.models.talhao import HistoricoTalhao, SituacaoAno, Talhao
 
 
 class _Frozen(BaseModel):
@@ -28,15 +28,36 @@ class ColheitaSugeridaSchema(_Frozen):
 
 class HistoricoAnoSchema(_Frozen):
     ano: int
-    situacao: str
-    ndvi_max: float
+    situacao: SituacaoAno
+    ndvi_max: float | None  # null quando o ano fica sem_dado
+    n_obs: int
 
 
 class HistoricoSchema(_Frozen):
     anos: list[HistoricoAnoSchema]
     parado: int
-    total: int
+    plantou: int
+    sem_certeza: int  # incerto + sem_dado
+    total: int  # anos da janela
     fonte: str
+    janela: str
+
+    @classmethod
+    def from_model(cls, historico: HistoricoTalhao) -> "HistoricoSchema":
+        return cls(
+            anos=[
+                HistoricoAnoSchema(
+                    ano=a.ano, situacao=a.situacao, ndvi_max=a.ndvi_max, n_obs=a.n_obs
+                )
+                for a in historico.anos
+            ],
+            parado=historico.parado,
+            plantou=historico.plantou,
+            sem_certeza=historico.sem_certeza,
+            total=historico.total,
+            fonte=historico.fonte,
+            janela=historico.janela,
+        )
 
 
 class FonteDadoSchema(_Frozen):
@@ -59,7 +80,6 @@ class TalhaoResponse(_Frozen):
 
     @classmethod
     def from_model(cls, talhao: Talhao) -> "TalhaoResponse":
-        historico = talhao.historico
         return cls(
             ponto=PontoSchema(lat=talhao.lat, lon=talhao.lon),
             celula_id=talhao.celula_id,
@@ -75,16 +95,8 @@ class TalhaoResponse(_Frozen):
                 anos_usados=talhao.colheita_sugerida.anos_usados,
             ),
             historico=(
-                HistoricoSchema(
-                    anos=[
-                        HistoricoAnoSchema(ano=a.ano, situacao=a.situacao, ndvi_max=a.ndvi_max)
-                        for a in historico.anos
-                    ],
-                    parado=historico.parado,
-                    total=historico.total,
-                    fonte=historico.fonte,
-                )
-                if historico is not None
+                HistoricoSchema.from_model(talhao.historico)
+                if talhao.historico is not None
                 else None
             ),
             dados=[

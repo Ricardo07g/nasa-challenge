@@ -98,16 +98,8 @@ solo:
     fonte: "PRD 7.4: com nematoide = sim, a coluna de pragas vale 1,5 vez e o total é reescalado para 0 a 100"
 
 ndvi:
-  # Histórico do talhão pelo NDVI do MODIS, já com o fator 0,0001 (PRD 7.8)
-  plantou_acima:
-    valor: 0.60
-    fonte: "PRD 7.8: maior NDVI da entressafra acima de 0,6 = segunda safra ou cobertura (Embrapa, 2021; a calibrar com 5 talhões)"
-  parado_abaixo:
-    valor: 0.45
-    fonte: "PRD 7.8: maior NDVI da entressafra abaixo de 0,45 = pousio (Embrapa, 2021; a calibrar com 5 talhões)"
-  meses_entressafra:
-    valor: [4, 5, 6, 7]
-    fonte: "PRD 7.8: entressafra de 1º de abril a 31 de julho"
+  # Colheita sugerida pela série de NDVI do MODIS, já com o fator 0,0001 (PRD 7.9).
+  # Os limites do histórico do talhão (PRD 7.8) ficam em historico_ndvi.
   queda_colheita:
     valor: 0.50
     fonte: "PRD 7.9: soja secando quando o NDVI cai abaixo de 50% do pico do verão"

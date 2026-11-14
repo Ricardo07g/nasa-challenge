@@ -58,8 +58,9 @@ SOIL_CAD_BY_TEXTURE: Final[dict[str, float]] = {
 }
 
 # MODIS NDVI Scale & Harvest Band Constants (US-02, US-07, ADR-0002)
-# Limiares do NDVI (plantou/parado, queda da soja, meses da entressafra): regras.yaml, grupo ndvi
+# Histórico do talhão: regras.yaml, grupo historico_ndvi; queda da soja: grupo ndvi
 NDVI_SCALE_FACTOR: Final[float] = 0.0001
+NDVI_DECIMALS: Final[int] = 4  # precisão do MOD13Q1 (fator 0,0001): tira o ruído do float
 MIN_NDVI_YEARS_FOR_SUGGESTION: Final[int] = 5
 EARLY_HARVEST_DOY_LIMIT: Final[int] = 41  # Feb 10
 MID_HARVEST_DOY_LIMIT: Final[int] = 53  # Feb 22

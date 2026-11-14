@@ -57,12 +57,9 @@ class RegrasSolo:
 
 @dataclass(frozen=True)
 class RegrasNdvi:
-    """Histórico do talhão (PRD 7.8) e queda da soja para a colheita sugerida (PRD 7.9)."""
+    """Queda da soja para a colheita sugerida (PRD 7.9). O histórico fica em RegrasHistoricoNdvi."""
 
-    plantou_acima: float
-    parado_abaixo: float
     queda_colheita: float
-    meses_entressafra: frozenset[int]
 
 
 @dataclass(frozen=True)
