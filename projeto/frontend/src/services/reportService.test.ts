@@ -24,7 +24,15 @@ describe('reportSources (relatório, P2)', () => {
         { fonte: 'nex_gddp_cmip6', periodo: '2041-2060' },
       ],
       solo: { textura: 'argiloso', cad_mm: 75, fonte: 'soilgrids' },
-      historico: { anos: [], parado: 5, total: 10, fonte: 'modis_mod13q1' },
+      historico: {
+        anos: [],
+        parado: 5,
+        plantou: 4,
+        sem_certeza: 1,
+        total: 10,
+        fonte: 'MODIS MOD13Q1 + MYD13Q1',
+        janela: '04-01 a 07-31',
+      },
     })
     const rec = { sinal: { fonte: ['GEOS-S2S', 'SMAP'] } } as Recomendacao
 

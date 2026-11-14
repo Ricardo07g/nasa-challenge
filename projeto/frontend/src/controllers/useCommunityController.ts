@@ -5,6 +5,7 @@ import { communityService, regionPoints, regionSummary, type CommunityService } 
 import { farmService, type FarmService } from '../services/farmService'
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { EXAMPLE_FARM } from '../services/locationService'
+import { historySummary } from '../services/satelliteService'
 import { useAsync } from './useAsync'
 
 type Deps = { community: CommunityService; farm: FarmService }
@@ -31,6 +32,8 @@ export function useCommunityController(deps: Deps = defaultDeps) {
     [center, params?.exemplo, lang, deps.farm],
   )
 
+  const history = historySummary(talhao.data?.historico ?? null)
+
   return {
     status: community.status,
     retry: community.retry,
@@ -39,9 +42,7 @@ export function useCommunityController(deps: Deps = defaultDeps) {
     points,
     region: region.status === 'ready' && region.data ? regionSummary(region.data) : null,
     regionRadius: region.data?.raio_km ?? null,
-    history: talhao.data?.historico
-      ? { parado: talhao.data.historico.parado, total: talhao.data.historico.total }
-      : null,
+    history: history ? { idle: history.idle, known: history.known, uncertain: history.uncertain } : null,
     // A Comunidade abre de qualquer tela pelo cabeçalho: volta para a resposta se o caminho estiver na URL.
     backTo: params?.colheita ? `/resposta${keepFlowQuery(search.toString())}` : '/',
     demo,

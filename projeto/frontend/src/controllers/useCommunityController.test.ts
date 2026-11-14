@@ -77,7 +77,8 @@ describe('useCommunityController (tela 8)', () => {
     await waitFor(() => expect(result.current.region).not.toBeNull())
     expect(result.current.region?.last).toEqual({ ano: 2025, pct: 62 })
     expect(result.current.regionRadius).toBe(30)
-    await waitFor(() => expect(result.current.history).toEqual({ parado: 5, total: 10 }))
+    // A lavoura de exemplo tem 5 anos parados, 4 plantados e 1 sem certeza: conta só os anos certos.
+    await waitFor(() => expect(result.current.history).toEqual({ idle: 5, known: 9, uncertain: 1 }))
     expect(d.community.region).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993 }, 'pt')
   })
 

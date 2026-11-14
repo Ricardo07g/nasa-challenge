@@ -142,8 +142,20 @@
 }
 
 .cell[data-state='unknown'] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--color-divider);
   border: 1.5px dashed var(--color-border-strong);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+/* Na faixa grande (histórico do talhão), o "?" acompanha o tamanho do quadrinho */
+.strip[data-size='lg'] .cell[data-state='unknown'] {
+  font-size: var(--font-size-small);
 }
 
 .year {
@@ -187,8 +199,15 @@
 }
 
 .legendCell[data-state='unknown'] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--color-divider);
   border: 1.5px dashed var(--color-border-strong);
+  color: var(--color-text-muted);
+  font-size: 8px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
 }
 
 @media (max-width: 768px) {
@@ -201,6 +220,10 @@
   }
 
   .year {
+    font-size: 9px;
+  }
+
+  .cell[data-state='unknown'] {
     font-size: 9px;
   }
 }

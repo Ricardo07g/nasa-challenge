@@ -7,7 +7,7 @@ import type { Lang } from '../../i18n/language'
 import type { Community } from '../../models/community'
 import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo } from '../../models/recomendacao'
 import { PREPARED_AREA } from '../../models/area'
-import type { Colheita, Ponto, Talhao } from '../../models/talhao'
+import type { Colheita, Ponto, SituacaoAno, Talhao } from '../../models/talhao'
 
 /** O backend responde `dentro_da_area: false` fora da caixa preparada; o mock imita isso. */
 function insideBox({ lat, lon }: Ponto): boolean {
@@ -286,12 +286,27 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
       dados: [],
     }
   }
-  const planted = [false, true, false, true, false, true, true, false, false, true]
-  const anos = planted.map((plantou, index) => ({
+  // Exemplo do guia do NDVI: 5 anos parados, 4 plantados e 1 em que o satélite não teve certeza.
+  const situacoes: SituacaoAno[] = [
+    'parado',
+    'plantou',
+    'parado',
+    'plantou',
+    'parado',
+    'incerto',
+    'plantou',
+    'parado',
+    'parado',
+    'plantou',
+  ]
+  const NDVI_MAX: Record<SituacaoAno, number | null> = { plantou: 0.71, parado: 0.42, incerto: 0.52, sem_dado: null }
+  const anos = situacoes.map((situacao, index) => ({
     ano: 2016 + index,
-    situacao: plantou ? ('plantou' as const) : ('parado' as const),
-    ndvi_max: plantou ? 0.71 : 0.42,
+    situacao,
+    ndvi_max: NDVI_MAX[situacao],
+    n_obs: situacao === 'sem_dado' ? 1 : 12,
   }))
+  const count = (...which: SituacaoAno[]) => anos.filter((ano) => which.includes(ano.situacao)).length
   return {
     ponto: point,
     celula_id: cellId(point),
@@ -300,9 +315,12 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
     colheita_sugerida: { faixa: 'meio', fonte: 'ndvi_modis', anos_usados: 9 },
     historico: {
       anos,
-      parado: anos.filter((ano) => ano.situacao === 'parado').length,
+      parado: count('parado'),
+      plantou: count('plantou'),
+      sem_certeza: count('incerto', 'sem_dado'),
       total: anos.length,
-      fonte: 'modis_mod13q1',
+      fonte: 'MODIS MOD13Q1 + MYD13Q1',
+      janela: '04-01 a 07-31',
     },
     dados: [
       { fonte: 'gpm_imerg', periodo: '2006-2025' },

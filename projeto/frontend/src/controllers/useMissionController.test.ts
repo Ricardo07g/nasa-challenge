@@ -12,7 +12,18 @@ const talhao = {
   ponto: { lat: -18.9543, lon: -48.1993 },
   dentro_da_area: true,
   solo: { textura: 'medio', cad_mm: 50, fonte: 'soilgrids' },
-  historico: { anos: [], parado: 5, total: 10, fonte: 'modis' },
+  historico: {
+    anos: [
+      { ano: 2024, situacao: 'parado', ndvi_max: 0.42, n_obs: 12 },
+      { ano: 2025, situacao: 'incerto', ndvi_max: 0.52, n_obs: 11 },
+    ],
+    parado: 1,
+    plantou: 0,
+    sem_certeza: 1,
+    total: 2,
+    fonte: 'MODIS MOD13Q1 + MYD13Q1',
+    janela: '04-01 a 07-31',
+  },
 } as unknown as Talhao
 const rec = { sinal: { nivel: 'incerto' } } as Recomendacao
 
@@ -61,7 +72,7 @@ describe('useMissionController (tela de cálculo, RF-19)', () => {
     expect(result.current.facts).toEqual({
       point: { lat: -18.9543, lon: -48.1993 },
       soil: 'medio',
-      historyYears: 10,
+      historyYears: 1,
       signal: 'incerto',
     })
     expect(result.current.place).toBe('Uberlândia (MG)')

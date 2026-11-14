@@ -61,9 +61,18 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
     const sheet = screen.getByRole('article')
     expect(sheet).toHaveTextContent('Sinal para o outono de 2027')
     expect(sheet).toHaveTextContent('Sem sinal claro')
-    expect(sheet).toHaveTextContent('Ficou parada em 5 de 10 anos')
+    expect(sheet).toHaveTextContent('Ficou parada em 5 de 9 anos (1 sem certeza)')
     expect(sheet).toHaveTextContent('GPM IMERG · NASA POWER · NEX-GDDP-CMIP6 · MODIS · SoilGrids · GEOS-S2S · SMAP')
     expect(sheet).toHaveTextContent('Não é laudo técnico, não substitui o ZARC oficial nem o agrônomo responsável.')
+  })
+
+  it('histórico da área: o ano sem certeza fica cinza com "?" e a fonte vem embaixo da faixa', () => {
+    setup()
+
+    const strip = screen.getByRole('img', { name: 'Ficou parada em 5 de 9 anos (1 sem certeza)' })
+    expect(strip.querySelectorAll('[data-state="unknown"]')).toHaveLength(1)
+    expect(strip.querySelector('[data-state="unknown"]')).toHaveTextContent('?')
+    expect(screen.getByRole('article')).toHaveTextContent('Visto pelo satélite MODIS (NASA), de abril a julho de cada ano')
   })
 
   it('sem sinal e sem histórico na API, essas seções somem e a numeração segue', () => {
@@ -110,5 +119,7 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
     setup({ t: en, lang: 'en', recomendacao: buildRecomendacao({ ...point, colheita: 'meio' }, 'en') })
 
     expect(screen.getByRole('heading', { level: 1, name: 'Field report · Raiz Orbital' })).toBeInTheDocument()
+    expect(screen.getByRole('article')).toHaveTextContent('Left idle in 5 of 9 years (1 uncertain)')
+    expect(screen.getByRole('article')).toHaveTextContent('Seen by the MODIS satellite (NASA), from April to July each year')
   })
 })

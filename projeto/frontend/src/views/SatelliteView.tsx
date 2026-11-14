@@ -5,6 +5,8 @@ import { PageHeading } from '../design-system/components/Content'
 import { BackLink } from '../design-system/components/Navigation'
 import { StripLegend, YearStrip, type CellState } from '../design-system/components/Status'
 import { ClimateIcon, DropIcon, HistoryIcon, SoilIcon } from '../design-system/icons'
+import { formatMonth } from '../i18n/format'
+import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import { TEXTURAS, type SituacaoAno, type Textura } from '../models/talhao'
 import type { HistorySummary, SoilSummary } from '../services/satelliteService'
@@ -14,6 +16,7 @@ import layout from './layout.module.css'
 
 export type SatelliteViewProps = {
   t: Messages
+  lang: Lang
   backTo: string
   status: ScreenStatus
   onRetry: () => void
@@ -26,8 +29,8 @@ export type SatelliteViewProps = {
   onConfirm: () => void
 }
 
-/** Cheio = plantou; contorno laranja = ficou parado; tracejado = o satélite não conseguiu ver. */
-const CELL: Record<SituacaoAno, CellState> = { plantou: 'good', parado: 'bad', incerto: 'unknown' }
+/** Cheio = plantou; contorno laranja = ficou parado; cinza com "?" = o satélite não teve certeza. */
+const CELL: Record<SituacaoAno, CellState> = { plantou: 'good', parado: 'bad', incerto: 'unknown', sem_dado: 'unknown' }
 
 /** Tela 4 "Pronto. O satélite já viu o resto.": histórico e chuva à esquerda; terra, clima e botão à direita. */
 export function SatelliteView(props: SatelliteViewProps) {
@@ -45,23 +48,22 @@ export function SatelliteView(props: SatelliteViewProps) {
   )
 }
 
-function Cards({ t, history, rain, soil, soilOpen, onToggleSoil, onChooseSoil, onConfirm }: SatelliteViewProps) {
+function Cards({ t, lang, history, rain, soil, soilOpen, onToggleSoil, onChooseSoil, onConfirm }: SatelliteViewProps) {
   const s = t.satellite
   const soilSource = { map: s.soilFromMap, user: s.soilFromUser, default: s.soilDefault }[soil.source]
-  const hasUnknown = history?.situations.includes('incerto') ?? false
   return (
     <div className={layout.pageGrid}>
       <div className={layout.stack}>
         {history && (
           <DataSourceCard
             icon={<HistoryIcon />}
-            title={s.historyTitle(history.idle, history.total)}
+            title={s.historyTitle(history.idle, history.known, history.uncertain)}
             subtitle={s.historySubtitle}
             readyLabel={t.common.ready}
           >
             <YearStrip
               size="lg"
-              label={s.historyStripLabel(history.planted, history.total)}
+              label={s.historyStripLabel(history.planted, history.known, history.uncertain)}
               cells={history.situations.map((situation) => CELL[situation])}
               years={history.years}
             />
@@ -69,9 +71,12 @@ function Cards({ t, history, rain, soil, soilOpen, onToggleSoil, onChooseSoil, o
               items={[
                 { state: 'good', label: s.planted },
                 { state: 'bad', label: s.idle },
-                ...(hasUnknown ? [{ state: 'unknown' as const, label: s.uncertain }] : []),
+                ...(history.uncertain > 0 ? [{ state: 'unknown' as const, label: s.uncertain }] : []),
               ]}
             />
+            <p className={layout.muted}>
+              {s.historySource(formatMonth(lang, history.window.from), formatMonth(lang, history.window.to))}
+            </p>
           </DataSourceCard>
         )}
         <DataSourceCard

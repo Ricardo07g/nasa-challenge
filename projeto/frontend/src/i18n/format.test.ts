@@ -6,6 +6,7 @@ import {
   formatDayMonth,
   formatDecimal,
   formatFullDate,
+  formatMonth,
   formatNumber,
 } from './format'
 
@@ -48,5 +49,13 @@ describe('format', () => {
   it('formata dia e mês sem depender do fuso horário', () => {
     expect(formatDayMonth('pt', '2027-02-18')).toBe('18 de fevereiro')
     expect(formatDayMonth('en', '2027-02-18')).toBe('February 18')
+  })
+})
+
+describe('formatMonth', () => {
+  it('nome do mês por extenso no jeito do idioma (1 = janeiro)', () => {
+    expect(formatMonth('pt', 4)).toBe('abril')
+    expect(formatMonth('pt', 7)).toBe('julho')
+    expect(formatMonth('en', 4)).toBe('April')
   })
 })

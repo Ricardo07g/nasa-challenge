@@ -173,12 +173,16 @@ export const pt = {
   satellite: {
     title: 'Pronto. O satélite já viu o resto.',
     subtitle: 'Você não precisa preencher mais nada.',
-    historyTitle: (idle: number, total: number) => `Sua área ficou parada em ${idle} de ${total} anos`,
+    /** Conta só os anos certos; os sem certeza vão no parêntese. */
+    historyTitle: (idle: number, known: number, uncertain: number) =>
+      `Sua área ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
     historySubtitle: 'O que cresceu depois da soja, ano a ano:',
-    historyStripLabel: (planted: number, total: number) => `Plantou em ${planted} de ${total} anos`,
+    historyStripLabel: (planted: number, known: number, uncertain: number) =>
+      `Plantou em ${planted} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
+    historySource: (from: string, to: string) => `Visto pelo satélite MODIS (NASA), de ${from} a ${to} de cada ano`,
     planted: 'Plantou',
     idle: 'Ficou parado',
-    uncertain: 'Não deu para ver',
+    uncertain: 'Sem certeza',
     rainTitle: '20 anos de chuva daqui',
     rainSubtitle: (start: string, end: string) => `De ${start} a ${end}, dia por dia.`,
     soilTitle: (texture: string) => `Terra ${texture}`,
@@ -307,7 +311,8 @@ export const pt = {
     table: 'Todas as opções',
     headers: { crop: 'Opção', years: 'Anos que deram certo (de 20)', margin: 'Sobra por hectare', soil: 'Terra' },
     history: 'Histórico da área',
-    idle: (idle: number, total: number) => `Ficou parada em ${idle} de ${total} anos`,
+    idle: (idle: number, known: number, uncertain: number) =>
+      `Ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
     sources: 'Fontes',
     footer: 'Ajuda a decidir. Não é laudo técnico, não substitui o ZARC oficial nem o agrônomo responsável.',
   },
@@ -315,8 +320,8 @@ export const pt = {
     title: 'Na sua região',
     regionSubtitle: (km: number) => `Até ${km} km da lavoura · visto pelo satélite`,
     regionBig: (year: number, pct: number) => `Em ${year}, ${pct}% da área de lavoura ficou parada depois da soja.`,
-    regionCompare: (idle: number, total: number, average: number) =>
-      `Sua área: parada em ${idle} de ${total} anos. Na região, em média ${average}% da área fica parada.`,
+    regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
+      `Sua área: parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}. Na região, em média ${average}% da área fica parada.`,
     regionAverage: (average: number) => `Na região, em média ${average}% da área fica parada depois da soja.`,
     regionChart: '% da área parada depois da soja, ano a ano.',
     regionNote: (pct: number) =>

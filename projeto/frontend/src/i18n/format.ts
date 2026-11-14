@@ -30,6 +30,13 @@ export function formatDayMonth(lang: Lang, isoDate: string): string {
   }).format(date)
 }
 
+/** Mês por extenso (1 = janeiro): "abril" / "April", sem depender do fuso do navegador. */
+export function formatMonth(lang: Lang, month: number): string {
+  return new Intl.DateTimeFormat(htmlLang(lang), { month: 'long', timeZone: 'UTC' }).format(
+    new Date(Date.UTC(2000, month - 1, 1)),
+  )
+}
+
 /** Ponto escolhido no mapa: "-18.9200, -48.2800" (latitude, longitude), igual em PT e EN. */
 export function formatCoordinates(point: { lat: number; lon: number }): string {
   return `${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`

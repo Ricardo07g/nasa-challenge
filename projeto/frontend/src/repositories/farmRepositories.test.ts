@@ -54,6 +54,25 @@ describe('repositories mock (dados de exemplo no formato do contrato)', () => {
     expect(talhao.historico?.parado).toBe(talhao.historico?.anos.filter((a) => a.situacao === 'parado').length)
   })
 
+  it('histórico do talhão no formato completo do guia do NDVI: 5 parados, 4 plantados e 1 sem certeza', async () => {
+    const { historico } = await createMockTalhaoRepository(0).get(UBERLANDIA, 'pt')
+
+    expect(historico).toMatchObject({
+      parado: 5,
+      plantou: 4,
+      sem_certeza: 1,
+      total: 10,
+      fonte: 'MODIS MOD13Q1 + MYD13Q1',
+      janela: '04-01 a 07-31',
+    })
+    for (const ano of historico!.anos) {
+      expect(['plantou', 'parado', 'incerto', 'sem_dado']).toContain(ano.situacao)
+      expect(ano.n_obs).toBeGreaterThanOrEqual(0)
+    }
+    const uncertain = historico!.anos.filter((a) => a.situacao === 'incerto' || a.situacao === 'sem_dado')
+    expect(uncertain).toHaveLength(historico!.sem_certeza)
+  })
+
   it('talhão fora da área preparada vem sem dados (HTTP 200, não é erro)', async () => {
     const talhao = await createMockTalhaoRepository(0).get({ lat: -15.8, lon: -47.9 }, 'pt')
 

@@ -9,10 +9,20 @@ import { SatelliteView, type SatelliteViewProps } from './SatelliteView'
 function setup(overrides: Partial<SatelliteViewProps> = {}) {
   const props: SatelliteViewProps = {
     t: pt,
+    lang: 'pt',
     backTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=meio',
     status: 'ready',
     onRetry: vi.fn(),
-    history: { idle: 1, planted: 1, total: 2, situations: ['parado', 'plantou'], years: ['2024', '2025'] },
+    history: {
+      idle: 1,
+      planted: 1,
+      uncertain: 0,
+      known: 2,
+      total: 2,
+      situations: ['parado', 'plantou'],
+      years: ['2024', '2025'],
+      window: { from: 4, to: 7 },
+    },
     rain: { start: '2006', end: '2025' },
     soil: { textura: 'argiloso', source: 'map' },
     soilOpen: false,
@@ -48,6 +58,55 @@ describe('SatelliteView (tela 4)', () => {
       'href',
       '/quando?lat=-18.9543&lon=-48.1993&colheita=meio',
     )
+  })
+
+  const withUncertain: SatelliteViewProps['history'] = {
+    idle: 5,
+    planted: 4,
+    uncertain: 1,
+    known: 9,
+    total: 10,
+    situations: ['parado', 'plantou', 'parado', 'plantou', 'parado', 'incerto', 'plantou', 'parado', 'parado', 'plantou'],
+    years: ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'],
+    window: { from: 4, to: 7 },
+  }
+
+  it('com ano sem certeza, a frase conta só os anos certos e o ano fica cinza com "?"', () => {
+    setup({ history: withUncertain })
+
+    expect(screen.getByRole('heading', { name: 'Sua área ficou parada em 5 de 9 anos (1 sem certeza)' })).toBeInTheDocument()
+    const strip = screen.getByRole('img', { name: 'Plantou em 4 de 9 anos (1 sem certeza)' })
+    expect(strip.querySelectorAll('[data-state="unknown"]')).toHaveLength(1)
+    expect(strip.querySelector('[data-state="unknown"]')).toHaveTextContent('?')
+    expect(strip.querySelectorAll('[data-state="good"]')).toHaveLength(4)
+    expect(strip.querySelectorAll('[data-state="bad"]')).toHaveLength(5)
+    expect(screen.getByText('Sem certeza')).toBeInTheDocument()
+  })
+
+  it('"sem_dado" também vira o quadrinho cinza com "?"', () => {
+    setup({ history: { ...withUncertain, situations: [...withUncertain!.situations.slice(0, 5), 'sem_dado', ...withUncertain!.situations.slice(6)] } })
+
+    const strip = screen.getByRole('img', { name: 'Plantou em 4 de 9 anos (1 sem certeza)' })
+    expect(strip.querySelector('[data-state="unknown"]')).toHaveTextContent('?')
+  })
+
+  it('sem ano sem certeza, a frase fica sem o parêntese e a legenda sem o cinza', () => {
+    setup()
+
+    expect(screen.getByRole('heading', { name: 'Sua área ficou parada em 1 de 2 anos' })).toBeInTheDocument()
+    expect(screen.queryByText('Sem certeza')).not.toBeInTheDocument()
+  })
+
+  it('embaixo da faixa, diz de onde veio: o satélite MODIS e os meses olhados', () => {
+    setup({ history: withUncertain })
+
+    expect(screen.getByText('Visto pelo satélite MODIS (NASA), de abril a julho de cada ano')).toBeInTheDocument()
+  })
+
+  it('os meses da linha da fonte seguem a janela do dado', () => {
+    setup({ history: { ...withUncertain!, window: { from: 5, to: 8 } } })
+
+    expect(screen.getByText('Visto pelo satélite MODIS (NASA), de maio a agosto de cada ano')).toBeInTheDocument()
   })
 
   it('sem histórico do satélite, o cartão do histórico some', () => {
@@ -111,6 +170,15 @@ describe('SatelliteView (tela 4)', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Done. The satellite saw the rest.' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Clayey soil' })).toBeInTheDocument()
+  })
+
+  it('o histórico em inglês, com o ano sem certeza e a linha da fonte', () => {
+    setup({ t: en, lang: 'en', history: withUncertain })
+
+    expect(screen.getByRole('heading', { name: 'Your field was left idle in 5 of 9 years (1 uncertain)' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Planted in 4 of 9 years (1 uncertain)' })).toBeInTheDocument()
+    expect(screen.getByText('Uncertain')).toBeInTheDocument()
+    expect(screen.getByText('Seen by the MODIS satellite (NASA), from April to July each year')).toBeInTheDocument()
   })
 
   it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {

@@ -1,5 +1,6 @@
 import type { NivelSinal, Recomendacao } from '../models/recomendacao'
 import type { Ponto, Talhao, Textura } from '../models/talhao'
+import { historySummary } from './satelliteService'
 
 /** RF-19: a missão tem 6 fases (lavoura, terra, chuva e calor, histórico, clima que vem, conta). */
 export const MISSION_PHASES = 6
@@ -25,12 +26,15 @@ export type MissionFacts = {
   signal: NivelSinal | null
 }
 
-/** O dado real que cada fase mostra. Sem o dado na API, fica null (a tela não inventa). */
+/**
+ * O dado real que cada fase mostra. Sem o dado na API, fica null (a tela não inventa). Os anos de
+ * histórico contam só os anos certos, como a frase da tela 4.
+ */
 export function missionFacts(talhao: Talhao, recomendacao: Recomendacao): MissionFacts {
   return {
     point: talhao.ponto,
     soil: talhao.solo?.textura ?? 'medio',
-    historyYears: talhao.historico?.total ?? null,
+    historyYears: historySummary(talhao.historico)?.known ?? null,
     signal: recomendacao.sinal?.nivel ?? null,
   }
 }

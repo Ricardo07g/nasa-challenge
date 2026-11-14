@@ -257,7 +257,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             />
             <YearStrip
               size="lg"
-              label={t.satellite.historyStripLabel(5, 10)}
+              label={t.satellite.historyStripLabel(5, 9, 1)}
               cells={['bad', 'good', 'bad', 'good', 'bad', 'good', 'good', 'bad', 'unknown', 'good']}
               years={['16', '17', '18', '19', '20', '21', '22', '23', '24', '25']}
             />
