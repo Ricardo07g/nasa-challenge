@@ -1,69 +1,53 @@
-"""Pydantic response schemas for GET /api/talhao."""
+"""JSON de GET /api/talhao (plano técnico §3.1)."""
 
 from pydantic import BaseModel, ConfigDict
 
 from app.models.talhao import Talhao
 
 
-class PontoSchema(BaseModel):
+class _Frozen(BaseModel):
     model_config = ConfigDict(frozen=True)
 
+
+class PontoSchema(_Frozen):
     lat: float
     lon: float
 
 
-class SoloSchema(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
+class SoloSchema(_Frozen):
     textura: str
-    textura_solo: str
-    argila_pct: float
-    argila_percentual: float
-    areia_pct: float
-    areia_percentual: float
     cad_mm: float
-    cad_capacidade_agua_mm: float
     fonte: str
 
 
-class ColheitaSugeridaSchema(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
+class ColheitaSugeridaSchema(_Frozen):
     faixa: str
     fonte: str
     anos_usados: int
 
 
-class HistoricoAnoSchema(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
+class HistoricoAnoSchema(_Frozen):
     ano: int
     situacao: str
     ndvi_max: float
-    ndvi_medio_safrinha: float
-    status_talhao: str
 
 
-class HistoricoSchema(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
+class HistoricoSchema(_Frozen):
     anos: list[HistoricoAnoSchema]
     parado: int
     total: int
     fonte: str
 
 
-class FonteDadoSchema(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
+class FonteDadoSchema(_Frozen):
     fonte: str
-    status: str
+    periodo: str
+    cenario: str | None = None
+    modelos: int | None = None
 
 
-class TalhaoResponse(BaseModel):
-    """HTTP JSON response schema for field inspection (/api/talhao)."""
-
-    model_config = ConfigDict(frozen=True)
+class TalhaoResponse(_Frozen):
+    """Resposta de /api/talhao."""
 
     ponto: PontoSchema
     celula_id: str | None
@@ -75,39 +59,14 @@ class TalhaoResponse(BaseModel):
 
     @classmethod
     def from_model(cls, talhao: Talhao) -> "TalhaoResponse":
-        historico_schema = (
-            HistoricoSchema(
-                anos=[
-                    HistoricoAnoSchema(
-                        ano=a.ano,
-                        situacao=a.situacao,
-                        ndvi_max=a.ndvi_max,
-                        ndvi_medio_safrinha=a.ndvi_medio_safrinha,
-                        status_talhao=a.status_talhao,
-                    )
-                    for a in talhao.historico.anos
-                ],
-                parado=talhao.historico.parado,
-                total=talhao.historico.total,
-                fonte=talhao.historico.fonte,
-            )
-            if talhao.historico is not None
-            else None
-        )
-
+        historico = talhao.historico
         return cls(
             ponto=PontoSchema(lat=talhao.lat, lon=talhao.lon),
             celula_id=talhao.celula_id,
             dentro_da_area=talhao.dentro_da_area,
             solo=SoloSchema(
                 textura=talhao.solo.textura_solo,
-                textura_solo=talhao.solo.textura_solo,
-                argila_pct=talhao.solo.argila_percentual,
-                argila_percentual=talhao.solo.argila_percentual,
-                areia_pct=talhao.solo.areia_percentual,
-                areia_percentual=talhao.solo.areia_percentual,
                 cad_mm=talhao.solo.cad_capacidade_agua_mm,
-                cad_capacidade_agua_mm=talhao.solo.cad_capacidade_agua_mm,
                 fonte=talhao.solo.fonte,
             ),
             colheita_sugerida=ColheitaSugeridaSchema(
@@ -115,8 +74,23 @@ class TalhaoResponse(BaseModel):
                 fonte=talhao.colheita_sugerida.fonte,
                 anos_usados=talhao.colheita_sugerida.anos_usados,
             ),
-            historico=historico_schema,
+            historico=(
+                HistoricoSchema(
+                    anos=[
+                        HistoricoAnoSchema(ano=a.ano, situacao=a.situacao, ndvi_max=a.ndvi_max)
+                        for a in historico.anos
+                    ],
+                    parado=historico.parado,
+                    total=historico.total,
+                    fonte=historico.fonte,
+                )
+                if historico is not None
+                else None
+            ),
             dados=[
-                FonteDadoSchema(fonte=d["fonte"], status=d["status"]) for d in talhao.dados_fontes
+                FonteDadoSchema(
+                    fonte=d.fonte, periodo=d.periodo, cenario=d.cenario, modelos=d.modelos
+                )
+                for d in talhao.dados_fontes
             ],
         )

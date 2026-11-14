@@ -21,3 +21,10 @@ class ValidationDomainError(DomainError):
 
     def __init__(self, message: str) -> None:
         super().__init__(message, code="VALIDATION_ERROR")
+
+
+class OutsideAreaError(NotFoundError):
+    """O ponto fica fora da área com dados preparados (vira HTTP 404 com code OUTSIDE_AREA)."""
+
+    def __init__(self, message: str) -> None:
+        DomainError.__init__(self, message, code="OUTSIDE_AREA")

@@ -1,6 +1,6 @@
 """FastAPI controllers for GET /api/recomendacao and GET /api/exemplo."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Header, Query
 
@@ -17,15 +17,14 @@ RecService = Annotated[RecommendationService, Depends(get_recommendation_service
 FieldService = Annotated[TalhaoService, Depends(get_talhao_service)]
 
 
-def _parse_optional_bool(raw: str | None) -> bool | None:
-    if raw is None:
-        return None
-    normalized = raw.strip().lower()
-    if normalized in ("sim", "true", "1", "yes"):
-        return True
-    if normalized in ("nao", "não", "false", "0", "no"):
-        return False
-    return None
+Colheita = Literal["cedo", "meio", "tarde"]
+Textura = Literal["arenoso", "medio", "argiloso"]
+# ADR-0002: sim/true/1 = True, nao/false/0 = False; qualquer outro valor dá 422
+SimNao = Literal["sim", "nao", "true", "false", "1", "0"]
+
+
+def _sim_nao(value: SimNao | None) -> bool | None:
+    return None if value is None else value in ("sim", "true", "1")
 
 
 @router.get("/recomendacao", response_model=RecomendacaoResponse)
@@ -33,10 +32,10 @@ def get_recomendacao(
     lat: Annotated[float, Query(ge=-90.0, le=90.0)],
     lon: Annotated[float, Query(ge=-180.0, le=180.0)],
     service: RecService,
-    colheita: Annotated[str, Query()] = "meio",
-    solo: Annotated[str | None, Query()] = None,
-    nematoide: Annotated[str | None, Query()] = None,
-    gado: Annotated[str | None, Query()] = None,
+    colheita: Annotated[Colheita, Query()] = "meio",
+    solo: Annotated[Textura | None, Query()] = None,
+    nematoide: Annotated[SimNao | None, Query()] = None,
+    gado: Annotated[SimNao | None, Query()] = None,
     accept_language: Annotated[str, Header(alias="Accept-Language")] = "pt-BR",
 ) -> RecomendacaoResponse:
     rec = service.recommend(
@@ -44,8 +43,8 @@ def get_recomendacao(
         lon=lon,
         colheita=colheita,
         solo_override=solo,
-        nematoide=_parse_optional_bool(nematoide),
-        gado=_parse_optional_bool(gado),
+        nematoide=_sim_nao(nematoide),
+        gado=_sim_nao(gado),
         lang=accept_language,
     )
     return RecomendacaoResponse.from_model(rec)

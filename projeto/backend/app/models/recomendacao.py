@@ -16,11 +16,22 @@ class ResultadoAno:
 
 
 @dataclass(frozen=True)
+class FuturoResultado:
+    """Anos sem aperto no clima de 2041-2060: média, mínimo e máximo entre os modelos do CMIP6."""
+
+    anos_bons_media: int
+    anos_bons_min: int
+    anos_bons_max: int
+    modelos: int
+    cenario: str
+
+
+@dataclass(frozen=True)
 class NotasOpcao:
     """Normalized 0-100 multi-objective scores for a crop option."""
 
     seguranca: float
-    futuro: float
+    futuro: float | None  # None quando não há deltas do CMIP6
     solo: float
     renda: float
     final: float
@@ -39,15 +50,15 @@ class ResultadoOpcao:
     faixa_anos: tuple[bool, ...]
     rotulo_chuva: str
     texto_chuva: str
-    futuro_anos_bons_media: int
-    futuro_anos_bons_min: int
-    futuro_anos_bons_max: int
+    futuro: FuturoResultado | None
     margem_ha: float
     rotulo_dinheiro: str
     texto_dinheiro: str
     rotulo_terra: str
     texto_terra: str
     notas: NotasOpcao
+    # Mesmas notas usando só os 4 anos mais secos (cenário "seco" do plano de 3 anos)
+    notas_seco: NotasOpcao
     porque: tuple[str, ...]
     como_fazer: tuple[str, ...]
 
@@ -66,7 +77,7 @@ class Alternativa:
     """Alternative crop recommendation prioritized by a single dimension."""
 
     motivo: str
-    opcao_id: str
+    opcao: str
 
 
 @dataclass(frozen=True)

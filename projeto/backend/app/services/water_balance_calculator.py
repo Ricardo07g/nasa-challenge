@@ -1,63 +1,66 @@
-"""FAO-56 reference evapotranspiration, daily bucket water balance, and ISNA calculator."""
+"""ETo (Hargreaves-Samani, FAO-56), balanço hídrico diário em balde e ISNA."""
 
 import math
 from collections.abc import Sequence
 
 from app.constants import (
-    ALBEDO_CANOPY,
     DEFAULT_INITIAL_ARM_FRACTION,
     KC_DEV_STAGE_FRACTION,
     KC_END_DEFAULT,
     KC_INITIAL_DEFAULT,
     KC_INITIAL_STAGE_FRACTION,
     KC_MID_STAGE_FRACTION,
-    MAX_DAILY_ETO_MM,
-    MIN_DAILY_ETO_MM,
-    PSYCHROMETRIC_CONSTANT_KPA_C,
+    MJ_TO_MM_EVAPORATION,
+    SOLAR_CONSTANT_MJ_M2_MIN,
 )
 
 
 class WaterBalanceCalculator:
     """Pure biophysical functions for crop water balance and drought risk analysis."""
 
-    def calculate_eto_fao(
-        self,
-        t_max: float,
-        t_min: float,
-        t_mean: float,
-        solar_rad_mj: float,
-        ws2m: float,
-        rh2m: float,
-    ) -> float:
-        """Calculates daily reference evapotranspiration (ETo in mm/day) via FAO-56.
+    def extraterrestrial_radiation(self, lat_deg: float, day_of_year: int) -> float:
+        """Radiação extraterrestre diária Ra em MJ/m²/dia (FAO-56, equações 21 a 25).
 
         Args:
-            t_max: Daily maximum air temperature at 2m in degrees Celsius.
-            t_min: Daily minimum air temperature at 2m in degrees Celsius.
-            t_mean: Daily mean air temperature at 2m in degrees Celsius.
-            solar_rad_mj: Downward shortwave solar radiation (ALLSKY_SFC_SW_DWN) in MJ/m2/day.
-            ws2m: Wind speed at 2m in m/s.
-            rh2m: Relative humidity at 2m in percentage (0-100).
+            lat_deg: Latitude em graus decimais (sul negativo).
+            day_of_year: Dia do ano (1 a 366).
 
         Returns:
-            Daily reference evapotranspiration in millimeters per day.
+            Ra em MJ/m²/dia.
         """
-        es_tmax = 0.6108 * math.exp((17.27 * t_max) / (t_max + 237.3))
-        es_tmin = 0.6108 * math.exp((17.27 * t_min) / (t_min + 237.3))
-        es = (es_tmax + es_tmin) / 2.0
-        ea = es * max(0.10, min(1.0, rh2m / 100.0))
-
-        delta = (4098.0 * (0.6108 * math.exp((17.27 * t_mean) / (t_mean + 237.3)))) / (
-            (t_mean + 237.3) ** 2
+        phi = math.radians(lat_deg)
+        dr = 1.0 + 0.033 * math.cos(2.0 * math.pi * day_of_year / 365.0)
+        delta = 0.409 * math.sin(2.0 * math.pi * day_of_year / 365.0 - 1.39)
+        ws = math.acos(max(-1.0, min(1.0, -math.tan(phi) * math.tan(delta))))
+        return (
+            (24.0 * 60.0 / math.pi)
+            * SOLAR_CONSTANT_MJ_M2_MIN
+            * dr
+            * (
+                ws * math.sin(phi) * math.sin(delta)
+                + math.cos(phi) * math.cos(delta) * math.sin(ws)
+            )
         )
-        rn = (1.0 - ALBEDO_CANOPY) * max(1.0, solar_rad_mj) * 0.75
 
-        numerator = 0.408 * delta * rn + PSYCHROMETRIC_CONSTANT_KPA_C * (
-            900.0 / (t_mean + 273.0)
-        ) * ws2m * (es - ea)
-        denominator = delta + PSYCHROMETRIC_CONSTANT_KPA_C * (1.0 + 0.34 * ws2m)
-        eto = numerator / denominator if denominator > 0.0 else MIN_DAILY_ETO_MM
-        return round(max(MIN_DAILY_ETO_MM, min(MAX_DAILY_ETO_MM, eto)), 3)
+    def hargreaves_eto(self, t_max: float, t_min: float, lat_deg: float, day_of_year: int) -> float:
+        """ETo diária (mm/dia) por Hargreaves-Samani com a radiação extraterrestre (FAO-56 eq. 52).
+
+        Usa Ra (topo da atmosfera), não a radiação que chega na superfície.
+
+        Args:
+            t_max: Temperatura máxima do dia (°C).
+            t_min: Temperatura mínima do dia (°C).
+            lat_deg: Latitude em graus decimais.
+            day_of_year: Dia do ano (1 a 366).
+
+        Returns:
+            ETo em mm/dia.
+        """
+        ra = self.extraterrestrial_radiation(lat_deg, day_of_year)
+        t_mean = (t_max + t_min) / 2.0
+        amplitude = max(0.0, t_max - t_min)
+        eto = 0.0023 * (t_mean + 17.8) * math.sqrt(amplitude) * MJ_TO_MM_EVAPORATION * ra
+        return round(max(0.0, eto), 3)
 
     def build_kc_curve(self, ciclo_dias: int, kc_pico: float) -> list[float]:
         """Generates a daily crop coefficient (Kc) curve across phenological stages.
@@ -101,42 +104,33 @@ class WaterBalanceCalculator:
         cad: float,
         arm0: float | None = None,
     ) -> tuple[list[float], list[float]]:
-        """Simulates a daily Thornthwaite-Mather / FAO-56 soil water bucket.
+        """Balanço hídrico diário em "balde" (PRD 7.2, função `simular`).
+
+        A cada dia: água disponível = balde + chuva; ETr = menor entre ETc e a água disponível;
+        o balde guarda o que sobrou, até a CAD (o excesso escorre).
 
         Args:
-            chuva: Daily precipitation sequence in mm.
-            eto: Daily reference evapotranspiration sequence in mm.
-            kc: Daily crop coefficient sequence.
-            cad: Soil available water capacity (CAD) in mm.
-            arm0: Initial soil water storage in mm (defaults to 50% of CAD).
+            chuva: Chuva diária em mm.
+            eto: ETo diária em mm.
+            kc: Kc diário da cultura.
+            cad: Capacidade de água disponível do solo (mm).
+            arm0: Água no balde no primeiro dia (mm). Sem valor, começa em 50% da CAD.
 
         Returns:
-            A tuple of (etr_list, etc_list) representing actual and maximum crop evapotranspiration.
+            Tupla (etr_l, etc_l): evapotranspiração real e máxima da cultura, por dia.
         """
         n_days = min(len(chuva), len(eto), len(kc))
-        safe_cad = max(1.0, cad)
-        arm = (
-            max(0.0, min(safe_cad, arm0))
-            if arm0 is not None
-            else safe_cad * DEFAULT_INITIAL_ARM_FRACTION
-        )
+        safe_cad = max(0.0, cad)
+        arm = safe_cad * DEFAULT_INITIAL_ARM_FRACTION if arm0 is None else arm0
+        arm = max(0.0, min(safe_cad, arm))
 
         etr_l: list[float] = []
         etc_l: list[float] = []
-
         for idx in range(n_days):
-            p_day = max(0.0, float(chuva[idx]))
-            etc_day = max(0.0, float(eto[idx]) * float(kc[idx]))
-            saldo = p_day - etc_day
-
-            if saldo >= 0.0:
-                arm_novo = min(safe_cad, arm + saldo)
-                etr_day = etc_day
-            else:
-                arm_novo = arm * math.exp(saldo / safe_cad)
-                etr_day = min(etc_day, p_day + (arm - arm_novo))
-
-            arm = max(0.0, min(safe_cad, arm_novo))
+            etc_day = max(0.0, float(kc[idx]) * float(eto[idx]))
+            disponivel = arm + max(0.0, float(chuva[idx]))
+            etr_day = min(etc_day, disponivel)
+            arm = min(safe_cad, disponivel - etr_day)
             etr_l.append(round(etr_day, 4))
             etc_l.append(round(etc_day, 4))
 

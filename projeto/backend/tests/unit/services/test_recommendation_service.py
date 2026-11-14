@@ -1,179 +1,113 @@
-"""Unit tests for RecommendationService with fake repositories."""
+"""Unit tests for RecommendationService (notas, rótulos, ranking, alternativas e frases)."""
 
-from datetime import date
+from datetime import date, timedelta
 
-from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
+import pytest
+
+from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
+from app.models.recomendacao import Recomendacao, ResultadoOpcao
 from app.models.talhao import SoloInfo
 from app.services.climate_risk_service import ClimateRiskService
+from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.recommendation_service import RecommendationService
 from app.services.rotation_plan_service import RotationPlanService
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
+DAYS = 212
+CELL_ID = "-190_-482"
+
+
+def _crop(
+    crop_id: str,
+    tipo: str,
+    limite: str | None,
+    solo: tuple[int, int, int],
+    economia: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    n_kg: int = 0,
+) -> CropParams:
+    palhada, nitrogenio, pragas = solo
+    produtividade, preco, custo = economia
+    return CropParams(
+        id=crop_id,
+        nome=crop_id.replace("_", " ").title(),
+        nome_en=f"{crop_id} (en)",
+        tipo=tipo,
+        funcao="x",
+        semeadura_limite_mes_dia=limite,
+        dias_florescer=0 if tipo == "pousio" else 60,
+        ciclo_dias=0 if tipo == "pousio" else 100,
+        kc_pico=1.0,
+        solo_palhada=palhada,
+        solo_nitrogenio=nitrogenio,
+        solo_pragas=pragas,
+        n_deixado_kg=n_kg,
+        produtividade_padrao_sc_ha=produtividade,
+        preco_padrao_saca=preco,
+        custo_padrao_ha=custo,
+        como_fazer=("Passo 1",),
+    )
+
+
+# Pontos de solo da tabela 7.4 do PRD e dinheiro do culturas.yaml
+CROPS = [
+    _crop("pousio", "pousio", None, (0, 0, 0)),
+    _crop("milho_safrinha", "grao", "02-28", (20, 0, 0), (80.0, 62.0, 3500.0)),
+    _crop("sorgo", "grao", "03-20", (20, 0, 15), (60.0, 49.6, 2200.0)),
+    _crop("milho_braquiaria", "consorcio", "02-28", (40, 0, 10), (76.0, 62.0, 3800.0)),
+    _crop("milheto", "cobertura", "03-15", (35, 0, 20), (0.0, 0.0, 600.0)),
+    _crop("crotalaria", "cobertura", "02-28", (25, 30, 30), (0.0, 0.0, 800.0), n_kg=80),
+]
+
 
 class FakeCropParamsRepository:
-    def __init__(self) -> None:
-        self._crops = [
-            CropParams(
-                id="pousio",
-                nome="Pousio",
-                nome_en="Fallow",
-                tipo="pousio",
-                funcao="Nenhuma",
-                semeadura_limite_mes_dia=None,
-                dias_florescer=0,
-                ciclo_dias=120,
-                kc_pico=0.30,
-                palhada_score=15,
-                n_deixado_kg=0,
-                nematoide_efeito=-10,
-                produtividade_padrao_sc_ha=0.0,
-                preco_padrao_saca=0.0,
-                custo_padrao_ha=250.0,
-                como_fazer=("Controlar daninhas",),
-            ),
-            CropParams(
-                id="milho_safrinha",
-                nome="Milho safrinha",
-                nome_en="Second-crop Corn",
-                tipo="grao",
-                funcao="Grão",
-                semeadura_limite_mes_dia="02-28",
-                dias_florescer=60,
-                ciclo_dias=120,
-                kc_pico=1.15,
-                palhada_score=55,
-                n_deixado_kg=0,
-                nematoide_efeito=-15,
-                produtividade_padrao_sc_ha=95.0,
-                preco_padrao_saca=55.0,
-                custo_padrao_ha=3200.0,
-                como_fazer=("Plantar cedo",),
-            ),
-            CropParams(
-                id="sorgo",
-                nome="Sorgo granífero",
-                nome_en="Grain Sorghum",
-                tipo="grao",
-                funcao="Grão",
-                semeadura_limite_mes_dia="03-20",
-                dias_florescer=55,
-                ciclo_dias=110,
-                kc_pico=1.00,
-                palhada_score=65,
-                n_deixado_kg=0,
-                nematoide_efeito=10,
-                produtividade_padrao_sc_ha=75.0,
-                preco_padrao_saca=44.0,
-                custo_padrao_ha=2100.0,
-                como_fazer=("Tolerante à seca",),
-            ),
-            CropParams(
-                id="milho_braquiaria",
-                nome="Milho + braquiária ruziziensis",
-                nome_en="Corn + Ruzigrass Intercrop",
-                tipo="consorcio",
-                funcao="Grão + cobertura",
-                semeadura_limite_mes_dia="02-28",
-                dias_florescer=60,
-                ciclo_dias=120,
-                kc_pico=1.20,
-                palhada_score=95,
-                n_deixado_kg=15,
-                nematoide_efeito=5,
-                produtividade_padrao_sc_ha=92.0,
-                preco_padrao_saca=55.0,
-                custo_padrao_ha=3450.0,
-                como_fazer=("Consórcio na linha",),
-            ),
-            CropParams(
-                id="milheto",
-                nome="Milheto",
-                nome_en="Pearl Millet",
-                tipo="cobertura",
-                funcao="Cobertura",
-                semeadura_limite_mes_dia="03-15",
-                dias_florescer=45,
-                ciclo_dias=90,
-                kc_pico=0.90,
-                palhada_score=85,
-                n_deixado_kg=20,
-                nematoide_efeito=15,
-                produtividade_padrao_sc_ha=0.0,
-                preco_padrao_saca=0.0,
-                custo_padrao_ha=450.0,
-                como_fazer=("Cobertura rústica",),
-            ),
-            CropParams(
-                id="crotalaria",
-                nome="Crotalária spectabilis",
-                nome_en="Showy Rattlebox",
-                tipo="cobertura",
-                funcao="Cobertura leguminosa",
-                semeadura_limite_mes_dia="02-28",
-                dias_florescer=50,
-                ciclo_dias=100,
-                kc_pico=0.95,
-                palhada_score=75,
-                n_deixado_kg=80,
-                nematoide_efeito=30,
-                produtividade_padrao_sc_ha=0.0,
-                preco_padrao_saca=0.0,
-                custo_padrao_ha=650.0,
-                como_fazer=("Supressão de nematoides",),
-            ),
-        ]
-
     def list_all(self) -> list[CropParams]:
-        return list(self._crops)
+        return list(CROPS)
 
     def get_by_id(self, crop_id: str) -> CropParams | None:
-        return next((c for c in self._crops if c.id == crop_id), None)
+        return next((c for c in CROPS if c.id == crop_id), None)
+
+
+def _season(year: int, dry_feb_to_jun: bool) -> ClimateSeason:
+    start = date(year, 1, 1)
+    rain = tuple(
+        0.0 if dry_feb_to_jun and 2 <= (start + timedelta(days=i)).month <= 6 else 8.0
+        for i in range(DAYS)
+    )
+    return ClimateSeason(
+        cell_id=CELL_ID,
+        year=year,
+        start_date=start,
+        lat=-18.95,
+        rain_mm=rain,
+        rain_source="nasa_power",
+        tmax_c=tuple([30.0] * DAYS),
+        tmin_c=tuple([18.0] * DAYS),
+        eto_mm=tuple([4.0] * DAYS),
+    )
 
 
 class FakeClimateRepository:
+    """20 anos (2005-2024); `dry_years` ficam sem chuva de fevereiro a junho."""
+
+    def __init__(
+        self,
+        dry_years: tuple[int, ...] = (),
+        deltas: list[Cmip6Delta] | None = None,
+        inside: bool = True,
+    ) -> None:
+        self._dry_years = dry_years
+        self._deltas = deltas or []
+        self._inside = inside
+
     def find_cell_id(self, lat: float, lon: float) -> str | None:
-        return "-189_-483"
+        return CELL_ID if self._inside else None
 
     def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
-        seasons = []
-        for year in range(2005, 2025):
-            rain = 1.5 if year in (2007, 2010, 2012, 2014) else 5.5
-            seasons.append(
-                ClimateSeason(
-                    cell_id=cell_id,
-                    year=year,
-                    start_date=date(year, 1, 1),
-                    rain_mm=tuple([rain] * 210),
-                    rain_source="nasa_power",
-                    tmax_c=tuple([30.0] * 210),
-                    tmin_c=tuple([18.0] * 210),
-                    eto_mm=tuple([4.0] * 210),
-                    gwetroot=tuple([0.65] * 210),
-                )
-            )
-        return seasons
+        return [_season(y, y in self._dry_years) for y in range(2005, 2025)]
 
-    def get_cmip6_delta(self, cell_id: str) -> Cmip6Delta:
-        return Cmip6Delta(
-            cell_id=cell_id,
-            cenario="SSP2-4.5",
-            modelos_referencia=("ACCESS-CM2", "MIROC6"),
-            aumento_temperatura_media_c=1.8,
-            variacao_chuva_safrinha_pct=-12.5,
-            aumento_dias_calor_extremo_ge_35c=6.4,
-        )
-
-    def get_latest_smap(self, lat: float, lon: float) -> SmapSoilMoisture | None:
-        return SmapSoilMoisture(
-            data=date(2024, 2, 18),
-            latitude=lat,
-            longitude=lon,
-            sm_surface_m3_m3=0.28,
-            sm_rootzone_m3_m3=0.32,
-            sm_rootzone_wetness=0.68,
-            fonte="nasa_smap_l4",
-        )
+    def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]:
+        return list(self._deltas)
 
 
 class FakeSoilRepository:
@@ -187,56 +121,194 @@ class FakeSoilRepository:
         )
 
 
-def _build_service() -> RecommendationService:
+def _service(climate: FakeClimateRepository | None = None) -> RecommendationService:
     return RecommendationService(
         crop_repo=FakeCropParamsRepository(),
-        climate_repo=FakeClimateRepository(),
+        climate_repo=climate or FakeClimateRepository(),
         soil_repo=FakeSoilRepository(),
         risk_service=ClimateRiskService(WaterBalanceCalculator()),
         plan_service=RotationPlanService(),
     )
 
 
-def test_should_keep_all_five_plantable_crops_in_window_when_harvest_is_meio() -> None:
-    service = _build_service()
+def _opcao(rec: Recomendacao, crop_id: str) -> ResultadoOpcao:
+    return next(o for o in rec.opcoes if o.id == crop_id)
 
-    rec = service.recommend(lat=-18.92, lon=-48.28, colheita="meio")
 
-    assert rec.colheita == "meio"
+def test_should_keep_five_crops_and_never_rank_pousio_when_harvest_is_meio() -> None:
+    # PRD §11: pousio nunca é a "melhor opção" nem alternativa
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
     assert rec.semeadura == date(2027, 2, 18)
-    assert len(rec.opcoes) == 5
-    assert len(rec.fora_da_janela) == 0
-    assert all(o.id != "pousio" for o in rec.opcoes)
-    assert rec.melhor in {o.id for o in rec.opcoes}
+    assert rec.celula_id == CELL_ID
+    assert {o.id for o in rec.opcoes} == {
+        "milho_safrinha",
+        "sorgo",
+        "milho_braquiaria",
+        "milheto",
+        "crotalaria",
+    }
+    assert rec.melhor != "pousio"
+    assert all(a.opcao not in ("pousio", rec.melhor) for a in rec.alternativas)
 
 
 def test_should_move_early_deadline_crops_to_fora_da_janela_when_harvest_is_tarde() -> None:
-    service = _build_service()
-
-    rec = service.recommend(lat=-18.92, lon=-48.28, colheita="tarde")
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="tarde")
 
     assert rec.semeadura == date(2027, 3, 3)
-    in_window_ids = {o.id for o in rec.opcoes}
-    out_window_ids = {o.id for o in rec.fora_da_janela}
+    assert {o.id for o in rec.opcoes} == {"sorgo", "milheto"}
+    assert {o.id for o in rec.fora_da_janela} == {
+        "milho_safrinha",
+        "milho_braquiaria",
+        "crotalaria",
+    }
 
-    assert in_window_ids == {"sorgo", "milheto"}
-    assert out_window_ids == {"milho_safrinha", "milho_braquiaria", "crotalaria"}
+
+def test_should_raise_outside_area_instead_of_using_other_region_data() -> None:
+    service = _service(FakeClimateRepository(inside=False))
+
+    with pytest.raises(OutsideAreaError):
+        service.recommend(lat=-23.55, lon=-46.63, colheita="meio")
 
 
-def test_should_support_soil_override_nematoide_and_english_language() -> None:
-    service = _build_service()
+def test_should_reject_unknown_harvest_band() -> None:
+    with pytest.raises(ValidationDomainError):
+        _service().recommend(lat=-18.95, lon=-48.20, colheita="ontem")
 
-    rec = service.recommend(
-        lat=-18.92,
-        lon=-48.28,
-        colheita="meio",
-        solo_override="arenoso",
-        nematoide=True,
-        gado=True,
-        lang="en",
+
+def test_should_score_soil_with_prd_table_when_nematoide_not_informed() -> None:
+    # PRD 7.4: crotalária 85, milheto 55, milho + braquiária 50, sorgo 35, milho 20
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert _opcao(rec, "crotalaria").notas.solo == 85.0
+    assert _opcao(rec, "milheto").notas.solo == 55.0
+    assert _opcao(rec, "milho_braquiaria").notas.solo == 50.0
+    assert _opcao(rec, "sorgo").notas.solo == 35.0
+    assert _opcao(rec, "milho_safrinha").notas.solo == 20.0
+    assert _opcao(rec, "crotalaria").rotulo_terra == "bom"
+    assert _opcao(rec, "sorgo").rotulo_terra == "medio"
+    assert _opcao(rec, "milho_safrinha").rotulo_terra == "medio"
+
+
+def test_should_weight_pests_one_and_half_times_when_nematoide_is_true() -> None:
+    # PRD 7.4: pragas x 1,5 e total reescalado para 0 a 100 (máximo 40 + 30 + 45 = 115)
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", nematoide=True)
+
+    assert _opcao(rec, "crotalaria").notas.solo == pytest.approx(round(100 * 100 / 115, 1))
+    assert _opcao(rec, "milho_safrinha").notas.solo == pytest.approx(round(100 * 20 / 115, 1))
+
+
+def test_should_score_income_relative_to_best_margin_when_no_losses() -> None:
+    # PRD 7.5: margem = produtividade x fator x preço - custo; nota = 100 x margem / maior margem
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    milho = _opcao(rec, "milho_safrinha")
+    braquiaria = _opcao(rec, "milho_braquiaria")
+    crotalaria = _opcao(rec, "crotalaria")
+
+    assert milho.margem_ha == pytest.approx(80 * 62 - 3500)
+    assert milho.notas.renda == 100.0
+    assert braquiaria.notas.renda == pytest.approx(round(100 * (76 * 62 - 3800) / 1460, 1))
+    assert crotalaria.margem_ha == pytest.approx(-800.0)
+    assert crotalaria.notas.renda == 0.0
+    assert milho.texto_dinheiro == "Sobra perto de R$ 1.460 por hectare"
+    assert crotalaria.texto_dinheiro == "Custa perto de R$ 800 por hectare"
+    assert milho.rotulo_dinheiro == "bom"
+    assert crotalaria.rotulo_dinheiro == "fraco"
+
+
+@pytest.mark.parametrize(
+    ("n_dry", "anos_bons", "rotulo"),
+    [(3, 17, "bom"), (4, 16, "medio"), (9, 11, "fraco")],
+)
+def test_should_label_rain_axis_by_good_years_when_dry_years_vary(
+    n_dry: int, anos_bons: int, rotulo: str
+) -> None:
+    # PRD §11: 17, 16 e 11 anos sem aperto -> Bom, Médio e Fraco
+    dry_years = tuple(range(2005, 2005 + n_dry))
+    rec = _service(FakeClimateRepository(dry_years=dry_years)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
     )
+    milho = _opcao(rec, "milho_safrinha")
+
+    assert milho.anos_bons_chuva == anos_bons
+    assert milho.total_anos == 20
+    assert milho.rotulo_chuva == rotulo
+    assert milho.texto_chuva == f"Deu certo em {anos_bons} de 20 anos"
+
+
+def test_should_cite_same_number_as_the_math_when_explaining_stress_years() -> None:
+    # PRD §11: resultado com 6 anos de aperto -> a frase cita "6 dos últimos 20 anos"
+    dry_years = (2006, 2009, 2012, 2015, 2018, 2021)
+    rec = _service(FakeClimateRepository(dry_years=dry_years)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+    milho = _opcao(rec, "milho_safrinha")
+
+    assert milho.faixa_anos == tuple(year not in dry_years for year in range(2005, 2025))
+    assert any("6 dos últimos 20 anos" in frase for frase in milho.porque)
+
+
+def test_should_leave_future_empty_and_reweight_final_score_when_no_cmip6_data() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    milho = _opcao(rec, "milho_safrinha")
+    notas = milho.notas
+
+    assert milho.futuro is None
+    assert notas.futuro is None
+    assert not any("2041" in frase for frase in milho.porque)
+    expected = (0.30 * notas.seguranca + 0.25 * notas.solo + 0.30 * notas.renda) / 0.85
+    assert notas.final == pytest.approx(round(expected, 1))
+
+
+def test_should_include_future_range_and_weight_when_cmip6_deltas_exist() -> None:
+    deltas = [
+        Cmip6Delta(model=model, scenario="ssp245", month=m, rain_pct=pct, tmax_c=0.0)
+        for model, pct in (("IGUAL", 0.0), ("SECO", -100.0))
+        for m in range(1, 13)
+    ]
+    rec = _service(FakeClimateRepository(deltas=deltas)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+    milho = _opcao(rec, "milho_safrinha")
+    notas = milho.notas
+
+    assert milho.futuro is not None
+    assert (milho.futuro.anos_bons_min, milho.futuro.anos_bons_max) == (0, 20)
+    assert notas.futuro == 50.0
+    expected = 0.30 * notas.seguranca + 0.25 * notas.solo + 0.30 * notas.renda + 0.15 * 50.0
+    assert notas.final == pytest.approx(round(expected, 1))
+    assert any("2041" in frase for frase in milho.porque)
+
+
+def test_should_score_dry_scenario_only_with_the_four_driest_years() -> None:
+    dry_years = (2007, 2010, 2012, 2014)
+    rec = _service(FakeClimateRepository(dry_years=dry_years)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+    milho = _opcao(rec, "milho_safrinha")
+
+    assert milho.notas.seguranca == 80.0
+    assert milho.notas_seco.seguranca == 0.0
+    assert "2007, 2010, 2012, 2014" in rec.plano_seco.descricao
+
+
+def test_should_write_texts_in_english_when_language_is_en() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="en-US,en;q=0.9")
+    milho = _opcao(rec, "milho_safrinha")
+
+    assert milho.nome == "milho_safrinha (en)"
+    assert milho.texto_chuva == "Worked in 20 of 20 years"
+    assert any("NASA POWER" in frase for frase in milho.porque)
+
+
+def test_should_use_soil_override_for_water_capacity() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", solo_override="arenoso")
 
     assert rec.solo == "arenoso"
-    assert rec.nematoide is True
-    assert rec.gado is True
-    assert any("NASA POWER" in phrase for opt in rec.opcoes for phrase in opt.porque)
+    assert any("40 mm" in frase for frase in _opcao(rec, "milho_safrinha").porque)
+
+
+def test_should_write_soil_texture_with_accent_in_portuguese_text() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", solo_override="medio")
+
+    assert any("solo médio" in frase for frase in _opcao(rec, "sorgo").porque)

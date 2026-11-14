@@ -1,8 +1,11 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+APP_DIR = Path(__file__).resolve().parent
 
 
 class Settings(BaseSettings):
@@ -17,6 +20,14 @@ class Settings(BaseSettings):
 
     # PostgreSQL + PostGIS. No docker compose: postgresql://<user>:<senha>@db:5432/<banco>
     database_url: str | None = None
+
+    # Dados que a API lê. Os padrões vêm junto com o código (pasta app/), então funcionam no
+    # Docker, no uv e nos testes. Para usar outro arquivo, aponte a variável de ambiente.
+    culturas_path: Path = APP_DIR / "config_data" / "culturas.yaml"
+    clima_path: Path = APP_DIR / "fixtures" / "clima_fazenda_exemplo.json"
+    # Caches opcionais por ponto (SoilGrids e NDVI do MODIS). Sem arquivo: solo padrão e sem NDVI.
+    solo_cache_path: Path | None = None
+    ndvi_cache_path: Path | None = None
 
     # Credenciais dos dados da NASA / Google. Só via ambiente, nunca no código.
     earthdata_username: str | None = None

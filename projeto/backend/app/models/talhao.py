@@ -17,11 +17,9 @@ class SoloInfo:
 
 @dataclass(frozen=True)
 class NdviRecord:
-    """Single 16-day MODIS MOD13Q1 NDVI observation."""
+    """Uma imagem de 16 dias do MODIS MOD13Q1 no ponto (NDVI bruto ou já com o fator 0,0001)."""
 
     data: date
-    year: int
-    month: int
     ndvi: float
 
 
@@ -32,8 +30,6 @@ class HistoricoAno:
     ano: int
     situacao: str
     ndvi_max: float
-    ndvi_medio_safrinha: float = 0.0
-    status_talhao: str = ""
 
 
 @dataclass(frozen=True)
@@ -56,6 +52,16 @@ class ColheitaSugerida:
 
 
 @dataclass(frozen=True)
+class FonteDado:
+    """Uma fonte de dado usada na conta, com o período (plano técnico §3.1, campo `dados`)."""
+
+    fonte: str
+    periodo: str
+    cenario: str | None = None
+    modelos: int | None = None
+
+
+@dataclass(frozen=True)
 class Talhao:
     """Consolidated spatial, soil, and satellite history inspection for a field coordinate."""
 
@@ -66,4 +72,4 @@ class Talhao:
     solo: SoloInfo
     colheita_sugerida: ColheitaSugerida
     historico: HistoricoTalhao | None
-    dados_fontes: tuple[dict[str, str], ...]
+    dados_fontes: tuple[FonteDado, ...]

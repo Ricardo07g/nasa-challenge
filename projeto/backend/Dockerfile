@@ -25,6 +25,7 @@ RUN if [ "$INSTALL_DEV" = "true" ]; then \
 
 COPY app ./app
 COPY tests ./tests
+COPY pipeline ./pipeline
 COPY migrations ./migrations
 COPY alembic.ini ./
 

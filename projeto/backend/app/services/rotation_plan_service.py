@@ -1,11 +1,13 @@
 """Service for building 3-year off-season crop rotation plans (normal, dry stress, and baseline)."""
 
+from datetime import timedelta
 from itertools import product
 
 from app.constants import (
     DIVERSITY_BONUS_THREE_ROLES,
     DIVERSITY_BONUS_TWO_ROLES,
     DRIEST_YEARS_COUNT,
+    DRY_SCENARIO_MONTHS,
     MAX_CONSECUTIVE_FALLOW,
     MONOCULTURE_CORN_PENALTY,
     NEMATODE_SUPPRESSOR_CROPS,
@@ -20,24 +22,31 @@ from app.models.recomendacao import PlanoRotacao, ResultadoOpcao
 class RotationPlanService:
     """Evaluates 3-year off-season crop sequences under normal and dry El Nino stress scenarios."""
 
-    def select_4_driest_years(self, seasons: list[ClimateSeason]) -> list[ClimateSeason]:
-        """Selects the 4 seasons with lowest accumulated off-season rainfall (Feb-May) (US-09)."""
+    def select_driest_years(self, seasons: list[ClimateSeason]) -> list[int]:
+        """Os 4 anos com menos chuva de fevereiro a abril (PRD 7.7), do mais seco ao menos seco."""
 
-        def _safrinha_rain(season: ClimateSeason) -> float:
-            # Feb 1 is index 31, May 31 is index 151
-            return sum(season.rain_mm[31:151])
+        def _rain_feb_to_apr(season: ClimateSeason) -> float:
+            return sum(
+                rain
+                for idx, rain in enumerate(season.rain_mm)
+                if (season.start_date + timedelta(days=idx)).month in DRY_SCENARIO_MONTHS
+            )
 
-        sorted_seasons = sorted(seasons, key=_safrinha_rain)
-        return sorted_seasons[:DRIEST_YEARS_COUNT]
+        driest = sorted(seasons, key=_rain_feb_to_apr)[:DRIEST_YEARS_COUNT]
+        return [s.year for s in driest]
 
     def build_3_year_plans(
         self,
         opcoes: list[ResultadoOpcao],
-        seasons: list[ClimateSeason],
+        anos_secos: list[int],
         nematoide: bool | None = None,
         lang: str = "pt-BR",
     ) -> tuple[PlanoRotacao, PlanoRotacao, PlanoRotacao]:
-        """Evaluates 3-year sequences and returns normal, dry, and baseline plans."""
+        """Melhor plano de 3 anos no ano normal e no ano seco, mais a sequência de hoje.
+
+        O ano normal usa as notas finais dos 20 anos; o ano seco usa as notas calculadas só
+        com os anos mais secos (`notas_seco`), como pede o plano técnico §4.6.
+        """
         if not opcoes:
             fallback = PlanoRotacao(
                 anos=("pousio", "pousio", "pousio"),
@@ -49,21 +58,14 @@ class RotationPlanService:
         opt_by_id = {o.id: o for o in opcoes}
         candidate_ids = [o.id for o in opcoes]
 
-        best_normal_seq: tuple[str, str, str] = (
-            candidate_ids[0],
-            candidate_ids[0],
-            candidate_ids[0],
-        )
+        best_normal_seq: tuple[str, ...] = (candidate_ids[0],) * ROTATION_HORIZON_YEARS
         best_normal_score = -1.0
-
-        best_dry_seq: tuple[str, str, str] = best_normal_seq
+        best_dry_seq: tuple[str, ...] = best_normal_seq
         best_dry_score = -1.0
 
         for seq in product(candidate_ids, repeat=ROTATION_HORIZON_YEARS):
-            c1, c2, c3 = seq[0], seq[1], seq[2]
             if sum(1 for c in seq if c == "pousio") >= MAX_CONSECUTIVE_FALLOW:
                 continue
-
             if nematoide is True and not any(c in NEMATODE_SUPPRESSOR_CROPS for c in seq):
                 continue
 
@@ -78,37 +80,21 @@ class RotationPlanService:
                 if seq == ("milho_safrinha", "milho_safrinha", "milho_safrinha")
                 else 0.0
             )
+            ajuste = diversity_bonus - monoculture_penalty
 
-            # Normal scenario score
-            avg_final = sum(opt_by_id[c].notas.final for c in seq) / ROTATION_HORIZON_YEARS
-            normal_score = max(
-                SCORE_MIN,
-                min(SCORE_MAX, round(avg_final + diversity_bonus - monoculture_penalty, 1)),
-            )
+            avg_normal = sum(opt_by_id[c].notas.final for c in seq) / ROTATION_HORIZON_YEARS
+            normal_score = max(SCORE_MIN, min(SCORE_MAX, round(avg_normal + ajuste, 1)))
             if normal_score > best_normal_score:
                 best_normal_score = normal_score
-                best_normal_seq = (c1, c2, c3)
+                best_normal_seq = seq
 
-            # Dry scenario score prioritizes climate safety (60%) and soil protection (30%)
-            avg_dry = (
-                sum(
-                    0.60 * opt_by_id[c].notas.seguranca
-                    + 0.30 * opt_by_id[c].notas.solo
-                    + 0.10 * opt_by_id[c].notas.renda
-                    for c in seq
-                )
-                / ROTATION_HORIZON_YEARS
-            )
-            dry_score = max(
-                SCORE_MIN,
-                min(SCORE_MAX, round(avg_dry + diversity_bonus - monoculture_penalty, 1)),
-            )
+            avg_dry = sum(opt_by_id[c].notas_seco.final for c in seq) / ROTATION_HORIZON_YEARS
+            dry_score = max(SCORE_MIN, min(SCORE_MAX, round(avg_dry + ajuste, 1)))
             if dry_score > best_dry_score:
                 best_dry_score = dry_score
-                best_dry_seq = (c1, c2, c3)
+                best_dry_seq = seq
 
-        driest_years = [s.year for s in self.select_4_driest_years(seasons)]
-        driest_str = ", ".join(str(y) for y in driest_years)
+        driest_str = ", ".join(str(y) for y in sorted(anos_secos))
 
         is_en = lang.lower().startswith("en")
         desc_normal = (
