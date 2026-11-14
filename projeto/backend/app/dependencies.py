@@ -12,7 +12,7 @@ from app.repositories.climate_repository import (
 )
 from app.repositories.crop_option_repository import (
     CropOptionRepository,
-    InMemoryCropOptionRepository,
+    YamlCropOptionRepository,
 )
 from app.repositories.crop_params_repository import (
     CropParamsRepository,
@@ -44,8 +44,9 @@ from app.services.talhao_service import TalhaoService
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
 
+@lru_cache
 def get_crop_option_repository() -> CropOptionRepository:
-    return InMemoryCropOptionRepository()
+    return YamlCropOptionRepository(get_settings().culturas_path)
 
 
 def get_crop_option_service(

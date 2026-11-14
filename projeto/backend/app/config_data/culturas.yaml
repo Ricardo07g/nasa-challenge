@@ -7,6 +7,8 @@
 #   antigos (sorgo_granifero, crotalaria_spectabilis) ainda são aceitos na entrada
 #   (CROP_ID_ALIASES em app/constants.py). O nome do PRD §5 fica no comentário do id.
 # nome / nome_en: como a interface mostra (front: src/i18n/messages.pt.ts e messages.en.ts).
+# funcao: coluna "Função" do PRD §5. O /api/crop-options devolve `nome` como `name` e
+#   `funcao` como `role`.
 # como_fazer / como_fazer_en: os 3 passos do cartão "Como fazer" (PRD §4, tela 5).
 #   RASCUNHO PARA A AGRÔNOMA REVISAR. Texto do protótipo (front:
 #   src/repositories/mocks/fixtures.ts, igual ao plano técnico §3.2 e ao prompt do Lovable);
@@ -89,7 +91,7 @@ culturas:
     nome: "Milho com braquiária"
     nome_en: "Corn with brachiaria"
     tipo: "consorcio"
-    funcao: "Grão + Cobertura"
+    funcao: "Grão + cobertura"
     semeadura_limite_mes_dia: "02-28"
     dias_florescer: 60
     ciclo_dias: 120
@@ -112,7 +114,7 @@ culturas:
     nome: "Milheto"
     nome_en: "Pearl millet"
     tipo: "cobertura"
-    funcao: "Cobertura de solo"
+    funcao: "Cobertura"
     semeadura_limite_mes_dia: "03-15"
     dias_florescer: 50
     ciclo_dias: 90
