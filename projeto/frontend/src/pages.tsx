@@ -5,6 +5,7 @@ import { Navigate, Outlet, ScrollRestoration } from 'react-router'
 import { useAnswerController } from './controllers/useAnswerController'
 import { useCommunityController } from './controllers/useCommunityController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
+import { useMethodController } from './controllers/useMethodController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useOptionsController } from './controllers/useOptionsController'
 import { usePlanController } from './controllers/usePlanController'
@@ -16,9 +17,9 @@ import { useI18n } from './i18n/useI18n'
 import { EXAMPLE_FARM } from './services/locationService'
 import { buildFlowQuery } from './services/flowParams'
 import { AnswerView } from './views/AnswerView'
-import { ComingSoonView } from './views/ComingSoonView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
+import { MethodView } from './views/MethodView'
 import { OptionsView } from './views/OptionsView'
 import { PlanView } from './views/PlanView'
 import { SatelliteView } from './views/SatelliteView'
@@ -184,6 +185,22 @@ export function CommunityPage() {
   )
 }
 
+export function MethodPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.method.title)
+  const state = useMethodController()
+  return (
+    <MethodView
+      t={t}
+      backTo={state.backTo}
+      status={state.status}
+      onRetry={state.retry}
+      rows={state.rows}
+      example={state.example}
+    />
+  )
+}
+
 /** "Ver um exemplo pronto": abre a resposta da fazenda de exemplo (RF-11). */
 export function ExamplePage() {
   return <Navigate to={`/resposta${buildFlowQuery({ ...EXAMPLE_FARM, colheita: 'meio', exemplo: true })}`} replace />
@@ -194,16 +211,4 @@ export function DesignSystemPage() {
   useDocumentTitle(t.designSystem.title)
   const state = useDesignSystemController()
   return <DesignSystemView t={t} {...state} />
-}
-
-type PendingScreen = 'method'
-
-/** Provisório até cada tela ficar pronta. */
-export function PendingPage({ screen }: { screen: PendingScreen }) {
-  const { messages: t } = useI18n()
-  const titles: Record<PendingScreen, string> = {
-    method: t.method.title,
-  }
-  useDocumentTitle(titles[screen])
-  return <ComingSoonView t={t} title={titles[screen]} />
 }

@@ -133,6 +133,16 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Perto de você')
   })
 
+  it('"Sou agrônomo(a)" no rodapé abre a tela 9 com as notas da lavoura', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await userEvent.click(await screen.findByRole('link', { name: /Sou agrônomo\(a\)/ }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Como a conta é feita' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Notas de cada opção (0 a 100)' })).toBeInTheDocument()
+    expect(document.title).toBe('Raiz Orbital – Como a conta é feita')
+  })
+
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
     renderAt('/onde')
 

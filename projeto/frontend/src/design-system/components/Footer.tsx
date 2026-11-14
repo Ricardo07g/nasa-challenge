@@ -5,11 +5,13 @@ import styles from './Footer.module.css'
 export type AppFooterProps = {
   disclaimer: string
   agronomist: string
+  /** Destino do link do agrônomo; leva junto o caminho da URL, se houver. */
+  agronomistTo?: string
   project: string
 }
 
 /** Rodapé comum: o aviso de apoio à decisão, o caminho para o agrônomo e o projeto. */
-export function AppFooter({ disclaimer, agronomist, project }: AppFooterProps) {
+export function AppFooter({ disclaimer, agronomist, agronomistTo = '/como-funciona', project }: AppFooterProps) {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
@@ -18,7 +20,7 @@ export function AppFooter({ disclaimer, agronomist, project }: AppFooterProps) {
             <ShieldIcon size={18} />
             <span>{disclaimer}</span>
           </p>
-          <Link to="/como-funciona" className={styles.link}>
+          <Link to={agronomistTo} className={styles.link}>
             {agronomist} <ArrowUpRightIcon />
           </Link>
         </div>

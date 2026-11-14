@@ -140,3 +140,8 @@ export function buildPlan(recomendacao: Recomendacao, scenario: PlanScenario): P
     today: hoje.descricao,
   }
 }
+
+/** Tela 9 (para o agrônomo): as notas de 0 a 100 de cada opção, da maior nota final para a menor. */
+export function scoreRows(recomendacao: Recomendacao): { id: CropId; nome: string; notas: Opcao['notas'] }[] {
+  return [...recomendacao.opcoes].sort(byFinal).map(({ id, nome, notas }) => ({ id, nome, notas }))
+}

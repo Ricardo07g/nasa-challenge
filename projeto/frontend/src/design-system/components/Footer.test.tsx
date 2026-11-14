@@ -24,3 +24,15 @@ describe('AppFooter', () => {
     )
   })
 })
+
+describe('AppFooter com o caminho na URL', () => {
+  it('o link do agrônomo pode levar junto o caminho', () => {
+    render(
+      <MemoryRouter>
+        <AppFooter disclaimer="Aviso" agronomist="Sou agrônomo(a)" agronomistTo="/como-funciona?lat=1&lon=2" project="P" />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('link', { name: 'Sou agrônomo(a)' })).toHaveAttribute('href', '/como-funciona?lat=1&lon=2')
+  })
+})
