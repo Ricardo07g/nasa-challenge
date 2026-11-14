@@ -25,6 +25,8 @@ RUN if [ "$INSTALL_DEV" = "true" ]; then \
 
 COPY app ./app
 COPY tests ./tests
+COPY migrations ./migrations
+COPY alembic.ini ./
 
 RUN useradd --create-home --uid 1000 appuser && chown -R appuser /app
 USER appuser

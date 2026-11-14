@@ -68,8 +68,14 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
 - Só repositories falam com o banco. Coordenadas em SRID 4326, `ST_MakePoint(lon, lat)`.
 - Testes unitários não usam o banco real. Testes que precisarem do banco ficam em
   `tests/integration/` e devem ser marcados e documentados quando forem criados.
-- Ainda não há ORM nem migrações. Quando entrarem (sugestão: SQLAlchemy 2 + GeoAlchemy2 + Alembic +
-  psycopg), registre a decisão no PR e atualize este arquivo.
+- Migrações gerenciadas via **Alembic** (`migrations/`).
+  No compose: o serviço `migration` executa automaticamente `alembic upgrade head` antes de iniciar a API.
+  Para aplicar manualmente com Docker: `docker compose run --rm migration`
+  Para aplicar com uv (fora do Docker): `uv run alembic upgrade head`
+  Para ver SQL gerado sem rodar: `uv run alembic upgrade head --sql`
+  Para criar nova migração: `uv run alembic revision -m "descricao"`
+  Para popular dados iniciais dos satélites: `uv run python -m scripts.seed_db`
+- Script DDL standalone também disponível em `scripts/init_db.sql`.
 
 ## Comandos
 
