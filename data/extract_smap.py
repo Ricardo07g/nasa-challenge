@@ -9,17 +9,17 @@ Documentação oficial: https://nsidc.org/data/spl4smgp/versions/7
 
 import json
 import os
+import sys
 import time
 from typing import Any, Dict, List, Optional
 import requests
 
 # ==============================================================================
-# 🔑 TOKEN NASA EARTHDATA / APPEEARS (OPÇÃO PARA TESTE RÁPIDO / HARDCODED)
-# Cole seu token da NASA diretamente aqui entre as aspas para testar de imediato:
-# Exemplo: EARTHDATA_BEARER_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6..."
-# Se deixar vazio "", o script tenta usar as variáveis de ambiente ou o login por usuário/senha.
+# 🔑 CREDENCIAIS: SÓ POR VARIÁVEL DE AMBIENTE (o repositório é PÚBLICO)
+# Nunca escreva token ou senha neste arquivo. Use uma destas opções:
+#   export EARTHDATA_TOKEN=...                          (token bearer do AppEEARS)
+#   export EARTHDATA_USERNAME=... EARTHDATA_PASSWORD=...  (login do Earthdata)
 # ==============================================================================
-EARTHDATA_BEARER_TOKEN = ""
 
 # Diretório padrão para salvar dados extraídos
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
@@ -119,7 +119,12 @@ def download_appeears_bundle(token: str, task_id: str, output_dir: Optional[str]
         file_name = f.get("file_name")
         download_url = f"{APPEEARS_API_URL}/bundle/{task_id}/{file_id}"
 
-        filepath = os.path.join(target_dir, file_name)
+        # O nome vem do servidor: usa só o nome do arquivo, nunca um caminho (evita "../").
+        safe_name = os.path.basename(str(file_name or ""))
+        if not safe_name or safe_name in (".", ".."):
+            print(f"[DOWNLOAD SMAP] Nome de arquivo inválido ignorado: {file_name!r}")
+            continue
+        filepath = os.path.join(target_dir, safe_name)
         with requests.get(download_url, headers=headers, stream=True, timeout=60) as r:
             r.raise_for_status()
             with open(filepath, "wb") as out_f:
@@ -172,9 +177,9 @@ def generate_smap_sample_dataset(
     dias: int = 90
 ) -> List[Dict[str, Any]]:
     """
-    Gera uma série temporal representativa dos dados do SMAP L4 para a região do talhão.
-    Útil para desenvolvimento rápido no hackathon enquanto a conta Earthdata é ativada.
-    Valores físicos reais em m³/m³ e fração de umidade (0 a 1).
+    Gera uma série ALEATÓRIA (sintética) com cara de SMAP L4, só para testar código.
+    NÃO É DADO DA NASA: nunca use na API, no banco ou na demo. Os registros saem com
+    `fonte` marcando isso, e o __main__ não chama mais esta função sozinho.
     """
     from datetime import datetime, timedelta
     import random
@@ -207,7 +212,7 @@ def generate_smap_sample_dataset(
             "sm_surface_m3_m3": sm_surface,            # Umidade superficial (0-5 cm)
             "sm_rootzone_m3_m3": sm_rootzone,          # Umidade na zona das raízes (0-100 cm)
             "sm_rootzone_wetness": sm_rootzone_wetness, # Saturação relativa (0 a 1)
-            "fonte": "NASA SMAP L4 (SPL4SMGP v8 / 9km)"
+            "fonte": "SINTETICO - nao e dado da NASA (gerado aleatoriamente)"
         })
 
     return registros
@@ -248,8 +253,8 @@ if __name__ == "__main__":
     print("=== Extração de Dados NASA SMAP (Soil Moisture Active Passive) ===")
     print(f"Alvo: Lat {lat}, Lon {lon} (Triângulo Mineiro)")
 
-    # 1. Prioridade 1: Verifica se há token hardcoded no topo do arquivo ou na variável de ambiente
-    active_token = EARTHDATA_BEARER_TOKEN.strip() or os.getenv("EARTHDATA_TOKEN", "").strip()
+    # 1. Prioridade 1: token na variável de ambiente EARTHDATA_TOKEN
+    active_token = os.getenv("EARTHDATA_TOKEN", "").strip()
 
     if active_token:
         print("[SMAP] Token NASA Earthdata detectado!")
@@ -278,10 +283,7 @@ if __name__ == "__main__":
                 if task_id:
                     wait_and_download_task(token, task_id)
         else:
-            # 3. Fallback: Sem token ou credenciais, gera série de desenvolvimento
+            # 3. Sem credencial: para aqui. Não gera série falsa com nome de dado da NASA.
             print("[SMAP] Nenhum token ou credencial configurado.")
-            print("[DICA] Para usar a API real, cole seu token na variável 'EARTHDATA_BEARER_TOKEN' no início deste script.")
-            print("[SMAP] Gerando série calibrada de umidade da zona radicular (SPL4SMGP) para testes locais...")
-            dados_smap = generate_smap_sample_dataset(lat, lon, start_date="2024-01-01", dias=90)
-            save_smap_data(dados_smap, prefix="smap_uberlandia_2024_safra")
-            print(f"[SMAP] Concluído! {len(dados_smap)} dias de umidade de solo salvos na pasta 'output/'.")
+            print("[DICA] Defina EARTHDATA_TOKEN, ou EARTHDATA_USERNAME e EARTHDATA_PASSWORD.")
+            sys.exit(1)

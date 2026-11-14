@@ -18,8 +18,9 @@ data/
 ├── extract_soilgrids.py       # Extração de textura do solo e CAD via SoilGrids REST API
 ├── extract_gee_ndvi.py        # Extração de histórico de NDVI (MODIS) via Google Earth Engine
 ├── extract_gee_cmip6.py       # Projeções climáticas 2041-2060 (NEX-GDDP-CMIP6) via Earth Engine
-├── culturas.yaml              # Parâmetros das 6 opções de entressafra (Embrapa/ZARC)
-└── output/                    # Diretório onde todos os arquivos JSON e CSV são gerados
+└── output/                    # Saída dos scripts (fora do git)
+
+# culturas.yaml mudou para projeto/backend/app/config_data/culturas.yaml (é lido pela API)
 ```
 
 ---
@@ -139,7 +140,7 @@ O **NEX-GDDP-CMIP6** (*NASA Earth Exchange Global Daily Downscaled Projections*)
 
 ## 4. Como Usar os Scripts de Extração
 
-Todos os scripts salvam automaticamente os arquivos `.json` e `.csv` no diretório [`output/`](file:///workspace/data/output).
+Todos os scripts salvam os arquivos `.json` e `.csv` em `data/output/`. Essa pasta **não vai para o git** (dados brutos; regra do `AGENTS.md`). A API não lê daqui: ela usa a fixture derivada `projeto/backend/app/fixtures/clima_fazenda_exemplo.json`, gerada pelo `projeto/backend/pipeline/export_climate_fixture.py` (ver `projeto/backend/AGENTS.md`).
 
 ### 1. Extração NASA POWER Diária
 Script: [`extract_nasa_power.py`](file:///workspace/data/extract_nasa_power.py)
@@ -167,25 +168,14 @@ Script: [`extract_historical_20y.py`](file:///workspace/data/extract_historical_
 ### 3. Extração NASA SMAP (Umidade do Solo)
 Script: [`extract_smap.py`](file:///workspace/data/extract_smap.py)
 
-O script oferece 3 formas flexíveis de uso:
-1. **Token Hardcoded (Teste Rápido):** Cole seu token diretamente na variável `EARTHDATA_BEARER_TOKEN` no topo do arquivo.
-2. **Login Automático:** Configure as variáveis de ambiente `EARTHDATA_USERNAME` e `EARTHDATA_PASSWORD` para login automático na API AppEEARS.
-3. **Modo Desenvolvimento/Hackathon:** Se executado sem credenciais, gera e salva uma série representativa do SMAP L4 para Uberlândia em `output/smap_uberlandia_2024_safra.json` e `.csv`.
+Credenciais **só por variável de ambiente** (o repositório é público; nunca escreva token no código):
+1. **Token:** `export EARTHDATA_TOKEN=...` (token bearer do AppEEARS).
+2. **Login:** `export EARTHDATA_USERNAME=...` e `export EARTHDATA_PASSWORD=...`.
 
-```python
-from extract_smap import generate_smap_sample_dataset, save_smap_data
-
-# Gera série representativa da umidade do solo para o talhão
-dados_smap = generate_smap_sample_dataset(
-    latitude=-18.9543,
-    longitude=-48.1993,
-    start_date="2024-01-01",
-    dias=90
-)
-
-# Salva automaticamente dentro de data/output/
-save_smap_data(dados_smap, prefix="smap_uberlandia_2024")
-```
+Sem credencial, o script para com erro. Ele **não** gera mais uma série sintética sozinho: a
+versão anterior gravava números aleatórios com o rótulo "NASA SMAP L4" e esse arquivo chegou a
+ser commitado e lido pela API. A função `generate_smap_sample_dataset` continua existindo só para
+testar código, e marca os registros como `SINTETICO - nao e dado da NASA`.
 
 ### 4. Extração SoilGrids (Textura e CAD do Solo)
 Script: [`extract_soilgrids.py`](file:///workspace/data/extract_soilgrids.py)

@@ -2,6 +2,11 @@
 # Parâmetros das 6 Opções de Entressafra (Raiz Orbital - Triângulo Mineiro)
 # Referência: Embrapa, ZARC e Seção 5 do PRD
 # Editável por agrônomos sem necessidade de alterar o código de backend
+#
+# nota_solo: pontos da tabela 7.4 do PRD (palhada até 40, nitrogênio até 30,
+#   quebra de pragas/nematoide até 30). A nota de solo é a soma (0 a 100).
+# Coberturas e pousio não dão grão: sem produtividade_padrao_sc_ha e preco_padrao_saca
+#   (valem 0); custo_padrao_ha é o custo de implantação/semente.
 # ==============================================================================
 
 culturas:
@@ -13,10 +18,8 @@ culturas:
     dias_florescer: 0
     ciclo_dias: 0
     kc_pico: 0.0
-    palhada_score: 5        # Escala 0 a 40
+    nota_solo: {palhada: 0, nitrogenio: 0, pragas: 0}
     n_deixado_kg: 0         # Nitrogênio fixado no solo (kg/ha)
-    nematoide_efeito: -10   # Não quebra ciclo e deixa solo desprotegido
-    renda_padrao_ha: 0.0    # Lucro líquido estimado (R$/ha)
 
   milho_safrinha:
     nome: "Milho Safrinha"
@@ -26,9 +29,8 @@ culturas:
     dias_florescer: 60
     ciclo_dias: 120
     kc_pico: 1.20
-    palhada_score: 20
+    nota_solo: {palhada: 20, nitrogenio: 0, pragas: 0}
     n_deixado_kg: 0
-    nematoide_efeito: -15   # Altamente suscetível (multiplica Pratylenchus)
     produtividade_padrao_sc_ha: 80.0
     preco_padrao_saca: 62.0 # R$ / saca Uberlândia nov/2026
     custo_padrao_ha: 3500.0
@@ -41,9 +43,8 @@ culturas:
     dias_florescer: 65
     ciclo_dias: 115
     kc_pico: 1.05
-    palhada_score: 25
+    nota_solo: {palhada: 20, nitrogenio: 0, pragas: 15}
     n_deixado_kg: 0
-    nematoide_efeito: 10    # Reduz nematoide reniforme
     produtividade_padrao_sc_ha: 60.0
     preco_padrao_saca: 49.6 # ~80% do milho
     custo_padrao_ha: 2200.0
@@ -56,9 +57,8 @@ culturas:
     dias_florescer: 60
     ciclo_dias: 120
     kc_pico: 1.20
-    palhada_score: 38       # Alta palhada e cobertura verde contínua na seca
+    nota_solo: {palhada: 40, nitrogenio: 0, pragas: 10}
     n_deixado_kg: 0
-    nematoide_efeito: 5     # Reduz reniforme, mas exige rotação com leguminosa
     produtividade_padrao_sc_ha: 76.0 # Leve desconto pelo consórcio (-5%)
     preco_padrao_saca: 62.0
     custo_padrao_ha: 3800.0
@@ -71,9 +71,8 @@ culturas:
     dias_florescer: 50
     ciclo_dias: 90
     kc_pico: 1.00
-    palhada_score: 35       # Excelente ciclagem de nutrientes e biomassa
+    nota_solo: {palhada: 35, nitrogenio: 0, pragas: 20}
     n_deixado_kg: 0
-    nematoide_efeito: 15    # Supressor de Pratylenchus
     custo_padrao_ha: 600.0  # Custo de implantação/semente
 
   crotalaria_spectabilis:
@@ -84,7 +83,6 @@ culturas:
     dias_florescer: 60
     ciclo_dias: 100
     kc_pico: 1.00
-    palhada_score: 30
+    nota_solo: {palhada: 25, nitrogenio: 30, pragas: 30}
     n_deixado_kg: 80        # Fixação biológica de Nitrogênio (60 a 100 kg/ha)
-    nematoide_efeito: 30    # Planta armadilha/altamente resistente (quebra ciclo)
     custo_padrao_ha: 800.0
