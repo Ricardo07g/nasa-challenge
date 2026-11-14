@@ -124,6 +124,10 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   acima fica no repositório (exceção prevista no plano técnico §5 e §11).
 - **Nunca** use dado sintético com rótulo de fonte real (ex.: "NASA SMAP"). Sem dado real, a
   conta segue o PRD sem aquela fonte (balde começa em 50% da CAD; futuro `null` sem CMIP6).
+- **NASA POWER sob demanda** (tarefas 0004 e 0005): o `NasaPowerClient` só traz a série bruta
+  (`-999` vira `None`). O `ClimateSeasonBuilder` monta as temporadas de 212 dias desde 1/jan,
+  tira o ano com algum dia sem chuva, máxima ou mínima, e calcula a ETo FAO-56 Penman-Monteith.
+  Faltou UR, vento, radiação ou altitude: Hargreaves-Samani na temporada inteira.
 
 ## Configuração e segredos
 

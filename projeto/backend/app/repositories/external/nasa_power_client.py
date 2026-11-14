@@ -9,9 +9,6 @@ from app.constants import (
     NASA_POWER_DAILY_POINT_URL,
     NASA_POWER_MISSING_SENTINEL,
     NASA_POWER_PARAMETERS,
-    RH_DEFAULT_PCT,
-    SOLAR_RAD_DEFAULT_MJ,
-    WIND_SPEED_DEFAULT_MS,
 )
 from app.models.climate import DailyWeatherRecord, PowerDailySeries
 from app.repositories.external.http_client import (
@@ -32,12 +29,13 @@ class NasaPowerClientProtocol(Protocol):
     def fetch_daily(self, lat: float, lon: float, start: date, end: date) -> PowerDailySeries: ...
 
 
-def _clean_val(raw: Any, fallback: float) -> float:
+def _raw_value(raw: Any) -> float | None:
+    """Valor como veio do POWER; nulo, ausente ou a sentinela -999 viram "sem dado" (None)."""
     if raw is None:
-        return fallback
+        return None
     val = float(raw)
     if val <= NASA_POWER_MISSING_SENTINEL:
-        return fallback
+        return None
     return val
 
 
@@ -45,10 +43,7 @@ def _elevation(payload: dict[str, Any]) -> float | None:
     coordinates = payload.get("geometry", {}).get("coordinates", [])
     if len(coordinates) <= ELEVATION_COORDINATE_INDEX:
         return None
-    raw = coordinates[ELEVATION_COORDINATE_INDEX]
-    if raw is None or float(raw) <= NASA_POWER_MISSING_SENTINEL:
-        return None
-    return float(raw)
+    return _raw_value(coordinates[ELEVATION_COORDINATE_INDEX])
 
 
 class NasaPowerClient:
@@ -111,12 +106,12 @@ class NasaPowerClient:
             days.append(
                 DailyWeatherRecord(
                     data=day,
-                    prectotcorr=max(0.0, _clean_val(prec_map.get(key), 0.0)),
-                    t2m_max=_clean_val(tmax_map.get(key), 30.0),
-                    t2m_min=_clean_val(tmin_map.get(key), 18.0),
-                    rh2m=_clean_val(rh_map.get(key), RH_DEFAULT_PCT),
-                    ws2m=_clean_val(ws_map.get(key), WIND_SPEED_DEFAULT_MS),
-                    allsky_sfc_sw_dwn=_clean_val(rad_map.get(key), SOLAR_RAD_DEFAULT_MJ),
+                    prectotcorr=_raw_value(prec_map.get(key)),
+                    t2m_max=_raw_value(tmax_map.get(key)),
+                    t2m_min=_raw_value(tmin_map.get(key)),
+                    rh2m=_raw_value(rh_map.get(key)),
+                    ws2m=_raw_value(ws_map.get(key)),
+                    allsky_sfc_sw_dwn=_raw_value(rad_map.get(key)),
                 )
             )
 

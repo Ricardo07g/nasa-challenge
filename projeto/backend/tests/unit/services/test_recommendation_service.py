@@ -98,16 +98,18 @@ class FakeClimateRepository:
         dry_years: tuple[int, ...] = (),
         deltas: list[Cmip6Delta] | None = None,
         inside: bool = True,
+        years: tuple[int, ...] = tuple(range(2005, 2025)),
     ) -> None:
         self._dry_years = dry_years
         self._deltas = deltas or []
         self._inside = inside
+        self._years = years
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
         return CELL_ID if self._inside else None
 
     def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
-        return [_season(y, y in self._dry_years) for y in range(2005, 2025)]
+        return [_season(y, y in self._dry_years) for y in self._years]
 
     def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]:
         return list(self._deltas)
@@ -237,6 +239,18 @@ def test_should_label_rain_axis_by_good_years_when_dry_years_vary(
     assert milho.total_anos == 20
     assert milho.rotulo_chuva == rotulo
     assert milho.texto_chuva == f"Deu certo em {anos_bons} de 20 anos"
+
+
+def test_should_count_only_the_years_with_data_when_some_years_were_dropped() -> None:
+    # Tarefa 0005: anos descartados por dia sem dado no POWER não entram no "de N anos"
+    years = tuple(y for y in range(2005, 2025) if y not in (2010, 2015, 2020))
+    rec = _service(FakeClimateRepository(years=years)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+    milho = _opcao(rec, "milho_safrinha")
+
+    assert milho.total_anos == 17
+    assert milho.texto_chuva == "Deu certo em 17 de 17 anos"
 
 
 def test_should_cite_same_number_as_the_math_when_explaining_stress_years() -> None:

@@ -33,8 +33,9 @@ def _make_season(cell_id: str, year: int) -> ClimateSeason:
 class FakeNasaPowerClient:
     """Devolve uma série diária completa (valores fixos) para o período pedido."""
 
-    def __init__(self, should_fail: bool = False) -> None:
+    def __init__(self, should_fail: bool = False, days_without_tmax: frozenset[date] = frozenset()):
         self.should_fail = should_fail
+        self.days_without_tmax = days_without_tmax
         self.calls: list[tuple[float, float, date, date]] = []
 
     def fetch_daily(self, lat: float, lon: float, start: date, end: date) -> PowerDailySeries:
@@ -45,7 +46,7 @@ class FakeNasaPowerClient:
             DailyWeatherRecord(
                 data=start + timedelta(days=i),
                 prectotcorr=5.0,
-                t2m_max=30.0,
+                t2m_max=None if start + timedelta(days=i) in self.days_without_tmax else 30.0,
                 t2m_min=19.0,
                 rh2m=75.0,
                 ws2m=1.5,
@@ -203,3 +204,22 @@ def test_should_save_jan_jul_seasons_with_penman_monteith_eto_when_power_series_
             day_of_year=1,
             elevation_m=850.0,
         )
+
+
+def test_should_save_only_complete_years_when_power_has_days_without_data() -> None:
+    # Tarefa 0005: ano com dia sem dado sai da série; nada de 30 °C inventados
+    nasa_client = FakeNasaPowerClient(
+        days_without_tmax=frozenset({date(2010, 2, 14), date(2017, 6, 1)})
+    )
+    climate_repo = FakeClimateRepository()
+    service = SatelliteIngestionService(
+        nasa_client=nasa_client,
+        soil_client=FakeSoilGridsClient(),
+        climate_repo=climate_repo,
+        soil_repo=FakeSoilRepository(),
+    )
+
+    cell_id = service.ingest_area(lat=-17.78, lon=-50.92)
+
+    years = [s.year for s in climate_repo.saved_cells[cell_id]]
+    assert years == [y for y in range(2005, 2025) if y not in (2010, 2017)]
