@@ -6,17 +6,23 @@ from datetime import date
 
 @dataclass(frozen=True)
 class DailyWeatherRecord:
-    """Single day meteorological observation from NASA POWER."""
+    """Um dia do NASA POWER, com o valor de cada parâmetro como veio da API (sem cálculo)."""
 
     data: date
-    prectotcorr: float | None
-    t2m_max: float | None
-    t2m_min: float | None
-    t2m: float | None
-    rh2m: float | None
-    ws2m: float | None
-    allsky_sfc_sw_dwn: float | None
-    gwetroot: float | None
+    prectotcorr: float | None  # chuva corrigida (mm/dia)
+    t2m_max: float | None  # máxima a 2 m (°C)
+    t2m_min: float | None  # mínima a 2 m (°C)
+    rh2m: float | None  # umidade relativa média a 2 m (%)
+    ws2m: float | None  # vento a 2 m (m/s)
+    allsky_sfc_sw_dwn: float | None  # radiação solar na superfície (MJ/m²/dia)
+
+
+@dataclass(frozen=True)
+class PowerDailySeries:
+    """Série diária bruta do NASA POWER num ponto e a altitude da célula do POWER."""
+
+    elevation_m: float | None
+    days: tuple[DailyWeatherRecord, ...]
 
 
 @dataclass(frozen=True)

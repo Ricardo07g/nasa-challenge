@@ -76,7 +76,6 @@ KC_DEV_STAGE_FRACTION: Final[float] = 0.45
 KC_MID_STAGE_FRACTION: Final[float] = 0.75
 SOLAR_CONSTANT_MJ_M2_MIN: Final[float] = 0.0820  # FAO-56, Gsc
 MJ_TO_MM_EVAPORATION: Final[float] = 0.408  # FAO-56: 1 MJ/m² evapora 0,408 mm
-MIN_DAILY_ETO_MM: Final[float] = 0.5
 MAX_DAILY_ETO_MM: Final[float] = 10.0
 RH_DEFAULT_PCT: Final[float] = 65.0
 WIND_SPEED_DEFAULT_MS: Final[float] = 2.0
@@ -143,12 +142,13 @@ PROBLEM_BASE_URI: Final[str] = "https://api.raizorbital.com/errors"
 # External Satellite APIs & On-Demand Ingestion Constants (Task 0001)
 NASA_POWER_DAILY_POINT_URL: Final[str] = "https://power.larc.nasa.gov/api/temporal/daily/point"
 NASA_POWER_COMMUNITY: Final[str] = "AG"
-NASA_POWER_PARAMETERS: Final[str] = (
-    "PRECTOTCORR,T2M_MAX,T2M_MIN,T2M,RH2M,WS2M,ALLSKY_SFC_SW_DWN,GWETROOT"
-)
+NASA_POWER_PARAMETERS: Final[str] = "PRECTOTCORR,T2M_MAX,T2M_MIN,RH2M,WS2M,ALLSKY_SFC_SW_DWN"
 NASA_POWER_MISSING_SENTINEL: Final[float] = -999.0
 HISTORICAL_START_YEAR: Final[int] = 2005
 HISTORICAL_END_YEAR: Final[int] = 2024
+# Temporada de clima: 212 dias a partir de 1/jan (1/jan a 31/jul; em ano bissexto, a 30/jul),
+# igual à fixture (pipeline/export_climate_fixture.py) e à tabela climate_season (plano técnico §5)
+CLIMATE_SEASON_DAYS: Final[int] = 212
 
 SOILGRIDS_QUERY_URL: Final[str] = "https://rest.isric.org/soilgrids/v2.0/properties/query"
 SOILGRIDS_DEPTHS: Final[tuple[str, ...]] = ("0-5cm", "5-15cm", "15-30cm")

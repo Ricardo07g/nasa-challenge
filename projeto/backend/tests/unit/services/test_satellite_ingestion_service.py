@@ -1,12 +1,19 @@
 """Unit tests for SatelliteIngestionService (Sub-task 1.2 & 1.4 of Task 0001)."""
 
-from datetime import date
+from datetime import date, timedelta
 
-from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
+from app.models.climate import (
+    ClimateSeason,
+    Cmip6Delta,
+    DailyWeatherRecord,
+    PowerDailySeries,
+    SmapSoilMoisture,
+)
 from app.models.talhao import SoloInfo
 from app.repositories.climate_repository import cell_id_for
 from app.services.errors import DomainError
 from app.services.satellite_ingestion_service import SatelliteIngestionService
+from app.services.water_balance_calculator import WaterBalanceCalculator
 
 
 def _make_season(cell_id: str, year: int) -> ClimateSeason:
@@ -24,22 +31,29 @@ def _make_season(cell_id: str, year: int) -> ClimateSeason:
 
 
 class FakeNasaPowerClient:
+    """Devolve uma série diária completa (valores fixos) para o período pedido."""
+
     def __init__(self, should_fail: bool = False) -> None:
         self.should_fail = should_fail
-        self.calls: list[tuple[float, float, str]] = []
+        self.calls: list[tuple[float, float, date, date]] = []
 
-    def fetch_seasons(
-        self,
-        lat: float,
-        lon: float,
-        cell_id: str,
-        start_year: int = 2005,
-        end_year: int = 2024,
-    ) -> list[ClimateSeason]:
-        self.calls.append((lat, lon, cell_id))
+    def fetch_daily(self, lat: float, lon: float, start: date, end: date) -> PowerDailySeries:
+        self.calls.append((lat, lon, start, end))
         if self.should_fail:
             raise DomainError("NASA POWER timeout", code="NASA_POWER_UNAVAILABLE")
-        return [_make_season(cell_id, yr) for yr in range(2005, 2025)]
+        days = tuple(
+            DailyWeatherRecord(
+                data=start + timedelta(days=i),
+                prectotcorr=5.0,
+                t2m_max=30.0,
+                t2m_min=19.0,
+                rh2m=75.0,
+                ws2m=1.5,
+                allsky_sfc_sw_dwn=18.0,
+            )
+            for i in range((end - start).days + 1)
+        )
+        return PowerDailySeries(elevation_m=850.0, days=days)
 
 
 class FakeSoilGridsClient:
@@ -156,3 +170,36 @@ def test_should_use_the_same_floor_cell_id_as_the_repositories_when_ingesting() 
     assert cell_id == "-190_-483"
     assert cell_id == cell_id_for(-18.92, -48.27)
     assert "-190_-483" in climate_repo.saved_cells
+
+
+def test_should_save_jan_jul_seasons_with_penman_monteith_eto_when_power_series_arrives() -> None:
+    nasa_client = FakeNasaPowerClient()
+    climate_repo = FakeClimateRepository()
+    service = SatelliteIngestionService(
+        nasa_client=nasa_client,
+        soil_client=FakeSoilGridsClient(),
+        climate_repo=climate_repo,
+        soil_repo=FakeSoilRepository(),
+    )
+
+    cell_id = service.ingest_area(lat=-17.78, lon=-50.92)
+
+    # Pede ao POWER de 1/jan/2005 ao fim da temporada de 2024 (bissexto: 212 dias até 30/jul)
+    assert nasa_client.calls[0][2:] == (date(2005, 1, 1), date(2024, 7, 30))
+    seasons = climate_repo.saved_cells[cell_id]
+    assert [s.year for s in seasons] == list(range(2005, 2025))
+    wb = WaterBalanceCalculator()
+    ea = wb.actual_vapour_pressure_from_rh_mean(t_max=30.0, t_min=19.0, rh_mean_pct=75.0)
+    for season in seasons:
+        assert season.start_date == date(season.year, 1, 1)
+        assert len(season.rain_mm) == len(season.eto_mm) == 212
+        assert season.eto_mm[0] == wb.penman_monteith_eto(
+            t_max=30.0,
+            t_min=19.0,
+            actual_vapour_pressure_kpa=ea,
+            wind_2m_ms=1.5,
+            solar_rad_mj=18.0,
+            lat_deg=-17.78,
+            day_of_year=1,
+            elevation_m=850.0,
+        )

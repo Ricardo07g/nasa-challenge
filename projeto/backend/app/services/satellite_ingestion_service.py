@@ -12,6 +12,8 @@ from app.repositories.climate_repository import ClimateRepository, cell_id_for
 from app.repositories.external.nasa_power_client import NasaPowerClientProtocol
 from app.repositories.external.soilgrids_client import SoilGridsClientProtocol
 from app.repositories.soil_repository import SoilRepository
+from app.services.climate_season_builder import ClimateSeasonBuilder
+from app.services.water_balance_calculator import WaterBalanceCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +28,14 @@ class SatelliteIngestionService:
         climate_repo: ClimateRepository,
         soil_repo: SoilRepository,
         timeout_seconds: float = INGESTION_TOTAL_TIMEOUT_SECONDS,
+        season_builder: ClimateSeasonBuilder | None = None,
     ) -> None:
         self._nasa_client = nasa_client
         self._soil_client = soil_client
         self._climate_repo = climate_repo
         self._soil_repo = soil_repo
         self._timeout = timeout_seconds
+        self._season_builder = season_builder or ClimateSeasonBuilder(WaterBalanceCalculator())
 
     def ingest_area(self, lat: float, lon: float) -> str:
         """Fetches climate and soil data in parallel for a new coordinate and persists to cache/DB.
@@ -39,13 +43,15 @@ class SatelliteIngestionService:
         If NASA POWER is unavailable or times out, falls back to the nearest existing spatial cell.
         """
         cell_id = cell_id_for(lat, lon)
+        start, end = self._season_builder.request_window()
 
         with ThreadPoolExecutor(max_workers=INGESTION_WORKERS_COUNT) as executor:
             nasa_future = executor.submit(
-                self._nasa_client.fetch_seasons,
+                self._nasa_client.fetch_daily,
                 lat,
                 lon,
-                cell_id,
+                start,
+                end,
             )
             soil_future = executor.submit(
                 self._soil_client.fetch_soil,
@@ -58,7 +64,7 @@ class SatelliteIngestionService:
                 self._soil_repo.save_soil(lat, lon, soil_info)
 
             try:
-                seasons = nasa_future.result(timeout=self._timeout)
+                series = nasa_future.result(timeout=self._timeout)
             except Exception as exc:
                 logger.warning(
                     "NASA POWER ingestion failed for cell %s (%s, %s); "
@@ -69,6 +75,8 @@ class SatelliteIngestionService:
                     exc,
                 )
                 seasons = self._load_nearest_neighbor_seasons(cell_id, lat, lon)
+            else:
+                seasons = self._season_builder.build(series, cell_id=cell_id, lat=lat)
 
         if hasattr(self._climate_repo, "save_cell_seasons"):
             self._climate_repo.save_cell_seasons(
