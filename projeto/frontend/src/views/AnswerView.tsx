@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
-import { Button } from '../design-system/components/Button'
 import { AlternativeCard, Card } from '../design-system/components/Card'
 import { Disclosure, NumberedSteps, RecommendationHero } from '../design-system/components/Content'
-import { ErrorState, LoadingState, SkeletonCard } from '../design-system/components/Feedback'
 import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
 import { MetricRow, StatusPill, StripLegend, YearStrip } from '../design-system/components/Status'
 import { DropIcon, LeafIcon, MoneyIcon, ShieldIcon, SoilIcon, SproutIcon } from '../design-system/icons'
@@ -11,6 +9,7 @@ import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { Motivo } from '../models/recomendacao'
 import type { AnswerSummary } from '../services/recomendacaoRules'
+import { FlowError, FlowLoading, LateWarning } from './FlowStates'
 import layout from './layout.module.css'
 
 export type AnswerViewProps = {
@@ -37,28 +36,8 @@ export function AnswerView(props: AnswerViewProps) {
     <div className={layout.page}>
       <BackLink to={nav.backTo}>{t.nav.back}</BackLink>
       <AnswerTabs label={nav.label} tabs={nav.tabs} />
-      {status === 'loading' && (
-        <>
-          <LoadingState>{t.common.loading}</LoadingState>
-          <div className={layout.pageGrid}>
-            <div className={layout.stack}>
-              <SkeletonCard />
-              <SkeletonCard />
-            </div>
-            <SkeletonCard />
-          </div>
-        </>
-      )}
-      {status === 'error' && (
-        <div className={layout.stack}>
-          <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={props.onRetry} />
-          <div className={layout.cta}>
-            <Button to="/exemplo" variant="outline">
-              {t.where.seeExample}
-            </Button>
-          </div>
-        </div>
-      )}
+      {status === 'loading' && <FlowLoading label={t.common.loading} />}
+      {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={props.onRetry} />}
       {status === 'ready' && answer && <Answer {...props} answer={answer} />}
     </div>
   )
@@ -71,14 +50,7 @@ function Answer({ t, lang, answer, aviso, sampleData }: AnswerViewProps & { answ
   return (
     <>
       <p className={layout.lead}>{a.lead(answer.year)}</p>
-      {late.names.length > 0 && (
-        <Card tone="orange" as="section" aria-label={t.options.outOfWindowTitle}>
-          <strong>{a.lateWarning(late.names.join(', '), late.names.length)}</strong>
-          {late.texts.map((text) => (
-            <p key={text}>{text}</p>
-          ))}
-        </Card>
-      )}
+      <LateWarning t={t} late={late} />
       <div className={layout.pageGrid}>
         <div className={layout.stack}>
           <RecommendationHero as="h1" label={a.best} title={best.nome}>

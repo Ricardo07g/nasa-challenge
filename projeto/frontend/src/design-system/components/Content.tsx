@@ -103,32 +103,61 @@ export function YearTimeline({ label, items }: { label: string; items: readonly 
   )
 }
 
-type CompareRow = { label: string; value: string; extra?: ReactNode }
+type CompareRow = {
+  label: string
+  value: string
+  /** Ícone do eixo (gota, nota, broto); azul para dado de satélite. */
+  icon?: ReactNode
+  iconTone?: 'green' | 'blue'
+  /** Rótulo Bom/Médio/Fraco, embaixo da frase. */
+  pill?: ReactNode
+  /** Conteúdo extra embaixo da frase (ex.: os 20 quadrinhos da chuva). */
+  extra?: ReactNode
+}
 
 type OptionCompareCardProps = {
   rank: string
   name: string
   rows: readonly CompareRow[]
   highlighted?: boolean
+  /** Fora da janela de plantio: cartão laranja com este aviso no lugar das linhas. */
+  unavailable?: string
 }
 
-export function OptionCompareCard({ rank, name, rows, highlighted = false }: OptionCompareCardProps) {
+export function OptionCompareCard({ rank, name, rows, highlighted = false, unavailable }: OptionCompareCardProps) {
   const titleId = useId()
   return (
-    <article className={styles.compare} data-highlighted={highlighted} aria-labelledby={titleId}>
+    <article
+      className={styles.compare}
+      data-highlighted={highlighted}
+      data-unavailable={unavailable !== undefined}
+      aria-labelledby={titleId}
+    >
       <div className={styles.compareHead}>
         <span className={styles.rank}>{rank}</span>
         <h3 id={titleId} className={styles.compareName}>
           {name}
         </h3>
       </div>
-      {rows.map((row) => (
-        <div key={row.label} className={styles.compareRow}>
-          <span className={styles.compareLabel}>{row.label}</span>
-          <span className={styles.compareValue}>{row.value}</span>
-          {row.extra}
-        </div>
-      ))}
+      {unavailable !== undefined ? (
+        <p>{unavailable}</p>
+      ) : (
+        rows.map((row) => (
+          <div key={row.label} className={styles.compareRow} data-icon={row.icon !== undefined}>
+            {row.icon && (
+              <span className={styles.compareIcon} data-tone={row.iconTone ?? 'green'}>
+                {row.icon}
+              </span>
+            )}
+            <span className={styles.compareText}>
+              <span className={styles.compareLabel}>{row.label}</span>
+              <span className={styles.compareValue}>{row.value}</span>
+              {row.extra && <span className={styles.compareExtra}>{row.extra}</span>}
+              {row.pill && <span className={styles.comparePill}>{row.pill}</span>}
+            </span>
+          </div>
+        ))
+      )}
     </article>
   )
 }

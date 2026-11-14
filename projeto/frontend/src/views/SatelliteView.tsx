@@ -2,13 +2,13 @@ import { Button, TextButton } from '../design-system/components/Button'
 import { DataSourceCard } from '../design-system/components/Card'
 import { RadioCard } from '../design-system/components/Choice'
 import { PageHeading } from '../design-system/components/Content'
-import { ErrorState, LoadingState, SkeletonCard } from '../design-system/components/Feedback'
 import { BackLink } from '../design-system/components/Navigation'
 import { StripLegend, YearStrip, type CellState } from '../design-system/components/Status'
 import { ClimateIcon, DropIcon, HistoryIcon, SoilIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import { TEXTURAS, type SituacaoAno, type Textura } from '../models/talhao'
 import type { HistorySummary, SoilSummary } from '../services/satelliteService'
+import { FlowError, FlowLoading } from './FlowStates'
 import layout from './layout.module.css'
 
 export type SatelliteViewProps = {
@@ -36,37 +36,10 @@ export function SatelliteView(props: SatelliteViewProps) {
     <div className={layout.page}>
       <BackLink to={backTo}>{t.nav.back}</BackLink>
       <PageHeading title={s.title} subtitle={status === 'error' ? undefined : s.subtitle} />
-      {status === 'loading' && <Loading t={t} />}
-      {status === 'error' && (
-        <div className={layout.stack}>
-          <ErrorState message={s.error} retryLabel={t.common.retry} onRetry={props.onRetry} />
-          <div className={layout.cta}>
-            <Button to="/exemplo" variant="outline">
-              {t.where.seeExample}
-            </Button>
-          </div>
-        </div>
-      )}
+      {status === 'loading' && <FlowLoading label={s.loading} />}
+      {status === 'error' && <FlowError t={t} message={s.error} onRetry={props.onRetry} />}
       {status === 'ready' && <Cards {...props} />}
     </div>
-  )
-}
-
-function Loading({ t }: { t: Messages }) {
-  return (
-    <>
-      <LoadingState>{t.satellite.loading}</LoadingState>
-      <div className={layout.pageGrid}>
-        <div className={layout.stack}>
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-        <div className={layout.stack}>
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      </div>
-    </>
   )
 }
 

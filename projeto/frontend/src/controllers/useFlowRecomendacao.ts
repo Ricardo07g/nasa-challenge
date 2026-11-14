@@ -1,0 +1,31 @@
+import { useMemo } from 'react'
+import { useSearchParams } from 'react-router'
+import { useI18n } from '../i18n/useI18n'
+import type { FarmService } from '../services/farmService'
+import { keepFlowQuery, readFlowParams } from '../services/flowParams'
+import { useAsync } from './useAsync'
+
+/**
+ * Recomendação do caminho que está na URL (telas 5, 6 e 7). Quase sempre já está no cache: as telas
+ * 3 e 4 pediram antes. Sem ponto volta ao mapa; sem colheita volta à pergunta 2.
+ */
+export function useFlowRecomendacao(farm: FarmService) {
+  const { lang } = useI18n()
+  const [search] = useSearchParams()
+  const params = useMemo(() => readFlowParams(search), [search])
+
+  const recomendacao = useAsync(
+    () =>
+      params?.colheita
+        ? farm.recomendacao(
+            { lat: params.lat, lon: params.lon, colheita: params.colheita, solo: params.solo, exemplo: params.exemplo },
+            lang,
+          )
+        : Promise.reject(new Error('sem ponto ou colheita na URL')),
+    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, lang, farm],
+  )
+
+  const query = keepFlowQuery(search.toString())
+  const redirectTo = !params ? '/onde' : !params.colheita ? `/quando${query}` : null
+  return { redirectTo, recomendacao }
+}

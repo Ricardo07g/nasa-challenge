@@ -193,7 +193,7 @@ export const pt = {
   options: {
     title: 'Todas as opções',
     sortLabel: 'Colocar na frente quem é melhor em:',
-    rank: (position: number) => `Nº ${position}`,
+    rank: (position: number) => `${position}º`,
     fallowRain: 'Não depende de chuva',
     fallowMoney: 'Não rende nem custa',
     fallowSoil: 'Fica descoberta',

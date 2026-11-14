@@ -69,12 +69,22 @@ export function planSwaps(
 
 const sentence = (text: string) => (/[.!?]$/.test(text) ? text : `${text}.`)
 
+export type LateSummary = { names: string[]; texts: string[] }
+
+/** Opções que já passaram da janela de plantio (colheita tardia), para o aviso laranja. */
+function lateSummary(recomendacao: Recomendacao): LateSummary {
+  return {
+    names: recomendacao.fora_da_janela.map((item) => item.nome),
+    texts: recomendacao.fora_da_janela.map((item) => item.texto),
+  }
+}
+
 export type AnswerSummary = {
   /** Ano da soja que vem antes da entressafra ("Depois da soja de 2027…"). */
   year: number
   best: Opcao
   alternatives: { motivo: Motivo; option: Opcao; text: string }[]
-  late: { names: string[]; texts: string[] }
+  late: LateSummary
 }
 
 /** Tela 5: o que a resposta mostra. Sem a melhor opção na lista, não há resposta. */
@@ -88,9 +98,16 @@ export function buildAnswer(recomendacao: Recomendacao): AnswerSummary | null {
       const option = findOption(recomendacao.opcoes, opcao)
       return option ? [{ motivo, option, text: alternativeSummary(motivo, option).map(sentence).join(' ') }] : []
     }),
-    late: {
-      names: recomendacao.fora_da_janela.map((item) => item.nome),
-      texts: recomendacao.fora_da_janela.map((item) => item.texto),
-    },
+    late: lateSummary(recomendacao),
   }
+}
+
+/**
+ * Tela 6: todas as opções. As que cabem na janela de plantio vêm na ordem do eixo escolhido (sem eixo,
+ * nota final); as que não cabem vão para o fim.
+ */
+export function optionsSummary(recomendacao: Recomendacao, axis: Eixo | null): { options: Opcao[]; late: LateSummary } {
+  const inWindow = recomendacao.opcoes.filter((option) => option.na_janela)
+  const outOfWindow = recomendacao.opcoes.filter((option) => !option.na_janela)
+  return { options: [...sortOptions(inWindow, axis), ...outOfWindow], late: lateSummary(recomendacao) }
 }

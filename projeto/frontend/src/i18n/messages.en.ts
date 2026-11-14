@@ -192,7 +192,7 @@ export const en = {
   options: {
     title: 'All options',
     sortLabel: 'Put first the best at:',
-    rank: (position: number) => `No. ${position}`,
+    rank: (position: number) => `${position}.`,
     fallowRain: 'Does not depend on rain',
     fallowMoney: 'No income, no cost',
     fallowSoil: 'Soil stays bare',
