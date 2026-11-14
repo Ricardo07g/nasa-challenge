@@ -122,7 +122,7 @@ rotacao:
     fonte: "PRD 7.7: ano seco = menor chuva de fevereiro a abril"
   max_pousios:
     valor: 2
-    fonte: "PRD 7.7: descartar mais de 2 pousios seguidos (o filtro fiel ao PRD vem no R4.3)"
+    fonte: "PRD 7.7: descartar mais de 2 pousios seguidos (o pousio entra nas 216 combinações)"
   bonus_diversidade_2:
     valor: 5.0
     fonte: "PRD 7.7: +5 com 2 funções diferentes"

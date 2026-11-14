@@ -34,7 +34,7 @@ from app.repositories.soil_repository import SoilRepository
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
-from app.services.rotation_plan_service import RotationPlanService
+from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 
 RAIN_SOURCE_NAMES = {"nasa_power": "NASA POWER", "imerg_final": "GPM IMERG + NASA POWER"}
 SOIL_SOURCE_PT = {
@@ -252,10 +252,11 @@ class RecommendationService:
         is_en = lang.lower().startswith("en")
         anos_secos = self._plan_service.select_driest_years(seasons)
 
+        crops = self._crop_repo.list_all()
         avaliacoes: list[_Avaliacao] = []
         fora_da_janela: list[ForaDaJanelaOpcao] = []
-        for crop in self._crop_repo.list_all():
-            if crop.id == "pousio":
+        for crop in crops:
+            if crop.id == FALLOW_ID:
                 continue  # linha de base, fora do ranking (PRD 7.6)
             nome = crop.nome_en if (is_en and crop.nome_en) else crop.nome
             if not self._risk_service.is_within_window(crop, semeadura):
@@ -290,10 +291,14 @@ class RecommendationService:
             for a in avaliacoes
         ]
         opcoes.sort(key=lambda o: o.notas.final, reverse=True)
-        melhor_id = opcoes[0].id if opcoes else "pousio"
+        melhor_id = opcoes[0].id if opcoes else FALLOW_ID
 
         plano_normal, plano_seco, plano_hoje = self._plan_service.build_3_year_plans(
-            opcoes=opcoes, anos_secos=anos_secos, nematoide=nematoide, lang=lang
+            opcoes=opcoes,
+            anos_secos=anos_secos,
+            pousio=self._fallow_scores(crops, nematoide, has_future=bool(deltas)),
+            nematoide=nematoide,
+            lang=lang,
         )
 
         return Recomendacao(
@@ -327,6 +332,22 @@ class RecommendationService:
                 if is_en
                 else "Ajuda a decidir. Não substitui o agrônomo."
             ),
+        )
+
+    def _fallow_scores(
+        self, crops: list[CropParams], nematoide: bool | None, has_future: bool
+    ) -> NotasOpcao:
+        """Notas do pousio para o plano de 3 anos: fora do ranking, mas nas combinações (PRD 7.7).
+
+        Segurança 100 (PRD 7.2: não tem o que perder) e futuro 100 quando há CMIP6 (PRD 7.6); renda
+        0 (PRD 5) e a nota de solo da tabela 7.4 (0). Iguais no ano normal e no ano seco.
+        """
+        crop = next((c for c in crops if c.id == FALLOW_ID), None)
+        solo = soil_score(crop, nematoide, self._rules.solo) if crop else SCORE_MIN
+        futuro = SCORE_MAX if has_future else None
+        final = final_score(SCORE_MAX, solo, SCORE_MIN, futuro, self._rules.nota_final)
+        return NotasOpcao(
+            seguranca=SCORE_MAX, futuro=futuro, solo=solo, renda=SCORE_MIN, final=final
         )
 
     def _evaluate(

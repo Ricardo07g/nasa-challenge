@@ -11,10 +11,15 @@ from app.repositories.rules_repository import load_default_rules
 from app.services.rotation_plan_service import RotationPlanService
 
 DAYS = 212
+ALL_CROPS = ["pousio", "milho_safrinha", "sorgo", "milho_braquiaria", "milheto", "crotalaria"]
 
 
 def _notas(final: float) -> NotasOpcao:
     return NotasOpcao(seguranca=final, futuro=None, solo=final, renda=final, final=final)
+
+
+# Notas do pousio sem CMIP6 (PRD 7.2 e 7.6): segurança 100, solo 0, renda 0 -> 30 / 0,85 = 35,3
+POUSIO = NotasOpcao(seguranca=100.0, futuro=None, solo=0.0, renda=0.0, final=35.3)
 
 
 def _make_option(crop_id: str, final: float, final_seco: float | None = None) -> ResultadoOpcao:
@@ -85,7 +90,7 @@ def test_should_include_nematode_suppressor_crop_in_3_year_plan_when_nematoide_i
     ]
 
     normal, seco, hoje = service.build_3_year_plans(
-        opcoes=opcoes, anos_secos=[2007, 2010, 2012, 2014], nematoide=True
+        opcoes=opcoes, anos_secos=[2007, 2010, 2012, 2014], pousio=POUSIO, nematoide=True
     )
 
     assert any(c in ("crotalaria", "milheto") for c in normal.anos)
@@ -103,7 +108,7 @@ def test_should_build_dry_plan_from_dry_year_scores_when_they_differ_from_normal
     ]
 
     normal, seco, _ = service.build_3_year_plans(
-        opcoes=opcoes, anos_secos=[2007, 2010, 2012, 2014], nematoide=None
+        opcoes=opcoes, anos_secos=[2007, 2010, 2012, 2014], pousio=POUSIO, nematoide=None
     )
 
     assert "milho_safrinha" in normal.anos
@@ -123,7 +128,7 @@ def test_should_not_give_diversity_bonus_when_every_year_is_a_grain_crop() -> No
         _make_option("milheto", 50.0),
     ]
 
-    normal, _, _ = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007])
+    normal, _, _ = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007], pousio=POUSIO)
 
     assert normal.nota == 80.0
 
@@ -134,7 +139,7 @@ def test_should_count_brachiaria_as_grain_and_grass_cover_for_diversity() -> Non
     service = RotationPlanService()
     opcoes = [_make_option("milho_braquiaria", 50.0), _make_option("crotalaria", 50.0)]
 
-    normal, _, _ = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007])
+    normal, _, _ = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007], pousio=POUSIO)
 
     assert normal.nota == 60.0
     assert set(normal.anos) == {"milho_braquiaria", "crotalaria"}
@@ -146,7 +151,9 @@ def test_should_still_plan_and_say_so_when_nematoide_and_no_suppressor_fits_the_
     service = RotationPlanService()
     opcoes = [_make_option("milho_safrinha", 70.0), _make_option("sorgo", 60.0)]
 
-    normal, seco, _ = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007], nematoide=True)
+    normal, seco, _ = service.build_3_year_plans(
+        opcoes=opcoes, anos_secos=[2007], pousio=POUSIO, nematoide=True
+    )
 
     assert normal.nota == 70.0
     assert seco.nota == 70.0
@@ -161,10 +168,77 @@ def test_should_score_today_corn_sequence_with_the_plan_formula_and_no_extra_pen
     service = RotationPlanService()
     opcoes = [_make_option("sorgo", 60.0), _make_option("milho_safrinha", 70.0)]
 
-    _, _, hoje = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007])
+    _, _, hoje = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007], pousio=POUSIO)
 
     assert hoje.anos == ("milho_safrinha", "milho_safrinha", "milho_safrinha")
     assert hoje.nota == 70.0
+
+
+def test_should_generate_216_sequences_with_fallow_before_any_filter() -> None:
+    # PRD §11: "planos | sem restrição | 216 combinações antes do filtro" (6 x 6 x 6, com pousio)
+    sequences = RotationPlanService().all_sequences(ALL_CROPS)
+
+    assert len(sequences) == 216
+    assert ("pousio", "pousio", "pousio") in sequences
+
+
+def test_should_drop_only_more_than_two_fallows_in_a_row() -> None:
+    # PRD 7.7: descartar mais de 2 pousios seguidos. Dois pousios ainda valem.
+    sequences = RotationPlanService().candidate_sequences(ALL_CROPS, nematoide=None)
+
+    assert len(sequences) == 215
+    assert ("pousio", "pousio", "pousio") not in sequences
+    assert ("pousio", "pousio", "milheto") in sequences
+    assert ("pousio", "milheto", "pousio") in sequences
+
+
+def test_should_keep_only_sequences_with_crotalaria_or_millet_when_nematoide_is_true() -> None:
+    # PRD §11: nematoide = sim -> nenhum plano sem crotalária ou milheto nos 3 anos
+    sequences = RotationPlanService().candidate_sequences(ALL_CROPS, nematoide=True)
+
+    assert sequences
+    assert all({"crotalaria", "milheto"} & set(seq) for seq in sequences)
+    # 215 sem 3 pousios, menos as 63 só com pousio, milho, sorgo e milho + braquiária (4³ - 1)
+    assert len(sequences) == 215 - 63
+
+
+def test_should_put_fallow_in_dry_plan_when_every_crop_does_worse_than_fallow_in_dry_years() -> (
+    None
+):
+    # O pousio entra nas combinações (PRD 7.7). No ano seco o milho vale 10 e o pousio 35,3: o
+    # melhor plano usa 2 pousios, nunca 3 seguidos.
+    service = RotationPlanService()
+    opcoes = [_make_option("milho_safrinha", final=70.0, final_seco=10.0)]
+
+    normal, seco, _ = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007], pousio=POUSIO)
+
+    assert normal.anos == ("milho_safrinha", "milho_safrinha", "milho_safrinha")
+    assert sorted(seco.anos) == ["milho_safrinha", "pousio", "pousio"]
+    assert seco.nota == pytest.approx(round((35.3 + 35.3 + 10.0) / 3, 1))
+
+
+def test_should_compare_with_fallow_today_when_corn_is_out_of_the_window() -> None:
+    # PRD 7.7: a sequência de hoje é soja/milho ou soja/pousio. Sem milho na janela (colheita
+    # tarde), o "hoje" é o pousio, e não a melhor opção repetida.
+    service = RotationPlanService()
+    opcoes = [_make_option("milheto", 51.5), _make_option("sorgo", 24.4)]
+
+    _, _, hoje = service.build_3_year_plans(opcoes=opcoes, anos_secos=[2007], pousio=POUSIO)
+
+    assert hoje.anos == ("pousio", "pousio", "pousio")
+    assert hoje.nota == 35.3
+    assert "milho" in hoje.descricao
+
+
+def test_should_leave_only_fallow_when_no_crop_fits_the_window() -> None:
+    service = RotationPlanService()
+
+    planos = service.build_3_year_plans(opcoes=[], anos_secos=[2007], pousio=POUSIO, lang="en")
+
+    for plano in planos:
+        assert plano.anos == ("pousio", "pousio", "pousio")
+        assert plano.nota == 35.3
+        assert plano.descricao
 
 
 def test_should_take_number_of_dry_years_from_injected_rules() -> None:
