@@ -6,6 +6,8 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 APP_DIR = Path(__file__).resolve().parent
+# Regras do motor (limiares, pesos e frases) que vão junto com o código.
+DEFAULT_REGRAS_PATH = APP_DIR / "config_data" / "regras.yaml"
 
 
 class Settings(BaseSettings):
@@ -24,6 +26,7 @@ class Settings(BaseSettings):
     # Dados que a API lê. Os padrões vêm junto com o código (pasta app/), então funcionam no
     # Docker, no uv e nos testes. Para usar outro arquivo, aponte a variável de ambiente.
     culturas_path: Path = APP_DIR / "config_data" / "culturas.yaml"
+    regras_path: Path = DEFAULT_REGRAS_PATH
     clima_path: Path = APP_DIR / "fixtures" / "clima_fazenda_exemplo.json"
     # Caches opcionais por ponto (SoilGrids e NDVI do MODIS). Sem arquivo: solo padrão e sem NDVI.
     solo_cache_path: Path | None = None

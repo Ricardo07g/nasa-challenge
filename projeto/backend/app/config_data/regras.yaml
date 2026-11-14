@@ -1,0 +1,157 @@
+# ==============================================================================
+# Regras do motor de pontuação (Raiz Orbital), versão 0
+# Referência: PRD seção 7 e plano técnico §4. Editável pela agrônoma sem mexer no código.
+#
+# Cada número tem `valor` e `fonte`. A API não carrega um número sem fonte.
+# "Hipótese do time" = valor a calibrar com a agrônoma e com os resultados reais.
+# Os parâmetros de cada cultura (ciclo, Kc, data limite, nota de solo, dinheiro) ficam em
+# culturas.yaml.
+# ==============================================================================
+
+clima:
+  # Ano com aperto (PRD 7.2): ISNA abaixo do limiar na janela crítica OU calor na janela.
+  isna_grao:
+    valor: 0.55
+    fonte: "PRD 7.2 e plano técnico §4.2: ISNA de 0,55 do ZARC da soja em MG na floração e no enchimento (hipótese aplicada ao milho e ao sorgo)"
+  isna_cobertura:
+    valor: 0.50
+    fonte: "PRD 7.2 item 4: cobertura falha no estabelecimento com ISNA abaixo de 0,50"
+  janela_grao_meia_dias:
+    valor: 15
+    fonte: "PRD 7.2 item 2: janela crítica de 15 dias antes a 15 dias depois do florescimento"
+  janela_cobertura_dias:
+    valor: 30
+    fonte: "PRD 7.2 item 4: estabelecimento da cobertura nos primeiros 30 dias"
+  calor_temp_c:
+    valor: 35.0
+    fonte: "PRD 7.2 item 3: máxima de 35 °C ou mais na floração, ligada a aborto de flores"
+  calor_min_dias:
+    valor: 3
+    fonte: "PRD 7.2 item 3: 3 dias ou mais com calor na janela crítica"
+  # Perda de produtividade pelo ISNA, usada na margem (PRD 7.5)
+  perda_isna_sem_perda:
+    valor: 0.65
+    fonte: "PRD 7.5: perda de 0% com ISNA de 0,65 ou mais (hipótese do time)"
+  perda_isna_alta_abaixo:
+    valor: 0.55
+    fonte: "PRD 7.5: perda de 60% com ISNA abaixo de 0,55 (hipótese do time)"
+  perda_fator_media:
+    valor: 0.30
+    fonte: "PRD 7.5: perda de 30% com ISNA entre 0,55 e 0,65 (hipótese do time)"
+  perda_fator_alta:
+    valor: 0.60
+    fonte: "PRD 7.5: perda de 60% com ISNA abaixo de 0,55 (hipótese do time)"
+
+nota_final:
+  # Nota final = soma de (peso x nota). Sem CMIP6, o futuro sai e os outros pesos são reescalados.
+  peso_seguranca:
+    valor: 0.30
+    fonte: "PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15"
+  peso_solo:
+    valor: 0.25
+    fonte: "PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15"
+  peso_renda:
+    valor: 0.30
+    fonte: "PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15"
+  peso_futuro:
+    valor: 0.15
+    fonte: "PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15"
+  bonus_gado_milho_braquiaria:
+    valor: 15.0
+    fonte: "ADR-0004: com gado = sim, milho + braquiária ganha 15 pontos (pecuária ainda em decisão, R4.7)"
+
+rotulos:
+  # Rótulos que o produtor vê (PRD 7.6, plano técnico §4.4; hipótese do time)
+  chuva_bom_pct:
+    valor: 85.0
+    fonte: "PRD 7.6: chuva Bom com 17 a 20 anos sem aperto (17 de 20 = 85%)"
+  chuva_medio_pct:
+    valor: 60.0
+    fonte: "PRD 7.6: chuva Médio com 12 a 16 anos sem aperto (12 de 20 = 60%)"
+  terra_bom:
+    valor: 50.0
+    fonte: "PRD 7.6: terra Bom com nota de solo 50 ou mais"
+  terra_medio:
+    valor: 20.0
+    fonte: "PRD 7.6: terra Médio com nota de solo de 20 a 49"
+  dinheiro_bom:
+    valor: 70.0
+    fonte: "PRD 7.6: dinheiro Bom com nota de renda 70 ou mais"
+  dinheiro_medio:
+    valor: 30.0
+    fonte: "PRD 7.6: dinheiro Médio com nota de renda de 30 a 69"
+
+solo:
+  # Nota de solo (PRD 7.4): palhada + nitrogênio + quebra de pragas; os pontos por cultura ficam
+  # em culturas.yaml (nota_solo).
+  palhada_max:
+    valor: 40.0
+    fonte: "PRD 7.4: palhada vale até 40 pontos"
+  nitrogenio_max:
+    valor: 30.0
+    fonte: "PRD 7.4: nitrogênio vale até 30 pontos"
+  pragas_max:
+    valor: 30.0
+    fonte: "PRD 7.4: quebra de pragas vale até 30 pontos"
+  peso_pragas_nematoide:
+    valor: 1.5
+    fonte: "PRD 7.4: com nematoide = sim, a coluna de pragas vale 1,5 vez e o total é reescalado para 0 a 100"
+
+ndvi:
+  # Histórico do talhão pelo NDVI do MODIS, já com o fator 0,0001 (PRD 7.8)
+  plantou_acima:
+    valor: 0.60
+    fonte: "PRD 7.8: maior NDVI da entressafra acima de 0,6 = segunda safra ou cobertura (Embrapa, 2021; a calibrar com 5 talhões)"
+  parado_abaixo:
+    valor: 0.45
+    fonte: "PRD 7.8: maior NDVI da entressafra abaixo de 0,45 = pousio (Embrapa, 2021; a calibrar com 5 talhões)"
+  meses_entressafra:
+    valor: [4, 5, 6, 7]
+    fonte: "PRD 7.8: entressafra de 1º de abril a 31 de julho"
+  queda_colheita:
+    valor: 0.50
+    fonte: "PRD 7.9: soja secando quando o NDVI cai abaixo de 50% do pico do verão"
+
+rotacao:
+  # Plano de 3 anos (PRD 7.7)
+  anos_secos:
+    valor: 4
+    fonte: "PRD 7.7 e plano técnico §4.6: cenário ano seco com os 4 anos mais secos da série"
+  meses_seco:
+    valor: [2, 3, 4]
+    fonte: "PRD 7.7: ano seco = menor chuva de fevereiro a abril"
+  max_pousios:
+    valor: 2
+    fonte: "PRD 7.7: descartar mais de 2 pousios seguidos (o filtro fiel ao PRD vem no R4.3)"
+  bonus_diversidade_2:
+    valor: 5.0
+    fonte: "PRD 7.7: +5 com 2 funções diferentes"
+  bonus_diversidade_3:
+    valor: 10.0
+    fonte: "PRD 7.7: +10 com 3 funções diferentes (grão, cobertura gramínea, cobertura leguminosa)"
+  penalidade_monocultura_milho:
+    valor: 12.0
+    fonte: "Hipótese do time (não está no PRD): milho safrinha nos 3 anos e plano 'hoje' perdem 12 pontos; revisar no R4.3"
+  culturas_supressoras_nematoide:
+    valor: [crotalaria, milheto]
+    fonte: "PRD 7.7: com nematoide = sim, descartar 3 anos sem crotalária ou milheto"
+
+# Modelos de frase do "Por quê?" (PRD 7.6, plano técnico §4.8), sem IA generativa.
+# Os campos entre chaves são preenchidos pela conta; o número da frase é o mesmo da conta.
+#   seguranca: {data} {anos_aperto} {total} {calor_c} {fase} {fonte_chuva}
+#   fase_cobertura: {dias}
+#   futuro: {cenario} {modelos} {anos_bons} {total} {minimo} {maximo}
+#   solo: {textura} {cad_mm} {fonte_solo}
+frases:
+  pt:
+    seguranca: "Semeando em {data}, em {anos_aperto} dos últimos {total} anos faltou água ou fez calor de {calor_c} °C {fase} ({fonte_chuva})."
+    fase_grao: "no florescimento"
+    fase_cobertura: "nos primeiros {dias} dias"
+    futuro: "No clima de 2041–2060 (NEX-GDDP-CMIP6, {cenario}, {modelos} modelos), daria certo em {anos_bons} de {total} anos (de {minimo} a {maximo}, conforme o modelo)."
+    solo: "Conta feita com solo {textura} ({cad_mm} mm de água disponível; {fonte_solo})."
+  en:
+    seguranca: "Sowing on {data}, in {anos_aperto} of the last {total} years the crop ran short of water or had {calor_c} °C heat {fase} ({fonte_chuva})."
+    fase_grao: "around flowering"
+    fase_cobertura: "in the first {dias} days"
+    futuro: "In the 2041–2060 climate (NEX-GDDP-CMIP6, {cenario}, {modelos} models), it would work in {anos_bons} of {total} years ({minimo} to {maximo}, depending on the model)."
+    solo: "Computed with {textura} soil ({cad_mm} mm of available water; {fonte_solo})."

@@ -4,7 +4,13 @@ import pytest
 
 from app.config import Settings
 
-DATA_ENV_VARS = ("CULTURAS_PATH", "CLIMA_PATH", "SOLO_CACHE_PATH", "NDVI_CACHE_PATH")
+DATA_ENV_VARS = (
+    "CULTURAS_PATH",
+    "REGRAS_PATH",
+    "CLIMA_PATH",
+    "SOLO_CACHE_PATH",
+    "NDVI_CACHE_PATH",
+)
 
 
 @pytest.fixture(autouse=True)
@@ -63,3 +69,19 @@ def test_data_paths_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
 
     assert settings.clima_path == tmp_path / "clima.json"
     assert settings.ndvi_cache_path == tmp_path / "ndvi.json"
+
+
+def test_rules_path_defaults_to_file_shipped_with_the_app() -> None:
+    settings = Settings(_env_file=None)
+    app_dir = Path(__file__).resolve().parents[2] / "app"
+
+    assert settings.regras_path == app_dir / "config_data" / "regras.yaml"
+    assert settings.regras_path.is_file()
+
+
+def test_rules_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("REGRAS_PATH", str(tmp_path / "regras.yaml"))
+
+    settings = Settings(_env_file=None)
+
+    assert settings.regras_path == tmp_path / "regras.yaml"
