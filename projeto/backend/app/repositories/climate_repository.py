@@ -216,6 +216,16 @@ class PostgisClimateRepository:
             return self._fallback.find_nearest_cell_id(lat, lon)
         return None
 
+    def list_cell_ids(self) -> list[str]:
+        """Ids de todas as células em `grid_cell`, em ordem (só o banco, nunca a reserva).
+
+        Usado pela carga dos arquivos no banco (`pipeline/load_files_to_db.py`): o `cmip6_delta`
+        só aceita célula que já está aqui.
+        """
+        with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
+            cur.execute("SELECT id FROM grid_cell ORDER BY id;")
+            return [str(row[0]) for row in cur.fetchall()]
+
     def save_cell_seasons(
         self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
     ) -> None:

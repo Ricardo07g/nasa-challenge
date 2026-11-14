@@ -88,3 +88,12 @@ def test_should_round_trip_soilgrids_soil_and_fall_back_to_default_elsewhere(db_
 
     assert (saved.textura_solo, saved.fonte) == ("argiloso", "soilgrids")
     assert (elsewhere.textura_solo, elsewhere.fonte) == ("medio", "padrao")
+
+
+def test_should_list_the_ids_of_every_cell_in_the_grid_in_order(db_url: str) -> None:
+    repo = PostgisClimateRepository(db_url)
+    assert repo.list_cell_ids() == []
+    for cell_id, lat, lon in (("-193_-483", -19.25, -48.25), ("-190_-482", -18.95, -48.15)):
+        repo.save_cell_seasons(cell_id, lat=lat, lon=lon, seasons=[_season(cell_id, 2005)])
+
+    assert repo.list_cell_ids() == ["-190_-482", "-193_-483"]

@@ -12,7 +12,9 @@ from typing import Any, Protocol
 import psycopg
 
 from app.models.climate import Cmip6Delta
+from app.models.data_run import DataRun
 from app.repositories.climate_repository import cell_center, cmip6_delta_from_json
+from app.repositories.data_run_repository import data_run_from_json
 
 
 class Cmip6Repository(Protocol):
@@ -38,23 +40,27 @@ class FileCmip6Repository:
 
     def __init__(self, path: Path | None) -> None:
         self._path = path
-        self._points: list[dict[str, Any]] | None = None
+        self._payload: dict[str, Any] | None = None
 
-    def _load(self) -> list[dict[str, Any]]:
-        if self._points is None:
+    def _load(self) -> dict[str, Any]:
+        if self._payload is None:
             if self._path is None or not self._path.is_file():
-                self._points = []
+                self._payload = {}
             else:
-                payload = json.loads(self._path.read_text(encoding="utf-8"))
-                self._points = list(payload.get("pontos", []))
-        return self._points
+                self._payload = json.loads(self._path.read_text(encoding="utf-8"))
+        return self._payload
+
+    def get_data_run(self) -> DataRun | None:
+        """A execução que gerou o arquivo (`versao_dados`); None sem arquivo ou sem a chave."""
+        versao_dados = self._load().get("versao_dados")
+        return None if versao_dados is None else data_run_from_json(versao_dados)
 
     def get_cmip6_deltas(self, cell_id: str) -> list[Cmip6Delta]:
         try:
             lat, lon = cell_center(cell_id)
         except ValueError:
             return []
-        for point in self._load():
+        for point in self._load().get("pontos", []):
             box = point["cobertura"]
             if box["lat_min"] <= lat < box["lat_max"] and box["lon_min"] <= lon < box["lon_max"]:
                 return [cmip6_delta_from_json(item) for item in point.get("cmip6", [])]

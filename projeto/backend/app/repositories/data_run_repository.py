@@ -3,12 +3,27 @@
 A coluna `version` é da migração R1.6. Montar o `versao_dados` da resposta a partir daqui é o R3.5.
 """
 
-from typing import Protocol
+from collections.abc import Mapping
+from datetime import datetime
+from typing import Any, Protocol
 
 import psycopg
 from psycopg.types.json import Jsonb
 
 from app.models.data_run import DataRun
+
+
+def data_run_from_json(item: Mapping[str, Any]) -> DataRun:
+    """O `versao_dados` de um arquivo do contrato (chaves em português) como `DataRun`.
+
+    `fim` em ISO 8601 com fuso (`2026-11-14T13:00:00Z`); o model recusa hora sem fuso.
+    """
+    return DataRun(
+        source=str(item["fonte"]),
+        params=dict(item.get("parametros") or {}),
+        finished_at=datetime.fromisoformat(str(item["fim"])),
+        version=str(item["versao"]),
+    )
 
 
 class DataRunRepository(Protocol):
