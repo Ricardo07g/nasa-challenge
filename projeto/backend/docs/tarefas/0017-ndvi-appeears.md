@@ -117,5 +117,5 @@ CSV → filtro (qualidade 0/1, jan–jul, 2016–2025, sem preenchimento, sem du
   data da composição está dentro da janela.
 - **Ligação na API (R3.2):** o `CachedNdviRepository` ainda lê só `data` e `ndvi`; ler `qualidade` e
   `produto` e apontar o `NDVI_CACHE_PATH` para o arquivo é do R3.2.
-- **Reserva ORNL** (`--fonte ornl`): não feita nesta tarefa.
+- **Reserva ORNL** (`--fonte ornl`): não feita nesta tarefa; veio na [tarefa 0024](0024-ndvi-pela-ornl.md), que também passou a saída padrão para `data/baixados/nasa_modis_ndvi/`.
 - **Caixa inteira a 250 m** (P3): fora do escopo.

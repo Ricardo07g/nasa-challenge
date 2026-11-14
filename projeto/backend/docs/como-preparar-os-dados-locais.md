@@ -14,7 +14,7 @@ alguns cartões (clima futuro, histórico do talhão).
 | Clima diário de 20 anos (chuva, temperatura, ETo) | NASA POWER | banco (`grid_cell`, `climate_season`) | chance de dar certo, chuva dos 20 anos | pré-carga, ou na hora do 1º clique (busca sob demanda) |
 | Solo (argila e areia → CAD) | SoilGrids (ISRIC) | banco (`soil_point`) | "Terra argilosa / média / arenosa · Do mapa de solos" | pré-carga, ou no 1º clique |
 | Clima futuro (2041–2060 × 1995–2014) | NEX-GDDP-CMIP6 | arquivo `data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json` e, depois da carga, banco (`cmip6_delta`) | "Clima dos próximos anos" e a nota de futuro | script `fetch_cmip6_deltas` + carga no banco |
-| Histórico do talhão (NDVI) | MODIS pelo AppEEARS | arquivo `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` e, depois da carga, banco (`ndvi_point`) | "Sua área ficou parada em X de Y anos" e a colheita sugerida | script `fetch_ndvi` (chega com o PR do R2.2) + carga no banco |
+| Histórico do talhão (NDVI) | MODIS (MOD13Q1 + MYD13Q1) pelo AppEEARS ou pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` (o mesmo nome para as duas fontes) e, depois da carga, banco (`ndvi_point`) | "Sua área ficou parada em X de Y anos" e a colheita sugerida | script `fetch_ndvi` + carga no banco |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
 aponta `CMIP6_PATH` e `NDVI_CACHE_PATH` para os arquivos acima. Arquivo ausente = a API segue sem
@@ -60,7 +60,8 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Clima e solo da caixa piloto (banco) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.preload_pilot_box` | ~1 h (pausa de 12 s entre pedidos ao SoilGrids); o clima fica pronto nos primeiros minutos | nenhuma |
 | Clima futuro da caixa piloto inteira | `uv run python -m pipeline.fetch_cmip6_deltas --area` | ~45 min (378 pedidos ao OPeNDAP, um por arquivo para a caixa toda); se parar, rode de novo que continua do cache | nenhuma |
 | Clima futuro só da fazenda de exemplo | `uv run python -m pipeline.fetch_cmip6_deltas --pontos="-18.9543,-48.1993"` | ~40 min (360 pedidos ao NCSS, um ponto por pedido) | nenhuma |
-| Histórico do talhão (NDVI) | chega com o PR do R2.2 (`pipeline/fetch_ndvi.py`) | depende da fila do AppEEARS (minutos a horas) | `APPEEARS_TOKEN` ou `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` no `projeto/backend/.env` |
+| Histórico do talhão (NDVI) pelo AppEEARS | `uv run python -m pipeline.fetch_ndvi --pontos="-18.9543,-48.1993"` | depende da fila do AppEEARS (minutos a horas) | `APPEEARS_TOKEN` ou `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` no `projeto/backend/.env` |
+| Histórico do talhão (NDVI) pela ORNL | `uv run python -m pipeline.fetch_ndvi --fonte ornl --pontos="-18.9543,-48.1993"` | ~50 min por ponto (64 pedidos de 19 a 57 s, sem fila); se parar, rode de novo que continua do cache | nenhuma |
 | Carregar os arquivos no banco (`cmip6_delta` e `ndvi_point`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` | segundos | nenhuma |
 
 - A pré-carga é idempotente: rodar de novo só completa o que faltou (por exemplo, solos em que o
@@ -85,6 +86,20 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   `uv run python -m pipeline.fetch_cmip6_deltas --dry-run --area` (pedidos e tempo nos dois modos).
   O `--area` cobre as 12 células do POWER da caixa, e cada uma sai igual ao que o modo por ponto
   daria. O arquivo da caixa substitui o da fazenda de exemplo (a célula da fazenda está nele).
+- **NDVI: qual fonte usar.** As duas gravam o mesmo arquivo, no mesmo formato, em
+  `data/baixados/nasa_modis_ndvi/` a partir da raiz do repositório (o
+  `versao_dados.parametros.servico` diz de qual veio). Rodar uma depois da outra substitui o
+  arquivo.
+  - **AppEEARS** (padrão): um pedido só para todos os pontos, mas entra numa fila que pode levar
+    horas (já ficou mais de 3 h em `pending`). Use quando tiver a credencial e tempo para esperar;
+    se o limite de espera estourar, retome com `--tarefa-existente <id>` (o script mostra o id).
+  - **ORNL** (`--fonte ornl`): sem credencial e sem fila, mas cada pedido leva de 19 a 57 s e o
+    serviço às vezes corta em ~60 s (502). Use quando a fila do AppEEARS travar ou faltar
+    credencial. Veja antes o plano: `uv run python -m pipeline.fetch_ndvi --fonte ornl --dry-run
+    --pontos="..."` (pedidos, o que já está no cache e o tempo estimado; 3 pontos ~2,4 h). As
+    respostas ficam em `cache_ornl/`; se terminar com código 2 (algum recorte sem resposta),
+    rode o mesmo comando de novo, que só pede o que falta. `--datas-por-pedido` (padrão 5, máximo
+    10) e `--pausa` (padrão 5 s) ajustam o ritmo.
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).
@@ -130,6 +145,8 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | Mudou o código ou baixou dado e a tela não mudou | o backend não recarregou | `docker compose restart backend` |
 | Erro na API sobre tabela ou coluna | banco sem a migração mais nova | `docker compose up -d` (o serviço `migration` aplica) |
 | NDVI: 401/403 no AppEEARS | o `APPEEARS_TOKEN` venceu (dura ~48 h) | ponha `EARTHDATA_USERNAME`/`EARTHDATA_PASSWORD` no `.env` ou gere outro token |
+| NDVI: tarefa do AppEEARS parada em `pending` por horas | fila do AppEEARS | use `--fonte ornl` (sem fila) |
+| NDVI pela ORNL termina com código 2 | o serviço deu 502 ou ficou sem responder em algum recorte | rode o mesmo comando de novo (continua do cache); se a ORNL estiver fora do ar, tente mais tarde |
 | IMERG: 403 "EULA Acceptance Failure" | falta aceitar a EULA do GES DISC | perfil da Earthdata → *Applications → Authorized Apps* → *NASA GESDISC DATA ARCHIVE* |
 | Restaurar a cópia do banco dá "duplicate key" | o banco já tinha dados | esvazie as tabelas (passo 3 do caminho rápido) |
 
