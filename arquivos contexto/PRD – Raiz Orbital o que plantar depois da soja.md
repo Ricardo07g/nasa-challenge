@@ -1,0 +1,495 @@
+# PRD – Raiz Orbital: o que plantar depois da soja?
+
+Nov 14, 2026 · @Rayanne
+
+## 1. Resumo e mudança de foco
+
+**Por que reescrevemos.** O desafio Field Shift pede uma ferramenta de apoio à decisão que use observações da Terra da NASA, informação local de solo, características das culturas e prioridades do produtor para **explorar estratégias de rotação** que fortaleçam a saúde do solo e adaptem a fazenda a condições que mudam. A versão anterior (semáforo de plantio e alertas) respondia bem à parte de clima, mas não à rotação, ao solo e às prioridades. O motor de eventos climáticos continua, agora como coração do cálculo de risco.
+
+**Problema.** No Triângulo Mineiro e no Cerrado, o sistema dominante é soja no verão seguida de milho safrinha, ou soja seguida de pousio. A Embrapa aponta que a região ainda é marcada pelo monocultivo de soja ou pela sucessão soja/milho, o que prejudica o solo e a produtividade no longo prazo. Todo ano, entre janeiro e março, o produtor decide o que plantar depois da soja. Essa decisão é tomada com pouca informação sobre o risco de faltar chuva, sobre o efeito no solo e sobre o clima que vem pela frente.
+
+**Solução.** Para um talhão (ponto ou polígono no mapa), o Raiz Orbital compara 6 opções de entressafra (pousio, milho safrinha, sorgo, milho com braquiária, milheto e crotalária) e monta planos de rotação de 3 anos. Cada opção recebe notas em quatro eixos, e o produtor decide quanto cada eixo pesa:
+
+| Eixo | Pergunta que responde | Dados |
+| --- | --- | --- |
+| Segurança climática | Em quantos dos últimos 20 anos essa opção teria passado aperto de água ou calor no florescimento? | GPM IMERG, NASA POWER, SMAP |
+| Clima futuro | Esse risco aumenta em 2041–2060? | NEX-GDDP-CMIP6 |
+| Saúde do solo | Quanto de palhada, nitrogênio e quebra de pragas a opção traz? | Parâmetros da Embrapa + histórico do talhão pelo MODIS/HLS |
+| Renda | Quanto sobra no bolso, descontando o risco? | Preço e custo informados ou padrão regional |
+
+Cada recomendação mostra **qual dado da NASA levou a ela** (por exemplo, "em 7 dos últimos 20 anos o florescimento do milho semeado depois de 25/fev pegou 10 dias sem chuva").
+
+**Escopo do MVP (14 e 15 de novembro de 2026).**
+
+| Entra no MVP | Fica para depois |
+| --- | --- |
+| Talhão por ponto ou polígono no mapa, no Triângulo Mineiro | Outras regiões do Cerrado |
+| 6 opções de entressafra e planos de 3 anos | Algodão, feijão, trigo tropical, pecuária (ILP completa) |
+| Risco climático com 20 anos de dados da NASA | Modelo de produtividade calibrado |
+| Clima futuro com CMIP6 (1 cenário, poucos modelos) | Todos os modelos e cenários |
+| Histórico do talhão pelo NDVI (pousio ou segunda safra) | Classificação de cultura por aprendizado de máquina |
+| Pesos ajustáveis e explicação de cada nota | Conta de usuário, pagamento |
+| Interface web responsiva, em inglês e português | Bot de WhatsApp e alertas diários (vira módulo 2) |
+
+**Glossário rápido**
+
+- **Entressafra / safrinha / segunda safra:** o que se planta depois da soja, de janeiro a março.
+- **Pousio:** deixar a área sem cultivo até a próxima soja.
+- **Rotação:** alternar culturas diferentes ao longo dos anos; **sucessão:** repetir a mesma sequência todo ano.
+- **Planta de cobertura:** cultura plantada para proteger e melhorar o solo, sem colheita de grão (milheto, crotalária, braquiária).
+- **Palhada:** restos de planta sobre o solo, que protegem da erosão e do calor e guardam umidade.
+- **Fixação de nitrogênio:** leguminosas (como a crotalária) capturam nitrogênio do ar e deixam no solo.
+- **ISNA:** índice de satisfação da necessidade de água, a razão entre a água que a planta usou e a que precisava (0 a 1).
+- **NDVI:** índice de verde da vegetação medido por satélite; mostra se havia planta crescendo no talhão.
+
+## 2. Critérios de avaliação e como vamos pontuar
+
+O Space Apps avalia os projetos em cinco critérios; o guia não dá peso diferente a nenhum deles e lembra que muitos times capricham nos quatro primeiros e esquecem o último, a apresentação ([Judging & Awards Guide](https://www.spaceappschallenge.org/resources/judging-awards-guide)).
+
+| Critério | O que os juízes perguntam | Como o Raiz Orbital pontua |
+| --- | --- | --- |
+| **Impacto** (no guia aparece como "Influence") | Quanto bem o projeto pode fazer e para quantas pessoas? | Sucessão soja/milho e pousio dominam milhões de hectares no Cerrado; mostrar o tamanho da área e o custo de uma safrinha frustrada ou de um replantio |
+| **Criatividade** | A abordagem é nova ou só incremental? | Ler o histórico real do talhão pelo NDVI ("você deixou em pousio 6 dos últimos 10 anos"), testar cada opção nos 20 anos de chuva da NASA e no clima de 2050, e deixar o produtor mexer nos pesos |
+| **Validade** | A solução é cientificamente correta e funciona no mundo real? | Limiares de dissertações, Embrapa e ZARC; balanço hídrico FAO-56; teste com safras passadas; limites e incertezas escritos na tela |
+| **Relevância** | Responde ao desafio? Está completo, é viável e fácil de usar? | Cobre os quatro insumos pedidos (dados da NASA, solo local, culturas, prioridades) e o resultado pedido (estratégias de rotação para solo e clima) |
+| **Apresentação** | O time contou bem o desafio, a solução e por que importa? | Vídeo de 30 s com a história de um produtor de Uberlândia e a tela de comparação |
+
+### Cobertura dos pedidos do desafio
+
+| O desafio pede | Onde está no produto |
+| --- | --- |
+| Observações da Terra da NASA | IMERG, POWER, SMAP, MODIS/HLS, NEX-GDDP-CMIP6 (seção 6) |
+| Informação local de solo | Textura e água disponível informadas pelo produtor ou do SoilGrids; problema de nematoide (sim, não, não sei) |
+| Características das culturas | Tabela de 6 opções com ciclo, água, palhada, nitrogênio e pragas (seção 5) |
+| Prioridades do produtor | Controles de peso para segurança, solo, renda e futuro |
+| Explorar estratégias de rotação | Ranking de opções e de planos de 3 anos, com comparação lado a lado |
+| Fortalecer a saúde do solo | Nota de solo (palhada, nitrogênio, quebra de pragas) |
+| Adaptar a condições que mudam | Risco nos últimos 20 anos, teste de ano seco e cenário 2041–2060 |
+
+### Regras que eliminam do julgamento global
+
+Segundo o guia de submissão ([Project Submission Guide](https://www.spaceappschallenge.org/resources/project-submission-guide/)):
+
+- **Inglês obrigatório** no formulário, nos slides e nas legendas do vídeo.
+- **Demo:** vídeo de até **30 segundos** ou até **7 slides**, contando a capa. Passou disso, não concorre no global.
+- **Link do projeto público**, sem senha nem cadastro (repositório no GitHub e site).
+- **Uso de dados da NASA** é obrigatório para prêmio global; listar todas as outras fontes no campo de referências.
+- **IA:** permitida, mas declarada no formulário; imagem ou vídeo gerado por IA leva marca d'água; não usar logo ou marca da NASA em material gerado.
+- Todos os membros registrados e no evento local, sem lista de espera.
+- **Prazo:** no guia de 2025, a submissão abria às 9h de sábado e fechava às 23h59 de domingo, no horário do evento local. **Confirmar o horário de 2026 com a organização de Uberlândia.**
+
+### Prêmios globais que combinam com o projeto
+
+- **Local Impact Award:** maior potencial de fazer diferença numa comunidade local.
+- **Best Use of Data:** deixa os dados espaciais mais acessíveis ou os usa de forma única.
+- **Best Use of Science:** uso mais válido do método científico.
+
+## 3. Usuário, decisão e histórias de usuário
+
+**A decisão que o produto apoia:** "Depois desta soja, o que eu planto neste talhão, e que sequência sigo nos próximos 3 anos para manter renda, proteger o solo e não perder dinheiro com seca?" Ela acontece de dezembro a março, quando a colheita da soja se aproxima, e é revista todo ano.
+
+| Persona | Quem é | O que precisa |
+| --- | --- | --- |
+| Marcelo, produtor de grãos de sequeiro (principal) | 200 a 1.500 ha de soja no Triângulo, usa celular o dia todo, decide a safrinha com o agrônomo | Ver, em poucos minutos, qual opção e qual sequência dão mais segurança e renda no talhão dele |
+| Ana, agrônoma de revenda ou cooperativa | Atende dezenas de produtores | Comparar opções com dados para justificar a recomendação e mostrar o efeito no solo |
+| Jurado do Space Apps | Avalia em minutos | Entender o valor em 30 segundos e ver o dado da NASA por trás de cada nota |
+
+### Histórias de usuário do MVP
+
+| ID | Como... | Quero... | Para... | Prioridade |
+| --- | --- | --- | --- | --- |
+| US-01 | produtor | marcar meu talhão no mapa (ponto ou polígono) | o app buscar os dados daquele lugar | Must |
+| US-02 | produtor | informar a data prevista de colheita da soja e a textura do solo | o app saber quando a entressafra começa e quanta água o solo guarda | Must |
+| US-03 | produtor | ver as 6 opções de entressafra lado a lado com notas de segurança, solo, renda e futuro | escolher com informação, não só por hábito | Must |
+| US-04 | produtor | mexer nos pesos (por exemplo, renda vale mais que solo) | o ranking refletir o que importa para mim | Must |
+| US-05 | produtor | ler por que cada opção ganhou ou perdeu nota, com o dado da NASA citado | confiar na recomendação | Must |
+| US-06 | produtor | ver planos de rotação de 3 anos | sair da sucessão soja/milho ou soja/pousio | Must |
+| US-07 | produtor | ver o histórico do meu talhão (anos de pousio e de segunda safra) pelo satélite | entender de onde estou partindo | Should |
+| US-08 | produtor | informar se tenho problema de nematoide | o app priorizar opções que quebram o ciclo | Should |
+| US-09 | produtor | testar o plano num ano seco tipo El Niño e no clima de 2050 | saber se o plano aguenta | Should |
+| US-10 | produtor | editar produtividade, preço e custo | a renda ficar do meu jeito | Could |
+| US-11 | jurado | abrir uma fazenda de exemplo em Uberlândia com um clique | ver o produto funcionando sem cadastro | Must |
+
+## 4. Como funciona: fluxo e requisitos funcionais
+
+&#91;embedded content: fluxo do usuário · 5 passos\]
+
+### Telas do MVP
+
+1. **Início:** frase do problema, botão "Usar fazenda de exemplo (Uberlândia)" e botão "Marcar meu talhão".
+2. **Meu talhão:** mapa para marcar ponto ou desenhar polígono; data prevista de colheita da soja; textura do solo (arenoso, médio, argiloso ou "não sei", que usa o SoilGrids); nematoide (sim, não, não sei).
+3. **Histórico do talhão:** gráfico do NDVI de 10 anos com cada entressafra marcada como "pousio" ou "segunda safra", e a chuva da safrinha em cada ano.
+4. **Comparar opções:** 6 cartões com as quatro notas, a nota final e a frase "por quê"; controles de peso no topo.
+5. **Planos de 3 anos:** os 3 melhores planos, com a nota de cada ano e o ganho de solo acumulado; botão "Testar em ano seco" e "Testar em 2050".
+6. **Sobre os dados:** cada fonte da NASA, o que mede e as limitações.
+
+### Requisitos funcionais
+
+| ID | Requisito | Detalhe | História |
+| --- | --- | --- | --- |
+| RF-01 | Marcar talhão | Ponto (lat/long) ou polígono até 500 ha dentro da caixa do Triângulo; o centro do polígono vira o ponto de clima | US-01 |
+| RF-02 | Dados do talhão | Data de colheita da soja (padrão: 10/fev), textura do solo, nematoide; sem cadastro | US-02, US-08 |
+| RF-03 | Buscar dados da NASA | Em até 20 s: série de chuva 2005–2025, clima diário, umidade do solo, NDVI e projeção 2041–2060 do ponto; cache por célula de 0,1° | US-03 |
+| RF-04 | Notas por opção | Calcular segurança, futuro, solo e renda para as 6 opções com a regra da seção 7 | US-03 |
+| RF-05 | Pesos | 4 controles de 0 a 100% que somam 100; padrão 30% segurança, 25% solo, 30% renda, 15% futuro; recalcula no navegador | US-04 |
+| RF-06 | Explicação | Para cada nota, 1 frase gerada por regra (sem IA generativa) citando o dado e o número | US-05 |
+| RF-07 | Planos de 3 anos | Gerar as 216 combinações, aplicar as restrições da seção 7 e mostrar os 3 melhores | US-06 |
+| RF-08 | Histórico do talhão | Classificar cada entressafra de 2015 a 2025 como pousio ou segunda safra pelo NDVI | US-07 |
+| RF-09 | Testes de estresse | Recalcular com o ano mais seco da série e com o cenário 2041–2060 | US-09 |
+| RF-10 | Edição de economia | Produtividade, preço e custo editáveis por opção | US-10 |
+| RF-11 | Fazenda de exemplo | Talhão em Uberlândia com dados pré-calculados, abre sem esperar | US-11 |
+| RF-12 | Idioma | Interface em inglês (para os juízes) com botão para português | — |
+
+### Exemplo de saída (números ilustrativos, serão trocados pelos calculados)
+
+> **1º Milho + braquiária — nota 74.** Segurança 62: em 6 dos últimos 20 anos o florescimento do milho semeado em 20/fev ficou com falta de água (IMERG + POWER). Solo 80: palhada alta e cobertura na seca. Renda 70. Futuro 58: o risco sobe para 8 em 20 anos no cenário 2041–2060 (CMIP6).
+>
+> **Pousio — nota 31.** Segurança 100, mas solo 10 e renda 0. Seu talhão ficou em pousio em 5 dos últimos 10 anos (NDVI do MODIS).
+
+### Módulo 2 (depois do MVP): acompanhamento da safra
+
+O semáforo de plantio da soja e os alertas de veranico, calor, chuva forte e fogo descritos no [Doc 5](https://claude.ai/artifact/Ub4x3JemJK2pZ6NnbqLPbh) viram o módulo que acompanha o plano ao longo do ano. No hackathon, eles aparecem só como "próximos passos".
+
+## 5. Opções de entressafra e parâmetros das culturas
+
+Todos os números ficam em `culturas.yaml`, para a agrônoma do time ajustar sem mexer no código. O que está marcado como hipótese precisa ser conferido antes da demo.
+
+| Opção | Função | Semeadura até | Dias até florescer / ciclo | Kc no pico (FAO-56) | Palhada | Nitrogênio deixado | Nematoide | Renda |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Pousio | Nenhuma | — | — | — | Muito baixa | 0 | Não quebra o ciclo e deixa o solo exposto | 0 |
+| Milho safrinha | Grão | \~28/fev (hipótese; conferir ZARC milho 2ª safra MG) | \~60 / \~120 dias | 1,20 | Média (cerca de 2,7 t/ha num estudo em Goiás) | 0 | Hospedeiro (o milho é altamente suscetível ao nematoide das lesões, como a soja) | Maior: milho a R$ 61–63/saca em Uberlândia (nov/2026); produtividade padrão 80 sc/ha (hipótese) |
+| Sorgo granífero | Grão | \~20 dias depois do limite do milho (Embrapa) | \~65 / \~115 dias | 1,05 | Média | 0 | Reduz o nematoide reniforme | Média: preço padrão 80% do milho, 60 sc/ha (hipóteses) |
+| Milho + braquiária ruziziensis | Grão + cobertura | Igual ao milho | Igual ao milho | 1,20 | Alta, com cobertura na seca | 0 | Braquiárias multiplicam alguns nematoides, mas reduzem o reniforme | Milho com desconto de 5% (hipótese) |
+| Milheto | Cobertura | Até março (hipótese) | \~50 / \~90 dias | 1,00 | Alta | 0 | Ajuda no controle do Pratylenchus | 0 (custo de semente) |
+| Crotalária spectabilis | Cobertura leguminosa | Até fevereiro (hipótese) | \~60 / \~100 dias | 1,00 | 3 a 6 t/ha de matéria seca | 60 a 100 kg/ha | Altamente resistente; quebra o ciclo | 0 (custo de semente) |
+
+**Base das referências.** Milho também suscetível e crotalária resistente ao nematoide ([Revista Cultivar / Embrapa](https://revistacultivar.com.br/noticias/rotacao-de-culturas-e-uma-das-indicacoes-para-controle-de-nematoides-fitoparasitos)); milheto contra Pratylenchus e braquiárias ([Agrolink / Embrapa](https://www.agrolink.com.br/noticias/rotacao-de-culturas-controla-nematoides-fitoparasitos_453196.html)); sorgo, nabo e gramíneas forrageiras reduzem o reniforme ([Notícias Agrícolas / Embrapa](https://www.noticiasagricolas.com.br/noticia/283964)); sorgo semeado até 20 dias depois do milho na segunda safra ([Notícias Agrícolas / Embrapa](https://www.noticiasagricolas.com.br/noticia/292308)); crotalária com 60 a 100 kg/ha de nitrogênio e 3 a 6 t/ha de matéria seca ([Aegro](https://aegro.com.br/tags/crotalaria-spectabilis/)); palhada de milho de 2,7 t/ha ([Pesquisa Agropecuária Tropical, UFG](https://revistas.ufg.br/pat/article/download/75032/39853/368616)); preço do milho ([Safras & Mercado](https://safras.com.br/?p=90328)).
+
+**Efeito na soja seguinte (para a nota de solo e para o pitch).** Num estudo no Cerrado, a soja depois de grão consorciado com braquiária ruziziensis rendeu 3.196 kg/ha, 11% a mais que depois do pousio ([Revista Cultivar](https://revistacultivar.com.br/noticias/consorcio-de-graos-com-forrageiras-controla-plantas-daninhas-na-soja)).
+
+### Solo
+
+| Textura | Água disponível (CAD) usada no balanço hídrico |
+| --- | --- |
+| Arenoso | 40 mm |
+| Médio | 50 mm |
+| Argiloso | 60 mm |
+
+Valores na ordem de grandeza das reservas úteis usadas pelo ZARC. Se o produtor marcar "não sei", usar a textura do SoilGrids (ISRIC) no ponto.
+
+## 6. Dados da NASA e externos: o que usar e como
+
+| Fonte | Para que serve | Resolução e período | Acesso | Prioridade |
+| --- | --- | --- | --- | --- |
+| NASA POWER (API diária) | Temperatura máx./mín., umidade, vento, radiação e chuva; base da ETo | \~0,5°; diário desde 1981 | API REST aberta, sem chave | Must |
+| GPM IMERG Final Daily (GPM\_3IMERGDF v07) | Chuva diária de 2005 a 2025 para o risco por ano | 0,1° (\~10 km); desde 2000 | Earthdata Login + `earthaccess`, ou Earth Engine | Must |
+| SMAP L4 (SPL4SMGP v8) | Umidade da zona das raízes para calibrar o balanço hídrico e mostrar o solo na entressafra | 9 km; a cada 3 h; desde 2015 | Earth Engine `NASA/SMAP/SPL4SMGP/008` | Should |
+| MODIS MOD13Q1 (NDVI 16 dias) | Histórico do talhão: houve segunda safra ou pousio em cada ano? | 250 m; desde 2000 | Earth Engine `MODIS/061/MOD13Q1` | Must |
+| HLS (Landsat + Sentinel-2) | O mesmo histórico em talhões pequenos, nas safras recentes | 30 m; a cada 2–3 dias | Earthdata / Earth Engine | Could |
+| NEX-GDDP-CMIP6 | Chuva e temperatura diárias projetadas para 2041–2060 | \~27,8 km; 1950–2100; cenários SSP2-4.5 e SSP5-8.5 | Earth Engine `NASA/GDDP-CMIP6` | Must |
+| SoilGrids (ISRIC, não NASA) | Textura do solo quando o produtor não sabe | 250 m | API REST | Should |
+
+O MODIS Terra deve parar de coletar em 2027, mas o histórico continua disponível e é isso que o MVP usa. Para o presente, o caminho é o HLS.
+
+### Contas que o time precisa hoje
+
+1. **Earthdata Login** (grátis), para IMERG e SMAP pelos servidores da NASA.
+2. **Google Earth Engine** com um projeto do Google Cloud (grátis para uso não comercial). É o caminho mais rápido para MODIS, SMAP e CMIP6 sem baixar arquivos globais.
+3. Repositório **público** no GitHub desde o início (exigência da entrega).
+
+### 6.1 NASA POWER: clima diário de 20 anos
+
+```
+GET https://power.larc.nasa.gov/api/temporal/daily/point
+  ?parameters=PRECTOTCORR,T2M_MAX,T2M_MIN,RH2M,WS2M,ALLSKY_SFC_SW_DWN
+  &community=AG&latitude=-18.92&longitude=-48.28
+  &start=20050101&end=20251231&format=JSON
+```
+
+Com esses campos, calcular a ETo diária pelo FAO-56 Penman-Monteith (biblioteca `pyet`). O valor `-999` é dado ausente.
+
+### 6.2 IMERG Final: chuva diária
+
+```python
+import earthaccess, xarray as xr
+earthaccess.login()
+res = earthaccess.search_data(short_name="GPM_3IMERGDF", version="07",
+                              temporal=("2005-01-01", "2025-12-31"),
+                              bounding_box=(-51.0, -20.5, -46.0, -17.5))
+ds = xr.open_mfdataset(earthaccess.open(res))
+chuva = ds["precipitation"].sel(lat=-18.92, lon=-48.28, method="nearest")
+```
+
+São cerca de 7.700 arquivos diários: **baixar uma vez só para a caixa do Triângulo e salvar em Parquet ou Zarr**. Se travar, usar a chuva do POWER (PRECTOTCORR) no hackathon e trocar depois.
+
+### 6.3 Earth Engine: MODIS, SMAP e CMIP6
+
+```python
+import ee
+ee.Initialize(project="SEU-PROJETO")
+ponto = ee.Geometry.Point(-48.28, -18.92)
+
+# NDVI de 16 dias, 2015-2025
+ndvi = (ee.ImageCollection("MODIS/061/MOD13Q1").filterDate("2015-01-01", "2025-12-31")
+        .select("NDVI").getRegion(ponto, 250).getInfo())
+
+# Projecao diaria 2041-2060, um modelo e um cenario
+cmip = (ee.ImageCollection("NASA/GDDP-CMIP6")
+        .filter(ee.Filter.eq("model", "ACCESS-CM2"))
+        .filter(ee.Filter.eq("scenario", "ssp245"))
+        .filterDate("2041-01-01", "2061-01-01")
+        .select(["pr", "tasmax"]).getRegion(ponto, 27830).getInfo())
+```
+
+No CMIP6, `pr` vem em kg/m²/s (multiplicar por 86.400 para mm/dia) e `tasmax` em Kelvin (subtrair 273,15). Usar 3 a 5 modelos e mostrar a média e a faixa, nunca um modelo só como verdade. Para o SMAP, a coleção `NASA/SMAP/SPL4SMGP/008`, banda `sm_rootzone`. O `getRegion` tem limite de linhas por chamada: quebrar o pedido por ano se der erro.
+
+### 6.4 SoilGrids
+
+```
+GET https://rest.isric.org/soilgrids/v2.0/properties/query
+  ?lon=-48.28&lat=-18.92&property=clay&property=sand&depth=0-30cm&value=mean
+```
+
+Regra simples: argila acima de 35% = argiloso; areia acima de 70% = arenoso; o resto = médio.
+
+## 7. Motor de pontuação
+
+Tudo é regra transparente, sem modelo de caixa-preta: cada nota tem uma conta que cabe numa frase. Os limiares são a **versão 0** e ficam em `regras.yaml`.
+
+### 7.1 Data de semeadura de cada opção
+
+Semeadura = data de colheita da soja + 3 dias. Se passar do limite da opção (seção 5), a opção aparece como "fora da janela" e não entra no ranking daquele ano.
+
+### 7.2 Segurança climática (0 a 100)
+
+Para cada ano de 2005 a 2025, simular a opção com a chuva real daquele ano:
+
+1. **Balanço hídrico diário ("balde")** a partir da semeadura, com chuva do IMERG, ETo do POWER, Kc da cultura e CAD da textura. O balde começa em 50% da CAD, ou no valor estimado pelo SMAP quando houver.
+2. **Janela crítica:** 15 dias antes e 15 depois do florescimento.
+3. **Ano com aperto** se, na janela crítica, o ISNA ficar abaixo de 0,55 **ou** houver 3 dias ou mais com máxima de 35 °C ou mais.
+4. **Coberturas** (milheto, crotalária) não têm grão: o aperto delas é falhar no estabelecimento (ISNA abaixo de 0,50 nos primeiros 30 dias).
+5. **Segurança = 100 × (1 − anos com aperto ÷ anos simulados).** O pousio não tem o que perder e recebe 100.
+
+```python
+def simular(chuva, eto, kc, cad, arm0=None):
+    arm = cad * 0.5 if arm0 is None else arm0
+    etr_l, etc_l = [], []
+    for p, e, k in zip(chuva, eto, kc):
+        etc = k * e
+        disp = arm + p
+        etr = min(etc, disp)
+        arm = min(cad, disp - etr)
+        etr_l.append(etr); etc_l.append(etc)
+    return etr_l, etc_l
+
+def isna(etr_l, etc_l, ini, fim):
+    return sum(etr_l[ini:fim]) / max(sum(etc_l[ini:fim]), 1e-6)
+```
+
+Base: limiar de ISNA de 0,55 usado pelo ZARC da soja em Minas na floração e no enchimento (aplicado aqui ao milho e ao sorgo como hipótese); calor acima de 35 °C na floração ligado a aborto de flores; balanço hídrico FAO-56. Detalhes no [Doc 5, seção "Como identificar os eventos"](https://claude.ai/artifact/Ub4x3JemJK2pZ6NnbqLPbh).
+
+### 7.3 Clima futuro (0 a 100)
+
+Repetir 7.2 com o clima de 2041–2060. Para não herdar o erro dos modelos, usar o **método do delta**: calcular, mês a mês, quanto a chuva e a máxima mudam entre 1995–2014 e 2041–2060 em cada modelo do CMIP6, e aplicar essa mudança à série observada da NASA. Nota = média de 3 a 5 modelos, cenário SSP2-4.5; mostrar também a faixa entre modelos.
+
+### 7.4 Saúde do solo (0 a 100)
+
+Nota relativa entre as opções, a validar com a agrônoma:
+
+| Opção | Palhada (até 40) | Nitrogênio (até 30) | Quebra de pragas (até 30) | Total |
+| --- | --- | --- | --- | --- |
+| Pousio | 0 | 0 | 0 | 0 |
+| Milho safrinha | 20 | 0 | 0 | 20 |
+| Sorgo | 20 | 0 | 15 | 35 |
+| Milho + braquiária | 40 | 0 | 10 | 50 |
+| Milheto | 35 | 0 | 20 | 55 |
+| Crotalária | 25 | 30 | 30 | 85 |
+
+Se o produtor marcar nematoide = sim, a coluna de pragas vale 1,5 vez e o total é reescalado para 0 a 100.
+
+### 7.5 Renda (0 a 100)
+
+Margem esperada = produtividade padrão × fator de segurança × preço − custo. O fator vem dos 20 anos simulados: perda de 0% com ISNA de 0,65 ou mais, 30% entre 0,55 e 0,65 e 60% abaixo de 0,55 (hipótese do time). Nota = 100 × margem ÷ maior margem entre as opções; margem negativa vale 0. Produtividade, preço e custo são editáveis.
+
+### 7.6 Nota final e explicação
+
+Nota final = soma de (peso × nota) nos quatro eixos. Cada nota gera uma frase por modelo de texto:
+
+- Segurança: "Em {n} dos últimos {N} anos, o florescimento de {opção} semeado em {data} ficou com falta de água (GPM IMERG + NASA POWER)."
+- Futuro: "No clima de 2041–2060 (NEX-GDDP-CMIP6), isso subiria para {m} em {N} anos."
+- Solo: "Deixa {palhada} de palhada e {n} kg/ha de nitrogênio; {quebra ou não} o ciclo do nematoide."
+- Histórico: "Seu talhão ficou em pousio em {k} das últimas {K} entressafras (NDVI do MODIS)."
+
+### 7.7 Planos de rotação de 3 anos
+
+1. Gerar as 6 × 6 × 6 = 216 sequências de entressafra.
+2. Descartar: opção fora da janela; mais de 2 pousios seguidos; se nematoide = sim, 3 anos sem crotalária ou milheto.
+3. Nota do plano = média das notas finais dos 3 anos + bônus de diversidade (+5 se tiver 2 funções diferentes, +10 se tiver 3: grão, cobertura gramínea, cobertura leguminosa).
+4. Mostrar os 3 melhores e, ao lado, a sequência atual do produtor (soja/milho ou soja/pousio) para comparação.
+
+### 7.8 Histórico do talhão pelo NDVI
+
+Para cada ano, olhar o NDVI entre 1º de abril e 31 de julho (entressafra). Se o maior valor passar de 0,6, houve segunda safra ou cobertura; se ficar abaixo de 0,45, pousio; entre os dois, "incerto". Limiares a calibrar olhando 5 talhões conhecidos da região. Estudos da Embrapa já usaram séries do MODIS para separar soja-milho, soja-milheto e soja-pousio no Cerrado, com acurácia de 84% a 100% nessas classes ([Embrapa, 2021](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1135867/1/Big-Earth-Observation-Data-e-aprendizado-de-maquina-2021.pdf)).
+
+## 8. Arquitetura, modelo de dados e requisitos não funcionais
+
+**Ideia central:** baixar e preparar os dados pesados **antes** (pré-cálculo por célula de 0,1° na caixa do Triângulo) e deixar o app só consultar e somar. Assim a demo não depende da velocidade dos servidores da NASA na hora da apresentação.
+
+| Camada | Escolha | Por quê |
+| --- | --- | --- |
+| Pré-cálculo | Python (earthaccess, xarray, pandas, pyet, earthengine-api) em script ou notebook | Gera as séries diárias e os resultados por ano e opção, salvos em Parquet |
+| API | FastAPI: `GET /talhao?lat&lon&colheita&solo&nematoide` | Devolve, por opção e por ano, ISNA, aperto e margem; e o histórico do NDVI |
+| Front-end | React + Vite (ou Streamlit se o tempo apertar), mapa com Leaflet e OpenStreetMap | Os pesos são aplicados no navegador, então o ranking muda na hora |
+| Hospedagem | Vercel (front) e Render ou Railway (API) | Link público, sem senha, como exige a entrega |
+| Código | GitHub público, licença MIT | Exigência da entrega e transparência |
+
+### Modelo de dados (arquivos do pré-cálculo)
+
+| Arquivo | Campos |
+| --- | --- |
+| `clima_diario.parquet` | celula\_id, data, chuva\_mm, fonte\_chuva, tmax, tmin, eto |
+| `cmip6_delta.parquet` | celula\_id, modelo, mes, delta\_chuva\_pct, delta\_tmax\_c |
+| `ndvi_talhao.parquet` | lat, lon, data, ndvi (calculado sob demanda e guardado) |
+| `simulacao.parquet` | celula\_id, opcao, ano, data\_semeadura, solo, isna\_critico, dias\_calor, aperto, fator\_perda, cenario (atual ou 2050) |
+| `culturas.yaml` e `regras.yaml` | Parâmetros da seção 5 e limiares da seção 7, com fonte ao lado de cada número |
+
+### Requisitos não funcionais
+
+| ID | Requisito | Meta |
+| --- | --- | --- |
+| RNF-01 | Tempo da primeira resposta | até 20 s para um talhão novo; fazenda de exemplo instantânea |
+| RNF-02 | Recálculo ao mexer nos pesos | menos de 1 s, no navegador |
+| RNF-03 | Idioma | inglês para os juízes, português para o produtor |
+| RNF-04 | Celular | funciona em tela de celular, com textos curtos |
+| RNF-05 | Transparência | toda nota com fórmula, fonte e incerteza visíveis; aviso "apoio à decisão, não substitui o agrônomo" |
+| RNF-06 | Privacidade | sem cadastro e sem dado pessoal; o talhão fica só na sessão |
+| RNF-07 | Atribuição | citar NASA POWER, GPM IMERG, SMAP, MODIS, NEX-GDDP-CMIP6 e SoilGrids na tela "Sobre os dados"; não usar logotipo da NASA |
+| RNF-08 | Segredos | credenciais do Earthdata e do Earth Engine fora do repositório |
+| RNF-09 | Custo | tudo no plano grátis durante o hackathon |
+
+## 9. Backlog e plano até a entrega
+
+Time: **Rayanne** (produto, parâmetros, pitch e submissão), **Dev 1** (dados e motor), **Dev 2** (API, front-end e deploy).
+
+### Backlog priorizado
+
+| # | Tarefa | Quem | Estimativa | Pronto quando |
+| --- | --- | --- | --- | --- |
+| T-01 | Repositório público, `.env`, contas Earthdata e Earth Engine | Dev 1 | 30 min | todos rodam o projeto |
+| T-02 | `culturas.yaml` e `regras.yaml` com as tabelas das seções 5 e 7 e a fonte de cada número | Rayanne | 1 h | revisado por alguém de agronomia, se possível |
+| T-03 | Clima diário 2005–2025: POWER (todas as variáveis + ETo) para a fazenda de exemplo e para a grade do Triângulo | Dev 1 | 1,5 h | Parquet gerado |
+| T-04 | Chuva IMERG Final para a grade (ou plano B: chuva do POWER) | Dev 1 | 2 h | Parquet gerado |
+| T-05 | Motor: balde, ISNA da janela crítica, aperto por ano, segurança e renda por opção | Dev 1 | 3 h | testes da seção 11 passam |
+| T-06 | Deltas do CMIP6 (3 modelos, SSP2-4.5) e nota de futuro | Dev 1 | 2 h | nota de futuro para as 6 opções |
+| T-07 | API FastAPI com o endpoint do talhão | Dev 2 | 2 h | JSON correto para o exemplo |
+| T-08 | Front: mapa, formulário, cartões das 6 opções, controles de peso | Dev 2 | 4 h | ranking muda ao mexer nos pesos |
+| T-09 | Planos de 3 anos e comparação com a sequência atual | Dev 2 | 2 h | 3 melhores planos na tela |
+| T-10 | Histórico do talhão pelo NDVI do MODIS | Dev 1 | 2 h | gráfico com pousio e segunda safra marcados |
+| T-11 | Textos de explicação e tela "Sobre os dados" em inglês e português | Rayanne | 2 h | todas as frases da seção 7.6 |
+| T-12 | Validação: comparar o risco calculado com a produtividade do milho 2ª safra de Uberlândia no IBGE (PAM) | Dev 1 + Rayanne | 1,5 h | gráfico "anos de aperto x anos de quebra" para o pitch |
+| T-13 | Deploy front e API | Dev 2 | 1 h | links públicos funcionando em aba anônima |
+| T-14 | Vídeo de 30 s com legenda em inglês e página do projeto | Rayanne | 3 h | submetido |
+
+**Ordem de corte se o tempo apertar:** T-10 (histórico) vira imagem estática; T-06 usa 1 modelo só; T-04 usa a chuva do POWER; T-09 mostra só o melhor plano. **Nunca cortar:** T-05, T-08, T-13 e T-14.
+
+### Plano de horas
+
+| Bloco | Horário | Entregas |
+| --- | --- | --- |
+| 1 | sáb 10h–14h | T-01, T-02, T-03; esqueleto do front com mapa |
+| 2 | sáb 14h–20h | T-04, T-05; API devolvendo o exemplo |
+| 3 | sáb 20h–2h | T-06, T-08, T-11 |
+| 4 | dom 2h–8h | T-09, T-10 (revezamento de sono) |
+| 5 | dom 8h–14h | T-12, T-13, testes de ponta a ponta; congelar funcionalidades |
+| 6 | dom 14h–entrega | T-14, ensaio do pitch, revisão da submissão com 2 horas de folga antes do prazo |
+
+## 10. Demo de 30 segundos, página do projeto e checklist de entrega
+
+### Roteiro do vídeo (até 30 s, legenda em inglês)
+
+Segue a divisão de tempo sugerida pelo guia de submissão.
+
+| Tempo | Imagem | Fala (inglês) |
+| --- | --- | --- |
+| 0:00–0:02 | Time | "We are Raiz Orbital, from Uberlândia, Brazil." |
+| 0:02–0:05 | Talhão em pousio na seca | "Every year, Cerrado farmers decide what to plant after soybeans, often guessing." |
+| 0:05–0:10 | Logo do projeto e frase | "Raiz Orbital: NASA data to choose the rotation that protects your soil and your income." |
+| 0:10–0:20 | Tela: marcar talhão, cartões, mexer no peso, plano de 3 anos | "We replay 20 years of NASA rainfall, soil moisture and satellite greenness, plus 2050 climate projections, to score each option." |
+| 0:20–0:30 | Antes e depois: pousio x milho + braquiária | "Less risk, healthier soil, a plan the farmer can trust, starting with the Cerrado." |
+
+### Campos da página do projeto (em inglês)
+
+| Campo | O que escrever |
+| --- | --- |
+| Project Name | Raiz Orbital – Field Shift for the Brazilian Cerrado |
+| High-Level Summary | O que é, para quem, como responde ao Field Shift e por que importa (5 a 6 frases) |
+| Link to Project Demo | Vídeo de até 30 s, público |
+| Link to Final Project | Site publicado + GitHub público |
+| Detailed Description | Fluxo, motor de pontuação, limites, ferramentas e linguagens |
+| NASA Data | POWER, GPM IMERG, SMAP L4, MODIS MOD13Q1, NEX-GDDP-CMIP6 (e HLS se entrar): o que cada um mede e como entra na nota |
+| Space Agency Partner & Other Data | SoilGrids (ISRIC), Embrapa, ZARC/MAPA, Safras & Mercado, IBGE, OpenStreetMap, bibliotecas usadas |
+| Use of AI | Declarar as ferramentas de IA usadas na pesquisa, no código e nos textos, e como foram usadas |
+
+### Checklist antes de clicar em "Submit for Judging"
+
+- [ ] Os três membros registrados e na página do time.
+- [ ] Vídeo com 30 s ou menos e legenda em inglês (ou até 7 slides em inglês).
+- [ ] Todos os links abrem numa aba anônima, sem senha.
+- [ ] Dados da NASA descritos; todas as outras fontes nas referências.
+- [ ] Uso de IA declarado; nenhuma imagem gerada por IA sem marca d'água; nenhum logo da NASA.
+- [ ] Caixas de termos e "trabalho original" marcadas.
+- [ ] Enviado com folga antes do prazo confirmado com a organização local.
+
+## 11. Testes, riscos e fontes
+
+### Critérios de aceite do MVP
+
+- Um jurado abre o link, clica em "fazenda de exemplo" e vê as 6 opções ranqueadas em menos de 5 segundos.
+- Mexer num peso muda o ranking na hora.
+- Cada nota mostra a frase "por quê" com o dado da NASA e o número.
+- O plano de 3 anos aparece ao lado da sequência atual do talhão.
+- A tela "Sobre os dados" lista fontes, limites e o aviso de apoio à decisão.
+
+### Testes unitários obrigatórios
+
+| Função | Entrada | Esperado |
+| --- | --- | --- |
+| `simular` | chuva 10 mm/dia, ETo 5, Kc 1, CAD 50 | ETr = ETc todos os dias; ISNA = 1 |
+| `simular` | chuva 0, ETo 5, Kc 1, CAD 50, balde inicial 25 | ETr = 5 por 5 dias, depois 0; ISNA de 10 dias = 0,5 |
+| aperto | ISNA crítico 0,50 | ano com aperto |
+| aperto | ISNA 0,70 e 3 dias com 36 °C | ano com aperto (calor) |
+| janela | colheita 05/mar, milho até 28/fev | milho "fora da janela" |
+| pesos | 30/25/30/15 | soma 100; nota final = soma ponderada |
+| planos | nematoide = sim | nenhum plano sem crotalária ou milheto nos 3 anos |
+| planos | sem restrição | 216 combinações antes do filtro |
+
+### Riscos
+
+| Risco | Mitigação |
+| --- | --- |
+| Download do IMERG lento demais | Plano B com a chuva do POWER; IMERG só para a fazenda de exemplo |
+| Earth Engine sem acesso a tempo | Plano B: NDVI via AppEEARS ou imagem estática do histórico; CMIP6 baixado de 1 modelo |
+| Parâmetros das culturas errados | Fonte ao lado de cada número; marcar hipóteses na tela; validar com agrônomo da região |
+| Escala do satélite maior que o talhão (chuva \~10 km, CMIP6 \~28 km) | Dizer isso na tela; o NDVI de 250 m ou 30 m é o único dado no nível do talhão |
+| Jurado não entender o Cerrado | Primeiros 10 s do vídeo explicam o problema com uma imagem |
+| Pesos parecem arbitrários | Mostrar a conta e deixar o usuário mudar; o padrão vem da conversa com produtores |
+
+### Fontes
+
+- [Judging & Awards Guide (Space Apps)](https://www.spaceappschallenge.org/resources/judging-awards-guide)
+- [Project Submission Guide (Space Apps)](https://www.spaceappschallenge.org/resources/project-submission-guide/)
+- [Descrição do desafio Field Shift (evento Sonoma State)](https://edeon.sonoma.edu/nasaspaceapps-26/)
+- [Sistema de plantio direto e rotação no Cerrado (Embrapa, 2022)](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1149543/1/rsd-2022.pdf)
+- [Rotação e nematoides (Revista Cultivar / Embrapa)](https://revistacultivar.com.br/noticias/rotacao-de-culturas-e-uma-das-indicacoes-para-controle-de-nematoides-fitoparasitos)
+- [Consorcio de grãos com braquiária e soja seguinte (Revista Cultivar)](https://revistacultivar.com.br/noticias/consorcio-de-graos-com-forrageiras-controla-plantas-daninhas-na-soja)
+- [Zoneamento do sorgo e semeadura mais tardia (Notícias Agrícolas / Embrapa)](https://www.noticiasagricolas.com.br/noticia/292308)
+- [Crotalária spectabilis: nitrogênio e biomassa (Aegro)](https://aegro.com.br/tags/crotalaria-spectabilis/)
+- [MODIS para separar sistemas de cultivo (Embrapa, 2021)](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1135867/1/Big-Earth-Observation-Data-e-aprendizado-de-maquina-2021.pdf)
+- [NEX-GDDP-CMIP6 no Earth Engine](https://developers.google.com/earth-engine/datasets/catalog/NASA_GDDP-CMIP6)
+- [SMAP L4 no Earth Engine](https://developers.google.com/earth-engine/datasets/catalog/NASA_SMAP_SPL4SMGP_008)
+- [GPM IMERG (NASA Earthdata)](https://www.earthdata.nasa.gov/data/catalog/ges-disc-gpm-3imergdl-07)
+- [NASA POWER](https://power.larc.nasa.gov/)
+- [Portaria ZARC soja Minas Gerais 2026/27](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/portarias/safra-vigente/minas-gerais/PORTN200SOJAMG.pdf)
+- [Preço do milho em Uberlândia (Safras & Mercado)](https://safras.com.br/?p=90328)
+- [Doc 5: critérios dos eventos climáticos e business plan](https://claude.ai/artifact/Ub4x3JemJK2pZ6NnbqLPbh)
+- [Discovery do público e das dores](https://claude.ai/artifact/G3DVwtrQ6RCVSA7jTKQidD)
