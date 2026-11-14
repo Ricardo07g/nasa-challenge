@@ -25,6 +25,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0014**](0014-deltas-cmip6.md) | **Deltas mensais do NEX-GDDP-CMIP6 pelo THREDDS (3 modelos, SSP2-4.5, 2041–2060 × 1995–2014)** | **Concluída** | **Alta** | `pipeline/fetch_cmip6_deltas.py`, `http_client.py` |
 | [**0016**](0016-plano-3-anos-fiel-ao-prd.md) | **Plano de 3 anos fiel ao PRD 7.7: 216 combinações com pousio, pousios seguidos, diversidade por função, sem nota −1,0** | **Concluída** | **Alta** | `app/services/rotation_plan_service.py` |
 | [**0015**](0015-servico-sinal-outono.md) | **Service do sinal para o outono (regra do PRD 7.10) e campo sinal opcional em /recomendacao** | **Concluída** | **Média** | `app/services/sinal_outono_service.py`, `app/repositories/sinal_outono_repository.py` |
+| [**0020**](0020-pior-ano-seco-na-api.md) | **Margem do pior ano seco em /recomendacao (opcoes[].dinheiro.pior_ano_seco_ha); custo da semente espera o A1.1** | **Concluída** | **Média** | `app/services/recommendation_service.py`, `app/schemas/recomendacao.py` |
 
 ---
 
