@@ -107,9 +107,9 @@ class SmapSoilMoisture:
 class Cmip6Delta:
     """Delta mensal de um modelo do NEX-GDDP-CMIP6: 2041-2060 contra 1995-2014 (PRD 7.3).
 
-    O motor aplica cada mês à série observada (método do delta): chuva x (1 + rain_pct / 100) e
-    máxima + tmax_c. `tmin_c` é opcional: só vem quando o script de dados também baixa o `tasmin`
-    (decisão pendente no roteiro, seção 5).
+    O motor aplica cada mês à série observada (método do delta): chuva x (1 + rain_pct / 100),
+    máxima + tmax_c e, se houver, mínima + tmin_c. `tmin_c` é opcional: só vem quando o script de
+    dados também baixa o `tasmin` (padrão adotado no R2.1, a revisar no roteiro, seção 5).
     """
 
     model: str
