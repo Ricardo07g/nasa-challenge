@@ -16,6 +16,7 @@ Este diretório reúne os **Architecture Decision Records (ADRs)** do projeto **
 | [**ADR-0002**](0002-contratos-api-talhao-e-recomendacao.md) | **Alinhamento dos Contratos de API (`/talhao` e `/recomendacao`)** | **Decidido** | Divergências de tipagem em `nematoide` (`boolean` vs `'sim'|'nao'`), ausência de `data_limite` no backend, formato de `fora_da_janela` e tipagem de `historico` do NDVI. |
 | [**ADR-0003**](0003-series-temporais-nasa-e-janela-de-20-anos.md) | **Série Histórica de 20 Anos da NASA e Bounding Box Geográfica** | **Decidido** | Discrepância de período temporal (`2005–2024` consolidado em `/data` vs `2006–2025` no plano) e substituição oficial do GPM IMERG pela chuva do NASA POWER no MVP. |
 | [**ADR-0004**](0004-fluxo-fazenda-exemplo-e-camada-comunitaria.md) | **Fluxo da Fazenda de Exemplo e Escopo da Camada Comunitária** | **Decidido** | Rota `/exemplo` no frontend (redirecionamento com query params vs endpoint `GET /api/exemplo`) e confinamento de *"Perto de você"* e *Pecuária* como simulados/pós-MVP. |
+| [**ADR-0005**](0005-fontes-diretas-da-nasa-sem-earth-engine.md) | **Dados direto dos serviços da NASA, sem Google Earth Engine no MVP** | **Proposto** | PRD e plano técnico pedem o Earth Engine para NDVI, CMIP6 e SMAP, sem ninguém com a credencial; os mesmos dados saem dos serviços da NASA (ORNL, NCCS THREDDS, AppEEARS) com só o token da Earthdata. |
 
 ---
 

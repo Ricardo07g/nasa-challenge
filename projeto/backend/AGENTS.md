@@ -3,6 +3,8 @@
 Complementa o `AGENTS.md` da raiz (leia primeiro: TDD obrigatório e arquitetura em camadas).
 Aqui ficam só as regras da API.
 
+O que falta implementar, em que ordem e o que pode ser feito em paralelo: `docs/roteiro-de-implementacao.md`.
+
 ## Stack
 
 - Python **3.12** (fixado em `.python-version`)
