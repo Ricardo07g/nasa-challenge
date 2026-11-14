@@ -16,6 +16,7 @@ from app.models.regras import (
     RegrasNotaFinal,
     RegrasRotacao,
     RegrasRotulos,
+    RegrasSinalOutono,
     RegrasSolo,
 )
 
@@ -70,6 +71,7 @@ class YamlRulesRepository:
             solo=_group(raw, "solo", RegrasSolo),
             ndvi=_group(raw, "ndvi", RegrasNdvi),
             rotacao=_group(raw, "rotacao", RegrasRotacao),
+            sinal_outono=_group(raw, "sinal_outono", RegrasSinalOutono),
             frases={
                 lang: FrasesPorque(**{f.name: str(textos[f.name]) for f in fields(FrasesPorque)})
                 for lang, textos in frases.items()

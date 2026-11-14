@@ -86,6 +86,16 @@ def test_should_load_crop_functions_for_rotation_diversity() -> None:
     }
 
 
+def test_should_load_autumn_signal_thresholds() -> None:
+    # PRD 7.10: seco com chance >= 50% ou terra seca (SMAP < percentil 20 e chuva < 60% da média);
+    # normal com chance < 33% e terra sem falta de água
+    sinal = YamlRulesRepository(SHIPPED).get_rules().sinal_outono
+
+    assert (sinal.chance_seco_min, sinal.chance_normal_max) == (0.50, 0.33)
+    assert sinal.smap_percentil_seco == 20.0
+    assert sinal.chuva_fracao_seco == 0.60
+
+
 def test_should_load_phrase_templates_in_portuguese_and_english() -> None:
     # Plano técnico §4.8: modelos de frase em regras.yaml, nas duas línguas
     regras = YamlRulesRepository(SHIPPED).get_rules()

@@ -1,14 +1,16 @@
 """Integration tests for GET /api/recomendacao and GET /api/exemplo (contrato do plano §3.2)."""
 
 from dataclasses import replace
+from datetime import date
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.constants import PROBLEM_BASE_URI, PROBLEM_JSON_MEDIA_TYPE
-from app.dependencies import get_rules_repository
+from app.dependencies import get_rules_repository, get_seasonal_forecast_repository
 from app.main import app
 from app.models.regras import Regras
+from app.models.sinal_outono import SeasonalForecast
 from app.repositories.rules_repository import load_default_rules
 
 UFU = {"lat": -18.9543, "lon": -48.1993}
@@ -177,6 +179,46 @@ def test_should_return_example_farm_at_ufu_point_when_get_exemplo_called(
     assert body["talhao"]["dentro_da_area"] is True
     assert body["recomendacao"]["entrada"]["colheita"] == "meio"
     assert body["recomendacao"]["opcoes"][0]["chuva"]["texto"].startswith("Worked in")
+
+
+class FakeForecastRepository:
+    """GEOS-S2S com 60% de chance de chuva abaixo do normal de março a maio."""
+
+    def get_seasonal_forecast(self, lat: float, lon: float) -> SeasonalForecast | None:
+        return SeasonalForecast(chance_abaixo_normal=0.6, data=date(2027, 2, 1))
+
+
+def test_should_send_null_autumn_signal_until_the_signal_data_arrives(client: TestClient) -> None:
+    # RF-20: sem GEOS-S2S, SMAP e chuva recente (tarefas A2.1 a A2.3), nada de previsão inventada.
+    response = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "sinal" in body
+    assert body["sinal"] is None
+
+
+def test_should_send_autumn_signal_in_the_front_contract_when_a_repository_has_data(
+    client: TestClient,
+) -> None:
+    # Contrato do front: SinalOutono em projeto/frontend/src/models/recomendacao.ts
+    app.dependency_overrides[get_seasonal_forecast_repository] = FakeForecastRepository
+
+    response = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"})
+
+    assert response.status_code == 200
+    body = response.json()
+    sinal = body["sinal"]
+    assert set(sinal) == {"nivel", "motivo", "fonte", "data", "regra_dia_plantar"}
+    assert sinal["nivel"] == "seco"
+    assert "60%" in sinal["motivo"]
+    assert sinal["fonte"] == ["GEOS-S2S"]
+    assert sinal["data"] == "2027-02-01"
+    primeira_a = next(
+        o for o in body["opcoes"] if o["id"] == body["plano_3_anos"]["normal"]["anos"][0]
+    )
+    assert sinal["regra_dia_plantar"]["data_limite"] == primeira_a["data_limite"]
+    assert sinal["regra_dia_plantar"]["texto"].startswith("No dia de plantar")
 
 
 def test_should_use_rules_from_the_injected_rules_repository(client: TestClient) -> None:

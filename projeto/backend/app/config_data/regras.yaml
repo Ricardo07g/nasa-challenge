@@ -145,6 +145,22 @@ rotacao:
       crotalaria: [cobertura_leguminosa]
     fonte: "PRD 5 (coluna Função) e 7.7 (grão, cobertura gramínea, cobertura leguminosa). Milho + braquiária conta grão e cobertura gramínea, porque o PRD 5 diz 'Grão + cobertura' e a braquiária é gramínea (hipótese do time, revisar com a agrônoma)"
 
+sinal_outono:
+  # Sinal para o outono e regra do dia de plantar (PRD 7.10, RF-20; plano de evolução, ajuste A2).
+  # Hipótese a calibrar com as previsões retrospectivas do GMAO antes de publicar (tarefa A2.5).
+  chance_seco_min:
+    valor: 0.50
+    fonte: "PRD 7.10: sinal de seco com chance de chuva abaixo do normal em março a maio de 50% ou mais (GEOS-S2S; hipótese a calibrar)"
+  chance_normal_max:
+    valor: 0.33
+    fonte: "PRD 7.10: sinal de normal com chance de chuva abaixo do normal menor que 33% e terra sem falta de água (hipótese a calibrar)"
+  smap_percentil_seco:
+    valor: 20.0
+    fonte: "PRD 7.10: terra seca com o SMAP sm_rootzone_pctl abaixo do percentil 20 (e a chuva recente baixa)"
+  chuva_fracao_seco:
+    valor: 0.60
+    fonte: "PRD 7.10: terra seca com a chuva dos últimos 30 dias pelo IMERG abaixo de 60% da média (e o SMAP baixo)"
+
 # Modelos de frase do "Por quê?" (PRD 7.6, plano técnico §4.8), sem IA generativa.
 # Os campos entre chaves são preenchidos pela conta; o número da frase é o mesmo da conta.
 #   seguranca: {data} {anos_aperto} {total} {calor_c} {fase} {fonte_chuva}

@@ -81,6 +81,16 @@ class RegrasRotacao:
 
 
 @dataclass(frozen=True)
+class RegrasSinalOutono:
+    """Sinal para o outono (PRD 7.10, RF-20): limiares da previsão sazonal e da terra seca."""
+
+    chance_seco_min: float  # chance (0 a 1) de chuva abaixo do normal que já é sinal de seco
+    chance_normal_max: float  # abaixo disso (e com a terra sem falta de água) é sinal de normal
+    smap_percentil_seco: float  # terra seca: percentil do SMAP abaixo disso...
+    chuva_fracao_seco: float  # ...e chuva recente abaixo desta fração da média
+
+
+@dataclass(frozen=True)
 class FrasesPorque:
     """Modelos de frase do "Por quê?" em uma língua (PRD 7.6, plano técnico §4.8)."""
 
@@ -101,4 +111,5 @@ class Regras:
     solo: RegrasSolo
     ndvi: RegrasNdvi
     rotacao: RegrasRotacao
+    sinal_outono: RegrasSinalOutono
     frases: dict[str, FrasesPorque]  # "pt" e "en"

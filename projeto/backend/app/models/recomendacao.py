@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from datetime import date
 
+from app.models.sinal_outono import SinalOutono
+
 
 @dataclass(frozen=True)
 class ResultadoAno:
@@ -111,3 +113,5 @@ class Recomendacao:
     plano_hoje: PlanoRotacao
     versao_dados: str
     aviso: str
+    # Sinal para o outono (PRD 7.10, RF-20); None sem previsão nem dado da terra
+    sinal: SinalOutono | None = None
