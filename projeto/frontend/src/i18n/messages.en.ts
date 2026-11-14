@@ -11,6 +11,7 @@ export const en = {
     mockNotice: 'Sample data: the scoring engine is not connected yet.',
     disclaimer: 'It helps you decide. It does not replace your agronomist.',
     ready: 'Done',
+    unavailable: 'Not available yet',
   },
   header: {
     home: 'Raiz Orbital, back to start',
@@ -181,8 +182,14 @@ export const en = {
     planted: 'Planted',
     idle: 'Left idle',
     uncertain: 'Uncertain',
-    rainTitle: '20 years of rain right here',
-    rainSubtitle: (start: string, end: string) => `From ${start} to ${end}, day by day.`,
+    rainTitle: (years: number) => `${years} years of rain right here`,
+    rainSubtitle: (start: string, end: string, skipped: number) =>
+      `From ${start} to ${end}, day by day.${
+        skipped > 0 ? ` ${skipped === 1 ? '1 year was' : `${skipped} years were`} left out for missing data.` : ''
+      }`,
+    rainDaily: 'Day by day.',
+    rainUnavailableTitle: 'Rain right here',
+    notAvailable: 'Not available yet for this area.',
     soilTitle: (texture: string) => `${texture} soil`,
     soilFromMap: 'From the soil map.',
     soilFromUser: 'You chose it.',

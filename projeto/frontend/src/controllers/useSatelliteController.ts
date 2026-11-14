@@ -5,7 +5,7 @@ import type { Textura } from '../models/talhao'
 import type { ScreenStatus } from '../models/screenStatus'
 import { farmService, isOutsideArea, type FarmService } from '../services/farmService'
 import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
-import { historySummary, rainPeriod, soilSummary } from '../services/satelliteService'
+import { climateReady, historySummary, rainSummary, soilSummary } from '../services/satelliteService'
 import { useAsync } from './useAsync'
 
 type Deps = { farm: FarmService }
@@ -14,7 +14,8 @@ const defaultDeps: Deps = { farm: farmService }
 
 /**
  * Tela 4 "Pronto. O satélite já viu o resto.": histórico do talhão, chuva, terra (com "Não é? Trocar")
- * e clima. A terra escolhida fica na URL (RF-18) e segue para a resposta.
+ * e clima. A terra escolhida fica na URL (RF-18) e segue para a resposta. Chuva e clima só aparecem
+ * prontos com o dado de verdade (anos usados pela conta; CMIP6 no talhão).
  */
 export function useSatelliteController(deps: Deps = defaultDeps) {
   const { lang } = useI18n()
@@ -30,6 +31,18 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
         ? deps.farm.talhao({ lat: params.lat, lon: params.lon, exemplo: params.exemplo }, lang)
         : Promise.reject(new Error('sem ponto na URL')),
     [params?.lat, params?.lon, params?.exemplo, lang, deps.farm],
+  )
+  // Só para os anos de chuva usados de fato (`chuva.anos`). Quase sempre já está no cache: a missão
+  // esperou por ela. Se falhar, a chuva conta pelo período de dados[] e a tela segue.
+  const recomendacao = useAsync(
+    () =>
+      params?.colheita
+        ? deps.farm.recomendacao(
+            { lat: params.lat, lon: params.lon, colheita: params.colheita, solo: params.solo, exemplo: params.exemplo },
+            lang,
+          )
+        : Promise.reject(new Error('sem colheita na URL')),
+    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, lang, deps.farm],
   )
 
   const toggleSoil = useCallback(() => setSoilOpen((open) => !open), [])
@@ -64,7 +77,8 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
     status,
     retry: talhao.retry,
     history: historySummary(talhao.data?.historico ?? null),
-    rain: rainPeriod(talhao.data?.dados ?? []),
+    rain: rainSummary(talhao.data?.dados ?? [], recomendacao.data?.opcoes ?? null),
+    climate: climateReady(talhao.data?.dados ?? []),
     soil: soilSummary(talhao.data?.solo ?? null, params?.solo),
     soilOpen,
     toggleSoil,

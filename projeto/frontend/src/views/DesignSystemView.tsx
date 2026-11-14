@@ -297,8 +297,10 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             icon={<ClimateIcon />}
             iconTone="blue"
             title={t.satellite.climateTitle}
-            subtitle={t.satellite.climateSubtitle}
+            subtitle={t.satellite.notAvailable}
             readyLabel={t.common.ready}
+            status="unavailable"
+            unavailableLabel={t.common.unavailable}
           />
           <AlternativeCard
             icon={<ShieldIcon />}

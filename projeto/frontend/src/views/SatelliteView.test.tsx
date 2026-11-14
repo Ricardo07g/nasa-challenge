@@ -23,7 +23,8 @@ function setup(overrides: Partial<SatelliteViewProps> = {}) {
       years: ['2024', '2025'],
       window: { from: 4, to: 7 },
     },
-    rain: { start: '2006', end: '2025' },
+    rain: { years: 20, period: { start: '2005', end: '2024' }, skipped: 0 },
+    climate: true,
     soil: { textura: 'argiloso', source: 'map' },
     soilOpen: false,
     onToggleSoil: vi.fn(),
@@ -49,7 +50,7 @@ describe('SatelliteView (tela 4)', () => {
     expect(screen.getByRole('img', { name: 'Plantou em 1 de 2 anos' })).toHaveTextContent('20242025')
     expect(screen.getByText('Ficou parado')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: '20 anos de chuva daqui' })).toBeInTheDocument()
-    expect(screen.getByText('De 2006 a 2025, dia por dia.')).toBeInTheDocument()
+    expect(screen.getByText('De 2005 a 2024, dia por dia.')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Terra argilosa' })).toBeInTheDocument()
     expect(screen.getByText('Do mapa de solos.')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Clima dos próximos anos' })).toBeInTheDocument()
@@ -107,6 +108,54 @@ describe('SatelliteView (tela 4)', () => {
     setup({ history: { ...withUncertain!, window: { from: 5, to: 8 } } })
 
     expect(screen.getByText('Visto pelo satélite MODIS (NASA), de maio a agosto de cada ano')).toBeInTheDocument()
+  })
+
+  it('17 anos de chuva: o número vem do dado e o subtítulo diz quantos anos ficaram de fora', () => {
+    setup({ rain: { years: 17, period: { start: '2005', end: '2024' }, skipped: 3 } })
+
+    expect(screen.getByRole('heading', { name: '17 anos de chuva daqui' })).toBeInTheDocument()
+    expect(screen.getByText('De 2005 a 2024, dia por dia. 3 anos ficaram de fora por falta de dado.')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '20 anos de chuva daqui' })).not.toBeInTheDocument()
+  })
+
+  it('um ano de fora fica no singular', () => {
+    setup({ rain: { years: 19, period: { start: '2005', end: '2024' }, skipped: 1 } })
+
+    expect(screen.getByText('De 2005 a 2024, dia por dia. 1 ano ficou de fora por falta de dado.')).toBeInTheDocument()
+  })
+
+  it('com o número de anos mas sem o período, não inventa as datas', () => {
+    setup({ rain: { years: 17, period: null, skipped: 0 } })
+
+    expect(screen.getByRole('heading', { name: '17 anos de chuva daqui' })).toBeInTheDocument()
+    expect(screen.getByText('Dia por dia.')).toBeInTheDocument()
+  })
+
+  it('sem dado de chuva, o cartão da chuva diz que ainda não está disponível (sem o ✓)', () => {
+    setup({ rain: null })
+
+    expect(screen.getByRole('heading', { name: 'Chuva daqui' })).toBeInTheDocument()
+    expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
+    expect(screen.getAllByRole('img', { name: 'Ainda não disponível' })).toHaveLength(1)
+  })
+
+  it('com o CMIP6, o clima dos próximos anos aparece pronto', () => {
+    setup({ climate: true })
+
+    const title = screen.getByRole('heading', { name: 'Clima dos próximos anos' })
+    expect(screen.getByText('Como a chuva e o calor devem mudar até 2050.')).toBeInTheDocument()
+    expect(title.closest('[data-status]')).toHaveAttribute('data-status', 'ready')
+  })
+
+  it('sem o CMIP6, o clima dos próximos anos não leva o ✓: diz que ainda não está disponível para a área', () => {
+    setup({ climate: false })
+
+    const title = screen.getByRole('heading', { name: 'Clima dos próximos anos' })
+    expect(title.closest('[data-status]')).toHaveAttribute('data-status', 'unavailable')
+    expect(screen.getByText('Ainda não disponível para esta área.')).toBeInTheDocument()
+    expect(screen.queryByText('Como a chuva e o calor devem mudar até 2050.')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
+    expect(screen.getByRole('img', { name: 'Ainda não disponível' })).toBeInTheDocument()
   })
 
   it('sem histórico do satélite, o cartão do histórico some', () => {
@@ -179,6 +228,15 @@ describe('SatelliteView (tela 4)', () => {
     expect(screen.getByRole('img', { name: 'Planted in 4 of 9 years (1 uncertain)' })).toBeInTheDocument()
     expect(screen.getByText('Uncertain')).toBeInTheDocument()
     expect(screen.getByText('Seen by the MODIS satellite (NASA), from April to July each year')).toBeInTheDocument()
+  })
+
+  it('chuva e clima em inglês: 17 anos e sem o CMIP6', () => {
+    setup({ t: en, rain: { years: 17, period: { start: '2005', end: '2024' }, skipped: 3 }, climate: false })
+
+    expect(screen.getByRole('heading', { name: '17 years of rain right here' })).toBeInTheDocument()
+    expect(screen.getByText('From 2005 to 2024, day by day. 3 years were left out for missing data.')).toBeInTheDocument()
+    expect(screen.getByText('Not available yet for this area.')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Not available yet' })).toBeInTheDocument()
   })
 
   it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {

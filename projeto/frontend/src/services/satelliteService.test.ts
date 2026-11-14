@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import type { Opcao } from '../models/recomendacao'
 import type { Talhao } from '../models/talhao'
-import { historySummary, rainPeriod, soilSummary } from './satelliteService'
+import { climateReady, historySummary, rainSummary, soilSummary } from './satelliteService'
 
 type Historico = NonNullable<Talhao['historico']>
 type Ano = Historico['anos'][number]
@@ -76,17 +77,59 @@ describe('historySummary', () => {
   })
 })
 
-describe('rainPeriod', () => {
-  it('lê o período da chuva do IMERG', () => {
-    expect(rainPeriod([{ fonte: 'gpm_imerg', periodo: '2006-2025' }])).toEqual({ start: '2006', end: '2025' })
+describe('rainSummary', () => {
+  const power = { fonte: 'nasa_power', periodo: '2005-2024' }
+  const opcoes = (...anos: number[]) => anos.map((n) => ({ chuva: { anos: n } }) as Opcao)
+
+  it('20 anos: o número vem da recomendação (anos usados de fato) e o período do NASA POWER', () => {
+    expect(rainSummary([power], opcoes(20, 20))).toEqual({
+      years: 20,
+      period: { start: '2005', end: '2024' },
+      skipped: 0,
+    })
   })
 
-  it('sem o IMERG, usa o período da chuva do NASA POWER', () => {
-    expect(rainPeriod([{ fonte: 'nasa_power', periodo: '2005-2024' }])).toEqual({ start: '2005', end: '2024' })
+  it('17 anos: o backend descartou 3 anos com dia faltando, e a tela diz quantos ficaram de fora', () => {
+    expect(rainSummary([power], opcoes(17, 17))).toEqual({
+      years: 17,
+      period: { start: '2005', end: '2024' },
+      skipped: 3,
+    })
   })
 
-  it('sem a fonte, usa os 20 anos do PRD (2006 a 2025)', () => {
-    expect(rainPeriod([])).toEqual({ start: '2006', end: '2025' })
+  it('vale o maior número entre as opções (a série de chuva é a mesma para todas)', () => {
+    expect(rainSummary([power], opcoes(17, 16))?.years).toBe(17)
+  })
+
+  it('sem a recomendação à mão, conta os anos pelo período do NASA POWER', () => {
+    expect(rainSummary([power], null)).toEqual({ years: 20, period: { start: '2005', end: '2024' }, skipped: 0 })
+    expect(rainSummary([power], [])).toMatchObject({ years: 20 })
+  })
+
+  it('lê o período da chuva do IMERG quando ele vem', () => {
+    expect(rainSummary([{ fonte: 'gpm_imerg', periodo: '2006-2025' }, power], null)).toMatchObject({
+      years: 20,
+      period: { start: '2006', end: '2025' },
+    })
+  })
+
+  it('com o número da recomendação mas sem a fonte em dados[], mostra o número sem inventar período', () => {
+    expect(rainSummary([], opcoes(17))).toEqual({ years: 17, period: null, skipped: 0 })
+  })
+
+  it('sem nenhuma das duas, não inventa os 20 anos do PRD: não há resumo da chuva', () => {
+    expect(rainSummary([], null)).toBeNull()
+  })
+})
+
+describe('climateReady', () => {
+  it('pronto só quando o talhão traz o NEX-GDDP-CMIP6 em dados[]', () => {
+    expect(climateReady([{ fonte: 'nasa_power', periodo: '2005-2024' }, { fonte: 'nex_gddp_cmip6', periodo: '2041-2060' }])).toBe(true)
+  })
+
+  it('sem o CMIP6, o clima dos próximos anos não está pronto', () => {
+    expect(climateReady([{ fonte: 'nasa_power', periodo: '2005-2024' }])).toBe(false)
+    expect(climateReady([])).toBe(false)
   })
 })
 

@@ -9,7 +9,7 @@ import { formatMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import { TEXTURAS, type SituacaoAno, type Textura } from '../models/talhao'
-import type { HistorySummary, SoilSummary } from '../services/satelliteService'
+import type { HistorySummary, RainSummary, SoilSummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
@@ -21,7 +21,10 @@ export type SatelliteViewProps = {
   status: ScreenStatus
   onRetry: () => void
   history: HistorySummary | null
-  rain: { start: string; end: string }
+  /** Anos de chuva usados de fato; null sem dado de chuva. */
+  rain: RainSummary | null
+  /** O NEX-GDDP-CMIP6 veio no talhão (só assim o clima dos próximos anos fica pronto). */
+  climate: boolean
   soil: SoilSummary
   soilOpen: boolean
   onToggleSoil: () => void
@@ -48,7 +51,7 @@ export function SatelliteView(props: SatelliteViewProps) {
   )
 }
 
-function Cards({ t, lang, history, rain, soil, soilOpen, onToggleSoil, onChooseSoil, onConfirm }: SatelliteViewProps) {
+function Cards({ t, lang, history, rain, climate, soil, soilOpen, onToggleSoil, onChooseSoil, onConfirm }: SatelliteViewProps) {
   const s = t.satellite
   const soilSource = { map: s.soilFromMap, user: s.soilFromUser, default: s.soilDefault }[soil.source]
   return (
@@ -82,9 +85,13 @@ function Cards({ t, lang, history, rain, soil, soilOpen, onToggleSoil, onChooseS
         <DataSourceCard
           icon={<DropIcon />}
           iconTone="blue"
-          title={s.rainTitle}
-          subtitle={s.rainSubtitle(rain.start, rain.end)}
+          title={rain ? s.rainTitle(rain.years) : s.rainUnavailableTitle}
+          subtitle={
+            !rain ? s.notAvailable : rain.period ? s.rainSubtitle(rain.period.start, rain.period.end, rain.skipped) : s.rainDaily
+          }
           readyLabel={t.common.ready}
+          status={rain ? 'ready' : 'unavailable'}
+          unavailableLabel={t.common.unavailable}
         />
       </div>
       <div className={layout.stack}>
@@ -115,8 +122,10 @@ function Cards({ t, lang, history, rain, soil, soilOpen, onToggleSoil, onChooseS
           icon={<ClimateIcon />}
           iconTone="blue"
           title={s.climateTitle}
-          subtitle={s.climateSubtitle}
+          subtitle={climate ? s.climateSubtitle : s.notAvailable}
           readyLabel={t.common.ready}
+          status={climate ? 'ready' : 'unavailable'}
+          unavailableLabel={t.common.unavailable}
         />
         <Button onClick={onConfirm} arrow>
           {s.cta}

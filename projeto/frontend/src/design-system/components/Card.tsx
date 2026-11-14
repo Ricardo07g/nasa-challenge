@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CheckIcon, SatelliteIcon } from '../icons'
+import { CheckIcon, MinusIcon, SatelliteIcon } from '../icons'
 import styles from './Card.module.css'
 
 export type CardTone = 'white' | 'green' | 'blue' | 'orange'
@@ -56,20 +56,39 @@ type DataSourceCardProps = {
   readyLabel: string
   children?: ReactNode
   iconTone?: BubbleTone
+  /** Sem o dado ainda: no lugar do ✓ vem um traço apagado, e a borda fica tracejada (como o ano sem certeza). */
+  status?: 'ready' | 'unavailable'
+  /** Texto acessível do traço (ex.: "Ainda não disponível"). */
+  unavailableLabel?: string
 }
 
-export function DataSourceCard({ icon, title, subtitle, readyLabel, children, iconTone = 'green' }: DataSourceCardProps) {
+export function DataSourceCard({
+  icon,
+  title,
+  subtitle,
+  readyLabel,
+  children,
+  iconTone = 'green',
+  status = 'ready',
+  unavailableLabel,
+}: DataSourceCardProps) {
   return (
-    <div className={styles.dataSource}>
+    <div className={styles.dataSource} data-status={status}>
       <div className={styles.dataSourceHead}>
         <IconBubble tone={iconTone}>{icon}</IconBubble>
         <div className={styles.dataSourceText}>
           <h2 className={styles.dataSourceTitle}>{title}</h2>
           <div className={styles.dataSourceSubtitle}>{subtitle}</div>
         </div>
-        <span className={styles.ready} role="img" aria-label={readyLabel}>
-          <CheckIcon />
-        </span>
+        {status === 'ready' ? (
+          <span className={styles.ready} role="img" aria-label={readyLabel}>
+            <CheckIcon />
+          </span>
+        ) : (
+          <span className={styles.unavailable} role="img" aria-label={unavailableLabel}>
+            <MinusIcon />
+          </span>
+        )}
       </div>
       {children}
     </div>
