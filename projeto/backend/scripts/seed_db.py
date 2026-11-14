@@ -7,6 +7,11 @@ from pathlib import Path
 import psycopg
 
 from app.config import get_settings
+from app.repositories.climate_repository import cell_center_wkt, cell_id_for, cell_polygon_wkt
+
+# Ponto de Uberlândia usado na carga inicial. O id segue a regra única (floor) da API.
+SEED_LAT, SEED_LON = -18.9186, -48.2772
+SEED_CELL_ID = cell_id_for(SEED_LAT, SEED_LON)
 
 
 def seed_database() -> None:
@@ -17,18 +22,10 @@ def seed_database() -> None:
     print(f"Connecting to {db_url}...")
     with psycopg.connect(db_url) as conn:
         with conn.cursor() as cur:
-            # 1. Seed grid_cell for Uberlandia (-18.9186, -48.2772 -> -189_-483)
-            cell_id = "-189_-483"
-            lat_c, lon_c = -18.9, -48.3
-            half_res = 0.05
-            poly_wkt = (
-                f"POLYGON(({lon_c - half_res} {lat_c - half_res}, "
-                f"{lon_c + half_res} {lat_c - half_res}, "
-                f"{lon_c + half_res} {lat_c + half_res}, "
-                f"{lon_c - half_res} {lat_c + half_res}, "
-                f"{lon_c - half_res} {lat_c - half_res}))"
-            )
-            point_wkt = f"POINT({lon_c} {lat_c})"
+            # 1. Seed grid_cell for Uberlandia (-18.9186, -48.2772 -> -190_-483, floor)
+            cell_id = SEED_CELL_ID
+            poly_wkt = cell_polygon_wkt(cell_id)
+            point_wkt = cell_center_wkt(cell_id)
 
             cur.execute(
                 """
