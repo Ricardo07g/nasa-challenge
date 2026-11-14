@@ -139,8 +139,8 @@ Cmip6Delta + DataRun (validam) → data/output/cmip6_deltas_nex_gddp.json
   merge, com o `--dry-run` antes.
 - **Tempo:** ~8 h para a caixa, por causa do custo por dia de cada pedido. Para cortar ~12 vezes, dá para
   pedir a caixa inteira de uma vez por arquivo (360 pedidos) pelo OPeNDAP em ASCII
-  (`/thredds/dodsC/...nc.ascii?pr[t0:t1][lat0:lat1][lon0:lon1]`), também legível sem biblioteca. Isso
-  ainda não foi testado.
+  (`/thredds/dodsC/...nc.ascii?pr[t0:t1][lat0:lat1][lon0:lon1]`), também legível sem biblioteca. Feito
+  na [tarefa 0023](0023-cmip6-por-area.md) (`--area`: 378 pedidos, ~45 min).
 - **Pixel do ponto:** o delta da célula do POWER vem de um pixel de 0,25° (o mais próximo do centro), não
   da média dos ~5 pixels da célula. As latitudes −19,5, −19 etc. caem na borda entre dois pixels, e o
   NCSS escolhe um deles (na chamada real, −19,0 virou −18,875).
