@@ -14,6 +14,7 @@ from app.controllers import (
     crop_option_controller,
     health_controller,
     recomendacao_controller,
+    safra_passada_controller,
     talhao_controller,
 )
 from app.services.errors import NotFoundError, ValidationDomainError
@@ -96,3 +97,4 @@ app.include_router(health_controller.router, prefix="/api")
 app.include_router(crop_option_controller.router, prefix="/api")
 app.include_router(talhao_controller.router, prefix="/api")
 app.include_router(recomendacao_controller.router, prefix="/api")
+app.include_router(safra_passada_controller.router, prefix="/api")

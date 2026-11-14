@@ -45,8 +45,10 @@ from app.repositories.soil_repository import (
     SoilRepository,
 )
 from app.services.climate_risk_service import ClimateRiskService
+from app.services.crop_alert_service import CropAlertService
 from app.services.crop_option_service import CropOptionService
 from app.services.field_history_service import FieldHistoryService
+from app.services.past_season_service import PastSeasonService
 from app.services.recommendation_service import RecommendationService
 from app.services.rotation_plan_service import RotationPlanService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
@@ -224,4 +226,26 @@ def get_recommendation_service(
         rules=rules,
         ingestion_service=ingestion_service,
         sinal_service=sinal_service,
+    )
+
+
+def get_crop_alert_service(rules: Annotated[Regras, Depends(get_rules)]) -> CropAlertService:
+    return CropAlertService(rules)
+
+
+def get_past_season_service(
+    climate_repo: Annotated[ClimateRepository, Depends(get_climate_repository)],
+    crop_repo: Annotated[CropParamsRepository, Depends(get_crop_params_repository)],
+    recommender: Annotated[RecommendationService, Depends(get_recommendation_service)],
+    alert_service: Annotated[CropAlertService, Depends(get_crop_alert_service)],
+    ingestion_service: Annotated[
+        SatelliteIngestionService | None, Depends(get_satellite_ingestion_service)
+    ],
+) -> PastSeasonService:
+    return PastSeasonService(
+        climate_repo=climate_repo,
+        crop_repo=crop_repo,
+        recommender=recommender,
+        alert_service=alert_service,
+        ingestion_service=ingestion_service,
     )
