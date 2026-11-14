@@ -7,7 +7,7 @@ Este documento explica os conceitos geográficos e a arquitetura de dados do **R
 ## 1. Desmistificando o PostGIS
 
 > [!IMPORTANT]
-> **O PostGIS NÃO vem com mapas, cidades ou dados da NASA pré-carregados.**
+> **O PostGIS NÃO vem com mapas, cidades ou dados da NASA pré-carregados.**\
 > O PostGIS é uma extensão do PostgreSQL que adiciona **suporte a tipos e funções geométricas/espaciais**. Ele é como uma calculadora geométrica e uma gaveta vazia com índice espacial (R-Tree / GiST).
 
 - **O que o PostGIS faz:** sabe responder instantaneamente perguntas como:
@@ -35,7 +35,7 @@ Os satélites e modelos climáticos **não operam por raios circulares nem por d
 |                                                                                         |
 |  [ ISRIC SoilGrids: Argila/Solo] ──> Quadrado de 250 m x 250 m (Pixel fino)             |
 |                                                                                         |
-|  [ MODIS / GEE: NDVI Biomassa ]  ──> Quadrado de 250 m x 250 m (Histórico decenal)      |
+|  [ MODIS (AppEEARS): NDVI ]      ──> Quadrado de 250 m x 250 m (Histórico decenal)      |
 |                                                                                         |
 +-----------------------------------------------------------------------------------------+
 ```
@@ -52,19 +52,28 @@ Os satélites e modelos climáticos **não operam por raios circulares nem por d
 Quando um usuário clica no mapa em qualquer lugar do Brasil, o backend converte as coordenadas contínuas em um identificador discreto de célula pegando o **piso (`floor`) do passo de 0.1°** (plano técnico §5, alinhado à grade do IMERG). É a única regra do backend: `cell_id_for` em `app/repositories/climate_repository.py`, usada pela ingestão, pelos repositories e pelo polígono da célula.
 
 ```python
-lat = -18.9186
-lon = -48.2772
+# Fazenda de exemplo: campo de soja da Fazenda Experimental do Glória (UFU), Uberlândia
+lat = -18.9543
+lon = -48.1993
 
 # Piso do passo de 0.1° (floor, nunca round)
 lat_idx = math.floor(lat * 10)  # -190
-lon_idx = math.floor(lon * 10)  # -483
+lon_idx = math.floor(lon * 10)  # -482
 
-cell_id = f"{lat_idx}_{lon_idx}"  # "-190_-483"
+cell_id = f"{lat_idx}_{lon_idx}"  # "-190_-482"
 
 # O quadrado de 11 km x 11 km tem as bordas nos décimos: idx/10 até (idx + 1)/10
-# Lat: [-19.0 até -18.9] | Lon: [-48.3 até -48.2]
-# Centro: ((idx + 0.5) / 10) -> lat -18.95, lon -48.25
+# Lat: [-19.0 até -18.9] | Lon: [-48.2 até -48.1]
+# Centro: ((idx + 0.5) / 10) -> lat -18.95, lon -48.15
 ```
+
+> Até o R1.2 conviviam duas regras (`round` na ingestão e `floor` na fixture). Desde então só vale o
+> `floor`, decidido pelo time em 14/11 ([roteiro](roteiro-de-implementacao.md), seção 5).
+
+Os dados de satélite vêm direto dos serviços da NASA, sem Google Earth Engine no MVP
+([ADR-0005](adr/0005-fontes-diretas-da-nasa-sem-earth-engine.md)): NASA POWER e SoilGrids na hora do pedido
+(busca sob demanda, ligada no R1.1); NDVI do MODIS (AppEEARS), CMIP6 (THREDDS da NCCS) e SMAP (AppEEARS)
+preparados antes pelos scripts de dados.
 
 ---
 
