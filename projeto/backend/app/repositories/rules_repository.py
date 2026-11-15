@@ -17,6 +17,7 @@ from app.models.regras import (
     RegrasChuvaQueSobra,
     RegrasClima,
     RegrasColheita,
+    RegrasComunidade,
     RegrasEnso,
     RegrasFimDasChuvas,
     RegrasHistoricoNdvi,
@@ -105,6 +106,7 @@ class YamlRulesRepository:
             colheita=_group(raw, "colheita", RegrasColheita),
             chuva_que_sobra=_group(raw, "chuva_que_sobra", RegrasChuvaQueSobra),
             fim_das_chuvas=_group(raw, "fim_das_chuvas", RegrasFimDasChuvas),
+            comunidade=_group(raw, "comunidade", RegrasComunidade),
         )
         return self._cache
 

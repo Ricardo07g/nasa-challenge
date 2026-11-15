@@ -128,3 +128,7 @@ EXTERNAL_API_BACKOFF_BASE_SECONDS: Final[float] = 0.05
 GRID_CELL_HALF_SIZE_DEG: Final[float] = 0.05
 SOIL_POINT_ROUND_DECIMALS: Final[int] = 3
 INGESTION_WORKERS_COUNT: Final[int] = 2
+
+# Fuso da área piloto (Triângulo Mineiro): UTC-3 o ano todo, sem horário de verão desde 2019.
+# É o "hoje" do produtor nas datas dos relatos da comunidade (tarefa 0047).
+PILOT_UTC_OFFSET_HOURS: Final[int] = -3

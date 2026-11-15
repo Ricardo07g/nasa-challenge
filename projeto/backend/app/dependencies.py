@@ -1,5 +1,7 @@
 """Dependency injection wiring between controllers, services, and repositories."""
 
+import logging
+import secrets
 from functools import lru_cache
 from typing import Annotated
 
@@ -13,6 +15,10 @@ from app.repositories.climate_repository import (
     PostgisClimateRepository,
 )
 from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6Repository
+from app.repositories.community_report_repository import (
+    CommunityReportRepository,
+    PostgisCommunityReportRepository,
+)
 from app.repositories.crop_option_repository import (
     CropOptionRepository,
     YamlCropOptionRepository,
@@ -64,6 +70,7 @@ from app.repositories.soja_recente_repository import (
     SojaRecenteRepository,
 )
 from app.services.climate_risk_service import ClimateRiskService
+from app.services.community_report_service import CommunityReportService
 from app.services.crop_alert_service import CropAlertService
 from app.services.crop_option_service import CropOptionService
 from app.services.field_history_service import FieldHistoryService
@@ -82,6 +89,8 @@ from app.services.soja_recente_service import SojaRecenteService
 from app.services.talhao_service import TalhaoService
 from app.services.water_balance_calculator import WaterBalanceCalculator
 from app.services.year_detail_service import YearDetailService
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache
@@ -372,4 +381,40 @@ def get_past_season_service(
         recommender=recommender,
         alert_service=alert_service,
         ingestion_service=ingestion_service,
+    )
+
+
+# Relatos da comunidade (tarefa 0047): só com banco (tabela `community_report`). Sem
+# DATABASE_URL, o service responde 503 COMMUNITY_UNAVAILABLE e a tela não mostra os relatos.
+@lru_cache
+def get_community_report_repository() -> CommunityReportRepository | None:
+    database_url = get_settings().database_url
+    return PostgisCommunityReportRepository(database_url) if database_url else None
+
+
+@lru_cache
+def get_community_device_salt() -> str:
+    """Sal do hash do aparelho (COMMUNITY_DEVICE_SALT). Vazio: um sal aleatório por processo."""
+    salt = get_settings().community_device_salt
+    if salt:
+        return salt
+    logger.warning(
+        "COMMUNITY_DEVICE_SALT vazio: sal aleatório até a API reiniciar (o limite por dia e o "
+        "'apagar o meu' dos relatos recomeçam a cada reinício)."
+    )
+    return secrets.token_hex(32)
+
+
+def get_community_report_service(
+    repository: Annotated[
+        CommunityReportRepository | None, Depends(get_community_report_repository)
+    ],
+    crop_repo: Annotated[CropParamsRepository, Depends(get_crop_params_repository)],
+    rules: Annotated[Regras, Depends(get_rules)],
+) -> CommunityReportService:
+    return CommunityReportService(
+        repository=repository,
+        crop_repo=crop_repo,
+        rules=rules,
+        salt=get_community_device_salt(),
     )

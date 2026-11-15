@@ -447,3 +447,22 @@ frases_ano:
     calor: "It had {dias} days at {temp_c} °C or more in this stage."
     el_nino: "El Niño year."
     la_nina: "La Niña year."
+
+comunidade:
+  # Relatos da comunidade sem cadastro (seção 7 da remodelagem, tarefa 0047): plantio, chuva e
+  # evento. O relato guarda só a célula de 0,1° do ponto, nunca a coordenada exata.
+  raio_km:
+    valor: 30.0
+    fonte: "Pedido do usuário (seção 7 da remodelagem, 15/11/2026): a redondeza é o raio de 30 km em volta do ponto, pelas células de 0,1° cujo centro fica no raio"
+  raio_max_km:
+    valor: 50.0
+    fonte: "Hipótese do time (tarefa 0047): maior raio que a listagem aceita, para a consulta não varrer a caixa inteira"
+  chuva_max_mm:
+    valor: 300.0
+    fonte: "Pedido do usuário (seção 7 da remodelagem): a chuva relatada vai de 0 a 300 mm por dia"
+  dias_atras_max:
+    valor: 30
+    fonte: "Pedido do usuário (seção 7 da remodelagem): datas de chuva e de evento não futuras e de no máximo 30 dias atrás"
+  max_relatos_por_dia:
+    valor: 10
+    fonte: "Hipótese do time (o pedido da seção 7 dá 10 por dia como exemplo): no máximo 10 relatos por aparelho nas últimas 24 horas, para conter abuso sem cadastro"

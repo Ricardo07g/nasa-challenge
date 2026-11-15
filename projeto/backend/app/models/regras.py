@@ -286,6 +286,22 @@ class FrasesPorque:
 
 
 @dataclass(frozen=True)
+class RegrasComunidade:
+    """Relatos da comunidade sem cadastro (seção 7 da remodelagem, tarefa 0047).
+
+    `raio_km` é o raio padrão da redondeza e `raio_max_km` o maior que a listagem aceita; a chuva
+    vai de 0 a `chuva_max_mm` por dia; datas de chuva e evento de no máximo `dias_atras_max` dias
+    atrás; no máximo `max_relatos_por_dia` relatos por aparelho nas últimas 24 horas.
+    """
+
+    raio_km: float
+    raio_max_km: float
+    chuva_max_mm: float
+    dias_atras_max: int
+    max_relatos_por_dia: int
+
+
+@dataclass(frozen=True)
 class Regras:
     """Todas as regras do motor, versão 0 (PRD 7)."""
 
@@ -309,3 +325,4 @@ class Regras:
     colheita: RegrasColheita
     chuva_que_sobra: RegrasChuvaQueSobra
     fim_das_chuvas: RegrasFimDasChuvas
+    comunidade: RegrasComunidade

@@ -73,6 +73,12 @@ class Settings(BaseSettings):
     # Legado: projeto do Google Earth Engine (fora do MVP). Sai quando a ADR-0005 for aceita.
     ee_project: str | None = None
 
+    # Sal do hash do identificador do aparelho nos relatos da comunidade (tarefa 0047): o banco
+    # guarda só o HMAC-SHA-256 do identificador com este sal. Segredo: só no ambiente, nunca no
+    # código. Vazio: sal aleatório por processo (os relatos continuam anônimos, mas o limite por dia
+    # e o "apagar o meu" recomeçam quando a API reinicia).
+    community_device_salt: str | None = None
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def split_origins(cls, value: object) -> object:
