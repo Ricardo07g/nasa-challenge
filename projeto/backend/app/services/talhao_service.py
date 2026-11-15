@@ -9,6 +9,7 @@ from app.constants import IMERG_RAIN_SOURCE
 from app.models.talhao import FonteDado, Talhao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.ndvi_repository import NdviRepository
+from app.repositories.smap_repository import SMAP_SOURCE, CellSmapRepository
 from app.repositories.soil_repository import SoilRepository
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.field_history_service import FieldHistoryService
@@ -29,6 +30,7 @@ class TalhaoService:
         history_service: FieldHistoryService,
         ingestion_service: IngestionServiceProtocol | None = None,
         monthly_rain_service: MonthlyRainService | None = None,
+        smap_repo: CellSmapRepository | None = None,
     ) -> None:
         self._climate_repo = climate_repo
         self._soil_repo = soil_repo
@@ -36,6 +38,7 @@ class TalhaoService:
         self._history_service = history_service
         self._ingestion_service = ingestion_service
         self._monthly_rain_service = monthly_rain_service or MonthlyRainService()
+        self._smap_repo = smap_repo
 
     def inspect_talhao(self, lat: float, lon: float) -> Talhao:
         """Returns complete field metadata for the given coordinates (US-01, US-02, US-07)."""
@@ -80,6 +83,12 @@ class TalhaoService:
                         cenario=scenario,
                         modelos=model_count,
                     )
+                )
+            smap = self._smap_repo.get_cell_smap_series(cell_id) if self._smap_repo else []
+            if smap:
+                years = [record.data.year for record in smap]
+                dados_fontes.append(
+                    FonteDado(fonte=SMAP_SOURCE, periodo=f"{min(years)}-{max(years)}")
                 )
 
         return Talhao(

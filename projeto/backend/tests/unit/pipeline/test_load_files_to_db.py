@@ -1,4 +1,4 @@
-"""Unit tests da carga dos arquivos do CMIP6 e do NDVI no banco, com repositories falsos.
+"""Unit tests da carga dos arquivos do CMIP6, do NDVI e do SMAP no banco, com repositories falsos.
 
 Os arquivos são escritos em `tmp_path` no formato do contrato ("Contrato dos dados das fontes").
 Os valores, o `MODELO-TESTE` e as versões `teste-*` são de teste, não dado real. O `versao_dados`
@@ -13,7 +13,7 @@ from typing import Any
 import pytest
 
 from app.config import Settings
-from app.models.climate import Cmip6Delta
+from app.models.climate import Cmip6Delta, SmapSoilMoisture
 from app.models.data_run import DataRun
 from app.models.talhao import NdviRecord
 from app.repositories.climate_repository import SeasonWindow
@@ -101,6 +101,49 @@ def _ndvi_file(
     return path
 
 
+def _smap_item(data: str, wetness: float, rootzone: float, surface: float | None = None) -> dict:
+    item: dict[str, Any] = {
+        "data": data,
+        "sm_rootzone_wetness": wetness,
+        "sm_rootzone_m3_m3": rootzone,
+    }
+    if surface is not None:
+        item["sm_surface_m3_m3"] = surface
+    return item
+
+
+def _smap_file(tmp_path: Path, pontos: list[dict], fonte: str = "smap") -> Path:
+    path = tmp_path / "smap.json"
+    payload = {
+        "versao_dados": {
+            "fonte": fonte,
+            "parametros": {"produto": "SPL4SMGP.008", "pontos": len(pontos)},
+            "fim": "2026-11-14T13:00:00Z",
+            "versao": "teste-smap",
+        },
+        "pontos": pontos,
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def _two_smap_points(tmp_path: Path) -> Path:
+    return _smap_file(
+        tmp_path,
+        [
+            {
+                "lat": -18.95,
+                "lon": -48.15,
+                "serie": [
+                    _smap_item("2016-02-08", 0.61, 0.31, 0.27),
+                    _smap_item("2016-02-18", 0.55, 0.29),
+                ],
+            },
+            {"lat": -19.05, "lon": -48.15, "serie": []},
+        ],
+    )
+
+
 class FakeDatabase:
     """Faz o papel do PostGIS: as células de `grid_cell`, as temporadas e o que a carga grava."""
 
@@ -112,6 +155,7 @@ class FakeDatabase:
         self.cmip6: dict[str, list[Cmip6Delta]] = {}
         self.ndvi: list[tuple[float, float, list[NdviRecord]]] = []
         self.rain: list[tuple[str, dict[tuple[str, int], tuple[float, ...]]]] = []
+        self.smap: list[SmapSoilMoisture] = []
         self.runs: list[DataRun] = []
 
     def list_cell_ids(self) -> list[str]:
@@ -133,11 +177,14 @@ class FakeDatabase:
     def save_ndvi_history(self, lat: float, lon: float, records: list[NdviRecord]) -> None:
         self.ndvi.append((lat, lon, list(records)))
 
+    def save_smap_series(self, records: list[SmapSoilMoisture]) -> None:
+        self.smap.extend(records)
+
     def save_run(self, run: DataRun) -> None:
         self.runs.append(run)
 
     def wrote_anything(self) -> bool:
-        return bool(self.cmip6 or self.ndvi or self.rain or self.runs)
+        return bool(self.cmip6 or self.ndvi or self.rain or self.smap or self.runs)
 
 
 def _loader(db: FakeDatabase) -> FilesToDbLoader:
@@ -145,6 +192,7 @@ def _loader(db: FakeDatabase) -> FilesToDbLoader:
         grid_repo=db,
         cmip6_repo=db,
         ndvi_repo=db,
+        smap_repo=db,
         run_repo=db,
         season_repo=db,
         clock=lambda: FINISHED,
@@ -305,6 +353,75 @@ def test_should_load_both_files_and_record_one_run_per_source(tmp_path: Path) ->
     assert len(db.ndvi) == 1
 
 
+# --- SMAP → smap_point -----------------------------------------------------------------------
+
+
+def test_should_save_the_smap_series_of_every_point_of_the_file(tmp_path: Path) -> None:
+    db = FakeDatabase()
+    loader = _loader(db)
+
+    plan = loader.plan(smap_path=_two_smap_points(tmp_path))
+    loader.run(plan)
+
+    assert db.smap == [
+        SmapSoilMoisture(date(2016, 2, 8), -18.95, -48.15, 0.31, 0.61, "smap", 0.27),
+        SmapSoilMoisture(date(2016, 2, 18), -18.95, -48.15, 0.29, 0.55, "smap", None),
+    ]
+    assert plan.smap is not None
+    assert (plan.smap.points_total, plan.smap.points_with_series, plan.smap.rows) == (2, 1, 2)
+
+
+def test_should_record_one_smap_run_with_the_file_version(tmp_path: Path) -> None:
+    db = FakeDatabase()
+    loader = _loader(db)
+
+    loader.run(loader.plan(smap_path=_two_smap_points(tmp_path)))
+
+    assert db.runs == [
+        DataRun(
+            source="smap",
+            params={
+                "script": "pipeline.load_files_to_db",
+                "arquivo": "smap.json",
+                "arquivo_fim": "2026-11-14T13:00:00Z",
+                "pontos": 2,
+                "pontos_gravados": 1,
+                "linhas": 2,
+                "parametros_do_arquivo": {"produto": "SPL4SMGP.008", "pontos": 2},
+            },
+            finished_at=FINISHED,
+            version="teste-smap",
+        )
+    ]
+
+
+def test_should_not_record_a_smap_run_when_the_file_has_no_rows(tmp_path: Path) -> None:
+    db = FakeDatabase()
+    loader = _loader(db)
+
+    loader.run(
+        loader.plan(smap_path=_smap_file(tmp_path, [{"lat": -18.95, "lon": -48.15, "serie": []}]))
+    )
+
+    assert not db.wrote_anything()
+
+
+def test_should_refuse_a_smap_file_of_another_source(tmp_path: Path) -> None:
+    path = _smap_file(tmp_path, [], fonte="teste")
+
+    with pytest.raises(LoadError, match="smap"):
+        _loader(FakeDatabase()).plan(smap_path=path)
+
+
+def test_should_refuse_a_smap_file_outside_the_contract(tmp_path: Path) -> None:
+    path = _smap_file(
+        tmp_path, [{"lat": -18.95, "lon": -48.15, "serie": [_smap_item("2016-02-08", 1.4, 0.31)]}]
+    )
+
+    with pytest.raises(LoadError, match="fora do contrato"):
+        _loader(FakeDatabase()).plan(smap_path=path)
+
+
 # --- Arquivos recusados: nada é gravado ------------------------------------------------------
 
 
@@ -387,6 +504,15 @@ def test_should_describe_cells_points_rows_and_skipped_records(tmp_path: Path) -
     assert "teste-cmip6" in text and "teste-ndvi" in text
 
 
+def test_should_describe_the_smap_points_and_rows(tmp_path: Path) -> None:
+    loader = _loader(FakeDatabase())
+
+    text = describe_plan(loader.plan(smap_path=_two_smap_points(tmp_path)), dry_run=True)
+
+    assert "SMAP (smap.json, versão teste-smap): 2 pontos no arquivo, 1 com série" in text
+    assert "2 linhas em smap_point (a gravar)" in text
+
+
 def _settings(database_url: str | None) -> Settings:
     return Settings(_env_file=None, database_url=database_url)
 
@@ -443,6 +569,21 @@ def test_main_should_load_through_the_built_loader(
     assert set(db.cmip6) == {FARM_CELL}
     assert [run.source for run in db.runs] == ["nex_gddp_cmip6"]
     assert "2 linhas em cmip6_delta" in capsys.readouterr().out
+
+
+def test_main_should_load_the_smap_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    db = FakeDatabase()
+    monkeypatch.setattr(load_files_to_db, "get_settings", lambda: _settings("postgresql://teste"))
+    monkeypatch.setattr(load_files_to_db, "build_loader", lambda url: _loader(db))
+
+    code = load_files_to_db.main(["--smap", str(_two_smap_points(tmp_path))])
+
+    assert code == 0
+    assert len(db.smap) == 2
+    assert [run.source for run in db.runs] == ["smap"]
+    assert "2 linhas em smap_point" in capsys.readouterr().out
 
 
 def test_main_should_report_a_refused_file_and_write_nothing(

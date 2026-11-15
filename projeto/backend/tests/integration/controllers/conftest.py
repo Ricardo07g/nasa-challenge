@@ -12,11 +12,13 @@ from app.dependencies import (
     get_enso_repository,
     get_ndvi_repository,
     get_recent_rain_repository,
+    get_recent_soil_moisture_repository,
     get_satellite_ingestion_service,
+    get_smap_repository,
     get_soil_repository,
 )
 from app.main import app
-from app.models.climate import ClimateSeason, Cmip6Delta
+from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.crop_option import CropParams
 from app.models.enso import OniYear
 from app.models.talhao import NdviRecord, SoloInfo
@@ -170,6 +172,16 @@ class FakeEnsoRepository:
         ]
 
 
+class FakeSmapRepository:
+    """Sem SMAP por padrão (o balde começa em 50% da CAD)."""
+
+    def __init__(self, records: list[SmapSoilMoisture] | None = None) -> None:
+        self._records = records or []
+
+    def get_cell_smap_series(self, cell_id: str) -> list[SmapSoilMoisture]:
+        return list(self._records)
+
+
 @pytest.fixture
 def client() -> Iterator[TestClient]:
     app.dependency_overrides[get_crop_params_repository] = FakeCropParamsRepository
@@ -180,6 +192,8 @@ def client() -> Iterator[TestClient]:
     app.dependency_overrides[get_enso_repository] = FakeEnsoRepository
     # Sem a chuva recente do IMERG_LATE_PATH do ambiente (o compose aponta para data/baixados).
     app.dependency_overrides[get_recent_rain_repository] = NoAutumnSignalDataRepository
+    app.dependency_overrides[get_smap_repository] = FakeSmapRepository
+    app.dependency_overrides[get_recent_soil_moisture_repository] = NoAutumnSignalDataRepository
     # Sem busca sob demanda: ponto sem dados fica fora da área (nada de rede real nos testes).
     app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)

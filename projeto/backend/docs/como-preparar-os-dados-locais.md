@@ -19,10 +19,12 @@ alguns cartões (clima futuro, histórico do talhão).
 | El Niño / La Niña de cada safrinha | ONI da NOAA (não é da NASA) | arquivo `data/baixados/noaa_oni/oni.json` (só arquivo, sem tabela) | a marca de El Niño / La Niña nos quadrinhos de chuva e na frase de cada ano | script `fetch_oni` |
 | Região pelo satélite (lavoura parada na entressafra, num raio de 30 km) | MODIS (MOD13Q1, MYD13Q1 e o uso do solo MCD12Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` (sem tabela ainda) | "Na sua região": a área de lavoura parada, ano a ano | script `fetch_regiao_ndvi` |
 | Chuva dos últimos 30 dias × média | GPM IMERG Late (`GPM_3IMERGDL`) + NASA POWER já no banco | arquivo `data/baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json` | "Sinal para o outono" (junto com o SMAP recente; só a chuva não acende o sinal) | script `fetch_imerg_late`, perto do plantio (fev/mar) |
+| Umidade da terra no dia de plantar (2016–2025) | SMAP L4 (`SPL4SMGP` 008) pelo OPeNDAP da Earthdata | arquivo `data/baixados/nasa_smap/smap_semeadura.json` e, depois da carga, banco (`smap_point`) | ainda nada: o balde inicial pelo SMAP é o R3.3 (até lá, 50% da CAD) | script `fetch_smap` + carga no banco |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
-aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH` e `IMERG_LATE_PATH` para os
-arquivos acima. Arquivo ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`).
+aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH`, `IMERG_LATE_PATH`, `SMAP_PATH`
+e `SMAP_RECENTE_PATH` para os arquivos acima. Arquivo ausente = a API segue sem aquele dado, sem
+erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`).
 
 ## Caminho rápido: receber o pacote de alguém do time (~5 min)
 
@@ -67,7 +69,9 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Histórico do talhão (NDVI) pelo AppEEARS | `uv run python -m pipeline.fetch_ndvi --pontos="-18.9543,-48.1993"` | depende da fila do AppEEARS (minutos a horas) | `APPEEARS_TOKEN` ou `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` no `projeto/backend/.env` |
 | Histórico do talhão (NDVI) pela ORNL | `uv run python -m pipeline.fetch_ndvi --fonte ornl --pontos="-18.9543,-48.1993"` | ~1,6 h por ponto (64 pedidos, sem fila; vários dão 502 e são repetidos); se parar, rode de novo que continua do cache | nenhuma |
 | Chuva do IMERG da caixa piloto (2005–2024) | `uv run python -m pipeline.fetch_imerg` (antes: `--dry-run`; para conferir: `--anos 2024`) | até ~2,2 h (4.240 recortes, um por dia, 6 em paralelo); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env`, com o aplicativo *NASA GESDISC DATA ARCHIVE* autorizado e a EULA do GES DISC aceita |
-| Carregar os arquivos no banco (`cmip6_delta`, `ndvi_point` e a chuva do IMERG no `climate_season`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json --imerg ../../data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` | segundos | nenhuma |
+| Umidade da terra agora e percentil (SMAP recente, sinal do outono) | `uv run python -m pipeline.fetch_smap --recente --dry-run` e depois `uv run python -m pipeline.fetch_smap --recente` | ~12 min na 1ª vez (1.200 recortes da climatologia + 24 do dia); depois, segundos a 1 min por dia que passou | `EARTHDATA_TOKEN` no `projeto/backend/.env` |
+| Umidade da terra nos dias de semeadura (SMAP) | `uv run python -m pipeline.fetch_smap --dry-run` e depois `uv run python -m pipeline.fetch_smap` | ~6 min (720 recortes de ~2 s, 4 em paralelo, mais 30 buscas no CMR); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` |
+| Carregar os arquivos no banco (`cmip6_delta`, `ndvi_point`, `smap_point` e a chuva do IMERG no `climate_season`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json --imerg ../../data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json --smap ../../data/baixados/nasa_smap/smap_semeadura.json` | segundos | nenhuma |
 | El Niño / La Niña de cada safrinha (ONI) | `uv run python -m pipeline.fetch_oni` | segundos (1 pedido de ~23 KB à NOAA) | nenhuma |
 | Região pelo satélite (fazenda de exemplo, raio de 30 km) | `uv run python -m pipeline.fetch_regiao_ndvi` | ~20 min (41 pedidos à ORNL de ~25 a 40 s; num 502 ele espera e tenta de novo); se parar, rode de novo que continua do cache | nenhuma |
 | Chuva dos últimos 30 dias (sinal para o outono) | `uv run python -m pipeline.fetch_imerg_late` | ~2 min (1 a 2 pedidos ao CMR + 30 ao OPeNDAP, um por dia; estimativa, ainda não medido com token); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` (com o *NASA GESDISC DATA ARCHIVE* autorizado) |
@@ -79,9 +83,9 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   do ponto do arquivo que cobre o centro dela; célula sem cobertura fica sem deltas. Do NDVI entra
   só o que cabe na tabela (registro sem `produto` ou `qualidade`, de cache antigo, conta como
   pulado no resumo).
-  - Comece com `--dry-run` (só lê os arquivos e mostra o resumo). Dá para passar só um dos
-    arquivos (`--cmip6` ou `--ndvi`). Arquivo ausente, de outra fonte ou fora do contrato: nada é
-    gravado.
+  - Comece com `--dry-run` (só lê os arquivos e mostra o resumo). Dá para passar só um ou dois
+    dos arquivos (`--cmip6`, `--ndvi`, `--smap`). Arquivo ausente, de outra fonte ou fora do
+    contrato: nada é gravado.
   - Idempotente: rodar de novo regrava as mesmas linhas, sem duplicar. Cada execução põe uma linha
     por fonte em `data_run`, com a versão do arquivo.
   - Célula criada **depois** da carga (busca sob demanda, num clique fora das células já
@@ -137,6 +141,17 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   disso, o script avisa que não há média e não mexe no arquivo que já existe. Veja o plano antes
   com `uv run python -m pipeline.fetch_imerg_late --dry-run` (sem rede e sem token); `--fim
   AAAA-MM-DD` fixa o último dia somado e `--area="lat_min,lat_max,lon_min,lon_max"` troca a caixa.
+- O SMAP (tarefa 0029) grava em `data/baixados/nasa_smap/` (o JSON `smap_semeadura.json` e o cache
+  `cache_opendap/`). Ele pede à busca pública do CMR os 8 granulos de 3 h de cada dia de semeadura
+  (08/02, 18/02 e 03/03, de 2016 a 2025) e recorta no OPeNDAP só o retângulo de pixels de 9 km da
+  caixa piloto (~22 × 18 pixels), sem baixar os arquivos globais (~140 MB cada). Cada célula de 0,1°
+  da caixa recebe a média do dia do pixel mais perto. O `--dry-run` não usa a rede nem o token.
+  Token vencido (ele vale 60 dias): o script para na primeira resposta 401/403 e não grava nada no
+  cache. Um ano ou uma caixa só: `--anos=2024`, `--area="lat_min,lat_max,lon_min,lon_max"`.
+- O SMAP recente (`--recente`, tarefa 0031) grava `data/baixados/nasa_smap/smap_recente.json`, no
+  mesmo cache. É dado **de agora**: rode de novo perto da data de plantio (fev/mar). A API lê pelo
+  `SMAP_RECENTE_PATH`, mas o sinal para o outono só usa o SMAP junto com a chuva recente (IMERG,
+  A2.3), que ainda não existe: até lá a tela segue sem o sinal.
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).
@@ -144,7 +159,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 ## Gerar o pacote para passar ao time
 
 Antes, rode a carga dos arquivos no banco (última linha do caminho do zero), para a cópia do banco
-levar o `cmip6_delta` e o `ndvi_point`. Da pasta `projeto`:
+levar o `cmip6_delta`, o `ndvi_point` e o `smap_point`. Da pasta `projeto`:
 
 ```bash
 docker compose exec -T db pg_dump -U raiz -d raiz_orbital --data-only \
@@ -167,7 +182,7 @@ curl -s "localhost:8000/api/regiao?lat=-18.9543&lon=-48.1993" | python3 -m json.
 
 # o que está no banco
 cd projeto && docker compose exec -T db psql -U raiz -d raiz_orbital -c \
-  "select 'células', count(*) from grid_cell union all select 'temporadas', count(*) from climate_season union all select 'solos', count(*) from soil_point union all select 'deltas cmip6', count(*) from cmip6_delta union all select 'ndvi', count(*) from ndvi_point"
+  "select 'células', count(*) from grid_cell union all select 'temporadas', count(*) from climate_season union all select 'solos', count(*) from soil_point union all select 'deltas cmip6', count(*) from cmip6_delta union all select 'ndvi', count(*) from ndvi_point union all select 'smap', count(*) from smap_point"
 ```
 
 Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=meio):
@@ -180,6 +195,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | Histórico do talhão | faixa de 2016 a 2025 | não aparece (ou "Ainda não conectado") |
 | Anos de chuva (tocar num ano) | ponto de El Niño / La Niña em cima dos anos e "Ano de El Niño." na frase | a frase de cada ano aparece igual, sem a marca |
 | Na sua região (http://localhost:5173/comunidade) | "Em 2025, X% da área de lavoura ficou parada" e as barras de 2016 a 2025 | o bloco da região fica com erro (a API responde 404 `OUTSIDE_AREA`) |
+| "Por quê?" de cada opção | frase do balde pelo SMAP (anos de 2016 em diante) | sem a frase; o balde começa em 50% da CAD |
 
 ## Problemas comuns
 
@@ -190,6 +206,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | NDVI: 401/403 no AppEEARS | o `APPEEARS_TOKEN` venceu (dura ~48 h) | ponha `EARTHDATA_USERNAME`/`EARTHDATA_PASSWORD` no `.env` ou gere outro token |
 | NDVI: tarefa do AppEEARS parada em `pending` por horas | fila do AppEEARS | use `--fonte ornl` (sem fila) |
 | NDVI pela ORNL termina com código 2 | o serviço deu 502 ou ficou sem responder em algum recorte | rode o mesmo comando de novo (continua do cache); se a ORNL estiver fora do ar, tente mais tarde |
+| SMAP: "a Earthdata recusou o token" (401/403) ou "página de login" | o `EARTHDATA_TOKEN` venceu (dura 60 dias) | gere outro em urs.earthdata.nasa.gov → *Generate Token* e troque no `.env` |
 | IMERG: 403 "EULA Acceptance Failure" | falta aceitar a EULA do GES DISC | perfil da Earthdata → *Applications → Authorized Apps* → *NASA GESDISC DATA ARCHIVE* |
 | IMERG: "O GES DISC recusou o acesso (HTTP 401 / página HTML)" | o `EARTHDATA_TOKEN` venceu (dura 60 dias) ou falta autorizar o aplicativo | gere outro token em urs.earthdata.nasa.gov e confira *Authorized Apps* |
 | Região: "A ORNL não respondeu ... depois de 5 tentativas" | a ORNL está lenta ou fora (502) | rode o mesmo comando de novo mais tarde: continua do cache |

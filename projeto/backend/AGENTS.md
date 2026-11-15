@@ -103,9 +103,10 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
   - `cmip6_delta`, `ndvi_point`, `smap_point` e `data_run` (com `version`): no formato do "Contrato
     dos dados das fontes", abaixo. `PostgisCmip6Repository`, `PostgisNdviRepository`,
     `PostgisSmapRepository` e `PostgisDataRunRepository` gravam e leem. A API já lê o `cmip6_delta`
-    (R3.1, ver "Deltas do CMIP6 na API"), mas ainda não lê as outras (R3.2, R3.3 e R3.5 do
-    roteiro). O `cmip6_delta` exige a célula em `grid_cell`. O `cmip6_delta` e o `ndvi_point`
-    são preenchidos pela carga dos arquivos (`pipeline/load_files_to_db.py`, ver "Dados da API").
+    (R3.1, ver "Deltas do CMIP6 na API") e o `smap_point` (R3.3, ver "Balde inicial pelo SMAP"),
+    mas ainda não lê as outras (R3.2 e R3.5 do roteiro). O `cmip6_delta` exige a célula em `grid_cell`. O `cmip6_delta`, o `ndvi_point` e o
+    `smap_point` são preenchidos pela carga dos arquivos (`pipeline/load_files_to_db.py`, ver
+    "Dados da API").
 - Banco criado antes do R1.6: rode `uv run alembic upgrade head` (ou
   `docker compose run --rm migration`). A migração recria `cmip6_delta` e `ndvi_point`, troca
   `smap_moisture` por `smap_point` (o que houver nelas é apagado) e marca as cargas antigas de
@@ -138,7 +139,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
   `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`,
-  `IMERG_LATE_PATH`). Nunca coloque caminho fixo (como `/workspace/...`) num repository.
+  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`). Nunca coloque caminho fixo (como
+  `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
@@ -286,6 +288,56 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   uv run python -m pipeline.fetch_imerg               # 2005–2024
   ```
 
+- **SMAP L4 nos dias de semeadura** (R2.3, tarefa 0029): `pipeline/fetch_smap.py` baixa o
+  `SPL4SMGP` versão 008 (EASE-Grid 2.0 global de 9 km, de 3 em 3 horas) nos dias de semeadura das
+  três faixas do motor (`SOWING_MONTH_DAY_BY_HARVEST`: 08/02, 18/02 e 03/03), de 2016 a 2025 (o
+  SMAP começa em 31/03/2015), e grava o arquivo do contrato SMAP (abaixo). Precisa do
+  `EARTHDATA_TOKEN` (só o script; a API não usa).
+  - **Por recorte:** a busca **pública** do CMR lista os 8 granulos de 3 h do dia (UTC) e o link do
+    OPeNDAP de cada um (sempre o do CMR: alguns têm sufixo, como `_u9loH5HD`, e sem ele dá 404). O
+    OPeNDAP na nuvem da Earthdata (Hyrax, DAP4) devolve em CSV só o retângulo de pixels de 9 km que
+    cobre a caixa (`<granulo>.dap.csv?dap4.ce=/Geophysical_Data/sm_rootzone%5B...%5D%5B...%5D`), uma
+    variável por pedido, sem baixar o arquivo global (~140 MB);
+  - **retângulo e pixel:** uma coluna do `cell_lat` e uma linha do `cell_lon` (baixadas uma vez)
+    acham as linhas e colunas dos pontos; o `cell_lat`/`cell_lon` do retângulo escolhe o pixel mais
+    perto do centro de cada célula de 0,1° da caixa. O DMR do primeiro granulo confere a grade
+    (1624 × 3856), os nomes, as unidades e o `_FillValue`;
+  - **valor do dia:** média dos granulos do dia em UTC, sem o preenchimento; dia com menos de 8
+    granulos fica em `versao_dados.parametros.dias_incompletos`;
+  - **token:** `Authorization: Bearer` como cabeçalho comum (segue os redirecionamentos). Recusado
+    (401/403 ou página de login): para na hora, sem retentar e sem gravar no cache. O token nunca
+    vai para mensagem, log, cache nem arquivo; o CMR não o recebe;
+  - **custo:** caixa piloto = 30 buscas no CMR + 5 pedidos de estrutura e coordenadas + 720
+    recortes (30 dias × 8 granulos × 3 variáveis) de ~2 s, 4 em paralelo (`--paralelo`): **cerca
+    de 6 min** e poucos MB de cache;
+  - saída `data/baixados/nasa_smap/smap_semeadura.json` e cache `data/baixados/nasa_smap/cache_opendap/`
+    a partir da raiz do repositório (fora do git), com cache, retentativa e retomada como no CMIP6.
+    Para levar ao banco: "Carga dos arquivos no banco", abaixo.
+
+  ```bash
+  uv run python -m pipeline.fetch_smap --dry-run     # dias, pedidos e tempo, sem rede
+  uv run python -m pipeline.fetch_smap               # caixa piloto, 2016 a 2025
+  uv run python -m pipeline.fetch_smap --area="-19.0,-18.9,-48.2,-48.1" --anos=2024
+  ```
+
+  - **Modo `--recente`** (A2.2, tarefa 0031, sinal para o outono): o dia **completo** (8 granulos)
+    mais recente do CMR (o do granulo mais novo, ou até 3 dias antes se ele estiver pela metade) e
+    o percentil da `sm_rootzone` desse dia na **climatologia da mesma janela do ano** (o dia ±
+    `--janela-dias`, padrão 7) de 2016 até o ano anterior: % dos dias da climatologia com a média
+    do dia abaixo da de agora, empate valendo meio. Ponto com menos de 5 anos na janela fica com
+    `sm_rootzone_pctl: null`. Grava `data/baixados/nasa_smap/smap_recente.json` (contrato abaixo).
+  - **Custo do `--recente`:** o dia recente são 24 recortes (8 × 3 variáveis); a climatologia,
+    150 buscas públicas no CMR e **1.200 recortes** de uma variável (10 anos × 15 dias × 8
+    granulos), **cerca de 12 min** na primeira vez. Nas seguintes, o cache só pede os dias novos da
+    janela (~10 dias × 8 = 80 recortes por dia que passou). O `--dry-run` do `--recente` faz só a
+    busca pública no CMR (acha o dia) e mostra o que falta. Rode perto da data de plantio (fev/mar)
+    para o sinal valer, à mão ou por cron.
+
+  ```bash
+  uv run python -m pipeline.fetch_smap --recente --dry-run   # dia recente e custo
+  uv run python -m pipeline.fetch_smap --recente             # grava smap_recente.json
+  ```
+
 - **Pré-carga da caixa piloto** (tarefa 0012, R1.5): `pipeline/preload_pilot_box.py` grava no banco
   o clima e o solo das 225 células de 0,1° da caixa (`PILOT_*` de `app/constants.py`), com a da
   fazenda de exemplo primeiro, para o primeiro clique na caixa sair do banco, sem busca sob demanda.
@@ -316,16 +368,16 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - Depois da pré-carga, a célula da fazenda de exemplo (`-190_-482`) sai do banco (POWER de agora,
     com Penman-Monteith), não mais da fixture.
 
-- **Carga dos arquivos no banco** (tarefas 0022 e 0027): `pipeline/load_files_to_db.py` copia o
-  arquivo do CMIP6 para o `cmip6_delta`, o do NDVI para o `ndvi_point` e a chuva do IMERG para o
-  `climate_season`. Não busca nada na rede. Rode depois da pré-carga (o `cmip6_delta` só aceita
-  célula que já está em `grid_cell`, e o IMERG só troca temporada que já está no `climate_season`).
-  Dá para passar um, dois ou os três arquivos.
+- **Carga dos arquivos no banco** (tarefas 0022, 0027 e 0029): `pipeline/load_files_to_db.py` copia
+  o arquivo do CMIP6 para o `cmip6_delta`, o do NDVI para o `ndvi_point`, a chuva do IMERG para o
+  `climate_season` e o do SMAP para o `smap_point`. Não busca nada na rede. Rode depois da
+  pré-carga (o `cmip6_delta` só aceita célula que já está em `grid_cell`, e o IMERG só troca
+  temporada que já está no `climate_season`). Dá para passar um ou mais arquivos.
 
   ```bash
   # da pasta projeto/backend, com DATABASE_URL apontando para o banco que recebe a carga
-  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --dry-run
-  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq>
+  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --smap <arq> --dry-run
+  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --smap <arq>
   ```
 
   - **CMIP6:** cada célula de `grid_cell` recebe os deltas do ponto do arquivo cuja `cobertura`
@@ -340,9 +392,11 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `null`). Ano incompleto continua com o NASA POWER; célula ou ano que não está no banco (ou com
     outra janela) fica de fora. Nenhuma temporada é criada e as outras séries (temperatura, ETo)
     não mudam. Pelo `PostgisClimateRepository` (`list_season_windows` e `replace_seasons_rain`).
+  - **SMAP:** a série de cada ponto (centro de célula de 0,1°), lida pelo `FileSmapRepository` e
+    gravada pelo `PostgisSmapRepository.save_smap_series` (chave `point_key` + dia).
   - **Conferência antes de gravar:** os arquivos são lidos primeiro. Arquivo ausente, sem
     `versao_dados`, de outra fonte (o `versao_dados.fonte` tem de ser `nex_gddp_cmip6` /
-    `modis_mod13q1` / `gpm_imerg`) ou fora do contrato: nada é gravado (saída 1).
+    `modis_mod13q1` / `gpm_imerg` / `smap`) ou fora do contrato: nada é gravado (saída 1).
   - **Idempotente** (upsert; a chuva, update). **`data_run`:** uma linha por fonte com linhas
     gravadas, com a `version` do `versao_dados` do arquivo e, em `params`, o nome do arquivo (sem a
     pasta), as contagens e o `versao_dados.parametros` do arquivo (`parametros_do_arquivo`). No
@@ -351,7 +405,7 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **Células novas:** a busca sob demanda cria células depois da carga. Elas ficam sem linha no
     `cmip6_delta`, mas a API acha os deltas no arquivo (ordem tabela → arquivo, abaixo). Rodar a
     carga de novo copia essas células. A ingestão não muda.
-  - O pacote do time leva a cópia do banco com as duas tabelas: quem recebe não roda a carga.
+  - O pacote do time leva a cópia do banco com as tabelas: quem recebe não roda a carga.
     Caminho dos arquivos e comando completo: `docs/como-preparar-os-dados-locais.md`.
 
 - **Chuva do IMERG na conta** (R3.4, tarefa 0027): depois da carga (`--imerg`, acima), as
@@ -372,12 +426,15 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **GEOS-S2S** (A2.1): `NoAutumnSignalDataRepository` (sem dado). O GMAO só publica a previsão em
     NetCDF-4/HDF5, sem OPeNDAP nem texto: não dá para ler sem biblioteca nova (tarefa 0032, com o
     que precisaria);
-  - **SMAP recente com percentil** (A2.2): `NoAutumnSignalDataRepository` até a tarefa dele chegar;
+  - **SMAP recente com percentil** (A2.2, tarefa 0031): `FileRecentSoilMoistureRepository`, que lê o
+    arquivo do `SMAP_RECENTE_PATH` (o ponto da célula de 0,1°; sem arquivo, sem ponto ou com
+    percentil `null`: `None`);
   - **chuva dos últimos 30 dias** (A2.3, tarefa 0033): `FileRecentRainRepository`, que lê o arquivo do
     `IMERG_LATE_PATH` (contrato "Chuva recente", abaixo) pela célula de 0,1° do ponto. Sem arquivo
     ou sem a célula: `None`.
 
-  A terra só conta com o SMAP **e** a chuva recente juntos: só com a chuva, o `sinal` continua `null`.
+  A terra só conta com o SMAP **e** a chuva recente juntos: só com um dos dois, o `sinal` continua
+  `null`.
   Sem dado de nenhuma fonte, também. Nunca preencha com previsão inventada.
 - **Chuva dos últimos 30 dias pelo IMERG Late** (A2.3, tarefa 0033): `pipeline/fetch_imerg_late.py`
   grava, por célula de 0,1° da caixa (piloto por padrão, ou `--area="lat_min,lat_max,lon_min,lon_max"`),
@@ -424,10 +481,31 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **no compose**: já ligado. O serviço `backend` monta a pasta local `data/baixados` (fora do git)
     em `/dados_baixados`, só leitura, e aponta `CMIP6_PATH` para
     `/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json`, `NDVI_CACHE_PATH` para
-    `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` e `REGIAO_PATH` para
-    `/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`. Sem o arquivo, segue sem o dado.
+    `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json`, `REGIAO_PATH` para
+    `/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`, `SMAP_PATH` para
+    `/dados_baixados/nasa_smap/smap_semeadura.json` e `SMAP_RECENTE_PATH` para
+    `/dados_baixados/nasa_smap/smap_recente.json`. Sem o arquivo, segue sem o dado.
     Como baixar ou receber esses arquivos: `docs/como-preparar-os-dados-locais.md`.
 
+- **Balde inicial pelo SMAP** (R3.3, tarefa 0030, PRD 7.2): o balde de cada ano da série começa
+  com a umidade do SMAP do **dia de plantar daquele ano** (o dia e o mês da faixa de colheita):
+  `arm0 = CAD × sm_rootzone_wetness`, com piso de 20% da CAD (`MIN_INITIAL_ARM_FRACTION`, US-03).
+  Ano sem SMAP nesse dia (antes de 2016, ou dia que o arquivo não tem): 50% da CAD, como antes.
+  - **Regra no service:** `ClimateRiskService.sowing_day_wetness` (o dia de cada ano) e
+    `initial_bucket_fraction` (fração da CAD); `simulate_historical` e `simulate_future_cmip6`
+    recebem `smap_wetness_by_year`. O futuro do CMIP6 usa o mesmo balde de cada ano (o método do
+    delta muda só o clima).
+  - **Leitura no repository** (`get_smap_repository` em `dependencies.py`): a série da célula de
+    0,1° (o ponto do centro dela), nesta ordem: tabela `smap_point` (só com banco;
+    `PostgisSmapRepository.get_cell_smap_series`) e o arquivo do `SMAP_PATH`
+    (`FileSmapRepository`, o ponto do arquivo dentro da célula). Nunca a série de célula vizinha.
+  - **Na resposta:** o `/talhao` lista `{"fonte": "smap", "periodo": "<primeiro ano>-<último ano>"}`
+    em `dados` quando a célula tem SMAP (o front marca o SMAP como conectado). O `porque` de cada
+    opção do `/recomendacao` ganha, logo depois da frase da chuva, a frase `frases.<língua>.balde_smap`
+    do `regras.yaml` com quantos anos da série usaram o SMAP. Sem nenhum ano, não há frase.
+  - Para ligar o arquivo: **com uv**, `SMAP_PATH=../../data/baixados/nasa_smap/smap_semeadura.json`
+    no `.env` desta pasta; **no compose**, já ligado em `/dados_baixados/nasa_smap/smap_semeadura.json`.
+    Reinicie o backend depois de trocar o arquivo (ele é lido uma vez por processo).
 - **NDVI do MODIS e histórico do talhão** (R3.2, tarefa 0018). Com ou sem banco, a série vem do arquivo
   do `NDVI_CACHE_PATH` (a tabela `ndvi_point` existe desde o R1.6 e a carga da tarefa 0022 a preenche,
   mas a API ainda não lê dela). O arquivo vem do
@@ -666,14 +744,17 @@ Uma observação de 16 dias por ponto, já sem neve e sem nuvem. O arquivo é o 
 ### SMAP: `SmapSoilMoisture` (`app/models/climate.py`)
 
 Uma linha por ponto e data, com a média do dia do SMAP L4 (`SPL4SMGP`, de 3 em 3 horas). A versão do
-produto (007 ou 008) vai em `versao_dados.parametros`, não em cada linha.
+produto vai em `versao_dados.parametros`, não em cada linha. O `pipeline/fetch_smap.py` grava a 008,
+com um ponto por centro de célula de 0,1° e, opcionalmente, o pixel de 9 km usado (`pixel_9km`, só
+para conferência: quem lê pode ignorar). O `FileSmapRepository` lê este arquivo.
 
 ```json
 {
-  "versao_dados": {"fonte": "smap", "parametros": {"produto": "SPL4SMGP.007"}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-smap-l4"},
+  "versao_dados": {"fonte": "smap", "parametros": {"produto": "SPL4SMGP.008"}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-smap-l4"},
   "pontos": [
     {
-      "lat": -18.9543, "lon": -48.1993,
+      "lat": -18.95, "lon": -48.15,
+      "pixel_9km": {"linha": 1075, "coluna": 1412, "lat": -18.9403, "lon": -48.1276},
       "serie": [
         {"data": "2024-02-18", "sm_rootzone_wetness": 0.62, "sm_rootzone_m3_m3": 0.31, "sm_surface_m3_m3": 0.27}
       ]
@@ -693,8 +774,28 @@ produto (007 ou 008) vai em `versao_dados.parametros`, não em cada linha.
 
 - Tabela criada no R1.6: `smap_point (key, geom, date, sm_rootzone_wetness, sm_rootzone_m3_m3,
   sm_surface_m3_m3)`, chave `(key, date)`. Substitui a `smap_moisture` por célula da migração inicial.
-- Antes de 2015 não há SMAP. O percentil (`sm_rootzone_pctl`, A2.2) é calculado depois e não faz
-  parte deste registro.
+- Antes de 2015 não há SMAP. O percentil (`sm_rootzone_pctl`, A2.2) não faz parte deste registro:
+  ele vai no ponto do arquivo do SMAP recente (abaixo).
+
+#### SMAP recente (A2.2): o mesmo contrato, com o percentil no ponto
+
+O `pipeline/fetch_smap.py --recente` grava o contrato SMAP com um dia só na `serie` (o dia completo
+mais recente) e, em cada ponto, `sm_rootzone_pctl` (0 a 100, uma casa; `null` sem climatologia
+suficiente). O `versao_dados.parametros` traz `modo: "recente"`, a `data` e a `climatologia`
+(`variavel`, `anos`, `janela_dias`, `dias`, `dias_incompletos`, `minimo_de_anos`). O
+`FileRecentSoilMoistureRepository` lê o arquivo (`SMAP_RECENTE_PATH`) como `RecentSoilMoisture`.
+
+```json
+{
+  "versao_dados": {"fonte": "smap", "parametros": {"produto": "SPL4SMGP.008", "modo": "recente", "data": "2026-11-10", "climatologia": {"anos": [2016, 2025], "janela_dias": 7, "dias": 150}}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-smap-l4-recente"},
+  "pontos": [
+    {
+      "lat": -18.95, "lon": -48.15, "sm_rootzone_pctl": 34.5,
+      "serie": [{"data": "2026-11-10", "sm_rootzone_wetness": 0.41, "sm_rootzone_m3_m3": 0.2, "sm_surface_m3_m3": 0.18}]
+    }
+  ]
+}
+```
 
 ### IMERG: `ImergCellSeries` e `ImergSeason` (`app/models/climate.py`)
 

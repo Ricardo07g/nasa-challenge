@@ -173,6 +173,7 @@ class FrasesPorque:
     futuro: str
     solo: str
     historico: str
+    balde_smap: str
 
 
 @dataclass(frozen=True)

@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Any
 
-from app.models.climate import ClimateSeason, Cmip6Delta
+from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.talhao import ChuvaMes, FonteDado, HistoricoAno, NdviRecord, SoloInfo
 from app.services.field_history_service import FieldHistoryService
 from app.services.talhao_service import TalhaoService
@@ -87,10 +87,26 @@ class FakeNdviRepository:
         return records
 
 
+class FakeSmapRepository:
+    """Umidade de teste (não do SMAP) no dia 18/02 dos anos dados, na célula da fazenda."""
+
+    def __init__(self, years: tuple[int, ...] = ()) -> None:
+        self._years = years
+        self.calls: list[str] = []
+
+    def get_cell_smap_series(self, cell_id: str) -> list[SmapSoilMoisture]:
+        self.calls.append(cell_id)
+        return [
+            SmapSoilMoisture(date(year, 2, 18), -18.95, -48.15, 0.3, 0.6, "teste")
+            for year in self._years
+        ]
+
+
 def _service(
     climate: FakeClimateRepository | None = None,
     ndvi: FakeNdviRepository | None = None,
     ingestion_service: Any = None,
+    smap: FakeSmapRepository | None = None,
 ) -> TalhaoService:
     return TalhaoService(
         climate_repo=climate or FakeClimateRepository(),
@@ -98,6 +114,7 @@ def _service(
         ndvi_repo=ndvi or FakeNdviRepository(),
         history_service=FieldHistoryService(),
         ingestion_service=ingestion_service,
+        smap_repo=smap,
     )
 
 
@@ -144,6 +161,21 @@ def test_should_list_imerg_rain_when_the_cell_has_any_year_with_it() -> None:
         FonteDado(fonte="gpm_imerg", periodo="2005-2024"),
     )
     assert talhao.dados_fontes[-1].fonte == "nex_gddp_cmip6"
+
+
+def test_should_list_smap_with_the_years_of_the_cell_when_it_has_smap() -> None:
+    smap = FakeSmapRepository(years=tuple(range(2016, 2026)))
+
+    talhao = _service(smap=smap).inspect_talhao(lat=-18.9543, lon=-48.1993)
+
+    assert FonteDado(fonte="smap", periodo="2016-2025") in talhao.dados_fontes
+    assert smap.calls == ["-190_-482"]
+
+
+def test_should_not_list_smap_when_the_cell_has_no_smap() -> None:
+    talhao = _service(smap=FakeSmapRepository()).inspect_talhao(lat=-18.9543, lon=-48.1993)
+
+    assert all(d.fonte != "smap" for d in talhao.dados_fontes)
 
 
 def test_should_return_outside_area_without_sources_when_point_has_no_data() -> None:

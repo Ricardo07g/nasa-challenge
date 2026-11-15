@@ -150,6 +150,18 @@ def test_should_save_and_read_the_daily_smap_series_of_a_point(db_url: str) -> N
     assert repo.get_smap_series(-17.78, -50.92) == []
 
 
+def test_should_read_the_smap_series_of_a_cell_from_its_center(db_url: str) -> None:
+    repo = PostgisSmapRepository(db_url)
+    center = SmapSoilMoisture(date(2016, 2, 18), -18.95, -48.15, 0.31, 0.61, "smap")
+    other = SmapSoilMoisture(date(2016, 2, 18), -18.9543, -48.1993, 0.29, 0.55, "smap")
+    repo.save_smap_series([center, other])
+
+    [record] = repo.get_cell_smap_series("-190_-482")
+
+    assert (record.latitude, record.longitude, record.sm_rootzone_wetness) == (-18.95, -48.15, 0.61)
+    assert repo.get_cell_smap_series("-200_-500") == []
+
+
 def test_should_key_the_smap_point_by_the_cache_key_and_replace_the_same_day(
     db_url: str,
 ) -> None:

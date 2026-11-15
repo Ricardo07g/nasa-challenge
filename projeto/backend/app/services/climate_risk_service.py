@@ -1,6 +1,7 @@
 """Risco de clima por opção: janela de plantio, 20 anos de balanço hídrico e clima de 2041-2060."""
 
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from datetime import date, timedelta
 from statistics import mean
 
@@ -9,7 +10,7 @@ from app.constants import (
     MIN_INITIAL_ARM_FRACTION,
     PERCENT_DIVISOR,
 )
-from app.models.climate import ClimateSeason, Cmip6Delta
+from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.crop_option import CropParams
 from app.models.recomendacao import FuturoResultado, ResultadoAno
 from app.models.regras import Regras
@@ -39,6 +40,29 @@ class ClimateRiskService:
             return self._clima.perda_fator_media
         return self._clima.perda_fator_alta
 
+    @staticmethod
+    def initial_bucket_fraction(smap_wetness: float | None) -> float:
+        """Fração da CAD no balde do dia de plantar (PRD 7.2, US-03).
+
+        Com SMAP, a umidade relativa da zona das raízes (`sm_rootzone_wetness`, 0 a 1), com piso
+        de 20% da CAD; sem SMAP, 50% da CAD.
+        """
+        if smap_wetness is None:
+            return DEFAULT_INITIAL_ARM_FRACTION
+        return max(MIN_INITIAL_ARM_FRACTION, min(1.0, smap_wetness))
+
+    @staticmethod
+    def sowing_day_wetness(series: Iterable[SmapSoilMoisture], semeadura: date) -> dict[int, float]:
+        """A umidade do SMAP no dia de plantar de cada ano (dia e mês da `semeadura`).
+
+        Outros dias da série não contam: o balde de cada ano começa com a terra daquele dia.
+        """
+        return {
+            record.data.year: record.sm_rootzone_wetness
+            for record in series
+            if (record.data.month, record.data.day) == (semeadura.month, semeadura.day)
+        }
+
     def reference_eto(self, season: ClimateSeason) -> tuple[float, ...]:
         """ETo diária da temporada: a da fonte, ou Hargreaves-Samani com a latitude da célula."""
         if season.eto_mm:
@@ -59,7 +83,7 @@ class ClimateRiskService:
         seasons: list[ClimateSeason],
         semeadura: date,
         cad_mm: float,
-        smap_wetness: float | None = None,
+        smap_wetness_by_year: Mapping[int, float] | None = None,
     ) -> list[ResultadoAno]:
         """Simula o balanço hídrico da cultura em cada ano da série (PRD 7.2).
 
@@ -68,14 +92,14 @@ class ClimateRiskService:
             seasons: Séries de cada ano.
             semeadura: Data de semeadura (o ano é ignorado; vale o dia e o mês).
             cad_mm: Água disponível do solo (mm).
-            smap_wetness: Umidade relativa da zona das raízes (0 a 1), se houver dado real do SMAP.
+            smap_wetness_by_year: Umidade relativa da zona das raízes (0 a 1) no dia de plantar de
+                cada ano, com dado real do SMAP (`sowing_day_wetness`). Ano fora dele: 50% da CAD.
 
         Returns:
             Um ResultadoAno por temporada.
         """
         kc_curve = self._wb.build_kc_curve(crop.ciclo_dias, crop.kc_pico)
-        wetness = smap_wetness if smap_wetness is not None else DEFAULT_INITIAL_ARM_FRACTION
-        arm0 = cad_mm * max(MIN_INITIAL_ARM_FRACTION, min(1.0, wetness))
+        wetness_by_year = smap_wetness_by_year or {}
 
         clima = self._clima
         if crop.tipo == "cobertura":
@@ -92,6 +116,8 @@ class ClimateRiskService:
             season_sowing = date(season.year, semeadura.month, semeadura.day)
             start = max(0, (season_sowing - season.start_date).days)
             end = start + crop.ciclo_dias
+            fraction = self.initial_bucket_fraction(wetness_by_year.get(season.year))
+            arm0 = cad_mm * fraction
 
             etr_l, etc_l = self._wb.simular(
                 chuva=season.rain_mm[start:end],
@@ -174,9 +200,12 @@ class ClimateRiskService:
         deltas: list[Cmip6Delta],
         semeadura: date,
         cad_mm: float,
-        smap_wetness: float | None = None,
+        smap_wetness_by_year: Mapping[int, float] | None = None,
     ) -> FuturoResultado | None:
         """Anos sem aperto no clima de 2041-2060, por modelo do CMIP6 (PRD 7.3).
+
+        O balde de cada ano começa igual ao da conta histórica (`smap_wetness_by_year`): o método
+        do delta muda só o clima, e a diferença entre hoje e 2050 não vem da condição inicial.
 
         Returns:
             Média, mínimo e máximo entre os modelos, ou None quando não há deltas do CMIP6.
@@ -195,7 +224,7 @@ class ClimateRiskService:
                 seasons=projected,
                 semeadura=semeadura,
                 cad_mm=cad_mm,
-                smap_wetness=smap_wetness,
+                smap_wetness_by_year=smap_wetness_by_year,
             )
             anos_bons_por_modelo.append(sum(1 for r in resultados if not r.aperto))
 

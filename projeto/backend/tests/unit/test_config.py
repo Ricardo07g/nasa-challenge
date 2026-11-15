@@ -14,6 +14,8 @@ DATA_ENV_VARS = (
     "ONI_PATH",
     "REGIAO_PATH",
     "IMERG_LATE_PATH",
+    "SMAP_PATH",
+    "SMAP_RECENTE_PATH",
 )
 CREDENTIAL_ENV_VARS = (
     "EARTHDATA_TOKEN",
@@ -125,6 +127,27 @@ def test_imerg_late_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Pat
     settings = Settings(_env_file=None)
 
     assert settings.imerg_late_path == tmp_path / "chuva_30d.json"
+
+
+def test_smap_path_defaults_to_none_so_the_bucket_starts_at_half_without_the_file() -> None:
+    # Sem o arquivo do SMAP (e sem a tabela smap_point), o balde começa em 50% da CAD (PRD 7.2).
+    assert Settings(_env_file=None).smap_path is None
+
+
+def test_smap_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("SMAP_PATH", str(tmp_path / "smap.json"))
+
+    assert Settings(_env_file=None).smap_path == tmp_path / "smap.json"
+
+
+def test_smap_recente_path_defaults_to_none_so_there_is_no_soil_signal_without_the_file() -> None:
+    assert Settings(_env_file=None).smap_recente_path is None
+
+
+def test_smap_recente_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("SMAP_RECENTE_PATH", str(tmp_path / "smap_recente.json"))
+
+    assert Settings(_env_file=None).smap_recente_path == tmp_path / "smap_recente.json"
 
 
 def test_rules_path_defaults_to_file_shipped_with_the_app() -> None:

@@ -8,6 +8,7 @@ from statistics import mean
 
 from app.constants import (
     DATA_VERSION,
+    DEFAULT_INITIAL_ARM_FRACTION,
     IMERG_RAIN_SOURCE,
     PERCENT_DIVISOR,
     REFERENCE_SOWING_YEAR,
@@ -33,6 +34,7 @@ from app.repositories.climate_repository import ClimateRepository
 from app.repositories.crop_params_repository import CropParamsRepository
 from app.repositories.ndvi_repository import NdviRepository
 from app.repositories.rules_repository import load_default_rules
+from app.repositories.smap_repository import CellSmapRepository
 from app.repositories.soil_repository import SoilRepository
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.climate_risk_service import ClimateRiskService
@@ -223,6 +225,7 @@ class RecommendationService:
         ndvi_repo: NdviRepository | None = None,
         history_service: FieldHistoryService | None = None,
         year_detail_service: YearDetailService | None = None,
+        smap_repo: CellSmapRepository | None = None,
     ) -> None:
         self._crop_repo = crop_repo
         self._climate_repo = climate_repo
@@ -237,6 +240,8 @@ class RecommendationService:
         self._history_service = history_service or FieldHistoryService(self._rules)
         # Detalhe de cada ano da faixa de chuva (P1); sem o ONI injetado, `enso` sai nulo
         self._year_detail_service = year_detail_service or YearDetailService(rules=self._rules)
+        # Umidade do SMAP no dia de plantar de cada ano: balde inicial (PRD 7.2, R3.3)
+        self._smap_repo = smap_repo
 
     def recommend(
         self,
@@ -269,6 +274,13 @@ class RecommendationService:
 
         sow_month, sow_day = SOWING_MONTH_DAY_BY_HARVEST[colheita]
         semeadura = date(REFERENCE_SOWING_YEAR, sow_month, sow_day)
+        smap_por_ano = (
+            self._risk_service.sowing_day_wetness(
+                self._smap_repo.get_cell_smap_series(cell_id), semeadura
+            )
+            if self._smap_repo is not None
+            else {}
+        )
 
         soil_info = self._soil_repo.get_soil(lat, lon)
         solo_textura = solo_override or soil_info.textura_solo
@@ -294,7 +306,16 @@ class RecommendationService:
                 continue
             avaliacoes.append(
                 self._evaluate(
-                    crop, nome, seasons, deltas, semeadura, cad_mm, anos_secos, nematoide, lang
+                    crop,
+                    nome,
+                    seasons,
+                    deltas,
+                    semeadura,
+                    cad_mm,
+                    anos_secos,
+                    nematoide,
+                    smap_por_ano,
+                    lang,
                 )
             )
 
@@ -316,6 +337,10 @@ class RecommendationService:
             )
             for a in avaliacoes
         ]
+        frase_balde = self._bucket_phrase(seasons, smap_por_ano, is_en)
+        if frase_balde:
+            # Logo depois da frase da chuva: as duas falam da mesma conta de água.
+            opcoes = [replace(o, porque=(o.porque[0], frase_balde, *o.porque[1:])) for o in opcoes]
         frase_historico = self._history_phrase(lat, lon, is_en)
         if frase_historico:
             opcoes = [replace(o, porque=(*o.porque, frase_historico)) for o in opcoes]
@@ -402,14 +427,24 @@ class RecommendationService:
         cad_mm: float,
         anos_secos: list[int],
         nematoide: bool | None,
+        smap_por_ano: dict[int, float],
         lang: str,
     ) -> _Avaliacao:
         anos = self._risk_service.simulate_historical(
-            crop=crop, seasons=seasons, semeadura=semeadura, cad_mm=cad_mm
+            crop=crop,
+            seasons=seasons,
+            semeadura=semeadura,
+            cad_mm=cad_mm,
+            smap_wetness_by_year=smap_por_ano,
         )
         secos = [r for r in anos if r.ano in set(anos_secos)]
         futuro = self._risk_service.simulate_future_cmip6(
-            crop=crop, seasons=seasons, deltas=deltas, semeadura=semeadura, cad_mm=cad_mm
+            crop=crop,
+            seasons=seasons,
+            deltas=deltas,
+            semeadura=semeadura,
+            cad_mm=cad_mm,
+            smap_wetness_by_year=smap_por_ano,
         )
         return _Avaliacao(
             crop=crop,
@@ -592,6 +627,21 @@ class RecommendationService:
             )
         )
         return tuple(frases)
+
+    def _bucket_phrase(
+        self, seasons: list[ClimateSeason], smap_por_ano: dict[int, float], is_en: bool
+    ) -> str | None:
+        """Em quantos anos da série o balde começou pelo SMAP (PRD 7.2). Nenhum: sem frase."""
+        anos_smap = sorted({s.year for s in seasons if s.year in smap_por_ano})
+        if not anos_smap:
+            return None
+        return self._rules.frases["en" if is_en else "pt"].balde_smap.format(
+            anos_smap=len(anos_smap),
+            total=len(seasons),
+            ano_inicio=anos_smap[0],
+            ano_fim=anos_smap[-1],
+            padrao_pct=f"{DEFAULT_INITIAL_ARM_FRACTION * PERCENT_DIVISOR:.0f}",
+        )
 
     def _history_phrase(self, lat: float, lon: float, is_en: bool) -> str | None:
         """Frase do histórico do talhão (PRD 7.6), a mesma em todas as opções.
