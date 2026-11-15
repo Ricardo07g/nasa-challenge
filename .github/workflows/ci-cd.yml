@@ -1,0 +1,288 @@
+# CI/CD do Raiz Orbital.
+#
+# Em todo pull request e em todo push no main: segredos (gitleaks) e pre-commit, backend (ruff, pytest com
+# o PostGIS, migrações sobe e desce), frontend (lint, testes, build) e as imagens Docker de produção.
+# No push no main, com tudo verde, publica na Railway só o serviço que mudou desde o último deploy dele
+# (.github/scripts/railway-deploy.sh) e confere o site no ar. "Run workflow" no main publica à mão.
+#
+# Repositório PÚBLICO: o único segredo é o RAILWAY_TOKEN (token do projeto na Railway), guardado no
+# ambiente "production" do GitHub, que só libera para o main. PR (inclusive de fork) nunca recebe o
+# token: os jobs de deploy não rodam em pull_request. Nunca use pull_request_target aqui.
+name: CI/CD
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      servicos:
+        description: "O que publicar na Railway"
+        type: choice
+        options: [ambos, backend, frontend]
+        default: ambos
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  # Num PR, um push novo cancela a rodada antiga. No main, nunca corta um deploy no meio.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  SITE_URL: https://frontend-production-62e614b3.up.railway.app
+
+jobs:
+  qualidade:
+    name: Segredos e pre-commit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Instalar o gitleaks 8.30.0 (conferido pelo sha256)
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/gitleaks.tar.gz" \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_linux_x64.tar.gz
+          echo "79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP" gitleaks
+
+      - name: Segredos nos commits novos
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Só os commits que este PR/push traz: o histórico antigo já passou pelo hook local.
+          if [ "$EVENT" = "pull_request" ]; then
+            range="$BASE_SHA..HEAD"
+          elif [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            range="$BEFORE..HEAD"
+          else
+            range="HEAD~1..HEAD"
+          fi
+          echo "Commits verificados: $range"
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 --log-opts="$range" .
+
+      - name: Segredos nos arquivos de agora
+        run: '"$RUNNER_TEMP/gitleaks" dir --redact --no-banner --exit-code 1 .'
+
+      - name: Testes do script de deploy (Railway falsa, sem rede)
+        run: bash .github/scripts/test_railway_deploy.sh
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.4"
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: pre-commit em todos os arquivos
+        env:
+          # O gitleaks do pre-commit só olha o que está "staged" (nada, no CI): os dois passos acima cobrem.
+          SKIP: gitleaks
+        run: uv tool run --from 'pre-commit==4.7.0' pre-commit run --all-files --show-diff-on-failure
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      db:
+        image: postgis/postgis:17-3.5
+        env:
+          # Banco descartável, só dentro do runner, para os testes marcados com "db".
+          POSTGRES_USER: raiz
+          POSTGRES_PASSWORD: raiz_ci
+          POSTGRES_DB: raiz_orbital_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U raiz -d raiz_orbital_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+    defaults:
+      run:
+        working-directory: projeto/backend
+    env:
+      TEST_DATABASE_URL: postgresql://raiz:raiz_ci@localhost:5432/raiz_orbital_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.4"
+          enable-cache: true
+          cache-dependency-glob: projeto/backend/uv.lock
+
+      - name: Dependências (uv.lock)
+        run: uv sync --frozen
+
+      - name: Lint (ruff check)
+        run: uv run ruff check .
+
+      - name: Formatação (ruff format --check)
+        run: uv run ruff format --check .
+
+      - name: Testes (pytest, com os testes de banco no PostGIS)
+        run: uv run pytest -q
+
+      - name: Migrações sobem, descem e sobem de novo (banco vazio)
+        env:
+          DATABASE_URL: postgresql://raiz:raiz_ci@localhost:5432/raiz_ci_migracoes
+        run: |
+          uv run python -c "import psycopg; psycopg.connect('$TEST_DATABASE_URL', autocommit=True).execute('CREATE DATABASE raiz_ci_migracoes')"
+          uv run alembic upgrade head
+          uv run alembic downgrade base
+          uv run alembic upgrade head
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: projeto/frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: projeto/frontend/package-lock.json
+
+      - name: Dependências (package-lock.json)
+        run: npm ci
+
+      - name: Lint (oxlint)
+        run: npm run lint
+
+      - name: Testes (vitest)
+        run: npm test
+
+      - name: Build (tsc + vite)
+        run: npm run build
+
+  imagens:
+    name: Imagem Docker (${{ matrix.servico }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - servico: backend
+            contexto: projeto/backend
+            dockerfile: projeto/backend/Dockerfile
+          - servico: frontend
+            contexto: projeto/frontend
+            dockerfile: projeto/frontend/Dockerfile.prod
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build da imagem de produção (sem publicar)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.contexto }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.servico }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.servico }}
+
+  deploy-backend:
+    name: Publicar backend
+    needs: [qualidade, backend, frontend, imagens]
+    if: >-
+      github.ref == 'refs/heads/main' && github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_dispatch' || inputs.servicos != 'frontend')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment:
+      name: production
+      url: ${{ env.SITE_URL }}
+    concurrency:
+      group: railway-backend
+      cancel-in-progress: false
+    outputs:
+      publicou: ${{ steps.deploy.outputs.publicou }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Instalar o CLI da Railway (versão fixa)
+        run: npm install --global @railway/cli@5.71.0
+
+      - name: Publicar se mudou e esperar o deploy (migração + health check)
+        id: deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          FORCAR: ${{ github.event_name == 'workflow_dispatch' }}
+        run: .github/scripts/railway-deploy.sh backend
+
+  deploy-frontend:
+    name: Publicar frontend
+    needs: [qualidade, backend, frontend, imagens]
+    if: >-
+      github.ref == 'refs/heads/main' && github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_dispatch' || inputs.servicos != 'backend')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment:
+      name: production
+      url: ${{ env.SITE_URL }}
+    concurrency:
+      group: railway-frontend
+      cancel-in-progress: false
+    outputs:
+      publicou: ${{ steps.deploy.outputs.publicou }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Instalar o CLI da Railway (versão fixa)
+        run: npm install --global @railway/cli@5.71.0
+
+      - name: Publicar se mudou e esperar o deploy
+        id: deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          FORCAR: ${{ github.event_name == 'workflow_dispatch' }}
+        run: .github/scripts/railway-deploy.sh frontend
+
+  site-no-ar:
+    name: Site no ar (smoke test)
+    needs: [deploy-backend, deploy-frontend]
+    if: >-
+      always() && !cancelled() && !contains(needs.*.result, 'failure') &&
+      (needs.deploy-backend.outputs.publicou == 'true' || needs.deploy-frontend.outputs.publicou == 'true')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Site, API e lavoura de demonstração respondem
+        run: |
+          # Os serviços dormem sem uso: as retentativas dão tempo de acordar.
+          for caminho in "/" "/api/health" "/api/crop-options" "/api/talhao?lat=-18.9543&lon=-48.1993"; do
+            curl --fail --silent --show-error --retry 8 --retry-delay 10 --retry-all-errors \
+              --max-time 60 --output /dev/null --write-out "%{http_code} %{time_total}s $caminho\n" \
+              "$SITE_URL$caminho"
+          done
