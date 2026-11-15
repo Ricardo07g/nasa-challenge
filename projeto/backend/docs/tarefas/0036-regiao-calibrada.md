@@ -83,7 +83,7 @@ GET /api/regiao?lat&lon ─► RegionService.get_region ─► RegiaoDoPonto(reg
 
 Front (tela 8) ─► regionPlace: distancia_km ≤ 1 → "Até 30 km da sua lavoura"
                                senão → "Raio de 30 km em volta de um ponto a X km da sua lavoura"
-               404 OUTSIDE_AREA ─► estado "outside" (card próprio); 404 sem código ─► "Ainda não conectado"
+               404 OUTSIDE_AREA ─► estado "outside" (o bloco não aparece; ajuste de 15/11); 404 sem código ─► "Ainda não conectado"
 ```
 
 ---
@@ -190,3 +190,9 @@ Front (tela 8) ─► regionPlace: distancia_km ≤ 1 → "Até 30 km da sua lav
 - **Limites do talhão**: o `classify_year` usa > 0,60 (plantou) e < 0,45 (parado), como o talhão;
   0,60 e 0,45 exatos são incerto.
 - **Tabela**: ainda não há `regiao_entressafra` no PostGIS; a API lê o arquivo.
+
+## Ajuste de 15/11/2026
+
+Com o usuário: fora das regiões medidas, o bloco da região **não aparece** (sem o card "O satélite ainda
+não mediu…"). O produto resolve esse caso com as perguntas (confirmação das últimas safras). A região,
+por enquanto, só cobre a fazenda da UFU: não vamos medir outros círculos da caixa no MVP.

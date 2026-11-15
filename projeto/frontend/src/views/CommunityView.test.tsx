@@ -76,24 +76,23 @@ describe('CommunityView (tela 8)', () => {
     expect(screen.getByRole('img', { name: '% of the soybean area left idle after harvest, year by year.' })).toBeInTheDocument()
   })
 
-  it('ponto fora das regiões medidas: o card explica, sem "Ainda não conectado" e sem erro', () => {
+  it('ponto fora das regiões medidas: o bloco da região não aparece (sem aviso, sem erro)', () => {
     setup({ region: null, regionStatus: 'outside', regionRadius: null })
 
-    const card = screen.getByRole('region', { name: 'Área parada na região, pelo satélite' })
-    expect(card).toHaveTextContent(
-      'O satélite ainda não mediu a região da sua lavoura. Por enquanto, só algumas regiões perto de Uberlândia estão medidas.',
-    )
-    expect(card).not.toHaveTextContent('Ainda não conectado')
+    expect(screen.queryByRole('region', { name: 'Área parada na região, pelo satélite' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/ainda não mediu/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Tentar de novo' })).not.toBeInTheDocument()
     expect(screen.queryByText(/visto pelo satélite/)).not.toBeInTheDocument()
+    // a comunidade continua na tela
+    expect(screen.getByRole('heading', { name: 'Na sua região' })).toBeInTheDocument()
   })
 
-  it('ponto fora das regiões medidas, em inglês', () => {
+  it('ponto fora das regiões medidas, em inglês: também sem o bloco', () => {
     setup({ t: en, community: buildCommunity('en'), region: null, regionStatus: 'outside', regionRadius: null })
 
-    expect(screen.getByRole('region', { name: 'Idle cropland in the region, by satellite' })).toHaveTextContent(
-      "The satellite has not measured your field's region yet. For now, only a few regions near Uberlândia are measured.",
-    )
+    expect(screen.queryByRole('region', { name: 'Idle cropland in the region, by satellite' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/has not measured/i)).not.toBeInTheDocument()
   })
 
   it('a comunidade vem embaixo, marcada como ilustrativa, com quantos participam', () => {
