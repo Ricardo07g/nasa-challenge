@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import date
 
+from app.models.enso import FaseEnso
 from app.models.sinal_outono import SinalOutono
 
 
@@ -19,6 +20,23 @@ class ResultadoAno:
     # aperto = falta_agua or calor
     falta_agua: bool = False
     calor: bool = False
+
+
+@dataclass(frozen=True)
+class AnoDetalhe:
+    """O que aconteceu num ano da faixa de chuva (P1): `AnoDetalhe` do front.
+
+    `bom` é o mesmo da faixa (ano sem aperto). `fase_critica` é a data em que a planta chega na
+    fase que mais precisa de água (floração estimada; na cobertura, a semeadura).
+    `dias_sem_chuva` é a maior sequência de dias secos nessa fase. `enso` vem do ONI da NOAA.
+    """
+
+    ano: int
+    bom: bool
+    fase_critica: date
+    dias_sem_chuva: int
+    enso: FaseEnso | None
+    texto: str
 
 
 @dataclass(frozen=True)
@@ -69,6 +87,8 @@ class ResultadoOpcao:
     como_fazer: tuple[str, ...]
     # Margem por hectare no pior dos anos mais secos (A1.2, PRD 7.11); None sem ano seco na série
     pior_ano_seco_ha: float | None = None
+    # O que aconteceu em cada ano da faixa de chuva, na mesma ordem (P1)
+    anos_detalhe: tuple[AnoDetalhe, ...] = ()
 
 
 @dataclass(frozen=True)
