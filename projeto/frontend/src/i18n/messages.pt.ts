@@ -837,7 +837,6 @@ export const pt = {
     text: 'A resposta em áudio no seu celular e um aviso se faltar chuva na sua lavoura.',
     past: 'Quer receber avisos assim na próxima safra? Ative no Telegram.',
     open: 'Abrir no Telegram',
-    home: 'Prefere conversar? Fale com o Raiz Orbital no Telegram',
     methodTitle: 'Também no Telegram',
     method:
       'Mande a localização da lavoura e diga quando colhe a soja. O bot responde em texto e em áudio, com o link desta página. Quem quiser recebe avisos de falta de chuva e calor. Em português e em inglês.',
