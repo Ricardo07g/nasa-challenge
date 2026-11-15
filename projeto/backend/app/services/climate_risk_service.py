@@ -105,14 +105,17 @@ class ClimateRiskService:
             tmax_ciclo = season.tmax_c[start:end]
             dias_calor = sum(1 for t in tmax_ciclo[ini_crit:fim_crit] if t >= clima.calor_temp_c)
 
-            aperto = isna_val < isna_threshold or dias_calor >= clima.calor_min_dias
+            falta_agua = isna_val < isna_threshold
+            calor = dias_calor >= clima.calor_min_dias
             resultados.append(
                 ResultadoAno(
                     ano=season.year,
-                    aperto=aperto,
+                    aperto=falta_agua or calor,
                     isna=isna_val,
                     dias_calor=dias_calor,
                     fator_perda=self.loss_factor(isna_val),
+                    falta_agua=falta_agua,
+                    calor=calor,
                 )
             )
 

@@ -15,6 +15,10 @@ class ResultadoAno:
     isna: float
     dias_calor: int
     fator_perda: float
+    # Por que o ano apertou (PRD 7.2): ISNA abaixo do limiar e/ou calor na janela crítica.
+    # aperto = falta_agua or calor
+    falta_agua: bool = False
+    calor: bool = False
 
 
 @dataclass(frozen=True)
