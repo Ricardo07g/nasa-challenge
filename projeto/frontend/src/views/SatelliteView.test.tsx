@@ -262,7 +262,7 @@ describe('SatelliteView (tela 4)', () => {
       expect(onToggle).toHaveBeenCalled()
     })
 
-    it('sem safra confirmada (ou na fazenda de exemplo), não oferece compartilhar', () => {
+    it('sem safra confirmada (ou na lavoura de demonstração), não oferece compartilhar', () => {
       setup({ confirmations: rows, share: null })
 
       expect(screen.queryByRole('button', { name: 'Compartilhar com a comunidade' })).not.toBeInTheDocument()
@@ -370,7 +370,7 @@ describe('SatelliteView (tela 4)', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Não conseguimos buscar os dados agora.')
     await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
     expect(props.onRetry).toHaveBeenCalled()
-    expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
+    expect(screen.getByRole('link', { name: 'Ver a lavoura de demonstração' })).toHaveAttribute('href', '/exemplo')
   })
 
   it('em inglês', () => {
@@ -399,14 +399,14 @@ describe('SatelliteView (tela 4)', () => {
     expect(screen.queryByText(/Not connected yet/)).not.toBeInTheDocument()
   })
 
-  it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {
+  it('fora da área com dados preparados: explica e oferece a lavoura de demonstração', () => {
     setup({ status: 'outside' })
 
     const outside = screen.getByRole('region', { name: 'Ainda não chegamos aí' })
     expect(outside).toHaveTextContent(
       'Por enquanto, os dados estão prontos só para a região de Uberlândia e Uberaba. Vamos ampliar para todo o Triângulo Mineiro.',
     )
-    expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
+    expect(screen.getByRole('link', { name: 'Ver a lavoura de demonstração' })).toHaveAttribute('href', '/exemplo')
   })
 })
 

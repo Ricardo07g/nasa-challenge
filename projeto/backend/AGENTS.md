@@ -258,7 +258,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 - **Sem banco**, só arquivos, como antes: nada de busca sob demanda, solo padrão fora do cache e, fora da
   célula da fixture, a API responde que ainda não tem dados (`dentro_da_area: false` / 404 `OUTSIDE_AREA`).
 - `app/fixtures/clima_fazenda_exemplo.json`: NASA POWER diário (chuva, máxima e mínima),
-  1/jan a 31/jul de 2005 a 2024, da célula do POWER da Fazenda do Glória (UFU).
+  1/jan a 31/jul de 2005 a 2024, da célula do POWER da lavoura de demonstração, perto de
+  Uberlândia (MG); o ponto fica perto da Fazenda do Glória, mas não garantidamente dentro dela.
   Para gerar de novo a partir da saída do `data/extract_historical_20y.py`:
 
   ```bash
@@ -750,12 +751,12 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `melhor`, `nome`, `anos_bons`, `total_anos`; os da opção `null` quando nenhuma cabe na janela)
     e `mesma_cultura`. Nada é recalculado fora do motor (um teste de rota confere que os números
     são os do `/recomendacao` de cada faixa). Erros como no `/recomendacao` (404 `OUTSIDE_AREA`,
-    422). Sem cache HTTP: são 3 recomendações (~1 s na fazenda da UFU). Endpoint à parte, e não
+    422). Sem cache HTTP: são 3 recomendações (~1 s na lavoura de demonstração). Endpoint à parte, e não
     campo do `/talhao`, para o `/talhao` (pedido já na tela 2) continuar rápido.
 - **Raio-X da sua terra** (`GET /api/raio-x?lat&lon[&colheita][&solo][&confirmadas]`, tela 4,
   remodelagem S4, tarefa 0043, RF-29). Endpoint à parte (decisão D55 da remodelagem): ele roda o motor
   uma vez (`RecommendationService.recommend`, com a mesma colheita, solo e safras confirmadas) para
-  a melhor opção, ~0,5 s na fazenda da UFU; o `/talhao` continua leve. O `RaioXService` só busca e
+  a melhor opção, ~0,5 s na lavoura de demonstração; o `/talhao` continua leve. O `RaioXService` só busca e
   monta; cada conta mora num service com teste próprio e os números ficam no `regras.yaml` (grupos
   `raio_x` e `alertas_area`, hipótese do time a revisar). Reaproveita sem repetir: o fim das chuvas
   (`RainEndService`), o dia seco dos avisos (`avisos.dia_seco_abaixo_mm`), o calor do motor
@@ -861,7 +862,7 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `geada` = o alerta de geada (`RaioXClimateService.frost`, grupo `alertas_area`: `anos`,
     `total_anos`, `temp_c`, `menor_temp_c`, `fonte`; `null` sem nenhum ano com geada). Saíram o
     `CellClimateFactsService` e os grupos `clima_futuro_sugestao` e `geada_sugestao` (a média
-    simples dos meses dava −0,7% na Sugestão contra +2,2% no raio-X na fazenda da UFU);
+    simples dos meses dava −0,7% na Sugestão contra +2,2% no raio-X na lavoura de demonstração);
   - `fora_da_janela[].data_limite` (o aviso único da colheita tarde junta as culturas por data) e
     `GET /api/safra-passada?…&opcao=<id>` (o detalhe de qualquer ano do explorador, para a opção
     que a aba mostra; fora da janela, 404 `NOT_FOUND`).
@@ -870,7 +871,7 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   endpoint novo **`GET /api/plano?lat&lon&anos=a,b,c[&colheita][&solo]`** (`PlanEvaluationService`,
   decisão D110 da remodelagem): avalia qualquer sequência de 3 culturas do `culturas.yaml` (o pousio
   vale) com a conta do motor (`RecommendationService.recommend`, a mesma faixa e o mesmo solo; nada é
-  recalculado fora dele), ~0,3 s na fazenda da UFU, sem cache HTTP. Sem 3 culturas ou com cultura
+  recalculado fora dele), ~0,3 s na lavoura de demonstração, sem cache HTTP. Sem 3 culturas ou com cultura
   desconhecida: 422 `VALIDATION_ERROR`; ponto sem dados: 404 `OUTSIDE_AREA`. Devolve:
   - `anos[]`: `cultura`, `nome`, `na_janela`, `anos_bons`, `total_anos`, `futuro_anos_bons`, `sede`,
     `cobre_terra` (palhada > 0), `deixa_nitrogenio` (`n_deixado_kg` > 0), `quebra_nematoide`

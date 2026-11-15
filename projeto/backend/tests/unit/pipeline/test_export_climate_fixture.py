@@ -1,12 +1,17 @@
 """Unit tests do pipeline que gera o arquivo de clima da fazenda de exemplo."""
 
+import json
 from datetime import date, timedelta
+from pathlib import Path
 
 import pytest
 
 from pipeline.export_climate_fixture import build_climate_fixture, power_cell_bounds
 
 LAT, LON = -18.9543, -48.1993
+FIXTURE_PATH = (
+    Path(__file__).resolve().parents[3] / "app" / "fixtures" / "clima_fazenda_exemplo.json"
+)
 
 
 def _daily(year: int, days: int, rain: float = 1.0) -> list[dict]:
@@ -45,6 +50,16 @@ def test_should_build_one_season_per_year_from_january_to_july() -> None:
     assert fixture["fonte"] == "nasa_power"
     assert fixture["ponto"] == {"lat": LAT, "lon": LON}
     assert fixture["cobertura"] == power_cell_bounds(LAT, LON)
+
+
+def test_should_describe_the_demo_field_like_the_fixture_shipped_with_the_api() -> None:
+    # O ponto fica perto da Fazenda do Glória, mas não garantidamente dentro dela: a descrição usa
+    # o nome da lavoura de demonstração, igual à do arquivo que vai junto com a API.
+    fixture = build_climate_fixture(_daily(2005, 365), lat=LAT, lon=LON)
+    shipped = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+
+    assert "lavoura de demonstração, perto de Uberlândia (MG)" in fixture["descricao"]
+    assert fixture["descricao"] == shipped["descricao"]
 
 
 def test_should_skip_year_without_full_january_to_july_window() -> None:

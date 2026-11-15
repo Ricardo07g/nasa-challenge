@@ -201,8 +201,12 @@ def test_should_raise_not_found_for_a_year_without_data_at_the_point() -> None:
 
 
 def test_should_raise_outside_area_for_a_point_without_data() -> None:
-    with pytest.raises(OutsideAreaError):
+    with pytest.raises(OutsideAreaError) as error:
         _service().replay(lat=-23.55, lon=-46.63, ano=2024)
+
+    assert str(error.value) == (
+        "Ainda não temos dados preparados para esse ponto. Veja a lavoura de demonstração."
+    )
 
 
 def test_should_fetch_a_new_cell_on_demand_before_the_replay() -> None:

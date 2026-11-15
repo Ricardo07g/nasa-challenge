@@ -90,7 +90,7 @@ terra melhor, e isso já pesa no eixo do solo. Nenhum preço, custo ou produtivi
 - Um teste de rota confere que nem `R$`, nem `dinheiro`, `margem_ha`, `pior_ano_seco_ha`,
   `custo_semente_ha` ou `mais_dinheiro` aparecem no JSON (pt e en, nas duas rotas).
 
-## 4. A melhor opção da fazenda da UFU (−18,9543 / −48,1993), antes e depois
+## 4. A melhor opção da lavoura de demonstração (−18,9543 / −48,1993), antes e depois
 
 Banco local (IMERG + POWER, SMAP, CMIP6) e os arquivos de `data/baixados`, medido em 15/11/2026:
 
@@ -171,7 +171,7 @@ Banco local (IMERG + POWER, SMAP, CMIP6) e os arquivos de `data/baixados`, medid
 - **Pesos:** com a renda igual à segurança para quem dá grão, a segurança climática pesa duas vezes
   nessas opções (30% + 30%). A regra pedida mantém os eixos e os pesos; a agrônoma e o time podem
   querer rever o peso da renda.
-- **Repetição no plano:** o Plano A da colheita cedo da UFU repete o milho com braquiária nos 3 anos.
+- **Repetição no plano:** o Plano A da colheita cedo da lavoura de demonstração repete o milho com braquiária nos 3 anos.
   A saúde da terra da rotação (seção 5b) vai mostrar a repetição como fato; a regra do plano não muda
   aqui.
 - **Nota fixa sem grão:** 0 (o PRD 5 já dizia renda 0 para as coberturas). Uma nota maior faria as

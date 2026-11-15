@@ -73,10 +73,10 @@ fica na página inicial do Guia.
 
 - A área (`PILOT_*`), o `GET /api/area-piloto` e o bloqueio do "Confirmar local" fora dela.
 - Backend: as mensagens 404 `OUTSIDE_AREA` ("Ainda não temos dados preparados para esse ponto. Veja a
-  fazenda de exemplo.") e o `GET /api/metodo` não descrevem a área. A mensagem 422 dos relatos da
+  lavoura de demonstração.") e o `GET /api/metodo` não descrevem a área. A mensagem 422 dos relatos da
   comunidade fora da área ("O ponto fica fora da área piloto (região de Uberlândia e Uberaba).") já
   diz a área certa e o front não a mostra (usa o próprio texto pelo `code`).
-- A fazenda de exemplo (UFU, Uberlândia) e os textos que falam do Triângulo como região do problema.
+- A fazenda de exemplo (lavoura de demonstração, perto de Uberlândia) e os textos que falam do Triângulo como região do problema.
 
 ## 4. Testes (TDD)
 

@@ -1,8 +1,9 @@
 import type { Ponto } from './talhao'
 
 /**
- * Fazenda de exemplo (RF-11): campo de soja de 48 ha da Fazenda Experimental do Glória (UFU), Uberlândia.
- * 18°57'15.6"S 48°11'57.4"O, segundo TCC do ICIAG-UFU (2026). Área pública, sem dado de produtor.
+ * Fazenda de exemplo (RF-11): na tela, "Lavoura de demonstração, perto de Uberlândia (MG)" (tarefa 0053).
+ * Um dos 4 pontos com histórico de NDVI; fica perto da Fazenda do Glória, mas não garantidamente dentro
+ * dela (por isso o nome não cita a dona da área). Sem nome nem dado de produtor.
  */
 export const EXAMPLE_FARM: Ponto = { lat: -18.9543, lon: -48.1993 }
 

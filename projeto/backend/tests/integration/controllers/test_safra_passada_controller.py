@@ -106,6 +106,7 @@ def test_should_return_404_outside_area_for_a_point_without_data(client: TestCli
     assert response.status_code == 404
     assert response.headers["content-type"] == PROBLEM_JSON_MEDIA_TYPE
     assert response.json()["code"] == "OUTSIDE_AREA"
+    assert response.json()["detail"].endswith("Veja a lavoura de demonstração.")
 
 
 @pytest.mark.parametrize(

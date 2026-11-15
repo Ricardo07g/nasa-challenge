@@ -96,11 +96,11 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D52 | 15/11 | Tela: o resumo de plantio usa a safra mais recente com relatos; a chuva é a média dos relatos de hoje e dos 6 dias anteriores; o selo "Exemplo" vai em cada linha do resumo que tem algum relato de exemplo e em cada evento. Mapa: etiqueta com ícone e número por tipo, legenda em texto e a lista completa para o leitor de tela; abre enquadrando o círculo de 30 km. | Etiquetas com o texto inteiro se sobrepunham no celular (células a ~10 km); o nome de cada ícone fica na legenda, então nada depende só de cor. |
 | D53 | 15/11 | i18n só com acréscimos no bloco `community`; as chaves da comunidade simulada ficaram (a página `/design-system` ainda usa algumas). O RF novo é o RF-28; se outra seção também pegar o RF-28, renumerar no merge (como no D13). | Regra de só acrescentar com a S3 rodando em paralelo. |
 | D54 | 15/11 | Migração `3f7c2a9d4e81` revisa a `6e961f333ddc`. Se outra seção criar migração com a mesma base, o merge deixa duas cabeças no Alembic: a segunda a entrar passa a revisar a outra. O teste antigo da R1.6 passou a descer até a migração inicial (não mais `downgrade -1`). | O `alembic upgrade head` falha com duas cabeças; melhor resolver no merge do que travar as seções. |
-| D55 | 15/11 | O raio-X é um endpoint novo, `GET /api/raio-x?lat&lon[&colheita][&solo][&confirmadas]`, e não campos do `/talhao`. | Ele roda o motor uma vez (a melhor opção vai no bloco da água e no cartão dos 20 anos), ~0,5 s na UFU; o `/talhao`, pedido já na tela 2, continua leve (mesmo motivo do D34). |
+| D55 | 15/11 | O raio-X é um endpoint novo, `GET /api/raio-x?lat&lon[&colheita][&solo][&confirmadas]`, e não campos do `/talhao`. | Ele roda o motor uma vez (a melhor opção vai no bloco da água e no cartão dos 20 anos), ~0,5 s na lavoura de demonstração; o `/talhao`, pedido já na tela 2, continua leve (mesmo motivo do D34). |
 | D56 | 15/11 | A tela 4 pede o raio-X sem as safras confirmadas; a faixa de calor junta o NDVI do raio-X com o histórico do `/talhao` já com as respostas do produtor (no front). | Confirmar uma safra não recarrega o painel (o mesmo do talhão, tarefa 0039); as confirmações só mudam a frase do "Por quê?", não a melhor opção do motor. |
 | D57 | 15/11 | "Aguenta cerca de N dias sem chuva na floração" = ⌊CAD ÷ (ETo média do motor nos dias da janela do aperto, floração ± 15 dias, nos 20 anos × `kc_pico`)⌋ da melhor opção do motor, arredondado para baixo. Vale também para a cobertura (floração estimada); no pousio, só a CAD. **A revisar.** | É a conta do pedido com os números do motor; arredondar para baixo não promete água que a terra não tem. |
 | D58 | 15/11 | Célula sem solo: o raio-X usa o ponto gravado mais perto, de qualquer célula, até 15 km (`raio_x.solo_vizinho_max_km`), e diz a distância; o motor continua só com o solo da célula (ou o padrão). A CAD do bloco 2 é a do solo mostrado ou, se o produtor trocou a terra, a da escolha dele (a do motor). | Pedido da seção 4; mudar o solo do motor mexeria em todas as telas. Na caixa, 2 das 225 células não têm solo (ex.: −19,75 / −47,95 usa o ponto a 10,5 km). |
-| D59 | 15/11 | Bloco 8: compara só células da caixa com a mesma fonte de chuva (IMERG) e com a janela inteira; diz "mais seca que X%" quando a maioria chove mais e "mais chuvosa que Y%" quando a maioria chove menos. Mínimo de 10 células. | A frase do pedido ("mais seca que X%") viraria "mais seca que 38%" na UFU, que lê como seca quando a área é das mais chuvosas. |
+| D59 | 15/11 | Bloco 8: compara só células da caixa com a mesma fonte de chuva (IMERG) e com a janela inteira; diz "mais seca que X%" quando a maioria chove mais e "mais chuvosa que Y%" quando a maioria chove menos. Mínimo de 10 células. | A frase do pedido ("mais seca que X%") viraria "mais seca que 38%" na lavoura de demonstração, que lê como seca quando a área é das mais chuvosas. |
 | D60 | 15/11 | Maior veranico: o dia seco é o dos avisos (menos de 1 mm); empate entre anos fica com o mais recente. | Uma regra só de dia seco; o ano mais recente é o que o produtor lembra. |
 | D61 | 15/11 | Faixa de calor: 14 colunas de 16 dias desde 1º/jan pelo dia do ano (o calendário do MODIS), Terra e Aqua juntos (fica o maior NDVI bom do intervalo); 5 cores que sempre escurecem, cortes 0,30 / 0,45 / 0,60 / 0,75 (0,45 e 0,60 são os do histórico do talhão), "sem leitura" listrado. "Colheita" = a coluna do dia em que a soja costuma secar (RF-16); sem ele, a entressafra começa em abril (janela do histórico) e não há marca de colheita. | Escala acessível sem depender de cor (legenda numérica e o resultado do ano escrito em cada linha). |
 | D62 | 15/11 | Título do histórico: "Na entressafra, sua área ficou parada em X de N anos.", com N = todos os anos (10); os anos sem certeza e sem soja vão numa linha embaixo. | Texto do pedido ("X de 10 anos"); antes o total eram só os anos certos. |
@@ -111,10 +111,10 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D67 | 15/11 | S5a: as abas mudam de nome e de ordem (Sugestão, Comparar, Plano de 3 anos), mas as URLs ficam (`/resposta`, `/opcoes`, `/plano`). | Links já compartilhados não quebram e a S5b trabalha nas mesmas rotas. |
 | D68 | 15/11 | A reordenação pelo objetivo é **no motor**: o `/recomendacao` traz `objetivos` (equilíbrio, segurança, renda e terra), cada um com a ordem das opções e o plano; o navegador só escolhe. Sem o campo (API antiga), o front reordena pelo eixo como antes. | O plano do objetivo usa a regra do PRD 7.7 (restrições, nematoide, bônus de diversidade), que só existe no backend; refazer no front duplicaria a regra. O RNF-02 continua: trocar de objetivo não pede nada à API. |
 | D69 | 15/11 | O objetivo vai na URL (`objetivo=` com `seguranca`, `renda` ou `terra`, pelo `flowParams`, segue em todas as telas); sem objetivo = equilíbrio (pesos padrão, a melhor opção do motor), e tocar de novo tira a escolha. Ordem = nota do eixo (segurança, renda ou solo), desempate pela final. | "Se mantém entre as abas" (pedido 5.1). A escolha nula preserva a melhor opção do motor como padrão. |
-| D70 | 15/11 | Plano de um objetivo: a melhor sequência do PRD 7.7 que começa pela 1ª da ordem, com a média da nota do eixo + o bônus de diversidade **sem o teto de 100** na comparação, desempate pela mesma conta com a nota final; **sem o pousio** nos objetivos. **A revisar.** | Com o teto, planos diferentes empatavam em 100; com o pousio (segurança 100, PRD 7.2), "mais segurança" sugeria deixar a terra parada no 3º ano (UFU, colheita meio), o que não é proteger a lavoura. |
-| D71 | 15/11 | O Plano A (`plano_3_anos.normal`) passou a ser o plano do equilíbrio: começa pela melhor opção. O Plano B continua livre. O sinal do outono usa esse Plano A. | "A sugestão é o ano 1 de uma rotação" (pedido 5). Na UFU, o Plano A não mudou em nenhuma faixa. |
+| D70 | 15/11 | Plano de um objetivo: a melhor sequência do PRD 7.7 que começa pela 1ª da ordem, com a média da nota do eixo + o bônus de diversidade **sem o teto de 100** na comparação, desempate pela mesma conta com a nota final; **sem o pousio** nos objetivos. **A revisar.** | Com o teto, planos diferentes empatavam em 100; com o pousio (segurança 100, PRD 7.2), "mais segurança" sugeria deixar a terra parada no 3º ano (lavoura de demonstração, colheita meio), o que não é proteger a lavoura. |
+| D71 | 15/11 | O Plano A (`plano_3_anos.normal`) passou a ser o plano do equilíbrio: começa pela melhor opção. O Plano B continua livre. O sinal do outono usa esse Plano A. | "A sugestão é o ano 1 de uma rotação" (pedido 5). Na lavoura de demonstração, o Plano A não mudou em nenhuma faixa. |
 | D72 | 15/11 | Linha Água: "ano seco" = o percentil 80 da falta (só 20% dos anos faltou mais), com a mesma interpolação da tela 3; `agua.percentil_seco` = 20. | O pedido diz "percentil 20 dos 20 anos"; para a falta (mais é pior), o percentil 20 seria um ano úmido. Mantém o sentido do ano seco da S3 (percentil 20 da chuva). |
-| D73 | 15/11 | Sede da cultura pelo consumo mediano no ciclo (ETc): pouca abaixo de 280 mm, muita de 325 mm para cima (hipótese do time, `regras.yaml`). | Na UFU: milho 332–359 mm, sorgo 289–316, crotalária 249–272, milheto 231–248, conforme a data de plantio; os cortes deixam a sede estável entre as faixas de colheita. |
+| D73 | 15/11 | Sede da cultura pelo consumo mediano no ciclo (ETc): pouca abaixo de 280 mm, muita de 325 mm para cima (hipótese do time, `regras.yaml`). | Na lavoura de demonstração: milho 332–359 mm, sorgo 289–316, crotalária 249–272, milheto 231–248, conforme a data de plantio; os cortes deixam a sede estável entre as faixas de colheita. |
 | D74 | 15/11 | "Deu certo" é explicado com o critério que vem da API (`criterio`: ISNA mínimo, 35 °C, **3 dias**, janela), não com o texto do pedido ("nenhum dia de 35 °C"). | Pedido da tarefa: usar o critério do motor (está nos números estranhos). A tela nunca repete número fixo. |
 | D75 | 15/11 | Explorador: a barra é o ISNA do motor (já limitado a 100%); o detalhe do ano abre na própria Sugestão, com o `ano` na URL, e pede a safra dia a dia ao `/api/safra-passada` com a `opcao` mostrada e a `colheita` da URL. `/safra-passada?…&ano=X` e `/relatorio` levam para `/resposta`. | "Reaproveite a tela `/safra-passada`": a linha do tempo, o service e o endpoint ficam, como parte do detalhe. Antes, o front não mandava a colheita (o replay era sempre do meio) nem a opção. |
 | D76 | 15/11 | El Niño / La Niña: a frase só aparece com pelo menos 5 anos da fase e 25 pontos percentuais de diferença contra os outros anos (neutros e a outra fase) (`enso_acerto`, hipótese do time). | O mínimo de 5 anos é o do sinal do outono; 25 pontos é ~2 anos de diferença em 7. |
@@ -141,7 +141,7 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D111 | 15/11 | Notas do plano: segurança climática e clima 2041–2060 = média das notas do motor só nos anos com lavoura na janela; saúde da terra = média da nota de solo dos 3 anos (PRD 7.4; pousio = 0) + o bônus de diversidade do PRD 7.7, até 100. **A revisar.** | O pousio tem segurança 100 (PRD 7.2) e subiria a nota do plano sem ter lavoura para proteger (o mesmo motivo do D70); na terra, o pousio conta como terra descoberta, e a diversidade da rotação é o que o pedido quer mostrar. |
 | D112 | 15/11 | Fatos da terra do plano: coberta = palhada > 0 no `culturas.yaml`; deixa nitrogênio = `n_deixado_kg` > 0; quebra o ciclo do nematoide = as supressoras do PRD 7.7 (`rotacao.culturas_supressoras_nematoide`: crotalária e milheto); repetida = a mesma cultura (sem o pousio) em mais de um ano. | Números e listas que já estão no `culturas.yaml` e no `regras.yaml`; o pousio repetido já aparece como terra descoberta. |
 | D113 | 15/11 | Chuva aproveitada: da semeadura do motor (colheita + 3 dias) até 31/jul (fim da série guardada; 30/jul nos anos bissextos), mediana dos anos. "Usa" = mediana da ETr do ciclo (`agua.usa_mm`, novo no `WaterNeedService`); a frase usa a média dos 3 anos do plano (pousio = 0). No pousio, só a chuva que cai sem cultura. Ano fora da janela: sem número e sem a média. | Texto do pedido ("Com a terra parada, X mm… Com o plano, a lavoura usa Y mm"), sem estimar a evaporação da terra; a ETr é a mesma conta da linha Água. |
-| D114 | 15/11 | Plano A = a cultura do 1º ano do plano que a tela mostra (o sugerido ou o editado). Plano B = a cultura na janela (sem o pousio) que mais deu certo nos anos em que a do Plano A falhou, com desempate pela nota final do motor; sem ela, a tela diz por quê (deixar parado, nunca falhou, nenhuma melhor). O `plano_3_anos.seco` do motor não muda e continua no sinal do outono. | O 1º ano do plano seco do motor era igual ao do Plano A nas 3 faixas da UFU ("Plano B: milho com braquiária, se secar" não diz nada); o Plano B segue o Plano A quando o produtor troca o ano 1. |
+| D114 | 15/11 | Plano A = a cultura do 1º ano do plano que a tela mostra (o sugerido ou o editado). Plano B = a cultura na janela (sem o pousio) que mais deu certo nos anos em que a do Plano A falhou, com desempate pela nota final do motor; sem ela, a tela diz por quê (deixar parado, nunca falhou, nenhuma melhor). O `plano_3_anos.seco` do motor não muda e continua no sinal do outono. | O 1º ano do plano seco do motor era igual ao do Plano A nas 3 faixas da lavoura de demonstração ("Plano B: milho com braquiária, se secar" não diz nada); o Plano B segue o Plano A quando o produtor troca o ano 1. |
 | D115 | 15/11 | "Secar" com número = menos de L mm de chuva nos 15 dias antes da semeadura (o que o produtor confere no pluviômetro). L é o limite que mais acerta os anos de falha da cultura do Plano A (acertos − alarmes falsos; empate = menos anos marcados). **Separa bem** = 3 anos de falha ou mais, pega 50% das falhas ou mais, 60% ou mais dos anos marcados são falha, e a chance de pegar tantas falhas marcando o mesmo número de anos ao acaso (hipergeométrica) é de 10% ou menos (grupo `plano_b`, hipótese do time). Senão, o Plano B aparece sem número. | O pedido manda não inventar. As três primeiras condições foram fixadas antes de olhar os dados; a da chance foi acrescentada depois de ver que o sorgo da colheita tarde passava nelas com um limite que o acaso explica em 18,5% das vezes (está em "O que não foi possível"). |
 | D116 | 15/11 | Saíram da tela do Plano: a escolha "Plano A / Plano B" da linha do tempo, a regra antiga da data (30 dias antes da data limite, 60% da média; tarefa 0038), o botão "Como teria sido em 2024?" e o estudo ilustrativo do ganho na soja (só no modo de demonstração). O cartão do sinal do outono (previsão do ENSO, motivo, SMAP de agora) ficou. O `regra_dia_plantar` segue na API, sem uso na tela. | O pedido troca o Plano A/B por uma frase cada, com o número derivado da série; o estudo não tinha fonte conferida. |
 | D117 | 15/11 | "Como é hoje": as 3 safras de `anos_confirmaveis` com o NDVI do `/talhao` e as confirmações da tela 4; "O que foi?" com as culturas do relato de plantio da S7 (sem "outra", com "Deixei parado") e os `QuestionChips` da S7. Ano parado vale "Deixei parado" sem perguntar (dá para trocar). A resposta fica na URL (`hoje=`) e não vira relato nem confirmação. Com as 3 conhecidas, "Como é hoje" = essas culturas com a faixa de colheita de agora; senão, a referência do motor (`plano_3_anos.hoje`) com o aviso. | Reaproveita a forma de perguntar da S7 (o pedido não quer uma terceira); "outra" o motor não sabe avaliar. |
@@ -159,7 +159,7 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D136 | 15/11 | S9: "quebra o ciclo do nematoide" = as supressoras do PRD 7.7 (`rotacao.culturas_supressoras_nematoide`: crotalária e milheto), na linha Terra e no Plano; os outros "não quebra". Os pontos de pragas da nota de solo (PRD 7.4) não mudam. **A revisar pela agrônoma.** | Uma regra só nas duas telas (pedido). O PRD 5 diz que sorgo e braquiária reduzem o reniforme: se a agrônoma quiser, a lista do YAML muda as duas telas juntas. |
 | D137 | 15/11 | S9: `verde.soja_vista` no raio-X, pela regra da faixa do histórico (`soy_harvest_date`: pico e colheita; sem série, o `vista` do mapa da soja recente). Sem soja, o rótulo é "Maior verde de janeiro a meados de março" (a janela do pico é 1/jan a 15/mar), com "O satélite não viu soja aqui". | O pedido diz "maior verde de jan–mar"; a janela real termina em 15/mar, e a frase diz isso. A mesma regra da faixa evita a tela dizer "sem soja" na faixa e "pico da soja" no bloco. |
 | D138 | 15/11 | S9: "Ver um exemplo pronto" (`/exemplo`) pede o talhão do exemplo e abre a resposta com a `colheita_sugerida.faixa` (sem ela ou com falha, `meio`). O `farmService` só usa a resposta pronta do `/exemplo` quando a faixa da URL é a dela e a terra não foi trocada; senão, `/recomendacao` do ponto do exemplo. | Com `colheita=meio` fixo, a URL dizia meio e a resposta era da faixa tarde (a do satélite). O segundo ajuste também corrige quem volta à tela 3 no exemplo e troca a faixa. |
-| D139 | 15/11 | S9: a missão cita a fonte de cada fase só com o dado no talhão e no sinal (SoilGrids só com o mapa de solos; SMAP do balde; chuva do GPM IMERG ou do NASA POWER, calor sempre do POWER; MODIS NDVI; NEX-GDDP-CMIP6; previsão da NOAA) e conta as opções da conta (as que cabem na janela + deixar parado: 6 no meio, 3 na tarde da UFU). O MCD64A1 entra nas `dados` do `/talhao` quando o arquivo cobre o ponto (pedido de ±0,5 km ao repository). | "Só as fontes realmente usadas e o número certo de opções" (pedido 9). O talhão é a lista de fontes que as telas já liam (D2); com o arquivo pronto às 05:56, o MCD64A1 aparece na missão e em "De onde vem cada dado". |
+| D139 | 15/11 | S9: a missão cita a fonte de cada fase só com o dado no talhão e no sinal (SoilGrids só com o mapa de solos; SMAP do balde; chuva do GPM IMERG ou do NASA POWER, calor sempre do POWER; MODIS NDVI; NEX-GDDP-CMIP6; previsão da NOAA) e conta as opções da conta (as que cabem na janela + deixar parado: 6 no meio, 3 na tarde da lavoura de demonstração). O MCD64A1 entra nas `dados` do `/talhao` quando o arquivo cobre o ponto (pedido de ±0,5 km ao repository). | "Só as fontes realmente usadas e o número certo de opções" (pedido 9). O talhão é a lista de fontes que as telas já liam (D2); com o arquivo pronto às 05:56, o MCD64A1 aparece na missão e em "De onde vem cada dado". |
 | D140 | 15/11 | S9: endpoint novo `GET /api/metodo` (`MethodService`, RF-33) com os números das regras que "Como a conta é feita" explica; a tela escreve uma frase por regra e nunca repete número. Schemas com o prefixo `Metodo`. Sai o cartão "Bateu com o que aconteceu? Em breve…" (IBGE). | "Com os números lidos do regras.yaml ou da API, nunca fixos na tela" (pedido da tarefa). O cartão "em breve" era promessa de algo não ligado (regra geral: só o que está ligado). |
 | D141 | 15/11 | S9: no celular, cada botão do `ChipGroup` cresce pelo tamanho do texto (`flex: 1 1 auto`, `white-space: nowrap`, respiro `--space-3`) e desce para a linha de baixo quando não cabe. Vale para todos os grupos de botões. | Em 390 px, "Cuidar da terra" e "Deixei parado" quebravam em 2 ou 3 linhas dentro do botão; agora "Mais segurança" e "Renda" ficam na 1ª linha e "Cuidar da terra" na 2ª, inteiro. |
 | D142 | 15/11 | S9: os 3 artigos que faltavam (erosão, plantio direto, sementes) saem como rascunho, com fontes abertas e conferidas em 15/11 (Embrapa 2019: terraços e plantio direto; Embrapa 2014: dia de campo do plantio direto; Lei 10.711/2003). No de sementes, germinação e vigor sem número nem norma: a IN MAPA 17/2017 é um PDF que não deu para abrir. | Regra do Guia: só fonte aberta; melhor dizer "pergunte ao vendedor" do que citar o que não foi lido. |
@@ -363,7 +363,7 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
 
 ### S3 — Quando você colhe (revisada em 15/11 ~02:58)
 
-- ✅ Dia da colheita no topo, preenchido com o dia do satélite (UFU: 25/02, fim de fevereiro ou março); "Não sei o dia exato" abre as 3 faixas; saiu "Colocar a data exata".
+- ✅ Dia da colheita no topo, preenchido com o dia do satélite (lavoura de demonstração: 25/02, fim de fevereiro ou março); "Não sei o dia exato" abre as 3 faixas; saiu "Colocar a data exata".
 - ✅ Sugestão = seleção: a faixa azul só diz "já deixamos esse dia" quando é verdade; regra única das faixas no `regras.yaml` (D31).
 - ✅ Chuva que sobra até 30/jun (mediana e ano seco, IMERG): "Colhendo em 25 de fevereiro, sobram em média 367 mm; num ano seco, 276 mm.", com a curva.
 - ✅ Chuva (IMERG) × gasto da lavoura (ETo do POWER) por mês; abril destacado com texto e contorno (90 × 109 mm).
@@ -384,10 +384,10 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
 ### S1 — Renda sem reais e sem "Ainda não conectado" (revisada em 15/11 ~02:11)
 
 - ✅ Nenhum `R$` na API (conferido no JSON de `/recomendacao` nos 3 cenários de colheita) nem no front (busca no código, fora dos testes).
-- ✅ "Renda" com fatos: "Dá grão para vender" ou "Não dá grão: é investimento na terra" e "Risco de perder a lavoura: faltou água ou fez calor em N de 20 anos" (na UFU, colheita meio: milho com braquiária, 4 de 20).
+- ✅ "Renda" com fatos: "Dá grão para vender" ou "Não dá grão: é investimento na terra" e "Risco de perder a lavoura: faltou água ou fez calor em N de 20 anos" (na lavoura de demonstração, colheita meio: milho com braquiária, 4 de 20).
 - ✅ Nota de renda sem preço nem custo, no grupo `renda` do `regras.yaml` (D14 a D16), explicada em "Como a conta é feita".
 - ✅ "Comece por um pedaço" saiu inteiro (D20). Nenhum selo "Ainda não conectado" na tela; só comentários no código citam a regra (D18, D19).
-- ⚠️ A melhor opção da UFU mudou com a renda nova: colheita cedo e meio passaram de milho sozinho para **milho com braquiária**; tarde continua milheto.
+- ⚠️ A melhor opção da lavoura de demonstração mudou com a renda nova: colheita cedo e meio passaram de milho sozinho para **milho com braquiária**; tarde continua milheto.
 - ⚠️ Ainda na tela até as próximas seções: o botão "Relatório para banco ou seguro" (sai na S5a) e "Como teria sido em 2024?" (sai na S5b).
 
 ### S8 — Guia (revisada em 15/11 ~01:47)
@@ -440,7 +440,7 @@ não feito. A linha diz o porquê; o detalhe está na revisão da seção e nas 
 - ⚠️ "Chuva que sobra depois da colheita" (mediana e ano seco, IMERG) com a frase: "em média" é a mediana, explicado na legenda (D37).
 - ✅ Chuva (IMERG) × ETo (POWER) por mês, com o mês em que a chuva fica menor (D39, D40).
 - ⚠️ Custo do atraso pelo motor: feito, mas a melhor cultura muda entre as faixas e a colheita tarde parece melhor (milheto 20 de 20; números estranhos).
-- ⚠️ Fim das chuvas com a regra do pedido: feito; a regra é sensível (16/mar a 22/jun na UFU), a calibrar pela agrônoma.
+- ⚠️ Fim das chuvas com a regra do pedido: feito; a regra é sensível (16/mar a 22/jun na lavoura de demonstração), a calibrar pela agrônoma.
 
 ### 4. O que o satélite viu (raio-X)
 
@@ -561,54 +561,54 @@ Os mesmos itens do histórico abaixo, agrupados, com o estado de cada um. O hist
 - Rótulos diferentes de chuva (85/60) e renda (70/30) na mesma opção ("Médio" × "Bom", "pouco risco" no Comparar).
 - "Deu certo" do pedido ("nenhum dia de 35 °C") × motor (3 dias ou mais).
 - Planos que repetem a mesma cultura (crotalária × 3, milho com braquiária × 3) e a saúde da terra que não pune a repetição.
-- Fim das chuvas sensível a um veranico em março ou a chuva fora de época (16/mar a 22/jun na UFU); maior veranico de março a maio que mede o começo da seca.
-- "Parado em 0 de 10 anos" na UFU e soja recente pegando pasto e cerrado verdes (96% da caixa).
-- Clima 2041–2060 muda pouco a falta de água e a nota de futuro sai igual à de segurança na UFU.
-- Plano B sem número em todas as faixas da UFU; queda do "deu certo" para 3 de 5 em 2020–2024.
+- Fim das chuvas sensível a um veranico em março ou a chuva fora de época (16/mar a 22/jun na lavoura de demonstração); maior veranico de março a maio que mede o começo da seca.
+- "Parado em 0 de 10 anos" na lavoura de demonstração e soja recente pegando pasto e cerrado verdes (96% da caixa).
+- Clima 2041–2060 muda pouco a falta de água e a nota de futuro sai igual à de segurança na lavoura de demonstração.
+- Plano B sem número em todas as faixas da lavoura de demonstração; queda do "deu certo" para 3 de 5 em 2020–2024.
 - SMAP "de agora" em novembro; POWER recente com 2 a 3 dias de atraso; calor de 35 °C em novembro fora da safrinha.
 - Bloco 8: 1,6% de chuva a mais vira "mais chuvosa que 62% da região" (a caixa é pouco variada).
 
 **Novos na S9**
 
-- **Fogo perto da fazenda da UFU:** com o MCD64A1, fogo a até 5 km em 5 de 10 anos (2016, 2018, 2019, 2020 e 2024). É muito para uma área experimental; o raio de 5 km pega pasto, cerrado e beira de estrada em volta. Vale a agrônoma olhar o raio (`alertas_area.fogo_raio_km`).
+- **Fogo perto da lavoura de demonstração:** com o MCD64A1, fogo a até 5 km em 5 de 10 anos (2016, 2018, 2019, 2020 e 2024). É muito; o raio de 5 km pega pasto, cerrado e beira de estrada em volta. Vale a agrônoma olhar o raio (`alertas_area.fogo_raio_km`).
 - **Sinal do outono "normal" nos 3 pontos de teste:** com El Niño de 98%, a melhor opção deu certo em 5 a 7 dos 7 anos de El Niño; nenhum ponto chega ao `seco`. Com o Plano B da tela (D131), o `seco` pede a cultura do Plano B melhor nesses anos.
 - **Colheita tarde e ponto da terra seca sem Plano B:** o milheto (tarde) e a crotalária (terra seca) nunca falharam na série; o sinal fica `normal` e o cartão diz que não há Plano B.
 
 ### Histórico (como anotado em cada seção)
 
 
-- **Renda e chuva com rótulos diferentes na mesma opção:** milho com braquiária na UFU (16 de 20) sai "Médio" na chuva e "Bom" na renda, porque os cortes são 85/60 na chuva e 70/30 na renda. A segurança pesa duas vezes para quem dá grão (segurança 30% + renda 30%).
-- **Plano A da UFU (colheita cedo e meio):** milho com braquiária em 2027 e 2028; e a regra da data diz "siga o plano B; o 1º ano continua com milho com braquiária", porque o 1º ano do Plano B é a mesma cultura. A frase fica estranha; a S5b refaz o Plano A/B.
-- **CMIP6 na UFU:** a nota de futuro sai igual à de segurança em todas as opções (os deltas não mudam nenhum ano de "deu certo" para "faltou" nesse ponto). Conferir na S4/S5a.
+- **Renda e chuva com rótulos diferentes na mesma opção:** milho com braquiária na lavoura de demonstração (16 de 20) sai "Médio" na chuva e "Bom" na renda, porque os cortes são 85/60 na chuva e 70/30 na renda. A segurança pesa duas vezes para quem dá grão (segurança 30% + renda 30%).
+- **Plano A da lavoura de demonstração (colheita cedo e meio):** milho com braquiária em 2027 e 2028; e a regra da data diz "siga o plano B; o 1º ano continua com milho com braquiária", porque o 1º ano do Plano B é a mesma cultura. A frase fica estranha; a S5b refaz o Plano A/B.
+- **CMIP6 na lavoura de demonstração:** a nota de futuro sai igual à de segurança em todas as opções (os deltas não mudam nenhum ano de "deu certo" para "faltou" nesse ponto). Conferir na S4/S5a.
 - **"Deu certo" no pedido × motor:** o pedido diz "nenhum dia de 35 °C nessa fase"; o motor (`regras.yaml`, `calor_min_dias`) conta aperto com **3 dias ou mais** de 35 °C na fase crítica. Os textos seguem o motor; mudar a regra é decisão da agrônoma.
 - **Soja recente (RF-24):** 96% dos pixels da caixa piloto têm pico de NDVI ≥ 0,70 em jan–mar de 2026 (pasto e cerrado também ficam verdes na chuva). O aviso do começo pega cidade, água e solo exposto, mas não distingue soja de pasto.
 - **Região pelo satélite calibrada (tarefa 0036):** depois de tirar cana, café e pasto, a soja do ano é 45–58% da lavoura, mas "parado" ainda fica entre 0,7% e 6% (plantou 72–96%). Só 2 de 10 anos passam no critério de crível combinado com o usuário (parado entre 5% e 80%), então a região continua escondida. Pode ser real (safrinha comum no Triângulo) ou mato que rebrota com a chuva de março.
-- **S1, fazenda da UFU (banco local):** a nota "futuro" (CMIP6) sai igual à "segurança" em todas as
+- **S1, lavoura de demonstração (banco local):** a nota "futuro" (CMIP6) sai igual à "segurança" em todas as
   opções nos 3 cenários de colheita (ex.: milho 90/90, 80/80). Os deltas do CMIP6 não mudam nenhum ano
   de "deu certo" para "faltou" nesse ponto; vale conferir na S4/S5a (linha "Clima 2041–2060").
-- **S1, Plano A da colheita cedo na UFU:** com a renda nova, milho com braquiária nos 3 anos (nota 85,0
+- **S1, Plano A da colheita cedo na lavoura de demonstração:** com a renda nova, milho com braquiária nos 3 anos (nota 85,0
   contra 84,7 com crotalária no 3º ano). O PRD 7.7 não pune repetição; a S5b mostra a repetição como fato.
-- **S3, custo do atraso na UFU parece "premiar" a colheita tarde:** cedo, milho com braquiária deu certo
+- **S3, custo do atraso na lavoura de demonstração parece "premiar" a colheita tarde:** cedo, milho com braquiária deu certo
   em 18 de 20; meio, milho com braquiária, 16 de 20; tarde, **milheto, 20 de 20**. A melhor muda para uma
   cobertura, que tem outro critério de "deu certo" (ISNA 0,50 nos primeiros 30 dias, contra 0,55 na
   floração do grão). A frase diz a cultura de cada faixa, mas a leitura rápida é "colher tarde é melhor".
   Vale decidir (agrônoma/produto) se o custo do atraso deve comparar a mesma cultura nas três faixas.
-- **S3, fim das chuvas na UFU vai de 16/mar (2021) a 22/jun (2012)**, com a mediana em 21/abr. A regra pega
+- **S3, fim das chuvas na lavoura de demonstração vai de 16/mar (2021) a 22/jun (2012)**, com a mediana em 21/abr. A regra pega
   o primeiro trecho de 20 dias com menos de 10 mm a partir de 1º/mar: um veranico em março já conta como
   fim (2005: 26/mar, apesar de 94 mm em maio e junho), e uma chuva fora de época empurra o fim (2012: 108 mm
   em maio e junho, fim em 22/jun). O IMERG da célula confirma a chuva; o número é real, mas a regra é
   sensível. Cabe à agrônoma calibrar (ex.: exigir também pouca chuva nos 30 dias seguintes).
 - **S3, "em média" é a mediana:** o texto pedido diz "sobram em média X mm", e o número é a mediana (367 mm
-  em 25/fev na UFU). A legenda explica; se preferirem a média de verdade, é uma linha no service.
-- **S3, dia sugerido na UFU é 25/fev** (10 anos de NDVI), na faixa "fim de fevereiro ou março". O MOD13Q1 é
+  em 25/fev na lavoura de demonstração). A legenda explica; se preferirem a média de verdade, é uma linha no service.
+- **S3, dia sugerido na lavoura de demonstração é 25/fev** (10 anos de NDVI), na faixa "fim de fevereiro ou março". O MOD13Q1 é
   de 16 dias (Terra e Aqua defasados em 8): o dia é a data da composição em que o NDVI caiu, não o dia exato
   da colheita. Com a regra nova (D31), um ponto com mediana em 21 ou 22/fev passa de "meio" para "tarde".
-- **S5a, falta água mesmo chovendo mais do que a planta precisa:** na UFU, colheita meio, o milho com
+- **S5a, falta água mesmo chovendo mais do que a planta precisa:** na lavoura de demonstração, colheita meio, o milho com
   braquiária precisa de 346 mm no ciclo, costuma chover 400 mm e ainda faltam 116 mm (158 num ano seco). A
   chuva se concentra em fevereiro e março, a terra só guarda 60 mm (solo argiloso) e o excesso escorre; no fim
   do ciclo (abril a junho) falta. É a conta do balde do PRD 7.2; a tela explica numa frase.
 - **S5a, explorador "achatado" nas coberturas:** milheto e crotalária têm ISNA de 1,0 em todos os 20 anos na
-  UFU (a fase crítica da cobertura são os 30 primeiros dias, os mais chuvosos), então todas as barras ficam no
+  lavoura de demonstração (a fase crítica da cobertura são os 30 primeiros dias, os mais chuvosos), então todas as barras ficam no
   topo. O "deu certo" delas quase só depende do calor. O mesmo motivo põe a crotalária em 1º no "Mais
   segurança" (19 de 20, contra 16 de 20 do milho com braquiária no meio): critérios diferentes para grão e
   cobertura (como no custo do atraso da S3).
@@ -618,27 +618,28 @@ Os mesmos itens do histórico abaixo, agrupados, com o estado de cada um. O hist
 - **S5a, sede da crotalária perto do corte:** 272 mm na colheita cedo contra o corte de 280 mm; a sede pode
   virar "média" em outro ponto ou com outro solo. Os cortes são hipótese do time (D73).
 - **S5a, planos dos objetivos repetem a cultura:** renda = milho com braquiária nos 3 anos; terra =
-  crotalária nos 3 anos (UFU, meio). O PRD 7.7 não pune repetição; a S5b mostra a repetição como fato.
-- **S5a, El Niño / La Niña:** a frase não aparece para a melhor opção em nenhuma faixa na UFU; aparece para o
+  crotalária nos 3 anos (lavoura de demonstração, meio). O PRD 7.7 não pune repetição; a S5b mostra a repetição como fato.
+- **S5a, El Niño / La Niña:** a frase não aparece para a melhor opção em nenhuma faixa na lavoura de demonstração; aparece para o
   sorgo (meio: El Niño 4 de 7 contra 11 de 13; tarde: La Niña 6 de 8 contra 5 de 12). Em La Niña o sorgo da
   colheita tarde se sai **melhor** que nos outros anos: são poucos anos, a tela diz isso.
 
-- **S4, histórico da UFU: parada em 0 de 10 anos.** O NDVI depois da colheita fica entre 0,7 e 0,9 em abril e
+- **S4, histórico da lavoura de demonstração: parada em 0 de 10 anos.** O NDVI depois da colheita fica entre 0,7 e 0,9 em abril e
   maio todos os anos (a faixa de calor mostra isso): o pixel plantou (ou tem capim) em todas as
-  entressafras de 2017 a 2026. Pode ser real (área experimental), mas vale conferir com o ICIAG-UFU.
-- **S4, região na UFU:** 330,7 mm de março a maio contra a mediana da caixa de 325,6 mm (1,6% a mais), e a
+  entressafras de 2017 a 2026. Pode ser real (o ponto fica perto da Fazenda do Glória, área experimental, mas não
+  garantidamente dentro dela); vale conferir no campo.
+- **S4, região na lavoura de demonstração:** 330,7 mm de março a maio contra a mediana da caixa de 325,6 mm (1,6% a mais), e a
   frase diz "mais chuvosa que 62% da região". A caixa é pouco variada nessa época: a porcentagem parece
   maior que a diferença em mm (o bloco escreve os mm logo depois).
-- **S4, chuva forte na UFU:** 5 dias com 50 mm ou mais em fevereiro e março em 20 anos = 0,25 dia por ano,
+- **S4, chuva forte na lavoura de demonstração:** 5 dias com 50 mm ou mais em fevereiro e março em 20 anos = 0,25 dia por ano,
   que a tela escreve "0,3 dia por ano" (o pedido pede a média por ano). "5 dias em 20 anos", que a frase
   também diz, é mais fácil de ler.
-- **S4, maior veranico na UFU: 43 dias, a partir de 19/abr/2024.** De março a maio, o trecho seco mais
+- **S4, maior veranico na lavoura de demonstração: 43 dias, a partir de 19/abr/2024.** De março a maio, o trecho seco mais
   longo quase sempre é o começo da seca no fim de abril e em maio, não um veranico dentro da época de
   chuva. O número é real (IMERG), mas a janela do pedido mistura as duas coisas.
-- **S4, água que a terra guarda depende da faixa de colheita:** na colheita tarde (a do satélite na UFU) a
+- **S4, água que a terra guarda depende da faixa de colheita:** na colheita tarde (a do satélite na lavoura de demonstração) a
   melhor opção é milheto (Kc 1,0, 16 dias); no cedo e no meio, milho com braquiária (Kc 1,2, 13 dias). É
   o mesmo efeito do custo do atraso da S3 (a melhor cultura muda).
-- **S4, clima 2041–2060 na UFU:** chuva de março a maio +2,2% (2 de 3 modelos indicam mais chuva) e máxima
+- **S4, clima 2041–2060 na lavoura de demonstração:** chuva de março a maio +2,2% (2 de 3 modelos indicam mais chuva) e máxima
   +1,3 °C (3 de 3). Com chuva quase igual, combina com a nota "futuro" igual à "segurança" já anotada
   na S1.
 - **S4, "Umidade da terra agora" é de novembro:** o SMAP recente é de 10/11/2026 (percentil 59, "nesta
@@ -656,14 +657,14 @@ Os mesmos itens do histórico abaixo, agrupados, com o estado de cada um. O hist
 - **S5a, plano "Cuidar da terra" na fazenda: crotalária nos 3 anos.** Repetir a mesma cobertura três vezes
   vai contra a diversidade que o próprio PRD 7.7 premia na rotação; o plano de renda repete milho com
   braquiária. Vale a S5b (plano editável) e a agrônoma olharem.
-- **S6, falta de água no ciclo é grande na UFU:** milho com braquiária, 101,6 mm por ano em 2005–2019 e 177,4 mm
+- **S6, falta de água no ciclo é grande na lavoura de demonstração:** milho com braquiária, 101,6 mm por ano em 2005–2019 e 177,4 mm
   em 2020–2024. O ciclo (18/fev + 120 dias = 18/jun) entra na seca, então a conta junta a falta do fim do ciclo,
   quando o grão já está formado; o "deu certo" olha só a fase crítica. Vale comparar com a linha "Água" da S5a.
-- **S6, "deu certo" caiu de 13 de 15 para 3 de 5 na UFU** (milho com braquiária), e no ponto da terra seca de 15 de
+- **S6, "deu certo" caiu de 13 de 15 para 3 de 5 na lavoura de demonstração** (milho com braquiária), e no ponto da terra seca de 15 de
   15 para 3 de 5 (milheto). São 5 anos: a frase diz que é pouco, mas a queda chama a atenção.
-- **S6, El Niño na UFU:** milho com braquiária deu certo em 5 de 7 anos de El Niño e em 11 de 13 nos outros (71% ×
+- **S6, El Niño na lavoura de demonstração:** milho com braquiária deu certo em 5 de 7 anos de El Niño e em 11 de 13 nos outros (71% ×
   85%). Com 7 anos, 1 ano a mais muda a leitura.
-- **S6, maior veranico de março a maio subiu de 20,8 para 27,2 dias na UFU, e o fim das chuvas veio 11 dias mais
+- **S6, maior veranico de março a maio subiu de 20,8 para 27,2 dias na lavoura de demonstração, e o fim das chuvas veio 11 dias mais
   cedo (24/abr → 13/abr):** os dois medem quase a mesma coisa (o começo da seca cai dentro da janela de março a
   maio, como já anotado na S4).
 - **S6, POWER recente com atraso:** em 15/11, o último dia com dado no POWER é 12/11; 13 e 14/11 voltam −999. A
@@ -671,9 +672,9 @@ Os mesmos itens do histórico abaixo, agrupados, com o estado de cada um. O hist
 - **S6, calor em novembro:** no ponto −19,55 / −48,95, 5 dias de 35 °C ou mais de 3 a 12/11, e o aviso de calor
   aparece fora da safrinha. O "o que fazer" ficou condicional ("Se a lavoura estiver na floração…").
 - **S6, terra seca:** só 3 das 225 células têm o SMAP de 10/11 no percentil 20 ou menos, todas no sudoeste da caixa
-  (−19,55 / −48,95: 15,3). A UFU está no 59,3.
+  (−19,55 / −48,95: 15,3). A lavoura de demonstração está no 59,3.
 
-- **S5b, Plano B sem número em todas as faixas da UFU:** na colheita meio, as 4 falhas do milho com braquiária
+- **S5b, Plano B sem número em todas as faixas da lavoura de demonstração:** na colheita meio, as 4 falhas do milho com braquiária
   tiveram 77, 102, 129 e 164 mm nos 15 dias antes de plantar, no meio dos anos bons (31 a 181 mm): nenhum limite acerta
   mais do que erra. A falha da safrinha vem da floração, ~2 meses depois do plantio; a chuva antes de plantar quase não
   diz nada sobre ela.
@@ -689,7 +690,7 @@ Os mesmos itens do histórico abaixo, agrupados, com o estado de cada um. O hist
   então as notas de hoje saem "Sem lavoura" e a terra 0, contra 85 / 53 / 85 do plano. A tela diz que é referência.
 - **S5b, sinal do outono × Plano A editado:** com sorgo no ano 1, a frase do sinal ainda fala do milho com braquiária (o
   Plano A sugerido); o Plano B da tela (crotalária) também não é o do sinal. Unificar na S9.
-- **S5b, na UFU o satélite viu plantio nas 3 últimas entressafras** (verde máximo 0,71, 0,80 e 0,89): a tela pergunta "O
+- **S5b, na lavoura de demonstração o satélite viu plantio nas 3 últimas entressafras** (verde máximo 0,71, 0,80 e 0,89): a tela pergunta "O
   que foi?" nos 3 anos. Coerente com o "parada em 0 de 10 anos" da S4.
 
 - **S5b, saúde da terra do plano editado:** sorgo, milheto e crotalária (nenhuma repetição, 2 anos que quebram o
@@ -746,7 +747,7 @@ Os mesmos itens do histórico abaixo, agrupados, com o estado de cada um. O hist
 
 - **S5a, irrigação (opcional da 5.3):** "Você irriga essa área?" atrás de uma opção desligada não foi feita
   (tempo); fica para a S5b ou depois. O "deu certo" não muda com ela.
-- **S5a, geada na UFU:** nenhum ano com mínima de 3 °C ou menos de maio a julho no POWER da célula; a linha
+- **S5a, geada na lavoura de demonstração:** nenhum ano com mínima de 3 °C ou menos de maio a julho no POWER da célula; a linha
   da geada não aparece na fazenda de exemplo (o código e os testes cobrem quando há).
 - **S5a, Comparar e Plano completos:** só ganharam o objetivo, a imagem da planta, o selo de sede e (no
   Comparar) a linha Água; o resto é da S5b. O "Como teria sido em 2024?" do Plano abre o detalhe de 2024 no
@@ -770,7 +771,7 @@ Os mesmos itens do histórico abaixo, agrupados, com o estado de cada um. O hist
 - **S3, o dia exato não sobrevive à volta da tela 4:** a URL guarda só a faixa (D33). Voltando, o campo traz
   o dia do satélite (se a faixa é a dele) ou fica vazio com a faixa marcada.
 - **S3, "Ver um exemplo pronto" continua com `colheita=meio` fixo** (`ExamplePage`), enquanto o `/exemplo`
-  recomenda com a faixa do satélite (tarde na UFU). Na tela 3 isso já não engana (D33), mas a resposta do
+  recomenda com a faixa do satélite (tarde na lavoura de demonstração). Na tela 3 isso já não engana (D33), mas a resposta do
   exemplo e a URL dizem faixas diferentes; fica para a S9 (consistência) ou para quem mexer no exemplo.
 - **Artigos do Guia:** com os dois da S3 e os dois da S4 (raio-X e fogo na palha), faltam 3: plantio direto,
   sementes e erosão (D9).

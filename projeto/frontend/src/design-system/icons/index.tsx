@@ -12,6 +12,7 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronRight,
   CircleCheck,
   CircleHelp,
   Clock,
@@ -31,10 +32,11 @@ import {
   LocateFixed,
   LockKeyhole,
   MapPin,
+  Maximize2,
   Minus,
   Plus,
+  Pointer,
   Satellite,
-  Search,
   Send,
   ShieldCheck,
   Snowflake,
@@ -236,11 +238,6 @@ export function SendIcon({ size = 18 }: IconProps) {
   return <Send size={size} {...decorative} />
 }
 
-// Busca de endereço (tela "Onde fica a lavoura")
-export function SearchIcon({ size = 20 }: IconProps) {
-  return <Search size={size} {...decorative} />
-}
-
 // Alertas da sua área (raio-X, tela 4, tarefa 0043)
 export function FrostIcon({ size = 20 }: IconProps) {
   return <Snowflake size={size} {...decorative} />
@@ -282,4 +279,20 @@ export function SparkleIcon({ size = 12 }: IconProps) {
 /** Clima do futuro (2041 a 2060) no modal "De onde vêm os dados". */
 export function ClockIcon({ size = 20 }: IconProps) {
   return <Clock size={size} {...decorative} />
+}
+
+// Tela "Onde fica a lavoura" (tarefa 0053)
+/** Seta do cartão "Usar a lavoura de demonstração". */
+export function ChevronRightIcon({ size = 16 }: IconProps) {
+  return <ChevronRight size={size} {...decorative} />
+}
+
+/** "Ver a área inteira": afasta o mapa até a área do MVP caber. */
+export function ExpandIcon({ size = 14 }: IconProps) {
+  return <Maximize2 size={size} {...decorative} />
+}
+
+/** Dica sobre o mapa: "Toque no mapa onde fica a lavoura". */
+export function TapIcon({ size = 15 }: IconProps) {
+  return <Pointer size={size} {...decorative} />
 }

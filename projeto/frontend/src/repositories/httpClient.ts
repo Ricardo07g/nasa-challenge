@@ -108,8 +108,8 @@ export type GetExternalJsonOptions = { signal?: AbortSignal }
 export type GetExternalJson = <T>(url: string, options?: GetExternalJsonOptions) => Promise<T>
 
 /**
- * GET num serviço público de fora do app, sem chave (hoje só a busca de endereço do Photon, tarefa
- * 0041). URL completa e o `signal` para cancelar o pedido anterior. Nunca mande segredo por aqui.
+ * GET num serviço público de fora do app, sem chave (hoje só o endereço aproximado do Photon, tarefa
+ * 0053). URL completa e o `signal` para cancelar o pedido anterior. Nunca mande segredo por aqui.
  */
 export async function getExternalJson<T>(url: string, options?: GetExternalJsonOptions): Promise<T> {
   const response = await fetch(url, { signal: options?.signal })

@@ -44,7 +44,7 @@ export { deviceRepository } from './deviceRepository'
 export const regionRepository = useHttp ? createHttpRegionRepository() : createMockRegionRepository()
 export const pastSeasonRepository = useHttp ? createHttpPastSeasonRepository() : createMockPastSeasonRepository()
 export const pilotAreaRepository = useHttp ? createHttpPilotAreaRepository() : createMockPilotAreaRepository()
-/** Busca de endereço: Photon de verdade com a API real; cidades de exemplo, sem rede, no modo mock. */
+/** Endereço aproximado do alfinete: Photon de verdade com a API real; cidades de exemplo, sem rede, no modo mock. */
 export const geocodingRepository = useHttp ? createPhotonGeocodingRepository() : createMockGeocodingRepository()
 export const custoAtrasoRepository = useHttp ? createHttpCustoAtrasoRepository() : createMockCustoAtrasoRepository()
 export const raioXRepository = useHttp ? createHttpRaioXRepository() : createMockRaioXRepository()

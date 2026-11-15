@@ -5,8 +5,15 @@ import { describe, expect, it, vi } from 'vitest'
 import { I18nProvider } from './i18n/I18nProvider'
 import { routes } from './routes'
 
-vi.mock('./design-system/components/MapPicker', () => ({
-  MapPicker: ({ label }: { label: string }) => <section aria-label={label} />,
+// O mapa real (Leaflet) é testado no design system; aqui, um toque num ponto fixo da área do MVP.
+vi.mock('./design-system/components/FieldMap', () => ({
+  FieldMap: ({ label, onPick }: { label: string; onPick: (point: { lat: number; lon: number }) => void }) => (
+    <section aria-label={label}>
+      <button type="button" onClick={() => onPick({ lat: -19.0, lon: -48.2 })}>
+        tocar no mapa
+      </button>
+    </section>
+  ),
 }))
 
 function renderAt(path: string, lang: 'pt' | 'en' = 'pt') {
@@ -66,17 +73,32 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })).toBeInTheDocument()
   })
 
-  it('na pergunta 1, busca o lugar, escolhe e "Confirmar local" leva à pergunta 2 (tarefa 0041)', async () => {
+  it('na pergunta 1, tocar no mapa e "Confirmar local" leva à pergunta 2 com o ponto na URL (tarefa 0053)', async () => {
     const router = renderAt('/onde')
 
-    await userEvent.type(await screen.findByRole('combobox', { name: 'Buscar cidade, estrada ou endereço' }), 'uberaba')
-    await userEvent.click(await screen.findByRole('option', { name: /Uberaba/ }))
+    await userEvent.click(await screen.findByRole('button', { name: 'tocar no mapa' }))
     const confirm = screen.getByRole('button', { name: 'Confirmar local' })
     await vi.waitFor(() => expect(confirm).toBeEnabled())
     await userEvent.click(confirm)
 
     await vi.waitFor(() =>
-      expect(`${router.state.location.pathname}${router.state.location.search}`).toBe('/quando?lat=-19.748&lon=-47.932'),
+      expect(`${router.state.location.pathname}${router.state.location.search}`).toBe('/quando?lat=-19&lon=-48.2'),
+    )
+  })
+
+  it('na pergunta 1, "Usar a lavoura de demonstração" e "Confirmar local" seguem com o exemplo=1', async () => {
+    const router = renderAt('/onde')
+
+    await userEvent.click(await screen.findByRole('button', { name: /Usar a lavoura de demonstração/ }))
+    expect(screen.getByRole('heading', { name: 'Lavoura de demonstração, perto de Uberlândia (MG)' })).toBeInTheDocument()
+    const confirm = screen.getByRole('button', { name: 'Confirmar local' })
+    await vi.waitFor(() => expect(confirm).toBeEnabled())
+    await userEvent.click(confirm)
+
+    await vi.waitFor(() =>
+      expect(`${router.state.location.pathname}${router.state.location.search}`).toBe(
+        '/quando?lat=-18.9543&lon=-48.1993&exemplo=1',
+      ),
     )
   })
 

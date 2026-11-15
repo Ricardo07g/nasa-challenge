@@ -1,6 +1,6 @@
 /**
- * Busca de endereço e área piloto de EXEMPLO (VITE_API_MODE=mock): sem rede, no mesmo contrato do
- * Photon e do `GET /api/area-piloto`. Só `repositories/index.ts` (e as fixtures) importam daqui.
+ * Endereço aproximado e área piloto de EXEMPLO (VITE_API_MODE=mock): sem rede, no mesmo contrato do
+ * `/reverse` do Photon e do `GET /api/area-piloto`. Só `repositories/index.ts` (e as fixtures) importam daqui.
  */
 import type { PilotArea } from '../../models/area'
 import type { PhotonFeature } from '../../models/place'
@@ -31,12 +31,6 @@ const PLACES: { name: string; state: string; lat: number; lon: number }[] = [
   { name: 'Brasília', state: 'Distrito Federal', lat: -15.794, lon: -47.882 },
 ]
 
-const normalize = (text: string) =>
-  text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-
 function toFeature(place: (typeof PLACES)[number], index: number): PhotonFeature {
   return {
     type: 'Feature',
@@ -60,14 +54,6 @@ function nearest({ lat, lon }: Ponto): number {
 
 export function createMockGeocodingRepository(delayMs = 150): GeocodingRepository {
   return {
-    async search(query) {
-      await delay(delayMs)
-      const wanted = normalize(query)
-      const features = PLACES.map(toFeature).filter((feature) =>
-        normalize(feature.properties.name ?? '').includes(wanted),
-      )
-      return { type: 'FeatureCollection', features }
-    },
     async reverse(point) {
       await delay(delayMs)
       const index = nearest(point)

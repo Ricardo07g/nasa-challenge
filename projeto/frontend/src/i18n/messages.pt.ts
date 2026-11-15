@@ -132,43 +132,61 @@ export const pt = {
   },
   where: {
     title: 'Onde fica a lavoura?',
-    mapLabel: 'Mapa para marcar a lavoura. Arraste o mapa ou o alfinete até a lavoura.',
-    near: (place: string) => `Perto de ${place}`,
-    searchLabel: 'Buscar cidade, estrada ou endereço',
-    searchHint: 'Também dá para colar as coordenadas, como -18.9543, -48.1993, ou um link do Google Maps.',
-    searchList: 'Lugares encontrados',
-    searching: 'Procurando…',
-    searchFound: (count: number) =>
-      count === 1
-        ? 'Achamos 1 lugar. Toque nele, ou use as setas e o Enter.'
-        : `Achamos ${count} lugares. Toque num deles, ou use as setas e o Enter.`,
-    searchEmpty: 'Não achamos esse lugar. Tente outro nome ou arraste o mapa.',
-    searchError: 'A busca não respondeu agora. Arraste o mapa ou cole as coordenadas.',
-    goToCoordinates: 'Ir para as coordenadas',
-    goToLink: 'Ir para o ponto do link',
-    shortLink:
-      'Esse é um link curto, e daqui não dá para ver o ponto dele. Abra o link no Google Maps, copie o endereço completo da barra do navegador e cole aqui. Ou cole as coordenadas do ponto.',
-    linkWithoutPoint:
-      'Não achamos as coordenadas nesse link. Cole o link completo do Google Maps ou as coordenadas, como -18.9543, -48.1993.',
-    invalidCoordinates: 'Essas coordenadas não existem. A latitude vai de -90 a 90, e a longitude, de -180 a 180.',
-    attribution: 'Endereços: © OpenStreetMap',
-    areaLegend: 'Linha tracejada: área com dados',
-    /** Tarefa 0051 (RF-35): sempre visível junto do mapa, e não só com o ponto fora da área. */
-    mvpNote:
-      'Nesta primeira versão, o app funciona na região de Uberlândia e Uberaba (linha tracejada). Vamos ampliar para todo o Triângulo Mineiro.',
+    lead: 'Toque no mapa em cima da sua lavoura.',
+    /** Resumo falado do "Ouvir resumo" (2 ou 3 frases, nunca a tela inteira). */
+    summary:
+      'Marque onde fica a sua lavoura. Toque no mapa, use onde você está agora ou a lavoura de demonstração. Nesta primeira versão, o app funciona na região de Uberlândia e Uberaba. Depois, toque em Confirmar local.',
+    listenSummary: 'Ouvir resumo',
+    stopListening: 'Parar',
+    close: 'Fechar',
+    mapLabel: 'Mapa. Toque para marcar a lavoura.',
+    pinLabel: 'Alfinete da lavoura. Arraste para ajustar.',
+    zoomIn: 'Aproximar',
+    zoomOut: 'Afastar',
+    hintEmpty: 'Toque no mapa onde fica a lavoura',
+    hintMarked: 'Arraste o alfinete para ajustar',
     showArea: 'Ver a área inteira',
+    /** Tarefa 0051 (RF-35): legenda da linha tracejada; o texto inteiro fica no modal "Onde o app funciona". */
+    areaLegend: 'Área do MVP: Uberlândia e Uberaba',
+    learnMore: 'Saiba mais',
+    /** Cartão do local: rótulo, título e texto de cada estado. */
+    emptyLabel: 'Sua lavoura',
+    emptyTitle: 'Nenhum ponto marcado',
+    emptyText: 'Toque no mapa, use onde você está agora ou a lavoura de demonstração.',
+    chosenLabel: 'Local escolhido',
+    outsideLabel: 'Fora da área',
+    near: (place: string) => `Perto de ${place}`,
+    demoName: 'Lavoura de demonstração, perto de Uberlândia (MG)',
+    gpsError: 'Não deu para achar onde você está. Toque no mapa ou use a lavoura de demonstração.',
     useLocation: 'Usar onde estou agora',
-    locating: 'Procurando onde você está…',
-    locationError: 'Não conseguimos achar onde você está. Arraste o mapa até a lavoura.',
-    help: 'Ou arraste o mapa até o alfinete ficar em cima da lavoura.',
-    selected: (coordinates: string) => `Local escolhido: ${coordinates}`,
+    locating: 'Procurando você…',
+    useDemo: 'Usar a lavoura de demonstração',
+    demoNear: 'Perto de Uberlândia (MG)',
+    otherWays: 'Outras formas de marcar',
     confirm: 'Confirmar local',
+    needPoint: 'Marque a lavoura no mapa para continuar.',
+    needInside: 'Escolha um ponto dentro da linha tracejada.',
+    /** Barra fixa do celular, com o ponto fora da área. */
+    outsideShort: 'Fora da área do MVP. Veja os detalhes abaixo.',
+    other: {
+      title: 'Outras formas de marcar',
+      subtitle: 'Para quem já tem a localização da lavoura.',
+      field: 'Coordenadas ou link do Google Maps',
+      example: 'Exemplos: -18.9543, -48.1993 ou um link copiado do Google Maps.',
+      error: 'Não entendi. Cole a latitude e a longitude, ou um link do Google Maps.',
+      submit: 'Usar este ponto',
+    },
+    area: {
+      title: 'Onde o app funciona',
+      text: 'Nesta primeira versão (MVP), o app funciona na região de Uberlândia e Uberaba (MG): é lá que os dados de satélite já estão prontos. Vamos ampliar para todo o Triângulo Mineiro.',
+      line: 'A linha tracejada no mapa mostra essa área.',
+    },
     outsideTitle: 'Ainda não chegamos aí',
     outsideText:
-      'Por enquanto, os dados estão prontos só para a região de Uberlândia e Uberaba. Vamos ampliar para todo o Triângulo Mineiro. Veja como funciona na fazenda de exemplo.',
+      'Por enquanto, os dados estão prontos só para a região de Uberlândia e Uberaba. Vamos ampliar para todo o Triângulo Mineiro. Veja como funciona na lavoura de demonstração.',
     outsideNotice:
       'Por enquanto só temos dados da região de Uberlândia e Uberaba. Vamos ampliar para todo o Triângulo Mineiro.',
-    seeExample: 'Ver a fazenda de exemplo',
+    seeExample: 'Ver a lavoura de demonstração',
   },
   when: {
     title: 'Quando você colhe a soja?',
@@ -336,7 +354,7 @@ export const pt = {
     },
     close: 'Fechar',
     loading: 'Buscando dados do satélite…',
-    error: 'Não conseguimos buscar os dados agora. Tente de novo ou veja a fazenda de exemplo.',
+    error: 'Não conseguimos buscar os dados agora. Tente de novo ou veja a lavoura de demonstração.',
     climateTitle: 'Clima dos próximos anos',
     /** O período vem do NEX-GDDP-CMIP6 em dados[] (2041–2060). */
     climateSubtitle: (start: string, end: string) => `Como a chuva e o calor devem mudar de ${start} a ${end}.`,
@@ -1060,7 +1078,7 @@ export const pt = {
       income: 'Renda',
       final: 'Final',
     },
-    exampleFarm: 'Fazenda de exemplo: área experimental da UFU, Uberlândia (MG).',
+    exampleFarm: 'Lavoura de demonstração, perto de Uberlândia (MG).',
     disclaimer: 'Apoio à decisão: confirme com o seu agrônomo antes de comprar a semente.',
   },
   guide: {

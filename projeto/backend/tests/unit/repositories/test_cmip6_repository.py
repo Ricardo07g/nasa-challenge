@@ -13,10 +13,10 @@ import pytest
 from app.models.data_run import DataRun
 from app.repositories.cmip6_repository import FileCmip6Repository
 
-# Célula do POWER (0,5° × 0,625°) da Fazenda do Glória (UFU) e a de baixo dela.
+# Célula do POWER (0,5° × 0,625°) da lavoura de demonstração e a de baixo dela.
 UFU_POWER_CELL = {"lat_min": -19.25, "lat_max": -18.75, "lon_min": -48.4375, "lon_max": -47.8125}
 SOUTH_POWER_CELL = {"lat_min": -19.75, "lat_max": -19.25, "lon_min": -48.4375, "lon_max": -47.8125}
-# Célula de 0,1° da fazenda (centro -18,95 / -48,15), dentro da célula do POWER da UFU.
+# Célula de 0,1° da fazenda (centro -18,95 / -48,15), dentro da célula do POWER da lavoura.
 UFU_CELL_ID = "-190_-482"
 
 

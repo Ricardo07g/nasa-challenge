@@ -61,7 +61,7 @@
 "geada": {"anos": 0, "total": 20, "tmin_max_c": 3.0, "meses": [5, 6, 7]}
 ```
 
-(números reais da fazenda da UFU, colheita meio). Sem CMIP6: `agua.futuro` e `clima_futuro` nulos. Sem o ONI: `enso_acerto` vazio. Sem opção na janela: `objetivos` vazio. `GET /api/safra-passada` ganhou `opcao` (opcional): o replay dessa opção, se ela couber na janela da faixa (senão, 404 `NOT_FOUND`).
+(números reais da lavoura de demonstração, colheita meio). Sem CMIP6: `agua.futuro` e `clima_futuro` nulos. Sem o ONI: `enso_acerto` vazio. Sem opção na janela: `objetivos` vazio. `GET /api/safra-passada` ganhou `opcao` (opcional): o replay dessa opção, se ela couber na janela da faixa (senão, 404 `NOT_FOUND`).
 
 ## 3. Regras (todas no service, números no `regras.yaml`)
 
@@ -110,7 +110,7 @@ Exceções: o teste dos anos embaixo do explorador (o vizinho do ano escolhido s
 
 Nada de rede: repositórios falsos no backend; no front, services e repositórios falsos. Dados de teste com valores redondos e fonte de teste.
 
-## 5. Números reais na fazenda da UFU (−18,9543 / −48,1993; banco local de revisão, IMERG em 20 de 20 anos, solo argiloso, CAD 60 mm)
+## 5. Números reais na lavoura de demonstração (−18,9543 / −48,1993; banco local de revisão, IMERG em 20 de 20 anos, solo argiloso, CAD 60 mm)
 
 | Colheita | Cultura | Precisa | Chove | Falta normal / seca | 2041–2060 (normal, faixa, mudança) | Sede |
 | --- | --- | --- | --- | --- | --- | --- |

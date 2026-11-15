@@ -343,7 +343,7 @@ def test_should_write_the_contract_file_that_the_api_reads(tmp_path: Path) -> No
     assert sorted(c["cell_id"] for c in payload["celulas"]) == [
         "-189_-482", "-190_-481", "-190_-482"
     ]  # fmt: skip
-    # Média do POWER nos 3 dias: (12 + 18) / 2 = 15 mm; IMERG na UFU: 1 + 2 + 3 = 6 mm.
+    # Média do POWER nos 3 dias: (12 + 18) / 2 = 15 mm; IMERG na lavoura: 1 + 2 + 3 = 6 mm.
     rain = FileRecentRainRepository(tmp_path / "chuva.json").get_recent_rain(*UFU)
     assert rain == RecentRain(chuva_mm=6.0, media_mm=15.0, dias=3, data=date(2027, 2, 28))
 

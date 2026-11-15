@@ -35,7 +35,7 @@
 
 ## 2. Contrato `GET /api/plano?lat&lon&anos=a,b,c[&colheita][&solo]`
 
-`anos`: 3 ids do `culturas.yaml` (o pousio vale), separados por vírgula. Sem 3 culturas ou com cultura desconhecida: 422 `VALIDATION_ERROR`. Ponto sem dados: 404 `OUTSIDE_AREA`. Faixa ou solo inválidos: 422 `INVALID_REQUEST`. Sem cache HTTP. Números reais da fazenda da UFU, colheita meio:
+`anos`: 3 ids do `culturas.yaml` (o pousio vale), separados por vírgula. Sem 3 culturas ou com cultura desconhecida: 422 `VALIDATION_ERROR`. Ponto sem dados: 404 `OUTSIDE_AREA`. Faixa ou solo inválidos: 422 `INVALID_REQUEST`. Sem cache HTTP. Números reais da lavoura de demonstração, colheita meio:
 
 ```json
 {
@@ -96,7 +96,7 @@ Exceções: os testes de "Como é hoje com a mesma cultura nos 3 anos", "terra p
 
 Nada de rede nem banco nos testes unitários: recommender, clima e repositories falsos no backend; services e repositories falsos no front.
 
-## 5. Números reais na fazenda da UFU (−18,9543 / −48,1993; banco de revisão, IMERG em 20 de 20 anos)
+## 5. Números reais na lavoura de demonstração (−18,9543 / −48,1993; banco de revisão, IMERG em 20 de 20 anos)
 
 | Colheita | Plano (sugerido) | Notas (seg / terra / 2041–2060) | Como é hoje (referência) | Chuva da semeadura a 31/jul | Usa (plano / hoje) | Plano A / B |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -110,7 +110,7 @@ Nada de rede nem banco nos testes unitários: recommender, clima e repositories 
   - tarde, sorgo (o 1º ano do plano "Renda"): 9 falhas; o melhor limite (100 mm) marca os 10 anos mais secos com 6 falhas: pega 67% das falhas e 60% dos marcados são falha (passa nas três primeiras condições), mas marcar 10 anos ao acaso pega 6 ou mais falhas em **18,5%** das vezes (> 10%). **Sem número.**
   - SMAP no dia de plantar (2016 em diante, 9 anos na série do motor): meio, as falhas tiveram 40%, 40% e 44% da água que a terra guarda, no meio dos anos bons (35% a 46%): também não separa (e o produtor não confere o SMAP no pluviômetro).
 - **Saúde da terra (meio):** terra coberta nos 3 anos, 1 ano com nitrogênio (crotalária), 1 que quebra o nematoide, repete milho com braquiária, +10 de diversidade (71,7). Hoje (milho sozinho × 3): 20.
-- **"Como é hoje" na UFU:** o satélite viu plantio nas 3 últimas entressafras (verde máximo 0,71 em 2024, 0,80 em 2025 e 0,89 em 2026); a tela pergunta "O que foi?" nos 3 anos e, sem resposta, usa a referência.
+- **"Como é hoje" na lavoura de demonstração:** o satélite viu plantio nas 3 últimas entressafras (verde máximo 0,71 em 2024, 0,80 em 2025 e 0,89 em 2026); a tela pergunta "O que foi?" nos 3 anos e, sem resposta, usa a referência.
 - **Tempo do `/api/plano`:** de 0,25 a 0,42 s (uma recomendação do motor por pedido); a tela pede o plano e o "Como é hoje".
 
 ## 6. Decisões
@@ -119,7 +119,7 @@ D110 a D122 em `projeto/backend/docs/remodelagem.md`.
 
 ## 7. Riscos e o que ficou de fora
 
-- **Plano B × sinal do outono:** o sinal (RF-20) continua com o `plano_3_anos` do motor (o Plano B dele começa igual ao A na UFU). A frase do sinal fala da cultura do Plano A sugerido mesmo quando o produtor troca o ano 1. Unificar na S9.
+- **Plano B × sinal do outono:** o sinal (RF-20) continua com o `plano_3_anos` do motor (o Plano B dele começa igual ao A na lavoura de demonstração). A frase do sinal fala da cultura do Plano A sugerido mesmo quando o produtor troca o ano 1. Unificar na S9.
 - **Irrigação** (opcional da 5.3) e o "[A] no lugar de [B] economiza N mm" do Comparar: não feitos.
 - **"Outra" cultura no "Como é hoje":** fora (o motor não avalia). Cultura respondida que não cabe na janela da faixa de agora entra sem números.
 - **Sem uso no front** (limpar na S9): `buildPlan`, `planSwaps`, `planSummary`, `initialScenario`, `plantingRule`, `optionsSummary`, `buildAnswer` (`recomendacaoRules.ts`), `optionsForObjective` (`suggestionService.ts`), `PAST_YEARS` e as chaves `plan.*` antigas. No backend, o `regra_dia_plantar` do sinal segue na API sem uso na tela.

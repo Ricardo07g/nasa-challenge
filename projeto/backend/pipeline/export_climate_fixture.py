@@ -23,7 +23,9 @@ POWER_LAT_STEP = 0.5  # grade do MERRA-2 usada pelo NASA POWER
 POWER_LON_STEP = 0.625
 MISSING_VALUE = -999.0
 FIELDS = {"chuva_mm": "PRECTOTCORR", "tmax_c": "T2M_MAX", "tmin_c": "T2M_MIN"}
-DEFAULT_LAT = -18.9543  # Fazenda Experimental do Glória (UFU), Uberlândia
+# Lavoura de demonstração, perto de Uberlândia (MG): fica perto da Fazenda do Glória, mas não
+# garantidamente dentro dela.
+DEFAULT_LAT = -18.9543
 DEFAULT_LON = -48.1993
 
 
@@ -70,7 +72,7 @@ def build_climate_fixture(
         "fonte": "nasa_power",
         "descricao": (
             "NASA POWER diário (PRECTOTCORR, T2M_MAX, T2M_MIN), 1/jan a 31/jul de cada ano, "
-            "para a célula do POWER da Fazenda Experimental do Glória (UFU), Uberlândia."
+            "para a célula do POWER da lavoura de demonstração, perto de Uberlândia (MG)."
         ),
         "ponto": {"lat": lat, "lon": lon},
         "cobertura": power_cell_bounds(lat, lon),

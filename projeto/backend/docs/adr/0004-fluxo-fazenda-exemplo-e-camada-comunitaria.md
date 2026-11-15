@@ -37,7 +37,7 @@ Durante a auditoria cruzada entre frontend, backend docs e protótipo, identific
      ```
    - No frontend:
      - A rota `/exemplo` faz o fetch de `GET /api/exemplo` quando a API estiver conectada, e utiliza o fallback offline de `fixtures.ts` caso o backend esteja indisponível.
-     - Redireciona o usuário para `/resposta?exemplo=true`, preenchendo todos os cards com a fazenda de exemplo: o campo de soja da Fazenda Experimental do Glória (UFU), em Uberlândia/MG (`-18.9543, -48.1993`).
+     - Redireciona o usuário para `/resposta?exemplo=true`, preenchendo todos os cards com a fazenda de exemplo: a lavoura de demonstração, perto de Uberlândia (MG) (`-18.9543, -48.1993`), que fica perto da Fazenda do Glória, mas não garantidamente dentro dela.
      - Isso garante demonstração perfeita tanto em ambiente integrado quanto em modo offline/apresentação (pitch dos juízes).
 
 2. **Isolamento da Camada Comunitária ("Perto de Você") como Mock no Frontend no MVP:**

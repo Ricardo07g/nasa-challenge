@@ -23,7 +23,7 @@ from tests.integration.db.support import Api
 
 pytestmark = pytest.mark.db
 
-# Fazenda do Glória (UFU): a célula está na cobertura da fixture do clima, que dá as temporadas.
+# Lavoura de demonstração: a célula está na cobertura da fixture do clima, que dá as temporadas.
 UFU = {"lat": -18.9543, "lon": -48.1993}
 UFU_CELL_ID = "-190_-482"
 

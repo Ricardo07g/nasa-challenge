@@ -195,7 +195,7 @@ Tabela no PostGIS:
 | `n_pixels` | int | 1342 |
 | `fonte_mascara` | text | `mapbiomas_2023` |
 
-No hackathon, calcular só para a região da fazenda de exemplo (UFU). Outras regiões entram quando o pipeline rodar por célula.
+No hackathon, calcular só para a região da fazenda de exemplo (a lavoura de demonstração, perto de Uberlândia). Outras regiões entram quando o pipeline rodar por célula.
 
 ## Contrato da API e onde entra em cada camada
 
@@ -291,7 +291,7 @@ Os limites 0,60 e 0,45 são ponto de partida, não verdade. A Embrapa já separo
 - [ ] Todos os testes da seção de testes passando, escritos antes do código.
 - [ ] `GET /api/talhao` da fazenda de exemplo devolve os 10 anos classificados, e a tela 4 troca o mock pelos dados da API.
 - [ ] Ano incerto aparece cinza com "?", e a linha "Visto pelo satélite MODIS (NASA)" aparece embaixo da faixa.
-- [ ] `GET /api/regiao` devolve os percentuais de 2015 a 2025 da região da UFU, e a tela 8 lê da API.
+- [ ] `GET /api/regiao` devolve os percentuais de 2015 a 2025 da região da lavoura de demonstração, e a tela 8 lê da API.
 - [ ] Calibração com pelo menos 5 talhões conhecidos, com o resultado anotado no PR.
 - [ ] `pytest`, `ruff check`, `ruff format --check`, `npm test`, `npm run lint` e `npm run build` passando.
 

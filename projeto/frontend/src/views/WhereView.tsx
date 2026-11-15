@@ -1,156 +1,220 @@
-import { Button } from '../design-system/components/Button'
-import { Card, IconBubble } from '../design-system/components/Card'
-import { PageHeading } from '../design-system/components/Content'
-import { MapPicker } from '../design-system/components/MapPicker'
-import { BackLink, QuestionStepper } from '../design-system/components/Navigation'
-import { PlaceSearch, type PlaceSearchOption } from '../design-system/components/PlaceSearch'
-import { CrosshairIcon, PinIcon } from '../design-system/icons'
+import { useId, type FormEvent } from 'react'
+import { Link } from 'react-router'
+import type { ListenSummaryState } from '../controllers/useListenSummary'
+import type { AreaInfoState, OtherWaysState } from '../controllers/useWhereController'
+import { FieldMap, type FieldMapView, type LatLon } from '../design-system/components/FieldMap'
+import { ListenSummary } from '../design-system/components/ListenSummary'
+import { Modal } from '../design-system/components/Modal'
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ChevronRightIcon,
+  CrosshairIcon,
+  HouseIcon,
+  PinIcon,
+} from '../design-system/icons'
 import { formatCoordinates } from '../i18n/format'
 import type { Messages } from '../i18n/messages.pt'
 import type { PilotArea } from '../models/area'
-import type { LocationNotice, LocationOption } from '../models/place'
 import type { Ponto } from '../models/talhao'
-import layout from './layout.module.css'
+import type { WhereStatus } from '../services/locationService'
 import styles from './WhereView.module.css'
-
-/** Página de direitos do OpenStreetMap (dados da busca de endereço do Photon). */
-const OSM_COPYRIGHT = 'https://www.openstreetmap.org/copyright'
 
 export type WhereViewProps = {
   t: Messages
-  center: Ponto
+  point: Ponto | null
+  /** O ponto é a lavoura de demonstração (o título é o nome dela, não o endereço). */
+  demo: boolean
+  /** Endereço aproximado do ponto (Photon) ou a cidade de referência. */
   place: string
   area: PilotArea | null
-  outside: boolean
+  status: WhereStatus
   canConfirm: boolean
-  locating: boolean
-  locationError: boolean
-  query: string
-  options: LocationOption[]
-  searchStatus: 'idle' | 'loading' | 'ready' | 'error'
-  notice: LocationNotice | null
-  onMove: (point: Ponto) => void
+  gps: 'idle' | 'locating' | 'error'
+  view: FieldMapView
+  listen: ListenSummaryState
+  other: OtherWaysState
+  areaInfo: AreaInfoState
+  onPick: (point: LatLon) => void
+  onUseDemo: () => void
   onUseLocation: () => void
+  onShowArea: () => void
   onConfirm: () => void
-  onQueryChange: (text: string) => void
-  onSelectOption: (option: LocationOption) => void
 }
-
-function optionView(w: Messages['where'], option: LocationOption): PlaceSearchOption {
-  if (option.kind === 'place') return { id: option.id, label: option.label, detail: option.detail }
-  const label = option.source === 'link' ? w.goToLink : w.goToCoordinates
-  return { id: option.id, label, detail: formatCoordinates(option.point) }
-}
-
-function statusText(w: Messages['where'], status: WhereViewProps['searchStatus'], found: number): string | null {
-  if (status === 'loading') return w.searching
-  if (status === 'error') return w.searchError
-  if (status === 'ready') return found === 0 ? w.searchEmpty : w.searchFound(found)
-  return null
-}
-
-const NOTICE_TEXT = {
-  'short-link': 'shortLink',
-  'link-without-point': 'linkWithoutPoint',
-  'invalid-coordinates': 'invalidCoordinates',
-} as const satisfies Record<LocationNotice, keyof Messages['where']>
 
 /**
- * Tela "Onde fica a lavoura?" (pergunta 1 de 2): busca de endereço (ou coordenadas e link colados),
- * mapa grande com o limite da área piloto e o endereço perto do alfinete, e o painel do ponto ao lado.
+ * Tela "Onde fica a lavoura?" (tarefa 0053). Computador: mapa à esquerda e painel de 380 px à direita
+ * (cartão do local, atalhos e "Confirmar local"). Celular: atalhos, mapa e cartão, com o Confirmar numa
+ * barra fixa no fim da tela. Coordenadas e link do Google Maps ficam no modal "Outras formas de marcar".
  */
-export function WhereView({
-  t,
-  center,
-  place,
-  area,
-  outside,
-  canConfirm,
-  locating,
-  locationError,
-  query,
-  options,
-  searchStatus,
-  notice,
-  onMove,
-  onUseLocation,
-  onConfirm,
-  onQueryChange,
-  onSelectOption,
-}: WhereViewProps) {
+export function WhereView(props: WhereViewProps) {
+  const { t, point, demo, place, area, status, canConfirm, gps, view, listen, other, areaInfo } = props
   const w = t.where
+  const ids = useId()
+  const labelId = `${ids}-rotulo`
+  const fieldId = `${ids}-campo`
+  const exampleId = `${ids}-exemplo`
+  const errorId = `${ids}-erro`
+
+  const title = demo ? w.demoName : w.near(place)
+  const cardLabel = status === 'outside' ? w.outsideLabel : status === 'marked' ? w.chosenLabel : w.emptyLabel
+  const reason = status === 'empty' ? w.needPoint : status === 'outside' ? w.needInside : ''
+  const barText = status === 'empty' ? w.needPoint : status === 'outside' ? w.outsideShort : title
   const bounds = area ? { south: area.min_lat, west: area.min_lon, north: area.max_lat, east: area.max_lon } : undefined
+
+  function submitOther(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    other.onSubmit()
+  }
+
   return (
-    <div className={layout.page}>
-      <div className={layout.topLine}>
-        <BackLink to="/">{t.nav.back}</BackLink>
-        <QuestionStepper current={1} total={2} label={t.stepper.label(1, 2)} />
-      </div>
-      <PageHeading title={w.title} />
-      <div className={styles.search}>
-        <PlaceSearch
-          label={w.searchLabel}
-          hint={w.searchHint}
-          listLabel={w.searchList}
-          value={query}
-          onChange={onQueryChange}
-          options={options.map((option) => optionView(w, option))}
-          onSelect={(id) => {
-            const option = options.find((item) => item.id === id)
-            if (option) onSelectOption(option)
-          }}
-          status={statusText(w, searchStatus, options.length)}
-          notice={notice ? w[NOTICE_TEXT[notice]] : null}
-          attribution={{ text: w.attribution, href: OSM_COPYRIGHT }}
+    <div className={styles.page}>
+      <Link to="/" className={styles.back}>
+        <ArrowLeftIcon size={18} />
+        {t.nav.back}
+      </Link>
+      <h1 className={styles.title}>{w.title}</h1>
+      <div className={styles.sub}>
+        <p>{w.lead}</p>
+        <ListenSummary
+          supported={listen.supported}
+          speaking={listen.speaking}
+          onToggle={listen.toggle}
+          label={w.listenSummary}
+          stopLabel={w.stopListening}
         />
       </div>
-      <div className={layout.mapGrid}>
-        <div className={layout.stack}>
-          <MapPicker
+
+      <div className={styles.grid}>
+        <div className={styles.mapBlock}>
+          <FieldMap
             label={w.mapLabel}
-            center={center}
-            placeLabel={w.near(place)}
+            point={point}
+            pinLabel={w.pinLabel}
             bounds={bounds}
-            boundsLabel={w.areaLegend}
-            boundsAction={w.showArea}
-            onMove={onMove}
+            hint={point ? w.hintMarked : w.hintEmpty}
+            legend={w.areaLegend}
+            legendAction={w.learnMore}
+            onLegendAction={areaInfo.onOpen}
+            fitLabel={w.showArea}
+            onFit={props.onShowArea}
+            zoomInLabel={w.zoomIn}
+            zoomOutLabel={w.zoomOut}
+            view={view}
+            onPick={props.onPick}
           />
-          {/* Tarefa 0051 (RF-35): o limite do MVP, sempre visível logo abaixo da legenda do mapa. */}
-          <p className={layout.muted}>{w.mvpNote}</p>
         </div>
-        <div className={layout.stack}>
-          <Card>
-            <IconBubble tone="blue">
-              <PinIcon />
-            </IconBubble>
-            <h2 className={layout.cardTitle} aria-live="polite">
-              {w.near(place)}
-            </h2>
-            <p className={layout.muted}>{w.selected(formatCoordinates(center))}</p>
-            <Button variant="outline-blue" icon={<CrosshairIcon />} onClick={onUseLocation} disabled={locating}>
-              {locating ? w.locating : w.useLocation}
-            </Button>
-            <p className={layout.muted}>{w.help}</p>
-            {locationError && (
-              <p role="alert" className={layout.notice}>
-                {w.locationError}
-              </p>
-            )}
-          </Card>
-          {outside && (
-            <Card tone="orange" as="section" aria-label={w.outsideTitle}>
-              <h2 className={layout.cardTitle}>{w.outsideTitle}</h2>
-              <p>{w.outsideNotice}</p>
-              <Button to="/exemplo" variant="outline">
-                {w.seeExample}
-              </Button>
-            </Card>
+
+        <section className={styles.card} data-status={status} aria-labelledby={labelId} aria-live="polite">
+          <div className={styles.cardTop}>
+            <span className={styles.cardIcon}>
+              <PinIcon size={20} />
+            </span>
+            <span id={labelId} className={styles.cardLabel}>
+              {cardLabel}
+            </span>
+          </div>
+          {point ? (
+            <>
+              <h2 className={styles.cardTitle}>{title}</h2>
+              <p className={styles.coordinates}>{formatCoordinates(point)}</p>
+            </>
+          ) : (
+            <>
+              <h2 className={styles.cardTitle}>{w.emptyTitle}</h2>
+              <p className={styles.cardText}>{w.emptyText}</p>
+            </>
           )}
-          <Button onClick={onConfirm} disabled={!canConfirm} icon={<PinIcon size={20} />}>
-            {w.confirm}
-          </Button>
+          {status === 'outside' && (
+            <div className={styles.outside}>
+              <b>{w.outsideTitle}</b>
+              <span>{w.outsideNotice}</span>
+            </div>
+          )}
+          {gps === 'error' && <p className={styles.gpsError}>{w.gpsError}</p>}
+        </section>
+
+        <div className={styles.shortcuts}>
+          <button
+            type="button"
+            className={styles.gps}
+            aria-busy={gps === 'locating'}
+            onClick={props.onUseLocation}
+          >
+            <CrosshairIcon size={19} />
+            <span>{gps === 'locating' ? w.locating : w.useLocation}</span>
+          </button>
+          <button type="button" className={styles.demo} onClick={props.onUseDemo}>
+            <span className={styles.demoIcon}>
+              <HouseIcon size={20} />
+            </span>
+            <span className={styles.demoText}>
+              <span className={styles.demoName}>{w.useDemo}</span>{' '}
+              <span className={styles.demoNear}>{w.demoNear}</span>
+            </span>
+            <span className={styles.demoArrow}>
+              <ChevronRightIcon size={16} />
+            </span>
+          </button>
+          <button type="button" className={styles.otherWays} aria-haspopup="dialog" onClick={other.onOpen}>
+            {w.otherWays}
+          </button>
+        </div>
+
+        <div className={styles.confirmBlock}>
+          <p className={styles.barLine} data-bar-line data-status={status} aria-hidden="true">
+            <PinIcon size={16} />
+            <span>{barText}</span>
+          </p>
+          <button type="button" className={styles.confirm} disabled={!canConfirm} onClick={props.onConfirm}>
+            <span>{w.confirm}</span>
+            <ArrowRightIcon size={18} />
+          </button>
+          <p className={styles.reason}>{reason}</p>
         </div>
       </div>
+
+      <Modal open={other.open} onClose={other.onClose} title={w.other.title} subtitle={w.other.subtitle} closeLabel={w.close}>
+        <form className={styles.form} noValidate onSubmit={submitOther}>
+          <label htmlFor={fieldId} className={styles.fieldLabel}>
+            {w.other.field}
+          </label>
+          <input
+            id={fieldId}
+            className={styles.field}
+            value={other.text}
+            onChange={(event) => other.onChange(event.target.value)}
+            inputMode="text"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="-18.9543, -48.1993"
+            aria-invalid={other.error}
+            aria-describedby={other.error ? `${exampleId} ${errorId}` : exampleId}
+          />
+          <p id={exampleId} className={styles.example}>
+            {w.other.example}
+          </p>
+          {other.error && (
+            <p id={errorId} className={styles.error} role="alert">
+              {w.other.error}
+            </p>
+          )}
+          <button type="submit" className={styles.submit}>
+            {w.other.submit}
+          </button>
+        </form>
+      </Modal>
+
+      <Modal open={areaInfo.open} onClose={areaInfo.onClose} title={w.area.title} closeLabel={w.close}>
+        <p className={styles.areaText}>{w.area.text}</p>
+        <p className={styles.areaLine}>
+          <span className={styles.areaDash} aria-hidden="true" />
+          <span>{w.area.line}</span>
+        </p>
+        <button type="button" className={styles.showArea} onClick={areaInfo.onShowArea}>
+          {w.showArea}
+        </button>
+      </Modal>
     </div>
   )
 }

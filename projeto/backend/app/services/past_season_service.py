@@ -81,7 +81,7 @@ class PastSeasonService:
         seasons = self._climate_repo.get_seasons(cell_id) if cell_id is not None else []
         if not seasons:
             raise OutsideAreaError(
-                "Ainda não temos dados preparados para esse ponto. Veja a fazenda de exemplo."
+                "Ainda não temos dados preparados para esse ponto. Veja a lavoura de demonstração."
             )
         season = next((s for s in seasons if s.year == ano), None)
         if season is None:

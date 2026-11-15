@@ -302,8 +302,12 @@ def test_should_explain_out_of_window_crops_in_english() -> None:
 def test_should_raise_outside_area_instead_of_using_other_region_data() -> None:
     service = _service(FakeClimateRepository(inside=False))
 
-    with pytest.raises(OutsideAreaError):
+    with pytest.raises(OutsideAreaError) as error:
         service.recommend(lat=-23.55, lon=-46.63, colheita="meio")
+
+    assert str(error.value) == (
+        "Ainda não temos dados preparados para esse ponto. Veja a lavoura de demonstração."
+    )
 
 
 def test_should_fetch_new_point_on_demand_instead_of_outside_area_when_ingestion_is_on() -> None:

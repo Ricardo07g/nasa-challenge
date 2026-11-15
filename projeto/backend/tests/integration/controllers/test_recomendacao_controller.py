@@ -163,6 +163,7 @@ def test_should_return_404_outside_area_instead_of_another_region_answer(
 
     assert response.status_code == 404
     assert response.json()["code"] == "OUTSIDE_AREA"
+    assert response.json()["detail"].endswith("Veja a lavoura de demonstração.")
 
 
 def test_should_return_422_when_invalid_colheita_passed(client: TestClient) -> None:

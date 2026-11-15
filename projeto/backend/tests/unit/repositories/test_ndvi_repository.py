@@ -93,7 +93,7 @@ def test_should_drop_snow_cloud_and_empty_observations(tmp_path: Path) -> None:
 
 
 def test_should_use_the_nearest_point_within_the_declared_distance(tmp_path: Path) -> None:
-    # (-18.9550, -48.1990) fica a ~85 m do ponto da UFU e a ~180 m do outro ponto do arquivo.
+    # (-18.9550, -48.1990) fica a ~85 m do ponto da lavoura e a ~180 m do outro ponto do arquivo.
     # Os três caem na mesma chave de 0,0025°: a busca é pela distância, não pela chave.
     perto = [{"data": "2016-04-06", "ndvi": 0.71, "qualidade": 0, "produto": "MOD13Q1"}]
     longe = [{"data": "2016-04-06", "ndvi": 0.20, "qualidade": 0, "produto": "MOD13Q1"}]

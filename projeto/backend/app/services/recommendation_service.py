@@ -298,7 +298,7 @@ class RecommendationService:
         seasons = self._climate_repo.get_seasons(cell_id) if cell_id is not None else []
         if cell_id is None or not seasons:
             raise OutsideAreaError(
-                "Ainda não temos dados preparados para esse ponto. Veja a fazenda de exemplo."
+                "Ainda não temos dados preparados para esse ponto. Veja a lavoura de demonstração."
             )
         deltas = self._climate_repo.get_cmip6_deltas(cell_id)
 

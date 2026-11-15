@@ -47,7 +47,7 @@ Durante a verificação entre os dados reais obtidos na pasta `data/`, o plano t
    - A área piloto do Triângulo Mineiro (Uberaba/Frutal/Uberlândia) delimitada em `PILOT_*` (`projeto/backend/app/constants.py`) é a referência oficial para testes de integração, fixtures do frontend e validação dos juízes:
      - Latitude: `-19.9` a `-18.4` (Sul)
      - Longitude: `-49.0` a `-47.5` (Oeste)
-     - Talhão de exemplo: `-18.9543, -48.1993`, o campo de soja da Fazenda Experimental do Glória (UFU), em Uberlândia/MG (`EXAMPLE_FARM_*` em `projeto/backend/app/constants.py`). O ponto antigo caía perto do centro urbano, onde o NDVI mostra a cidade.
+     - Talhão de exemplo: `-18.9543, -48.1993`, a lavoura de demonstração, perto de Uberlândia (MG) (`EXAMPLE_FARM_*` em `projeto/backend/app/constants.py`); fica perto da Fazenda do Glória, mas não garantidamente dentro dela. O ponto antigo caía perto do centro urbano, onde o NDVI mostra a cidade.
 
 ---
 
