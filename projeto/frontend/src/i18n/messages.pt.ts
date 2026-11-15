@@ -960,6 +960,150 @@ export const pt = {
     cropOptions: 'Opções de entressafra (API real)',
     sampleText: 'O satélite da NASA olha a chuva de muitos anos na sua lavoura.',
   },
+  // Tela "Avisos" (seção 6 da remodelagem, tarefa 0046 do backend, RF-31)
+  alerts: {
+    title: 'Avisos',
+    subtitle: 'Para a lavoura marcada neste aparelho. Os avisos aparecem quando você abre o app.',
+    headerLabel: 'Avisos',
+    headerCount: (count: number) => (count === 1 ? 'Avisos: 1 aviso ativo' : `Avisos: ${count} avisos ativos`),
+    place: (place: string) => `Lavoura perto de ${place}`,
+    needPoint:
+      'Para ver os avisos, marque onde fica a sua lavoura. O ponto fica guardado só neste aparelho, sem cadastro.',
+    markField: 'Marcar minha lavoura',
+    level: { atencao: 'Atenção', fique_de_olho: 'Fique de olho' },
+    groups: {
+      agora: 'Agora',
+      mudou: 'O que mudou na sua área',
+      recordes: 'Fora do comum',
+      perto: 'Perto de você',
+    },
+    nothing: 'Nada fora do normal.',
+    lastReading: (date: string) => `Última leitura: ${date}.`,
+    readingOn: (date: string) => `leitura de ${date}`,
+    dataUntil: (date: string) => `dados até ${date}`,
+    reportedOn: (date: string) => `relato de ${date}`,
+    oldReading: 'Leitura antiga',
+    todo: 'O que fazer:',
+    source: (names: string) => `Fonte: ${names}`,
+    sources: {
+      smap: 'NASA SMAP',
+      nasa_power: 'NASA POWER',
+      gpm_imerg: 'GPM IMERG (NASA)',
+      noaa: 'NOAA',
+      comunidade: 'relato de vizinho',
+    },
+    changedIntro: (recentStart: number, recentEnd: number, beforeStart: number, beforeEnd: number) =>
+      `${recentStart} a ${recentEnd} comparado com ${beforeStart} a ${beforeEnd}, na sua área.`,
+    fewYears: 'São poucos anos: mostra o que aconteceu, não uma previsão.',
+    recordsIntro: (start: number, end: number) => `O que aconteceu de mais extremo na sua área de ${start} a ${end}.`,
+    nearbyIntro: (km: number, days: number) => `Eventos contados por vizinhos até ${km} km, nos últimos ${days} dias.`,
+    unconfirmed: 'Relato de vizinho, não confirmado',
+    period: (start: number, end: number) => `${start}–${end}`,
+    safrinhaRunning: (crop: string) =>
+      `Safrinha em andamento (${crop}): os avisos do plantio usam a chuva e o calor dos últimos dias.`,
+    safrinhaNext: (crop: string, date: string) =>
+      `A próxima safrinha (${crop}) começa por volta de ${date}. Durante ela, os avisos do plantio aparecem aqui.`,
+    safrinhaLink: (year: number) => `Ver como teriam sido os avisos em ${year}`,
+    guideLink: 'Saiba mais: como ler os avisos',
+    phases: { el_nino: 'El Niño', la_nina: 'La Niña' },
+    seasons: {
+      DJF: 'dezembro a fevereiro',
+      JFM: 'janeiro a março',
+      FMA: 'fevereiro a abril',
+      MAM: 'março a maio',
+      AMJ: 'abril a junho',
+      MJJ: 'maio a julho',
+      JJA: 'junho a agosto',
+      JAS: 'julho a setembro',
+      ASO: 'agosto a outubro',
+      SON: 'setembro a novembro',
+      OND: 'outubro a dezembro',
+      NDJ: 'novembro a janeiro',
+    },
+    kinds: {
+      dry: (pct: number) => `A terra está mais seca que em ${pct}% dos anos nesta época.`,
+      dryTodo: 'Confira a umidade da terra antes de plantar ou adubar.',
+      noRain: (days: number, date: string, atLeast: boolean) =>
+        `${atLeast ? 'Pelo menos ' : ''}${days} dias seguidos sem chuva (menos de 1 mm por dia) até ${date}.`,
+      noRainTodo: 'Converse com o agrônomo antes de plantar ou adubar.',
+      heat: (days: number, window: number, temp: number) =>
+        `${days} dias com ${temp} °C ou mais nos últimos ${window} dias.`,
+      heatTodo: 'Calor forte na floração derruba as flores. Converse com o agrônomo.',
+      ensoForecast: (phase: string, months: string, year: number, chance: number) =>
+        `Previsão da NOAA para ${months} de ${year}: ${phase}, com ${chance}% de chance.`,
+      ensoHistory: (
+        years: number,
+        phase: string,
+        start: number,
+        crop: string,
+        good: number,
+        others: number,
+        goodOthers: number,
+      ) =>
+        `Nos ${years} anos de ${phase} desde ${start}, ${crop} deu certo em ${good} aqui; nos outros ${others} anos, em ${goodOthers}. São poucos anos.`,
+      ensoTodo: 'Veja o Plano B no Plano de 3 anos antes de decidir o que plantar.',
+      safrinhaDry: (crop: string, days: number, date: string) =>
+        `${crop}: ${days} dias sem chuva perto da fase que mais precisa de água (até ${date}).`,
+      safrinhaHeat: (crop: string, days: number, temp: number, date: string) =>
+        `${crop}: ${days} dias seguidos com ${temp} °C ou mais perto da fase que mais precisa de água (até ${date}).`,
+      safrinhaTodo: 'Converse com o agrônomo.',
+      changedDrySpell: (recent: string, before: string, recentPeriod: string, beforePeriod: string) =>
+        `Maior veranico de março a maio: ${recent} dias em média em ${recentPeriod}; ${before} dias em ${beforePeriod}.`,
+      changedRainEnd: (
+        recent: string,
+        before: string,
+        recentPeriod: string,
+        beforePeriod: string,
+        days: number,
+        earlier: boolean,
+      ) =>
+        `Fim das chuvas: ${recent} em ${recentPeriod}; ${before} em ${beforePeriod} (${days} dias mais ${earlier ? 'cedo' : 'tarde'}).`,
+      changedHeat: (recent: string, before: string, temp: number, recentPeriod: string, beforePeriod: string) =>
+        `Dias de ${temp} °C ou mais de março a maio: ${recent} por ano em ${recentPeriod}; ${before} em ${beforePeriod}.`,
+      changedShortage: (crop: string, recent: string, before: string, recentPeriod: string, beforePeriod: string) =>
+        `Falta de água de ${crop} no ciclo: ${recent} mm por ano em ${recentPeriod}; ${before} mm em ${beforePeriod}.`,
+      changedWorked: (
+        crop: string,
+        recentGood: number,
+        recentTotal: number,
+        beforeGood: number,
+        beforeTotal: number,
+        recentPeriod: string,
+        beforePeriod: string,
+      ) =>
+        `${crop} deu certo em ${recentGood} de ${recentTotal} anos em ${recentPeriod}; em ${beforeGood} de ${beforeTotal} anos em ${beforePeriod}.`,
+      changedWorseTodo: 'Leve isso em conta ao escolher o que plantar.',
+      changedBetterTodo: 'Mudou para melhor, mas são poucos anos: não conte com isso.',
+      recordDrySpell: (days: number, date: string, year: number) =>
+        `Maior veranico de março a maio: ${days} dias seguidos sem chuva a partir de ${date} de ${year}.`,
+      recordDryAutumn: (mm: string, year: number, average: string) =>
+        `Outono mais seco: ${mm} mm de março a maio de ${year} (a média é ${average} mm).`,
+      recordRainEnd: (date: string, year: number) => `Chuva que acabou mais cedo: ${date} de ${year}.`,
+      recordHeat: (days: number, temp: number, year: number) =>
+        `Ano com mais calor: ${days} dias de ${temp} °C ou mais de março a maio de ${year}.`,
+      recordTodo: 'Já aconteceu aqui e pode voltar: planeje pensando num ano assim.',
+      neighbor: (event: string, count: number, km: number, date: string) =>
+        count === 1
+          ? `${event}: 1 relato de vizinho até ${km} km, em ${date}.`
+          : `${event}: ${count} relatos de vizinhos até ${km} km; o mais recente em ${date}.`,
+      neighborTodo: 'Olhe a sua lavoura para conferir.',
+      neighborFireTodo: 'Em caso de fogo, ligue 193 (Bombeiros).',
+    },
+    official: {
+      title: 'Alertas oficiais',
+      notice: 'Estes avisos não são alertas oficiais e não substituem a Defesa Civil nem o INMET.',
+      intro: 'Para receber os alertas oficiais da Defesa Civil no celular, de graça:',
+      sms: 'SMS: envie o CEP do lugar para 40199 (na área rural, use o CEP da sua cidade).',
+      smsButton: 'Enviar SMS para 40199',
+      whatsapp: 'WhatsApp: mande "Oi" para (61) 2034-4611.',
+      whatsappButton: 'Abrir conversa no WhatsApp',
+      app: 'Alertas graves chegam sozinhos pelo "Defesa Civil Alerta", sem cadastro.',
+      calls: 'Em caso de fogo, ligue 193 (Bombeiros). Emergência da Defesa Civil: 199.',
+      call193: 'Ligar 193 (Bombeiros)',
+      call199: 'Ligar 199 (Defesa Civil)',
+      guide: 'Como receber os alertas oficiais da Defesa Civil',
+    },
+  },
 }
 
 type Widen<T> = T extends string

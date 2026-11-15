@@ -1,6 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router'
 import {
   AnswerPage,
+  AvisosPage,
   CommunityPage,
   DesignSystemPage,
   ExamplePage,
@@ -36,6 +37,7 @@ export const routes: RouteObject[] = [
       { path: '/relatorio', element: <LegacyAnswerRedirect /> },
       { path: '/safra-passada', element: <LegacyAnswerRedirect keepYear /> },
       { path: '/comunidade', element: <CommunityPage /> },
+      { path: '/avisos', element: <AvisosPage /> },
       { path: '/guia', element: <GuidePage /> },
       { path: '/guia/:artigo', element: <GuideArticlePage /> },
       { path: '/como-funciona', element: <MethodPage /> },

@@ -3,6 +3,7 @@
  */
 import { Navigate, Outlet, ScrollRestoration, useParams, useSearchParams } from 'react-router'
 import { useAnswerController } from './controllers/useAnswerController'
+import { useAvisosController } from './controllers/useAvisosController'
 import { useCommunityController } from './controllers/useCommunityController'
 import { useGuideArticleController, useGuideController } from './controllers/useGuideController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
@@ -20,6 +21,7 @@ import { useI18n } from './i18n/useI18n'
 import { EXAMPLE_FARM } from './services/locationService'
 import { buildFlowQuery, keepFlowQuery } from './services/flowParams'
 import { AnswerView } from './views/AnswerView'
+import { AvisosView } from './views/AvisosView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { GuideArticleView, GuideView } from './views/GuideView'
@@ -346,4 +348,25 @@ export function GuideArticlePage() {
   const { article } = useGuideArticleController(artigo)
   useDocumentTitle(article?.title ?? t.guide.title)
   return <GuideArticleView t={t} article={article} />
+}
+
+/** Tela "Avisos" (seção 6 da remodelagem, tarefa 0046): os avisos do ponto salvo no aparelho. */
+export function AvisosPage() {
+  const { lang, messages: t } = useI18n()
+  useDocumentTitle(t.alerts.title)
+  const state = useAvisosController()
+  return (
+    <AvisosView
+      t={t}
+      lang={lang}
+      status={state.status}
+      onRetry={state.retry}
+      avisos={state.avisos}
+      groups={state.groups}
+      place={state.place}
+      explorerTo={state.explorerTo}
+      markTo={state.markTo}
+      backTo={state.backTo}
+    />
+  )
 }

@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  Bell,
   CalendarDays,
   Check,
   ChevronDown,
@@ -18,6 +19,7 @@ import {
   CloudSun,
   DropletOff,
   Droplets,
+  Eye,
   FileText,
   Flame,
   History,
@@ -239,4 +241,13 @@ export function HeavyRainIcon({ size = 20 }: IconProps) {
 
 export function FireIcon({ size = 20 }: IconProps) {
   return <Flame size={size} {...decorative} />
+}
+
+// Tela "Avisos" (tarefa 0046): o botão do cabeçalho e o nível "Fique de olho"
+export function AlertsIcon({ size = 18 }: IconProps) {
+  return <Bell size={size} {...decorative} />
+}
+
+export function WatchIcon({ size = 16 }: IconProps) {
+  return <Eye size={size} {...decorative} />
 }
