@@ -9,10 +9,15 @@ import { MissionView, type MissionViewProps } from './MissionView'
 const facts = {
   point: { lat: -18.9543, lon: -48.1993 },
   soil: 'medio' as const,
+  soilSource: 'SoilGrids' as string | null,
+  smap: { start: '2016', end: '2024' } as { start: string; end: string } | null,
   rainYears: 20 as number | null,
+  rainSource: 'GPM IMERG' as string | null,
   historyYears: 10 as number | null,
   future: { period: { start: '2041', end: '2060' } } as { period: { start: string; end: string } | null } | null,
   signal: 'seco' as 'seco' | null,
+  signalSource: 'NOAA' as string | null,
+  options: 6 as number | null,
 }
 
 function setup(overrides: Partial<MissionViewProps> = {}) {
@@ -67,7 +72,7 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
   it('não revela a melhor opção: a última fase só diz que a resposta está pronta', () => {
     setup({ phase: 6, complete: true })
 
-    expect(screen.getAllByRole('listitem')[4]).toHaveTextContent('Previsão do outono: sinal de ano seco')
+    expect(screen.getAllByRole('listitem')[4]).toHaveTextContent('Previsão do outono (NOAA): sinal de ano seco')
     expect(screen.getAllByRole('listitem')[5]).toHaveTextContent('Resposta pronta')
   })
 
@@ -86,12 +91,35 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(6)
   })
 
+  it('cada fase diz a fonte que foi usada, e a última conta o número certo de opções (tarefa 0049)', () => {
+    setup({ phase: 6, complete: true, facts: { ...facts, options: 3 } })
+
+    const phases = screen.getAllByRole('listitem')
+    expect(phases[1]).toHaveTextContent('Terra média (SoilGrids)')
+    expect(phases[1]).toHaveTextContent('Umidade da terra no dia de plantar: SMAP, de 2016 a 2024')
+    expect(phases[3]).toHaveTextContent('10 anos de histórico do satélite (MODIS NDVI)')
+    expect(phases[4]).toHaveTextContent('Clima de 2041 a 2060 lido (NEX-GDDP-CMIP6)')
+    expect(phases[5]).toHaveTextContent('Fazendo a conta das 3 opções')
+    expect(screen.queryByText(/6 opções/)).not.toBeInTheDocument()
+  })
+
+  it('sem SMAP, sem IMERG e sem mapa de solos, a fase não cita a fonte que não foi usada', () => {
+    setup({ phase: 6, complete: true, facts: { ...facts, smap: null, rainSource: 'NASA POWER', soilSource: null, options: null } })
+
+    const phases = screen.getAllByRole('listitem')
+    expect(phases[1]).not.toHaveTextContent('SMAP')
+    expect(phases[1]).not.toHaveTextContent('SoilGrids')
+    expect(phases[2]).toHaveTextContent('Chuva e calor do NASA POWER: 20 anos lidos, dia a dia')
+    expect(phases[2]).not.toHaveTextContent('IMERG')
+    expect(phases[5]).toHaveTextContent('Fazendo a conta')
+  })
+
   it('a fase da chuva diz quantos anos a conta leu, sem número fixo', () => {
     setup({ phase: 6, complete: true, facts: { ...facts, rainYears: 17 } })
 
     const phases = screen.getAllByRole('listitem')
     expect(phases[2]).toHaveTextContent('Chuva e calor de cada ano')
-    expect(phases[2]).toHaveTextContent('Chuva e calor de 17 anos lidos, dia a dia')
+    expect(phases[2]).toHaveTextContent('Chuva do GPM IMERG e calor do NASA POWER: 17 anos lidos, dia a dia')
     expect(screen.queryByText(/20 anos/)).not.toBeInTheDocument()
   })
 
@@ -121,7 +149,7 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
 
     const phase = screen.getAllByRole('listitem')[4]
     expect(phase).toHaveTextContent('Clima de 2041 a 2060 lido')
-    expect(phase).toHaveTextContent('Previsão do outono: sinal de ano seco')
+    expect(phase).toHaveTextContent('Previsão do outono (NOAA): sinal de ano seco')
     expect(phase.querySelectorAll('strong')).toHaveLength(2)
   })
 
@@ -130,7 +158,7 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
 
     const phase = screen.getAllByRole('listitem')[4]
     expect(phase).not.toHaveTextContent('Clima de 2041 a 2060 lido')
-    expect(phase).toHaveTextContent('Previsão do outono: sinal de ano seco')
+    expect(phase).toHaveTextContent('Previsão do outono (NOAA): sinal de ano seco')
     expect(phase).not.toHaveTextContent('Ainda não conectado')
   })
 

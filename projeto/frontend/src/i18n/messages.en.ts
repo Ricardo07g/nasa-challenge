@@ -224,15 +224,24 @@ export const en = {
       'Rain and heat, year by year',
       'What grew in your field',
       'The climate ahead',
-      'Calculating the 6 options',
+      'Calculating',
     ],
+    phaseOptions: (count: number) => `Calculating the ${count} options`,
     found: (lat: string, lon: string) => `Field found: ${lat} / ${lon}`,
-    rain: (years: number) => `${years} years of rain and heat read, day by day`,
-    history: (years: number) => `${years} years of satellite history`,
+    rain: (years: number, source: string | null) =>
+      source === 'GPM IMERG'
+        ? `Rain from GPM IMERG and heat from NASA POWER: ${years} years read, day by day`
+        : source
+          ? `Rain and heat from ${source}: ${years} years read, day by day`
+          : `${years} years of rain and heat read, day by day`,
+    history: (years: number) => `${years} years of satellite history (MODIS NDVI)`,
+    soilFrom: (soil: string, source: string) => `${soil} (${source})`,
+    smap: (start: string, end: string) => `Soil moisture on sowing day: SMAP, ${start} to ${end}`,
     /** Clima de 2041–2060 (NEX-GDDP-CMIP6); a previsão do outono aparece à parte. */
-    future: (start: string, end: string) => `Climate for ${start}–${end} read`,
-    futureRead: 'Future climate read',
-    forecast: (signal: string) => `Autumn outlook: ${signal}`,
+    future: (start: string, end: string) => `Climate for ${start}–${end} read (NEX-GDDP-CMIP6)`,
+    futureRead: 'Future climate read (NEX-GDDP-CMIP6)',
+    forecast: (signal: string, source: string | null) =>
+      source ? `Autumn outlook (${source}): ${signal}` : `Autumn outlook: ${signal}`,
     ready: 'Answer ready',
     collected: (count: number) => `Data collected ${count}/6`,
     complete: 'Mission complete!',

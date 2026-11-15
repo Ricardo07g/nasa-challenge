@@ -56,21 +56,32 @@ const PHASE_ICONS: ReactNode[] = [
  */
 type PhaseResult = { text: string; extra?: string }
 
+/** Tarefa 0049: cada fase cita só a fonte que a conta usou de fato (sem o dado, a fonte não aparece). */
 function phaseResults(t: Messages, lang: Lang, facts: MissionFacts | null): (PhaseResult | null)[] {
   const m = t.mission
   if (!facts) return []
   const period = facts.future?.period
   const future = facts.future ? (period ? m.future(period.start, period.end) : m.futureRead) : null
-  const forecast = facts.signal ? m.forecast(t.signal[facts.signal].toLocaleLowerCase(lang)) : null
+  const forecast = facts.signal ? m.forecast(t.signal[facts.signal].toLocaleLowerCase(lang), facts.signalSource) : null
   const nextClimate = future ? { text: future, extra: forecast ?? undefined } : forecast ? { text: forecast } : null
+  const soil = t.satellite.soilTitle(t.soil[facts.soil])
   return [
     { text: m.found(formatDecimal(lang, facts.point.lat, 2), formatDecimal(lang, facts.point.lon, 2)) },
-    { text: t.satellite.soilTitle(t.soil[facts.soil]) },
-    facts.rainYears !== null ? { text: m.rain(facts.rainYears) } : null,
+    {
+      text: facts.soilSource ? m.soilFrom(soil, facts.soilSource) : soil,
+      extra: facts.smap ? m.smap(facts.smap.start, facts.smap.end) : undefined,
+    },
+    facts.rainYears !== null ? { text: m.rain(facts.rainYears, facts.rainSource) } : null,
     facts.historyYears !== null ? { text: m.history(facts.historyYears) } : null,
     nextClimate,
     { text: m.ready },
   ]
+}
+
+/** O nome de cada fase; a última diz quantas opções entram na conta, quando a conta já chegou. */
+function phaseLabel(t: Messages, index: number, facts: MissionFacts | null): string {
+  const m = t.mission
+  return index === m.phases.length - 1 && facts?.options ? m.phaseOptions(facts.options) : (m.phases[index] ?? '')
 }
 
 /** Tela de cálculo "Missão: sua lavoura" (RF-19): cena do satélite à esquerda, diário da missão à direita. */
@@ -104,7 +115,8 @@ export function MissionView(props: MissionViewProps) {
           <ProgressBar label={m.title} value={phase} max={6} />
           <strong className={styles.count}>{m.collected(phase)}</strong>
           <ol className={styles.log}>
-            {m.phases.map((label, index) => {
+            {m.phases.map((_, index) => {
+              const label = phaseLabel(t, index, facts)
               const state = index < phase ? 'done' : index === phase ? 'current' : 'locked'
               return (
                 <li key={label} className={styles.logItem} data-state={state}>
@@ -120,7 +132,7 @@ export function MissionView(props: MissionViewProps) {
             })}
           </ol>
           <p className="visually-hidden" aria-live="polite" aria-atomic="true">
-            {complete ? m.complete : `${m.phases[phase] ?? ''}. ${phase > 0 ? (results[phase - 1]?.text ?? '') : m.intro}`}
+            {complete ? m.complete : `${phaseLabel(t, phase, facts)}. ${phase > 0 ? (results[phase - 1]?.text ?? '') : m.intro}`}
           </p>
           {(weak || status === 'error') && (
             <div className={styles.status}>

@@ -235,16 +235,27 @@ export const pt = {
       'Chuva e calor de cada ano',
       'O que cresceu na sua área',
       'O clima que vem',
-      'Fazendo a conta das 6 opções',
+      'Fazendo a conta',
     ],
+    /** Tarefa 0049: o número de opções vem da conta (as que cabem na janela e deixar parado). */
+    phaseOptions: (count: number) => `Fazendo a conta das ${count} opções`,
     found: (lat: string, lon: string) => `Lavoura encontrada: ${lat} / ${lon}`,
     /** Os anos vêm da conta (anos de chuva usados de fato). */
-    rain: (years: number) => `Chuva e calor de ${years} anos lidos, dia a dia`,
-    history: (years: number) => `${years} anos de histórico do satélite`,
+    /** A fonte da chuva vem da série (GPM IMERG ou NASA POWER); o calor é sempre do NASA POWER. */
+    rain: (years: number, source: string | null) =>
+      source === 'GPM IMERG'
+        ? `Chuva do GPM IMERG e calor do NASA POWER: ${years} anos lidos, dia a dia`
+        : source
+          ? `Chuva e calor do ${source}: ${years} anos lidos, dia a dia`
+          : `Chuva e calor de ${years} anos lidos, dia a dia`,
+    history: (years: number) => `${years} anos de histórico do satélite (MODIS NDVI)`,
+    soilFrom: (soil: string, source: string) => `${soil} (${source})`,
+    smap: (start: string, end: string) => `Umidade da terra no dia de plantar: SMAP, de ${start} a ${end}`,
     /** Clima de 2041–2060 (NEX-GDDP-CMIP6); a previsão do outono aparece à parte. */
-    future: (start: string, end: string) => `Clima de ${start} a ${end} lido`,
-    futureRead: 'Clima do futuro lido',
-    forecast: (signal: string) => `Previsão do outono: ${signal}`,
+    future: (start: string, end: string) => `Clima de ${start} a ${end} lido (NEX-GDDP-CMIP6)`,
+    futureRead: 'Clima do futuro lido (NEX-GDDP-CMIP6)',
+    forecast: (signal: string, source: string | null) =>
+      source ? `Previsão do outono (${source}): ${signal}` : `Previsão do outono: ${signal}`,
     ready: 'Resposta pronta',
     collected: (count: number) => `Dados coletados ${count}/6`,
     complete: 'Missão completa!',
