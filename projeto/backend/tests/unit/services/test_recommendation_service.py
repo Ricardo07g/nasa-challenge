@@ -260,6 +260,30 @@ def test_should_move_early_deadline_crops_to_fora_da_janela_when_harvest_is_tard
     }
 
 
+def test_should_explain_each_crop_out_of_window_with_its_name_and_the_harvest_in_words() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="tarde")
+
+    textos = {o.id: o.texto for o in rec.fora_da_janela}
+    nomes = {o.id: o.nome for o in rec.fora_da_janela}
+    assert textos["milho_safrinha"] == (
+        f"{nomes['milho_safrinha']}: o plantio vai só até 28/02 (ZARC), e com a colheita no fim de "
+        "fevereiro ou em março não dá tempo."
+    )
+    assert len(set(textos.values())) == len(textos)  # uma frase por cultura, sem repetir
+    assert all("'tarde'" not in t for t in textos.values())
+
+
+def test_should_explain_out_of_window_crops_in_english() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="tarde", lang="en")
+
+    texto = next(o.texto for o in rec.fora_da_janela if o.id == "milho_safrinha")
+    assert texto.endswith(
+        ": sowing only until Feb 28 (ZARC); with the soybean harvest in late February or March, "
+        "there is no time."
+    )
+    assert "'tarde'" not in texto
+
+
 def test_should_raise_outside_area_instead_of_using_other_region_data() -> None:
     service = _service(FakeClimateRepository(inside=False))
 

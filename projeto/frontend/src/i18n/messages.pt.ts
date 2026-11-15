@@ -377,13 +377,17 @@ export const pt = {
     regionSubtitle: (km: number) => `Até ${km} km da sua lavoura · visto pelo satélite`,
     regionSubtitleAway: (km: number, distance: number) =>
       `Raio de ${km} km em volta de um ponto a ${String(distance).replace('.', ',')} km da sua lavoura · visto pelo satélite`,
-    regionBig: (year: number, pct: number) => `Em ${year}, ${pct}% da área de soja ficou parada depois da colheita.`,
+    /** Porcentagem com vírgula ('0,8%'), no jeito do português. */
+    regionPct: (pct: number) => `${String(pct).replace('.', ',')}%`,
+    regionBig: (year: number, pct: number) =>
+      `Em ${year}, ${String(pct).replace('.', ',')}% da área de soja ficou parada depois da colheita.`,
     regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
-      `Sua área: parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}. Na região, em média ${average}% da área fica parada.`,
-    regionAverage: (average: number) => `Na região, em média ${average}% da área fica parada depois da soja.`,
+      `Sua área: parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}. Na região, em média ${String(average).replace('.', ',')}% da área fica parada.`,
+    regionAverage: (average: number) =>
+      `Na região, em média ${String(average).replace('.', ',')}% da área fica parada depois da soja.`,
     regionChart: '% da área de soja parada depois da colheita, ano a ano.',
     regionNote: (pct: number) =>
-      `Estimativa pelo satélite MODIS (NASA), pixel de 250 m. Em ${pct}% da área o satélite não conseguiu dizer. Mostramos só o total da região, nunca uma fazenda.`,
+      `Estimativa pelo satélite MODIS (NASA), pixel de 250 m. Em ${String(pct).replace('.', ',')}% da área o satélite não conseguiu dizer. Mostramos só o total da região, nunca uma fazenda.`,
     bridge: 'O satélite mostra quanto a região deixa a terra parada. Os vizinhos contam se valeu a pena plantar.',
     communityTitle: 'O que os vizinhos contam',
     illustrative: 'Valores ilustrativos',

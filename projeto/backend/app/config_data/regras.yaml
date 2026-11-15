@@ -281,6 +281,10 @@ frases:
     solo: "Conta feita com solo {textura} ({cad_mm} mm de água disponível; {fonte_solo})."
     historico: "Seu talhão ficou em pousio em {parado} de {anos_certos} entressafras vistas pelo satélite de {ano_inicio} a {ano_fim} (NDVI do MODIS)."
     balde_smap: "O balde de água começou com a umidade da terra medida pelo SMAP no dia de plantar em {anos_smap} dos {total} anos ({ano_inicio} a {ano_fim}); nos outros, com {padrao_pct}% da água disponível."
+    fora_da_janela: "{cultura}: o plantio vai só até {limite} (ZARC), e com a colheita {faixa} não dá tempo."
+    colheita_cedo: "no começo de fevereiro"
+    colheita_meio: "no meio de fevereiro"
+    colheita_tarde: "no fim de fevereiro ou em março"
   en:
     seguranca: "Sowing on {data}, in {anos_aperto} of the last {total} years the crop ran short of water or had {calor_c} °C heat {fase} ({fonte_chuva})."
     fase_grao: "around flowering"
@@ -289,6 +293,10 @@ frases:
     solo: "Computed with {textura} soil ({cad_mm} mm of available water; {fonte_solo})."
     historico: "Your field was left fallow in {parado} of {anos_certos} off-seasons seen by the satellite from {ano_inicio} to {ano_fim} (MODIS NDVI)."
     balde_smap: "The water bucket started from the soil moisture measured by SMAP on sowing day in {anos_smap} of the {total} years ({ano_inicio} to {ano_fim}); in the other years, at {padrao_pct}% of the available water."
+    fora_da_janela: "{cultura}: sowing only until {limite} (ZARC); with the soybean harvest {faixa}, there is no time."
+    colheita_cedo: "in early February"
+    colheita_meio: "in mid-February"
+    colheita_tarde: "in late February or March"
 
 # Textos da linha do tempo da safra (P4 e P6), sem IA generativa. RASCUNHO: agrônoma revisar.
 #   semeadura, colheita_grao, colheita_cobertura: {opcao} (nome da opção)

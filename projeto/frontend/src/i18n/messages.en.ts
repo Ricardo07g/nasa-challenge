@@ -357,6 +357,7 @@ export const en = {
     regionSubtitle: (km: number) => `Within ${km} km of your field · seen by satellite`,
     regionSubtitleAway: (km: number, distance: number) =>
       `${km} km radius around a point ${distance} km from your field · seen by satellite`,
+    regionPct: (pct: number) => `${pct}%`,
     regionBig: (year: number, pct: number) => `In ${year}, ${pct}% of the soybean area was left idle after harvest.`,
     regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
       `Your field: idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}. In the region, on average ${average}% of the area stays idle.`,

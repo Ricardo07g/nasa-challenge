@@ -207,6 +207,12 @@ class FrasesPorque:
     solo: str
     historico: str
     balde_smap: str
+    # Cultura fora da janela de plantio para a faixa de colheita: {cultura}, {limite}, {faixa}
+    fora_da_janela: str
+    # A faixa de colheita por extenso, para as frases (a chave interna nunca aparece na tela)
+    colheita_cedo: str
+    colheita_meio: str
+    colheita_tarde: str
 
 
 @dataclass(frozen=True)
