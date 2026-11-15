@@ -45,7 +45,7 @@ flowchart LR
     T1["Tela 1: Início"] -->|"Começar"| T2["Tela 2: Onde fica a lavoura?<br/>(Pergunta 1/2)"]
     T1 -->|"Ver um exemplo pronto"| EX["GET /api/exemplo<br/>(fixture app/fixtures, Fazenda do Glória)"]
     EX --> T5["Tela 5: A Resposta"]
-    T2 -->|"Toca em 'É aqui'"| API_TALHAO["GET /api/talhao?lat&lon<br/>(SoilGrids + MODIS NDVI)"]
+    T2 -->|"Toca em 'Confirmar local'"| API_TALHAO["GET /api/talhao?lat&lon<br/>(SoilGrids + MODIS NDVI)"]
     API_TALHAO --> T3["Tela 3: Quando colhe a soja?<br/>(Pergunta 2/2 - pré-marcada)"]
     T3 --> T4["Tela 4: O satélite já viu o resto<br/>(Solo, Histórico 10a, Chuva 20a, 2050)"]
     T4 -->|"Ver recomendação"| API_REC["GET /api/recomendacao?lat&lon&colheita<br/>(POWER + SMAP + CMIP6 + culturas.yaml)"]

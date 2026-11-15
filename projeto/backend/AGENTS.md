@@ -186,6 +186,10 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `ResultadoAno.falta_agua` e `ResultadoAno.calor` do `ClimateRiskService`); a marca do ENSO.
   - O campo é opcional no schema (padrão `[]`); com o service ligado, sempre vem. São ~27 KB a mais
     sem compressão (5 opções × 20 anos).
+- **Área piloto** (`GET /api/area-piloto`, tarefa 0041): devolve `min_lat`, `max_lat`, `min_lon` e
+  `max_lon` dos `PILOT_*` do `app/constants.py` (`PilotAreaService`). É a **fonte única** dos limites:
+  o front desenha a caixa e bloqueia o ponto fora dela lendo esta rota, sem repetir os números. Mudou a
+  caixa? Mude só as constantes.
 - **ONI da NOAA** (P1, tarefa 0035): `pipeline/fetch_oni.py` baixa a tabela pública do ONI
   (`https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt`, um pedido de ~23 KB, **sem
   credencial**) e grava o arquivo do contrato ONI (abaixo) em `data/baixados/noaa_oni/oni.json`, a

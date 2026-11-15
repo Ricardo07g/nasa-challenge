@@ -102,7 +102,7 @@ sequenceDiagram
     participant DB as Caches por ponto (JSON) / PostGIS
     participant Ext as SoilGrids API
 
-    Produtor->>UI: Marca ponto no mapa ou GPS e toca em "É aqui" (Tela 2)
+    Produtor->>UI: Marca ponto (mapa, GPS, busca, coordenadas ou link) e toca em "Confirmar local" (Tela 2)
     UI->>Ctrl: GET /api/talhao?lat=-18.9543&lon=-48.1993
     UI-->>Produtor: Avança imediatamente para a Tela 3 (Pergunta 2/2)
 
