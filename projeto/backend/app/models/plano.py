@@ -7,6 +7,14 @@ from app.models.sinal_outono import SinalOutono
 
 
 @dataclass(frozen=True)
+class CicloPlano:
+    """O ciclo da cultura do `culturas.yaml` (tarefa 0065): dias até a floração e até o fim."""
+
+    dias_florescer: int
+    ciclo_dias: int
+
+
+@dataclass(frozen=True)
 class AnoPlano:
     """Um ano do plano: a cultura e os fatos do motor para ela na faixa de colheita.
 
@@ -16,6 +24,8 @@ class AnoPlano:
     continuam. No pousio, `anos_bons` e `usa_mm` são None.
     `fixo`: o produtor escolheu o ano (no plano em cadeia, False nos anos sugeridos); `motivo`: o
     porquê de um ano sugerido (None nos fixos).
+    `data_limite` (tarefa 0065): o prazo do ZARC da cultura, "AAAA-MM-DD" no ano daquele ano do
+    plano (o 1º = o ano da semeadura do motor); `ciclo`: o do `culturas.yaml`. None no pousio.
     """
 
     cultura: str
@@ -35,6 +45,9 @@ class AnoPlano:
     fora_do_prazo: bool = False
     fixo: bool = True
     motivo: str | None = None
+    # Tarefa 0065 (tela 6): o prazo do ZARC e o ciclo de cada ano
+    data_limite: str | None = None
+    ciclo: CicloPlano | None = None
 
 
 @dataclass(frozen=True)

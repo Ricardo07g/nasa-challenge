@@ -49,7 +49,13 @@ def test_should_evaluate_any_three_year_plan(client: TestClient) -> None:
         "fora_do_prazo",
         "fixo",
         "motivo",
+        # Tarefa 0065: o prazo do ZARC e o ciclo de cada ano (tela 6)
+        "data_limite",
+        "ciclo",
     }
+    assert [a["data_limite"] for a in body["anos"]] == ["2027-02-28", "2028-03-20", "2029-02-28"]
+    # As culturas falsas do conftest: 60 dias até a floração, ciclo de 100
+    assert body["anos"][1]["ciclo"] == {"dias_florescer": 60, "ciclo_dias": 100}
     # O plano de `anos` é todo do produtor: nenhum ano sugerido
     assert [(a["fixo"], a["motivo"]) for a in body["anos"]] == [(True, None)] * 3
     assert set(body["notas"]) == {"seguranca", "solo", "futuro"}
@@ -65,6 +71,14 @@ def test_should_evaluate_any_three_year_plan(client: TestClient) -> None:
     assert {"cultura_a", "nome_a", "falhas_a", "total", "cultura_b", "nome_b"} <= set(
         body["plano_ab"]
     )
+
+
+def test_should_give_no_deadline_nor_cycle_to_a_fallow_year(client: TestClient) -> None:
+    params = {**UFU, "colheita": "meio", "anos": "sorgo,pousio,milheto"}
+
+    pousio = client.get("/api/plano", params=params).json()["anos"][1]
+
+    assert (pousio["data_limite"], pousio["ciclo"]) == (None, None)
 
 
 def test_should_give_the_same_numbers_as_the_recommendation(client: TestClient) -> None:

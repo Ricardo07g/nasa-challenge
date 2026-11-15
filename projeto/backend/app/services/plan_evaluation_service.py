@@ -29,6 +29,7 @@ from app.models.crop_option import CropParams
 from app.models.plano import (
     AnoPlano,
     ChuvaAproveitada,
+    CicloPlano,
     NotasPlano,
     PlanoAB,
     PlanoAvaliado,
@@ -196,7 +197,10 @@ class PlanEvaluationService:
         en = lang.lower().startswith("en")
         by_id = {o.id: o for o in (*rec.opcoes, *rec.opcoes_fora_do_prazo)}
         out_names = {f.id: f.nome for f in rec.fora_da_janela}
-        years = tuple(self._year(crop, by_id.get(crop.id), out_names, en) for crop in crops)
+        years = tuple(
+            self._year(crop, by_id.get(crop.id), out_names, en, rec.semeadura.year + index)
+            for index, crop in enumerate(crops)
+        )
         seasons = self._climate_repo.get_seasons(rec.celula_id)
         first = years[0]
         # Plano A = a cultura do 1º ano, mesmo fora do prazo; o Plano B só entre as no prazo
@@ -262,12 +266,22 @@ class PlanEvaluationService:
         option: ResultadoOpcao | None,
         out_names: dict[str, str],
         en: bool,
+        year: int,
     ) -> AnoPlano:
+        """Um ano do plano; `year` é o ano do plantio daquele ano (o do prazo do ZARC)."""
         own_name = crop.nome_en if (en and crop.nome_en) else crop.nome
+        limite = crop.semeadura_limite_mes_dia
         facts = {
             "cobre_terra": crop.solo_palhada > 0,
             "deixa_nitrogenio": crop.n_deixado_kg > 0,
             "quebra_nematoide": crop.id in self._rules.rotacao.culturas_supressoras_nematoide,
+            # Tarefa 0065: o prazo e o ciclo do culturas.yaml (o pousio não tem)
+            "data_limite": f"{year}-{limite}" if limite else None,
+            "ciclo": (
+                CicloPlano(dias_florescer=crop.dias_florescer, ciclo_dias=crop.ciclo_dias)
+                if crop.id != FALLOW_ID
+                else None
+            ),
         }
         if option is None:
             # Pousio, ou cultura fora do prazo sem a conta do motor (motor antigo)

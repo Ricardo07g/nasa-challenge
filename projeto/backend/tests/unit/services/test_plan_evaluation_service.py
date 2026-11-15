@@ -211,6 +211,31 @@ def test_should_give_the_facts_of_the_engine_for_each_year_of_the_plan() -> None
     assert (plano.colheita, plano.semeadura) == ("meio", SOWING)
 
 
+def test_should_give_the_zarc_deadline_and_the_cycle_of_each_year() -> None:
+    # Tarefa 0065: o prazo do ZARC e o ciclo de cada ano (culturas.yaml), para o relatório e a
+    # linha do tempo da tela 6. O prazo leva o ano de cada ano do plano: o 1º é o da semeadura do
+    # motor (o mesmo `data_limite` do /recomendacao); no pousio, nem prazo nem ciclo.
+    service, _, _ = _service()
+
+    plano = service.evaluate(-18.95, -48.2, ["milho_braquiaria", "sorgo", "pousio"])
+
+    assert [a.data_limite for a in plano.anos] == ["2027-02-28", "2028-03-20", None]
+    assert [(a.ciclo.dias_florescer, a.ciclo.ciclo_dias) for a in plano.anos[:2]] == [
+        (60, 120),
+        (65, 115),
+    ]
+    assert plano.anos[2].ciclo is None
+
+
+def test_should_give_the_deadline_and_the_cycle_of_the_suggested_years_too() -> None:
+    service, _, _ = _service()
+
+    plano = service.suggest(-18.95, -48.2, ["sorgo", "pousio"], colheita="tarde")
+
+    assert [a.data_limite for a in plano.anos] == ["2027-03-20", None, "2029-02-28"]
+    assert plano.anos[2].ciclo is not None and plano.anos[2].ciclo.ciclo_dias == 100
+
+
 def test_should_average_the_engine_scores_and_add_the_diversity_bonus_to_soil_health() -> None:
     service, _, _ = _service()
 

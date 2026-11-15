@@ -13,6 +13,11 @@ class _Frozen(BaseModel):
     model_config = ConfigDict(frozen=True)
 
 
+class CicloPlanoSchema(_Frozen):
+    dias_florescer: int  # dias do plantio até a floração (culturas.yaml)
+    ciclo_dias: int  # dias do plantio ao fim do ciclo
+
+
 class AnoPlanoSchema(_Frozen):
     cultura: str  # id do culturas.yaml (com o pousio)
     nome: str
@@ -30,6 +35,10 @@ class AnoPlanoSchema(_Frozen):
     fora_do_prazo: bool = False
     fixo: bool = True
     motivo: str | None = None
+    # Tarefa 0065 (tela 6): o prazo do ZARC no ano daquele ano do plano e o ciclo da cultura;
+    # null no pousio
+    data_limite: date | None = None
+    ciclo: CicloPlanoSchema | None = None
 
 
 class NotasPlanoSchema(_Frozen):
