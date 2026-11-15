@@ -28,6 +28,6 @@ Veja o número na [Sugestão](/resposta) e a conta aberta em [Como a conta é fe
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [NASA: o projeto POWER, dados diários de clima](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
 - [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)

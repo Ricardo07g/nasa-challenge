@@ -2,7 +2,7 @@
 titulo: How to prevent erosion
 tema: terra
 slug: como-evitar-erosao
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
@@ -31,7 +31,7 @@ Where to build terraces and how far apart they should be is up to your agronomis
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (regras.yaml).
 - [Embrapa: terraces to control erosion, together with no-till](https://www.embrapa.br/en/busca-de-noticias/-/noticia/46926155/terracos-para-controlar-a-erosao-em-santa-catarina)
 - [Embrapa: no-till, straw and contour lines](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2098787/dia-de-campo-aborda-manejo-e-conservacao-do-solo-e-plantio-direto)
 - [Embrapa: Santa Fé system, straw and erosion](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)

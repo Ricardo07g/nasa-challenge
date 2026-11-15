@@ -2,7 +2,7 @@
 titulo: Nematoide e por que trocar de cultura
 tema: terra
 slug: nematoide
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -28,6 +28,6 @@ Qual espécie de nematoide você tem e que variedade resistente usar ficam com o
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: nematoides no milho e rotação com a crotalária](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
 - [Embrapa: rotação de culturas e nematoides](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)

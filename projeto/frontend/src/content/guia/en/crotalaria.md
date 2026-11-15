@@ -2,7 +2,7 @@
 titulo: Crotalaria
 tema: culturas
 slug: crotalaria
-rascunho: sim
+rascunho: nao
 planta: crotalaria
 ---
 
@@ -34,6 +34,6 @@ The app shows crotalaria in [Compare](/opcoes). With nematodes in the field, the
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: crotalaria, nitrogen and nematodes](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2380275/crotalaria-e-uma-boa-alternativa-para-a-renovacao-de-canaviais)
 - [Embrapa: nematodes in corn and rotation](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)

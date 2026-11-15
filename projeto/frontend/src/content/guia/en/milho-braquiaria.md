@@ -2,7 +2,7 @@
 titulo: Corn with brachiaria
 tema: culturas
 slug: milho-braquiaria
-rascunho: sim
+rascunho: nao
 planta: milho_braquiaria
 ---
 
@@ -34,6 +34,6 @@ The app compares corn with brachiaria with the other options in [Compare](/opcoe
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: Santa Fé system](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)
 - [Embrapa: brachiaria beyond animal feed](https://www.embrapa.br/en/tema-integracao-lavoura-pecuaria-floresta-ilpf/busca-de-noticias/-/noticia/31795514/braquiaria-muito-alem-da-alimentacao-animal)

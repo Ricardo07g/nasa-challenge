@@ -25,5 +25,5 @@ Não existe regra simples de "El Niño igual seca". Por isso a marca é só um a
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [NOAA: índice ONI do El Niño e La Niña](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)

@@ -28,6 +28,6 @@ See the number in the [Suggestion](/resposta) and the open math in [How the math
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [NASA: the POWER project, daily climate data](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
 - [NASA: GPM IMERG rainfall](https://gpm.nasa.gov/data/imerg)

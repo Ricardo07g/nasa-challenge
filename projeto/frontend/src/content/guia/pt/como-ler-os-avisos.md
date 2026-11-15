@@ -28,7 +28,7 @@ Para os alertas oficiais, veja [Alertas oficiais da Defesa Civil](/guia/alertas-
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (regras.yaml).
 - [NSIDC: SMAP L4, umidade da terra](https://nsidc.org/data/spl4smgp/versions/8)
 - [NASA: dados do NASA POWER](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
 - [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)

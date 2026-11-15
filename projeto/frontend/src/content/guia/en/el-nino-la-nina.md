@@ -25,5 +25,5 @@ There is no simple "El Niño equals drought" rule. That is why the mark is only 
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [NOAA: ONI index of El Niño and La Niña](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)

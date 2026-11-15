@@ -2,7 +2,7 @@
 titulo: Fogo na palha
 tema: seguranca
 slug: fogo-na-palha
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -31,6 +31,6 @@ Em caso de fogo, ligue 193 (Bombeiros). Veja também [Alertas oficiais da Defesa
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (regras.yaml).
 - [NASA Earthdata: área queimada MCD64A1](https://www.earthdata.nasa.gov/data/catalog/lpcloud-mcd64a1-061)
 - [Governo Federal: 193 é o número dos Bombeiros](https://www.gov.br/mcom/pt-br/noticias/2026/setembro/emergencia-voce-sabe-para-quem-ligar-quando-precisa-de-ajuda)

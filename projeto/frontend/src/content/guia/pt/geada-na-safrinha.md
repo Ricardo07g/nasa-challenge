@@ -2,7 +2,7 @@
 titulo: Geada na safrinha
 tema: seguranca
 slug: geada-na-safrinha
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -28,5 +28,5 @@ Que cultivar escolher para o seu frio fica com o seu agrônomo.
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: geada no milho safrinha e semeadura escalonada](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)

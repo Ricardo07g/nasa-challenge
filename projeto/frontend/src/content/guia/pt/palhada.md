@@ -2,7 +2,7 @@
 titulo: Palhada: por que cobrir a terra
 tema: terra
 slug: palhada
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -29,7 +29,7 @@ A palha deve ser mantida na superfície. Quanto de palha o seu solo precisa fica
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: Sistema Santa Fé, palhada e erosão](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)
 - [Embrapa: cobertura do solo e umidade](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
 - [Embrapa: milheto para palhada](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)

@@ -2,7 +2,7 @@
 titulo: Frost in the second crop
 tema: seguranca
 slug: geada-na-safrinha
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
@@ -28,5 +28,5 @@ Which cultivar to choose for your cold is up to your agronomist.
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: frost in second-crop corn and staggered sowing](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)

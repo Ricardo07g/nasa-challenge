@@ -2,7 +2,7 @@
 titulo: Second-crop corn
 tema: culturas
 slug: milho-safrinha
-rascunho: sim
+rascunho: nao
 planta: milho_safrinha
 ---
 
@@ -34,6 +34,6 @@ The app shows second-crop corn in the [Suggestion](/resposta) and in [Compare](/
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: frost and staggered sowing in second-crop corn](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
 - [Ministry of Agriculture: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

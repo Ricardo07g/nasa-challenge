@@ -2,7 +2,7 @@
 titulo: O prazo de plantio e o ZARC
 tema: plantar
 slug: prazo-de-plantio-zarc
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -29,6 +29,6 @@ Colher a soja mais cedo abre espaço. Semear em datas escalonadas, conforme a co
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Ministério da Agricultura: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
 - [Embrapa: semeadura escalonada no milho safrinha](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)

@@ -1408,7 +1408,7 @@ export const en = {
   },
   guide: {
     summary: (count: number) =>
-      `The Guide has ${count} short articles on crops, planting, soil, climate and safety. Search by title or tap an article to read it. The crop and planting ones are still drafts, to be reviewed by the agronomist.`,
+      `The Guide has ${count} short articles on crops, planting, soil, climate and safety. Search by title or tap an article to read it.`,
     title: 'Guide',
     subtitle: 'Short answers to the most common questions from the field.',
     mvpArea:

@@ -2,7 +2,7 @@
 titulo: The planting deadline and ZARC
 tema: plantar
 slug: prazo-de-plantio-zarc
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
@@ -29,6 +29,6 @@ Harvesting soybeans earlier opens room. Sowing on staggered dates, as the harves
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Ministry of Agriculture: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
 - [Embrapa: staggered sowing in second-crop corn](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)

@@ -2,7 +2,7 @@
 titulo: Nematodes and why to switch crops
 tema: terra
 slug: nematoide
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
@@ -28,6 +28,6 @@ Which nematode species you have and which resistant variety to use are up to you
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: nematodes in corn and rotation with crotalaria](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
 - [Embrapa: crop rotation and nematodes](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)

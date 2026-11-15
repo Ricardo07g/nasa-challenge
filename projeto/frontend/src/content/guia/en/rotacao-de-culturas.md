@@ -2,7 +2,7 @@
 titulo: Crop rotation
 tema: terra
 slug: rotacao-de-culturas
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
@@ -28,6 +28,6 @@ You can swap an option and see the score right away. See each crop in the [Sugge
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: crop rotation and cover crops](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
 - [Embrapa: nematodes and rotation](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)

@@ -2,7 +2,7 @@
 titulo: Straw: why cover the soil
 tema: terra
 slug: palhada
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
@@ -29,7 +29,7 @@ The straw should stay on the surface. How much straw your soil needs is up to yo
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: Santa Fé system, straw and erosion](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)
 - [Embrapa: soil cover and moisture](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
 - [Embrapa: pearl millet for straw](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)

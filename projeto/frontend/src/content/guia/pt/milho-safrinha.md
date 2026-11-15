@@ -2,7 +2,7 @@
 titulo: Milho safrinha
 tema: culturas
 slug: milho-safrinha
-rascunho: sim
+rascunho: nao
 planta: milho_safrinha
 ---
 
@@ -34,6 +34,6 @@ O app mostra o milho safrinha na [Sugestão](/resposta) e em [Comparar](/opcoes)
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: geada e semeadura escalonada no milho safrinha](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
 - [Ministério da Agricultura: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

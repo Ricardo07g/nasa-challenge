@@ -327,11 +327,11 @@ export function GuidePage() {
 }
 
 export function GuideArticlePage() {
-  const { messages: t } = useI18n()
+  const { messages: t, lang } = useI18n()
   const { artigo = '' } = useParams()
   const { article, listen } = useGuideArticleController(artigo)
   useDocumentTitle(article?.title ?? t.guide.title)
-  return <GuideArticleView t={t} article={article} listen={listen} />
+  return <GuideArticleView t={t} lang={lang} article={article} listen={listen} />
 }
 
 /** Tela "Avisos" (seção 6 da remodelagem, tarefa 0046): os avisos do ponto salvo no aparelho. */

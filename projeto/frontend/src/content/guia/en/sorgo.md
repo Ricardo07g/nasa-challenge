@@ -2,7 +2,7 @@
 titulo: Sorghum
 tema: culturas
 slug: sorgo
-rascunho: sim
+rascunho: nao
 planta: sorgo
 ---
 
@@ -34,5 +34,5 @@ The app shows sorghum in the [Suggestion](/resposta) and in [Compare](/opcoes). 
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: sorghum is recommended for the second crop](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18856249/sorgo-e-recomendado-para-a-safrinha)

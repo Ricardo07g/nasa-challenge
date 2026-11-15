@@ -2,7 +2,7 @@
 titulo: Sementes: o que olhar antes de comprar
 tema: plantar
 slug: sementes
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase

@@ -2,7 +2,7 @@
 titulo: Seeds: what to check before buying
 tema: plantar
 slug: sementes
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence

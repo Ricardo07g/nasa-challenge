@@ -21,10 +21,10 @@ The rain comes from the GPM IMERG satellite. A day without rain is not water sho
 
 What to do? The [3-year plan](/plano) brings Plan B, an alternative if autumn turns dry. In [Alerts](/avisos), you see the alerts for your area.
 
-The 10-day limit comes from the product evolution plan. The 1 mm is a team hypothesis, to be reviewed by the agronomist.
+The 10-day limit comes from the product evolution plan. The 1 mm is a team hypothesis.
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: dry spells are short droughts in the rainy season](https://www.embrapa.br/en/busca-de-noticias/-/noticia/43736399/soja-tolerante-a-veranicos-e-lancada-na-bahia)
 - [NASA: GPM IMERG rainfall](https://gpm.nasa.gov/data/imerg)

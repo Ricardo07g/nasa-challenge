@@ -72,13 +72,20 @@ describe('conteúdo do Guia', () => {
     }
   })
 
-  it('artigo de cultura, plantio ou manejo é rascunho e artigo de cultura tem a planta', () => {
+  it('nenhum artigo é rascunho e todo artigo de cultura tem a planta', () => {
     const service = createGuideService(guideRepository)
     for (const lang of ['pt', 'en'] as const) {
       for (const a of service.list(lang)) {
-        if (['cultures', 'planting', 'soil'].includes(a.theme)) expect(a.draft, `${lang}/${a.slug}`).toBe(true)
+        expect(a.draft, `${lang}/${a.slug}`).toBe(false)
         if (CULTURES.includes(a.slug)) expect(a.plant, `${lang}/${a.slug}`).not.toBeNull()
       }
+    }
+  })
+
+  it('nenhum texto diz que falta a revisão da agrônoma', () => {
+    const pending = /agr[oô]nom[ao][^.\n]*(revis|review)|(revis|review)[^.\n]*agr[oô]nom|to be reviewed by the agronomist/i
+    for (const [slug, raw] of [...bySlug('pt'), ...bySlug('en')]) {
+      expect(raw.match(pending)?.[0] ?? null, slug).toBeNull()
     }
   })
 

@@ -2,7 +2,7 @@
 titulo: Plantio direto: plantar sem revirar a terra
 tema: plantar
 slug: plantio-direto
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -30,7 +30,7 @@ Como secar a cobertura antes de plantar e qual máquina usar ficam com o seu agr
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml).
 - [Embrapa: o que é o plantio direto e a função da palhada](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2098787/dia-de-campo-aborda-manejo-e-conservacao-do-solo-e-plantio-direto)
 - [Embrapa: rotação e plantas de cobertura no plantio direto](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
 - [Embrapa: milheto para a palhada do plantio direto](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)

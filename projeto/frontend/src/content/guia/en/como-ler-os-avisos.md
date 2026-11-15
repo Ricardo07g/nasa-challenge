@@ -28,7 +28,7 @@ For the official alerts, see [Official Civil Defense alerts](/guia/alertas-defes
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (regras.yaml).
 - [NSIDC: SMAP L4 soil moisture](https://nsidc.org/data/spl4smgp/versions/8)
 - [NASA: NASA POWER data](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
 - [NASA: GPM IMERG rain](https://gpm.nasa.gov/data/imerg)

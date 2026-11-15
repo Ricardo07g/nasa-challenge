@@ -21,10 +21,10 @@ A chuva vem do satélite GPM IMERG. Dia sem chuva não é falta de água na hora
 
 O que fazer? O [Plano de 3 anos](/plano) traz o Plano B, uma alternativa se o outono vier seco. Em [Avisos](/avisos), você vê os alertas da sua área.
 
-O limite de 10 dias é do plano de evolução do produto. O de 1 mm é hipótese do time, a revisar pela agrônoma.
+O limite de 10 dias é do plano de evolução do produto. O de 1 mm é hipótese do time.
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: veranicos são curtos períodos de estiagem na época de chuvas](https://www.embrapa.br/en/busca-de-noticias/-/noticia/43736399/soja-tolerante-a-veranicos-e-lancada-na-bahia)
 - [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)

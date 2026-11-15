@@ -2,7 +2,7 @@
 titulo: Sorgo
 tema: culturas
 slug: sorgo
-rascunho: sim
+rascunho: nao
 planta: sorgo
 ---
 
@@ -34,5 +34,5 @@ O app mostra o sorgo na [Sugestão](/resposta) e em [Comparar](/opcoes). O selo 
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: sorgo é recomendado para a safrinha](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18856249/sorgo-e-recomendado-para-a-safrinha)

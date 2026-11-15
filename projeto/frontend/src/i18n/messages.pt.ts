@@ -1488,7 +1488,7 @@ export const pt = {
   guide: {
     /** "Ouvir resumo" (regra geral 9 do pacote 2) da página inicial; o do artigo é o título e o "Em uma frase". */
     summary: (count: number) =>
-      `O Guia tem ${count} artigos curtos sobre culturas, plantio, terra, clima e segurança. Busque pelo título ou toque num artigo para ler. Os de cultura e de plantio ainda são rascunho, a revisar pela agrônoma.`,
+      `O Guia tem ${count} artigos curtos sobre culturas, plantio, terra, clima e segurança. Busque pelo título ou toque num artigo para ler.`,
     title: 'Guia',
     subtitle: 'Respostas curtas para as dúvidas mais comuns da lavoura.',
     /** Tarefa 0051 (RF-35): a área do MVP, na página inicial do Guia (os artigos não mudam). */

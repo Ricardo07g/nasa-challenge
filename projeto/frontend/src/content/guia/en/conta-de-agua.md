@@ -2,7 +2,7 @@
 titulo: The water math of your field
 tema: clima
 slug: conta-de-agua
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
@@ -30,7 +30,7 @@ In the [3-year plan](/plano), "rain used" shows this for each year. The [Suggest
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [NASA: GPM IMERG rainfall](https://gpm.nasa.gov/data/imerg)
 - [NASA: the POWER project](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
 - [Embrapa: cover helps retain moisture](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)

@@ -2,7 +2,7 @@
 titulo: Milheto
 tema: culturas
 slug: milheto
-rascunho: sim
+rascunho: nao
 planta: milheto
 ---
 
@@ -34,5 +34,5 @@ O app mostra o milheto em [Comparar](/opcoes) e dentro do [Plano de 3 anos](/pla
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: milheto é cultura alternativa para cobertura de solo](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)

@@ -95,10 +95,10 @@ const article: GuideArticle = { slug: 'sorgo', title: 'Sorgo', theme: 'cultures'
 describe('GuideArticleView', () => {
   const listen = { supported: true, speaking: false, toggle: vi.fn() }
 
-  function setup(a: GuideArticle | null, t = pt) {
+  function setup(a: GuideArticle | null, t = pt, lang: 'pt' | 'en' = 'pt') {
     render(
       <MemoryRouter>
-        <GuideArticleView t={t} article={a} listen={listen} />
+        <GuideArticleView t={t} lang={lang} article={a} listen={listen} />
       </MemoryRouter>,
     )
   }
@@ -111,11 +111,13 @@ describe('GuideArticleView', () => {
     expect(listen.toggle).toHaveBeenCalled()
   })
 
-  it('título, aviso de rascunho no topo, desenho da planta e texto', () => {
+  it('título, aviso de rascunho no topo, foto real da planta com crédito e texto', () => {
     setup(article)
     expect(screen.getByRole('heading', { level: 1, name: 'Sorgo' })).toBeInTheDocument()
     expect(screen.getByText('Rascunho: a revisar pela agrônoma.')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Desenho de sorgo' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Lavoura de sorgo com os cachos de grão maduros/ })).toHaveAttribute('src', '/fotos/sorgo.jpg')
+    expect(screen.getByRole('link', { name: /Josue Marinho/ })).toHaveAttribute('href', expect.stringContaining('commons.wikimedia.org'))
+    expect(screen.getByText(/CC BY 3\.0/)).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'Em uma frase' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Voltar ao Guia' })).toHaveAttribute('href', '/guia')
   })
@@ -137,8 +139,14 @@ describe('GuideArticleView', () => {
   })
 
   it('aviso em inglês', () => {
-    setup(article, en)
+    setup(article, en, 'en')
     expect(screen.getByText('Draft: to be reviewed by the agronomist.')).toBeInTheDocument()
+  })
+
+  it('em inglês, a foto vem com o texto alternativo e o crédito em inglês', () => {
+    setup({ ...article, draft: false }, en, 'en')
+    expect(screen.getByRole('img', { name: /Sorghum field with ripe grain heads/ })).toBeInTheDocument()
+    expect(screen.getByText(/Photo:/)).toBeInTheDocument()
   })
 
   it('artigo inexistente mostra a mensagem e o caminho de volta', () => {

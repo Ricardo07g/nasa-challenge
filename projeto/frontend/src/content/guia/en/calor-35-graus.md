@@ -27,5 +27,5 @@ The 35 °C limit comes from the PRD. The link to flower loss is the rule the tea
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [NASA: the POWER project, daily temperature](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)

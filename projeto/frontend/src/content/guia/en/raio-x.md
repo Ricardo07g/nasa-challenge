@@ -30,7 +30,7 @@ See also [Dry spell](/guia/veranico) and [The water math of your field](/guia/co
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (regras.yaml).
 - [ISRIC: SoilGrids, the world soil map](https://www.isric.org/explore/soilgrids)
 - [NSIDC: SMAP L4, soil moisture](https://nsidc.org/data/spl4smgp/versions/8)
 - [NASA: what NDVI is](https://science.nasa.gov/earth/earth-observatory/measuring-vegetation-ndvi-evi)

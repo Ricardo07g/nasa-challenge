@@ -2,7 +2,7 @@
 titulo: Milho com braquiária
 tema: culturas
 slug: milho-braquiaria
-rascunho: sim
+rascunho: nao
 planta: milho_braquiaria
 ---
 
@@ -34,6 +34,6 @@ O app compara o milho com braquiária com as outras opções em [Comparar](/opco
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: Sistema Santa Fé](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)
 - [Embrapa: braquiária além da alimentação animal](https://www.embrapa.br/en/tema-integracao-lavoura-pecuaria-floresta-ilpf/busca-de-noticias/-/noticia/31795514/braquiaria-muito-alem-da-alimentacao-animal)

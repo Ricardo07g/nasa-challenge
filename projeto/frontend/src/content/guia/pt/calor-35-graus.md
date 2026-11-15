@@ -27,5 +27,5 @@ O limite de 35 °C é do PRD. A ligação com aborto de flores é a regra que o 
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [NASA: o projeto POWER, temperatura diária](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)

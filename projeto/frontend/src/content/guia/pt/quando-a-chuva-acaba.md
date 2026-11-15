@@ -23,12 +23,12 @@ Na tela [Quando você colhe](/quando), o app mostra três coisas, com a chuva me
 2. Quando a chuva acaba. O app chama de fim da chuva o primeiro dia, a partir de 1º de março, que começa 20 dias seguidos com menos de 10 mm somados. Ele mostra o dia em que isso aconteceu em metade dos anos, o ano mais cedo e o mais tarde.
 3. Mês a mês, a chuva e o que a lavoura gasta. O gasto é a evapotranspiração, calculada com o clima do NASA POWER. O mês em que a chuva fica menor que o gasto aparece escrito em destaque.
 
-Os números de 1º de março, 20 dias, 10 mm e 20% são hipótese do time, a revisar pela agrônoma.
+Os números de 1º de março, 20 dias, 10 mm e 20% são hipótese do time.
 
 Veja também [Veranico](/guia/veranico) e [A conta de água da lavoura](/guia/conta-de-agua).
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (regras.yaml).
 - [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)
 - [NASA: o projeto POWER](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)

@@ -2,7 +2,7 @@
 titulo: Pearl millet
 tema: culturas
 slug: milheto
-rascunho: sim
+rascunho: nao
 planta: milheto
 ---
 
@@ -34,5 +34,5 @@ The app shows pearl millet in [Compare](/opcoes) and inside the [3-year plan](/p
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: pearl millet as an alternative soil cover](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)

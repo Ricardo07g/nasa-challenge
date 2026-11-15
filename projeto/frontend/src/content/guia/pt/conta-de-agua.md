@@ -2,7 +2,7 @@
 titulo: A conta de água da lavoura
 tema: clima
 slug: conta-de-agua
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -30,7 +30,7 @@ No [Plano de 3 anos](/plano), a "chuva aproveitada" mostra isso para cada ano. A
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)
 - [NASA: o projeto POWER](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
 - [Embrapa: cobertura ajuda a reter umidade](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)

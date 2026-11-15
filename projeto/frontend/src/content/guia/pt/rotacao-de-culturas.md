@@ -2,7 +2,7 @@
 titulo: Rotação de culturas
 tema: terra
 slug: rotacao-de-culturas
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -28,6 +28,6 @@ Você pode trocar uma opção e ver a nota na hora. Veja cada cultura na [Sugest
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: rotação de culturas e plantas de cobertura](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
 - [Embrapa: nematoides e rotação](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)

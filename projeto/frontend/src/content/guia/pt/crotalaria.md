@@ -2,7 +2,7 @@
 titulo: Crotalária
 tema: culturas
 slug: crotalaria
-rascunho: sim
+rascunho: nao
 planta: crotalaria
 ---
 
@@ -34,6 +34,6 @@ O app mostra a crotalária em [Comparar](/opcoes). Com nematoide na área, o [Pl
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: crotalária, nitrogênio e nematoides](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2380275/crotalaria-e-uma-boa-alternativa-para-a-renovacao-de-canaviais)
 - [Embrapa: nematoides no milho e rotação](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)

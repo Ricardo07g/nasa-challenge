@@ -2,7 +2,7 @@
 titulo: Sowing right after harvest
 tema: plantar
 slug: plantar-logo-depois-da-colheita
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
@@ -33,6 +33,6 @@ See [The planting deadline and ZARC](/guia/prazo-de-plantio-zarc) and [When the 
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml, regras.yaml and PRD), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml, regras.yaml and PRD).
 - [Ministry of Agriculture: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
 - [Embrapa: second crop sown as the soybean harvest advances](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)

@@ -2,7 +2,7 @@
 titulo: Plantar logo depois da colheita
 tema: plantar
 slug: plantar-logo-depois-da-colheita
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -33,6 +33,6 @@ Veja [O prazo de plantio e o ZARC](/guia/prazo-de-plantio-zarc) e [Quando a chuv
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml, regras.yaml e PRD), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (culturas.yaml, regras.yaml e PRD).
 - [Ministério da Agricultura: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
 - [Embrapa: safrinha semeada conforme a colheita da soja](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)

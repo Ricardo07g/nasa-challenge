@@ -2,7 +2,7 @@
 titulo: Como evitar erosão
 tema: terra
 slug: como-evitar-erosao
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
@@ -31,7 +31,7 @@ Onde fazer terraço e a distância entre eles ficam com o seu agrônomo.
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (regras.yaml).
 - [Embrapa: terraços para controlar a erosão, junto com o plantio direto](https://www.embrapa.br/en/busca-de-noticias/-/noticia/46926155/terracos-para-controlar-a-erosao-em-santa-catarina)
 - [Embrapa: plantio direto, palhada e curvas de nível](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2098787/dia-de-campo-aborda-manejo-e-conservacao-do-solo-e-plantio-direto)
 - [Embrapa: Sistema Santa Fé, palhada e erosão](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)

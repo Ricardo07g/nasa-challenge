@@ -30,7 +30,7 @@ Veja também [Veranico](/guia/veranico) e [A conta de água da lavoura](/guia/co
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (regras.yaml), a revisar pela agrônoma.
+- Números do app: parâmetros do Raiz Orbital (regras.yaml).
 - [ISRIC: SoilGrids, mapa mundial de solos](https://www.isric.org/explore/soilgrids)
 - [NSIDC: SMAP L4, umidade da terra](https://nsidc.org/data/spl4smgp/versions/8)
 - [NASA: o que é o NDVI](https://science.nasa.gov/earth/earth-observatory/measuring-vegetation-ndvi-evi)

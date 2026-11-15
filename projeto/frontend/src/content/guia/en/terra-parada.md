@@ -2,7 +2,7 @@
 titulo: Leaving the land fallow
 tema: culturas
 slug: terra-parada
-rascunho: sim
+rascunho: nao
 planta: pousio
 ---
 
@@ -33,5 +33,5 @@ The app shows the history of fallow years in [What the satellite saw](/satelite)
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: rotation and cover crops in no-till](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)

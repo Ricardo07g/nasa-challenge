@@ -2,7 +2,7 @@
 titulo: Fire in the straw
 tema: seguranca
 slug: fogo-na-palha
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
@@ -31,6 +31,6 @@ In case of fire, call 193 (Fire Department). See also [Official Civil Defense al
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (regras.yaml), to be reviewed by the agronomist.
+- App numbers: Raiz Orbital parameters (regras.yaml).
 - [NASA Earthdata: MCD64A1 burned area](https://www.earthdata.nasa.gov/data/catalog/lpcloud-mcd64a1-061)
 - [Brazilian Government: 193 is the Fire Department number](https://www.gov.br/mcom/pt-br/noticias/2026/setembro/emergencia-voce-sabe-para-quem-ligar-quando-precisa-de-ajuda)
