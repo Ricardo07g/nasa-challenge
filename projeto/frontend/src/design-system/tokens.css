@@ -222,6 +222,15 @@
   --color-input-focus: #cfe3d7;
   --color-error-text: #a3361a; /* "Não entendi" do modal */
   --color-primary-disabled: #a9c2b4; /* "Confirmar local" desligado */
+
+  /*
+   * Fotos das plantas (tarefa 0055, `PlantPhoto`): faixa escura do crédito em cima da foto (com 55% de
+   * preto no ponto mais claro, o texto branco passa de 4,5:1 até sobre céu branco) e o bloco verde de
+   * quando a foto não carrega.
+   */
+  --color-photo-credit: #ffffff;
+  --photo-credit-shade: linear-gradient(0deg, rgb(0 0 0 / 75%), rgb(0 0 0 / 55%));
+  --photo-fallback: linear-gradient(140deg, var(--color-primary), var(--color-primary-strong));
 }
 
 /* Celular e tablet (até 900 px, protótipos da remodelagem v4): margem menor e cabeçalho mais baixo */
