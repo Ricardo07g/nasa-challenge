@@ -110,6 +110,19 @@ describe('OptionCompareCard', () => {
     expect(card).toHaveTextContent('Nº 1')
     expect(card).toHaveTextContent('ChuvaDeu certo em 14 de 20 anos')
   })
+
+  it('linha sem valor (dado que a API ainda não manda): eixo e conteúdo extra, sem frase vazia', () => {
+    const { container } = render(
+      <OptionCompareCard
+        rank="Nº 1"
+        name="Sorgo"
+        rows={[{ label: 'Clima 2041–2060', extra: <span>Ainda não conectado</span> }]}
+      />,
+    )
+
+    expect(screen.getByRole('article', { name: 'Sorgo' })).toHaveTextContent('Clima 2041–2060Ainda não conectado')
+    expect(container.querySelector('[class*="compareValue"]')).toBeNull()
+  })
 })
 
 describe('RecommendationHero como título da página', () => {
