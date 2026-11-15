@@ -10,8 +10,12 @@ from app.models.sinal_outono import SinalOutono
 class AnoPlano:
     """Um ano do plano: a cultura e os fatos do motor para ela na faixa de colheita.
 
-    Fora da janela de plantio (ZARC), o motor não avalia a cultura: os números saem None, mas os
-    fatos da terra (do `culturas.yaml`) continuam. No pousio, `anos_bons` e `usa_mm` são None.
+    Fora do prazo do ZARC, o motor avalia a cultura na mesma semeadura desde a tarefa 0056:
+    `na_janela` = False, `fora_do_prazo` = True e os números do motor (antes saíam None). Sem a
+    conta do motor (motor antigo), os números saem None e os fatos da terra (do `culturas.yaml`)
+    continuam. No pousio, `anos_bons` e `usa_mm` são None.
+    `fixo`: o produtor escolheu o ano (no plano em cadeia, False nos anos sugeridos); `motivo`: o
+    porquê de um ano sugerido (None nos fixos).
     """
 
     cultura: str
@@ -27,6 +31,22 @@ class AnoPlano:
     quebra_nematoide: bool
     # Chuva aproveitada: a mediana do que a planta usou no ciclo (ETr do balanço), em mm
     usa_mm: int | None
+    # Tarefa 0056 (tela 5): passou do prazo do ZARC; o ano foi fixado pelo produtor; o porquê
+    fora_do_prazo: bool = False
+    fixo: bool = True
+    motivo: str | None = None
+
+
+@dataclass(frozen=True)
+class AnoSugerido:
+    """Um ano do plano em cadeia (tarefa 0056): a cultura, se o produtor fixou o ano e o porquê.
+
+    `motivo` só nos anos que o motor sugeriu: a frase da regra que pesou (grupo `frases_plano`).
+    """
+
+    cultura: str
+    fixo: bool
+    motivo: str | None
 
 
 @dataclass(frozen=True)
@@ -126,5 +146,5 @@ class PlanoAvaliado:
     chuva: ChuvaAproveitada | None
     plano_ab: PlanoAB | None
     # Sinal do outono com o Plano A e o Plano B desta tela (tarefa 0049); None sem a previsão do
-    # ENSO, no pousio ou com o 1º ano fora da janela
+    # ENSO ou no pousio (com o 1º ano fora do prazo, o sinal fala dele desde a tarefa 0056)
     sinal: SinalOutono | None = None

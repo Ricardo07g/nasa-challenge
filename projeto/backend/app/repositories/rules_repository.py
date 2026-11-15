@@ -10,6 +10,7 @@ import yaml
 from app.config import DEFAULT_REGRAS_PATH
 from app.models.regras import (
     FrasesAno,
+    FrasesPlano,
     FrasesPorque,
     FrasesSafra,
     Regras,
@@ -29,6 +30,7 @@ from app.models.regras import (
     RegrasNdvi,
     RegrasNotaFinal,
     RegrasPlanoB,
+    RegrasPlanoCadeia,
     RegrasRaioX,
     RegrasRegiaoNdvi,
     RegrasRenda,
@@ -121,6 +123,8 @@ class YamlRulesRepository:
             enso_acerto=_group(raw, "enso_acerto", RegrasEnsoAcerto),
             plano_b=_group(raw, "plano_b", RegrasPlanoB),
             chuva_aproveitada=_group(raw, "chuva_aproveitada", RegrasChuvaAproveitada),
+            plano_cadeia=_group(raw, "plano_cadeia", RegrasPlanoCadeia),
+            frases_plano=_texts(raw, "frases_plano", FrasesPlano),
         )
         return self._cache
 

@@ -1,5 +1,6 @@
 """Unit tests for PlanEvaluationService (avaliar um plano de 3 anos qualquer, tarefa 0045)."""
 
+from dataclasses import replace
 from datetime import date, timedelta
 from types import SimpleNamespace
 from typing import Any
@@ -100,6 +101,12 @@ MILHO_BRAQ = _option(
 )
 CROTALARIA = _option("crotalaria", "Crotalária", 95.0, 85.0, 200, {2010}, sede="pouca")
 SORGO = _option("sorgo", "Sorgo", 70.0, 35.0, 210, {2006, 2009, 2011})
+# Fora do prazo do ZARC (tarefa 0056): o motor avalia na mesma semeadura, com na_janela = False
+MILHO_FORA = replace(
+    _option("milho_safrinha", "Milho sozinho", 60.0, 20.0, 240, {2005, 2006, 2009, 2010}),
+    na_janela=False,
+)
+POUSIO_NOTAS = NotasOpcao(seguranca=100.0, futuro=100.0, solo=0.0, renda=0.0, final=45.0)
 
 
 def _recommendation(**over: Any) -> SimpleNamespace:
@@ -107,8 +114,11 @@ def _recommendation(**over: Any) -> SimpleNamespace:
         "celula_id": "-190_-482",
         "colheita": "meio",
         "semeadura": SOWING,
+        "nematoide": None,
         "opcoes": (MILHO_BRAQ, CROTALARIA, SORGO),
         "fora_da_janela": (),
+        "opcoes_fora_do_prazo": (),
+        "notas_pousio": POUSIO_NOTAS,
     }
     return SimpleNamespace(**(base | over))
 
@@ -249,8 +259,119 @@ def test_should_mark_a_crop_out_of_the_sowing_window_without_numbers() -> None:
         None,
     )
     assert milho.cobre_terra is True  # a palhada do milho é fato do culturas.yaml
+    assert milho.fora_do_prazo is True
     assert plano.notas.seguranca == pytest.approx(95.0)  # só a crotalária tem a conta
     assert plano.chuva is not None and plano.chuva.usa_media_mm is None
+
+
+def test_should_evaluate_a_first_year_past_the_deadline_with_the_engine_numbers() -> None:
+    # Tarefa 0056: o motor avalia a cultura fora do prazo do ZARC; o ano vem com os números e o
+    # aviso `fora_do_prazo`, em vez dos números nulos.
+    fora = ForaDaJanelaOpcao(id="milho_safrinha", nome="Milho sozinho", texto="")
+    spy = SpySinal()
+    rec = _recommendation(fora_da_janela=(fora,), opcoes_fora_do_prazo=(MILHO_FORA,))
+    service, _, _ = _service(rec, sinal=spy)
+
+    plano = service.evaluate(-18.95, -48.2, ["milho_safrinha", "sorgo", "crotalaria"])
+
+    milho, sorgo, _ = plano.anos
+    assert (milho.na_janela, milho.fora_do_prazo) == (False, True)
+    assert (milho.anos_bons, milho.total_anos, milho.usa_mm, milho.sede) == (6, 10, 240, "media")
+    assert (sorgo.na_janela, sorgo.fora_do_prazo) == (True, False)
+    assert plano.notas.seguranca == pytest.approx(75.0)  # (60 + 70 + 95) / 3
+    assert plano.chuva is not None and plano.chuva.usa_media_mm == 217  # (240 + 210 + 200) / 3
+    # Plano A = o milho fora do prazo; o Plano B só entre as culturas no prazo
+    ab = plano.plano_ab
+    assert ab is not None
+    assert (ab.cultura_a, ab.falhas_a) == ("milho_safrinha", 4)
+    assert ab.cultura_b == "crotalaria"  # deu certo em 2005, 2006 e 2009 (falhou em 2010)
+    (call,) = spy.calls
+    assert (call["cultura_a"], call["cultura_b"]) == ("milho_safrinha", "crotalaria")
+    assert {o.id for o in call["opcoes"]} == {
+        "milho_braquiaria",
+        "crotalaria",
+        "sorgo",
+        "milho_safrinha",
+    }
+
+
+def test_should_mark_every_year_of_a_plan_given_by_the_producer_as_fixed() -> None:
+    service, _, _ = _service()
+
+    plano = service.evaluate(-18.95, -48.2, ["sorgo", "pousio", "crotalaria"])
+
+    assert [(a.fixo, a.motivo, a.fora_do_prazo) for a in plano.anos] == [(True, None, False)] * 3
+
+
+def test_should_suggest_the_next_years_with_the_reason_and_evaluate_the_whole_plan() -> None:
+    # Tarefa 0056 (tela 5): o produtor fixa o 1º e o 2º ano; o motor sugere o 3º e avalia o plano
+    # inteiro com a mesma conta do `evaluate`, numa chamada só ao motor.
+    service, recommender, _ = _service()
+
+    plano = service.suggest(-18.95, -48.2, ["sorgo", "pousio"], colheita="tarde", lang="en")
+
+    assert [(a.cultura, a.fixo) for a in plano.anos] == [
+        ("sorgo", True),
+        ("pousio", True),
+        ("crotalaria", False),
+    ]
+    assert [a.motivo for a in plano.anos[:2]] == [None, None]
+    # Sem milheto nas opções de teste: a crotalária (sede pouca) pela melhor nota
+    assert (
+        plano.anos[2].motivo
+        == "it has the engine's best score for this harvest and handles drought"
+    )
+    sem_motivo = tuple(replace(a, fixo=True, motivo=None) for a in plano.anos)
+    avaliado = service.evaluate(
+        -18.95, -48.2, ["sorgo", "pousio", "crotalaria"], colheita="tarde", lang="en"
+    )
+    assert replace(plano, anos=sem_motivo) == avaliado
+    assert recommender.calls[0] == {
+        "lat": -18.95,
+        "lon": -48.2,
+        "colheita": "tarde",
+        "solo_override": None,
+        "lang": "en",
+    }
+
+
+def test_should_redo_the_second_and_third_years_when_the_first_one_changes() -> None:
+    service, _, _ = _service()
+
+    com_sorgo = service.suggest(-18.95, -48.2, ["sorgo"])
+    com_milho = service.suggest(-18.95, -48.2, ["milho_braquiaria"])
+
+    assert [a.cultura for a in com_sorgo.anos] == ["sorgo", "milho_braquiaria", "crotalaria"]
+    assert [a.cultura for a in com_milho.anos] == ["milho_braquiaria", "crotalaria", "crotalaria"]
+    assert all(a.motivo for a in com_sorgo.anos[1:])
+
+
+def test_should_suggest_after_a_first_year_past_the_deadline_only_crops_in_time() -> None:
+    fora = ForaDaJanelaOpcao(id="milho_safrinha", nome="Milho sozinho", texto="")
+    rec = _recommendation(fora_da_janela=(fora,), opcoes_fora_do_prazo=(MILHO_FORA,))
+    service, _, _ = _service(rec)
+
+    plano = service.suggest(-18.95, -48.2, ["milho_safrinha"])
+
+    primeiro = plano.anos[0]
+    assert (primeiro.cultura, primeiro.fixo, primeiro.fora_do_prazo) == (
+        "milho_safrinha",
+        True,
+        True,
+    )
+    assert primeiro.anos_bons == 6
+    for ano in plano.anos[1:]:
+        assert ano.cultura in {"milho_braquiaria", "crotalaria", "sorgo", "pousio"}
+        assert (ano.fixo, ano.fora_do_prazo) == (False, False)
+
+
+@pytest.mark.parametrize("fixos", [[], ["sorgo", "sorgo", "sorgo"], ["sorgo", "trigo"]])
+def test_should_refuse_a_suggestion_without_one_or_two_known_fixed_years(fixos: list[str]) -> None:
+    service, recommender, _ = _service()
+
+    with pytest.raises(ValidationDomainError):
+        service.suggest(-18.95, -48.2, fixos)
+    assert recommender.calls == []
 
 
 def test_should_count_the_soil_health_facts_of_the_whole_rotation() -> None:

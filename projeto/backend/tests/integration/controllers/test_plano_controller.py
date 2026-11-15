@@ -45,7 +45,13 @@ def test_should_evaluate_any_three_year_plan(client: TestClient) -> None:
         "deixa_nitrogenio",
         "quebra_nematoide",
         "usa_mm",
+        # Tarefa 0056 (tela 5): campos novos, opcionais no front
+        "fora_do_prazo",
+        "fixo",
+        "motivo",
     }
+    # O plano de `anos` é todo do produtor: nenhum ano sugerido
+    assert [(a["fixo"], a["motivo"]) for a in body["anos"]] == [(True, None)] * 3
     assert set(body["notas"]) == {"seguranca", "solo", "futuro"}
     assert set(body["terra"]) == {
         "anos_cobertos",
@@ -130,6 +136,110 @@ def test_should_refuse_an_unknown_harvest_band(client: TestClient) -> None:
 
 def test_should_answer_outside_area_for_a_point_without_data(client: TestClient) -> None:
     response = client.get("/api/plano", params={"lat": -23.55, "lon": -46.63, "anos": PLANO})
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "OUTSIDE_AREA"
+
+
+def test_should_evaluate_a_year_past_the_deadline_with_the_numbers_of_the_recommendation(
+    client: TestClient,
+) -> None:
+    # Tarefa 0056: na colheita tarde o milho passou do prazo do ZARC; o ano vem com a conta do
+    # motor (a mesma do /recomendacao) e `fora_do_prazo: true`, em vez dos números nulos.
+    params = {**UFU, "colheita": "tarde"}
+    plano = client.get("/api/plano", params={**params, "anos": "milho_safrinha,sorgo,milheto"})
+    rec = client.get("/api/recomendacao", params=params).json()
+
+    assert plano.status_code == 200
+    milho, sorgo, _ = plano.json()["anos"]
+    opcao = next(o for o in rec["opcoes"] if o["id"] == "milho_safrinha")
+    assert (milho["na_janela"], milho["fora_do_prazo"]) == (False, True)
+    assert (milho["anos_bons"], milho["total_anos"], milho["sede"]) == (
+        opcao["chuva"]["anos_bons"],
+        opcao["chuva"]["anos"],
+        opcao["agua"]["sede"],
+    )
+    assert (sorgo["na_janela"], sorgo["fora_do_prazo"]) == (True, False)
+    assert plano.json()["plano_ab"]["cultura_a"] == "milho_safrinha"
+
+
+def test_should_suggest_the_next_years_with_the_reason_and_evaluate_the_plan(
+    client: TestClient,
+) -> None:
+    # Tela 5: o produtor fixa o 1º e o 2º ano; a API sugere o 3º, com o porquê, e devolve a mesma
+    # avaliação do /api/plano para o plano inteiro (uma chamada só para o front).
+    params = {**UFU, "colheita": "meio"}
+    response = client.get("/api/plano/sugestao", params={**params, "fixos": "sorgo,pousio"})
+
+    assert response.status_code == 200
+    body = response.json()
+    anos = body["anos"]
+    assert [(a["cultura"], a["fixo"], a["motivo"]) for a in anos[:2]] == [
+        ("sorgo", True, None),
+        ("pousio", True, None),
+    ]
+    terceiro = anos[2]
+    assert terceiro["fixo"] is False
+    assert terceiro["cultura"] != "pousio" and terceiro["fora_do_prazo"] is False
+    assert isinstance(terceiro["motivo"], str) and terceiro["motivo"]
+    plano = ",".join(a["cultura"] for a in anos)
+    avaliado = client.get("/api/plano", params={**params, "anos": plano}).json()
+    for ano in anos:
+        ano.update(fixo=True, motivo=None)
+    assert body == avaliado
+
+
+def test_should_write_the_reason_in_the_language_of_accept_language(client: TestClient) -> None:
+    params = {**UFU, "fixos": "sorgo,pousio"}
+
+    pt = client.get("/api/plano/sugestao", params=params).json()
+    en = client.get("/api/plano/sugestao", params=params, headers={"Accept-Language": "en"}).json()
+
+    assert pt["anos"][2]["cultura"] == en["anos"][2]["cultura"]
+    assert pt["anos"][2]["motivo"] != en["anos"][2]["motivo"]
+
+
+def test_should_suggest_only_crops_in_time_after_a_first_year_past_the_deadline(
+    client: TestClient,
+) -> None:
+    params = {**UFU, "colheita": "tarde", "fixos": "milho_braquiaria"}
+
+    body = client.get("/api/plano/sugestao", params=params).json()
+
+    primeiro, *seguintes = body["anos"]
+    assert (primeiro["cultura"], primeiro["fixo"], primeiro["fora_do_prazo"]) == (
+        "milho_braquiaria",
+        True,
+        True,
+    )
+    assert primeiro["anos_bons"] is not None
+    for ano in seguintes:
+        assert ano["cultura"] in {"sorgo", "milheto", "pousio"}
+        assert (ano["fixo"], ano["fora_do_prazo"]) == (False, False)
+
+
+@pytest.mark.parametrize("fixos", ["", "sorgo,sorgo,sorgo", "sorgo,trigo"])
+def test_should_refuse_a_suggestion_without_one_or_two_known_fixed_years(
+    client: TestClient, fixos: str
+) -> None:
+    response = client.get("/api/plano/sugestao", params={**UFU, "fixos": fixos})
+
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith(PROBLEM_JSON_MEDIA_TYPE)
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_should_require_the_fixed_years(client: TestClient) -> None:
+    response = client.get("/api/plano/sugestao", params=UFU)
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "INVALID_REQUEST"
+
+
+def test_should_answer_outside_area_for_a_suggestion_without_data(client: TestClient) -> None:
+    params = {"lat": -23.55, "lon": -46.63, "fixos": "sorgo"}
+
+    response = client.get("/api/plano/sugestao", params=params)
 
     assert response.status_code == 404
     assert response.json()["code"] == "OUTSIDE_AREA"
