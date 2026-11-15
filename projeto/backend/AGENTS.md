@@ -979,8 +979,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **Leitura:** `FileSojaRecenteRepository` (`SOJA_RECENTE_PATH`, com ou sem banco), o pixel do
     ponto na grade do arquivo (contrato "Soja recente", abaixo). Sem arquivo ou com o ponto fora
     da grade: `soja_recente: null`.
-  - **Front:** com `vista: false`, a tela 3 ("Quando você colhe a soja?") avisa no topo, com
-    "Ajustar no mapa" e "Seguir mesmo assim". `true` ou `null`: nada muda.
+  - **Front:** com `vista: false`, a tela "Quando você colhe a soja?" mostra o aviso laranja "Não parece uma
+    lavoura de soja", com "Conferir no mapa" (pacote 2, tarefa 0057), e o raio-X diz "maior verde" no lugar de
+    "pico da soja". `true` ou `null`: nada muda.
   - `pipeline/fetch_soja_recente.py` pede à **ORNL DAAC** (pública, sem credencial; reaproveita o
     `OrnlClient`, o `SubsetCache` e o `parse_subset` do script da região) o recorte **por área**
     do NDVI e da `pixel_reliability` de MOD13Q1 e MYD13Q1 nas 5 + 5 datas da janela, para a caixa
