@@ -67,22 +67,22 @@ export function WherePage() {
   return (
     <WhereView
       t={t}
-      center={state.center}
+      point={state.point}
+      demo={state.demo}
       place={state.place}
       area={state.area}
-      outside={state.outside}
+      status={state.status}
       canConfirm={state.canConfirm}
-      locating={state.locating}
-      locationError={state.locationError}
-      query={state.query}
-      options={state.options}
-      searchStatus={state.searchStatus}
-      notice={state.notice}
-      onMove={state.move}
+      gps={state.gps}
+      view={state.view}
+      listen={state.listen}
+      other={state.other}
+      areaInfo={state.areaInfo}
+      onPick={state.pick}
+      onUseDemo={state.useDemo}
       onUseLocation={state.useMyLocation}
+      onShowArea={state.showArea}
       onConfirm={state.confirm}
-      onQueryChange={state.changeQuery}
-      onSelectOption={state.selectOption}
     />
   )
 }

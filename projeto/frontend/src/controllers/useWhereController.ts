@@ -1,128 +1,185 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
+import type { FieldMapView } from '../design-system/components/FieldMap'
 import { useI18n } from '../i18n/useI18n'
-import type { LocationNotice, LocationOption } from '../models/place'
 import type { Ponto } from '../models/talhao'
 import { farmService, type FarmService } from '../services/farmService'
 import { buildFlowQuery, readFlowParams } from '../services/flowParams'
 import { geocodingService, SEARCH_DELAY_MS, type GeocodingService } from '../services/geocodingService'
 import { parseLocationInput } from '../services/locationInputService'
-import { areaCenter, EXAMPLE_FARM, isInsideArea, nearestPlace } from '../services/locationService'
+import { canConfirm, EXAMPLE_FARM, nearestPlace, whereStatus } from '../services/locationService'
 import { pilotAreaService, type PilotAreaService } from '../services/pilotAreaService'
 import { positionService, type PositionService } from '../services/positionService'
+import { speechService, type SpeechService } from '../services/speechService'
 import { useAsync } from './useAsync'
 import { useDebouncedRequest } from './useDebouncedRequest'
+import { useListenSummary } from './useListenSummary'
 
 type Deps = {
   farm: FarmService
   positionService: PositionService
-  geocoding: GeocodingService
+  geocoding: Pick<GeocodingService, 'reverse'>
   pilotArea: PilotAreaService
+  speech: SpeechService
 }
 
-const defaultDeps: Deps = { farm: farmService, positionService, geocoding: geocodingService, pilotArea: pilotAreaService }
+const defaultDeps: Deps = {
+  farm: farmService,
+  positionService,
+  geocoding: geocodingService,
+  pilotArea: pilotAreaService,
+  speech: speechService,
+}
 
-const NOTICES: readonly string[] = ['short-link', 'link-without-point', 'invalid-coordinates'] satisfies LocationNotice[]
+/** Modal "Outras formas de marcar": coordenadas ou link do Google Maps. */
+export type OtherWaysState = {
+  open: boolean
+  text: string
+  /** "Não entendi": o texto não virou um ponto. */
+  error: boolean
+  onOpen: () => void
+  onClose: () => void
+  onChange: (text: string) => void
+  onSubmit: () => void
+}
+
+/** Modal "Onde o app funciona", aberto pelo "Saiba mais" da legenda do mapa. */
+export type AreaInfoState = {
+  open: boolean
+  onOpen: () => void
+  onClose: () => void
+  /** "Ver a área inteira": fecha o modal e enquadra a área no mapa. */
+  onShowArea: () => void
+}
+
+type Marked = { point: Ponto; demo: boolean }
 
 /**
- * Tela "Onde fica a lavoura?" (tarefa 0041): busca de endereço (Photon), coordenadas ou link colados,
- * GPS, arrastar o mapa, endereço aproximado do pino e "Confirmar local" (que já dispara o talhão).
- * Ponto fora da área piloto (vinda da API) não avança.
+ * Tela "Onde fica a lavoura?" (tarefa 0053): o produtor toca no mapa (e arrasta o alfinete), usa o GPS ou a
+ * lavoura de demonstração; coordenadas e link do Google Maps ficam no modal "Outras formas de marcar". O
+ * endereço aproximado vem do Photon (busca reversa). Ponto fora da área do MVP (vinda da API) não avança.
  */
 export function useWhereController(deps: Deps = defaultDeps) {
-  const { lang } = useI18n()
+  const { lang, messages: t } = useI18n()
   const navigate = useNavigate()
   const [search] = useSearchParams()
-  const [center, setCenter] = useState<Ponto>(() => {
+  const [marked, setMarked] = useState<Marked | null>(() => {
     const params = readFlowParams(search)
-    return params ? { lat: params.lat, lon: params.lon } : EXAMPLE_FARM
+    return params ? { point: { lat: params.lat, lon: params.lon }, demo: params.exemplo } : null
   })
-  const [locating, setLocating] = useState(false)
-  const [locationError, setLocationError] = useState(false)
-  const [query, setQuery] = useState('')
-  /** O texto que a pessoa digitou ou colou; `null` depois de escolher uma opção (lista fechada). */
-  const [typed, setTyped] = useState<string | null>(null)
+  const [view, setView] = useState<FieldMapView>(() => ({ target: marked ? 'point' : 'area', seq: 0 }))
+  const [gps, setGps] = useState<'idle' | 'locating' | 'error'>('idle')
+  const [modal, setModal] = useState<'other' | 'area' | null>(null)
+  const [otherText, setOtherText] = useState('')
+  const [otherError, setOtherError] = useState(false)
+  const listen = useListenSummary(t.where.summary, lang, deps.speech)
 
+  const point = marked?.point ?? null
   const areaState = useAsync(() => deps.pilotArea.get(), [deps.pilotArea])
   const area = areaState.status === 'ready' ? (areaState.data ?? null) : null
-  const outside = area !== null && !isInsideArea(center, area)
-  // Sem a área (API fora do ar), deixa seguir: o backend ainda responde OUTSIDE_AREA nas próximas telas.
-  const canConfirm = areaState.status === 'error' || (area !== null && !outside)
+  const status = whereStatus(point, area)
 
-  const input = useMemo(() => parseLocationInput(typed ?? ''), [typed])
-  const searchText = input.kind === 'search' && deps.geocoding.canSearch(input.query) ? input.query : null
-  const near = area ? areaCenter(area) : center
-  const found = useDebouncedRequest(
-    searchText === null ? null : `${lang}|${searchText}`,
-    (signal) => deps.geocoding.search(searchText ?? '', lang, { near, signal }),
-    SEARCH_DELAY_MS,
-  )
-
+  // Endereço aproximado: só para o ponto do produtor (a lavoura de demonstração tem nome próprio).
   const reverse = useDebouncedRequest(
-    `${lang}|${center.lat.toFixed(5)},${center.lon.toFixed(5)}`,
-    (signal) => deps.geocoding.reverse(center, lang, { signal }),
+    point && !marked?.demo ? `${lang}|${point.lat.toFixed(5)},${point.lon.toFixed(5)}` : null,
+    (signal) => deps.geocoding.reverse(point!, lang, { signal }),
     SEARCH_DELAY_MS,
   )
-  const fallbackPlace = useMemo(() => nearestPlace(center), [center])
+  const fallbackPlace = useMemo(() => (point ? nearestPlace(point) : ''), [point])
   const place = reverse.status === 'ready' && reverse.data ? reverse.data : fallbackPlace
 
-  const options: LocationOption[] =
-    input.kind === 'point'
-      ? [{ kind: 'point', id: 'ponto-colado', source: input.source, point: input.point }]
-      : searchText !== null && found.status === 'ready'
-        ? (found.data ?? []).map((suggestion) => ({ kind: 'place', ...suggestion }))
-        : []
-  const notice = NOTICES.includes(input.kind) ? (input.kind as LocationNotice) : null
-  const searchStatus = searchText === null ? 'idle' : found.status
-
-  const move = useCallback((point: Ponto) => setCenter(point), [])
-
-  const changeQuery = useCallback((text: string) => {
-    setQuery(text)
-    setTyped(text)
+  const focus = useCallback((target: FieldMapView['target']) => {
+    setView((current) => ({ target, seq: current.seq + 1 }))
   }, [])
 
-  const selectOption = useCallback((option: LocationOption) => {
-    setCenter(option.point)
-    if (option.kind === 'place') setQuery(option.label)
-    setTyped(null)
+  const mark = useCallback((next: Ponto, demo = false) => {
+    setMarked({ point: next, demo })
+    setGps((current) => (current === 'error' ? 'idle' : current))
   }, [])
+
+  const pick = useCallback((next: Ponto) => mark(next), [mark])
+
+  const useDemo = useCallback(() => {
+    mark(EXAMPLE_FARM, true)
+    focus('point')
+  }, [mark, focus])
 
   const useMyLocation = useCallback(() => {
-    setLocating(true)
-    setLocationError(false)
-    deps.positionService
-      .current()
-      .then((point) => setCenter(point))
-      .catch(() => setLocationError(true))
-      .finally(() => setLocating(false))
-  }, [deps.positionService])
+    setGps('locating')
+    deps.positionService.current().then(
+      (found) => {
+        setMarked({ point: found, demo: false })
+        setGps('idle')
+        focus('point')
+      },
+      () => setGps('error'),
+    )
+  }, [deps.positionService, focus])
 
+  const showArea = useCallback(() => focus('area'), [focus])
+
+  const other: OtherWaysState = {
+    open: modal === 'other',
+    text: otherText,
+    error: otherError,
+    onOpen: useCallback(() => setModal('other'), []),
+    onClose: useCallback(() => {
+      setModal(null)
+      setOtherError(false)
+    }, []),
+    onChange: useCallback((text: string) => {
+      setOtherText(text)
+      setOtherError(false)
+    }, []),
+    onSubmit: useCallback(() => {
+      const typed = parseLocationInput(otherText)
+      if (!typed) {
+        setOtherError(true)
+        return
+      }
+      setModal(null)
+      mark(typed)
+      focus('point')
+    }, [otherText, mark, focus]),
+  }
+
+  const areaInfo: AreaInfoState = {
+    open: modal === 'area',
+    onOpen: useCallback(() => setModal('area'), []),
+    onClose: useCallback(() => setModal(null), []),
+    onShowArea: useCallback(() => {
+      setModal(null)
+      focus('area')
+    }, [focus]),
+  }
+
+  const confirmable = canConfirm(status, areaState.status)
   const confirm = useCallback(() => {
-    if (!canConfirm) return
-    const flowQuery = buildFlowQuery(center)
-    const point = readFlowParams(new URLSearchParams(flowQuery))!
-    // Dispara já: o talhão (solo, NDVI) carrega enquanto a pessoa responde a pergunta 2.
-    deps.farm.talhao({ lat: point.lat, lon: point.lon }, lang).catch(() => {})
+    if (!confirmable || !marked) return
+    const flowQuery = buildFlowQuery({ ...marked.point, exemplo: marked.demo })
+    const params = readFlowParams(new URLSearchParams(flowQuery))!
+    // Dispara já: o talhão (solo, NDVI) carrega enquanto a pessoa responde a pergunta seguinte.
+    const talhao = marked.demo ? { lat: params.lat, lon: params.lon, exemplo: true } : { lat: params.lat, lon: params.lon }
+    deps.farm.talhao(talhao, lang).catch(() => {})
     navigate(`/quando${flowQuery}`)
-  }, [canConfirm, center, deps.farm, lang, navigate])
+  }, [confirmable, marked, deps.farm, lang, navigate])
 
   return {
-    center,
+    point,
+    demo: marked?.demo ?? false,
     place,
     area,
-    outside,
-    canConfirm,
-    locating,
-    locationError,
-    query,
-    options,
-    searchStatus,
-    notice,
-    move,
-    changeQuery,
-    selectOption,
+    status,
+    canConfirm: confirmable,
+    gps,
+    view,
+    listen,
+    other,
+    areaInfo,
+    pick,
+    useDemo,
     useMyLocation,
+    showArea,
     confirm,
   }
 }

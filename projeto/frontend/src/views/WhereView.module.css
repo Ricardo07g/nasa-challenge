@@ -1,5 +1,578 @@
-/* Busca de endereço em cima do mapa: largura de leitura no computador, a tela toda no celular */
-.search {
+/*
+ * Tela "Onde fica a lavoura?" (protótipo de 15/11/2026, tarefa 0053). Contêiner de 1280 px com margem de
+ * 52 px (20 px no celular); mapa à esquerda e painel de 380 px à direita; no celular, uma coluna e o
+ * "Confirmar local" numa barra fixa no fim da tela.
+ */
+.page {
   width: 100%;
-  max-width: 640px;
+  max-width: var(--page-width-v4);
+  margin-inline: auto;
+  padding: 22px var(--page-margin-v4) 36px;
+  color: var(--color-text-muted);
+}
+
+/* "← Voltar": discreto como no protótipo, com a área de toque maior por fora */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: -10px -12px;
+  border-radius: var(--radius-2xs);
+  color: var(--color-primary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.back:hover {
+  background: var(--color-tint-green-soft);
+}
+
+.title {
+  margin: 18px 0 0;
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+/* A frase e o "Ouvir resumo" na mesma linha no computador, empilhados no celular */
+.sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin-top: 8px;
+}
+
+.sub p {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.4;
+}
+
+/* Grade: mapa à esquerda (as 3 linhas) e, à direita, cartão, atalhos e Confirmar (preso embaixo) */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-areas:
+    'map card'
+    'map shortcuts'
+    'map confirm';
+  grid-template-rows: auto auto 1fr;
+  gap: 16px 28px;
+  margin-top: 22px;
+}
+
+.mapBlock {
+  grid-area: map;
+  min-width: 0;
+}
+
+/* Cartão do local: sem ponto, marcado, fora da área (o erro do GPS é o "sem ponto" com o aviso) */
+.card {
+  grid-area: card;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+}
+
+.cardLabel {
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.cardTitle {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.cardText {
+  margin: 6px 0 0;
+  font-size: var(--font-size-caption);
+  line-height: 1.5;
+}
+
+.coordinates {
+  margin: 6px 0 0;
+  font-size: var(--font-size-tiny);
+  line-height: 1.5;
+  color: var(--color-text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.card[data-status='empty'] .cardIcon {
+  background: var(--color-empty-icon-bg);
+  color: var(--color-empty-icon);
+}
+
+.card[data-status='empty'] .cardLabel {
+  color: var(--color-text-soft);
+}
+
+.card[data-status='outside'] {
+  border-color: var(--color-outside-border);
+  background: var(--color-outside-bg);
+}
+
+.card[data-status='outside'] .cardIcon {
+  background: var(--color-outside-icon-bg);
+  color: var(--color-outside);
+}
+
+.card[data-status='outside'] .cardLabel {
+  color: var(--color-outside);
+}
+
+.outside {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-outside-border);
+  color: var(--color-outside-text);
+}
+
+.outside b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.outside span {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--font-size-caption);
+  line-height: 1.5;
+}
+
+.gpsError {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-outside-text);
+}
+
+/* Atalhos: GPS (contornado em azul), lavoura de demonstração (cartão clicável) e "Outras formas" */
+.shortcuts {
+  grid-area: shortcuts;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.gps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 16px;
+  border: 1.5px solid var(--color-info);
+  border-radius: var(--radius-cta);
+  background: var(--color-surface);
+  color: var(--color-info);
+  font: inherit;
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.gps:hover {
+  background: var(--color-tint-blue);
+}
+
+.gps[aria-busy='true'] {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.demo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-cta);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.demo:hover {
+  border-color: var(--color-border-green-hover);
+  background: var(--color-tint-green-soft);
+}
+
+.demoIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-2xs);
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+}
+
+.demoText {
+  min-width: 0;
+}
+
+.demoName {
+  display: block;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+}
+
+.demoNear {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--font-size-tiny);
+  line-height: 1.3;
+  color: var(--color-text-soft);
+}
+
+.demoArrow {
+  display: flex;
+  margin-left: auto;
+  color: var(--color-text-soft);
+}
+
+.otherWays {
+  align-self: center;
+  margin-top: 2px;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+  text-decoration-color: var(--color-link-underline);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.otherWays:hover {
+  color: var(--color-primary);
+}
+
+/* Confirmar: no fim do painel, com o motivo embaixo quando está desligado */
+.confirmBlock {
+  grid-area: confirm;
+  align-self: end;
+  min-width: 0;
+}
+
+.confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 58px;
+  border: 0;
+  border-radius: var(--radius-cta);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-cta);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-size: 17px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.confirm:hover:not(:disabled) {
+  background: var(--color-primary-strong);
+}
+
+.confirm:disabled {
+  background: var(--color-primary-disabled);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.reason {
+  min-height: 18px;
+  margin: 8px 0 0;
+  font-size: var(--font-size-tiny);
+  line-height: 1.4;
+  text-align: center;
+  color: var(--color-text-soft);
+}
+
+/* Linha do estado na barra fixa: só no celular */
+.barLine {
+  display: none;
+}
+
+.back:focus-visible,
+.gps:focus-visible,
+.demo:focus-visible,
+.otherWays:focus-visible,
+.confirm:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Modal "Outras formas de marcar" */
+.form {
+  margin: 0;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.field {
+  display: block;
+  width: 100%;
+  height: 50px;
+  margin-top: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-2xs);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.field:focus {
+  border-color: var(--color-primary);
+  outline: 3px solid var(--color-input-focus);
+  outline-offset: 0;
+}
+
+.example {
+  margin: 8px 0 0;
+  font-size: var(--font-size-tiny);
+  line-height: 1.5;
+  color: var(--color-text-soft);
+}
+
+.error {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-error-text);
+}
+
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  margin-top: 18px;
+  border: 0;
+  border-radius: var(--radius-cta);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.submit:hover {
+  background: var(--color-primary-strong);
+}
+
+/* Modal "Onde o app funciona" */
+.areaText {
+  margin: 0 0 12px;
+  font-size: var(--font-size-small);
+  line-height: 1.6;
+}
+
+.areaLine {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-2xs);
+  background: var(--color-tint-green-soft);
+  font-size: var(--font-size-caption);
+  line-height: 1.5;
+}
+
+.areaDash {
+  flex: none;
+  width: 26px;
+  border-top: 2.5px dashed var(--color-info);
+}
+
+.showArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  margin-top: 16px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-2xs);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.showArea:hover {
+  background: var(--color-tint-green-soft);
+}
+
+/* Celular e tablet (até 900 px): uma coluna, nesta ordem, e o Confirmar preso embaixo da tela */
+@media (max-width: 900px) {
+  .page {
+    padding: 14px var(--page-margin-v4) 24px;
+  }
+
+  /* Espaço embaixo da página para a barra fixa não cobrir o rodapé */
+  :global(body):has(.confirmBlock) {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .title {
+    margin-top: 12px;
+    font-size: 28px;
+  }
+
+  .sub {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .sub p {
+    font-size: 15.5px;
+  }
+
+  .grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 16px;
+  }
+
+  .shortcuts {
+    order: 1;
+  }
+
+  .mapBlock {
+    order: 2;
+  }
+
+  .card {
+    order: 3;
+    padding: 16px 18px;
+  }
+
+  .demo {
+    min-height: 56px;
+  }
+
+  .confirmBlock {
+    position: fixed;
+    z-index: 1000;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 12px var(--page-margin-v4) calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-border);
+    background: var(--color-confirm-bar);
+    box-shadow: var(--shadow-confirm-bar);
+  }
+
+  .confirm {
+    height: 54px;
+  }
+
+  .reason {
+    display: none;
+  }
+
+  .barLine {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.4;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .barLine span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .barLine svg {
+    flex: none;
+    color: var(--color-primary);
+  }
+
+  .barLine[data-status='empty'] {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-soft);
+  }
+
+  .barLine[data-status='empty'] svg {
+    color: var(--color-empty-icon);
+  }
+
+  .barLine[data-status='outside'] {
+    color: var(--color-outside-text);
+  }
+
+  .barLine[data-status='outside'] svg {
+    color: var(--color-outside);
+  }
 }

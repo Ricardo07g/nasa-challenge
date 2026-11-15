@@ -181,13 +181,13 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
     expect(phase).not.toHaveTextContent('Not connected yet')
   })
 
-  it('sinal fraco: deixa esperar mais ou ver a fazenda de exemplo', async () => {
+  it('sinal fraco: deixa esperar mais ou ver a lavoura de demonstração', async () => {
     const props = setup({ weak: true })
 
     expect(screen.getByText('O sinal está fraco. O satélite continua tentando.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Esperar mais' }))
     expect(props.onWait).toHaveBeenCalled()
-    expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
+    expect(screen.getByRole('link', { name: 'Ver a lavoura de demonstração' })).toHaveAttribute('href', '/exemplo')
   })
 
   it('erro: mensagem calma e tentar de novo', async () => {
@@ -208,7 +208,7 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
     )
   })
 
-  it('fora da área com dados preparados: oferece a fazenda de exemplo', () => {
+  it('fora da área com dados preparados: oferece a lavoura de demonstração', () => {
     setup({ status: 'outside', facts: null, phase: 0 })
 
     expect(screen.getByRole('region', { name: 'Ainda não chegamos aí' })).toBeInTheDocument()

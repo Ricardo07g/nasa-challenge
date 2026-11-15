@@ -8,10 +8,25 @@ export function isInsideArea({ lat, lon }: Ponto, area: PilotArea): boolean {
   return lat >= area.min_lat && lat <= area.max_lat && lon >= area.min_lon && lon <= area.max_lon
 }
 
-/** Centro da área piloto: a preferência da busca de endereço. */
-export function areaCenter(area: PilotArea): Ponto {
-  const half = (a: number, b: number) => Number(((a + b) / 2).toFixed(6))
-  return { lat: half(area.min_lat, area.max_lat), lon: half(area.min_lon, area.max_lon) }
+/** Estado do cartão do local na tela "Onde fica a lavoura" (tarefa 0053). */
+export type WhereStatus = 'empty' | 'marked' | 'outside'
+
+/**
+ * Sem ponto, marcado ou fora da área do MVP. Sem a área (carregando ou fora do ar), o ponto conta como
+ * marcado: o aviso de fora só aparece com os limites da API na mão.
+ */
+export function whereStatus(point: Ponto | null, area: PilotArea | null): WhereStatus {
+  if (!point) return 'empty'
+  if (area && !isInsideArea(point, area)) return 'outside'
+  return 'marked'
+}
+
+/**
+ * "Confirmar local" liga só com o ponto marcado dentro da área. Enquanto a área carrega, espera; se ela não
+ * carregar, deixa seguir (o backend ainda responde `OUTSIDE_AREA` nas telas seguintes).
+ */
+export function canConfirm(status: WhereStatus, area: 'loading' | 'ready' | 'error'): boolean {
+  return status === 'marked' && area !== 'loading'
 }
 
 /** Cidades de referência do Triângulo Mineiro (sem serviço externo de endereço). */
