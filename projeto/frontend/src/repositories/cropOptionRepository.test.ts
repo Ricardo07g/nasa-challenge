@@ -23,4 +23,13 @@ describe('repositories', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/health')
     expect(result).toEqual({ status: 'ok' })
   })
+
+  it('healthRepository traz o commit que está no ar (campo novo do /api/health)', async () => {
+    const commit = 'f4f06206e1c3b791e0fa2ffe5a037653ef533977'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ status: 'ok', commit })))
+
+    const result = await healthRepository.getHealth()
+
+    expect(result.commit).toBe(commit)
+  })
 })
