@@ -94,13 +94,19 @@ describe('AppHeader (cabeçalho global, tarefas 0052 e 0061)', () => {
     expect(link).not.toHaveTextContent(/\d/)
   })
 
-  it('o idioma mostra PT | EN com o atual destacado e troca ao tocar', async () => {
+  it('o idioma fica em destaque: EN primeiro, cada um com a bandeirinha, o atual marcado, e troca ao tocar', async () => {
     const props = setup()
 
     const toggle = screen.getByRole('button', { name: 'Trocar idioma: português ou inglês' })
-    expect(toggle).toHaveTextContent('PT|EN')
-    expect(toggle.querySelector('[data-active="true"]')).toHaveTextContent('PT')
-    expect(toggle.querySelector('[data-active="false"]')).toHaveTextContent('EN')
+    expect(toggle).toHaveAttribute('data-highlight')
+    expect(toggle).toHaveTextContent('EN|PT')
+    const en = toggle.querySelector('[data-lang="en"]')!
+    const pt = toggle.querySelector('[data-lang="pt"]')!
+    expect(en.querySelector('svg[data-flag="us"]')).toBeInTheDocument()
+    expect(pt.querySelector('svg[data-flag="br"]')).toBeInTheDocument()
+    expect(en.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(pt).toHaveAttribute('data-active', 'true')
+    expect(en).toHaveAttribute('data-active', 'false')
     await userEvent.click(toggle)
 
     expect(props.lang.onToggle).toHaveBeenCalled()
@@ -120,6 +126,7 @@ describe('AppHeader (cabeçalho global, tarefas 0052 e 0061)', () => {
     expect(screen.getByRole('link', { name: 'Guide' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Alerts' })).toBeInTheDocument()
     const toggle = screen.getByRole('button', { name: 'Switch language: Portuguese or English' })
-    expect(toggle.querySelector('[data-active="true"]')).toHaveTextContent('EN')
+    expect(toggle.querySelector('[data-lang="en"]')).toHaveAttribute('data-active', 'true')
+    expect(toggle.querySelector('[data-lang="pt"]')).toHaveAttribute('data-active', 'false')
   })
 })

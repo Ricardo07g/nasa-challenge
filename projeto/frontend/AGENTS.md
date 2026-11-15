@@ -471,7 +471,11 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   linha) e o slogan (some no celular) à esquerda; à direita, **só três itens**: **Guia** (desde o pacote 3, tarefa
   0061, no lugar da Comunidade: pílula verde-clara com o livro, `BookIcon`, e o nome escrito também no celular; leva a
   `/guia`), Avisos (sino, nome e o selo laranja com o `contador` de `/api/avisos`; sem aviso, sem selo; no celular, só
-  o sino com o selo) e o idioma ("PT | EN"; no celular, só o outro idioma). A página atual fica marcada com
+  o sino com o selo) e o idioma **em destaque** (15/11/2026, pedido do usuário): pílula "EN | PT" com o inglês primeiro,
+  cada um com a **bandeirinha** (EUA e Brasil, SVG próprio em `design-system/flags/Flag.tsx`, decorativo, cores
+  `--flag-*` do `tokens.css`), o atual em branco e negrito e o inglês sempre em evidência; no celular, só o outro
+  idioma, com a bandeira. As bandeiras de idioma são decisão do usuário: a regra do NASA Space Apps registrada fala de
+  logo, bandeira ou identificador **da NASA** (e o crédito do Leaflet continua sem a bandeira dele). A página atual fica marcada com
   `aria-current="page"` (o `NavLink`): em `/guia` e nos artigos, a pílula fica verde cheia; em `/avisos`, o sino ganha
   o fundo verde-claro (no computador, o respiro em volta do sino é compensado por margem negativa, para nada mudar de
   lugar). Não ponha outro item nem botão grande no cabeçalho, nem a Comunidade (está "em breve"). Abaixo de 380 px

@@ -138,30 +138,47 @@
   line-height: 1;
 }
 
-/* Idioma: "PT | EN", o atual em verde */
+/* Idioma em destaque (15/11/2026): pílula "🇺🇸 EN | 🇧🇷 PT", o atual em branco e negrito */
 .lang {
   display: flex;
   align-items: center;
-  gap: 0;
-  margin-left: -6px;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: none;
+  gap: 2px;
+  margin-left: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-tint-green-soft);
   font-size: 13px;
   line-height: 1.4;
   cursor: pointer;
 }
 
 .lang span[data-active] {
-  padding: 6px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
   color: var(--color-text-soft);
   font-weight: var(--font-weight-medium);
 }
 
+.lang span[data-active] svg {
+  flex: none;
+  border-radius: 2px;
+}
+
 .lang span[data-active='true'] {
+  background: var(--color-surface);
   color: var(--color-primary);
   font-weight: var(--font-weight-bold);
+  box-shadow: var(--shadow-seal);
+}
+
+/* O inglês chama atenção mesmo quando não é o atual */
+.lang span[data-lang='en'][data-active='false'] {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
 }
 
 .lang:hover span[data-active='false'] {
@@ -169,7 +186,7 @@
 }
 
 .divider {
-  color: var(--color-border);
+  display: none;
 }
 
 .logo:focus-visible,
@@ -251,9 +268,10 @@
     font-size: 11px;
   }
 
-  /* Idioma: só o botão do outro idioma */
+  /* Idioma: só o outro idioma, com a bandeirinha, na mesma pílula */
   .lang {
     margin-left: 0;
+    padding: 2px;
   }
 
   .lang span[data-active='true'],
@@ -262,7 +280,8 @@
   }
 
   .lang span[data-active='false'] {
-    padding: 8px 6px;
+    gap: 5px;
+    padding: 5px 8px;
     color: var(--color-text);
     font-weight: var(--font-weight-semibold);
   }
@@ -308,6 +327,7 @@
   }
 
   .lang span[data-active='false'] {
-    padding: 8px 4px;
+    gap: 4px;
+    padding: 5px 6px;
   }
 }

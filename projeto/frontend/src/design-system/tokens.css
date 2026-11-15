@@ -331,6 +331,15 @@
   --community-bg: linear-gradient(140deg, #123b2a, #1f6b47); /* bloco "Comunidade (em breve) e Guia" */
   --color-community-text: #cfe5da; /* texto sobre o verde-escuro (contraste 4,9:1 no ponto mais claro do degradê) */
   --color-community-pill: rgb(255 255 255 / 12%);
+
+  /* Seletor de idioma com bandeirinha (15/11/2026, pedido do usuário): cores das bandeiras dos EUA (EN) e do Brasil (PT) */
+  --flag-us-red: #b22234;
+  --flag-us-blue: #3c3b6e;
+  --flag-br-green: #009c3b;
+  --flag-br-yellow: #ffdf00;
+  --flag-br-blue: #002776;
+  --flag-white: #ffffff;
+  --flag-outline: rgb(0 0 0 / 18%);
 }
 
 /* Celular e tablet (até 900 px, protótipos da remodelagem v4): margem menor e cabeçalho mais baixo */
