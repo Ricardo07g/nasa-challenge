@@ -122,6 +122,7 @@ function HarvestCard({ t, lang, window, choice, onPickDate, bandsModal }: WhenVi
           {w.dontKnow}
         </button>
       </div>
+      <p className={styles.dateLimit}>{w.dateLimit}</p>
       {/* O calendário do próprio aparelho, aberto pelo botão (fica escondido, perto do canto do cartão). */}
       <input
         ref={inputRef}

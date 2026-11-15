@@ -712,3 +712,11 @@
     color: var(--color-text-soft);
   }
 }
+
+/* Por que o calendário vai só até 30 de abril: uma linha discreta embaixo dos botões (15/11/2026) */
+.dateLimit {
+  margin: 10px 0 0;
+  color: var(--color-text-soft);
+  font-size: var(--font-size-caption);
+  line-height: 1.45;
+}

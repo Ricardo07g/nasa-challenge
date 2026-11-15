@@ -282,6 +282,9 @@ export const pt = {
     /** Os dias de cada época no calendário ("FEV 11–20"). */
     bandDays: { cedo: '1–10', meio: '11–20', tarde: '21+' },
     pickDate: 'Escolher data',
+    /** Por que o calendário vai só até 30 de abril (15/11/2026): uma linha discreta junto da data. */
+    dateLimit:
+      'O calendário vai só até 30 de abril: colhendo depois disso, já passou o prazo de plantio (ZARC) de todas as culturas da safrinha.',
     changeDate: 'Trocar data',
     pickDay: 'Escolher o dia',
     dontKnow: 'Não sei o dia exato',

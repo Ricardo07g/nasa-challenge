@@ -249,6 +249,8 @@ export const en = {
     bandHint: 'Approximate time',
     bandDays: { cedo: '1–10', meio: '11–20', tarde: '21+' },
     pickDate: 'Pick a date',
+    dateLimit:
+      'The calendar only goes up to April 30: harvesting later than that, the planting deadline (ZARC) has passed for every second-crop option.',
     changeDate: 'Change date',
     pickDay: 'Pick the day',
     dontKnow: "I don't know the exact day",
