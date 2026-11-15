@@ -2,11 +2,12 @@ import { useId } from 'react'
 import { Link } from 'react-router'
 import type { GuideSlug } from '../content/guia/slugs'
 import type { ListenSummaryState } from '../controllers/useListenSummary'
+import type { PlanReportData } from '../controllers/usePlanningController'
 import { BackButton } from '../design-system/components/BackButton'
 import { Card, DataSourceCard } from '../design-system/components/Card'
 import { GuideLink } from '../design-system/components/GuideLink'
 import { ListenSummary } from '../design-system/components/ListenSummary'
-import { ClimateIcon, DropIcon, FireIcon, FrostIcon, HeavyRainIcon } from '../design-system/icons'
+import { ClimateIcon, DropIcon, FireIcon, FrostIcon, HeavyRainIcon, PrinterIcon } from '../design-system/icons'
 import { formatDecimal, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
@@ -16,6 +17,7 @@ import type { AreaAlert } from '../services/raioXService'
 import type { ClimateSummary, RainSummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import { futureClimateText } from './futureClimateText'
+import { PlanReport } from './PlanReport'
 import styles from './PlanningView.module.css'
 
 export type PlanningViewProps = {
@@ -34,6 +36,9 @@ export type PlanningViewProps = {
   climate: ClimateSummary | null
   /** "ver na sugestão": a resposta com o caminho todo. */
   answerTo: string
+  /** O relatório para imprimir (veio da tela 5 no pacote 3); null enquanto o plano não chegou. */
+  report: PlanReportData | null
+  onPrint: () => void
 }
 
 const ALERT_ICON = { frost: <FrostIcon />, heavyRain: <HeavyRainIcon />, fire: <FireIcon /> }
@@ -58,7 +63,7 @@ function cropName(t: Messages, id: string): string {
  * pacote.
  */
 export function PlanningView(props: PlanningViewProps) {
-  const { t, backTo, status, listen, cards } = props
+  const { t, lang, backTo, status, listen, cards, report } = props
   const p = t.planning
   return (
     <div className={styles.page}>
@@ -76,12 +81,19 @@ export function PlanningView(props: PlanningViewProps) {
         {status === 'loading' && <FlowLoading label={p.loading} />}
         {status === 'error' && <FlowError t={t} message={t.satellite.error} onRetry={props.onRetry} />}
         {status === 'outside' && <FlowOutside t={t} />}
+        {status === 'ready' && report && (
+          <button type="button" className={styles.print} onClick={props.onPrint}>
+            <PrinterIcon size={17} />
+            {p.print}
+          </button>
+        )}
         {status === 'ready' && (
           <>
             <AreaAlerts {...props} />
             <div className={styles.cardsRow}>{cards ? <SmallCards {...props} cards={cards} /> : <LegacyCards {...props} />}</div>
           </>
         )}
+        {report && <PlanReport t={t} lang={lang} data={report} />}
       </div>
     </div>
   )

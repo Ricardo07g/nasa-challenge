@@ -30,8 +30,6 @@ function deps(rec: Recomendacao = buildRecomendacao({ ...point, colheita: 'tarde
     raioX: { get: vi.fn((params) => Promise.resolve(buildRaioX(params, 'pt'))) },
     pastSeason: { get: vi.fn(() => new Promise<never>(() => {})) },
     speech: { isSupported: () => false, speak: vi.fn(), stop: vi.fn() },
-    print: vi.fn(),
-    today: () => '2026-11-15',
   }
 }
 
@@ -90,7 +88,7 @@ function renderAt(url: string, d = deps(), lang: 'pt' | 'en' = 'pt') {
 const here = (router: ReturnType<typeof createMemoryRouter>) => `${router.state.location.pathname}${router.state.location.search}`
 
 describe('ChoosePlanView: topo e abas (tela 5)', () => {
-  it('Voltar para o raio-X, o título, a safra com a colheita prevista e as 2 abas, com "Imprimir relatório"', async () => {
+  it('Voltar para o raio-X, o título, a safra com a colheita prevista e as 2 abas, sem "Imprimir relatório" (pacote 3)', async () => {
     renderAt(`/resposta?${flow}`)
 
     expect(await screen.findByRole('heading', { level: 1, name: 'O que plantar depois da soja' })).toBeInTheDocument()
@@ -100,12 +98,14 @@ describe('ChoosePlanView: topo e abas (tela 5)', () => {
     const tabs = screen.getByRole('tablist', { name: 'Etapas' })
     expect(within(tabs).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['1Escolher', '2Plano de 3 anos'])
     expect(screen.getByRole('tab', { name: 'Escolher' })).toHaveAttribute('aria-selected', 'true')
-    expect(await screen.findByRole('button', { name: 'Imprimir relatório' })).toBeInTheDocument()
+    expect(await screen.findByRole('tabpanel', { name: 'Escolher' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Imprimir relatório' })).not.toBeInTheDocument()
+    expect(document.querySelector('[data-print-report]')).toBeNull()
     expect(screen.queryByText(/Pergunta \d de/)).not.toBeInTheDocument()
   })
 
-  it('a aba "Plano de 3 anos" troca o endereço sem rolar a tela; "Imprimir relatório" chama a impressão', async () => {
-    const { router, d } = renderAt(`/resposta?${flow}`)
+  it('a aba "Plano de 3 anos" troca o endereço sem rolar a tela, sem "Imprimir relatório"', async () => {
+    const { router } = renderAt(`/resposta?${flow}`)
 
     const planTab = await screen.findByRole('tab', { name: 'Plano de 3 anos' })
     scrolled()
@@ -113,9 +113,8 @@ describe('ChoosePlanView: topo e abas (tela 5)', () => {
     await waitFor(() => expect(here(router)).toBe(`/plano?${flow}`))
     expect(window.scrollY).toBe(600)
     expect(await screen.findByRole('tabpanel', { name: 'Plano de 3 anos' })).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Imprimir relatório' }))
-    expect(d.print).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Imprimir relatório' })).not.toBeInTheDocument()
+    expect(document.querySelector('[data-print-report]')).toBeNull()
   })
 })
 
@@ -303,33 +302,15 @@ describe('ChoosePlanView: aba "2. Plano de 3 anos"', () => {
     expect(within(dry).getByRole('link', { name: newTabName('Saiba mais: veranico') })).toHaveAttribute('target', '_blank')
     expect(screen.getByRole('link', { name: /Ver meu planejamento/ })).toHaveAttribute('href', `/planejamento?${flow}&escolha=sorgo`)
   })
-})
 
-describe('ChoosePlanView: relatório para imprimir', () => {
-  it('fica no <body>, escondido na tela, com as 6 seções', async () => {
-    renderAt(`/resposta?${flow}&pensa=sorgo&safras=2024:milho_braquiaria,2025:pousio`)
-    await screen.findByRole('heading', { level: 1 })
-    await waitFor(() => expect(document.querySelector('[data-print-report]')).not.toBeNull())
-
-    const report = document.querySelector('[data-print-report]') as HTMLElement
-    expect(report.parentElement).toBe(document.body)
-    expect(report).toHaveAttribute('hidden')
-    expect(within(report).getByRole('heading', { level: 1, hidden: true })).toHaveTextContent('Relatório do planejamento')
-    expect(report.querySelector('header')).toBeNull()
-    expect(report).toHaveTextContent('Sua lavoura · -18.9543, -48.1993')
-    expect(report).toHaveTextContent('Gerado em 15 de novembro de 2026 pelo Raiz Orbital')
-    for (const title of ['1. Sua terra', '2. Suas últimas safras', '3. Opções comparadas', '4. Plano de 3 anos', '5. E se o ano vier seco?', '6. Fontes']) {
-      expect(report).toHaveTextContent(title)
-    }
-    expect(report).toHaveTextContent('2026/27 (o que você pensava plantar)Sorgo')
-    expect(report).toHaveTextContent('2025/26não preenchido')
-    expect(report).toHaveTextContent('Não substitui o seu agrônomo')
+  it('a frase antes de "Ver meu planejamento" fala do relatório para imprimir, em pt e en (pacote 3)', async () => {
+    renderAt(`/plano?${flow}`)
+    expect(await screen.findByText('Pronto para ver tudo junto: alertas, o que fazer depois e o relatório para imprimir.')).toBeInTheDocument()
   })
 
-  it('em inglês', async () => {
+  it('a frase nova em inglês', async () => {
     renderAt(`/plano?${flow}`, deps(), 'en')
-    await screen.findByRole('heading', { level: 1, name: 'What to plant after soybeans' })
-    await waitFor(() => expect(document.querySelector('[data-print-report]')).toHaveTextContent('Planning report'))
-    expect(document.querySelector('[data-print-report]')).toHaveTextContent('6. Sources')
+    expect(await screen.findByText('Ready to see it all together: alerts, what to do next and the report to print.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /See my plan/ })).toBeInTheDocument()
   })
 })

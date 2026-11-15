@@ -185,8 +185,8 @@ export function SatellitePage({ deps }: { deps?: SatelliteDeps } = {}) {
 }
 
 /**
- * Tela 5 do pacote 2 (`/resposta`, `/opcoes` e `/plano`): as abas "1. Escolher" e "2. Plano de 3 anos" e o
- * relatório para imprimir. `/plano` abre a aba do plano; as outras, a aba "Escolher".
+ * Tela 5 do pacote 2 (`/resposta`, `/opcoes` e `/plano`): as abas "1. Escolher" e "2. Plano de 3 anos". `/plano`
+ * abre a aba do plano; as outras, a aba "Escolher".
  */
 export function ChoosePlanPage() {
   const { lang, messages: t } = useI18n()
@@ -230,6 +230,8 @@ export function PlanningPage() {
       rain={state.rain}
       climate={state.climate}
       answerTo={state.answerTo}
+      report={state.report}
+      onPrint={state.print}
     />
   )
 }

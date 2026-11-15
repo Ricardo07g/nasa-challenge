@@ -1,10 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import type { PlanoParams, PlanoSugestaoParams } from '../models/plano'
 import type { RaioX } from '../models/raioX'
-import type { Recomendacao } from '../models/recomendacao'
 import type { Talhao } from '../models/talhao'
+import { buildRecomendacao } from '../repositories/mocks/fixtures'
+import { buildPlano, buildSugestao } from '../repositories/mocks/mockPlano'
 import { buildRaioX } from '../repositories/mocks/raioXFixture'
 import type { FarmService } from '../services/farmService'
+import type { PlanService } from '../services/planService'
 import type { RaioXService } from '../services/raioXService'
 import type { SpeechService } from '../services/speechService'
 import { providers } from '../test/providers'
@@ -24,11 +27,15 @@ const talhao = {
 function deps(loadRaio: () => Promise<RaioX> = () => Promise.resolve(RAIO), loadTalhao = () => Promise.resolve(talhao)) {
   const farm: FarmService = {
     talhao: vi.fn(loadTalhao),
-    recomendacao: vi.fn(() => Promise.resolve({ opcoes: [{ chuva: { anos: 18 } }] } as unknown as Recomendacao)),
+    recomendacao: vi.fn(() => Promise.resolve(buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'tarde' }, 'pt'))),
+  }
+  const plan: PlanService = {
+    suggest: vi.fn((params: PlanoSugestaoParams) => Promise.resolve(buildSugestao(params, 'pt'))),
+    evaluate: vi.fn((params: PlanoParams) => Promise.resolve(buildPlano(params, 'pt'))),
   }
   const raioX: RaioXService = { get: vi.fn(loadRaio) }
   const speech: SpeechService = { isSupported: () => true, speak: vi.fn(), stop: vi.fn() }
-  return { farm, raioX, speech }
+  return { farm, plan, raioX, speech, print: vi.fn(), today: () => '2026-11-15' }
 }
 
 describe('usePlanningController (/planejamento: os blocos que saíram do raio-X)', () => {
@@ -55,7 +62,7 @@ describe('usePlanningController (/planejamento: os blocos que saíram do raio-X)
     const { result } = renderHook(() => usePlanningController(d), { wrapper: providers(`/planejamento?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('ready'))
-    await waitFor(() => expect(result.current.rain?.years).toBe(18))
+    await waitFor(() => expect(result.current.rain?.years).toBe(20))
     expect(result.current.cards).toBeNull()
     expect(result.current.alerts).toEqual([])
     expect(result.current.climate).toEqual({ period: { start: '2041', end: '2060' } })
@@ -72,6 +79,15 @@ describe('usePlanningController (/planejamento: os blocos que saíram do raio-X)
       'pt',
       expect.any(Function),
     )
+  })
+
+  it('"Imprimir relatório" (veio da tela 5) chama a impressão; o relatório tem o raio-X e a data de hoje', async () => {
+    const d = deps()
+    const { result } = renderHook(() => usePlanningController(d), { wrapper: providers(`/planejamento?${flow}`) })
+    await waitFor(() => expect(result.current.report?.raio).not.toBeNull())
+    expect(result.current.report?.generatedOn).toBe('2026-11-15')
+    act(() => result.current.print())
+    expect(d.print).toHaveBeenCalledTimes(1)
   })
 
   it('sem ponto volta para o mapa; sem colheita, para a pergunta da colheita', () => {

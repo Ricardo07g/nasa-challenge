@@ -28,8 +28,7 @@ function deps(rec: Recomendacao = tarde) {
   const raioX: RaioXService = { get: vi.fn((params) => Promise.resolve(buildRaioX(params, 'pt'))) }
   const pastSeason: PastSeasonService = { get: vi.fn(() => new Promise<never>(() => {})) }
   const speech: SpeechService = { isSupported: () => true, speak: vi.fn(), stop: vi.fn() }
-  const print = vi.fn()
-  return { farm, plan, raioX, pastSeason, speech, print, suggest, evaluate, today: () => '2026-11-15' }
+  return { farm, plan, raioX, pastSeason, speech, suggest, evaluate }
 }
 
 async function ready(url = `/resposta?${flow}`, d = deps()) {
@@ -196,14 +195,6 @@ describe('useChoosePlanController (tela 5: "1. Escolher" e "2. Plano de 3 anos")
     const { result } = await ready(`/resposta?${flow}&ano=2016`)
     expect(result.current.why.open).toBe(true)
     expect(result.current.why.year.selected?.ano).toBe(2016)
-  })
-
-  it('"Imprimir relatório" chama a impressão; o relatório tem o raio-X e a data de hoje', async () => {
-    const { result, d } = await ready()
-    await waitFor(() => expect(result.current.report.raio).not.toBeNull())
-    expect(result.current.report.generatedOn).toBe('2026-11-15')
-    act(() => result.current.print())
-    expect(d.print).toHaveBeenCalledTimes(1)
   })
 
   it('o "Ouvir resumo" fala a sugestão e o que o produtor pensava', async () => {

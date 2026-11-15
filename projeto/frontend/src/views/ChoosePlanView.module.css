@@ -35,34 +35,11 @@
   font-size: 16px;
 }
 
-/* Abas à esquerda e "Imprimir relatório" à direita */
+/* Abas sozinhas à esquerda (pacote 3: o "Imprimir relatório" foi para a tela 6) */
 .tabsRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   margin-top: 22px;
-}
-
-.print {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 16px;
-  border: 1px solid var(--color-back-border);
-  border-radius: var(--radius-cta);
-  background: var(--color-surface);
-  color: var(--color-primary);
-  font: inherit;
-  font-size: 14.5px;
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-
-.print:hover {
-  background: var(--color-back-hover);
 }
 
 .panel {

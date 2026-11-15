@@ -1,10 +1,18 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
+import { usePlanningController } from '../controllers/usePlanningController'
+import { I18nProvider } from '../i18n/I18nProvider'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
+import { useI18n } from '../i18n/useI18n'
+import type { PlanoParams, PlanoSugestaoParams } from '../models/plano'
+import { buildRecomendacao, buildTalhao } from '../repositories/mocks/fixtures'
+import { buildPlano, buildSugestao } from '../repositories/mocks/mockPlano'
 import { buildRaioX } from '../repositories/mocks/raioXFixture'
+import type { FarmService } from '../services/farmService'
+import type { PlanService } from '../services/planService'
 import { alertList } from '../services/raioXService'
 import { PlanningView, type PlanningViewProps } from './PlanningView'
 
@@ -31,6 +39,8 @@ function setup(overrides: Partial<PlanningViewProps> = {}) {
     rain: null,
     climate: null,
     answerTo: '/resposta?lat=-18.9543&lon=-48.1993&colheita=tarde',
+    report: null,
+    onPrint: vi.fn(),
     ...overrides,
   }
   render(
@@ -130,6 +140,98 @@ function setupProps(overrides: Partial<PlanningViewProps>): PlanningViewProps {
     rain: null,
     climate: null,
     answerTo: '/resposta',
+    report: null,
+    onPrint: vi.fn(),
     ...overrides,
   }
 }
+
+const point = { lat: -18.9543, lon: -48.1993 }
+const flow = 'lat=-18.9543&lon=-48.1993&colheita=tarde&data=2027-03-03'
+
+function planningDeps() {
+  const farm: FarmService = {
+    talhao: vi.fn(() => Promise.resolve(buildTalhao(point, 'pt'))),
+    recomendacao: vi.fn(() => Promise.resolve(buildRecomendacao({ ...point, colheita: 'tarde' }, 'pt'))),
+  }
+  const plan: PlanService = {
+    suggest: vi.fn((params: PlanoSugestaoParams) => Promise.resolve(buildSugestao(params, 'pt'))),
+    evaluate: vi.fn((params: PlanoParams) => Promise.resolve(buildPlano(params, 'pt'))),
+  }
+  return {
+    farm,
+    plan,
+    raioX: { get: vi.fn((params) => Promise.resolve(buildRaioX(params, 'pt'))) },
+    speech: { isSupported: () => false, speak: vi.fn(), stop: vi.fn() },
+    print: vi.fn(),
+    today: () => '2026-11-15',
+  }
+}
+
+/** A tela inteira, com o controller de verdade e os services falsos. */
+function renderPlanning(url: string, d = planningDeps(), lang: 'pt' | 'en' = 'pt') {
+  function Screen() {
+    const { lang: current, messages: t } = useI18n()
+    const state = usePlanningController(d)
+    return (
+      <PlanningView
+        t={t}
+        lang={current}
+        backTo={state.backTo}
+        status={state.status}
+        onRetry={state.retry}
+        listen={state.listen}
+        alerts={state.alerts}
+        cards={state.cards}
+        rain={state.rain}
+        climate={state.climate}
+        answerTo={state.answerTo}
+        report={state.report}
+        onPrint={state.print}
+      />
+    )
+  }
+  render(
+    <I18nProvider initialLang={lang}>
+      <MemoryRouter initialEntries={[url]}>
+        <Screen />
+      </MemoryRouter>
+    </I18nProvider>,
+  )
+  return d
+}
+
+describe('PlanningView: relatório para imprimir (veio da tela 5, pacote 3)', () => {
+  it('fica no <body>, escondido na tela, com as 6 seções', async () => {
+    renderPlanning(`/planejamento?${flow}&pensa=sorgo&safras=2024:milho_braquiaria,2025:pousio`)
+    await screen.findByRole('heading', { level: 1 })
+    await waitFor(() => expect(document.querySelector('[data-print-report]')).not.toBeNull())
+
+    const report = document.querySelector('[data-print-report]') as HTMLElement
+    expect(report.parentElement).toBe(document.body)
+    expect(report).toHaveAttribute('hidden')
+    expect(within(report).getByRole('heading', { level: 1, hidden: true })).toHaveTextContent('Relatório do planejamento')
+    expect(report.querySelector('header')).toBeNull()
+    expect(report).toHaveTextContent('Sua lavoura · -18.9543, -48.1993')
+    expect(report).toHaveTextContent('Gerado em 15 de novembro de 2026 pelo Raiz Orbital')
+    for (const title of ['1. Sua terra', '2. Suas últimas safras', '3. Opções comparadas', '4. Plano de 3 anos', '5. E se o ano vier seco?', '6. Fontes']) {
+      expect(report).toHaveTextContent(title)
+    }
+    expect(report).toHaveTextContent('2026/27 (o que você pensava plantar)Sorgo')
+    expect(report).toHaveTextContent('2025/26não preenchido')
+    expect(report).toHaveTextContent('Não substitui o seu agrônomo')
+  })
+
+  it('em inglês', async () => {
+    renderPlanning(`/planejamento?${flow}`, planningDeps(), 'en')
+    await screen.findByRole('heading', { level: 1, name: 'Your planning' })
+    await waitFor(() => expect(document.querySelector('[data-print-report]')).toHaveTextContent('Planning report'))
+    expect(document.querySelector('[data-print-report]')).toHaveTextContent('6. Sources')
+  })
+
+  it('"Imprimir relatório" fica nesta tela e chama a impressão', async () => {
+    const d = renderPlanning(`/planejamento?${flow}`)
+    await userEvent.click(await screen.findByRole('button', { name: 'Imprimir relatório' }))
+    expect(d.print).toHaveBeenCalledTimes(1)
+  })
+})

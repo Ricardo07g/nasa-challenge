@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import type { ChoosePlanState } from '../controllers/useChoosePlanController'
+import type { PlanReportData } from '../controllers/usePlanningController'
 import { formatCoordinates, formatFullDate, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
@@ -10,36 +10,35 @@ import { CURRENT_SEASON, LAST_SEASONS, seasonName } from '../services/seasonServ
 import { consTexts, contextText, cropName, deadlineText, futureTexts, joinList, prosTexts, waterTexts } from './choiceTexts'
 import styles from './PlanReport.module.css'
 
-type Choose = NonNullable<ChoosePlanState['choose']>
-
-export type PlanReportProps = { t: Messages; lang: Lang; state: ChoosePlanState; choose: Choose }
+export type PlanReportProps = { t: Messages; lang: Lang; data: PlanReportData }
 
 /**
- * Relatório do planejamento para imprimir (tela 5): "Imprimir relatório" chama `window.print()` e o CSS de
- * impressão esconde o app e mostra só isto. Fica direto no `<body>` (portal), escondido na tela (`hidden`), e
- * sai no idioma da tela. Não é o relatório para o banco.
+ * Relatório do planejamento para imprimir (desde o pacote 3, só na tela 6 `/planejamento`): "Imprimir relatório"
+ * chama `window.print()` e o CSS de impressão esconde o app e mostra só isto. Fica direto no `<body>` (portal),
+ * escondido na tela (`hidden`), e sai no idioma da tela. Não é o relatório para o banco.
  */
 export function PlanReport(props: PlanReportProps) {
   return createPortal(<Report {...props} />, document.body)
 }
 
 function answerText(t: Messages, answer: SeasonAnswer | undefined): string | null {
-  const r = t.choose.report
+  const r = t.planning.report
   if (answer === undefined) return null
   if (answer === 'soja') return r.soyOnly
   if (answer === 'sem_soja') return r.noSoy
   return t.seasons.options[answer]
 }
 
-function Report({ t, lang, state, choose }: PlanReportProps) {
-  const r = t.choose.report
+function Report({ t, lang, data: state }: PlanReportProps) {
+  const r = t.planning.report
   const c = t.choose
   const s = t.choose.scores
+  const choose = state.choose
   const plan = state.plan.evaluation.data
   const today = state.today.state.kind === 'crops' ? state.today.evaluation.data : null
-  const raio = state.report.raio
+  const raio = state.raio
   const mm = (value: number) => formatNumber(lang, value)
-  const idea = state.report.idea
+  const idea = state.idea
   const ideaText = !idea ? s.notFilled : idea === 'nao_sei' ? t.seasons.notSure : idea === 'pousio' ? t.seasons.fallowFuture : t.seasons.options[idea]
   const score = (data: PlanoAvaliado | null, key: 'seguranca' | 'solo' | 'futuro') => {
     if (!data) return '—'
@@ -61,11 +60,11 @@ function Report({ t, lang, state, choose }: PlanReportProps) {
       <div className={styles.head}>
         <h1>{r.title}</h1>
         <p className={styles.meta}>
-          {state.report.demo ? r.demo : r.point}
-          {state.report.point && ` · ${formatCoordinates(state.report.point)}`}
+          {state.demo ? r.demo : r.point}
+          {state.point && ` · ${formatCoordinates(state.point)}`}
         </p>
         <p className={styles.meta}>{contextText(t, lang, seasonName(CURRENT_SEASON), state.harvest.date, state.harvest.band)}</p>
-        <p className={styles.meta}>{r.generated(formatFullDate(lang, state.report.generatedOn))}</p>
+        <p className={styles.meta}>{r.generated(formatFullDate(lang, state.generatedOn))}</p>
       </div>
 
       <section>
@@ -96,7 +95,7 @@ function Report({ t, lang, state, choose }: PlanReportProps) {
             {LAST_SEASONS.map((year) => (
               <tr key={year}>
                 <td>{seasonName(year)}</td>
-                <td>{answerText(t, state.report.answers[year]) ?? s.notFilled}</td>
+                <td>{answerText(t, state.answers[year]) ?? s.notFilled}</td>
               </tr>
             ))}
             <tr>

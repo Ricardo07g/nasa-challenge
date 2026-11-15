@@ -8,7 +8,6 @@ import { farmService, type FarmService } from '../services/farmService'
 import { buildFlowQuery, keepFlowQuery } from '../services/flowParams'
 import { pastSeasonService, type PastSeasonService } from '../services/pastSeasonService'
 import { planService as defaultPlanService, resetPlanFlow, todayState, yearFlow, type PlanService } from '../services/planService'
-import { raioXService, type RaioXService } from '../services/raioXService'
 import {
   currentChoiceCrop,
   flowWithSeasonAnswers,
@@ -29,23 +28,15 @@ export type { CompareColumn, Evaluation } from './usePlanFlow'
 type Deps = {
   farm: FarmService
   plan: PlanService
-  raioX: RaioXService
   pastSeason: PastSeasonService
   speech: SpeechService
-  /** "Imprimir relatório": a impressão do navegador. */
-  print: () => void
-  /** O dia de hoje (ISO), para o "Gerado em" do relatório. */
-  today: () => string
 }
 
 const defaultDeps: Deps = {
   farm: farmService,
   plan: defaultPlanService,
-  raioX: raioXService,
   pastSeason: pastSeasonService,
   speech: speechService,
-  print: () => window.print(),
-  today: () => new Date().toISOString().slice(0, 10),
 }
 
 export type AnswerTab = 'choose' | 'plan'
@@ -69,8 +60,8 @@ function readYear(value: string | null): number | null {
 }
 
 /**
- * Tela 5 do pacote 2 (`/resposta`, `/opcoes` e `/plano`): as abas "1. Escolher" e "2. Plano de 3 anos" e o
- * relatório para imprimir. O estado fica na URL (`objetivo`, `comparar`, `escolha`, `ano2`, `ano3`, `safras`),
+ * Tela 5 do pacote 2 (`/resposta`, `/opcoes` e `/plano`): as abas "1. Escolher" e "2. Plano de 3 anos". Desde o
+ * pacote 3, o relatório para imprimir fica só na tela 6 (`/planejamento`). O estado fica na URL (`objetivo`, `comparar`, `escolha`, `ano2`, `ano3`, `safras`),
  * gravado sem rolar; os modais ficam aqui. A sugestão e a ordem vêm do `/recomendacao`; o plano, da sugestão em
  * cadeia (`/api/plano/sugestao`) e, com o 3º ano mudado, do `/api/plano`.
  */
@@ -101,15 +92,6 @@ export function useChoosePlanController(deps: Deps = defaultDeps) {
   const todayEvaluation = useAsync(
     () => (place && todayList ? deps.plan.evaluate({ ...place, anos: todayList }, lang) : Promise.resolve(null)),
     [place?.lat, place?.lon, place?.colheita, place?.solo, todayList?.join(','), lang, deps.plan],
-  )
-
-  // Relatório: o resumo do raio-X ("Sua terra"); sem ele, a seção diz que não carregou.
-  const raio = useAsync(
-    () =>
-      params?.colheita
-        ? deps.raioX.get({ lat: params.lat, lon: params.lon, colheita: params.colheita, solo: params.solo }, lang)
-        : Promise.resolve(null),
-    [params?.lat, params?.lon, params?.colheita, params?.solo, lang, deps.raioX],
   )
 
   // "Por que essa sugestão?": o ano tocado no explorador e a safra dia a dia daquele ano.
@@ -248,15 +230,6 @@ export function useChoosePlanController(deps: Deps = defaultDeps) {
       onClose: () => setSeasonsOpen(false),
       form: { seasons: seasonRows(talhao.data?.historico ?? null), answers, onAnswer: answerSeason },
     },
-    report: {
-      raio: raio.data ?? null,
-      answers,
-      idea: params?.pensa ?? null,
-      demo: params?.exemplo ?? false,
-      point: params ? { lat: params.lat, lon: params.lon } : null,
-      generatedOn: deps.today(),
-    },
-    print: deps.print,
   }
 }
 

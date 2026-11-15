@@ -1,5 +1,6 @@
 /*
- * Relatório do planejamento (tela 5): escondido na tela (`hidden`); na impressão, o app some e só ele aparece.
+ * Relatório do planejamento (tela 6, desde o pacote 3): escondido na tela (`hidden`); na impressão, o app some e
+ * só ele aparece.
  * Fica direto no <body> (portal), então basta esconder os outros filhos do <body>.
  */
 @media print {

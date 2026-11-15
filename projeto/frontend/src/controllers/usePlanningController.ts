@@ -5,15 +5,33 @@ import { planningSummary } from '../i18n/xrayTexts'
 import type { ScreenStatus } from '../models/screenStatus'
 import { farmService, isOutsideArea, type FarmService } from '../services/farmService'
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
+import { planService, todayState, type PlanService } from '../services/planService'
 import { alertList, raioXService, type RaioXService } from '../services/raioXService'
 import { climateSummary, rainSummary } from '../services/satelliteService'
+import { seasonAnswersFromFlow } from '../services/seasonAnswersService'
 import { speechService, type SpeechService } from '../services/speechService'
 import { useAsync } from './useAsync'
 import { useListenSummary } from './useListenSummary'
+import { usePlanFlow, type Evaluation } from './usePlanFlow'
 
-export type PlanningDeps = { farm: FarmService; raioX: RaioXService; speech?: SpeechService }
+export type PlanningDeps = {
+  farm: FarmService
+  plan: PlanService
+  raioX: RaioXService
+  speech?: SpeechService
+  /** "Imprimir relatório": a impressão do navegador. */
+  print: () => void
+  /** O dia de hoje (ISO), para o "Gerado em" do relatório. */
+  today: () => string
+}
 
-const defaultDeps: PlanningDeps = { farm: farmService, raioX: raioXService }
+const defaultDeps: PlanningDeps = {
+  farm: farmService,
+  plan: planService,
+  raioX: raioXService,
+  print: () => window.print(),
+  today: () => new Date().toISOString().slice(0, 10),
+}
 
 /**
  * Tela final "Seu planejamento" (`/planejamento`, pacote 2, tarefa 0058). Por enquanto, guarda os blocos que
@@ -66,6 +84,33 @@ export function usePlanningController(deps: PlanningDeps = defaultDeps) {
   const cards = raioX?.cartoes ?? null
   const listen = useListenSummary(planningSummary(t, alerts, cards), lang, deps.speech ?? speechService)
 
+  // Relatório para imprimir (veio da tela 5 no pacote 3): o mesmo plano da tela 5 (`usePlanFlow`).
+  const flowPlan = usePlanFlow(deps)
+  const answers = useMemo(() => seasonAnswersFromFlow(params), [params])
+  const today = todayState(answers)
+  const todayList = today.kind === 'crops' ? today.crops : null
+  const place = flowPlan.place
+  const todayEvaluation = useAsync(
+    () => (place && todayList ? deps.plan.evaluate({ ...place, anos: todayList }, lang) : Promise.resolve(null)),
+    [place?.lat, place?.lon, place?.colheita, place?.solo, todayList?.join(','), lang, deps.plan],
+  )
+  const data = flowPlan.data
+  const report = flowPlan.choose
+    ? {
+        choose: flowPlan.choose,
+        harvest: { date: params?.data ?? null, band: data?.entrada.colheita ?? params?.colheita ?? null },
+        plan: { cards: flowPlan.cards, evaluation: flowPlan.evaluation, signal: flowPlan.signal },
+        today: { state: today, evaluation: { data: todayEvaluation.data ?? null, status: todayEvaluation.status } as Evaluation },
+        pousioText: data?.pousio.texto ?? '',
+        raio: raioX ?? null,
+        answers,
+        idea: params?.pensa ?? null,
+        demo: params?.exemplo ?? false,
+        point: params ? { lat: params.lat, lon: params.lon } : null,
+        generatedOn: deps.today(),
+      }
+    : null
+
   return {
     redirectTo: !params ? '/onde' : !params.colheita ? `/quando${query}` : null,
     backTo: `/resposta${query}`,
@@ -77,5 +122,12 @@ export function usePlanningController(deps: PlanningDeps = defaultDeps) {
     cards,
     rain: rainSummary(talhao.data?.dados ?? [], recomendacao.data?.opcoes ?? null),
     climate: climateSummary(talhao.data?.dados ?? []),
+    report,
+    print: deps.print,
   }
 }
+
+export type PlanningState = ReturnType<typeof usePlanningController>
+
+/** O que o relatório para imprimir usa (null enquanto o plano não chegou). */
+export type PlanReportData = NonNullable<PlanningState['report']>
