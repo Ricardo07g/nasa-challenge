@@ -70,6 +70,11 @@ export const pt = {
   header: {
     home: 'Raiz Orbital, voltar ao início',
     slogan: 'Do espaço até a raiz.',
+    /**
+     * Linha discreta sob o nome, só na Início (15/11/2026). Vazia em português (o nome já é português), para não
+     * aparecer; em inglês, "Portuguese for “Orbital Root”". O nome "Raiz Orbital" não se traduz.
+     */
+    nameMeaning: '',
     navLabel: 'Principal',
     /** Pílula do cabeçalho (pacote 3, tarefa 0061): o Guia no lugar da Comunidade, que está "em breve". */
     guide: 'Guia',

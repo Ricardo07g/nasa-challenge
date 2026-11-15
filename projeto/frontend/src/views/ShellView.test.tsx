@@ -11,6 +11,7 @@ import { ShellView } from './ShellView'
 const header: AppHeaderProps = {
   homeLabel: 'Raiz Orbital, voltar ao início',
   slogan: 'Do espaço até a raiz.',
+  nameMeaning: null,
   navLabel: 'Principal',
   guide: { label: 'Guia', to: '/guia' },
   alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null },

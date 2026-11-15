@@ -319,6 +319,30 @@ describe('rotas', () => {
     expect(within(agro).getByRole('link', { name: 'Como a conta é feita' })).toHaveAttribute('href', '/como-funciona')
   })
 
+  it('em inglês, o cabeçalho e a Início mostram o slogan novo, e só a Início explica o nome (15/11/2026)', async () => {
+    renderAt('/', 'en')
+
+    const banner = await screen.findByRole('banner')
+    expect(within(banner).getByText('Eyes on the sky, roots in the ground.')).toBeInTheDocument()
+    expect(within(banner).getByText('Portuguese for “Orbital Root”')).toBeInTheDocument()
+    expect(within(screen.getByRole('main')).getByText('Eyes on the sky, roots in the ground.')).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia', 'en')
+    const guideBanner = await screen.findByRole('banner')
+    expect(within(guideBanner).getByText('Eyes on the sky, roots in the ground.')).toBeInTheDocument()
+    expect(screen.queryByText(/Portuguese for/)).not.toBeInTheDocument()
+  })
+
+  it('em português, a Início continua com "Do espaço até a raiz." e sem a explicação do nome', async () => {
+    renderAt('/')
+
+    const banner = await screen.findByRole('banner')
+    expect(within(banner).getByText('Do espaço até a raiz.')).toBeInTheDocument()
+    expect(within(screen.getByRole('main')).getByText('Do espaço até a raiz.')).toBeInTheDocument()
+    expect(screen.queryByText(/Portuguese for|Orbital Root/)).not.toBeInTheDocument()
+  })
+
   it('o cabeçalho de toda tela tem só Guia, Avisos e o idioma, sem Comunidade e sem o botão grande "Ouvir"', async () => {
     for (const path of ['/', '/onde', '/guia', '/avisos', '/comunidade', '/satelite?lat=-18.9543&lon=-48.1993&colheita=tarde&exemplo=1']) {
       renderAt(path)

@@ -8,6 +8,7 @@ function setup(overrides: Partial<AppHeaderProps> = {}, path = '/') {
   const props: AppHeaderProps = {
     homeLabel: 'Raiz Orbital, voltar ao início',
     slogan: 'Do espaço até a raiz.',
+    nameMeaning: null,
     navLabel: 'Principal',
     guide: { label: 'Guia', to: '/guia' },
     alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null },
@@ -112,16 +113,36 @@ describe('AppHeader (cabeçalho global, tarefas 0052 e 0061)', () => {
     expect(props.lang.onToggle).toHaveBeenCalled()
   })
 
+  it('com o significado do nome, mostra a linha discreta logo abaixo do nome e acima do slogan, sem link nem botão próprio', () => {
+    setup({ slogan: 'Eyes on the sky, roots in the ground.', nameMeaning: 'Portuguese for “Orbital Root”' })
+
+    const home = screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })
+    const meaning = screen.getByText('Portuguese for “Orbital Root”')
+    expect(meaning.tagName).toBe('SPAN')
+    expect(meaning.closest('button')).toBeNull()
+    expect(within(home).queryAllByRole('link', { hidden: true })).toHaveLength(0)
+    const brand = Array.from(meaning.parentElement!.children).map((child) => child.textContent)
+    expect(brand).toEqual(['Raiz Orbital', 'Portuguese for “Orbital Root”', 'Eyes on the sky, roots in the ground.'])
+  })
+
+  it('sem o significado do nome (null), a linha não aparece', () => {
+    setup({ nameMeaning: null })
+
+    const home = screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })
+    expect(home).not.toHaveTextContent('Portuguese for')
+    expect(home).toHaveTextContent('Raiz OrbitalDo espaço até a raiz.')
+  })
+
   it('em inglês, destaca o EN', () => {
     setup({
-      slogan: 'From space to the root.',
+      slogan: 'Eyes on the sky, roots in the ground.',
       navLabel: 'Main',
       guide: { label: 'Guide', to: '/guia' },
       alerts: { label: 'Alerts', to: '/avisos', count: null, countLabel: null },
       lang: { current: 'en', onToggle: vi.fn(), label: 'Switch language: Portuguese or English' },
     })
 
-    expect(screen.getByText('From space to the root.')).toBeInTheDocument()
+    expect(screen.getByText('Eyes on the sky, roots in the ground.')).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Guide' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Alerts' })).toBeInTheDocument()

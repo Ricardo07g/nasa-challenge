@@ -56,7 +56,8 @@ export const en = {
   },
   header: {
     home: 'Raiz Orbital, back to start',
-    slogan: 'From space to the root.',
+    slogan: 'Eyes on the sky, roots in the ground.',
+    nameMeaning: 'Portuguese for “Orbital Root”',
     navLabel: 'Main',
     guide: 'Guide',
     langToggleLabel: 'Switch language: Portuguese or English',

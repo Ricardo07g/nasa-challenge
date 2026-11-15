@@ -26,9 +26,28 @@ describe('dicionários', () => {
         : obj && typeof obj === 'object'
           ? Object.values(obj).flatMap(values)
           : []
+    // Única exceção: o significado do nome fica vazio em pt (o nome já é português), para a linha não aparecer.
+    const ptWithoutNameMeaning = { ...pt, header: { ...pt.header, nameMeaning: 'x' } }
     expect(empty.length).toBeGreaterThan(0)
-    expect(values(pt).filter((text) => text.trim() === '')).toEqual([])
+    expect(values(ptWithoutNameMeaning).filter((text) => text.trim() === '')).toEqual([])
     expect(values(en).filter((text) => text.trim() === '')).toEqual([])
+  })
+})
+
+describe('nome e slogan (15/11/2026)', () => {
+  it('o nome continua "Raiz Orbital" nos dois idiomas; o slogan em inglês é "Eyes on the sky, roots in the ground."', () => {
+    expect(en.header.slogan).toBe('Eyes on the sky, roots in the ground.')
+    expect(en.header.home).toBe('Raiz Orbital, back to start')
+  })
+
+  it('o slogan em português não muda', () => {
+    expect(pt.header.slogan).toBe('Do espaço até a raiz.')
+    expect(pt.header.home).toBe('Raiz Orbital, voltar ao início')
+  })
+
+  it('só em inglês o nome ganha a explicação, com aspas curvas; em português fica vazia (não aparece)', () => {
+    expect(en.header.nameMeaning).toBe('Portuguese for “Orbital Root”')
+    expect(pt.header.nameMeaning).toBe('')
   })
 })
 
