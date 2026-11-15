@@ -242,3 +242,57 @@ def test_should_stop_at_the_last_day_with_data_and_still_mark_the_harvest() -> N
     events = _timeline(_series(days=70))
 
     assert _kinds(events)[-1] == (_day(CYCLE_DAYS), "colheita")
+
+
+# --- maior sequência seca na fase crítica (detalhe de cada ano, P1) ----------------------------
+
+
+def _longest_dry_spell(
+    series: list[DailyWeather], crop: CropParams | None = None, rules: Regras | None = None
+) -> int:
+    service = CropAlertService(rules)
+    return service.longest_dry_spell(crop=crop or _crop(), sowing=SOWING, days=series)
+
+
+def test_should_count_the_longest_dry_spell_inside_the_critical_stage() -> None:
+    # Dias 50 a 61 sem chuva, dentro da janela crítica (dias 45 a 74)
+    assert _longest_dry_spell(_series(dry=range(50, 62))) == 12
+
+
+def test_should_count_no_dry_day_when_it_rained_every_day_of_the_critical_stage() -> None:
+    assert _longest_dry_spell(_series()) == 0
+
+
+def test_should_count_only_the_days_of_a_spell_that_fall_inside_the_critical_stage() -> None:
+    # Seca dos dias 40 a 49: só os dias 45 a 49 são da fase. Seca dos dias 70 a 79: só 70 a 74.
+    assert _longest_dry_spell(_series(dry=range(40, 50))) == 5
+    assert _longest_dry_spell(_series(dry=range(70, 80))) == 5
+
+
+def test_should_keep_the_longest_of_several_dry_spells() -> None:
+    series = _series(dry=range(46, 50))
+    series = [replace(d, chuva_mm=DRY_MM) if _day(55) <= d.data <= _day(62) else d for d in series]
+
+    assert _longest_dry_spell(series) == 8
+
+
+def test_should_break_the_dry_spell_on_a_day_with_rain_at_the_dry_threshold() -> None:
+    # Dia seco = chuva abaixo de 1 mm, o mesmo do aviso de veranico: o dia 55 com 1 mm quebra a seca
+    series = _series(dry=range(50, 62))
+    series[55] = replace(series[55], chuva_mm=1.0)
+
+    assert _longest_dry_spell(series) == 6
+
+
+def test_should_take_the_dry_day_threshold_from_the_rules() -> None:
+    base = load_default_rules()
+    rules = replace(base, avisos=replace(base.avisos, dia_seco_abaixo_mm=5.0))
+    series = [replace(d, chuva_mm=4.9) if _day(50) <= d.data <= _day(54) else d for d in _series()]
+
+    assert _longest_dry_spell(series, rules=rules) == 5
+    assert _longest_dry_spell(series) == 0
+
+
+def test_should_use_the_establishment_window_for_cover_crops() -> None:
+    # Cobertura: os primeiros 30 dias (dias 0 a 29). A seca dos dias 25 a 39 conta 5 dias.
+    assert _longest_dry_spell(_series(dry=range(25, 40)), crop=_crop(tipo="cobertura")) == 5

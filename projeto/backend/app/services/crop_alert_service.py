@@ -118,7 +118,7 @@ class CropAlertService:
         for day in sorted((d for d in days if sowing <= d.data < harvest), key=lambda d: d.data):
             in_stage = stage.start <= (day.data - sowing).days < stage.end
 
-            if day.chuva_mm < avisos.dia_seco_abaixo_mm:
+            if self._is_dry(day):
                 dry.extend(day.data)
             else:
                 if dry.warned:
@@ -146,6 +146,41 @@ class CropAlertService:
 
         events.append(SeasonEvent(harvest, "colheita", self._harvest_text(crop, crop_name, texts)))
         return sorted(events, key=lambda e: e.data)
+
+    def longest_dry_spell(
+        self, crop: CropParams, sowing: date, days: Sequence[DailyWeather]
+    ) -> int:
+        """Maior sequência de dias secos seguidos dentro da fase crítica (detalhe do ano, P1).
+
+        Dia seco é o mesmo do aviso de veranico (`avisos.dia_seco_abaixo_mm`) e a fase é a da
+        conta do aperto (`critical_stage`). Só os dias da fase contam: a seca que começou antes
+        conta a partir do primeiro dia da fase, e a que segue depois para no último.
+
+        Args:
+            crop: Parâmetros da cultura (floração, ciclo e tipo).
+            sowing: Data da semeadura.
+            days: Série diária; dias fora da fase são ignorados.
+
+        Returns:
+            Dias secos seguidos (0 quando choveu em todos os dias da fase com dado).
+        """
+        stage = critical_stage(crop, self._rules.clima)
+        in_stage = sorted(
+            (d for d in days if stage.start <= (d.data - sowing).days < stage.end),
+            key=lambda d: d.data,
+        )
+        longest = current = 0
+        previous: date | None = None
+        for day in in_stage:
+            continues = previous is not None and (day.data - previous).days == 1
+            current = (current + 1 if continues else 1) if self._is_dry(day) else 0
+            longest = max(longest, current)
+            previous = day.data
+        return longest
+
+    def _is_dry(self, day: DailyWeather) -> bool:
+        """Dia sem chuva: abaixo de `avisos.dia_seco_abaixo_mm` (o mesmo nos avisos e no P1)."""
+        return day.chuva_mm < self._rules.avisos.dia_seco_abaixo_mm
 
     def _should_warn(self, spell: _Spell, min_days: int, warnings: list[date], day: date) -> bool:
         if spell.warned or spell.days < min_days:
