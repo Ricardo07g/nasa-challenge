@@ -203,6 +203,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
 - **Pacote 2: regras gerais de todas as telas (tarefa 0054, RF-38).** Valem para toda tela nova ou refeita:
   - **Navegação:** nada de "Pergunta X de 2" nem barra de progresso. Toda tela interna tem o "← Voltar" de
     verdade acima do título: `BackButton` do design system (`to`, `children` = `t.nav.back`); não desenhe outro.
+    Para voltar à tela anterior de verdade, o `onClick` opcional chama `preventDefault` e `navigate(-1)` (o `to`
+    fica como reserva, ex.: o início do Guia).
   - **Clicar não rola:** escolha que vai para a URL usa `useReplaceFlow()` (mesma rota, recebe o `FlowParams`)
     ou `useReplaceUrl()` (endereço pronto), que trocam com `replace` e `preventScrollReset` (o `ScrollRestoration`
     do `ShellPage` sobe a tela em toda outra navegação). Listas com `key` estável e botão que muda de estado sem
@@ -235,22 +237,52 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   - A vitrine `/design-system` tem a seção "Pacote 2: peças compartilhadas" com tudo isso funcionando.
 - **Gráfico com dado real:** tudo o que é desenhado vem da API, com a fonte e o período na legenda (ex.:
   "Média de 2005 a 2024, NASA POWER"). O mock traz o mesmo campo, no formato do contrato.
-- **Guia (`/guia`, tarefa 0048, RF-26):** os artigos são arquivos Markdown em
+- **Guia (`/guia`, tarefas 0048 e 0063, RF-26 e RF-46):** os artigos são arquivos Markdown em
   `src/content/guia/pt/<slug>.md` e `.../en/<slug>.md` (mesmo slug nos dois idiomas, carregados no build
-  por `repositories/guideRepository.ts`). Cabeçalho simples entre `---`: `titulo`, `tema`
-  (`culturas`, `plantar`, `terra`, `clima` ou `seguranca`), `slug` (igual ao nome do arquivo), `rascunho`
-  (`sim` ou `nao`) e, nas culturas, `planta` (id do `culturas.yaml`, para a ilustração de
-  `design-system/plants/PlantImage`). Título de seção fixo: "Em uma frase", "Por que importa", "Na sua
-  lavoura", "Fontes" (cultura tem também "Conheça" e "Passo a passo"; em inglês "In one sentence", "Why it
-  matters", "In your field", "Sources", "Get to know it", "Step by step"). De 150 a 300 palavras, frases
-  curtas. Artigo de cultura, plantio e manejo tem `rascunho: sim` (a view põe "Rascunho: a revisar pela
-  agrônoma." no topo). Números só de `culturas.yaml`, `regras.yaml` e do PRD. Link externo só de página
-  aberta e conferida, e a página entra antes em `src/content/guia/verifiedSources.ts` (url, o que confirma,
-  data); `guideContent.test.ts` barra link fora da lista, artigo fora do tamanho, sem a estrutura, sem par
-  em outro idioma ou com link interno quebrado. Para ligar uma tela a um artigo, use o `GuideLink`
-  (pacote 2: abre em nova aba; o `slug` só aceita os de `GUIDE_SLUGS`). O Markdown é lido por `services/markdownService.ts` (títulos, parágrafos, listas, negrito
-  e links; HTML vira texto puro e a view nunca usa `dangerouslySetInnerHTML`). Não adicione biblioteca de
-  Markdown.
+  por `repositories/guideRepository.ts`). Cabeçalho simples entre `---`: `titulo`, `resumo` (uma linha para o
+  cartão: **só o "Em uma frase" do próprio artigo, encurtado**, sem afirmação nem número novo), `tema` (`culturas`,
+  `plantar`, `terra`, `clima` ou `seguranca`), `slug` (igual ao nome do arquivo), `rascunho` (`sim` ou `nao`; desde
+  15/11/2026 **nenhuma tela mostra**: nada de "em revisão" nem de "a revisar pela agrônoma"), `relacionados` (até 3
+  slugs, o "Veja também"; sem eles, outros do mesmo tema) e, nas culturas, `planta` (id do `culturas.yaml`, para a
+  ilustração de `design-system/plants/PlantImage`). **O tempo de leitura não vai no cabeçalho:** `readingMinutes`
+  conta as palavras do texto (~200 por minuto, para cima, mínimo 1). `guideMeta.test.ts` confere o `resumo` e os
+  `relacionados`. Título de seção fixo: "Em uma frase", "Por que importa", "Na sua lavoura", "Fontes" (cultura tem
+  também "Conheça" e "Passo a passo"; em inglês "In one sentence", "Why it matters", "In your field", "Sources",
+  "Get to know it", "Step by step"). De 150 a 300 palavras, frases curtas. Números só de `culturas.yaml`,
+  `regras.yaml` e do PRD. Link externo só de
+  página aberta e conferida, e a página entra antes em `src/content/guia/verifiedSources.ts` (url, o que confirma,
+  data); `guideContent.test.ts` barra link fora da lista, artigo fora do tamanho, sem a estrutura, sem par em outro
+  idioma ou com link interno quebrado. Para ligar uma tela a um artigo, use o `GuideLink` (pacote 2: abre em nova
+  aba; o `slug` só aceita os de `GUIDE_SLUGS`): não mude slug nem a rota `/guia/{slug}`. O Markdown é lido por
+  `services/markdownService.ts` (títulos, parágrafos, listas, negrito e links; HTML vira texto puro e a view nunca
+  usa `dangerouslySetInnerHTML`). Não adicione biblioteca de Markdown.
+  - **Início (`GuideView`, `useGuideController`, pacote 3):** "← Voltar" (com tela anterior no app, volta para ela
+    pelo `onClick` do `BackButton`; aberto direto, vai para a Início), título, "Ouvir resumo" e a busca grande à
+    direita (no celular, embaixo). Pílulas "Todos" e os 5 temas com ícone e contagem (`themeCounts`), `aria-pressed`
+    na escolhida; no celular, rolam para o lado dentro da própria fileira. "Comece por aqui" (`FEATURED_SLUGS`: raio-X,
+    "deu certo" e ZARC) só em "Todos". Seções por tema com "{n} artigos" e cartões (3, 2 ou 1 coluna): o título é o
+    link (`::after` cobre o cartão, que pode abrir em nova aba), com o resumo e "{n} min de leitura"; as culturas têm o
+    `PlantPhoto` (o crédito fica fora do link, por cima; no celular, a foto à esquerda com 96 px). A frase do MVP saiu.
+  - **Busca:** `searchGuides` no título e no resumo, sem acento e sem maiúscula; `highlight` devolve os trechos
+    para o `<mark>` (no texto original, mesmo com acento antes). Com busca, os temas somem e aparecem "**{n}**
+    resultados para "{busca}"" e os cartões com o nome do tema; sem resultado, 3 sugestões (`guide.suggestions`).
+    **A busca e o tema ficam no estado da tela e são copiados para a URL** (`q`, `tema` em português) com
+    `useReplaceUrl`: digitar ou trocar de filtro não rola nem cria entrada no histórico (teste em
+    `pages.guide.test.tsx`); a tela abre com o que vier na URL, e uma navegação que não é `replace` relê a URL.
+  - **Artigo (`GuideArticleView`, `useGuideArticleController`):** `articleLayout` separa o "Em uma frase" (caixa com
+    borda verde), as seções (com âncora, `sectionId`) e as "Fontes" (num `<details>` fechado, "Fontes conferidas");
+    lista de 2 a 4 itens "**Nome:** texto" vira cartões com ícone. Coluna lateral fixa no computador com "Neste
+    artigo" (rolagem suave, ou direta com menos movimento) e "Veja também" (`relatedArticles`); no celular, o índice
+    some e o "Veja também" vai para o fim. "Este artigo ajudou? Sim / Não" só marca e diz "Obrigado!": **nenhuma
+    contagem guardada**. Os links internos (e o "Voltar ao Guia") levam o fluxo da URL (`keepFlowQuery`).
+  - **"Na sua lavoura" (`services/guideFieldService.ts`, frases em `i18n/guideTexts.ts`):** caixa azul com **um
+    número real do ponto**, do `GET /api/raio-x`, com o lugar (`nearestPlace`) e a fonte do dado. Vale o ponto da
+    URL ou o salvo no aparelho (`savedPointRepository`, o mesmo dos avisos), **nunca a fazenda de exemplo**; sem
+    ponto, sem dado ou com falha, a caixa não aparece. Só os artigos de `FIELD_SLUGS` pedem o raio-X: erosão (dias
+    de chuva forte), veranico (o maior), calor de 35 °C (anos com o dia), clima de 2041 a 2060 (média dos modelos) e
+    raio-X (argila e areia do SoilGrids, umidade do SMAP e chuva média). **Nada que dependa de hipótese do time**
+    (geada de 3 °C, fogo a 5 km, água por textura, fim das chuvas) e nenhuma frase de recomendação. O "Ouvir" do
+    artigo lê o título, o "Em uma frase" e o número da caixa.
 - **Endereço aproximado (serviço externo, tela "Onde fica a lavoura", tarefas 0041 e 0053, RF-01):** instância
   pública do **Photon** (komoot, `https://photon.komoot.io`, dados do OpenStreetMap), **sem chave e sem cadastro**:
   nada de token nem variável `VITE_*` para ela. Desde a tarefa 0053 só a busca **reversa** (`/reverse`, o "Perto
@@ -294,8 +326,7 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   dizem que esta primeira versão funciona na região de Uberlândia e Uberaba (MG) e que vamos ampliar para todo o
   Triângulo Mineiro: a legenda do mapa de `/onde` e o modal "Onde o app funciona" (`where.areaLegend`,
   `where.area.text`), os avisos de fora da área (`where.outsideNotice`, `outsideText`), "De onde vem cada dado"
-  (`method.sourcesArea`) e a página inicial do Guia (`guide.mvpArea`). A tela inicial não fala mais do MVP (tarefa
-  0052: o selo e a frase saíram). Mudou a área? Troque esses textos junto, em pt e en.
+  (`method.sourcesArea`). A tela inicial e o Guia não falam mais do MVP (tarefa 0052 e, no Guia, tarefa 0063). Mudou a área? Troque esses textos junto, em pt e en.
 - **Tela 3 "Quando você colhe" (`/quando`; tarefa 0042 do backend e, desde o pacote 2, tarefa 0057, RF-40):**
   na tela fica **só a pergunta**; o que ajuda a decidir vai para o modal grande. O satélite não vê o dia da
   colheita: a tela **abre sem data** e com o "Próximo passo" desligado (a `colheita_sugerida` do NDVI não
@@ -433,9 +464,9 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   0,95); enquanto fala, o link vira "Parar" com o quadrado e `aria-pressed="true"`; trocar o idioma ou sair da tela
   para a fala; sem voz no navegador, o link não aparece. **Desde o pacote 2, toda tela tem o seu**, montado com os números
   dela no controller (ex.: avisos = o lugar e quantos avisos ativos; comunidade = o raio e o plantio da safra mais
-  recente; artigo do Guia = o título e o "Em uma frase", `articleSummary`). O texto não deve mudar a cada segundo
-  (cada troca para a fala): na missão, nada de fase; no Guia, o total de artigos, não o da busca. O da tela 4 fica em
-  `i18n/xrayTexts.ts`; o da tela 6, em `i18n/planningTexts.ts` (`planningSummary`).
+  recente; artigo do Guia = o título, o "Em uma frase" (`articleSummary`) e o número de "Na sua lavoura"). O texto
+  não deve mudar a cada segundo (cada troca para a fala): na missão, nada de fase; no Guia, o total de artigos, não o
+  da busca. O da tela 4 fica em `i18n/xrayTexts.ts`; o da tela 6, em `i18n/planningTexts.ts` (`planningSummary`).
 - **Modal reutilizável (`design-system/components/Modal.tsx`, tarefa 0052):** o padrão de todo "ver detalhes".
   `<dialog>` nativo (`showModal`; sem ele, o atributo `open`): fecha com o X, com Esc e com clique fora (no fundo
   escurecido); o foco entra no modal, fica preso nele (Tab e Shift+Tab dão a volta) e volta a quem o abriu. Quem
