@@ -104,8 +104,9 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
     dos dados das fontes", abaixo. `PostgisCmip6Repository`, `PostgisNdviRepository`,
     `PostgisSmapRepository` e `PostgisDataRunRepository` gravam e leem. A API já lê o `cmip6_delta`
     (R3.1, ver "Deltas do CMIP6 na API"), mas ainda não lê as outras (R3.2, R3.3 e R3.5 do
-    roteiro). O `cmip6_delta` exige a célula em `grid_cell`. O `cmip6_delta` e o `ndvi_point`
-    são preenchidos pela carga dos arquivos (`pipeline/load_files_to_db.py`, ver "Dados da API").
+    roteiro). O `cmip6_delta` exige a célula em `grid_cell`. O `cmip6_delta`, o `ndvi_point` e o
+    `smap_point` são preenchidos pela carga dos arquivos (`pipeline/load_files_to_db.py`, ver
+    "Dados da API").
 - Banco criado antes do R1.6: rode `uv run alembic upgrade head` (ou
   `docker compose run --rm migration`). A migração recria `cmip6_delta` e `ndvi_point`, troca
   `smap_moisture` por `smap_point` (o que houver nelas é apagado) e marca as cargas antigas de
@@ -286,6 +287,38 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   uv run python -m pipeline.fetch_imerg               # 2005–2024
   ```
 
+- **SMAP L4 nos dias de semeadura** (R2.3, tarefa 0029): `pipeline/fetch_smap.py` baixa o
+  `SPL4SMGP` versão 008 (EASE-Grid 2.0 global de 9 km, de 3 em 3 horas) nos dias de semeadura das
+  três faixas do motor (`SOWING_MONTH_DAY_BY_HARVEST`: 08/02, 18/02 e 03/03), de 2016 a 2025 (o
+  SMAP começa em 31/03/2015), e grava o arquivo do contrato SMAP (abaixo). Precisa do
+  `EARTHDATA_TOKEN` (só o script; a API não usa).
+  - **Por recorte:** a busca **pública** do CMR lista os 8 granulos de 3 h do dia (UTC) e o link do
+    OPeNDAP de cada um (sempre o do CMR: alguns têm sufixo, como `_u9loH5HD`, e sem ele dá 404). O
+    OPeNDAP na nuvem da Earthdata (Hyrax, DAP4) devolve em CSV só o retângulo de pixels de 9 km que
+    cobre a caixa (`<granulo>.dap.csv?dap4.ce=/Geophysical_Data/sm_rootzone%5B...%5D%5B...%5D`), uma
+    variável por pedido, sem baixar o arquivo global (~140 MB);
+  - **retângulo e pixel:** uma coluna do `cell_lat` e uma linha do `cell_lon` (baixadas uma vez)
+    acham as linhas e colunas dos pontos; o `cell_lat`/`cell_lon` do retângulo escolhe o pixel mais
+    perto do centro de cada célula de 0,1° da caixa. O DMR do primeiro granulo confere a grade
+    (1624 × 3856), os nomes, as unidades e o `_FillValue`;
+  - **valor do dia:** média dos granulos do dia em UTC, sem o preenchimento; dia com menos de 8
+    granulos fica em `versao_dados.parametros.dias_incompletos`;
+  - **token:** `Authorization: Bearer` como cabeçalho comum (segue os redirecionamentos). Recusado
+    (401/403 ou página de login): para na hora, sem retentar e sem gravar no cache. O token nunca
+    vai para mensagem, log, cache nem arquivo; o CMR não o recebe;
+  - **custo:** caixa piloto = 30 buscas no CMR + 5 pedidos de estrutura e coordenadas + 720
+    recortes (30 dias × 8 granulos × 3 variáveis) de ~2 s, 4 em paralelo (`--paralelo`): **cerca
+    de 6 min** e poucos MB de cache;
+  - saída `data/baixados/nasa_smap/smap_semeadura.json` e cache `data/baixados/nasa_smap/cache_opendap/`
+    a partir da raiz do repositório (fora do git), com cache, retentativa e retomada como no CMIP6.
+    Para levar ao banco: "Carga dos arquivos no banco", abaixo.
+
+  ```bash
+  uv run python -m pipeline.fetch_smap --dry-run     # dias, pedidos e tempo, sem rede
+  uv run python -m pipeline.fetch_smap               # caixa piloto, 2016 a 2025
+  uv run python -m pipeline.fetch_smap --area="-19.0,-18.9,-48.2,-48.1" --anos=2024
+  ```
+
 - **Pré-carga da caixa piloto** (tarefa 0012, R1.5): `pipeline/preload_pilot_box.py` grava no banco
   o clima e o solo das 225 células de 0,1° da caixa (`PILOT_*` de `app/constants.py`), com a da
   fazenda de exemplo primeiro, para o primeiro clique na caixa sair do banco, sem busca sob demanda.
@@ -316,16 +349,16 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - Depois da pré-carga, a célula da fazenda de exemplo (`-190_-482`) sai do banco (POWER de agora,
     com Penman-Monteith), não mais da fixture.
 
-- **Carga dos arquivos no banco** (tarefas 0022 e 0027): `pipeline/load_files_to_db.py` copia o
-  arquivo do CMIP6 para o `cmip6_delta`, o do NDVI para o `ndvi_point` e a chuva do IMERG para o
-  `climate_season`. Não busca nada na rede. Rode depois da pré-carga (o `cmip6_delta` só aceita
-  célula que já está em `grid_cell`, e o IMERG só troca temporada que já está no `climate_season`).
-  Dá para passar um, dois ou os três arquivos.
+- **Carga dos arquivos no banco** (tarefas 0022, 0027 e 0029): `pipeline/load_files_to_db.py` copia
+  o arquivo do CMIP6 para o `cmip6_delta`, o do NDVI para o `ndvi_point`, a chuva do IMERG para o
+  `climate_season` e o do SMAP para o `smap_point`. Não busca nada na rede. Rode depois da
+  pré-carga (o `cmip6_delta` só aceita célula que já está em `grid_cell`, e o IMERG só troca
+  temporada que já está no `climate_season`). Dá para passar um ou mais arquivos.
 
   ```bash
   # da pasta projeto/backend, com DATABASE_URL apontando para o banco que recebe a carga
-  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --dry-run
-  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq>
+  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --smap <arq> --dry-run
+  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --smap <arq>
   ```
 
   - **CMIP6:** cada célula de `grid_cell` recebe os deltas do ponto do arquivo cuja `cobertura`
@@ -340,9 +373,11 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `null`). Ano incompleto continua com o NASA POWER; célula ou ano que não está no banco (ou com
     outra janela) fica de fora. Nenhuma temporada é criada e as outras séries (temperatura, ETo)
     não mudam. Pelo `PostgisClimateRepository` (`list_season_windows` e `replace_seasons_rain`).
+  - **SMAP:** a série de cada ponto (centro de célula de 0,1°), lida pelo `FileSmapRepository` e
+    gravada pelo `PostgisSmapRepository.save_smap_series` (chave `point_key` + dia).
   - **Conferência antes de gravar:** os arquivos são lidos primeiro. Arquivo ausente, sem
     `versao_dados`, de outra fonte (o `versao_dados.fonte` tem de ser `nex_gddp_cmip6` /
-    `modis_mod13q1` / `gpm_imerg`) ou fora do contrato: nada é gravado (saída 1).
+    `modis_mod13q1` / `gpm_imerg` / `smap`) ou fora do contrato: nada é gravado (saída 1).
   - **Idempotente** (upsert; a chuva, update). **`data_run`:** uma linha por fonte com linhas
     gravadas, com a `version` do `versao_dados` do arquivo e, em `params`, o nome do arquivo (sem a
     pasta), as contagens e o `versao_dados.parametros` do arquivo (`parametros_do_arquivo`). No
@@ -351,7 +386,7 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **Células novas:** a busca sob demanda cria células depois da carga. Elas ficam sem linha no
     `cmip6_delta`, mas a API acha os deltas no arquivo (ordem tabela → arquivo, abaixo). Rodar a
     carga de novo copia essas células. A ingestão não muda.
-  - O pacote do time leva a cópia do banco com as duas tabelas: quem recebe não roda a carga.
+  - O pacote do time leva a cópia do banco com as tabelas: quem recebe não roda a carga.
     Caminho dos arquivos e comando completo: `docs/como-preparar-os-dados-locais.md`.
 
 - **Chuva do IMERG na conta** (R3.4, tarefa 0027): depois da carga (`--imerg`, acima), as
@@ -666,14 +701,17 @@ Uma observação de 16 dias por ponto, já sem neve e sem nuvem. O arquivo é o 
 ### SMAP: `SmapSoilMoisture` (`app/models/climate.py`)
 
 Uma linha por ponto e data, com a média do dia do SMAP L4 (`SPL4SMGP`, de 3 em 3 horas). A versão do
-produto (007 ou 008) vai em `versao_dados.parametros`, não em cada linha.
+produto vai em `versao_dados.parametros`, não em cada linha. O `pipeline/fetch_smap.py` grava a 008,
+com um ponto por centro de célula de 0,1° e, opcionalmente, o pixel de 9 km usado (`pixel_9km`, só
+para conferência: quem lê pode ignorar). O `FileSmapRepository` lê este arquivo.
 
 ```json
 {
-  "versao_dados": {"fonte": "smap", "parametros": {"produto": "SPL4SMGP.007"}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-smap-l4"},
+  "versao_dados": {"fonte": "smap", "parametros": {"produto": "SPL4SMGP.008"}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-smap-l4"},
   "pontos": [
     {
-      "lat": -18.9543, "lon": -48.1993,
+      "lat": -18.95, "lon": -48.15,
+      "pixel_9km": {"linha": 1075, "coluna": 1412, "lat": -18.9403, "lon": -48.1276},
       "serie": [
         {"data": "2024-02-18", "sm_rootzone_wetness": 0.62, "sm_rootzone_m3_m3": 0.31, "sm_surface_m3_m3": 0.27}
       ]
