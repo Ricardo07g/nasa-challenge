@@ -9,10 +9,15 @@ from fastapi import Depends
 
 from app.config import get_settings
 from app.models.regras import Regras
+from app.repositories.area_queimada_repository import (
+    AreaQueimadaRepository,
+    FileAreaQueimadaRepository,
+)
 from app.repositories.climate_repository import (
     ClimateRepository,
     FixtureClimateRepository,
     PostgisClimateRepository,
+    RegionRainRepository,
 )
 from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6Repository
 from app.repositories.community_report_repository import (
@@ -62,6 +67,7 @@ from app.repositories.smap_repository import (
 )
 from app.repositories.soil_repository import (
     CachedSoilGridsRepository,
+    NearestSoilRepository,
     PostgisSoilRepository,
     SoilRepository,
 )
@@ -69,6 +75,7 @@ from app.repositories.soja_recente_repository import (
     FileSojaRecenteRepository,
     SojaRecenteRepository,
 )
+from app.services.burned_area_service import BurnedAreaService
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.community_report_service import CommunityReportService
 from app.services.crop_alert_service import CropAlertService
@@ -79,6 +86,7 @@ from app.services.monthly_rain_service import MonthlyRainService
 from app.services.past_season_service import PastSeasonService
 from app.services.pilot_area_service import PilotAreaService
 from app.services.rain_end_service import RainEndService
+from app.services.raio_x_service import RaioXService
 from app.services.recommendation_service import RecommendationService
 from app.services.region_service import RegionService
 from app.services.remaining_rain_service import RemainingRainService
@@ -417,4 +425,65 @@ def get_community_report_service(
         crop_repo=crop_repo,
         rules=rules,
         salt=get_community_device_salt(),
+    )
+
+
+# Raio-X da sua terra (tela 4, remodelagem S4, tarefa 0043). A chuva da região e o solo da célula
+# vizinha só existem com banco; a área queimada vem do arquivo do AREA_QUEIMADA_PATH.
+@lru_cache
+def get_area_queimada_repository() -> AreaQueimadaRepository:
+    return FileAreaQueimadaRepository(get_settings().area_queimada_path)
+
+
+def get_burned_area_service(
+    repository: Annotated[AreaQueimadaRepository, Depends(get_area_queimada_repository)],
+    rules: Annotated[Regras, Depends(get_rules)],
+) -> BurnedAreaService:
+    return BurnedAreaService(repository, rules)
+
+
+def get_region_rain_repository(
+    climate_repo: Annotated[ClimateRepository, Depends(get_climate_repository)],
+) -> RegionRainRepository | None:
+    return climate_repo if isinstance(climate_repo, PostgisClimateRepository) else None
+
+
+def get_nearest_soil_repository(
+    soil_repo: Annotated[SoilRepository, Depends(get_soil_repository)],
+) -> NearestSoilRepository | None:
+    return soil_repo if isinstance(soil_repo, PostgisSoilRepository) else None
+
+
+def get_raio_x_service(
+    climate_repo: Annotated[ClimateRepository, Depends(get_climate_repository)],
+    soil_repo: Annotated[SoilRepository, Depends(get_soil_repository)],
+    ndvi_repo: Annotated[NdviRepository, Depends(get_ndvi_repository)],
+    crop_repo: Annotated[CropParamsRepository, Depends(get_crop_params_repository)],
+    recommender: Annotated[RecommendationService, Depends(get_recommendation_service)],
+    risk_service: Annotated[ClimateRiskService, Depends(get_climate_risk_service)],
+    recent_soil_moisture_repo: Annotated[
+        RecentSoilMoistureRepository, Depends(get_recent_soil_moisture_repository)
+    ],
+    nearest_soil_repo: Annotated[
+        NearestSoilRepository | None, Depends(get_nearest_soil_repository)
+    ],
+    soja_recente_service: Annotated[SojaRecenteService, Depends(get_soja_recente_service)],
+    region_rain_repo: Annotated[RegionRainRepository | None, Depends(get_region_rain_repository)],
+    burned_area_service: Annotated[BurnedAreaService, Depends(get_burned_area_service)],
+    rules: Annotated[Regras, Depends(get_rules)],
+) -> RaioXService:
+    return RaioXService(
+        climate_repo=climate_repo,
+        soil_repo=soil_repo,
+        ndvi_repo=ndvi_repo,
+        crop_repo=crop_repo,
+        recommender=recommender,
+        # A ETo é a do balanço hídrico do motor (a gravada, POWER, ou Hargreaves-Samani)
+        reference_eto=risk_service.reference_eto,
+        recent_soil_moisture_repo=recent_soil_moisture_repo,
+        nearest_soil_repo=nearest_soil_repo,
+        soja_recente_service=soja_recente_service,
+        region_rain_repo=region_rain_repo,
+        burned_area_service=burned_area_service,
+        rules=rules,
     )

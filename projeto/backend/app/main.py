@@ -16,6 +16,7 @@ from app.controllers import (
     custo_atraso_controller,
     health_controller,
     pilot_area_controller,
+    raio_x_controller,
     recomendacao_controller,
     regiao_controller,
     safra_passada_controller,
@@ -139,3 +140,4 @@ def handle_community_unavailable(_: Request, exc: CommunityUnavailableError) -> 
 
 
 app.include_router(community_report_controller.router, prefix="/api")
+app.include_router(raio_x_controller.router, prefix="/api")

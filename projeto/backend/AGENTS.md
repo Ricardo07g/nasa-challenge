@@ -144,7 +144,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
   `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`,
-  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`, `ENSO_PREVISAO_PATH`). Nunca
+  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`, `ENSO_PREVISAO_PATH`,
+  `AREA_QUEIMADA_PATH`). Nunca
   coloque caminho fixo (como `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4). Sem preço, custo
   nem produtividade (tarefa 0040): o `tipo` diz se a cultura dá grão para vender.
@@ -547,7 +548,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`, `SMAP_PATH` para
     `/dados_baixados/nasa_smap/smap_semeadura.json`, `SMAP_RECENTE_PATH` para
     `/dados_baixados/nasa_smap/smap_recente.json` e `SOJA_RECENTE_PATH` para
-    `/dados_baixados/nasa_modis_soja_recente/soja_recente_2026.json`. Sem o arquivo, segue sem o
+    `/dados_baixados/nasa_modis_soja_recente/soja_recente_2026.json` e `AREA_QUEIMADA_PATH` para
+    `/dados_baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json`. Sem o arquivo, segue sem o
     dado.
     Como baixar ou receber esses arquivos: `docs/como-preparar-os-dados-locais.md`.
 
@@ -705,7 +707,7 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     para baixo, num ano comum: em metade dos anos a chuva acabou até esse dia), `mais_cedo` e
     `mais_tarde` (`{dia, ano}`), `anos`, `fonte` e a própria regra (`inicio`, `dias`,
     `chuva_max_mm`). Se algum ano não tem esse dia dentro da série (até 31/jul), `null`: sem ele, a
-    mediana e o mais tarde sairiam errados. O raio-X da seção 4 deve usar este mesmo service.
+    mediana e o mais tarde sairiam errados. O raio-X da seção 4 (tarefa 0043) usa este mesmo service.
   - **Custo do atraso** (`GET /api/custo-atraso?lat&lon[&solo][&confirmadas]`,
     `HarvestDelayService`): uma recomendação do motor (`RecommendationService.recommend`) por faixa,
     com o mesmo solo e as mesmas safras confirmadas; devolve `faixas[]` (`colheita`, `semeadura`,
@@ -714,6 +716,78 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     são os do `/recomendacao` de cada faixa). Erros como no `/recomendacao` (404 `OUTSIDE_AREA`,
     422). Sem cache HTTP: são 3 recomendações (~1 s na fazenda da UFU). Endpoint à parte, e não
     campo do `/talhao`, para o `/talhao` (pedido já na tela 2) continuar rápido.
+- **Raio-X da sua terra** (`GET /api/raio-x?lat&lon[&colheita][&solo][&confirmadas]`, tela 4,
+  remodelagem S4, tarefa 0043, RF-29). Endpoint à parte (decisão D55 da remodelagem): ele roda o motor
+  uma vez (`RecommendationService.recommend`, com a mesma colheita, solo e safras confirmadas) para
+  a melhor opção, ~0,5 s na fazenda da UFU; o `/talhao` continua leve. O `RaioXService` só busca e
+  monta; cada conta mora num service com teste próprio e os números ficam no `regras.yaml` (grupos
+  `raio_x` e `alertas_area`, hipótese do time a revisar). Reaproveita sem repetir: o fim das chuvas
+  (`RainEndService`), o dia seco dos avisos (`avisos.dia_seco_abaixo_mm`), o calor do motor
+  (`clima.calor_temp_c`), a janela da floração (`clima.janela_grao_meia_dias`), a ETo do motor
+  (`ClimateRiskService.reference_eto`), a soja do ano e a colheita sugerida (`FieldHistoryService`).
+  Cada bloco é `null` sem dado (o front não desenha). Só números: as frases são do front.
+  - `solo` (SoilGrids): `textura`, `argila_pct`, `areia_pct`, `cad_mm`, `vizinho_km`. Sem solo na
+    célula, o ponto gravado mais perto de qualquer célula (`PostgisSoilRepository.get_nearest_soil`,
+    só com banco), até `raio_x.solo_vizinho_max_km` (15 km). O motor **não** usa esse solo (o
+    `get_soil` continua só na célula). Sem nenhum: `null`.
+  - `agua`: `cad_mm` (a da terra escolhida pelo produtor, se houver, como no motor; senão a do bloco
+    1), `dias` = ⌊CAD ÷ (ETo média na floração ± 15 dias em todos os anos × `kc_pico`)⌋ da melhor
+    opção (`RaioXClimateService.flowering_water`), `cultura`, `nome`, `floracao` ("MM-DD"),
+    `eto_mm_dia`, `kc`, `consumo_mm_dia`, `fonte_eto`. Pousio: `dias` e a cultura `null`.
+  - `umidade`: `percentil` e `data` do SMAP recente (`SMAP_RECENTE_PATH`).
+  - `verde` (`NdviStripService.green`): `ultimo_ndvi`/`ultimo_data` (a última leitura da série do
+    ponto) e `pico_ndvi`/`pico_data`/`safra` (o maior NDVI da janela do pico da soja,
+    `regiao_ndvi.pico_inicio` a `pico_fim`, no último ano da série); sem série, o pico do mapa da soja
+    recente (RF-24).
+  - `chuva`: `media_mm` de `raio_x.chuva_inicio` a `chuva_fim` (a temporada guardada), `anos`,
+    `fonte` e `fim_das_chuvas` (o mesmo objeto do `/talhao`).
+  - `veranico`: `dias`, `ano` (empate: o mais recente), `inicio` ("MM-DD"), `total_anos`, `fonte`.
+  - `calor`: `anos_com_calor`, `total_anos`, `temp_c`, `anos`, `fonte` (`nasa_power`).
+  - `regiao` (`RegionRankService`): a chuva média de `raio_x.regiao_inicio` a `regiao_fim` da
+    célula contra as células da caixa piloto, só da mesma fonte de chuva e com a janela inteira
+    (`PostgisClimateRepository.rain_totals_in_window`, recorte do vetor no SQL, só com banco):
+    `chuva_mm`, `mediana_regiao_mm`, `celulas`, `pct_mais_seca` (% das outras com mais chuva),
+    `pct_mais_chuvosa`, `fonte`. Menos de `regiao_min_celulas` (10): `null`.
+  - `historico_ndvi` (`NdviStripService.strip`): `colunas` ("MM-DD" de cada leitura de 16 dias, a
+    partir do dia 1, até `raio_x.ndvi_fim`: 14), `anos` (os do `historico_ndvi`, 2017–2026, com os
+    `valores` de cada coluna: o maior NDVI bom de Terra e Aqua no intervalo, `null` sem leitura),
+    `fonte`, `colheita_dia` (a da RF-16). O que aconteceu em cada ano continua no `historico` do
+    `/talhao`; o front junta os dois.
+  - `alertas` (cada um só vem com risco): `geada` (`RaioXClimateService.frost`: anos com mínima de
+    `alertas_area.geada_temp_c` ou menos de `geada_inicio` a `geada_fim`), `chuva_forte` (`heavy_rain`:
+    `media_dias_ano` com `chuva_forte_mm` ou mais na janela, a partir de `chuva_forte_media_min_dias`)
+    e `fogo` (`BurnedAreaService`: anos com pixel queimado do MCD64A1 a até `fogo_raio_km`, nos anos
+    da regra que o arquivo cobre; sem o arquivo do `AREA_QUEIMADA_PATH`, `null`). **Sem granizo**:
+    nenhuma fonte mede.
+  - `cartoes`: `chuva_20_anos` (a melhor opção do motor: `cultura`, `nome`, `anos_bons`,
+    `total_anos`) e `clima_futuro` (`FutureClimateService`: os deltas de `futuro_mes_inicio` a
+    `futuro_mes_fim`; a chuva de cada modelo pesada pela chuva média de cada mês na célula, a máxima
+    pela média simples; `chuva_pct` e `tmax_c` = média dos modelos; `modelos`,
+    `modelos_menos_chuva`, `modelos_mais_chuva`, `modelos_mais_quente`, `cenario`, `periodo`).
+  - `leitura_recente`: o dia mais recente entre o SMAP de agora e a última leitura do NDVI;
+    `altitude_m`: sempre `null` (o `grid_cell` não tem a coluna e o pedido manda não buscar fora).
+  - Erros como no `/recomendacao` (404 `OUTSIDE_AREA`, 422). Sem cache HTTP.
+- **Área queimada do MODIS** (alerta de fogo do raio-X, tarefa 0043): `pipeline/fetch_area_queimada.py`
+  pede à **ORNL DAAC** (pública, sem credencial; reaproveita o `OrnlClient`, o `SubsetCache` e o
+  `parse_subset` da região e a grade sinusoidal da soja recente, que aceitam o pixel de 500 m) a
+  banda `Burn_Date` do **MCD64A1** (coleção 061, mensal, 500 m) de todos os meses dos anos do
+  `alertas_area` (2016 a 2025), por área, em ladrilhos. A ORNL conta 0,5 km por pixel nos produtos de
+  500 m: ±30 km = 121 × 121 pixels. Padrão: **12 ladrilhos × 20 pedidos = 240, ~2,3 h** (~35 s por
+  pedido, medido em 15/11/2026 com a ORNL lenta; ±30 km com 6 e 10 datas voltou 502 naquela hora:
+  diminua `--km` ou `--datas-por-pedido`). Pixel com `Burn_Date` > 0 num mês queimou naquele ano (0 =
+  não queimou, −1 = sem dado, −2 = água). Grava o contrato "Área queimada" (abaixo) em
+  `data/baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json` e, com `DATABASE_URL`, uma linha em
+  `data_run` (`modis_mcd64a1`). Cache em gzip em `cache_ornl/`, retomada como na região.
+
+  ```bash
+  uv run python -m pipeline.fetch_area_queimada --dry-run   # ladrilhos, pedidos e tempo, sem rede
+  uv run python -m pipeline.fetch_area_queimada             # caixa piloto, 2016 a 2025
+  uv run python -m pipeline.fetch_area_queimada --area="-19.0,-18.9,-48.25,-48.15" --anos 2016
+  ```
+
+  Para ligar o arquivo: **com uv**,
+  `AREA_QUEIMADA_PATH=../../data/baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json` no `.env`
+  desta pasta; **no compose**, já ligado. Lido uma vez por processo: reinicie o backend.
 - **Região pelo satélite** (P3, tarefas 0034 e 0036): `GET /api/regiao?lat&lon`, no contrato do
   front (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem
   banco).
@@ -884,7 +958,7 @@ Regras gerais:
   `app/repositories/point_cache.py`); na tabela, `key` + `geom`.
 - Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1`, `smap` e
   `gpm_imerg` (a que o front já procura; decidida em 14/11, tarefa 0027), mais `imerg_late`
-  (chuva recente, A2.3). Fora da NASA: `noaa_oni` (ONI da NOAA) e `noaa_cpc_enso` (previsão do
+  (chuva recente, A2.3) e `modis_mcd64a1` (área queimada, tarefa 0043). Fora da NASA: `noaa_oni` (ONI da NOAA) e `noaa_cpc_enso` (previsão do
   ENSO da NOAA CPC, tarefa 0038), só em arquivo.
 - Todo arquivo traz `versao_dados`, a execução que o gerou.
 - Sem valor: campo ausente ou `null`. Nunca `-999`, zero ou número inventado, e nunca dado
@@ -1155,6 +1229,35 @@ totais e percentuais: nenhum pixel nem ponto individual (RNF-10). Números ilust
 - A resposta da API (`RegiaoResponse`) junta `centro: {lat, lon}` e `distancia_km`, que não estão no
   arquivo: o `RegionService` calcula para cada ponto pedido (ver "Dados da API").
 - Ainda não há tabela: a API lê o arquivo. O guia NDVI propõe a `regiao_entressafra` no PostGIS.
+
+### Área queimada: `MapaAreaQueimada` (`app/models/area_queimada.py`)
+
+Os pixels de 500 m do MODIS MCD64A1 que queimaram em algum ano (tarefa 0043), numa grade da
+projeção sinusoidal do MODIS (a mesma `GradeSinusoidal` da soja recente, com o pixel de 463,31 m =
+2πR ÷ 86.400). O `pipeline/fetch_area_queimada.py` grava e o `FileAreaQueimadaRepository` lê
+(`AREA_QUEIMADA_PATH`); recusa arquivo com `versao_dados.fonte` diferente de `modis_mcd64a1`.
+Números ilustrativos:
+
+```json
+{
+  "versao_dados": {"fonte": "modis_mcd64a1", "parametros": {"servico": "ornl_daac", "produto": "MCD64A1", "colecao": "061", "banda": "Burn_Date", "anos": [2016, 2025], "ladrilhos": 12, "pedidos": 240}, "fim": "2026-11-15T13:00:00Z", "versao": "2026.11-modis-mcd64a1"},
+  "fonte": "MODIS MCD64A1",
+  "anos": [2016, 2025],
+  "grade": {"projecao": "sinusoidal_modis", "raio_m": 6371007.181, "x_oeste_m": -5085053.4, "y_norte_m": -2022839.2, "pixel_m": 463.3127165693847, "linhas": 361, "colunas": 440},
+  "queimadas": [[12, 40, [2017, 2021]], [13, 40, [2021]]]
+}
+```
+
+| JSON | Model | Regra |
+| --- | --- | --- |
+| `fonte` | `fonte` | texto não vazio (vai no alerta) |
+| `anos` | `ano_inicio`, `ano_fim` | o período baixado, em ordem |
+| `grade` | `GradeSinusoidal` | como na soja recente (linha 0 no norte, coluna 0 a oeste) |
+| `queimadas[]` | `(linha, coluna, anos)` | só os pixels que queimaram; dentro da grade; anos não vazios e dentro de `anos` |
+
+- O repository devolve os pixels queimados no quadrado de ±`km` em volta do ponto, com o centro de
+  cada um (`QueimadasPerto`); o raio exato e a contagem dos anos ficam no `BurnedAreaService`.
+- Não há tabela: a API lê o arquivo. A comunidade (seção 7) pode mostrar os mesmos pixels no mapa.
 
 ### Chuva recente: `RecentRainRecord` (`app/models/recent_rain.py`)
 

@@ -299,6 +299,148 @@ export const en = {
     satelliteSaw: (what: string) => `Satellite saw: ${what}`,
     satelliteSawLabels: { plantou: 'planted', parado: 'left idle', incerto: 'uncertain', sem_soja: 'no soybeans' },
   },
+  /** Your land's X-ray (screen 4, redesign S4, task 0043): the numbers come from `/api/raio-x`. */
+  xray: {
+    panelTitle: "Your land's X-ray",
+    place: (name: string) => `Near ${name}`,
+    coordinates: (coords: string) => `Marked point: ${coords}`,
+    mapLabel: (name: string) => `Small map with the marked point, near ${name}`,
+    latestReading: (date: string) => `Latest reading: ${date}`,
+    altitude: (meters: string) => `Altitude: ${meters} m`,
+    footer:
+      'Each number is for the area around the point, at the size shown on each tag, not for the exact field.',
+    learnMore: (title: string) => `Learn more: ${title}`,
+    articles: {
+      xray: "How to read your land's X-ray",
+      dryspell: 'Dry spell',
+      heat: '35 °C heat at flowering',
+      frost: 'Frost in the second crop',
+      fire: 'Fire in the straw',
+    },
+    badges: {
+      soil: 'SoilGrids · ISRIC · 250 m',
+      water: 'SoilGrids + NASA POWER',
+      moisture: 'SMAP · NASA · 9 km',
+      green: 'MODIS · NASA · 250 m',
+      rain: 'GPM IMERG · NASA · 10 km',
+      dryspell: 'GPM IMERG · NASA · 10 km',
+      heat: 'NASA POWER · ~50 km',
+      region: 'GPM IMERG · NASA · 10 km',
+    },
+    soil: {
+      label: 'Soil',
+      unit: '% clay',
+      sentence: (texture: string) => `${texture} soil, from the soil map.`,
+      neighbor: (km: string) => `The point's cell has no soil data: we used the nearest point, ${km} km away.`,
+      parts: { clay: 'Clay', silt: 'Silt', sand: 'Sand' },
+      barLabel: (clay: number, silt: number, sand: number) => `Clay ${clay}%, silt ${silt}% and sand ${sand}%`,
+      chosen: (texture: string) => `You chose ${texture} soil: the water math uses your choice.`,
+    },
+    water: {
+      label: 'Water the soil holds',
+      unit: 'mm',
+      days: (days: number, crop: string, date: string) =>
+        `It lasts about ${days} days without rain when ${crop} flowers, around ${date}.`,
+      use: (use: string, eto: string, kc: string) =>
+        `In this stage the crop uses ${use} mm a day (evapotranspiration of ${eto} mm from NASA POWER × Kc ${kc}).`,
+      noCrop: 'It is the water the soil holds within reach of the roots.',
+    },
+    moisture: {
+      label: 'Soil moisture now',
+      sentence: (pct: number, date: string) => `Wetter than in ${pct}% of years at this time. Read on ${date}.`,
+      meterLabel: (pct: number) => `Soil moisture now: wetter than in ${pct}% of years at this time`,
+      low: 'drier',
+      high: 'wetter',
+    },
+    green: {
+      label: 'How green the field is',
+      unit: 'NDVI',
+      last: (value: string, date: string) => `Latest reading: ${value}, on ${date}.`,
+      peak: (value: string, season: string) => `Soybean peak ${season}: ${value}.`,
+      peakOn: (value: string, season: string, date: string) => `Soybean peak ${season}: ${value}, on ${date}.`,
+      scale: 'NDVI goes from 0 (bare soil) to 1 (deep green).',
+    },
+    rain: {
+      label: 'Rain in a typical year',
+      unit: 'mm from January to July',
+      years: (years: number) => `Average of ${years} years, measured by the GPM IMERG satellite.`,
+      end: (median: string, early: string, earlyYear: number, late: string, lateYear: number) =>
+        `In half of the years, the rain was over by ${median}; the earliest was ${early}, ${earlyYear} and the latest ${late}, ${lateYear}.`,
+    },
+    dryspell: {
+      label: 'Longest dry spell',
+      unit: 'days in a row without rain',
+      sentence: (year: number, start: string) =>
+        `In ${year}, from ${start}: the longest stretch with less than 1 mm a day between March and May (GPM IMERG).`,
+    },
+    heat: {
+      label: 'Heat',
+      unit: (total: number) => `of ${total} years`,
+      sentence: (temp: string) => `Years with at least one day at ${temp} °C or more between March and May (NASA POWER).`,
+      years: (years: string) => `It was in ${years}.`,
+    },
+    region: {
+      label: 'Your area and the region',
+      drier: (pct: number) => `In March to May rain, your area is drier than ${pct}% of the region.`,
+      wetter: (pct: number) => `In March to May rain, your area is wetter than ${pct}% of the region.`,
+      detail: (mm: string, cells: number) => `${mm} mm on average, compared with ${cells} 10 km areas in the region (GPM IMERG).`,
+    },
+    history: {
+      title: (idle: number, total: number) => `In the off-season, your field was left idle in ${idle} of ${total} years.`,
+      others: (uncertain: number, noSoy: number) =>
+        [
+          uncertain > 0 ? `${uncertain === 1 ? '1 year' : `${uncertain} years`} uncertain` : '',
+          noSoy > 0 ? `${noSoy === 1 ? '1 year' : `${noSoy} years`} without soybeans` : '',
+        ]
+          .filter(Boolean)
+          .join('; '),
+      subtitle:
+        'Each row is a year. Each square is a satellite reading every 16 days, from January to July: the darker, the greener.',
+      label: (from: number, to: number, idle: number, total: number) =>
+        `How green the field was from the MODIS satellite, ${from} to ${to}: idle in the off-season in ${idle} of ${total} years.`,
+      marks: { soy: 'soybeans', harvest: 'harvest', offseason: 'off-season' },
+      tags: { plantou: 'planted', parado: 'idle', incerto: 'uncertain', sem_dado: 'no reading', sem_soja: 'no soybeans' },
+      byProducer: (tag: string) => `${tag} (you)`,
+      legend: ['under 0.30', '0.30 to 0.45', '0.45 to 0.60', '0.60 to 0.75', '0.75 or more'],
+      noData: 'no reading (clouds)',
+      cell: (column: string, value: string) => `${column}: NDVI ${value}`,
+      cellEmpty: (column: string) => `${column}: no reading`,
+      source:
+        'NDVI from the MODIS satellite (NASA), MOD13Q1 + MYD13Q1, 250 m pixel. Harvest is the day the soybeans usually dry down.',
+    },
+    alerts: {
+      title: 'Alerts for your area',
+      frost: {
+        title: 'Frost',
+        text: (years: number, total: number, temp: string) =>
+          `In ${years} of ${total} years, the low reached ${temp} °C or less between May and July (NASA POWER).`,
+      },
+      heavyRain: {
+        title: 'Heavy rain',
+        text: (mean: string, limit: string, days: number, total: number) =>
+          `On average, ${mean} day a year with ${limit} mm or more in February and March (${days} days in ${total} years, GPM IMERG). Bare soil washes away on these days.`,
+      },
+      fire: {
+        title: 'Fire',
+        text: (km: string, years: number, total: number) =>
+          `There was fire within ${km} km of your point in ${years} of ${total} years (MODIS, NASA).`,
+      },
+    },
+    cards: {
+      rainTitle: (total: number) => `${total} years of rain`,
+      rainValue: (good: number, total: number) => `${good} of ${total}`,
+      rainText: (crop: string) => `years in which ${crop} worked (GPM IMERG and NASA POWER).`,
+      futureTitle: 'Climate 2041–2060',
+      futureRain: (pct: string) => `March to May rain: ${pct}%`,
+      futureHeat: (degrees: string) => `Daily high: ${degrees} °C`,
+      agreeLess: (count: number, models: number) => `${count} of ${models} models point to less rain`,
+      agreeMore: (count: number, models: number) => `${count} of ${models} models point to more rain`,
+      agreeSplit: (models: number) => `the ${models} models disagree about rain`,
+      agreeHeat: (count: number, models: number) => `${count} of ${models}, to more heat`,
+      futureSource: 'Average of the NEX-GDDP-CMIP6 models (NASA), middle scenario.',
+      seeAnswer: 'see it in the suggestion',
+    },
+  },
   answer: {
     lead: (year: number) => `After the ${year} soybean harvest, on your field:`,
     best: 'The best option',

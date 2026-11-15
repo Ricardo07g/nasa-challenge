@@ -191,6 +191,21 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   (`repositories/custoAtrasoRepository.ts` → `services/delayCostService.ts`). Gráficos do design system:
   `RainLeftChart` (mediana em linha cheia, ano seco tracejado) e `RainEtoChart` (chuva cheia, gasto
   listrado, mês em destaque com contorno e texto). Cada bloco sem dado não aparece.
+- **Tela 4 "O que o satélite viu" = raio-X da sua terra (tarefa 0043 do backend, RF-29):** os números vêm
+  de `GET /api/raio-x` (`repositories/raioXRepository.ts` → `services/raioXService.ts`), pedido com a
+  colheita e a terra da URL e **sem** as safras confirmadas (como o talhão: confirmar não recarrega o
+  painel). O service só ordena e prepara (`xRayBlocks`, `heatmap`, `alertList`, `regionSide`,
+  `futureAgreement`, `soilParts`, `ndviLevel`); as frases ficam no bloco `xray` das mensagens. O painel é
+  o **único elemento escuro da tela**, com os tokens `--color-instrument-*` (contraste conferido) e o
+  design system `Instrument` (`InstrumentPanel`, `InstrumentBlock` com selo de fonte e resolução,
+  `SplitBar`, `Meter`, `CountUp`, `NdviHeatmap`) e o `MiniMap` (Leaflet parado). A entrada em sequência é
+  CSS e o `CountUp` só conta com `matchMedia` e sem "reduzir movimento"; o texto no DOM é sempre o valor
+  final ("Ouvir", leitor de tela e testes). Bloco sem dado não aparece. A faixa de calor do NDVI tem 5
+  cores que sempre escurecem (`--color-ndvi-1..5`, cortes `NDVI_BREAKS`), legenda numérica, "sem leitura"
+  listrado e o que aconteceu no ano escrito em cada linha (nada só por cor). Alertas (só os que o backend
+  manda, sem granizo) e cartões menores com "ver na sugestão". Os "Saiba mais" só apontam para artigos
+  que existem. Sem o raio-X (API antiga ou falha), a tela volta aos cartões de antes. Aviso nunca leva o
+  selo de "pronto" (✓).
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front.
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).

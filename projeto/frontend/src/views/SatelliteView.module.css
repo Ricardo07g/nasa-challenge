@@ -35,3 +35,165 @@
   font-size: var(--font-size-small);
   color: var(--color-title-on-orange-tint);
 }
+
+/* Raio-X da sua terra (tarefa 0043): cabeçalho do painel escuro */
+.xrayHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.xrayHeaderText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-instrument-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.xrayPlace {
+  font-family: var(--font-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-instrument-text);
+}
+
+/* Links e botão dentro do painel escuro (contraste 7,9:1 sobre os blocos) */
+.panelLink,
+.panelButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-min);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-instrument-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.panelLink:focus-visible,
+.panelButton:focus-visible {
+  outline: 2px solid var(--color-instrument-link);
+  outline-offset: 2px;
+}
+
+/* Histórico do talhão */
+.historyHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.historyIcon {
+  display: flex;
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.historyTitle,
+.sectionTitle,
+.smallTitle {
+  font-family: var(--font-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+/* Aviso "Não parece uma lavoura de soja": laranja, com o triângulo, sem selo de "pronto" */
+.soyWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-sm);
+  background: var(--color-tint-orange);
+  border: 1px solid var(--color-border-orange-tint);
+  color: var(--color-title-on-orange-tint);
+}
+
+.warningIcon {
+  display: flex;
+  flex: 0 0 auto;
+  color: var(--color-risk);
+}
+
+.warningTitle {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Alertas da sua área: uma fileira de cartões curtos */
+.alerts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-4);
+}
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-tint-orange);
+  border: 1px solid var(--color-border-orange-tint);
+  color: var(--color-title-on-orange-tint);
+}
+
+.alertIcon {
+  display: flex;
+  flex: 0 0 auto;
+  color: var(--color-risk);
+}
+
+.alertText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.alertTitle {
+  font-family: var(--font-display);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Cartões menores lado a lado; um por linha no celular */
+.cardsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-stack);
+  align-items: start;
+}
+
+.bigNumber {
+  font-family: var(--font-display);
+  font-size: var(--font-size-best);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary-strong);
+}
+
+.mediumNumber {
+  font-family: var(--font-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.cta {
+  max-width: 340px;
+  width: 100%;
+}

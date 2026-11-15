@@ -14,10 +14,12 @@ import {
   CircleHelp,
   CloudOff,
   CloudRain,
+  CloudRainWind,
   CloudSun,
   DropletOff,
   Droplets,
   FileText,
+  Flame,
   History,
   Layers,
   Leaf,
@@ -30,6 +32,7 @@ import {
   Search,
   Send,
   ShieldCheck,
+  Snowflake,
   Sprout,
   Thermometer,
   TriangleAlert,
@@ -223,4 +226,17 @@ export function SendIcon({ size = 18 }: IconProps) {
 // Busca de endereço (tela "Onde fica a lavoura")
 export function SearchIcon({ size = 20 }: IconProps) {
   return <Search size={size} {...decorative} />
+}
+
+// Alertas da sua área (raio-X, tela 4, tarefa 0043)
+export function FrostIcon({ size = 20 }: IconProps) {
+  return <Snowflake size={size} {...decorative} />
+}
+
+export function HeavyRainIcon({ size = 20 }: IconProps) {
+  return <CloudRainWind size={size} {...decorative} />
+}
+
+export function FireIcon({ size = 20 }: IconProps) {
+  return <Flame size={size} {...decorative} />
 }

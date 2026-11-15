@@ -1,10 +1,13 @@
 import { act, renderHook, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import type { RaioX } from '../models/raioX'
 import type { Recomendacao } from '../models/recomendacao'
 import type { Talhao } from '../models/talhao'
 import { ApiError } from '../repositories/httpClient'
 import type { CommunityService } from '../services/communityService'
+import { buildRaioX } from '../repositories/mocks/raioXFixture'
 import type { FarmService } from '../services/farmService'
+import type { RaioXService } from '../services/raioXService'
 import { providers } from '../test/providers'
 import { useSatelliteController } from './useSatelliteController'
 
@@ -34,15 +37,19 @@ const cmip6 = { fonte: 'nex_gddp_cmip6', periodo: '2041-2060', cenario: 'ssp245'
 const recWithRainYears = (anos: number) =>
   ({ opcoes: [{ chuva: { anos } }, { chuva: { anos } }] }) as unknown as Recomendacao
 
+const RAIO = buildRaioX({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
+
 function deps(
   load: () => Promise<Partial<Talhao>> = () => Promise.resolve(talhao),
   loadRec: () => Promise<Recomendacao> = () => Promise.resolve(recWithRainYears(20)),
+  loadRaio: () => Promise<RaioX> = () => Promise.resolve(RAIO),
 ) {
   const farm: FarmService = {
     talhao: vi.fn(() => load() as Promise<Talhao>),
     recomendacao: vi.fn(() => loadRec()),
   }
-  return { farm }
+  const raioX: RaioXService = { get: vi.fn(() => loadRaio()) }
+  return { farm, raioX }
 }
 
 describe('useSatelliteController (tela 4)', () => {
@@ -246,6 +253,68 @@ describe('useSatelliteController (tela 4)', () => {
     const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('outside'))
+  })
+
+  describe('raio-X da sua terra (tarefa 0043)', () => {
+    it('pede o raio-X com a colheita e a terra da URL, sem as safras confirmadas', async () => {
+      const d = deps()
+      renderHook(() => useSatelliteController(d), {
+        wrapper: providers(`/satelite?${flow}&solo=arenoso&confirmadas=2025:parado`),
+      })
+
+      await waitFor(() =>
+        expect(d.raioX.get).toHaveBeenCalledWith(
+          { lat: -18.9543, lon: -48.1993, colheita: 'meio', solo: 'arenoso' },
+          'pt',
+        ),
+      )
+    })
+
+    it('monta o painel com os blocos, o lugar e o ponto', async () => {
+      const d = deps()
+      const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+
+      await waitFor(() => expect(result.current.xray).not.toBeNull())
+      expect(result.current.xray?.blocks.map((block) => block.kind)).toEqual([
+        'soil', 'water', 'moisture', 'green', 'rain', 'dryspell', 'heat', 'region',
+      ]) // prettier-ignore
+      expect(result.current.xray?.place).toBe('Uberlândia (MG)')
+      expect(result.current.xray?.point).toEqual({ lat: -18.9543, lon: -48.1993 })
+      expect(result.current.alerts.map((alert) => alert.kind)).toEqual(['heavyRain'])
+      expect(result.current.cards?.chuva_20_anos?.anos_bons).toBe(16)
+    })
+
+    it('a faixa de calor usa o histórico com as safras confirmadas', async () => {
+      const raio: RaioX = {
+        ...RAIO,
+        historico_ndvi: { ...RAIO.historico_ndvi!, anos: [{ ano: 2025, valores: [0.8] }], colunas: ['01-01'] },
+      }
+      const d = deps(undefined, undefined, () => Promise.resolve(raio))
+      const { result } = renderHook(() => useSatelliteController(d), {
+        wrapper: providers(`/satelite?${flow}&confirmadas=2025:parado`),
+      })
+
+      await waitFor(() => expect(result.current.heatmap).not.toBeNull())
+      expect(result.current.heatmap?.rows[0]).toMatchObject({ year: 2025, situation: 'parado', byProducer: true })
+    })
+
+    it('sem o raio-X (falhou), a tela continua sem o painel', async () => {
+      const d = deps(undefined, undefined, () => Promise.reject(new Error('rede')))
+      const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+
+      await waitFor(() => expect(result.current.status).toBe('ready'))
+      await waitFor(() => expect(d.raioX.get).toHaveBeenCalled())
+      expect(result.current.xray).toBeNull()
+      expect(result.current.alerts).toEqual([])
+      expect(result.current.cards).toBeNull()
+    })
+
+    it('"ver na sugestão" leva o caminho todo para a resposta', async () => {
+      const d = deps()
+      const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+
+      expect(result.current.answerTo).toBe(`/resposta?${flow}`)
+    })
   })
 })
 

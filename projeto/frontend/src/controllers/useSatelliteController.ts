@@ -21,10 +21,12 @@ import {
 } from '../services/communityService'
 import { farmService, isOutsideArea, type FarmService } from '../services/farmService'
 import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
+import { nearestPlace } from '../services/locationService'
+import { alertList, heatmap, raioXService, xRayBlocks, type RaioXService } from '../services/raioXService'
 import { climateSummary, historySummary, rainSummary, soilSummary } from '../services/satelliteService'
 import { useAsync } from './useAsync'
 
-type Deps = { farm: FarmService; community?: CommunityService }
+type Deps = { farm: FarmService; raioX: RaioXService; community?: CommunityService }
 
 const EMPTY_SHARE: PlantingDraft = { crop: null, year: null, outcome: null, reason: null }
 
@@ -42,7 +44,7 @@ export type SeasonShareRow = {
 
 export type SeasonShare = { open: boolean; showNotice: boolean; rows: SeasonShareRow[] }
 
-const defaultDeps: Deps = { farm: farmService }
+const defaultDeps: Deps = { farm: farmService, raioX: raioXService }
 
 /**
  * Tela 4 "Pronto. O satélite já viu o resto.": histórico do talhão, chuva, terra (com "Não é? Trocar")
@@ -56,6 +58,10 @@ const defaultDeps: Deps = { farm: farmService }
  * Tarefa 0047: depois de confirmar, "Compartilhar com a comunidade" grava o relato de plantio de cada
  * safra confirmada no ponto da lavoura ("Deixei parado" vai pronto; "Plantei" pergunta a cultura e
  * como foi). Na fazenda de exemplo não aparece: o relato vale para a lavoura marcada.
+ *
+ * Tarefa 0043 (remodelagem S4): o raio-X do ponto (`/api/raio-x`), com a colheita e a terra da URL.
+ * Sem as safras confirmadas, como o talhão: confirmar não recarrega o painel (a faixa de calor aplica
+ * as respostas no front). Sem o raio-X, o painel, os alertas e os cartões não aparecem.
  */
 export function useSatelliteController(deps: Deps = defaultDeps) {
   const { lang } = useI18n()
@@ -85,6 +91,17 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
           )
         : Promise.reject(new Error('sem colheita na URL')),
     [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, lang, deps.farm],
+  )
+
+  const raio = useAsync(
+    () =>
+      params?.colheita
+        ? deps.raioX.get(
+            { lat: params.lat, lon: params.lon, colheita: params.colheita, ...(params.solo ? { solo: params.solo } : {}) },
+            lang,
+          )
+        : Promise.reject(new Error('sem colheita na URL')),
+    [params?.lat, params?.lon, params?.colheita, params?.solo, lang, deps.raioX],
   )
 
   const toggleSoil = useCallback(() => setSoilOpen((open) => !open), [])
@@ -178,13 +195,16 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
     [shareRows, sharePoint, community],
   )
 
+  const historicoConfirmado = applyConfirmations(historico, confirmadas)
+  const raioX = raio.status === 'ready' ? raio.data : undefined
+
   return {
     redirectTo,
     backTo: `/quando${query}`,
     adjustTo: `/onde${query}`,
     status,
     retry: talhao.retry,
-    history: historySummary(applyConfirmations(historico, confirmadas)),
+    history: historySummary(historicoConfirmado),
     confirmations,
     share,
     toggleShare,
@@ -200,5 +220,13 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
     chooseSoil,
     confirmSeason,
     confirm,
+    xray:
+      raioX && params
+        ? { raio: raioX, blocks: xRayBlocks(raioX), place: nearestPlace(params), point: { lat: params.lat, lon: params.lon } }
+        : null,
+    heatmap: heatmap(raioX?.historico_ndvi, historicoConfirmado),
+    alerts: alertList(raioX),
+    cards: raioX?.cartoes ?? null,
+    answerTo: `/resposta${query}`,
   }
 }

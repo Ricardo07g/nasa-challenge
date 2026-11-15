@@ -109,20 +109,21 @@ def _sinusoidal(lat: float, lon: float) -> tuple[float, float]:
     return SINUSOIDAL_RADIUS_M * math.radians(lon) * math.cos(phi), SINUSOIDAL_RADIUS_M * phi
 
 
-def global_pixel(lat: float, lon: float) -> tuple[int, int]:
-    """(linha, coluna) do pixel de 250 m que contém o ponto na grade global do MODIS."""
+def global_pixel(lat: float, lon: float, pixel_m: float = MODIS_250M_PIXEL_M) -> tuple[int, int]:
+    """(linha, coluna) do pixel que contém o ponto na grade global do MODIS (250 m por padrão;
+    a área queimada, tarefa 0043, usa a de 500 m)."""
     x, y = _sinusoidal(lat, lon)
     return (
-        math.floor((GLOBAL_Y_NORTH_M - y) / MODIS_250M_PIXEL_M),
-        math.floor((x - GLOBAL_X_WEST_M) / MODIS_250M_PIXEL_M),
+        math.floor((GLOBAL_Y_NORTH_M - y) / pixel_m),
+        math.floor((x - GLOBAL_X_WEST_M) / pixel_m),
     )
 
 
-def _pixel_center(row: int, col: int) -> tuple[float, float]:
+def _pixel_center(row: int, col: int, pixel_m: float = MODIS_250M_PIXEL_M) -> tuple[float, float]:
     """Centro do pixel global em latitude e longitude."""
     return sinusoidal_to_latlon(
-        GLOBAL_X_WEST_M + (col + 0.5) * MODIS_250M_PIXEL_M,
-        GLOBAL_Y_NORTH_M - (row + 0.5) * MODIS_250M_PIXEL_M,
+        GLOBAL_X_WEST_M + (col + 0.5) * pixel_m,
+        GLOBAL_Y_NORTH_M - (row + 0.5) * pixel_m,
     )
 
 
@@ -144,20 +145,21 @@ class PixelWindow:
         return self.col_last - self.col_first + 1
 
 
-def pixel_window(box: Box) -> PixelWindow:
+def pixel_window(box: Box, pixel_m: float = MODIS_250M_PIXEL_M) -> PixelWindow:
     """Os pixels que cobrem a caixa. Na projeção sinusoidal a caixa vira um trapézio (x encolhe
     com o cosseno da latitude): os extremos ficam nos cantos ou, se a caixa cruzar o equador,
     na latitude zero."""
     lats = [box.lat_min, box.lat_max] + ([0.0] if box.lat_min < 0 < box.lat_max else [])
-    pixels = [global_pixel(lat, lon) for lat in lats for lon in (box.lon_min, box.lon_max)]
+    pixels = [global_pixel(lat, lon, pixel_m) for lat in lats for lon in (box.lon_min, box.lon_max)]
     rows = [row for row, _ in pixels]
     cols = [col for _, col in pixels]
     return PixelWindow(min(rows), max(rows), min(cols), max(cols))
 
 
-def tile_half_pixels(km: int) -> int:
-    """Pixels de cada lado do centro que a ORNL devolve para `kmAboveBelow` = `km`."""
-    return round(km / ORNL_KM_PER_PIXEL)
+def tile_half_pixels(km: int, km_per_pixel: float = ORNL_KM_PER_PIXEL) -> int:
+    """Pixels de cada lado do centro que a ORNL devolve para `kmAboveBelow` = `km` (ela conta
+    0,25 km por pixel nos produtos de 250 m e 0,5 km nos de 500 m)."""
+    return round(km / km_per_pixel)
 
 
 @dataclass(frozen=True)
@@ -169,13 +171,13 @@ class Tile:
     center: Point
 
 
-def plan_tiles(window: PixelWindow, half: int) -> list[Tile]:
+def plan_tiles(window: PixelWindow, half: int, pixel_m: float = MODIS_250M_PIXEL_M) -> list[Tile]:
     """Ladrilhos de (2 × half + 1) pixels, lado a lado a partir do canto de cima à esquerda."""
     size = 2 * half + 1
     tiles = []
     for row in range(window.row_first + half, window.row_last + half + 1, size):
         for col in range(window.col_first + half, window.col_last + half + 1, size):
-            lat, lon = _pixel_center(row, col)
+            lat, lon = _pixel_center(row, col, pixel_m)
             center = Point(round(lat, CENTER_DECIMALS), round(lon, CENTER_DECIMALS))
             tiles.append(Tile(row=row, col=col, center=center))
     return tiles
@@ -204,13 +206,13 @@ def _offset(value: float, label: str) -> int:
     return offset
 
 
-def _tile_origin(grid: Grid) -> tuple[int, int]:
+def _tile_origin(grid: Grid, pixel_m: float = MODIS_250M_PIXEL_M) -> tuple[int, int]:
     """Pixel global do canto de cima à esquerda do recorte, pelo cabeçalho da ORNL."""
-    if not math.isclose(grid.cellsize, MODIS_250M_PIXEL_M, rel_tol=1e-6):
-        raise OrnlError(f"Recorte com pixel de {grid.cellsize} m (a grade tem 231,66 m).")
+    if not math.isclose(grid.cellsize, pixel_m, rel_tol=1e-6):
+        raise OrnlError(f"Recorte com pixel de {grid.cellsize} m (a grade tem {pixel_m:.2f} m).")
     y_top = grid.yll + grid.nrows * grid.cellsize
-    row = _offset((GLOBAL_Y_NORTH_M - y_top) / MODIS_250M_PIXEL_M, "linha")
-    col = _offset((grid.xll - GLOBAL_X_WEST_M) / MODIS_250M_PIXEL_M, "coluna")
+    row = _offset((GLOBAL_Y_NORTH_M - y_top) / pixel_m, "linha")
+    col = _offset((grid.xll - GLOBAL_X_WEST_M) / pixel_m, "coluna")
     return row, col
 
 
