@@ -6,7 +6,8 @@ temperatura do NASA POWER), só com as temporadas inteiras (1/jan a 31/jul).
 - **O que mudou:** os anos desde `avisos_tela.ano_recente_inicio` (2020–2024) contra os de antes
   (2005–2019), em cinco números: o maior veranico de março a maio (média dos anos), o fim das chuvas
   (mediana), os dias de calor de março a maio (média por ano), a falta de água da melhor opção no
-  ciclo (média, mm) e a parte dos anos em que ela deu certo. Só entra a mudança com a diferença
+  ciclo (média, mm) e a parte dos anos em que ela deu certo (com a `cultura` do plano no
+  `/api/avisos`, os dois últimos são dessa cultura, tarefa 0065). Só entra a mudança com a diferença
   mínima do `regras.yaml`. São poucos anos: mostra o que aconteceu, não uma previsão.
 - **Fora do comum:** os recordes dos 20 anos, cada um com o ano.
 

@@ -10,6 +10,7 @@ from datetime import UTC, date, datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
+from app.constants import PROBLEM_JSON_MEDIA_TYPE
 from app.dependencies import get_community_report_service, get_recent_weather_repository
 from app.main import app
 from app.models.avisos import RecentDay
@@ -157,6 +158,34 @@ def test_should_answer_outside_area_like_the_recommendation(avisos_client: TestC
 
     assert response.status_code == 404
     assert response.json()["code"] == "OUTSIDE_AREA"
+
+
+def test_should_count_the_crop_changes_for_the_crop_of_the_plan(
+    avisos_client: TestClient,
+) -> None:
+    # Tarefa 0065: `cultura` (id do culturas.yaml) troca a cultura da falta de água e do "deu
+    # certo"; os outros grupos não mudam.
+    sem = avisos_client.get("/api/avisos", params=UFU).json()
+    com = avisos_client.get("/api/avisos", params={**UFU, "cultura": "sorgo"})
+
+    assert com.status_code == 200
+    body = com.json()
+    for aviso in body["mudou"]["avisos"]:
+        if aviso["tipo"] in ("mudou_falta_agua", "mudou_deu_certo"):
+            assert aviso["valores"]["cultura"] == "sorgo"
+    assert (body["agora"], body["recordes"], body["contador"]) == (
+        sem["agora"],
+        sem["recordes"],
+        sem["contador"],
+    )
+
+
+def test_should_refuse_an_unknown_crop(avisos_client: TestClient) -> None:
+    response = avisos_client.get("/api/avisos", params={**UFU, "cultura": "trigo"})
+
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith(PROBLEM_JSON_MEDIA_TYPE)
+    assert response.json()["code"] == "VALIDATION_ERROR"
 
 
 def test_should_refuse_an_invalid_harvest_band(avisos_client: TestClient) -> None:

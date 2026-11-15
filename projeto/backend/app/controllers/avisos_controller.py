@@ -25,8 +25,10 @@ def get_avisos(
     colheita: Annotated[Colheita, Query()] = "meio",
     solo: Annotated[Textura | None, Query()] = None,
     confirmadas: ConfirmadasQuery = None,
+    cultura: Annotated[str | None, Query(max_length=40)] = None,
     accept_language: Annotated[str, Header(alias="Accept-Language")] = "pt-BR",
 ) -> AvisosResponse:
+    """`cultura` (tarefa 0065): o 1º ano do plano, para a falta de água e o "deu certo"."""
     avisos = service.avisos(
         lat=lat,
         lon=lon,
@@ -34,5 +36,6 @@ def get_avisos(
         solo_override=solo,
         confirmadas=parse_confirmadas(confirmadas),
         lang=accept_language,
+        cultura=cultura,
     )
     return AvisosResponse.from_model(avisos)
