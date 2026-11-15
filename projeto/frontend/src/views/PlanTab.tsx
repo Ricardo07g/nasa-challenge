@@ -167,11 +167,15 @@ function YearCard({ t, lang, state, choose, card, index }: PlanTabProps & { card
         {suggested && suggested.crop !== card.crop && (
           <p className={styles.yearSuggestion}>
             <Tag kind="suggestion">{c.tags.suggestion}</Tag>
-            <span className="visually-hidden">:</span> <strong>{cropName(t, suggested.crop)}</strong> ·{' '}
-            <button type="button" className={styles.linkButton} onClick={() => pick(suggested.crop)}>
-              {p.useSuggestion}
-              <span className="visually-hidden"> ({p.chooseFor(season)})</span>
-            </button>
+            <span className="visually-hidden">: </span>
+            {/* Cultura, ponto e link juntos: numa tela estreita, descem inteiros para a linha de baixo. */}
+            <span>
+              <strong>{cropName(t, suggested.crop)}</strong> ·{' '}
+              <button type="button" className={styles.linkButton} onClick={() => pick(suggested.crop)}>
+                {p.useSuggestion}
+                <span className="visually-hidden"> ({p.chooseFor(season)})</span>
+              </button>
+            </span>
           </p>
         )}
       </div>
