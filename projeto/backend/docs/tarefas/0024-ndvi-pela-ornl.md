@@ -39,6 +39,21 @@ o CMIP6): `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json`, que é o que
   e até um pedido de 1 data deu 502. O tempo depende mais da carga do serviço do que do tamanho.
 - O host do cabeçalho (`modisrest.ornl.gov`) não responde de fora.
 
+### Rodada real da fazenda de exemplo (−18,9543, −48,1993), 14/11/2026
+
+- 65 pedidos certos (2 de bandas, 2 de datas, 61 recortes, um deles dividido em 3 + 2) em ~99 min,
+  em duas execuções: a segunda retomou do cache da primeira (171 de 270 composições já guardadas) com
+  o código da divisão. 28 respostas 502 no caminho, quase todas do Aqua. Os pedidos certos levaram de
+  23 a 60 s (média 45 s); contando os 502, as retentativas e a pausa, ~90 s por pedido, o que a
+  estimativa do `--dry-run` usa agora.
+- Arquivo com 257 observações boas (qualidade 0: 204; 1: 53; MOD13Q1: 136; MYD13Q1: 121), de 22 a 27
+  por ano em jan–jul e **15 de 15 por ano em abr–jul** (seca: nenhuma nuvem na janela do histórico).
+  NDVI de 0,22 a 0,95.
+- O histórico que a regra do guia dá: **plantou nos 10 anos** (0 parado, 0 sem certeza), `ndvi_max`
+  de 0,62 (2016) a 0,90 (2020); colheita sugerida `tarde` (10 anos usados). A curva sobe depois da
+  colheita da soja (ex.: 2016, 0,33 no começo de abril → 0,62 em junho; 2021, 0,34 → 0,75), ou seja,
+  há cobertura verde na entressafra, não só a soja ainda verde em abril.
+
 ## 3. Fluxo
 
 ```
@@ -47,19 +62,23 @@ python -m pipeline.fetch_ndvi --fonte ornl [--pontos ...] [--saida ...] [--cache
         ▼
 GET /MOD13Q1/bands e /MYD13Q1/bands (uma vez por produto) → escala e preenchimento do NDVI
         ▼  para cada ponto e produto
-GET /{produto}/dates → só jan–jul de 2016 a 2025 → blocos de até 5 datas, sem cruzar o ano
-        │  (Terra 14 por ano: 5+5+4; Aqua 13: 5+5+3 → 60 recortes por ponto)
+GET /{produto}/dates → só jan–jul de 2016 a 2025
+        ▼
+datas já no cache (lidas por data, de todos os recortes guardados) saem do plano; as que faltam
+        viram blocos de até 5 datas seguidas, sem cruzar o ano nem pular uma data guardada
+        │  (sem cache: Terra 14 por ano, 5+5+4; Aqua 13, 5+5+3 → 60 recortes por ponto)
         ▼
 GET /{produto}/subset (todas as bandas, um pixel) por bloco
-        │  retentativa: rede, 5xx, 429, corpo fora do formato → espera 20, 40, 80 s (4 tentativas);
-        │  4xx → erro na hora (código 1)
-        │  resposta conferida (NDVI e qualidade em todas as datas do bloco, um valor numérico)
+        │  retentativa: rede, 5xx, 429, corpo fora do formato → espera 20, 40, 80 s;
+        │  bloco de várias datas: 2 tentativas e divide em duas metades (até 1 data);
+        │  bloco de 1 data: 4 tentativas; 4xx → erro na hora (código 1)
+        │  resposta conferida (NDVI e qualidade em todas as datas do bloco, um valor inteiro)
         │  → cache_ornl/lat<lat>_lon<lon>/<produto>/<início>_<fim>.json (arquivo provisório
-        │  renomeado no fim); já no cache → nem pede; pausa de --pausa s depois de cada pedido
+        │  renomeado no fim); pausa de --pausa s depois de cada pedido
         ▼
-recorte sem resposta → fica de fora e a execução segue; 3 seguidos → desiste (a ORNL caiu)
+data sem resposta → fica de fora e a execução segue; 3 falhas seguidas → desiste (a ORNL caiu)
         ▼
-algum recorte faltou → código 2, nada gravado na saída (rode de novo: continua do cache)
+alguma data faltou → código 2, nada gravado na saída (rode de novo: continua do cache)
 tudo veio → NDVI × escala, −3000 vira sem dado → mesmo filtro do AppEEARS (qualidade 0/1,
         jan–jul, 2016–2025, faixa −0,2 a 1, sem duplicata) → JSON do contrato, gravado por
         arquivo provisório renomeado
@@ -95,7 +114,25 @@ tudo veio → NDVI × escala, −3000 vira sem dado → mesmo filtro do AppEEARS
   `--datas-por-pedido`, `--pausa`; `build_ndvi_payload` ganhou `service` e `extra_params`; a saída é
   gravada por arquivo provisório renomeado (as duas fontes).
 
-### Sub-tarefa 4.2: Documentação
+### Sub-tarefa 4.2: NDVI escalado recusado
+- [x] Teste: recorte com NDVI que não é inteiro (já escalado) é recusado e não entra no cache.
+- [x] Red: `DID NOT RAISE`. Green: `_band_values` exige o inteiro bruto.
+
+### Sub-tarefa 4.3: Divisão do bloco que falha e cache lido por data
+Na rodada real, os recortes de 5 datas do Aqua deram 502 na 1ª tentativa quase sempre (10 em 6
+blocos, contra 10 em 33 do Terra), com os que passaram a 50–58 s.
+- [x] Testes: blocos só das datas que faltam, em trechos seguidos; valores do cache lidos por data,
+  de vários recortes; bloco que falha dividido em metades (5 → 2 tentativas → 3 + 2 → 2 + 1);
+  mudar o `--datas-por-pedido` não pede nada de novo; `--dry-run` com os pedidos que faltam e as
+  composições já no cache.
+- [x] Red: `TypeError: plan_blocks() got an unexpected keyword argument 'skip'`,
+  `AttributeError: 'CachedOrnlFetcher' object has no attribute 'cached_values'`, pedidos de novo
+  com outro tamanho de bloco e o texto antigo do `--dry-run`.
+- [x] Green: `plan_blocks(..., skip=)`, `CachedOrnlFetcher.cached_values`, `_fetch_block` (divisão)
+  com `_FailureTracker`, `max_retries` por pedido no `OrnlClient.fetch`. O cache da rodada que já
+  estava em andamento (blocos de 5) foi lido sem mudança.
+
+### Sub-tarefa 4.4: Documentação
 - [x] "Dados da API" do `AGENTS.md` do backend: as duas fontes, saída padrão e comandos.
 - [x] `docs/como-preparar-os-dados-locais.md`: NDVI pela ORNL, sem credencial, quando usar cada
   fonte e o que fazer com o código 2.
@@ -124,6 +161,11 @@ tudo veio → NDVI × escala, −3000 vira sem dado → mesmo filtro do AppEEARS
   e vários voltaram 502. Jan–jul cabe em 3 recortes por ano e produto.
 - **Lista de datas da própria ORNL** na extração (2 pedidos por ponto); o calendário de 16 dias só
   serve para o plano do `--dry-run` quando a lista ainda não está no cache.
+- **Dividir em vez de insistir:** um bloco de várias datas que dá 502 duas vezes vira duas metades,
+  que cabem melhor nos ~60 s do proxy. Só o bloco de 1 data usa as 4 tentativas e conta como falha.
+- **Cache por data:** o nome do arquivo (`<início>_<fim>.json`) é só o recorte que veio; o plano
+  olha as datas de todos os arquivos. Por isso a divisão e a troca do `--datas-por-pedido` não
+  invalidam nada.
 - **Nada gravado na saída se faltar recorte:** um ano sem recorte viraria `sem_dado` no histórico por
   falha de rede, não por falta de imagem boa.
 - **Mesmo nome de arquivo** para as duas fontes (o compose procura esse nome).
@@ -132,10 +174,12 @@ tudo veio → NDVI × escala, −3000 vira sem dado → mesmo filtro do AppEEARS
 
 ## 7. Fora do escopo / riscos
 
-- **Instabilidade da ORNL:** em horário de carga, até pedidos pequenos dão 502. A retentativa e a
-  retomada pelo cache cobrem isso, mas a extração pode levar mais que a estimativa.
-- **Recorte que nunca responde:** se um bloco falhar sempre, a saída não é gravada. Dá para tentar
-  com `--datas-por-pedido` menor (os blocos mudam e entram no cache com outro nome).
+- **Instabilidade da ORNL:** em horário de carga, até pedidos pequenos dão 502. A retentativa, a
+  divisão e a retomada pelo cache cobrem isso, mas a extração é lenta: ~1,6 h por ponto. Os pontos
+  são pedidos um depois do outro; dá para rodar um processo por ponto com o mesmo `--cache` (cada
+  um com o seu `--saida`) e depois uma execução com todos os pontos, que só lê o cache.
+- **Data que nunca responde:** se até o pedido de 1 data falhar sempre, a saída não é gravada (o
+  resto fica no cache). Não houve caso assim na rodada real.
 - **Coleção:** a ORNL não diz a versão na API; o `proc_date` de 2021 indica a coleção 6.1 (061).
 - **Pixel:** `kmAboveBelow=0` e `kmLeftRight=0` devolvem o pixel de 250 m que contém o ponto, como o
   AppEEARS; a API aceita o ponto do arquivo a até 250 m do talhão.

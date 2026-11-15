@@ -339,13 +339,17 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     dica para retomar com `--tarefa-existente <id>`. A fila pode levar horas.
   - **`--fonte ornl`**: o serviço de recortes do MODIS da ORNL DAAC
     (`https://modis.ornl.gov/rst/api/v1`), **sem credencial e sem fila**, mas lento: cada pedido
-    leva de 19 a 57 s e o proxy corta em ~60 s com 502 (medido em 14/11/2026). Pede a escala e o
+    que dá certo leva de 19 a 60 s e o proxy corta em ~60 s com 502 (14/11/2026). Pede a escala e o
     preenchimento do NDVI (`/bands`, a ORNL entrega o inteiro bruto), a lista de datas de cada ponto
     e recortes de um pixel com todas as bandas e até `--datas-por-pedido` datas (padrão 5, máximo 10
-    do serviço), sem cruzar o ano: 64 pedidos para um ponto (~50 min), 188 para três (~2,4 h).
-    Retentativa com espera crescente (rede, 5xx, corpo fora do formato), `--pausa` entre pedidos e
-    cache em `cache_ornl/` (só resposta conferida, arquivo provisório renomeado). Recorte que falhou
-    ou 3 seguidos sem resposta: código 2, nada gravado na saída; rode de novo que continua do cache.
+    do serviço), sem cruzar o ano: 64 pedidos para um ponto (~1,6 h na rodada real), 188 para três
+    (~4,7 h).
+    Retentativa com espera crescente (rede, 5xx, corpo fora do formato) e `--pausa` entre pedidos;
+    bloco de várias datas que falha 2 vezes é dividido em duas metades, até 1 data. Cache em
+    `cache_ornl/` (só resposta conferida, arquivo provisório renomeado), lido **por data**: só pede
+    o que falta, e mudar o `--datas-por-pedido` entre execuções não perde nada. Data que ficou sem
+    resposta ou 3 falhas seguidas: código 2, nada gravado na saída; rode de novo que continua do
+    cache.
 
   ```bash
   uv run python -m pipeline.fetch_ndvi --dry-run                 # AppEEARS: mostra o pedido, sem rede

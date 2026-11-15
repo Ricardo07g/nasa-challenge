@@ -61,7 +61,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Clima futuro da caixa piloto inteira | `uv run python -m pipeline.fetch_cmip6_deltas --area` | ~45 min (378 pedidos ao OPeNDAP, um por arquivo para a caixa toda); se parar, rode de novo que continua do cache | nenhuma |
 | Clima futuro só da fazenda de exemplo | `uv run python -m pipeline.fetch_cmip6_deltas --pontos="-18.9543,-48.1993"` | ~40 min (360 pedidos ao NCSS, um ponto por pedido) | nenhuma |
 | Histórico do talhão (NDVI) pelo AppEEARS | `uv run python -m pipeline.fetch_ndvi --pontos="-18.9543,-48.1993"` | depende da fila do AppEEARS (minutos a horas) | `APPEEARS_TOKEN` ou `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` no `projeto/backend/.env` |
-| Histórico do talhão (NDVI) pela ORNL | `uv run python -m pipeline.fetch_ndvi --fonte ornl --pontos="-18.9543,-48.1993"` | ~50 min por ponto (64 pedidos de 19 a 57 s, sem fila); se parar, rode de novo que continua do cache | nenhuma |
+| Histórico do talhão (NDVI) pela ORNL | `uv run python -m pipeline.fetch_ndvi --fonte ornl --pontos="-18.9543,-48.1993"` | ~1,6 h por ponto (64 pedidos, sem fila; vários dão 502 e são repetidos); se parar, rode de novo que continua do cache | nenhuma |
 | Carregar os arquivos no banco (`cmip6_delta` e `ndvi_point`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` | segundos | nenhuma |
 
 - A pré-carga é idempotente: rodar de novo só completa o que faltou (por exemplo, solos em que o
@@ -93,13 +93,14 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   - **AppEEARS** (padrão): um pedido só para todos os pontos, mas entra numa fila que pode levar
     horas (já ficou mais de 3 h em `pending`). Use quando tiver a credencial e tempo para esperar;
     se o limite de espera estourar, retome com `--tarefa-existente <id>` (o script mostra o id).
-  - **ORNL** (`--fonte ornl`): sem credencial e sem fila, mas cada pedido leva de 19 a 57 s e o
+  - **ORNL** (`--fonte ornl`): sem credencial e sem fila, mas cada pedido leva de 19 a 60 s e o
     serviço às vezes corta em ~60 s (502). Use quando a fila do AppEEARS travar ou faltar
     credencial. Veja antes o plano: `uv run python -m pipeline.fetch_ndvi --fonte ornl --dry-run
-    --pontos="..."` (pedidos, o que já está no cache e o tempo estimado; 3 pontos ~2,4 h). As
+    --pontos="..."` (pedidos, o que já está no cache e o tempo estimado; 3 pontos ~4,7 h). As
     respostas ficam em `cache_ornl/`; se terminar com código 2 (algum recorte sem resposta),
-    rode o mesmo comando de novo, que só pede o que falta. `--datas-por-pedido` (padrão 5, máximo
-    10) e `--pausa` (padrão 5 s) ajustam o ritmo.
+    rode o mesmo comando de novo, que só pede as datas que faltam. Recorte que dá 502 duas vezes é
+    dividido sozinho em pedaços menores. `--datas-por-pedido` (padrão 5, máximo 10) e `--pausa`
+    (padrão 5 s) ajustam o ritmo; dá para mudar de uma execução para outra sem perder o cache.
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).
