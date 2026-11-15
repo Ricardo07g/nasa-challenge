@@ -68,6 +68,35 @@ def test_should_parse_the_real_oni_table_by_season_and_year() -> None:
     assert len(table) == 13
 
 
+# Trecho real da tabela do RONI (Relative ONI), o índice oficial da NOAA desde 01/02/2026 (NWS PNS
+# 26-05), baixada em 15/11/2026: https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt
+RONI_SAMPLE = """SEAS   YR  ANOM
+NDJ  2015  2.25
+DJF  2016  2.14
+JFM  2016  1.81
+FMA  2016  1.30
+DJF  2024  1.13
+JFM  2024  0.78
+FMA  2024  0.42
+"""
+
+
+def test_should_download_the_relative_oni_the_official_index_since_2026() -> None:
+    # Tarefa 0066: as chances da NOAA CPC são verificadas pelo RONI, então a fase dos anos passados
+    # vem do mesmo índice.
+    assert ONI_URL == "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt"
+
+
+def test_should_parse_the_real_relative_oni_table_by_season_and_year() -> None:
+    table = parse_oni_table(RONI_SAMPLE)
+
+    assert table[("DJF", 2016)] == 2.14
+    assert table[("FMA", 2024)] == 0.42
+    assert len(table) == 7
+    # 2024 pelo RONI: média de 0,78 = El Niño
+    assert safra_oni(table, 2024, ENSO) == OniYear(ano=2024, oni=0.78, fase="el_nino")
+
+
 def test_should_refuse_an_error_page_instead_of_the_oni_table() -> None:
     with pytest.raises(ValueError, match="SEAS"):
         parse_oni_table("<html><body>Service unavailable</body></html>")

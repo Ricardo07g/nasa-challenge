@@ -52,6 +52,7 @@ class YamlCropParamsRepository:
                     n_deixado_kg=int(data["n_deixado_kg"]),
                     como_fazer=tuple(str(item) for item in data.get("como_fazer", [])),
                     como_fazer_en=tuple(str(item) for item in data.get("como_fazer_en", [])),
+                    prazo_zarc=bool(data.get("prazo_zarc", limite is not None)),
                 )
             )
 

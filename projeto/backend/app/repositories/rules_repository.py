@@ -9,6 +9,8 @@ import yaml
 
 from app.config import DEFAULT_REGRAS_PATH
 from app.models.regras import (
+    FonteCitacao,
+    FonteMetodo,
     FrasesAno,
     FrasesPlano,
     FrasesPorque,
@@ -82,6 +84,20 @@ def _texts[T](raw: dict[str, Any], group: str, cls: type[T]) -> dict[str, T]:
     }
 
 
+def _method_sources(raw: dict[str, Any]) -> dict[str, FonteMetodo]:
+    """Fonte de cada regra da tela "Como a conta é feita" (grupo `fontes_metodo`, tarefa 0066)."""
+    return {
+        chave: FonteMetodo(
+            citacoes=tuple(
+                FonteCitacao(citacao=str(item["citacao"]), url=item.get("url"))
+                for item in (dados.get("citacoes") or [])
+            ),
+            hipotese=str(dados["hipotese"]),
+        )
+        for chave, dados in (raw.get("fontes_metodo") or {}).items()
+    }
+
+
 class YamlRulesRepository:
     """Lê as regras do `regras.yaml` (caminho vem de Settings)."""
 
@@ -125,6 +141,7 @@ class YamlRulesRepository:
             chuva_aproveitada=_group(raw, "chuva_aproveitada", RegrasChuvaAproveitada),
             plano_cadeia=_group(raw, "plano_cadeia", RegrasPlanoCadeia),
             frases_plano=_texts(raw, "frases_plano", FrasesPlano),
+            fontes_metodo=_method_sources(raw),
         )
         return self._cache
 

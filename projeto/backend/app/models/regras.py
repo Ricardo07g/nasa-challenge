@@ -3,7 +3,7 @@
 Os nomes seguem as chaves do arquivo, que a agrônoma edita (por isso em português).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -16,6 +16,13 @@ class RegrasClima:
     janela_cobertura_dias: int
     calor_temp_c: float
     calor_min_dias: int
+    # ISNA mínimo próprio de uma cultura, do ZARC dela (tarefa 0066); as outras ficam com o do tipo.
+    isna_por_cultura: dict[str, float] = field(default_factory=dict)
+
+    def isna_min(self, crop_id: str, *, cobertura: bool) -> float:
+        """O ISNA abaixo do qual faltou água: o da cultura, ou o do grão ou o da cobertura."""
+        padrao = self.isna_cobertura if cobertura else self.isna_grao
+        return self.isna_por_cultura.get(crop_id, padrao)
 
 
 @dataclass(frozen=True)
@@ -244,6 +251,9 @@ class RegrasSinalEnso:
     anos_fase_min: int  # mínimo de anos daquela fase na série para contar o histórico
     fracao_anos_ruins_seco: float  # anos ruins do Plano A na fase a partir dos quais é seco
     smap_faixas_pct: tuple[float, ...]  # percentis do SMAP que separam as faixas da frase
+    # Tarefa 0066: o seco também pede a fase pior que os outros anos, com o teste exato de Fisher
+    # unilateral (hipergeométrico) com p de até este valor
+    p_max_seco: float = 0.10
 
 
 @dataclass(frozen=True)
@@ -346,6 +356,8 @@ class FrasesPorque:
     balde_smap: str
     # Cultura fora da janela de plantio para a faixa de colheita: {cultura}, {limite}, {faixa}
     fora_da_janela: str
+    # O mesmo, para a cultura sem ZARC (crotalária, tarefa 0066): a data é sugestão do app
+    fora_da_janela_sugerida: str
     # A faixa de colheita por extenso, para as frases (a chave interna nunca aparece na tela)
     colheita_cedo: str
     colheita_meio: str
@@ -447,8 +459,9 @@ class FrasesPlano:
     """O "Por quê:" de cada ano sugerido do plano de 3 anos em uma língua (tarefa 0056).
 
     Sem o nome da cultura: a tela mostra o nome logo antes ("Para 2028/29 agora sugerimos
-    Milheto: a terra ficou descoberta; cobre rápido e aguenta a seca.").
-    `prazo`: {cultura_fora} {limite_fora} {limite}; `aguenta_seca`: {motivo}.
+    Milheto: a terra ficou descoberta; cobre rápido e pede pouca água.").
+    `prazo` e `prazo_sugerido` (cultura sem ZARC, tarefa 0066): {cultura_fora} {limite_fora}
+    {limite}; `aguenta_seca`: {motivo}.
     """
 
     cobrir_depois_do_parado: str
@@ -457,6 +470,7 @@ class FrasesPlano:
     cobertura_depois_do_grao: str
     variar_funcao: str
     prazo: str
+    prazo_sugerido: str
     melhor_nota: str
     aguenta_seca: str
 
@@ -495,3 +509,34 @@ class Regras:
     chuva_aproveitada: RegrasChuvaAproveitada
     plano_cadeia: RegrasPlanoCadeia
     frases_plano: dict[str, FrasesPlano]  # "pt" e "en"
+    # Fonte de cada regra da tela "Como a conta é feita" (grupo `fontes_metodo`, tarefa 0066)
+    fontes_metodo: dict[str, "FonteMetodo"] = field(default_factory=dict)
+
+
+HIPOTESE_NIVEIS = frozenset({"nao", "parte", "sim"})
+
+
+@dataclass(frozen=True)
+class FonteCitacao:
+    """Uma fonte conferida, em forma curta (autores, ano, revista ou portaria) e o link aberto."""
+
+    citacao: str
+    url: str | None = None
+
+
+@dataclass(frozen=True)
+class FonteMetodo:
+    """De onde vêm os números de uma regra da tela "Como a conta é feita" (tarefa 0066).
+
+    `hipotese`: "nao" (todos os números têm fonte), "parte" (algum continua hipótese do time) ou
+    "sim" (nenhum tem fonte: a regra toda é hipótese do time, ainda não validada em campo).
+    """
+
+    citacoes: tuple[FonteCitacao, ...]
+    hipotese: str
+
+    def __post_init__(self) -> None:
+        if self.hipotese not in HIPOTESE_NIVEIS:
+            raise ValueError(f"hipotese deve ser nao, parte ou sim: {self.hipotese!r}")
+        if self.hipotese != "sim" and not self.citacoes:
+            raise ValueError("regra com fonte precisa de pelo menos uma citação")

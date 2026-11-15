@@ -85,7 +85,63 @@ def test_should_load_shipped_ndvi_and_rotation_rules() -> None:
     assert (rotacao.bonus_diversidade_2, rotacao.bonus_diversidade_3) == (5.0, 10.0)
     # R4.3: a penalidade de monocultura de milho (12, sem fonte no PRD) saiu do regras.yaml.
     assert not hasattr(rotacao, "penalidade_monocultura_milho")
-    assert rotacao.culturas_supressoras_nematoide == frozenset({"crotalaria", "milheto"})
+    # Tarefa 0066: no campo, só as crotalárias reduziram o nematoide das lesões (Debiasi et al.
+    # 2016); o milheto sozinho não diferiu da testemunha.
+    assert rotacao.culturas_supressoras_nematoide == frozenset({"crotalaria"})
+
+
+# Tarefa 0066 (revisão com fontes): o número conferido cita a fonte; o que não tem fonte diz
+# "Hipótese do time".
+REVIEWED_SOURCES = {
+    "clima.isna_grao": "Portaria SPA/MAPA nº 324",
+    "clima.isna_cobertura": "Hipótese do time",
+    "clima.isna_por_cultura": "Portaria SPA/MAPA nº 275",
+    "clima.janela_grao_meia_dias": "Andrade et al. (1999)",
+    "clima.janela_cobertura_dias": "Hipótese do time",
+    "clima.calor_temp_c": "Hatfield & Prueger (2015)",
+    "clima.calor_min_dias": "Hipótese do time",
+    "nota_final.peso_seguranca": "Hipótese do time",
+    "nota_final.peso_solo": "Hipótese do time",
+    "nota_final.peso_renda": "Hipótese do time",
+    "nota_final.peso_futuro": "Hipótese do time",
+    "ndvi.queda_colheita": "Hipótese do time",
+    "chuva_que_sobra.percentil_seco": "ZARC",
+    "agua.percentil_seco": "ZARC",
+    "agua.sede_pouca_ate_mm": "Hipótese do time",
+    "agua.sede_muita_desde_mm": "Hipótese do time",
+    "alertas_area.geada_temp_c": "Wrege et al. (2018)",
+    "alertas_area.chuva_forte_mm": "INMET",
+    "alertas_area.fogo_raio_km": "Hipótese do time",
+    "historico_ndvi.limite_plantou": "Hipótese do time",
+    "historico_ndvi.limite_parado": "Hipótese do time",
+    "regiao_ndvi.pico_min_ndvi": "Risso et al. (2012)",
+    "regiao_ndvi.colheita_max_ndvi": "Oliveira et al. (2016)",
+    "regiao_ndvi.colheita_fim": "Conab",
+    "soja_recente.ndvi_minimo": "Risso et al. (2012)",
+    "rotacao.bonus_diversidade_2": "Hipótese do time",
+    "rotacao.bonus_diversidade_3": "Hipótese do time",
+    "rotacao.max_pousios": "Hipótese do time",
+    "rotacao.culturas_supressoras_nematoide": "Debiasi et al. (2016)",
+    "plano_cadeia.culturas_que_multiplicam_nematoide": "Debiasi et al. (2016)",
+    "sinal_enso.fase_chance_min_pct": "Hipótese do time",
+    "sinal_enso.anos_fase_min": "Hipótese do time",
+    "sinal_enso.fracao_anos_ruins_seco": "Hipótese do time",
+    "sinal_enso.p_max_seco": "teste exato de Fisher",
+    "enso.el_nino_oni_min": "RONI",
+    "enso.la_nina_oni_max": "RONI",
+    "enso.estacoes": "Hipótese do time",
+}
+
+
+@pytest.mark.parametrize(("chave", "marca"), REVIEWED_SOURCES.items())
+def test_should_cite_the_source_of_each_reviewed_number(chave: str, marca: str) -> None:
+    grupo, nome = chave.split(".")
+
+    fonte = str(_shipped_raw()[grupo][nome]["fonte"])
+
+    assert marca in fonte, f"{chave}: {fonte}"
+    if marca != "Hipótese do time":
+        assert not fonte.startswith("Hipótese do time"), chave
 
 
 def test_should_load_crop_functions_for_rotation_diversity() -> None:
@@ -495,8 +551,9 @@ def test_should_load_the_chain_rules_of_the_three_year_plan() -> None:
     assert cadeia.bonus_quebrar_nematoide_depois_do_milho == 5.0
     assert cadeia.bonus_variar_funcao == 3.0
     assert cadeia.culturas_cobertura_rapida == frozenset({"milheto"})
+    # Tarefa 0066: milho e sorgo são hospedeiros favoráveis do nematoide das lesões
     assert cadeia.culturas_que_multiplicam_nematoide == frozenset(
-        {"milho_safrinha", "milho_braquiaria"}
+        {"milho_safrinha", "milho_braquiaria", "sorgo"}
     )
     # As supressoras do nematoide continuam uma regra só (rotacao, PRD 7.7; tarefa 0049)
     assert not hasattr(cadeia, "culturas_supressoras_nematoide")
@@ -519,8 +576,11 @@ def test_should_load_the_reason_of_each_suggested_year_in_portuguese_and_english
 
     assert set(frases) == {"pt", "en"}
     assert frases["pt"].cobrir_depois_do_parado == "a terra ficou descoberta; cobre rápido"
-    assert frases["pt"].aguenta_seca.format(motivo="x") == "x e aguenta a seca"
+    # Tarefa 0066: a sede "pouca" mede o consumo, não a tolerância à seca
+    assert frases["pt"].aguenta_seca.format(motivo="x") == "x e pede pouca água"
     assert "{cultura_fora}" in frases["en"].prazo and "{limite}" in frases["en"].prazo
+    assert "data sugerida" in frases["pt"].prazo_sugerido
+    assert "ZARC" not in frases["pt"].prazo_sugerido
     for lang in ("pt", "en"):
         textos = vars(frases[lang])
         assert set(textos) == {
@@ -530,6 +590,7 @@ def test_should_load_the_reason_of_each_suggested_year_in_portuguese_and_english
             "cobertura_depois_do_grao",
             "variar_funcao",
             "prazo",
+            "prazo_sugerido",
             "melhor_nota",
             "aguenta_seca",
         }

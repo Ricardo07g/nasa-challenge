@@ -1,6 +1,7 @@
 """Repositórios falsos para os testes das rotas (sem arquivo, banco ou rede)."""
 
 from collections.abc import Iterator
+from dataclasses import replace
 from datetime import date, timedelta
 
 import pytest
@@ -58,7 +59,8 @@ CROPS = [
     _crop("sorgo", "grao", "03-20", (20, 0, 15)),
     _crop("milho_braquiaria", "consorcio", "02-28", (40, 0, 10)),
     _crop("milheto", "cobertura", "03-15", (35, 0, 20)),
-    _crop("crotalaria", "cobertura", "02-28", (25, 30, 30)),
+    # Tarefa 0066: não há ZARC de crotalária (a data é sugestão do app)
+    replace(_crop("crotalaria", "cobertura", "02-28", (25, 30, 30)), prazo_zarc=False),
 ]
 
 

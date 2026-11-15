@@ -5,7 +5,9 @@ Cada número vem do `regras.yaml` (grupos `clima`, `nota_final`, `renda`, `agua`
 fixo, então mudar uma regra no YAML muda a explicação junto.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from app.models.regras import FonteMetodo
 
 
 @dataclass(frozen=True)
@@ -18,6 +20,8 @@ class DeuCertoRegra:
     janela_cobertura_dias: int  # os primeiros dias da cobertura
     calor_temp_c: float
     calor_min_dias: int
+    # O ISNA do ZARC de cada cultura que tem o seu (tarefa 0066), em %
+    isna_por_cultura_pct: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -114,3 +118,6 @@ class MetodoRegras:
     alertas: AlertasRegra
     avisos: AvisosRegra
     sinal: SinalRegra
+    # De onde vem cada regra da tela (tarefa 0066): deu_certo, pesos, renda, agua, sede, rotacao,
+    # plano_b, geada, chuva_forte, fogo, avisos e sinal
+    fontes: dict[str, FonteMetodo] = field(default_factory=dict)

@@ -1,6 +1,6 @@
 # ==============================================================================
 # Parâmetros das 6 Opções de Entressafra (Raiz Orbital - Triângulo Mineiro)
-# Referência: Embrapa, ZARC e Seção 5 do PRD
+# Referência: ZARC de MG (MAPA), Embrapa, FAO-56 e Seção 5 do PRD
 # Editável por agrônomos sem necessidade de alterar o código de backend
 #
 # Chaves de `culturas`: ids canônicos da ADR-0001 (os mesmos do front). Os ids longos
@@ -18,6 +18,14 @@
 #   quebra de pragas/nematoide até 30). A nota de solo é a soma (0 a 100).
 # Sem preço, custo nem produtividade: a renda não usa reais (tarefa 0040, seção 1 da
 #   remodelagem). O `tipo` diz se a cultura dá grão para vender (grupo `renda` do regras.yaml).
+#
+# fontes (tarefa 0066, revisão com fontes): de onde vem cada número, em citação curta; o que não
+#   tem fonte diz "Hipótese do time". Revisão completa: docs/tarefas/0066-regras-com-fonte.md.
+# semeadura_limite_mes_dia (tarefa 0066): o último dia do último decêndio do ZARC de MG vigente com
+#   risco de até 20%, para cultivar de ciclo curto (Grupo I), no solo que mais guarda água (AD6 no
+#   método novo, Tipo 3 no antigo), o mais cedo entre Uberlândia e Uberaba (SISZARC e Tábua de Risco
+#   do MAPA, 13/11/2026). Em solo arenoso o prazo é mais cedo. prazo_zarc: a data vem de portaria do
+#   ZARC (falso na crotalária, que não tem ZARC).
 # ==============================================================================
 
 culturas:
@@ -27,6 +35,7 @@ culturas:
     tipo: "pousio"
     funcao: "Nenhuma"
     semeadura_limite_mes_dia: null
+    prazo_zarc: false
     dias_florescer: 0
     ciclo_dias: 0
     kc_pico: 0.0
@@ -46,12 +55,20 @@ culturas:
     nome_en: "Corn alone"
     tipo: "grao"
     funcao: "Grão"
-    semeadura_limite_mes_dia: "02-28" # Limite ZARC Triângulo Mineiro
+    semeadura_limite_mes_dia: "02-10"
+    prazo_zarc: true
     dias_florescer: 60
     ciclo_dias: 120
     kc_pico: 1.20
     nota_solo: {palhada: 20, nitrogenio: 0, pragas: 0}
     n_deixado_kg: 0
+    fontes:
+      semeadura_limite_mes_dia: "ZARC milho 2ª safra MG: Portaria SPA/MAPA nº 324, de 28/07/2026 (Grupo I, AD5–AD6, risco 20%: decêndio 4, até 10/02, em Uberlândia e Uberaba). https://www.in.gov.br/web/dou/-/portaria-spa/mapa-n-324-de-28-de-julho-de-2026-722143549"
+      dias_florescer: "ZARC milho 2ª safra MG (Port. 324/2026, item 1.12): Grupo II com a fase III no dia 60; Andrade et al. (2025), Embrapa Milho e Sorgo BPD 271: 56–64 dias em semeaduras de fevereiro"
+      ciclo_dias: "ZARC milho 2ª safra MG (Port. 324/2026, item 1.12): Grupo II, fases 20/40/40/20 = 120 dias"
+      kc_pico: "FAO-56 (Allen et al., 1998), Tabela 12: milho grão, Kc médio 1,20"
+      nota_solo: "Palhada: hipótese do time. Pragas 0: milho é hospedeiro favorável de Pratylenchus brachyurus (Debiasi et al., 2016, PAB 51(10), doi:10.1590/S0100-204X2016001000003)"
+      n_deixado_kg: "Gramínea: não fixa nitrogênio"
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie o milho logo depois de colher a soja."
       - "Colha o milho no inverno."
@@ -66,12 +83,20 @@ culturas:
     nome_en: "Sorghum"
     tipo: "grao"
     funcao: "Grão"
-    semeadura_limite_mes_dia: "03-20" # Mais tolerante ao estresse hídrico
+    semeadura_limite_mes_dia: "03-20"
+    prazo_zarc: true
     dias_florescer: 65
     ciclo_dias: 115
     kc_pico: 1.05
-    nota_solo: {palhada: 20, nitrogenio: 0, pragas: 15}
+    nota_solo: {palhada: 20, nitrogenio: 0, pragas: 0}
     n_deixado_kg: 0
+    fontes:
+      semeadura_limite_mes_dia: "ZARC sorgo granífero MG: Portaria SPA/MAPA nº 275, de 20/07/2026 (Grupo I, solo Tipo 3, risco 20%: até 20/03 em Uberlândia e 31/03 em Uberaba; solo médio 28/02, arenoso 20/02). https://www.in.gov.br/web/dou/-/portaria-spa/mapa-n-275-de-20-de-julho-de-2026-720556455"
+      dias_florescer: "Menezes et al. (2015), Embrapa Milho e Sorgo BPD 127: média de 61 dias na 2ª safra"
+      ciclo_dias: "Hipótese do time (FAO-56, Tabela 11, fora do Brasil: 125–140 dias)"
+      kc_pico: "FAO-56 (Allen et al., 1998), Tabela 12: sorgo grão, Kc médio 1,00–1,10"
+      nota_solo: "Palhada: hipótese do time. Pragas 0: sorgo é hospedeiro favorável de Pratylenchus brachyurus (Debiasi et al., 2016, PAB 51(10))"
+      n_deixado_kg: "Gramínea: não fixa nitrogênio"
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie o sorgo logo depois de colher a soja."
       - "Colha o grão em junho ou julho."
@@ -86,12 +111,20 @@ culturas:
     nome_en: "Corn with brachiaria"
     tipo: "consorcio"
     funcao: "Grão + cobertura"
-    semeadura_limite_mes_dia: "02-28"
+    semeadura_limite_mes_dia: "02-10"
+    prazo_zarc: true
     dias_florescer: 60
     ciclo_dias: 120
     kc_pico: 1.20
-    nota_solo: {palhada: 40, nitrogenio: 0, pragas: 10}
+    nota_solo: {palhada: 40, nitrogenio: 0, pragas: 0}
     n_deixado_kg: 0
+    fontes:
+      semeadura_limite_mes_dia: "ZARC milho consorciado com braquiária 2ª safra MG: Portaria SPA/MAPA nº 339, de 28/07/2026 (linhas de Uberlândia e Uberaba iguais às do milho 2ª safra: até 10/02). https://www.in.gov.br/web/dou/-/portaria-spa/mapa-n-339-de-28-de-julho-de-2026-723739623"
+      dias_florescer: "ZARC do consórcio (Port. 339/2026): Grupo II com a fase III no dia 60"
+      ciclo_dias: "ZARC do consórcio (Port. 339/2026): Grupo II, fases 20/40/40/20 = 120 dias (a braquiária continua depois da colheita e o balanço não conta)"
+      kc_pico: "FAO-56 (Allen et al., 1998), Tabela 12: milho grão, Kc médio 1,20"
+      nota_solo: "Palhada: o consórcio dá mais massa seca que o milho solteiro (Ceccon et al., 2018, Rev. Bras. Milho e Sorgo 17(1)); os pontos são hipótese do time. Pragas 0: braquiárias e milho são hospedeiros favoráveis de P. brachyurus (Debiasi et al., 2016)"
+      n_deixado_kg: "Gramíneas: não fixam nitrogênio"
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie o capim junto com o milho."
       - "Colha o milho. O capim fica cobrindo a terra."
@@ -106,12 +139,20 @@ culturas:
     nome_en: "Pearl millet"
     tipo: "cobertura"
     funcao: "Cobertura"
-    semeadura_limite_mes_dia: "03-15"
+    semeadura_limite_mes_dia: "04-20"
+    prazo_zarc: true
     dias_florescer: 50
     ciclo_dias: 90
     kc_pico: 1.00
-    nota_solo: {palhada: 35, nitrogenio: 0, pragas: 20}
+    nota_solo: {palhada: 35, nitrogenio: 0, pragas: 0}
     n_deixado_kg: 0
+    fontes:
+      semeadura_limite_mes_dia: "ZARC milheto MG: Portaria SPA/MAPA nº 345, de 20/10/2020 (Grupo I, solo Tipo 3, risco 20%: decêndio 11, até 20/04, em Uberlândia e Uberaba; solo médio 31/03, arenoso 20/02). https://www.in.gov.br/web/dou/-/portaria-n-345-de-20-de-outubro-de-2020-284703461"
+      dias_florescer: "Embrapa Milho e Sorgo (2016), Cultivo do Milheto, Sistema de Produção 3, Tabela 3: ADR 300 floresce aos 45–50 dias; BRS 1501, aos 50"
+      ciclo_dias: "Embrapa Milho e Sorgo (2016), Cultivo do Milheto, Tabela 3: ADR 300, ciclo até a colheita de 92 dias"
+      kc_pico: "FAO-56 (Allen et al., 1998), Tabela 12: milheto, Kc médio 1,00"
+      nota_solo: "Palhada: estabelecimento rápido e muita biomassa (Pacheco et al., 2017, PAB 52(8)); os pontos são hipótese do time. Pragas 0: no campo, o milheto sozinho não reduziu P. brachyurus (Debiasi et al., 2016)"
+      n_deixado_kg: "Gramínea: não fixa nitrogênio"
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie o milheto logo depois da soja."
       - "Deixe crescer e formar palha."
@@ -127,11 +168,19 @@ culturas:
     tipo: "cobertura"
     funcao: "Cobertura leguminosa"
     semeadura_limite_mes_dia: "02-28"
-    dias_florescer: 60
+    prazo_zarc: false
+    dias_florescer: 70
     ciclo_dias: 100
     kc_pico: 1.00
     nota_solo: {palhada: 25, nitrogenio: 30, pragas: 30}
-    n_deixado_kg: 80        # Fixação biológica de Nitrogênio (60 a 100 kg/ha)
+    n_deixado_kg: 80        # Hipótese do time (a frase do "Por quê?" não mostra o número)
+    fontes:
+      semeadura_limite_mes_dia: "Hipótese do time: não existe ZARC de crotalária nem de plantas de cobertura (MAPA, safra vigente de MG; Tábua de Risco; Res. CMN 4.902/2021)"
+      dias_florescer: "Amabile et al. (2000), PAB 35(1), doi:10.1590/S0100-204X2000000100007: C. juncea floresce aos 67 dias semeada em março e aos 88 em janeiro; a C. spectabilis floresce junto com a C. juncea (Garcia & Staut, 2018, Embrapa CT 44). Estimativa indireta"
+      ciclo_dias: "Hipótese do time"
+      kc_pico: "Hipótese do time (a crotalária não está na Tabela 12 da FAO-56)"
+      nota_solo: "Pragas 30: C. spectabilis reduziu P. brachyurus antes e no começo da soja (Debiasi et al., 2016) e reduz M. javanica e M. incognita (Dias et al., 2010, Embrapa Soja CT 76). Nitrogênio: fixa N do ar (Garcia & Staut, 2018). Os pontos são hipótese do time"
+      n_deixado_kg: "Hipótese do time: nenhuma fonte aberta confirma os kg/ha na safrinha do Triângulo"
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie a crotalária a lanço ou em linha."
       - "Deixe crescer até florescer."

@@ -534,7 +534,7 @@ class RecommendationService:
         clima = self._rules.clima
         cobertura = crop.tipo == COVER_CROP_TYPE
         return CriterioDeuCerto(
-            isna_min=clima.isna_cobertura if cobertura else clima.isna_grao,
+            isna_min=clima.isna_min(crop.id, cobertura=cobertura),
             calor_temp_c=clima.calor_temp_c,
             calor_min_dias=clima.calor_min_dias,
             fase=CRITICAL_STAGE_ESTABLISHMENT if cobertura else CRITICAL_STAGE_FLOWERING,
@@ -681,6 +681,7 @@ class RecommendationService:
             ciclo=CicloOpcao(dias=a.crop.ciclo_dias, floracao_dias=a.crop.dias_florescer),
             observar=self._facts_service.watch_facts(a.anos_detalhe),
             enso_acerto=self._facts_service.enso_hit_rates(a.anos_detalhe),
+            prazo_zarc=a.crop.prazo_zarc,
         )
 
     @staticmethod
@@ -692,11 +693,13 @@ class RecommendationService:
         return RAIN_SOURCE_NAMES.get(source, source)
 
     def _soil_text(self, crop: CropParams, is_en: bool) -> str:
-        """Frase de solo do PRD 7.6: palhada, nitrogênio e ciclo do nematoide.
+        """Frase de solo do PRD 7.6: palhada, nitrogênio e nematoide.
 
-        "Quebra o ciclo do nematoide" = as supressoras do PRD 7.7 (`rotacao.
-        culturas_supressoras_nematoide`: crotalária e milheto), a mesma regra dos fatos do Plano
-        (tarefa 0049). Os pontos de pragas da nota de solo (PRD 7.4) não mudam.
+        "Ajuda a baixar o nematoide" = as supressoras do PRD 7.7 (`rotacao.
+        culturas_supressoras_nematoide`: a crotalária, tarefa 0066), a mesma regra dos fatos do
+        Plano (tarefa 0049). Sem os kg/ha de nitrogênio (sem fonte para a safrinha do Triângulo) e
+        sem "quebra o ciclo" (a crotalária reduz o nematoide antes e no começo da soja, mas a
+        diferença some na colheita: Debiasi et al., 2016).
         """
         if crop.solo_palhada >= 35:
             nivel, level = "alta", "high"
@@ -704,18 +707,14 @@ class RecommendationService:
             nivel, level = "média", "medium"
         else:
             nivel, level = "pouca", "little"
-        quebra = crop.id in self._rules.rotacao.culturas_supressoras_nematoide
+        baixa = crop.id in self._rules.rotacao.culturas_supressoras_nematoide
         if is_en:
-            nitrogen = (
-                f"{crop.n_deixado_kg} kg/ha of nitrogen" if crop.n_deixado_kg else "no nitrogen"
-            )
-            ciclo = "breaks" if quebra else "does not break"
-            return f"Leaves {level} straw and {nitrogen}; {ciclo} the nematode cycle."
-        nitrogenio = (
-            f"{crop.n_deixado_kg} kg/ha de nitrogênio" if crop.n_deixado_kg else "nenhum nitrogênio"
-        )
-        ciclo = "quebra" if quebra else "não quebra"
-        return f"Deixa palhada {nivel} e {nitrogenio}; {ciclo} o ciclo do nematoide."
+            nitrogen = "nitrogen in the soil" if crop.n_deixado_kg else "no nitrogen"
+            nematode = "helps lower nematodes" if baixa else "does not help lower nematodes"
+            return f"Leaves {level} straw and {nitrogen}; {nematode}."
+        nitrogenio = "nitrogênio na terra" if crop.n_deixado_kg else "nenhum nitrogênio"
+        nematoide = "ajuda a baixar o nematoide" if baixa else "não ajuda a baixar o nematoide"
+        return f"Deixa palhada {nivel} e {nitrogenio}; {nematoide}."
 
     def _why(
         self,
@@ -833,4 +832,5 @@ class RecommendationService:
             "meio": frases.colheita_meio,
             "tarde": frases.colheita_tarde,
         }.get(colheita, colheita)
-        return frases.fora_da_janela.format(cultura=nome, limite=limite, faixa=faixa)
+        template = frases.fora_da_janela if crop.prazo_zarc else frases.fora_da_janela_sugerida
+        return template.format(cultura=nome, limite=limite, faixa=faixa)

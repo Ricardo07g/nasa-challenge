@@ -108,11 +108,37 @@ MONTHS_IN_YEAR = 12
 
 @dataclass(frozen=True)
 class _PhaseRecord:
-    """Como uma opção se saiu nos anos de uma fase: quantos, quantos bons e o 1º ano da série."""
+    """Como uma opção se saiu nos anos de uma fase: quantos, quantos bons e o 1º ano da série.
+
+    `anos_total` e `bons_total`: todos os anos da opção com a fase conhecida (para comparar a fase
+    com os outros anos, tarefa 0066).
+    """
 
     anos: int
     bons: int
     inicio: int
+    anos_total: int = 0
+    bons_total: int = 0
+
+    def pior_que_os_outros(self, p_max: float) -> bool:
+        """A fase teve mais anos ruins que os outros anos, com o teste exato de Fisher unilateral.
+
+        Hipergeométrica: com `anos_total` anos, `ruins_total` ruins e `anos` anos na fase, a chance
+        de pegar `ruins` ruins ou mais na fase por acaso. Pior = proporção maior e chance <= p_max.
+        """
+        ruins = self.anos - self.bons
+        ruins_total = self.anos_total - self.bons_total
+        outros = self.anos_total - self.anos
+        if self.anos == 0 or outros <= 0:
+            return False
+        if ruins / self.anos <= (ruins_total - ruins) / outros:
+            return False
+        casos = math.comb(self.anos_total, self.anos)
+        chance = sum(
+            math.comb(ruins_total, k) * math.comb(self.anos_total - ruins_total, self.anos - k)
+            for k in range(ruins, min(self.anos, ruins_total) + 1)
+        )
+        return chance / casos <= p_max
 
 
 def _record(
@@ -126,7 +152,11 @@ def _record(
         return None
     in_phase = [d for d in known if phases[d.ano] == fase]
     return _PhaseRecord(
-        anos=len(in_phase), bons=sum(1 for d in in_phase if d.bom), inicio=min(d.ano for d in known)
+        anos=len(in_phase),
+        bons=sum(1 for d in in_phase if d.bom),
+        inicio=min(d.ano for d in known),
+        anos_total=len(known),
+        bons_total=sum(1 for d in known if d.bom),
     )
 
 
@@ -263,8 +293,14 @@ class SinalOutonoService:
         has_b = first_b is not None and first_b != first_a
         record_b = _record(by_id.get(first_b), phases, fase) if has_b and first_b else None
         show_b = record_b is not None and ruins >= regras.fracao_anos_ruins_seco
+        # Tarefa 0066: a fase só aponta seco se a cultura foi pior nela do que nos outros anos
+        same_as_others = ruins >= regras.fracao_anos_ruins_seco and not (
+            record_a.pior_que_os_outros(regras.p_max_seco)
+        )
         if ruins < regras.fracao_anos_ruins_seco:
             nivel = NORMAL
+        elif same_as_others:
+            nivel = INCERTO
         elif record_b is not None and record_b.bons > record_a.bons:
             nivel = SECO
         else:
@@ -275,7 +311,12 @@ class SinalOutonoService:
             if show_b and record_b is not None:
                 history += f" and {name_b} in {record_b.bons}"
             history += "."
-            if nivel == INCERTO:
+            if same_as_others:
+                history += (
+                    f" In the other years, {name_a} failed just as often: the phase does not"
+                    " change the picture."
+                )
+            elif nivel == INCERTO:
                 history += (
                     " Plan B did not do better in those years."
                     if record_b is not None
@@ -289,7 +330,11 @@ class SinalOutonoService:
             if show_b and record_b is not None:
                 history += f" e {name_b} em {record_b.bons}"
             history += "."
-            if nivel == INCERTO:
+            if same_as_others:
+                history += (
+                    f" Nos outros anos, {name_a} falhou tanto quanto: a fase não muda a conta."
+                )
+            elif nivel == INCERTO:
                 history += (
                     " O plano B não foi melhor nesses anos."
                     if record_b is not None

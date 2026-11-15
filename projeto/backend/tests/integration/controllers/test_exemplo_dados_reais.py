@@ -114,18 +114,19 @@ AXIS_BY_MOTIVO = {"menos_risco": "seguranca", "mais_renda": "renda", "cuidar_da_
 def test_should_only_offer_alternatives_better_than_the_best_on_their_axis(
     real_data_client: TestClient,
 ) -> None:
-    # Fazenda de exemplo (colheita meio). Tarefa 0040: a renda do grão é a segurança dele, então o
-    # milho com braquiária (grão e palhada) passa o milho sozinho (antes, renda 100 pela margem).
-    # Nenhum grão tem renda maior que a dele: não há "mais renda".
+    # Fazenda de exemplo (colheita meio, semeadura em 18/02). Tarefa 0066: o ZARC de MG vigente vai
+    # até 10/02 para o milho e o consórcio com braquiária (Portarias SPA/MAPA nº 324 e 339/2026),
+    # então os dois ficam fora do prazo e a melhor no prazo é a crotalária. Quem dá grão (sorgo)
+    # aparece como "mais renda".
     rec = real_data_client.get("/api/exemplo").json()["recomendacao"]
     notas = {o["id"]: o["notas"] for o in rec["opcoes"]}
+    fora = {o["id"] for o in rec["opcoes"] if o["fora_do_prazo"]}
     melhor = notas[rec["melhor"]]
     alternativas = rec["alternativas"]
 
-    assert rec["melhor"] == "milho_braquiaria"
-    assert melhor["renda"] == melhor["seguranca"]
-    assert "mais_renda" not in {a["motivo"] for a in alternativas}
-    assert alternativas  # coberturas superam o milho em risco e em terra
+    assert fora == {"milho_safrinha", "milho_braquiaria"}
+    assert rec["melhor"] == "crotalaria"
+    assert {(a["opcao"], a["motivo"]) for a in alternativas} == {("sorgo", "mais_renda")}
     assert len({a["opcao"] for a in alternativas}) == len(alternativas)
     for alt in alternativas:
         axis = AXIS_BY_MOTIVO[alt["motivo"]]
@@ -135,20 +136,26 @@ def test_should_only_offer_alternatives_better_than_the_best_on_their_axis(
 def test_should_replay_the_dry_2024_and_the_good_2023_of_the_example_farm(
     real_data_client: TestClient,
 ) -> None:
-    # P4 com a chuva real do NASA POWER: em 2024 parou de chover em 19/abr, logo depois da
-    # floração do milho (18/abr), e o aviso sai no 10º dia seco; 2023 passa sem aviso. A opção é a
-    # melhor do motor: milho com braquiária desde a tarefa 0040 (mesmo ciclo do milho sozinho).
+    # P4 com a chuva real do NASA POWER. Tarefa 0066: na colheita do meio (semeadura em 18/02), o
+    # milho com braquiária passou do prazo do ZARC (10/02): o replay dele é 404 e o da melhor
+    # opção é a crotalária. Na colheita cedo (semeadura em 08/02), o consórcio cabe no prazo, é a
+    # melhor opção e floresce por volta de 8/abr, antes de a chuva parar em 2024 (19/abr).
     farm = {"lat": -18.9543, "lon": -48.1993}
-    dry = real_data_client.get("/api/safra-passada", params={**farm, "ano": 2024}).json()
-    good = real_data_client.get("/api/safra-passada", params={**farm, "ano": 2023}).json()
+    best = real_data_client.get("/api/safra-passada", params={**farm, "ano": 2024}).json()
+    late = real_data_client.get(
+        "/api/safra-passada", params={**farm, "ano": 2024, "opcao": "milho_braquiaria"}
+    )
+    cedo = {**farm, "colheita": "cedo"}
+    early = real_data_client.get("/api/safra-passada", params={**cedo, "ano": 2024}).json()
+    good = real_data_client.get("/api/safra-passada", params={**cedo, "ano": 2023}).json()
 
-    assert dry["opcao"] == "milho_braquiaria"
-    assert [(e["data"], e["tipo"]) for e in dry["eventos"]] == [
-        ("2024-02-18", "semeadura"),
-        ("2024-04-18", "fase_critica"),
-        ("2024-04-19", "sem_chuva"),
-        ("2024-04-28", "aviso_veranico"),
-        ("2024-06-17", "colheita"),
+    assert best["opcao"] == "crotalaria"
+    assert late.status_code == 404
+    assert early["opcao"] == "milho_braquiaria"
+    assert [(e["data"], e["tipo"]) for e in early["eventos"]] == [
+        ("2024-02-08", "semeadura"),
+        ("2024-04-08", "fase_critica"),
+        ("2024-06-07", "colheita"),
     ]
     assert [e["tipo"] for e in good["eventos"]] == ["semeadura", "fase_critica", "colheita"]
 

@@ -285,6 +285,36 @@ def test_should_be_uncertain_without_the_phase_of_each_year() -> None:
     )
 
 
+def test_should_be_uncertain_when_plan_a_failed_just_as_often_in_the_other_years() -> None:
+    # Tarefa 0066: metade dos anos da fase ruins não basta se a cultura falhou na mesma proporção
+    # nos outros anos (com 6 anos de fase, a regra da metade sozinha dispara por acaso). O seco pede
+    # a fase pior que os outros anos, com o teste exato de Fisher (p de até 0,10).
+    outros = (2005, 2007, 2009, 2013, 2015, 2017, 2019)  # 7 dos 14 anos fora do El Niño
+    milho_bad = (2010, 2014, 2016, *outros)  # 3 dos 6 anos de El Niño
+
+    sinal = _evaluate(_forecast((10, 20, 70)), opcoes=_opcoes(milho_bad=milho_bad))
+
+    assert sinal is not None
+    assert sinal.nivel == "incerto"
+    assert sinal.motivo.endswith(
+        "Nos 6 anos de El Niño desde 2005, milho sozinho deu certo em 3 e sorgo em 5. "
+        "Nos outros anos, milho sozinho falhou tanto quanto: a fase não muda a conta."
+    )
+
+
+def test_should_explain_in_english_when_the_phase_does_not_change_the_picture() -> None:
+    outros = (2005, 2007, 2009, 2013, 2015, 2017, 2019)
+    opcoes = _opcoes(milho_bad=(2010, 2014, 2016, *outros), en=True)
+
+    sinal = _evaluate(_forecast((10, 20, 70)), opcoes=opcoes, lang="en")
+
+    assert sinal is not None
+    assert sinal.motivo.endswith(
+        "In the other years, corn alone failed just as often: "
+        "the phase does not change the picture."
+    )
+
+
 def test_should_be_uncertain_when_plan_b_did_not_do_better_in_those_years() -> None:
     # Milho e sorgo deram certo em 2 dos 6 anos de El Niño: trocar não ajuda
     sinal = _evaluate(_forecast((10, 20, 70)), opcoes=_opcoes(sorgo_bad=(2010, 2014, 2016, 2020)))

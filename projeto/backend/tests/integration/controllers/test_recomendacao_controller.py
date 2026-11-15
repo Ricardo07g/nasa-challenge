@@ -89,7 +89,7 @@ def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
     assert milho["terra"] == {
         "nota": 20.0,
         "rotulo": "medio",
-        "texto": "Deixa palhada média e nenhum nitrogênio; não quebra o ciclo do nematoide.",
+        "texto": "Deixa palhada média e nenhum nitrogênio; não ajuda a baixar o nematoide.",
     }
     assert set(milho["notas"]) == {"seguranca", "futuro", "solo", "renda", "final"}
     assert milho["porque"] and milho["como_fazer"] == ["Passo 1"]
@@ -184,6 +184,24 @@ def test_should_send_the_crops_past_the_deadline_with_their_numbers_after_the_on
     for objetivo in body["objetivos"].values():
         assert not set(objetivo["plano"]) & set(fora)
         assert set(objetivo["ordem"][2:]) == set(fora)
+
+
+def test_should_say_which_deadlines_come_from_the_zarc(client: TestClient) -> None:
+    # Tarefa 0066: campo opcional `prazo_zarc`. A crotalária não tem ZARC: a data dela é sugestão
+    # do app, e a frase de fora da janela não cita o ZARC.
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "tarde"}).json()
+
+    zarc = {o["id"]: o["prazo_zarc"] for o in body["opcoes"]}
+    assert zarc == {
+        "sorgo": True,
+        "milheto": True,
+        "milho_safrinha": True,
+        "milho_braquiaria": True,
+        "crotalaria": False,
+    }
+    textos = {f["id"]: f["texto"] for f in body["fora_da_janela"]}
+    assert "(ZARC)" in textos["milho_safrinha"]
+    assert "ZARC)" not in textos["crotalaria"] and "data sugerida" in textos["crotalaria"]
 
 
 def test_should_mark_every_option_in_time_when_every_crop_fits(client: TestClient) -> None:

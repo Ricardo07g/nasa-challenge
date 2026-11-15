@@ -42,6 +42,9 @@ class MethodService:
                 janela_cobertura_dias=r.clima.janela_cobertura_dias,
                 calor_temp_c=r.clima.calor_temp_c,
                 calor_min_dias=r.clima.calor_min_dias,
+                isna_por_cultura_pct={
+                    crop: _pct(isna) for crop, isna in sorted(r.clima.isna_por_cultura.items())
+                },
             ),
             pesos=PesosRegra(
                 seguranca_pct=_pct(r.nota_final.peso_seguranca),
@@ -96,4 +99,5 @@ class MethodService:
                 anos_fase_min=r.sinal_enso.anos_fase_min,
                 anos_ruins_seco_pct=_pct(r.sinal_enso.fracao_anos_ruins_seco),
             ),
+            fontes=dict(r.fontes_metodo),
         )
