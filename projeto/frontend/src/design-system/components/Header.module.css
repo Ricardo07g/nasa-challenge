@@ -248,8 +248,9 @@
 }
 
 /*
- * Celular estreito (até 380 px): tudo um pouco mais justo, para o nome "Raiz Orbital" aparecer inteiro e a
- * Comunidade continuar com o nome escrito, sem nada estourar na horizontal a partir de 360 px.
+ * Celular estreito (até 380 px, regra geral 8 do pacote 2): logo de 30 px, nome com 15,5 px e a pílula
+ * "Comunidade" com 12,5 px, para o nome "Raiz Orbital" aparecer inteiro e a Comunidade continuar com o nome
+ * escrito, sem nada estourar na horizontal a partir de 360 px.
  */
 @media (max-width: 380px) {
   .inner {
@@ -266,14 +267,14 @@
   }
 
   .brandName {
-    font-size: 16px;
+    font-size: 15.5px;
   }
 
   .community {
     margin-right: 0;
-    padding: 0 8px;
+    padding: 0 9px;
     gap: 5px;
-    font-size: 13px;
+    font-size: 12.5px;
   }
 
   .community svg {
