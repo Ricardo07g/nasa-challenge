@@ -278,6 +278,7 @@ export function CommunityPage() {
       regionStatus={state.regionStatus}
       onRegionRetry={state.retryRegion}
       regionRadius={state.regionRadius}
+      regionDistance={state.regionDistance}
       history={state.history}
     />
   )

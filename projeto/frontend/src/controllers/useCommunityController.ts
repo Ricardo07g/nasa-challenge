@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useI18n } from '../i18n/useI18n'
+import type { RegionStatus } from '../models/region'
 import type { BlockStatus } from '../models/screenStatus'
 import {
   communityService,
   isNotConnected,
+  regionPlace,
   regionPoints,
   regionSummary,
   type CommunityService,
@@ -24,10 +26,10 @@ function blockStatus(state: AsyncState<unknown>): BlockStatus {
 }
 
 /**
- * Tela 8 "Na sua região": a área parada na região pelo satélite (P3, `/api/regiao`) e o que os
- * vizinhos contam. Com a API real, a comunidade fica "Ainda não conectado", e a região também quando
- * o ponto está fora das regiões calculadas; os vizinhos simulados e os botões de demonstração só
- * existem com os dados de exemplo.
+ * Tela 8 "Na sua região": a área de soja parada na região pelo satélite (P3, `/api/regiao`) e o que
+ * os vizinhos contam. Com a API real, a comunidade fica "Ainda não conectado"; a região fica
+ * "outside" quando o ponto está fora das regiões que o satélite já mediu. Os vizinhos simulados e
+ * os botões de demonstração só existem com os dados de exemplo.
  */
 export function useCommunityController(deps: Deps = defaultDeps) {
   const { lang } = useI18n()
@@ -43,10 +45,10 @@ export function useCommunityController(deps: Deps = defaultDeps) {
 
   // P3: área parada na região, pelo satélite.
   const region = useAsync(() => deps.community.region(center, lang), [center, lang, deps.community])
-  // Fora das regiões que o satélite já calculou (404 OUTSIDE_AREA) não é falha: o dado ainda não
-  // existe para esse ponto, então fica "Ainda não conectado", como sem o endpoint.
-  const regionStatus =
-    region.status === 'error' && isOutsideArea(region.error) ? 'not-connected' : blockStatus(region)
+  // Fora das regiões que o satélite já mediu (404 OUTSIDE_AREA) não é falha nem função desligada:
+  // estado próprio, que explica. "Ainda não conectado" fica só para quando o endpoint não existe.
+  const regionStatus: RegionStatus =
+    region.status === 'error' && isOutsideArea(region.error) ? 'outside' : blockStatus(region)
   // Histórico da própria lavoura, para comparar com a região (quase sempre já no cache).
   const talhao = useAsync(
     () => deps.farm.talhao({ ...center, exemplo: params ? params.exemplo : true }, lang),
@@ -55,6 +57,7 @@ export function useCommunityController(deps: Deps = defaultDeps) {
 
   const history = historySummary(talhao.data?.historico ?? null)
   const regionReady = regionStatus === 'ready' && region.data ? region.data : null
+  const place = regionReady ? regionPlace(regionReady) : null
 
   return {
     status,
@@ -65,7 +68,8 @@ export function useCommunityController(deps: Deps = defaultDeps) {
     regionStatus,
     retryRegion: region.retry,
     region: regionReady ? regionSummary(regionReady) : null,
-    regionRadius: regionReady?.raio_km ?? null,
+    regionRadius: place?.radiusKm ?? null,
+    regionDistance: place?.distanceKm ?? null,
     history: history ? { idle: history.idle, known: history.known, uncertain: history.uncertain } : null,
     // A Comunidade abre de qualquer tela pelo cabeçalho: volta para a resposta se o caminho estiver na URL.
     backTo: params?.colheita ? `/resposta${keepFlowQuery(search.toString())}` : '/',

@@ -74,6 +74,28 @@ export function regionSummary(region: RegiaoSatelite): RegionSummary | null {
   }
 }
 
+/** Até 1 km do centro, o círculo medido é o da própria lavoura (a distância não ajuda o produtor). */
+const NEAR_CENTER_KM = 1
+
+export type RegionPlace = {
+  radiusKm: number
+  /** Distância da lavoura até o centro do círculo; null quando o círculo é em volta dela. */
+  distanceKm: number | null
+}
+
+/**
+ * P3: onde fica o círculo que o satélite mediu. A API usa a região mais perto que contém o ponto,
+ * que pode estar centrada em outro lugar (até o raio). Sem `distancia_km` (API antiga), vale como
+ * se o círculo fosse em volta da lavoura.
+ */
+export function regionPlace(region: RegiaoSatelite): RegionPlace {
+  const distance = region.distancia_km ?? null
+  return {
+    radiusKm: region.raio_km,
+    distanceKm: distance !== null && distance > NEAR_CENTER_KM ? distance : null,
+  }
+}
+
 export const communityService = createCommunityService()
 
 /** A API ainda não manda esse dado (sem endpoint ou sem versão http): "Ainda não conectado". */
