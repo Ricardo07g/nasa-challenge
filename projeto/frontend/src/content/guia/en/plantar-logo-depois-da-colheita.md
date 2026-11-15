@@ -1,8 +1,10 @@
 ---
 titulo: Sowing right after harvest
+resumo: Each day between the soybean harvest and sowing is one day less of rain.
 tema: plantar
 slug: plantar-logo-depois-da-colheita
 rascunho: sim
+relacionados: prazo-de-plantio-zarc, quando-a-chuva-acaba, sementes
 ---
 
 ## In one sentence

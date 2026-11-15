@@ -1,8 +1,10 @@
 ---
 titulo: Official Civil Defense alerts
+resumo: Civil Defense sends disaster alerts to your phone, and you can sign up for free.
 tema: seguranca
 slug: alertas-defesa-civil
 rascunho: nao
+relacionados: como-ler-os-avisos, fogo-na-palha, geada-na-safrinha
 ---
 
 ## In one sentence

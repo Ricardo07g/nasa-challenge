@@ -1,8 +1,10 @@
 ---
 titulo: Palhada: por que cobrir a terra
+resumo: Palhada é a camada de restos de planta que cobre a terra depois da colheita.
 tema: terra
 slug: palhada
 rascunho: sim
+relacionados: milheto, milho-braquiaria, como-evitar-erosao
 ---
 
 ## Em uma frase

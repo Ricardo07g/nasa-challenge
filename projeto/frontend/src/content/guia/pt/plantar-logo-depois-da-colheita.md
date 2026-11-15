@@ -1,8 +1,10 @@
 ---
 titulo: Plantar logo depois da colheita
+resumo: Cada dia entre a colheita da soja e o plantio é um dia a menos de chuva.
 tema: plantar
 slug: plantar-logo-depois-da-colheita
 rascunho: sim
+relacionados: prazo-de-plantio-zarc, quando-a-chuva-acaba, sementes
 ---
 
 ## Em uma frase

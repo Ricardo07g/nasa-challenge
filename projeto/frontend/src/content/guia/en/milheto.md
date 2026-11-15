@@ -1,9 +1,11 @@
 ---
 titulo: Pearl millet
+resumo: A cover plant that grows fast and makes a lot of straw, with no grain in the app.
 tema: culturas
 slug: milheto
 rascunho: sim
 planta: milheto
+relacionados: palhada, nematoide, sorgo
 ---
 
 ## In one sentence

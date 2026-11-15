@@ -1,8 +1,10 @@
 ---
 titulo: The planting deadline and ZARC
+resumo: ZARC says, for each municipality, until when you can plant with the lowest climate risk.
 tema: plantar
 slug: prazo-de-plantio-zarc
 rascunho: sim
+relacionados: plantar-logo-depois-da-colheita, sementes, milho-safrinha
 ---
 
 ## In one sentence

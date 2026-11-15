@@ -1,8 +1,10 @@
 ---
 titulo: Veranico
+resumo: Veranico é um período de dias seguidos sem chuva no meio da época das chuvas.
 tema: clima
 slug: veranico
 rascunho: nao
+relacionados: conta-de-agua, quando-a-chuva-acaba, raio-x
 ---
 
 ## Em uma frase

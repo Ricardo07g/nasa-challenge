@@ -1,8 +1,10 @@
 ---
 titulo: Nematodes and why to switch crops
+resumo: A very tiny soil critter that attacks the roots and takes strength from the plant.
 tema: terra
 slug: nematoide
 rascunho: sim
+relacionados: crotalaria, milheto, rotacao-de-culturas
 ---
 
 ## In one sentence

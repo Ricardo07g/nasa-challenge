@@ -1,8 +1,10 @@
 ---
 titulo: El Niño and La Niña
+resumo: Phases when the Pacific Ocean is warmer or colder than normal.
 tema: clima
 slug: el-nino-la-nina
 rascunho: nao
+relacionados: como-ler-os-avisos, quando-a-chuva-acaba, veranico
 ---
 
 ## In one sentence

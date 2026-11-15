@@ -1,8 +1,10 @@
 ---
 titulo: How to read the alerts
+resumo: What satellites and the El Niño forecast show about the point you marked.
 tema: clima
 slug: como-ler-os-avisos
 rascunho: nao
+relacionados: alertas-defesa-civil, veranico, el-nino-la-nina
 ---
 
 ## In one sentence

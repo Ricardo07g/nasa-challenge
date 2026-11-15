@@ -1,8 +1,10 @@
 ---
 titulo: No-till: planting without turning the soil
+resumo: The seed goes into the soil without plowing or harrowing, under the straw.
 tema: plantar
 slug: plantio-direto
 rascunho: sim
+relacionados: palhada, como-evitar-erosao, rotacao-de-culturas
 ---
 
 ## In one sentence

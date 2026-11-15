@@ -1,8 +1,10 @@
 ---
 titulo: Rotação de culturas
+resumo: Rotação é trocar o que se planta, ano após ano, em vez de repetir a mesma cultura.
 tema: terra
 slug: rotacao-de-culturas
 rascunho: sim
+relacionados: crotalaria, nematoide, adubo-verde
 ---
 
 ## Em uma frase

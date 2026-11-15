@@ -1,9 +1,11 @@
 ---
 titulo: Crotalaria
+resumo: A cover legume that leaves nitrogen in the soil and gets in the way of nematodes.
 tema: culturas
 slug: crotalaria
 rascunho: sim
 planta: crotalaria
+relacionados: adubo-verde, nematoide, rotacao-de-culturas
 ---
 
 ## In one sentence

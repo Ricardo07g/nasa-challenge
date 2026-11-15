@@ -1,8 +1,10 @@
 ---
 titulo: Calor de 35 °C na floração
+resumo: Calor de 35 °C ou mais na floração pode derrubar flores e reduzir o grão.
 tema: clima
 slug: calor-35-graus
 rascunho: nao
+relacionados: deu-certo, prazo-de-plantio-zarc, clima-2041-2060
 ---
 
 ## Em uma frase

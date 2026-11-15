@@ -1,9 +1,11 @@
 ---
 titulo: Milho safrinha
+resumo: Milho plantado logo depois da soja, para colher grão no inverno.
 tema: culturas
 slug: milho-safrinha
 rascunho: sim
 planta: milho_safrinha
+relacionados: prazo-de-plantio-zarc, geada-na-safrinha, calor-35-graus
 ---
 
 ## Em uma frase

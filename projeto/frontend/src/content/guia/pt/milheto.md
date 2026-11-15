@@ -1,9 +1,11 @@
 ---
 titulo: Milheto
+resumo: Uma planta de cobertura que cresce rápido e faz muita palha, sem dar grão no app.
 tema: culturas
 slug: milheto
 rascunho: sim
 planta: milheto
+relacionados: palhada, nematoide, sorgo
 ---
 
 ## Em uma frase

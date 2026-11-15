@@ -1,8 +1,10 @@
 ---
 titulo: How to prevent erosion
+resumo: Rain carries away the good top layer of the soil, more so when the soil is bare.
 tema: terra
 slug: como-evitar-erosao
 rascunho: sim
+relacionados: palhada, plantio-direto, plantar-logo-depois-da-colheita
 ---
 
 ## In one sentence

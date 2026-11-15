@@ -1,8 +1,10 @@
 ---
 titulo: O prazo de plantio e o ZARC
+resumo: O ZARC diz, para cada município, até quando plantar com o risco de clima mais baixo.
 tema: plantar
 slug: prazo-de-plantio-zarc
 rascunho: sim
+relacionados: plantar-logo-depois-da-colheita, sementes, milho-safrinha
 ---
 
 ## Em uma frase

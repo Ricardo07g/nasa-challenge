@@ -1,8 +1,10 @@
 ---
 titulo: Fogo na palha
+resumo: A palha que cobre a terra protege o solo, mas seca no inverno e pode pegar fogo.
 tema: seguranca
 slug: fogo-na-palha
 rascunho: sim
+relacionados: alertas-defesa-civil, palhada, geada-na-safrinha
 ---
 
 ## Em uma frase

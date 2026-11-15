@@ -1,8 +1,10 @@
 ---
 titulo: O que significa "deu certo"
+resumo: Um ano em que a planta não passou aperto de água nem de calor na fase mais delicada.
 tema: clima
 slug: deu-certo
 rascunho: nao
+relacionados: conta-de-agua, calor-35-graus, raio-x
 ---
 
 ## Em uma frase

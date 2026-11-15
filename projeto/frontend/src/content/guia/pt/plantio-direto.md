@@ -1,8 +1,10 @@
 ---
 titulo: Plantio direto: plantar sem revirar a terra
+resumo: A semente vai para a terra sem aração nem gradagem, por baixo da palha.
 tema: plantar
 slug: plantio-direto
 rascunho: sim
+relacionados: palhada, como-evitar-erosao, rotacao-de-culturas
 ---
 
 ## Em uma frase

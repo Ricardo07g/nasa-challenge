@@ -1,8 +1,10 @@
 ---
 titulo: Quando a chuva acaba
+resumo: Saber quando a chuva costuma acabar ajuda a escolher o que plantar.
 tema: clima
 slug: quando-a-chuva-acaba
 rascunho: nao
+relacionados: veranico, conta-de-agua, plantar-logo-depois-da-colheita
 ---
 
 ## Em uma frase

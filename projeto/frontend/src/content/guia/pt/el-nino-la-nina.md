@@ -1,8 +1,10 @@
 ---
 titulo: El Niño e La Niña
+resumo: Fases em que o Oceano Pacífico fica mais quente ou mais frio que o normal.
 tema: clima
 slug: el-nino-la-nina
 rascunho: nao
+relacionados: como-ler-os-avisos, quando-a-chuva-acaba, veranico
 ---
 
 ## Em uma frase

@@ -1,9 +1,11 @@
 ---
 titulo: Sorghum
+resumo: A grain cereal that handles water shortage better than corn.
 tema: culturas
 slug: sorgo
 rascunho: sim
 planta: sorgo
+relacionados: conta-de-agua, milho-safrinha, milheto
 ---
 
 ## In one sentence

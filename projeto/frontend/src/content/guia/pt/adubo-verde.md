@@ -1,8 +1,10 @@
 ---
 titulo: Adubo verde: nitrogênio que a planta deixa
+resumo: Planta cultivada para deixar nutrientes na terra, não para colher.
 tema: terra
 slug: adubo-verde
 rascunho: sim
+relacionados: crotalaria, palhada, rotacao-de-culturas
 ---
 
 ## Em uma frase

@@ -1,8 +1,10 @@
 ---
 titulo: When the rain ends
+resumo: Knowing when the rain usually ends helps you choose what to plant.
 tema: clima
 slug: quando-a-chuva-acaba
 rascunho: nao
+relacionados: veranico, conta-de-agua, plantar-logo-depois-da-colheita
 ---
 
 ## In one sentence

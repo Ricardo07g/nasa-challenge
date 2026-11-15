@@ -1,8 +1,10 @@
 ---
 titulo: Geada na safrinha
+resumo: A geada de junho pode machucar o milho safrinha que ainda está enchendo grão.
 tema: seguranca
 slug: geada-na-safrinha
 rascunho: sim
+relacionados: prazo-de-plantio-zarc, milho-safrinha, alertas-defesa-civil
 ---
 
 ## Em uma frase

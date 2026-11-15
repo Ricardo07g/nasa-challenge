@@ -1,8 +1,10 @@
 ---
 titulo: Frost in the second crop
+resumo: A June frost can hurt second-crop corn that is still filling grain.
 tema: seguranca
 slug: geada-na-safrinha
 rascunho: sim
+relacionados: prazo-de-plantio-zarc, milho-safrinha, alertas-defesa-civil
 ---
 
 ## In one sentence

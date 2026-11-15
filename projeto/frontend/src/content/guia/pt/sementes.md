@@ -1,8 +1,10 @@
 ---
 titulo: Sementes: o que olhar antes de comprar
+resumo: Confira de quem você compra a semente e o que vem escrito na embalagem.
 tema: plantar
 slug: sementes
 rascunho: sim
+relacionados: prazo-de-plantio-zarc, plantar-logo-depois-da-colheita, plantio-direto
 ---
 
 ## Em uma frase

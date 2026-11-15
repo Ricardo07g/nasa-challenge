@@ -1,9 +1,11 @@
 ---
 titulo: Milho com braquiária
+resumo: Milho e capim braquiária semeados juntos: o milho dá grão e o capim cobre a terra.
 tema: culturas
 slug: milho-braquiaria
 rascunho: sim
 planta: milho_braquiaria
+relacionados: palhada, milho-safrinha, plantio-direto
 ---
 
 ## Em uma frase

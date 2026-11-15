@@ -1,8 +1,10 @@
 ---
 titulo: What "it worked" means
+resumo: A year when the plant had no water or heat stress in its most delicate phase.
 tema: clima
 slug: deu-certo
 rascunho: nao
+relacionados: conta-de-agua, calor-35-graus, raio-x
 ---
 
 ## In one sentence

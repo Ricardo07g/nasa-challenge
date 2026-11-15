@@ -1,8 +1,10 @@
 ---
 titulo: Fire in the straw
+resumo: The straw that covers the soil protects it, but it dries in winter and can catch fire.
 tema: seguranca
 slug: fogo-na-palha
 rascunho: sim
+relacionados: alertas-defesa-civil, palhada, geada-na-safrinha
 ---
 
 ## In one sentence

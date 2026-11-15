@@ -1,8 +1,10 @@
 ---
 titulo: Como evitar erosão
+resumo: A chuva leva a camada boa da terra, e mais quando a terra fica descoberta.
 tema: terra
 slug: como-evitar-erosao
 rascunho: sim
+relacionados: palhada, plantio-direto, plantar-logo-depois-da-colheita
 ---
 
 ## Em uma frase

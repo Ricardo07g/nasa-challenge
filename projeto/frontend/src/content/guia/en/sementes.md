@@ -1,8 +1,10 @@
 ---
 titulo: Seeds: what to check before buying
+resumo: Check who you buy the seed from and what is written on the package.
 tema: plantar
 slug: sementes
 rascunho: sim
+relacionados: prazo-de-plantio-zarc, plantar-logo-depois-da-colheita, plantio-direto
 ---
 
 ## In one sentence

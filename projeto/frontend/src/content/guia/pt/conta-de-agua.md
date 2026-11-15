@@ -1,8 +1,10 @@
 ---
 titulo: A conta de água da lavoura
+resumo: A terra é um balde: a chuva enche, a planta esvazia, e o que falta é sede.
 tema: clima
 slug: conta-de-agua
 rascunho: sim
+relacionados: deu-certo, palhada, quando-a-chuva-acaba
 ---
 
 ## Em uma frase

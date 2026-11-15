@@ -1,8 +1,10 @@
 ---
 titulo: Como ler os avisos
+resumo: O que os satélites e a previsão do El Niño mostram sobre o ponto que você marcou.
 tema: clima
 slug: como-ler-os-avisos
 rascunho: nao
+relacionados: alertas-defesa-civil, veranico, el-nino-la-nina
 ---
 
 ## Em uma frase

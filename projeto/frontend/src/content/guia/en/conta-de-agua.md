@@ -1,8 +1,10 @@
 ---
 titulo: The water math of your field
+resumo: The soil is a bucket: rain fills it, the plant empties it, and what is missing is thirst.
 tema: clima
 slug: conta-de-agua
 rascunho: sim
+relacionados: deu-certo, palhada, quando-a-chuva-acaba
 ---
 
 ## In one sentence
