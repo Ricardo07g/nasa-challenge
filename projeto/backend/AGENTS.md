@@ -139,8 +139,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
   `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`,
-  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`). Nunca coloque caminho fixo (como
-  `/workspace/...`) num repository.
+  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`). Nunca coloque caminho
+  fixo (como `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
@@ -483,8 +483,10 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json`, `NDVI_CACHE_PATH` para
     `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json`, `REGIAO_PATH` para
     `/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`, `SMAP_PATH` para
-    `/dados_baixados/nasa_smap/smap_semeadura.json` e `SMAP_RECENTE_PATH` para
-    `/dados_baixados/nasa_smap/smap_recente.json`. Sem o arquivo, segue sem o dado.
+    `/dados_baixados/nasa_smap/smap_semeadura.json`, `SMAP_RECENTE_PATH` para
+    `/dados_baixados/nasa_smap/smap_recente.json` e `SOJA_RECENTE_PATH` para
+    `/dados_baixados/nasa_modis_soja_recente/soja_recente_2026.json`. Sem o arquivo, segue sem o
+    dado.
     Como baixar ou receber esses arquivos: `docs/como-preparar-os-dados-locais.md`.
 
 - **Balde inicial pelo SMAP** (R3.3, tarefa 0030, PRD 7.2): o balde de cada ano da série começa
@@ -642,6 +644,49 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
      "anos": [{"ano": 2016, "pct_parado": 62.0, "pct_plantou": 29.0, "pct_incerto": 9.0,
                "n_pixels": 6120, "n_pixels_lavoura": 13412, "pct_sem_dado": 1.5}]}
     ```
+
+- **Soja na safra mais recente** (RF-24, tarefa 0037): no começo do fluxo, o app confere se o
+  satélite viu soja no ponto na safra mais recente (2025/26, colhida em fev/2026), para saber que o
+  ponto é lavoura (e não cidade, cana ou pasto). O `/talhao` e o talhão do `/exemplo` ganham
+  `soja_recente`, no contrato do front (`SojaRecente` em `projeto/frontend/src/models/talhao.ts`):
+
+  ```json
+  "soja_recente": {"safra": "2025/26", "vista": true, "ndvi_pico": 0.86, "fonte": "MODIS MOD13Q1 + MYD13Q1"}
+  ```
+
+  - **Regra** (grupo `soja_recente` do `regras.yaml`, hipótese do time, **a revisar** pela
+    agrônoma): no pixel de 250 m, o maior NDVI das observações boas (qualidade 0 ou 1, MOD13Q1 e
+    MYD13Q1) de 1/jan a 15/mar; `vista` = pico de **0,70 ou mais**. Pixel com menos de **2**
+    observações boas: `vista` e `ndvi_pico` nulos (o front não avisa). O pico de cada pixel e o
+    mínimo de observações saem da `SojaRecenteRule`, que o script usa ao gravar; o limite, o
+    `SojaRecenteService` aplica na hora. **Integração:** o limite e a janela são os do pico da soja
+    da região calibrada (tarefa 0036, `regiao_ndvi.pico_min_ndvi`, `pico_inicio` e `pico_fim`): os
+    dois grupos do `regras.yaml` devem virar um só (até lá, um teste confere que são iguais).
+  - **Leitura:** `FileSojaRecenteRepository` (`SOJA_RECENTE_PATH`, com ou sem banco), o pixel do
+    ponto na grade do arquivo (contrato "Soja recente", abaixo). Sem arquivo ou com o ponto fora
+    da grade: `soja_recente: null`.
+  - **Front:** com `vista: false`, a tela 3 ("Quando você colhe a soja?") avisa no topo, com
+    "Ajustar no mapa" e "Seguir mesmo assim". `true` ou `null`: nada muda.
+  - `pipeline/fetch_soja_recente.py` pede à **ORNL DAAC** (pública, sem credencial; reaproveita o
+    `OrnlClient`, o `SubsetCache` e o `parse_subset` do script da região) o recorte **por área**
+    do NDVI e da `pixel_reliability` de MOD13Q1 e MYD13Q1 nas 5 + 5 datas da janela, para a caixa
+    piloto inteira (ou `--area`), em **ladrilhos** do tamanho da região: ±30 km pedidos = 241 ×
+    241 pixels (±27,9 km reais), lado a lado na grade global do MODIS (projeção sinusoidal). Pedido
+    maior passa do corte de ~60 s do proxy (502). Caixa piloto: **12 ladrilhos, 48 pedidos, ~30
+    min** (de ~25 a 50 s por pedido, medidos em 14 e 15/11/2026). Cache em gzip em `cache_ornl/`,
+    retentativa e retomada como na região. Saída
+    `data/baixados/nasa_modis_soja_recente/soja_recente_2026.json` (~2 MB), a partir da raiz do
+    repositório (fora do git).
+
+    ```bash
+    uv run python -m pipeline.fetch_soja_recente --dry-run   # ladrilhos, pedidos e tempo, sem rede
+    uv run python -m pipeline.fetch_soja_recente             # caixa piloto, safra 2025/26
+    uv run python -m pipeline.fetch_soja_recente --area="-19.0,-18.9,-48.25,-48.15" --ano 2026
+    ```
+
+  - Para ligar o arquivo: **com uv**,
+    `SOJA_RECENTE_PATH=../../data/baixados/nasa_modis_soja_recente/soja_recente_2026.json` no
+    `.env` desta pasta; **no compose**, já ligado. Lido uma vez por processo: reinicie o backend.
 
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
@@ -945,6 +990,53 @@ recusa se o `versao_dados.fonte` não for `imerg_late`. Vem do `pipeline/fetch_i
 - O sinal usa o `RecentRain` (`to_recent_rain()`): `chuva_mm`, `media_mm`, `dias`, `data`; a regra
   do PRD 7.10 compara `fracao_da_media` com `chuva_fracao_seco` do `regras.yaml`.
 - Ainda não há tabela: é dado de agora, regravado perto do plantio (fev/mar).
+
+### Soja recente: `MapaSojaRecente` (`app/models/soja_recente.py`)
+
+O maior NDVI de cada pixel de 250 m do MODIS na janela da safra mais recente (RF-24), numa grade
+da **projeção sinusoidal do MODIS** (a do cabeçalho dos recortes da ORNL), com o pico em
+**centésimos** (0,86 → 86). O `pipeline/fetch_soja_recente.py` grava e o
+`FileSojaRecenteRepository` lê (`SOJA_RECENTE_PATH`). A grade é a da caixa piloto; os picos são
+ilustrativos (e só 2 × 4 dos 721 × 880):
+
+```json
+{
+  "versao_dados": {"fonte": "modis_mod13q1", "parametros": {"servico": "ornl_daac", "tipo": "soja_recente", "ano": 2026, "safra": "2025/26", "janela": "01-01 a 03-15", "min_observacoes": 2, "ladrilhos": 12, "pedidos": 48}, "fim": "2026-11-15T13:00:00Z", "versao": "2026.11-modis-soja-recente"},
+  "safra": "2025/26",
+  "fonte": "MODIS MOD13Q1 + MYD13Q1",
+  "grade": {"projecao": "sinusoidal_modis", "raio_m": 6371007.181, "x_oeste_m": -5170106.6, "y_norte_m": -2045757.3, "pixel_m": 231.65635828469235, "linhas": 721, "colunas": 880},
+  "pico_centesimos": [
+    [86, 84, null, 41],
+    [79, 12, 70, 69]
+  ]
+}
+```
+
+| JSON | Model | Regra |
+| --- | --- | --- |
+| `safra` | `safra` | `AAAA/AA` da soja colhida no ano (`2025/26` = colhida em 2026) |
+| `fonte` | `fonte` | produtos do NDVI (texto não vazio) |
+| `grade.x_oeste_m`, `grade.y_norte_m` | `GradeSinusoidal` | canto de cima à esquerda da grade, em metros na projeção sinusoidal (esfera de `raio_m` = 6.371.007,181 m) |
+| `grade.pixel_m` | `pixel_m` | lado do pixel (231,66 m = 2πR ÷ 172.800), maior que zero |
+| `grade.linhas`, `grade.colunas` | `linhas`, `colunas` | 1 ou mais; `pico_centesimos` tem exatamente essas linhas e colunas |
+| `pico_centesimos[linha][coluna]` | idem | inteiro de −20 a 100 (NDVI × 100, **truncado**: 0,6999 → 69) ou `null` (menos observações boas que o mínimo); linha 0 no norte, coluna 0 a oeste |
+
+- **Como achar o pixel de um ponto** (`GradeSinusoidal.pixel_at`): com φ e λ em radianos,
+  `x = raio_m · λ · cos φ` e `y = raio_m · φ`; `coluna = ⌊(x − x_oeste_m) / pixel_m⌋` e
+  `linha = ⌊(y_norte_m − y) / pixel_m⌋`. Fora de `0..linhas−1` ou `0..colunas−1`: fora da grade.
+- **Por que essa forma:** a grade é a do próprio MODIS (cada célula é um pixel, sem reamostrar), os
+  ladrilhos da ORNL entram nela pelo cabeçalho com deslocamento inteiro, e achar o pixel é a conta
+  acima (sem ler pixel a pixel). Uma linha de pixels por linha do arquivo: ~2 MB para a caixa
+  piloto (721 × 880). A caixa vira um trapézio na projeção: os pixels da grade fora dela também
+  têm dado (os ladrilhos cobrem o retângulo todo).
+- **Truncado, não arredondado:** com o limite de 2 casas do `regras.yaml`, "pico ≥ 0,70" no
+  arquivo é o mesmo que no NDVI original (arredondando, 0,6951 viraria 70).
+- `versao_dados.fonte` = `modis_mod13q1`; os `parametros` dizem o serviço, os produtos, as camadas,
+  a qualidade aceita, o ano e a safra, a janela, as datas de cada produto, o mínimo de observações,
+  a caixa (`area`), o `km_pedido`, os ladrilhos, os pedidos e a contagem dos `pixels` (`total`,
+  `com_dado`, `sem_dado`, `sem_ladrilho`). O limite da soja **não** vai no arquivo: a API aplica o
+  do `regras.yaml`.
+- Não há tabela: a API lê o arquivo.
 
 ## Configuração e segredos
 
