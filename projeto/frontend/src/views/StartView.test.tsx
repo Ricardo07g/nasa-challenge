@@ -29,7 +29,23 @@ describe('StartView (tela 1)', () => {
 
     expect(screen.getByRole('img', { name: 'Fileiras de lavoura no Cerrado brasileiro' })).toBeInTheDocument()
     expect(screen.getByText('Do espaço até a raiz.')).toBeInTheDocument()
-    expect(screen.getByText('Triângulo Mineiro · MG')).toBeInTheDocument()
+    expect(screen.getByText('MVP · região de Uberlândia e Uberaba')).toBeInTheDocument()
+  })
+
+  it('diz que esta primeira versão funciona na região de Uberlândia e Uberaba e que vamos ampliar', () => {
+    // Tarefa 0051 (RF-35): o selo da foto some no celular, então a frase fica no texto da tela.
+    render(
+      <MemoryRouter>
+        <StartView t={pt} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Para quem planta soja no Triângulo Mineiro')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Nesta primeira versão (MVP), o app funciona na região de Uberlândia e Uberaba (MG). Vamos ampliar para todo o Triângulo Mineiro.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('explica os 3 passos com um texto curto em cada', () => {
@@ -56,6 +72,12 @@ describe('StartView (tela 1)', () => {
     )
 
     expect(screen.getByRole('heading', { level: 1, name: 'What to plant after soybeans?' })).toBeInTheDocument()
+    expect(screen.getByText('MVP · Uberlândia and Uberaba region')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'This first version (MVP) works in the Uberlândia and Uberaba region (Minas Gerais, Brazil). We will expand to the whole Triângulo Mineiro.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('com o bot configurado, oferece conversar pelo Telegram (P5)', () => {

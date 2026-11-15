@@ -100,6 +100,14 @@ describe('MethodView (tela 9)', () => {
     expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
   })
 
+  it('de onde vem cada dado diz a área do MVP, mesmo antes de as fontes chegarem (tarefa 0051)', () => {
+    setup({ sources: { status: 'loading', rows: [], rainKm: null } })
+
+    expect(screen.getByRole('region', { name: 'De onde vem cada dado' })).toHaveTextContent(
+      'Nesta primeira versão (MVP), os dados estão prontos para a região de Uberlândia e Uberaba (MG). Vamos ampliar para todo o Triângulo Mineiro.',
+    )
+  })
+
   it('"Como a conta é feita" explica a renda sem reais: dá grão ou não, com a segurança (tarefa 0040)', () => {
     setup()
 
@@ -241,6 +249,9 @@ describe('MethodView (tela 9)', () => {
     setup({ t: en })
 
     expect(screen.getByRole('table', { name: 'Scores for each option (0 to 100)' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Where each piece of data comes from' })).toHaveTextContent(
+      'This first version (MVP) has data ready for the Uberlândia and Uberaba region (Minas Gerais, Brazil). We will expand to the whole Triângulo Mineiro.',
+    )
   })
 
   it('com o bot configurado, explica como usar pelo Telegram (P5)', () => {

@@ -87,6 +87,9 @@ export const pt = {
     eyebrow: 'Para quem planta soja no Triângulo Mineiro',
     title: 'O que plantar depois da soja?',
     lead: 'O satélite da NASA olha a chuva de muitos anos na sua lavoura. Veja a melhor opção.',
+    /** Tarefa 0051 (RF-35): o limite do MVP, sempre na tela (o selo da foto some no celular). */
+    mvpNote:
+      'Nesta primeira versão (MVP), o app funciona na região de Uberlândia e Uberaba (MG). Vamos ampliar para todo o Triângulo Mineiro.',
     start: 'Começar',
     meta: '2 perguntas · 1 minuto · grátis, sem cadastro',
     example: 'Ver um exemplo pronto',
@@ -100,7 +103,7 @@ export const pt = {
     stepsEyebrow: 'Da NASA para a sua lavoura',
     photoAlt: 'Fileiras de lavoura no Cerrado brasileiro',
     nasaData: 'dados da NASA',
-    region: 'Triângulo Mineiro · MG',
+    region: 'MVP · região de Uberlândia e Uberaba',
   },
   where: {
     title: 'Onde fica a lavoura?',
@@ -125,6 +128,9 @@ export const pt = {
     invalidCoordinates: 'Essas coordenadas não existem. A latitude vai de -90 a 90, e a longitude, de -180 a 180.',
     attribution: 'Endereços: © OpenStreetMap',
     areaLegend: 'Linha tracejada: área com dados',
+    /** Tarefa 0051 (RF-35): sempre visível junto do mapa, e não só com o ponto fora da área. */
+    mvpNote:
+      'Nesta primeira versão, o app funciona na região de Uberlândia e Uberaba (linha tracejada). Vamos ampliar para todo o Triângulo Mineiro.',
     showArea: 'Ver a área inteira',
     useLocation: 'Usar onde estou agora',
     locating: 'Procurando onde você está…',
@@ -134,8 +140,9 @@ export const pt = {
     confirm: 'Confirmar local',
     outsideTitle: 'Ainda não chegamos aí',
     outsideText:
-      'Por enquanto, os dados estão prontos só para a região de Uberlândia e Uberaba. Veja como funciona na fazenda de exemplo.',
-    outsideNotice: 'Por enquanto só temos dados da região de Uberlândia e Uberaba.',
+      'Por enquanto, os dados estão prontos só para a região de Uberlândia e Uberaba. Vamos ampliar para todo o Triângulo Mineiro. Veja como funciona na fazenda de exemplo.',
+    outsideNotice:
+      'Por enquanto só temos dados da região de Uberlândia e Uberaba. Vamos ampliar para todo o Triângulo Mineiro.',
     seeExample: 'Ver a fazenda de exemplo',
   },
   when: {
@@ -1003,6 +1010,9 @@ export const pt = {
       and: 'e',
     },
     sourcesTitle: 'De onde vem cada dado',
+    /** Tarefa 0051 (RF-35): a área do MVP, mesmo antes de as fontes chegarem. */
+    sourcesArea:
+      'Nesta primeira versão (MVP), os dados estão prontos para a região de Uberlândia e Uberaba (MG). Vamos ampliar para todo o Triângulo Mineiro.',
     /** Uma por fonte do produto; a tela mostra só as que a API manda de fato (decisão D2). */
     sources: {
       nasa_power: {
@@ -1032,6 +1042,9 @@ export const pt = {
   guide: {
     title: 'Guia',
     subtitle: 'Respostas curtas para as dúvidas mais comuns da lavoura.',
+    /** Tarefa 0051 (RF-35): a área do MVP, na página inicial do Guia (os artigos não mudam). */
+    mvpArea:
+      'Nesta primeira versão (MVP), o app funciona na região de Uberlândia e Uberaba (MG). Vamos ampliar para todo o Triângulo Mineiro.',
     communityLink: 'Guia: dúvidas e respostas curtas',
     searchLabel: 'Buscar pelo título',
     searchPlaceholder: 'Buscar artigo',

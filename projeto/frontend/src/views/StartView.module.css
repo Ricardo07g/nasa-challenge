@@ -80,6 +80,15 @@
   color: var(--color-text-muted);
 }
 
+/* Tarefa 0051: o limite do MVP, sempre na tela (o selo da foto some no celular) */
+.mvp {
+  max-width: 420px;
+  margin: -10px 0 22px;
+  font-size: var(--font-size-caption);
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
 .actions {
   max-width: 340px;
   display: flex;
