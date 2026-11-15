@@ -38,6 +38,20 @@ describe('YearBarsChart (explorador ano a ano)', () => {
     expect(onSelect).toHaveBeenCalledWith(2016)
   })
 
+  it('o ano aparece embaixo de 5 em 5 e no escolhido; o vizinho do escolhido some para não encavalar', () => {
+    const years = Array.from({ length: 12 }, (_, i) => ({
+      year: 2005 + i,
+      pct: 80,
+      state: 'good' as const,
+      mark: null,
+      label: `ano ${2005 + i}`,
+    }))
+    render(<YearBarsChart label="x" bars={years} cutPct={55} cutLabel="Limite" selectedYear={2011} onSelect={() => {}} />)
+
+    const ticks = screen.getAllByRole('button').map((b) => b.lastElementChild?.textContent)
+    expect(ticks).toEqual(['05', '', '', '', '', '', '11', '', '', '', '15', ''])
+  })
+
   it('tocar de novo no ano escolhido fecha o detalhe', async () => {
     const onSelect = vi.fn()
     render(<YearBarsChart label="x" bars={BARS} cutPct={55} cutLabel="Limite" selectedYear={2016} onSelect={onSelect} />)

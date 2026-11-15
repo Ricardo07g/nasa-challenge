@@ -23,6 +23,14 @@ type YearBarsChartProps = {
 }
 
 const MAX_PCT = 100
+const TICK_EVERY = 5
+
+/** O ano embaixo da barra: de 5 em 5 e o escolhido (o vizinho do escolhido some, para não encavalar). */
+function tickText(year: number, first: number, selected: number | null): string {
+  if (year === selected) return String(year).slice(2)
+  if (selected !== null && Math.abs(year - selected) === 1) return ''
+  return (year - first) % TICK_EVERY === 0 ? String(year).slice(2) : ''
+}
 
 /**
  * Explorador ano a ano (aba Sugestão, tarefa 0044): uma barra-botão por ano, com a água na fase crítica em
@@ -61,7 +69,7 @@ export function YearBarsChart({ label, bars, cutPct, cutLabel, selectedYear, onS
                   <span className={styles.bar} data-state={bar.state} style={{ height: `${Math.max(2, Math.min(MAX_PCT, bar.pct))}%` }} />
                 </span>
                 <span className={styles.tick} aria-hidden="true">
-                  {selected || (bar.year - first) % 5 === 0 ? String(bar.year).slice(2) : ''}
+                  {tickText(bar.year, first, selectedYear)}
                 </span>
               </button>
             )
