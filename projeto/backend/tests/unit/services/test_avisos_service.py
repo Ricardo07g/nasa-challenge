@@ -1,0 +1,232 @@
+"""A tela Avisos do ponto junta os quatro grupos e o contador (tarefa 0046).
+
+Repositories e motor falsos, com valores de teste (não são de nenhuma fonte real). As regras de
+cada grupo têm teste próprio; aqui fica a montagem: de onde vem cada dado, o que some sem dado e
+o que conta no botão "Avisos".
+"""
+
+from datetime import date, timedelta
+from types import SimpleNamespace
+
+import pytest
+
+from app.models.avisos import RecentDay
+from app.models.community_report import NearbyReport, NearbyReports
+from app.models.enso import OniYear
+from app.models.enso_forecast import EnsoForecast, EnsoSeasonForecast
+from app.models.sinal_outono import RecentSoilMoisture
+from app.models.talhao import SoloInfo
+from app.services.avisos_service import AvisosService
+from app.services.climate_risk_service import ClimateRiskService
+from app.services.errors import CommunityUnavailableError, OutsideAreaError
+from app.services.water_balance_calculator import WaterBalanceCalculator
+from tests.avisos_fakes import CELL, YEARS, crop, option, season
+
+LAT, LON = -18.9543, -48.1993
+TODAY = date(2026, 11, 15)
+MILHO = crop("milho_safrinha", ciclo=120, kc=1.2)
+
+
+class FakeRecommender:
+    def __init__(self, outside: bool = False) -> None:
+        self.outside = outside
+        self.calls: list[dict[str, object]] = []
+
+    def recommend(self, **kwargs: object) -> SimpleNamespace:
+        self.calls.append(kwargs)
+        if self.outside:
+            raise OutsideAreaError("fora")
+        best = option("milho_safrinha", "Milho sozinho", bad_years=(2020, 2021, 2023))
+        return SimpleNamespace(
+            celula_id=CELL,
+            semeadura=date(2027, 2, 18),
+            melhor="milho_safrinha",
+            solo="argiloso",
+            opcoes=(best,),
+        )
+
+
+class FakeClimate:
+    def get_seasons(self, cell_id: str) -> list:  # type: ignore[type-arg]
+        return [season(y) for y in YEARS]
+
+
+class FakeCrops:
+    def get_by_id(self, crop_id: str):  # type: ignore[no-untyped-def]
+        return MILHO if crop_id == MILHO.id else None
+
+
+class FakeSoil:
+    def get_soil(self, lat: float, lon: float) -> SoloInfo:
+        return SoloInfo(40.0, 30.0, "argiloso", 60.0, "soilgrids")
+
+
+class FakeRecentSmap:
+    def __init__(self, value: RecentSoilMoisture | None) -> None:
+        self._value = value
+
+    def get_recent_soil_moisture(self, lat: float, lon: float) -> RecentSoilMoisture | None:
+        return self._value
+
+
+class FakeRecentWeather:
+    def __init__(self, days: list[RecentDay] | None) -> None:
+        self._days = days
+        self.calls: list[tuple[str, date, date]] = []
+
+    def get_recent_days(self, cell_id: str, start: date, end: date) -> list[RecentDay] | None:
+        self.calls.append((cell_id, start, end))
+        return self._days
+
+
+class FakeForecast:
+    def __init__(self, forecast: EnsoForecast | None) -> None:
+        self._forecast = forecast
+
+    def get_enso_forecast(self) -> EnsoForecast | None:
+        return self._forecast
+
+
+class FakeOni:
+    def get_oni_years(self) -> list[OniYear]:
+        return [
+            OniYear(y, 0.9 if y % 4 == 0 else 0.0, "el_nino" if y % 4 == 0 else None) for y in YEARS
+        ]
+
+
+class FakeCommunity:
+    def __init__(self, reports: tuple[NearbyReport, ...] = (), unavailable: bool = False) -> None:
+        self._reports = reports
+        self._unavailable = unavailable
+
+    def nearby(self, lat: float, lon: float) -> NearbyReports:
+        if self._unavailable:
+            raise CommunityUnavailableError("sem banco")
+        return NearbyReports(raio_km=30.0, anos_safra=(2024, 2025, 2026), relatos=self._reports)
+
+
+FROST = NearbyReport(
+    id="r1",
+    tipo="evento",
+    subtipo="geada",
+    valores={},
+    celula=CELL,
+    lat=-18.95,
+    lon=-48.15,
+    data_fato=date(2026, 11, 14),
+    meu=False,
+)
+FORECAST = EnsoForecast(
+    emitida_em=date(2026, 11, 12),
+    fonte="NOAA",
+    estacoes=(EnsoSeasonForecast("FMA", 2027, la_nina=0, neutro=2, el_nino=98),),
+)
+# 30 dias até 12/nov, os 10 últimos sem chuva; 13 e 14/nov a API ainda não tem
+DRY_DAYS = [
+    RecentDay(date(2026, 10, 14) + timedelta(days=i), 5.0 if i < 20 else 0.0, 30.0)
+    for i in range(30)
+] + [RecentDay(date(2026, 11, 13), None, None), RecentDay(date(2026, 11, 14), None, None)]
+
+
+def _service(**overrides: object) -> AvisosService:
+    deps: dict[str, object] = {
+        "recommender": FakeRecommender(),
+        "climate_repo": FakeClimate(),
+        "crop_repo": FakeCrops(),
+        "soil_repo": FakeSoil(),
+        "risk_service": ClimateRiskService(WaterBalanceCalculator()),
+        "recent_soil_moisture_repo": FakeRecentSmap(RecentSoilMoisture(15.0, date(2026, 11, 10))),
+        "recent_weather_repo": FakeRecentWeather(DRY_DAYS),
+        "forecast_repo": FakeForecast(FORECAST),
+        "enso_repo": FakeOni(),
+        "community_service": FakeCommunity((FROST,)),
+        "today": lambda: TODAY,
+    }
+    deps.update(overrides)
+    return AvisosService(**deps)  # type: ignore[arg-type]
+
+
+def test_should_join_the_four_groups_and_count_now_and_nearby() -> None:
+    avisos = _service().avisos(LAT, LON, colheita="meio")
+
+    assert (avisos.lat, avisos.lon, avisos.celula_id, avisos.hoje) == (LAT, LON, CELL, TODAY)
+    assert [a.tipo for a in avisos.agora.avisos] == ["terra_seca", "dias_sem_chuva", "enso"]
+    assert avisos.agora.ultima_leitura == date(2026, 11, 12)
+    assert avisos.perto is not None
+    assert [a.valores["evento"] for a in avisos.perto.avisos] == ["geada"]
+    assert (avisos.raio_km, avisos.vizinhos_dias) == (30.0, 7)
+    # Contador: os 3 de agora e o 1 de perto; mudanças e recordes são informação, não alerta.
+    assert avisos.contador == 4
+    assert avisos.mudou is not None and avisos.recordes is not None
+    assert avisos.periodo is not None and avisos.periodo.recente_inicio == 2020
+
+
+def test_should_ask_power_for_the_last_30_days_up_to_yesterday() -> None:
+    weather = FakeRecentWeather(DRY_DAYS)
+
+    _service(recent_weather_repo=weather).avisos(LAT, LON)
+
+    # 30 dias com os dois extremos: 16/out a 14/nov (o POWER sai com uns 2 dias de atraso)
+    assert weather.calls == [(CELL, date(2026, 10, 16), date(2026, 11, 14))]
+
+
+def test_should_leave_out_the_power_alerts_when_the_api_fails() -> None:
+    avisos = _service(recent_weather_repo=FakeRecentWeather(None)).avisos(LAT, LON)
+
+    assert [a.tipo for a in avisos.agora.avisos] == ["terra_seca", "enso"]
+    # Sem o POWER, a última leitura do grupo é a mais nova das outras (previsão de 12/nov)
+    assert avisos.agora.ultima_leitura == date(2026, 11, 12)
+
+
+def test_should_show_nothing_out_of_normal_with_the_last_reading_date() -> None:
+    avisos = _service(
+        recent_soil_moisture_repo=FakeRecentSmap(RecentSoilMoisture(59.3, date(2026, 11, 10))),
+        recent_weather_repo=FakeRecentWeather(None),
+        forecast_repo=FakeForecast(None),
+        community_service=FakeCommunity(),
+    ).avisos(LAT, LON)
+
+    assert avisos.agora.avisos == ()
+    assert avisos.agora.ultima_leitura == date(2026, 11, 10)
+    assert avisos.perto is not None and avisos.perto.avisos == ()
+    assert avisos.contador == 0
+
+
+def test_should_leave_out_the_nearby_group_without_the_community() -> None:
+    avisos = _service(community_service=FakeCommunity(unavailable=True)).avisos(LAT, LON)
+
+    assert avisos.perto is None
+    assert avisos.contador == 3
+
+
+def test_should_use_the_same_engine_inputs_as_the_recommendation() -> None:
+    recommender = FakeRecommender()
+
+    _service(recommender=recommender).avisos(
+        LAT, LON, colheita="tarde", solo_override="arenoso", confirmadas=[(2025, "parado")]
+    )
+
+    call = recommender.calls[0]
+    assert (call["colheita"], call["solo_override"]) == ("tarde", "arenoso")
+    assert list(call["confirmadas"]) == [(2025, "parado")]  # type: ignore[call-overload]
+
+
+def test_should_link_the_last_year_of_the_series_outside_the_safrinha() -> None:
+    avisos = _service().avisos(LAT, LON)
+
+    assert avisos.safrinha is not None
+    assert avisos.safrinha.em_andamento is False
+    assert avisos.safrinha.explorar_ano == 2024
+    assert avisos.safrinha.semeadura == date(2027, 2, 18)
+
+
+def test_should_compare_the_years_the_best_option_worked() -> None:
+    avisos = _service().avisos(LAT, LON)
+
+    assert avisos.mudou is not None
+    assert "mudou_deu_certo" in [a.tipo for a in avisos.mudou.avisos]
+
+
+def test_should_keep_the_outside_area_error_of_the_engine() -> None:
+    with pytest.raises(OutsideAreaError):
+        _service(recommender=FakeRecommender(outside=True)).avisos(LAT, LON)

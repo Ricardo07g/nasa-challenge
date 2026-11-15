@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.constants import PROBLEM_BASE_URI, PROBLEM_JSON_MEDIA_TYPE
 from app.controllers import (
+    avisos_controller,
     community_report_controller,
     crop_option_controller,
     custo_atraso_controller,
@@ -141,3 +142,6 @@ def handle_community_unavailable(_: Request, exc: CommunityUnavailableError) -> 
 
 app.include_router(community_report_controller.router, prefix="/api")
 app.include_router(raio_x_controller.router, prefix="/api")
+
+# Tela "Avisos" (remodelagem S6, tarefa 0046)
+app.include_router(avisos_controller.router, prefix="/api")

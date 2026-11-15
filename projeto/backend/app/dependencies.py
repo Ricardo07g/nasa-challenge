@@ -50,6 +50,10 @@ from app.repositories.ndvi_repository import (
     NdviRepository,
 )
 from app.repositories.recent_rain_repository import FileRecentRainRepository
+from app.repositories.recent_weather_repository import (
+    PowerRecentWeatherRepository,
+    RecentWeatherRepository,
+)
 from app.repositories.regiao_repository import FileRegionRepository, RegionRepository
 from app.repositories.rules_repository import RulesRepository, YamlRulesRepository
 from app.repositories.sinal_outono_repository import (
@@ -75,6 +79,7 @@ from app.repositories.soja_recente_repository import (
     FileSojaRecenteRepository,
     SojaRecenteRepository,
 )
+from app.services.avisos_service import AvisosService
 from app.services.burned_area_service import BurnedAreaService
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.community_report_service import CommunityReportService
@@ -485,5 +490,45 @@ def get_raio_x_service(
         soja_recente_service=soja_recente_service,
         region_rain_repo=region_rain_repo,
         burned_area_service=burned_area_service,
+        rules=rules,
+    )
+
+
+# Tela "Avisos" (remodelagem S6, tarefa 0046). O NASA POWER dos últimos dias é pedido pela API, com
+# cache de 24 h por célula (um repository por processo); sem resposta, os avisos dele não aparecem.
+# Os relatos dos vizinhos vêm do service da comunidade (sem banco, o grupo "Perto de você" some).
+@lru_cache
+def get_recent_weather_repository() -> RecentWeatherRepository:
+    return PowerRecentWeatherRepository(NasaPowerClient())
+
+
+def get_avisos_service(
+    recommender: Annotated[RecommendationService, Depends(get_recommendation_service)],
+    climate_repo: Annotated[ClimateRepository, Depends(get_climate_repository)],
+    crop_repo: Annotated[CropParamsRepository, Depends(get_crop_params_repository)],
+    soil_repo: Annotated[SoilRepository, Depends(get_soil_repository)],
+    risk_service: Annotated[ClimateRiskService, Depends(get_climate_risk_service)],
+    recent_soil_moisture_repo: Annotated[
+        RecentSoilMoistureRepository, Depends(get_recent_soil_moisture_repository)
+    ],
+    recent_weather_repo: Annotated[RecentWeatherRepository, Depends(get_recent_weather_repository)],
+    forecast_repo: Annotated[EnsoForecastRepository, Depends(get_enso_forecast_repository)],
+    enso_repo: Annotated[EnsoRepository, Depends(get_enso_repository)],
+    community_service: Annotated[CommunityReportService, Depends(get_community_report_service)],
+    smap_repo: Annotated[CellSmapRepository, Depends(get_smap_repository)],
+    rules: Annotated[Regras, Depends(get_rules)],
+) -> AvisosService:
+    return AvisosService(
+        recommender=recommender,
+        climate_repo=climate_repo,
+        crop_repo=crop_repo,
+        soil_repo=soil_repo,
+        risk_service=risk_service,
+        recent_soil_moisture_repo=recent_soil_moisture_repo,
+        recent_weather_repo=recent_weather_repo,
+        forecast_repo=forecast_repo,
+        enso_repo=enso_repo,
+        community_service=community_service,
+        smap_repo=smap_repo,
         rules=rules,
     )
