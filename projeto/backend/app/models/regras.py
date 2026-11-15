@@ -349,6 +349,47 @@ class RegrasComunidade:
 
 
 @dataclass(frozen=True)
+class RegrasAgua:
+    """Linha "Água" e selo "Sede da cultura" da aba Sugestão (seção 5.3, tarefa 0044).
+
+    Consumo da cultura no ciclo (mediana do ETc dos anos) abaixo de `sede_pouca_ate_mm` = pouca
+    água; de `sede_muita_desde_mm` para cima = muita; entre os dois, média. O ano seco da falta de
+    água é aquele em que só `percentil_seco`% dos anos tiveram falta maior.
+    """
+
+    sede_pouca_ate_mm: float
+    sede_muita_desde_mm: float
+    percentil_seco: int
+
+
+@dataclass(frozen=True)
+class RegrasEnsoAcerto:
+    """Quando a taxa de acerto nos anos de El Niño / La Niña difere "claramente" dos outros anos.
+
+    Clara = pelo menos `anos_fase_min` anos da fase e diferença de `diferenca_min_pct` pontos
+    percentuais ou mais entre a fase e os outros anos (tarefa 0044).
+    """
+
+    diferenca_min_pct: float
+    anos_fase_min: int
+
+
+@dataclass(frozen=True)
+class RegrasClimaFuturoSugestao:
+    """Meses da variação de chuva e máxima de 2041-2060 na célula (tarefa 0044; unificar na S9)."""
+
+    meses: tuple[int, ...]
+
+
+@dataclass(frozen=True)
+class RegrasGeadaSugestao:
+    """Anos com mínima de `tmin_max_c` °C ou menos nos `meses` (tarefa 0044; unificar na S9)."""
+
+    tmin_max_c: float
+    meses: tuple[int, ...]
+
+
+@dataclass(frozen=True)
 class Regras:
     """Todas as regras do motor, versão 0 (PRD 7)."""
 
@@ -375,3 +416,7 @@ class Regras:
     comunidade: RegrasComunidade
     raio_x: RegrasRaioX
     alertas_area: RegrasAlertasArea
+    agua: RegrasAgua
+    enso_acerto: RegrasEnsoAcerto
+    clima_futuro_sugestao: RegrasClimaFuturoSugestao
+    geada_sugestao: RegrasGeadaSugestao

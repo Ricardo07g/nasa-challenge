@@ -21,7 +21,11 @@ def get_safra_passada(
     ano: Annotated[int, Query()],
     service: PastService,
     colheita: Annotated[Colheita, Query()] = "meio",
+    # Tarefa 0044: o detalhe de cada ano do explorador mostra a opção da aba Sugestão
+    opcao: Annotated[str | None, Query(max_length=40, pattern=r"^[a-z_]+$")] = None,
     accept_language: Annotated[str, Header(alias="Accept-Language")] = "pt-BR",
 ) -> SafraPassadaResponse:
-    season = service.replay(lat=lat, lon=lon, ano=ano, colheita=colheita, lang=accept_language)
+    season = service.replay(
+        lat=lat, lon=lon, ano=ano, colheita=colheita, lang=accept_language, opcao=opcao
+    )
     return SafraPassadaResponse.from_model(season)

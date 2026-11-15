@@ -57,14 +57,23 @@ class PastSeasonService:
         self._ingestion_service = ingestion_service
 
     def replay(
-        self, lat: float, lon: float, ano: int, colheita: str = "meio", lang: str = "pt-BR"
+        self,
+        lat: float,
+        lon: float,
+        ano: int,
+        colheita: str = "meio",
+        lang: str = "pt-BR",
+        opcao: str | None = None,
     ) -> PastSeason:
         """Eventos da safrinha de `ano` no ponto, com a melhor opção da faixa de colheita.
 
+        Com `opcao` (tarefa 0044: o detalhe de qualquer ano do explorador da aba Sugestão), o
+        replay é dessa opção, desde que ela caiba na janela de plantio da faixa.
+
         Raises:
             OutsideAreaError: o ponto não tem dados (nem pela busca sob demanda).
-            NotFoundError: o ponto tem dados, mas não do ano pedido; ou nenhuma opção cabe na
-                janela de plantio da faixa de colheita.
+            NotFoundError: o ponto tem dados, mas não do ano pedido; nenhuma opção cabe na
+                janela de plantio da faixa de colheita; ou a `opcao` pedida não cabe nela.
             ValidationDomainError: faixa de colheita inválida (vem do motor do /recomendacao).
         """
         cell_id = find_or_ingest_cell(self._climate_repo, self._ingestion_service, lat, lon)
@@ -78,11 +87,15 @@ class PastSeasonService:
             raise NotFoundError(f"Sem dado de {ano} neste ponto.")
 
         rec = self._recommender.recommend(lat=lat, lon=lon, colheita=colheita, lang=lang)
-        crop = self._crop_repo.get_by_id(rec.melhor)
-        option = next((o for o in rec.opcoes if o.id == rec.melhor), None)
+        escolhida = opcao or rec.melhor
+        crop = self._crop_repo.get_by_id(escolhida)
+        option = next((o for o in rec.opcoes if o.id == escolhida), None)
         if crop is None or option is None:
             raise NotFoundError(
-                f"Nenhuma opção cabe na janela de plantio da colheita '{colheita}' para repetir."
+                f"A opção '{escolhida}' não cabe na janela de plantio da colheita '{colheita}'."
+                if opcao
+                else f"Nenhuma opção cabe na janela de plantio da colheita '{colheita}' para "
+                "repetir."
             )
 
         sowing = date(ano, rec.semeadura.month, rec.semeadura.day)

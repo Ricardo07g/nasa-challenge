@@ -1002,3 +1002,134 @@ def test_should_not_explain_smap_when_no_year_has_it_on_the_sowing_day() -> None
     rec = _service(smap=smap).recommend(lat=-18.95, lon=-48.20, colheita="meio")
 
     assert not any("SMAP" in frase for o in rec.opcoes for frase in o.porque)
+
+
+# --- aba Sugestão (tarefa 0044) -----------------------------------------------------------------
+
+MODEL_DELTAS = [
+    Cmip6Delta(model=model, scenario="ssp245", month=m, rain_pct=pct, tmax_c=tmax)
+    for model, pct, tmax in (("A", -10.0, 1.0), ("B", -20.0, 2.0), ("C", 6.0, 3.0))
+    for m in range(1, 13)
+]
+
+
+def test_should_give_each_option_its_water_line_from_the_motor_water_balance() -> None:
+    # Chuva de 8 mm todo dia e ETo de 4 mm (valores de teste): a cultura de 100 dias com Kc até
+    # 1,0 precisa de menos água do que chove. A mesma conta do "deu certo", nos dias do ciclo.
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    milho = _opcao(rec, "milho_safrinha")
+
+    assert milho.agua is not None
+    assert milho.agua.chove_mm == 800  # 8 mm x 100 dias
+    assert 0 < milho.agua.precisa_mm < milho.agua.chove_mm
+    assert milho.agua.falta_normal_mm == 0
+    # ~4 mm x Kc médio de ~0,8 x 100 dias: entre os cortes de 280 e 325 mm do regras.yaml
+    assert 280 <= milho.agua.precisa_mm < 325
+    assert milho.agua.sede == "media"
+    assert milho.agua.cad_mm == 60
+    assert milho.agua.anos == 20
+    assert milho.agua.futuro is None  # sem CMIP6
+
+
+def test_should_change_the_future_shortage_with_the_cmip6_deltas_of_each_model() -> None:
+    climate = FakeClimateRepository(dry_years=(2007, 2014), deltas=MODEL_DELTAS)
+
+    rec = _service(climate).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    milho = _opcao(rec, "milho_safrinha")
+
+    assert milho.agua is not None and milho.agua.futuro is not None
+    assert milho.agua.futuro.modelos == 3
+    assert milho.agua.futuro.falta_min_mm <= milho.agua.futuro.falta_max_mm
+
+
+def test_should_tell_the_real_criterion_and_the_crop_cycle_of_each_option() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    milho, milheto = _opcao(rec, "milho_safrinha"), _opcao(rec, "milheto")
+
+    assert milho.criterio is not None and milheto.criterio is not None
+    assert (milho.criterio.isna_min, milho.criterio.fase, milho.criterio.janela_dias) == (
+        0.55,
+        "floracao",
+        15,
+    )
+    assert (milho.criterio.calor_temp_c, milho.criterio.calor_min_dias) == (35.0, 3)
+    assert (milheto.criterio.isna_min, milheto.criterio.fase) == (0.50, "pegamento")
+    assert milheto.criterio.janela_dias == 30
+    assert milho.ciclo is not None
+    assert (milho.ciclo.dias, milho.ciclo.floracao_dias) == (100, 60)
+
+
+def test_should_give_the_isna_of_each_year_and_what_to_watch() -> None:
+    climate = FakeClimateRepository(dry_years=(2007, 2014))
+
+    rec = _service(climate).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    milho = _opcao(rec, "milho_safrinha")
+    seca = next(d for d in milho.anos_detalhe if d.ano == 2007)
+
+    assert seca.isna < 0.55 and seca.falta_agua is True
+    assert seca.semeadura == date(2007, 2, 18)
+    assert milho.observar is not None
+    assert milho.observar.total == 20
+    assert milho.observar.veranico_dias == 0  # 18 anos com chuva todo dia
+
+
+def test_should_rate_hits_by_enso_phase_only_with_the_oni_file() -> None:
+    sem = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    com = _service(year_detail=YearDetailService(enso_repo=FakeEnsoRepository())).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert _opcao(sem, "sorgo").enso_acerto == ()
+    [el_nino] = _opcao(com, "sorgo").enso_acerto
+    assert (el_nino.fase, el_nino.anos, el_nino.anos_outros) == ("el_nino", 1, 19)
+    assert el_nino.clara is False  # 1 ano só
+
+
+def test_should_order_options_and_build_a_plan_for_each_producer_objective() -> None:
+    # Tarefa 0044 (5.1): a reordenação é no motor, pronta para os 4 objetivos; o navegador só
+    # escolhe. A ordem é a nota do eixo (desempate pela final); o plano começa pela 1ª da ordem.
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    notas = {o.id: o.notas for o in rec.opcoes}
+
+    assert set(rec.objetivos) == {"equilibrio", "seguranca", "renda", "terra"}
+    assert rec.objetivos["equilibrio"].ordem == tuple(o.id for o in rec.opcoes)
+    terra = rec.objetivos["terra"].ordem
+    assert [notas[i].solo for i in terra] == sorted((n.solo for n in notas.values()), reverse=True)
+    for objetivo in rec.objetivos.values():
+        assert objetivo.plano[0] == objetivo.ordem[0]
+        assert len(objetivo.plano) == 3
+    for chave in ("seguranca", "renda", "terra"):
+        assert "pousio" not in rec.objetivos[chave].plano
+
+
+def test_should_start_plan_a_with_the_best_option() -> None:
+    # A sugestão é o ano 1 do Plano A (o Plano B, para ano seco, pode começar por outra).
+    rec = _service(FakeClimateRepository(dry_years=(2007, 2014))).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert rec.plano_normal.anos[0] == rec.melhor
+    assert rec.plano_normal.anos == rec.objetivos["equilibrio"].plano
+
+
+def test_should_summarize_the_2041_2060_climate_of_the_cell_and_the_frost_risk() -> None:
+    rec = _service(FakeClimateRepository(deltas=MODEL_DELTAS)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert rec.clima_futuro is not None
+    assert (rec.clima_futuro.chuva_pct, rec.clima_futuro.tmax_c) == (-8.0, 2.0)
+    assert (rec.clima_futuro.concordam_chuva, rec.clima_futuro.modelos) == (2, 3)
+    assert rec.geada is not None
+    assert (rec.geada.anos, rec.geada.total) == (0, 20)  # mínima de 18 °C todo dia
+    assert _service().recommend(lat=-18.95, lon=-48.20, colheita="meio").clima_futuro is None
+
+
+def test_should_give_the_planting_deadline_of_each_crop_out_of_the_window() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="tarde")
+
+    assert {f.id: f.data_limite for f in rec.fora_da_janela} == {
+        "milho_safrinha": "2027-02-28",
+        "milho_braquiaria": "2027-02-28",
+        "crotalaria": "2027-02-28",
+    }

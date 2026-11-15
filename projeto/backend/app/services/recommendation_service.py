@@ -19,11 +19,16 @@ from app.constants import (
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
 from app.models.recomendacao import (
+    AguaOpcao,
     Alternativa,
     AnoDetalhe,
+    CicloOpcao,
+    CriterioDeuCerto,
     ForaDaJanelaOpcao,
     FuturoResultado,
     NotasOpcao,
+    ObjetivoResultado,
+    PlanoRotacao,
     Recomendacao,
     ResultadoAno,
     ResultadoOpcao,
@@ -36,12 +41,16 @@ from app.repositories.ndvi_repository import NdviRepository
 from app.repositories.rules_repository import load_default_rules
 from app.repositories.smap_repository import CellSmapRepository
 from app.repositories.soil_repository import SoilRepository
+from app.services.cell_climate_facts_service import CellClimateFactsService
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.climate_risk_service import ClimateRiskService
+from app.services.crop_alert_service import COVER_CROP_TYPE
 from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
+from app.services.suggestion_facts_service import SuggestionFactsService
+from app.services.water_need_service import WaterNeedService
 from app.services.year_detail_service import YearDetailService
 
 # Nome da chuva no "Por quê?": com algum ano do IMERG (tarefa 0027), a série mistura as duas fontes.
@@ -65,6 +74,16 @@ ALTERNATIVE_AXES: tuple[tuple[str, Callable[[NotasOpcao], float]], ...] = (
     ("mais_renda", attrgetter("renda")),
     ("cuidar_da_terra", attrgetter("solo")),
 )
+# "O que você quer mais?" (seção 5.1, tarefa 0044): o eixo de cada objetivo do produtor. Sem
+# objetivo ("equilibrio"), vale a nota final com os pesos padrão (RF-05).
+OBJECTIVE_AXES: tuple[tuple[str, Callable[[NotasOpcao], float] | None], ...] = (
+    ("equilibrio", None),
+    ("seguranca", attrgetter("seguranca")),
+    ("renda", attrgetter("renda")),
+    ("terra", attrgetter("solo")),
+)
+CRITICAL_STAGE_FLOWERING = "floracao"
+CRITICAL_STAGE_ESTABLISHMENT = "pegamento"
 
 
 def _clamp(score: float) -> float:
@@ -199,6 +218,7 @@ class _Avaliacao:
     futuro: FuturoResultado | None
     solo: float
     anos_detalhe: tuple[AnoDetalhe, ...]
+    agua: AguaOpcao | None
 
 
 class RecommendationService:
@@ -234,6 +254,11 @@ class RecommendationService:
         self._year_detail_service = year_detail_service or YearDetailService(rules=self._rules)
         # Umidade do SMAP no dia de plantar de cada ano: balde inicial (PRD 7.2, R3.3)
         self._smap_repo = smap_repo
+        # Aba Sugestão (tarefa 0044): linha "Água", El Niño / La Niña e o que observar, clima de
+        # 2041-2060 e geada na célula. Só leem as regras: montados aqui, sem injeção
+        self._water_service = WaterNeedService(self._rules)
+        self._facts_service = SuggestionFactsService(self._rules)
+        self._cell_facts_service = CellClimateFactsService(self._rules)
 
     def recommend(
         self,
@@ -296,11 +321,13 @@ class RecommendationService:
                 continue  # linha de base, fora do ranking (PRD 7.6)
             nome = crop.nome_en if (is_en and crop.nome_en) else crop.nome
             if not self._risk_service.is_within_window(crop, semeadura):
+                limite = crop.semeadura_limite_mes_dia
                 fora_da_janela.append(
                     ForaDaJanelaOpcao(
                         id=crop.id,
                         nome=nome,
                         texto=self._out_of_window_text(crop, nome, colheita, is_en),
+                        data_limite=f"{REFERENCE_SOWING_YEAR}-{limite}" if limite else None,
                     )
                 )
                 continue
@@ -343,13 +370,24 @@ class RecommendationService:
         opcoes.sort(key=lambda o: o.notas.final, reverse=True)
         melhor_id = opcoes[0].id if opcoes else FALLOW_ID
 
+        pousio_notas = self._fallow_scores(crops, nematoide, has_future=bool(deltas))
         plano_normal, plano_seco, plano_hoje = self._plan_service.build_3_year_plans(
             opcoes=opcoes,
             anos_secos=anos_secos,
-            pousio=self._fallow_scores(crops, nematoide, has_future=bool(deltas)),
+            pousio=pousio_notas,
             nematoide=nematoide,
             lang=lang,
         )
+        objetivos = self._objectives(opcoes, pousio_notas, nematoide)
+        if "equilibrio" in objetivos:
+            # Tarefa 0044: a sugestão é o ano 1 da rotação. O Plano A começa pela melhor opção (o
+            # Plano B, do ano seco, continua livre para começar por outra).
+            equilibrio = objetivos["equilibrio"]
+            plano_normal = PlanoRotacao(
+                anos=equilibrio.plano,
+                nota=equilibrio.nota_plano,
+                descricao=plano_normal.descricao,
+            )
 
         return Recomendacao(
             lat=lat,
@@ -396,6 +434,56 @@ class RecommendationService:
                 if self._sinal_service is not None
                 else None
             ),
+            objetivos=objetivos,
+            clima_futuro=self._cell_facts_service.future_outlook(deltas),
+            geada=self._cell_facts_service.frost_risk(seasons),
+        )
+
+    def _objectives(
+        self, opcoes: list[ResultadoOpcao], pousio: NotasOpcao, nematoide: bool | None
+    ) -> dict[str, ObjetivoResultado]:
+        """Ordem das opções e plano para cada objetivo do produtor (seção 5.1, tarefa 0044).
+
+        A ordem é a nota do eixo do objetivo, com o desempate pela nota final (a mesma regra da
+        tela 6, RF-05); sem objetivo ("equilibrio"), a nota final. O plano começa pela 1ª da ordem
+        e escolhe os anos 2 e 3 pela nota do mesmo eixo. Sem opção na janela: nenhum objetivo.
+        """
+        if not opcoes:
+            return {}
+        finals = {o.id: o.notas.final for o in opcoes} | {FALLOW_ID: pousio.final}
+        objetivos: dict[str, ObjetivoResultado] = {}
+        for objetivo, eixo in OBJECTIVE_AXES:
+            nota = eixo or attrgetter("final")
+            ordem = tuple(
+                o.id for o in sorted(opcoes, key=lambda o: (-nota(o.notas), -o.notas.final))
+            )
+            # O plano de um objetivo usa só as culturas; o do equilíbrio é o Plano A do PRD 7.7,
+            # com o pousio nas combinações.
+            plano = tuple(
+                self._plan_service.best_plan_starting_with(
+                    ordem[0],
+                    opcoes,
+                    pousio,
+                    axis=eixo,
+                    nematoide=nematoide,
+                    allow_fallow=eixo is None,
+                )
+            )
+            objetivos[objetivo] = ObjetivoResultado(
+                ordem=ordem, plano=plano, nota_plano=self._plan_service.plan_score(plano, finals)
+            )
+        return objetivos
+
+    def _criterion(self, crop: CropParams) -> CriterioDeuCerto:
+        """O critério de "deu certo" do motor para a cultura (PRD 7.2), com os números do YAML."""
+        clima = self._rules.clima
+        cobertura = crop.tipo == COVER_CROP_TYPE
+        return CriterioDeuCerto(
+            isna_min=clima.isna_cobertura if cobertura else clima.isna_grao,
+            calor_temp_c=clima.calor_temp_c,
+            calor_min_dias=clima.calor_min_dias,
+            fase=CRITICAL_STAGE_ESTABLISHMENT if cobertura else CRITICAL_STAGE_FLOWERING,
+            janela_dias=clima.janela_cobertura_dias if cobertura else clima.janela_grao_meia_dias,
         )
 
     def _fallow_scores(
@@ -435,13 +523,16 @@ class RecommendationService:
             smap_wetness_by_year=smap_por_ano,
         )
         secos = [r for r in anos if r.ano in set(anos_secos)]
-        futuro = self._risk_service.simulate_future_cmip6(
+        futuro_por_modelo = self._risk_service.simulate_future_by_model(
             crop=crop,
             seasons=seasons,
             deltas=deltas,
             semeadura=semeadura,
             cad_mm=cad_mm,
             smap_wetness_by_year=smap_por_ano,
+        )
+        futuro = self._risk_service.summarize_future(
+            futuro_por_modelo, scenario=deltas[0].scenario if deltas else ""
         )
         return _Avaliacao(
             crop=crop,
@@ -451,8 +542,14 @@ class RecommendationService:
             futuro=futuro,
             solo=soil_score(crop, nematoide, self._rules.solo),
             anos_detalhe=self._year_detail_service.year_details(
-                crop=crop, semeadura=semeadura, seasons=seasons, resultados=anos, lang=lang
+                crop=crop,
+                semeadura=semeadura,
+                seasons=seasons,
+                resultados=anos,
+                lang=lang,
+                smap_wetness_by_year=smap_por_ano,
             ),
+            agua=self._water_service.summarize(anos, cad_mm, futuro_por_modelo),
         )
 
     def _build_option(
@@ -523,6 +620,11 @@ class RecommendationService:
                 a.crop.como_fazer_en if (is_en and a.crop.como_fazer_en) else a.crop.como_fazer
             ),
             anos_detalhe=a.anos_detalhe,
+            agua=a.agua,
+            criterio=self._criterion(a.crop),
+            ciclo=CicloOpcao(dias=a.crop.ciclo_dias, floracao_dias=a.crop.dias_florescer),
+            observar=self._facts_service.watch_facts(a.anos_detalhe),
+            enso_acerto=self._facts_service.enso_hit_rates(a.anos_detalhe),
         )
 
     @staticmethod
