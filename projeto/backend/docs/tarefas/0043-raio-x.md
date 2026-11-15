@@ -14,7 +14,7 @@
 
 ## 1. O que foi feito
 
-- **Endpoint novo `GET /api/raio-x?lat&lon[&colheita][&solo][&confirmadas]`** (e não campos do `/talhao`, decisão D55): o raio-X pede a melhor opção do motor (bloco da água e cartão dos 20 anos), ~0,5 s na fazenda da UFU; o `/talhao` continua leve para a tela 2.
+- **Endpoint novo `GET /api/raio-x?lat&lon[&colheita][&solo][&confirmadas]`** (e não campos do `/talhao`, decisão D55): o raio-X pede a melhor opção do motor (bloco da água e cartão dos 20 anos), ~0,5 s na lavoura de demonstração; o `/talhao` continua leve para a tela 2.
 - **Painel "Raio-X da sua terra"**, o único elemento escuro da tela, com tokens novos em `tokens.css` (contraste conferido: texto 11,3:1, apagado 7,3:1, número 8,0:1, selo 7,9:1). Cabeçalho com o lugar (cidade de referência mais perto, sem rede), as coordenadas, a miniatura do mapa com o pin e a data da leitura mais recente (SMAP ou NDVI). **Altitude: não aparece** (o `grid_cell` não tem altitude, e o pedido manda não buscar fora). Blocos entram em sequência (CSS) e os números contam até o valor; com "reduzir movimento", nada se mexe. O texto no DOM é sempre o valor final ("Ouvir" e leitor de tela).
 - **Os 8 blocos**, cada um com número, unidade, frase e selo (fonte e resolução):
   1. Solo (SoilGrids · ISRIC · 250 m): % de argila, barra dividida argila / silte / areia com a % escrita, textura, "Não é? Trocar" e, em célula sem solo, o ponto gravado mais perto (até 15 km) com a distância.
@@ -46,7 +46,7 @@ uv run python -m pipeline.fetch_area_queimada --dry-run   # 240 pedidos, ~2,3 h,
 uv run python -m pipeline.fetch_area_queimada             # caixa piloto, 2016 a 2025 (grava data_run com DATABASE_URL)
 ```
 
-## 3. Números na fazenda da UFU (−18,9543 / −48,1993; banco local de 15/11/2026, colheita tarde, a do satélite)
+## 3. Números na lavoura de demonstração (−18,9543 / −48,1993; banco local de 15/11/2026, colheita tarde, a do satélite)
 
 | Bloco / alerta | Número |
 | --- | --- |

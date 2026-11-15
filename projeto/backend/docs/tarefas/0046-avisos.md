@@ -14,7 +14,7 @@
 
 ## 1. O que foi feito
 
-- **Endpoint novo `GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas]`** (D93): roda o motor do `/recomendacao` uma vez (a melhor opção vai no ENSO, na safrinha e no "O que mudou") e junta os quatro grupos, o período comparado, a safrinha e o `contador`. ~0,5 s na fazenda da UFU com o POWER em cache; ~1,6 s no primeiro pedido do dia (o POWER). Erros como no `/recomendacao` (404 `OUTSIDE_AREA`, 422).
+- **Endpoint novo `GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas]`** (D93): roda o motor do `/recomendacao` uma vez (a melhor opção vai no ENSO, na safrinha e no "O que mudou") e junta os quatro grupos, o período comparado, a safrinha e o `contador`. ~0,5 s na lavoura de demonstração com o POWER em cache; ~1,6 s no primeiro pedido do dia (o POWER). Erros como no `/recomendacao` (404 `OUTSIDE_AREA`, 422).
 - **Grupo 1, Agora** (`AvisosAgoraService`):
   - terra seca: percentil do SMAP recente de 20 ou menos → "A terra está mais seca que em X% dos anos nesta época." (X = 100 − percentil, D96); leitura com mais de 15 dias marcada como antiga;
   - dias sem chuva e calor: os 30 dias até ontem do NASA POWER no centro da célula de 0,1°, pedidos pelo backend (`PowerRecentWeatherRepository`, cache de 24 h por célula e janela, 8 s no máximo, espera de 15 min depois de falha, D95). Aviso com 10 ou mais dias seguidos abaixo de 1 mm (o dia seco dos avisos) até a última leitura, ou 3 ou mais dias de 35 °C (o calor do motor) nos últimos 10. A data da última leitura vai junto. Se a API falhar, o aviso não aparece. A chuva recente **não** é comparada com o normal;

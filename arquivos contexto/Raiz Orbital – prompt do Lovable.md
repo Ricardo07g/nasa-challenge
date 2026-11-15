@@ -94,7 +94,7 @@ Acessibilidade: botões de verdade (`<button>`, `<a>`), `aria-pressed` nos botõ
 - Botão "Usar onde estou agora" (contorno azul, ícone de mira): usa `navigator.geolocation` e move o alfinete. Se o usuário negar, mostre uma mensagem curta e calma.
 - Texto: "Ou arraste o mapa até o alfinete ficar em cima da lavoura."
 - Botão principal "É aqui" → tela 3, levando `lat` e `lon` na URL.
-- Se o ponto ficar fora da área atendida (caixa lon -49.0 a -47.5, lat -19.9 a -18.4), mostre: "Ainda não temos dados dessa região. Veja a fazenda de exemplo." com botão para o exemplo.
+- Se o ponto ficar fora da área atendida (caixa lon -49.0 a -47.5, lat -19.9 a -18.4), mostre: "Ainda não temos dados dessa região. Veja a lavoura de demonstração." com botão para o exemplo.
 - Computador: mapa à esquerda (2/3), botões à direita (1/3).
 
 **Tela 3: Quando você colhe a soja? (`/colheita`)**
@@ -183,12 +183,12 @@ Acessibilidade: botões de verdade (`<button>`, `<a>`), `aria-pressed` nos botõ
 - **PT | EN:** troca todos os textos, inclusive os que vêm do mock (o mock tem as duas versões).
 - **Voltar** sempre volta um passo e mantém as escolhas (estão na URL).
 - **Carregamento:** esqueleto/placeholder discreto; nunca tela vazia.
-- **Erro de dados:** mensagem calma ("Não conseguimos buscar os dados agora. Tente de novo ou veja a fazenda de exemplo.") com os dois botões.
+- **Erro de dados:** mensagem calma ("Não conseguimos buscar os dados agora. Tente de novo ou veja a lavoura de demonstração.") com os dois botões.
 - **Sem animação exagerada;** respeite `prefers-reduced-motion`.
 
 ### 6. Dados de exemplo (mock)
 
-Fazenda de exemplo: campo de soja de 48 ha da **Fazenda Experimental do Glória (UFU)**, em Uberlândia (MG), `lat -18.9543`, `lon -48.1993`, terra média, colheita sugerida `meio`. Na tela, mostre "Fazenda de exemplo: área experimental da UFU, Uberlândia (MG)". É uma área pública: não use nome de produtor.
+Fazenda de exemplo: **lavoura de demonstração, perto de Uberlândia (MG)**, `lat -18.9543`, `lon -48.1993`, terra média, colheita sugerida `meio`. O ponto fica perto da Fazenda do Glória, mas não garantidamente dentro dela. Na tela, mostre "Lavoura de demonstração, perto de Uberlândia (MG)" (em inglês, "Demo field, near Uberlândia (MG)"). Não use nome de produtor nem diga de quem é a área.
 
 Histórico (2016 a 2025): 2016 parado, 2017 plantou, 2018 parado, 2019 plantou, 2020 parado, 2021 plantou, 2022 plantou, 2023 parado, 2024 parado, 2025 plantou → parado em 5 de 10.
 

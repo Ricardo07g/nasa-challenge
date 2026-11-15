@@ -117,7 +117,7 @@ DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run pyt
 - [x] `tests/unit/pipeline/test_load_files_to_db.py` (21 testes, banco falso, arquivos em
   `tmp_path`). Casos cobertos:
   - deltas do ponto que cobre o centro de cada célula, com as duas bordas (`-193_-482`, centro
-    −19,25, entra na célula do POWER da UFU; `-188_-482`, centro −18,75, fica com a de cima);
+    −19,25, entra na célula do POWER da lavoura de demonstração; `-188_-482`, centro −18,75, fica com a de cima);
   - célula sem cobertura: nada; nenhuma célula coberta: nada, nem `data_run`;
   - NDVI de todos os pontos e os seis tipos de registro pulado (nuvem, sem NDVI, sem qualidade,
     sem produto, bruto, cache antigo inteiro);

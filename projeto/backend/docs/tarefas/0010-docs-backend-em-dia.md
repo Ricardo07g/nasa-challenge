@@ -45,8 +45,8 @@ Quem pegasse uma tarefa do roteiro partiria de uma premissa errada.
   canônica) e a cópia desatualizada da 0001 sai.
 
 ### 2.3 ADRs
-- [x] ADR-0003 e ADR-0004: "Fazenda Santa Luzia" (−18,82 / −48,28) vira o campo de soja da Fazenda
-  Experimental do Glória (UFU), −18,9543 / −48,1993. Cada uma ganha a linha "Atualizado em" dizendo que a
+- [x] ADR-0003 e ADR-0004: "Fazenda Santa Luzia" (−18,82 / −48,28) vira a lavoura de demonstração, perto de
+  Uberlândia (MG), −18,9543 / −48,1993. Cada uma ganha a linha "Atualizado em" dizendo que a
   decisão não mudou.
 - [x] ADR-0003: `/workspace/data/...` vira `data/`, o `data/config.py` (que não existe) vira `PILOT_*` em
   `app/constants.py`, e a tabela `clima_historico_diario` vira `climate_season` (o nome real).
@@ -60,7 +60,7 @@ Quem pegasse uma tarefa do roteiro partiria de uma premissa errada.
 
 ### 2.5 Sem Earth Engine nos diagramas e textos
 - [x] `como-funcionam-os-dados-de-satelite-e-postgis.md`: "MODIS / GEE" vira MODIS pelo AppEEARS;
-  exemplo de célula com a Fazenda do Glória e nota sobre as duas regras de id (R1.2).
+  exemplo de célula com a lavoura de demonstração e nota sobre as duas regras de id (R1.2).
 - [x] A cópia idêntica em `docs/` da raiz vira ponteiro para a do backend.
 - [x] `diagrama-de-sequencias.md`: pipeline com os scripts reais e os que faltam (sem Earth Engine);
   `/exemplo` pela fixture; NDVI do `/talhao` pelo cache do pipeline.

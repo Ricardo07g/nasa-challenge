@@ -52,7 +52,7 @@ Os satélites e modelos climáticos **não operam por raios circulares nem por d
 Quando um usuário clica no mapa em qualquer lugar do Brasil, o backend converte as coordenadas contínuas em um identificador discreto de célula pegando o **piso (`floor`) do passo de 0.1°** (plano técnico §5, alinhado à grade do IMERG). É a única regra do backend: `cell_id_for` em `app/repositories/climate_repository.py`, usada pela ingestão, pelos repositories e pelo polígono da célula.
 
 ```python
-# Fazenda de exemplo: campo de soja da Fazenda Experimental do Glória (UFU), Uberlândia
+# Fazenda de exemplo: lavoura de demonstração, perto de Uberlândia (MG)
 lat = -18.9543
 lon = -48.1993
 

@@ -123,7 +123,7 @@ Todas as rotas ficam sob `/api` (já é a convenção do repositório). Nomes de
 
 ### 3.3 `GET /api/exemplo`
 
-Mesma forma de `/talhao` + `/recomendacao` juntos, para a fazenda de exemplo: o campo de soja de 48 ha da Fazenda Experimental do Glória (UFU), em Uberlândia (-18,9543 / -48,1993), colheita "meio". O ponto antigo (-18,92 / -48,28) caía perto do centro urbano, onde o NDVI mostra a cidade. Vem de uma fixture JSON gerada pelo pipeline, então funciona mesmo com o banco vazio ou o Earth Engine fora do ar.
+Mesma forma de `/talhao` + `/recomendacao` juntos, para a fazenda de exemplo: a lavoura de demonstração, perto de Uberlândia (MG) (-18,9543 / -48,1993), colheita "meio". O ponto fica perto da Fazenda do Glória, mas não garantidamente dentro dela. O ponto antigo (-18,92 / -48,28) caía perto do centro urbano, onde o NDVI mostra a cidade. Vem de uma fixture JSON gerada pelo pipeline, então funciona mesmo com o banco vazio ou o Earth Engine fora do ar.
 
 ### 3.4 Já existentes
 

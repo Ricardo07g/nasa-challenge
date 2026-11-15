@@ -43,7 +43,7 @@ O protótipo v3 foi desenhado com o princípio de **2 perguntas e 1 resposta cla
 ```mermaid
 flowchart LR
     T1["Tela 1: Início"] -->|"Começar"| T2["Tela 2: Onde fica a lavoura?<br/>(Pergunta 1/2)"]
-    T1 -->|"Ver um exemplo pronto"| EX["GET /api/exemplo<br/>(fixture app/fixtures, Fazenda do Glória)"]
+    T1 -->|"Ver um exemplo pronto"| EX["GET /api/exemplo<br/>(fixture app/fixtures, lavoura de demonstração)"]
     EX --> T5["Tela 5: A Resposta"]
     T2 -->|"Toca em 'Confirmar local'"| API_TALHAO["GET /api/talhao?lat&lon<br/>(SoilGrids + MODIS NDVI)"]
     API_TALHAO --> T3["Tela 3: Quando colhe a soja?<br/>(Pergunta 2/2 - pré-marcada)"]
@@ -75,7 +75,7 @@ qual tarefa do [roteiro](roteiro-de-implementacao.md) resolve.
 | **US-08** | Produtor ou Agrônomo | Trocar a textura do solo e informar presença de nematoide, só se eu quiser | Ajustar o cálculo sem tornar o caminho principal mais longo | **Could** | `GET /api/recomendacao?solo=...&nematoide=...` (`nota_solo` em `culturas.yaml`) | **Feita:** `solo` e `nematoide` mudam a conta. A reescala do nematoide espera a agrônoma (roteiro, seção 5) |
 | **US-09** | Produtor | Testar o plano num ano seco (tipo El Niño) e ver o impacto do clima de 2050 | Saber se a escolha e a rotação aguentam anos ruins | **Should** | `GET /api/recomendacao` (CMIP6 + 4 anos mais secos do NASA POWER) | **Parcial:** o ano seco sai (`plano_3_anos.seco`); o clima de 2050 vem `futuro: null` porque ainda não há deltas do CMIP6 (R2.1, R3.1) |
 | **US-10** | Agrônomo | Consultar e editar parâmetros de produtividade, preço e custo | Adequar a estimativa de margem financeira à realidade do cliente | **Could** | `culturas.yaml` / `GET /api/crop-options` | **Não feita:** `/crop-options` só lista as opções (em memória, sem ler o `culturas.yaml`: R4.4); editar valores é o RF-10 (R4.6) |
-| **US-11** | Jurado | Abrir uma fazenda de exemplo em Uberlândia com um clique | Ver o produto funcionando em menos de 1 segundo e sem cadastro | **Must** | `GET /api/exemplo` (campo de soja da Fazenda Experimental do Glória, UFU, `-18.9543, -48.1993`) | **Feita:** `/exemplo` sai da fixture do NASA POWER, sem banco nem rede |
+| **US-11** | Jurado | Abrir uma fazenda de exemplo em Uberlândia com um clique | Ver o produto funcionando em menos de 1 segundo e sem cadastro | **Must** | `GET /api/exemplo` (lavoura de demonstração, perto de Uberlândia (MG), `-18.9543, -48.1993`) | **Feita:** `/exemplo` sai da fixture do NASA POWER, sem banco nem rede |
 | **US-12** | Produtor com pouca leitura | Tocar em "Ouvir" e escutar o conteúdo da tela | Entender a recomendação no campo sem depender de leitura | **Should** | Frontend (Web Speech API) + textos curtos da API | **Feita no front** (`projeto/frontend/src/services/speechService.ts`) |
 | **US-13** | Produtor | Usar o mesmo site no celular (no campo) e no computador (no escritório) e compartilhar o link | Não precisar de dois apps nem perder a consulta ao recarregar a página | **Must** | Rotas `GET` idempotentes com query params na URL | **Feita:** a API só tem `GET` com query params e o front guarda a consulta na URL |
 
@@ -144,6 +144,6 @@ qual tarefa do [roteiro](roteiro-de-implementacao.md) resolve.
   - `resumo_uberlandia_20anos_anual.json` (em `data/output/`, local) — seleção dos **4 anos mais secos** na safrinha (`chuva_safrinha_fev_mai_mm`, ex.: 2007 com 278.2 mm, 2014 com 314.6 mm, 2010 com 317.6 mm, 2012 com 336.4 mm) para calcular `plano_3_anos.seco`.
 
 ### US-11: Fazenda de Exemplo em Uberlândia (`Must` · RF-11)
-- **Dados utilizados:** a fixture [`app/fixtures/clima_fazenda_exemplo.json`](../app/fixtures/clima_fazenda_exemplo.json) (NASA POWER, 2005–2024) da fazenda de exemplo, o campo de soja da Fazenda Experimental do Glória, UFU (`lat=-18.9543, lon=-48.1993`). A fixture já é do ponto novo; o ponto antigo (`-18.9186, -48.2772`) ficava no centro urbano.
+- **Dados utilizados:** a fixture [`app/fixtures/clima_fazenda_exemplo.json`](../app/fixtures/clima_fazenda_exemplo.json) (NASA POWER, 2005–2024) da fazenda de exemplo, a lavoura de demonstração, perto de Uberlândia (MG) (`lat=-18.9543, lon=-48.1993`), que fica perto da Fazenda do Glória, mas não garantidamente dentro dela. A fixture já é do ponto novo; o ponto antigo (`-18.9186, -48.2772`) ficava no centro urbano.
 - **Critérios de Aceite:**
   1. `GET /api/exemplo` responde em $< 100\text{ ms}$ usando os dados pré-extraídos de Uberlândia sem depender de banco ou rede externa.

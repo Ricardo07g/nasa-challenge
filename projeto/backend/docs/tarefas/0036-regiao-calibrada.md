@@ -12,8 +12,8 @@
 
 ## 1. Descrição e Motivação
 
-O `pipeline/fetch_regiao_ndvi.py` da tarefa 0034 rodou em 14/11/2026 para 30 km em volta da fazenda
-da UFU (−18,9543 / −48,1993) e deu "plantou" de 83% a 98% e "parado" abaixo de 2% em todos os anos
+O `pipeline/fetch_regiao_ndvi.py` da tarefa 0034 rodou em 14/11/2026 para 30 km em volta da lavoura
+de demonstração (−18,9543 / −48,1993) e deu "plantou" de 83% a 98% e "parado" abaixo de 2% em todos os anos
 de 2016 a 2025. Não é crível. Duas causas:
 
 1. A máscara (MCD12Q1 classe 12) inclui cana e café, verdes o ano todo. O entorno de Uberlândia e
@@ -195,4 +195,4 @@ Front (tela 8) ─► regionPlace: distancia_km ≤ 1 → "Até 30 km da sua lav
 
 Com o usuário: fora das regiões medidas, o bloco da região **não aparece** (sem o card "O satélite ainda
 não mediu…"). O produto resolve esse caso com as perguntas (confirmação das últimas safras). A região,
-por enquanto, só cobre a fazenda da UFU: não vamos medir outros círculos da caixa no MVP.
+por enquanto, só cobre a lavoura de demonstração: não vamos medir outros círculos da caixa no MVP.

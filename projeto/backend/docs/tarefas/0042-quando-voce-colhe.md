@@ -45,7 +45,7 @@
 }
 ```
 
-(números reais da fazenda da UFU, banco local de 15/11/2026). Todos os campos novos são opcionais no front (API antiga = o bloco não aparece) e `null` sem dado.
+(números reais da lavoura de demonstração, banco local de 15/11/2026). Todos os campos novos são opcionais no front (API antiga = o bloco não aparece) e `null` sem dado.
 
 ### `GET /api/custo-atraso?lat&lon[&solo][&confirmadas]` (novo)
 
@@ -57,7 +57,7 @@
  "mesma_cultura": false}
 ```
 
-Uma recomendação do motor por faixa, com o mesmo solo e as mesmas safras confirmadas. Faixa sem opção na janela de plantio: os campos da opção `null`. Ponto sem dados: 404 `OUTSIDE_AREA`; solo ou `confirmadas` inválidos: 422. Sem cache HTTP (são 3 recomendações: ~1 s na fazenda da UFU).
+Uma recomendação do motor por faixa, com o mesmo solo e as mesmas safras confirmadas. Faixa sem opção na janela de plantio: os campos da opção `null`. Ponto sem dados: 404 `OUTSIDE_AREA`; solo ou `confirmadas` inválidos: 422. Sem cache HTTP (são 3 recomendações: ~1 s na lavoura de demonstração).
 
 **Por que um endpoint, e não um campo do `/talhao`:** o custo roda o motor três vezes; o `/talhao` é pedido já na tela 2 e por várias telas, e ficaria lento. A chuva que sobra, a ETo e o fim das chuvas são contas leves da mesma série e foram para o `/talhao` (o raio-X da seção 4 também vai usar o fim das chuvas).
 
@@ -97,7 +97,7 @@ Cada teste foi escrito antes do código e visto falhando pelo motivo certo:
 
 Nada de rede: o motor é falso nos testes do service; os de rota usam os repositórios falsos do `conftest.py`; no front, repositórios e services falsos. Dados de teste com valores redondos e chave de fonte `teste` (ou, onde o teste confere a fonte, a chave sem rótulo de dado real).
 
-## 5. Números reais na fazenda da UFU (−18,9543 / −48,1993; banco local, IMERG em 20 de 20 anos)
+## 5. Números reais na lavoura de demonstração (−18,9543 / −48,1993; banco local, IMERG em 20 de 20 anos)
 
 - **Dia sugerido pelo NDVI:** 25/fev (10 anos), faixa "fim de fevereiro ou março" (a mesma de antes).
 - **Chuva que sobra até 30/jun:** colhendo em 25/fev, 367 mm em média e 276 mm num ano seco; 5/fev: 498 e 421; 15/fev: 435 e 352; 28/fev: 351 e 244.
@@ -112,5 +112,5 @@ D31 a D41 em `projeto/backend/docs/remodelagem.md`.
 ## 7. Riscos e o que ficou de fora
 
 - **O dia exato não vai para a URL:** voltando da tela 4, a URL traz só a faixa. Se ela é a do satélite, o campo volta com o dia do satélite (não com o dia que a pessoa digitou); se é outra, o campo fica vazio e a faixa fica marcada. Não mexemos no `flowParams` para não pisar na S2.
-- **Custo do atraso compara culturas diferentes** quando a melhor muda de faixa (na UFU, tarde = milheto, uma cobertura com outro critério de "deu certo"): a frase diz a cultura de cada faixa, mas o "20 de 20" do fim pode parecer melhor que o começo. Ver "Números estranhos".
-- **Fim das chuvas sensível a chuva solta:** a regra pega o primeiro trecho seco a partir de 1º/mar; um veranico em março conta como fim, e uma chuva de maio ou junho empurra o fim para longe (2012 na UFU).
+- **Custo do atraso compara culturas diferentes** quando a melhor muda de faixa (na lavoura de demonstração, tarde = milheto, uma cobertura com outro critério de "deu certo"): a frase diz a cultura de cada faixa, mas o "20 de 20" do fim pode parecer melhor que o começo. Ver "Números estranhos".
+- **Fim das chuvas sensível a chuva solta:** a regra pega o primeiro trecho seco a partir de 1º/mar; um veranico em março conta como fim, e uma chuva de maio ou junho empurra o fim para longe (2012 na lavoura de demonstração).

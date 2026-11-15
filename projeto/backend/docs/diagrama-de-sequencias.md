@@ -24,7 +24,7 @@ sequenceDiagram
     participant Out as data/output/ (local) e app/fixtures/
 
     Note over Dev,Out: 1. NASA POWER diário, 2005–2024 (sem login)
-    Dev->>Power: Extração para a Fazenda do Glória, UFU (-18.9543, -48.1993)
+    Dev->>Power: Extração para a lavoura de demonstração (-18.9543, -48.1993)
     Power->>APIs: GET power.larc.nasa.gov/api/temporal/daily/point (community=AG)
     APIs-->>Power: PRECTOTCORR, T2M_MAX, T2M_MIN, T2M, RH2M, WS2M, ALLSKY_SFC_SW_DWN, GWETROOT
     Power->>Power: -999.0 vira None; resumo anual (chuva fev–mai, dias >= 35 °C)
@@ -57,7 +57,7 @@ sequenceDiagram
 
 Atende à história **US-11 (Jurado)** e ao requisito **RF-11**: a resposta sai da fixture
 [`app/fixtures/clima_fazenda_exemplo.json`](../app/fixtures/clima_fazenda_exemplo.json) (NASA POWER,
-2005–2024, célula do POWER da Fazenda do Glória), sem banco nem rede externa.
+2005–2024, célula do POWER da lavoura de demonstração), sem banco nem rede externa.
 
 ```mermaid
 sequenceDiagram

@@ -141,7 +141,7 @@ Rodar no checkout principal (a pasta `data/baixados` fica na raiz do repositóri
 `--saida`. Depois, reiniciar o backend (o arquivo é lido uma vez por processo). Repetir todo mês,
 depois da 2ª quinta-feira.
 
-**Exemplo com os dados reais da fazenda da UFU** (−18,9543 / −48,1993, colheita "meio", banco local
+**Exemplo com os dados reais da lavoura de demonstração** (−18,9543 / −48,1993, colheita "meio", banco local
 com o IMERG, ONI e SMAP recente de `data/baixados`, previsão de 12/11/2026): `normal` (Plano A).
 "Previsão para fevereiro a abril de 2027: El Niño (98%, NOAA). Nos 7 anos de El Niño desde 2005,
 milho sozinho deu certo em 5." Regra: "Se nos 30 dias antes de 28/fev chover menos que 136 mm (60%

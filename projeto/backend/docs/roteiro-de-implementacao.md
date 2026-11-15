@@ -21,7 +21,7 @@
 ## 1. Resumo
 
 - **A API funciona, mas só num lugar.** `/talhao`, `/recomendacao` e `/exemplo` respondem de ponta a ponta,
-  mas **em execução** só para a célula do NASA POWER em volta da Fazenda do Glória (UFU), que vem da
+  mas **em execução** só para a célula do NASA POWER em volta da lavoura de demonstração (perto de Uberlândia), que vem da
   fixture. Fora dela, `/recomendacao` dá 404 `OUTSIDE_AREA`.
 - **A busca sob demanda já existe, mas está desligada.** A tarefa 0001 trouxe clientes do NASA POWER e do
   SoilGrids, repositories do PostGIS e um serviço que busca e guarda dados de células novas.
@@ -175,7 +175,7 @@ Cada linha diz quem decide e qual tarefa fica parada até lá.
 | [R0.1](tarefas/0009-token-earthdata-e-contrato-dados-fontes.md) ✅ | <ul><li>Campo `earthdata_token` no `Settings` e o nome `EARTHDATA_TOKEN` no `.env.example`</li><li>Avaliar remover `ee_project`, se a ADR-0005 for aceita</li></ul> | `app/config.py`, `.env.example`, `tests/unit/test_config.py` | — | — | T-01 |
 | [R0.2](tarefas/0009-token-earthdata-e-contrato-dados-fontes.md) ✅ | **Contrato dos dados das fontes novas.** Formato em arquivo (agora) e em tabela (R1.6) para: <ul><li>CMIP6: mensal por modelo, igual ao `Cmip6Delta`</li><li>NDVI: por ponto, com a qualidade já filtrada</li><li>SMAP: por ponto e data</li></ul> Também a versão dos dados (`data_run` → `versao_dados`). Documentar em "Dados da API" no `AGENTS.md` | `app/models/`, `AGENTS.md` | — | — | — |
 | R0.3 ⏸️ (adiado: [motivo](tarefas/0010-docs-backend-em-dia.md)) | **Dependências dos scripts de dados:** um grupo `pipeline` no uv, com `earthaccess`, `xarray`, `h5netcdf` e `numpy`. Fazer **uma vez só**, para evitar conflito no `uv.lock`, e justificar no PR. O `httpx2` já está na API | `pyproject.toml`, `uv.lock`, `requirements.txt` | — | — | — |
-| [R0.4](tarefas/0010-docs-backend-em-dia.md) ✅ | **Docs em dia:** <ul><li>`data/README.md` e a tarefa 0001: não marcar como pronto script que não existe</li><li>ADR-0003/0004: Fazenda do Glória (UFU), −18,9543 / −48,1993</li><li>"Dados da API" no `AGENTS.md`: busca sob demanda e PostGIS</li><li>coluna de status em `docs/historias-de-usuario.md`</li><li>diagramas sem Earth Engine</li></ul> | `docs/`, `data/README.md`, `AGENTS.md` | — | — | — |
+| [R0.4](tarefas/0010-docs-backend-em-dia.md) ✅ | **Docs em dia:** <ul><li>`data/README.md` e a tarefa 0001: não marcar como pronto script que não existe</li><li>ADR-0003/0004: lavoura de demonstração, −18,9543 / −48,1993</li><li>"Dados da API" no `AGENTS.md`: busca sob demanda e PostGIS</li><li>coluna de status em `docs/historias-de-usuario.md`</li><li>diagramas sem Earth Engine</li></ul> | `docs/`, `data/README.md`, `AGENTS.md` | — | — | — |
 | R0.5 | Fechar as decisões da seção 5 | — | — | — | — |
 
 ### Fase 1: clima e solo de verdade em toda a área (continua a tarefa 0001)
