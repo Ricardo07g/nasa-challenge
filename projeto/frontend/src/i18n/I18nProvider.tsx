@@ -24,7 +24,7 @@ function writeStored(lang: Lang) {
 
 export function I18nProvider({ children, initialLang }: { children: ReactNode; initialLang?: Lang }) {
   const [lang, setLangState] = useState<Lang>(
-    () => initialLang ?? detectLanguage(navigator.languages ?? [], readStored()),
+    () => initialLang ?? detectLanguage(readStored()),
   )
 
   useEffect(() => {
