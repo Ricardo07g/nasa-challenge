@@ -13,20 +13,26 @@ export const pt = {
     demoMode: 'Modo de demonstração: dados de exemplo, não são da NASA',
     disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
     ready: 'Pronto',
+    /** Nome do X dos modais. */
+    close: 'Fechar',
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',
     slogan: 'Do espaço até a raiz.',
+    navLabel: 'Principal',
     community: 'Comunidade',
-    listen: 'Ouvir',
-    stop: 'Parar',
-    listenLabel: 'Ouvir esta tela',
-    stopLabel: 'Parar a leitura',
     langToggleLabel: 'Trocar idioma: português ou inglês',
   },
+  /** "Ouvir resumo" (tarefa 0052): cada tela fala só o seu resumo; o texto falado fica no bloco da tela. */
+  listen: {
+    summary: 'Ouvir resumo',
+    stop: 'Parar',
+  },
+  /** Rodapé global (tarefa 0052): "Como a conta é feita" só nas telas internas; os créditos em todas. */
   footer: {
-    agronomist: 'Sou agrônomo(a): como a conta é feita',
-    project: 'NASA Space Apps Challenge 2026 · Field Shift',
+    method: 'Como a conta é feita',
+    credits: 'Créditos e uso de IA',
+    project: 'NASA Space Apps 2026 · Field Shift',
   },
   nav: {
     back: 'Voltar',
@@ -87,23 +93,42 @@ export const pt = {
     eyebrow: 'Para quem planta soja no Triângulo Mineiro',
     title: 'O que plantar depois da soja?',
     lead: 'O satélite da NASA olha a chuva de muitos anos na sua lavoura. Veja a melhor opção.',
-    /** Tarefa 0051 (RF-35): o limite do MVP, sempre na tela (o selo da foto some no celular). */
-    mvpNote:
-      'Nesta primeira versão (MVP), o app funciona na região de Uberlândia e Uberaba (MG). Vamos ampliar para todo o Triângulo Mineiro.',
+    /** Resumo falado do "Ouvir resumo" (2 ou 3 frases, nunca a tela inteira). */
+    summary:
+      'O Raiz Orbital ajuda a decidir o que plantar depois da soja, com 20 anos de dados de satélite da NASA. É só marcar a lavoura no mapa e dizer quando você colhe a soja. Em seguida, você vê a melhor opção para a sua terra.',
     start: 'Começar',
-    meta: '2 perguntas · 1 minuto · grátis, sem cadastro',
-    example: 'Ver um exemplo pronto',
-    stepMark: '1. Marque a lavoura',
-    stepHarvest: '2. Diga quando colhe',
-    stepAnswer: '3. Veja a resposta',
-    stepMarkText: 'Um ponto no mapa. É só isso.',
-    stepHarvestText: 'A época da sua colheita de soja.',
+    stepsTitle: 'Como funciona',
+    stepMark: 'Marque a lavoura',
+    stepMarkText: 'Um ponto no mapa.',
+    stepHarvest: 'Diga quando colhe',
+    stepHarvestText: 'A época da colheita da soja.',
+    stepAnswer: 'Veja a resposta',
     stepAnswerText: 'O melhor caminho para a sua terra.',
-    stepsTitle: 'Uma boa próxima safra começa com uma boa escolha.',
-    stepsEyebrow: 'Da NASA para a sua lavoura',
-    photoAlt: 'Fileiras de lavoura no Cerrado brasileiro',
+    photoAlt: 'Lavoura no Triângulo Mineiro ao amanhecer',
+    /** Selo da tela de cálculo (missão). */
     nasaData: 'dados da NASA',
-    region: 'MVP · região de Uberlândia e Uberaba',
+    /** Selo sobre a foto: abre o modal "De onde vêm os dados". */
+    seal: 'Dados da NASA',
+    sealRegion: 'Triângulo Mineiro · MG',
+    /** Marca d'água obrigatória (regra do NASA Space Apps): a foto foi gerada por IA. */
+    aiImage: 'Imagem gerada por IA',
+    agroTitle: 'É agrônomo(a) ou técnico(a)?',
+    agroText: 'Veja as regras, os pesos e a fonte de cada número.',
+    agroButton: 'Como a conta é feita',
+    sources: {
+      title: 'De onde vêm os dados',
+      subtitle: '20 anos de satélite (2005–2024) no ponto da sua lavoura.',
+      rain: 'Chuva',
+      rainText: 'GPM IMERG · NASA · chuva de cada dia',
+      heat: 'Calor e água que a lavoura gasta',
+      heatText: 'NASA POWER · temperatura, sol e vento',
+      soil: 'Solo',
+      soilText: 'SoilGrids · quanta água a terra guarda',
+      future: 'Clima de 2041 a 2060',
+      futureText: 'NEX-GDDP-CMIP6 · NASA',
+      note: 'Nenhum número é inventado. Se não há dado para o seu ponto, aquela parte não aparece.',
+      allCredits: 'Todas as fontes e créditos',
+    },
   },
   where: {
     title: 'Onde fica a lavoura?',
@@ -812,7 +837,6 @@ export const pt = {
     text: 'A resposta em áudio no seu celular e um aviso se faltar chuva na sua lavoura.',
     past: 'Quer receber avisos assim na próxima safra? Ative no Telegram.',
     open: 'Abrir no Telegram',
-    home: 'Prefere conversar? Fale com o Raiz Orbital no Telegram',
     methodTitle: 'Também no Telegram',
     method:
       'Mande a localização da lavoura e diga quando colhe a soja. O bot responde em texto e em áudio, com o link desta página. Quem quiser recebe avisos de falta de chuva e calor. Em português e em inglês.',

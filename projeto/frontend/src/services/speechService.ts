@@ -9,6 +9,7 @@ type SynthLike = {
 
 type UtteranceLike = {
   lang: string
+  rate: number
   voice: unknown
   onend: (() => void) | null
 }
@@ -22,6 +23,9 @@ export type SpeechService = {
 }
 
 const MAX_PART = 200
+
+/** Velocidade da fala: um pouco mais devagar que o normal, para o produtor acompanhar ("Ouvir resumo"). */
+export const SPEECH_RATE = 0.95
 
 /** Quebra um trecho grande demais nos espaços, sem cortar palavras. */
 function splitLong(sentence: string): string[] {
@@ -84,6 +88,7 @@ export function createSpeechService(
       parts.forEach((part, index) => {
         const utterance = new Utterance(part)
         utterance.lang = speechLang(lang)
+        utterance.rate = SPEECH_RATE
         utterance.voice = voice
         utterance.onend = index === parts.length - 1 ? onEnd : null
         synth.speak(utterance as never)

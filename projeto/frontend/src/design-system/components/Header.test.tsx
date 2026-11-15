@@ -1,159 +1,103 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { AppHeader, type AppHeaderProps } from './Header'
 
-function setup(overrides: Partial<AppHeaderProps> = {}) {
+function setup(overrides: Partial<AppHeaderProps> = {}, path = '/') {
   const props: AppHeaderProps = {
     homeLabel: 'Raiz Orbital, voltar ao início',
     slogan: 'Do espaço até a raiz.',
+    navLabel: 'Principal',
     community: { label: 'Comunidade', to: '/comunidade?lat=-18.95&lon=-48.2' },
-    listen: {
-      supported: true,
-      speaking: false,
-      onToggle: vi.fn(),
-      label: 'Ouvir esta tela',
-      stopLabel: 'Parar a leitura',
-      text: 'Ouvir',
-      stopText: 'Parar',
-    },
+    alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null },
     lang: { current: 'pt', onToggle: vi.fn(), label: 'Trocar idioma: português ou inglês' },
     ...overrides,
   }
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <AppHeader {...props} />
     </MemoryRouter>,
   )
   return props
 }
 
-describe('AppHeader', () => {
-  it('tem o logo que leva ao início', () => {
+describe('AppHeader (cabeçalho global, tarefa 0052)', () => {
+  it('tem o logo e o nome que levam ao início, com o slogan', () => {
     setup()
 
-    expect(screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })).toHaveAttribute('href', '/')
+    const home = screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })
+    expect(home).toHaveAttribute('href', '/')
+    expect(home).toHaveTextContent('Raiz Orbital')
+    expect(screen.getByText('Do espaço até a raiz.')).toBeInTheDocument()
   })
 
-  it('tem o link da Comunidade, que leva junto o ponto da lavoura', () => {
+  it('à direita, só três itens: Comunidade, Avisos e o idioma (sem o botão grande "Ouvir")', () => {
     setup()
 
-    expect(screen.getByRole('link', { name: 'Comunidade' })).toHaveAttribute('href', '/comunidade?lat=-18.95&lon=-48.2')
+    const nav = screen.getByRole('navigation', { name: 'Principal' })
+    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Comunidade', 'Avisos'])
+    expect(within(nav).getAllByRole('button')).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: /Ouvir/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Telegram/ })).not.toBeInTheDocument()
+  })
+
+  it('a Comunidade é uma pílula com o nome escrito (também no celular) e leva junto o ponto', () => {
+    setup()
+
+    const link = screen.getByRole('link', { name: 'Comunidade' })
+    expect(link).toHaveAttribute('href', '/comunidade?lat=-18.95&lon=-48.2')
+    expect(link).not.toHaveAttribute('aria-label')
+    expect(link).toHaveAttribute('data-variant', 'pill')
   })
 
   it('marca a Comunidade quando a pessoa está nela', () => {
-    render(
-      <MemoryRouter initialEntries={['/comunidade']}>
-        <AppHeader
-          homeLabel="Início"
-          slogan="Do espaço até a raiz."
-          community={{ label: 'Comunidade', to: '/comunidade' }}
-          listen={{
-            supported: false,
-            speaking: false,
-            onToggle: vi.fn(),
-            label: 'Ouvir',
-            stopLabel: 'Parar',
-            text: 'Ouvir',
-            stopText: 'Parar',
-          }}
-          lang={{ current: 'pt', onToggle: vi.fn(), label: 'Idioma' }}
-        />
-      </MemoryRouter>,
-    )
+    setup({ community: { label: 'Comunidade', to: '/comunidade' } }, '/comunidade')
 
     expect(screen.getByRole('link', { name: 'Comunidade' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('mostra o slogan ao lado do nome', () => {
-    setup()
+  it('Avisos mostra o selo com o número de avisos ativos, também no nome acessível', () => {
+    setup({ alerts: { label: 'Avisos', to: '/avisos?lat=1&lon=2', count: 2, countLabel: 'Avisos: 2 avisos ativos' } })
 
-    expect(screen.getByText('Do espaço até a raiz.')).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: 'Avisos: 2 avisos ativos' })
+    expect(link).toHaveAttribute('href', '/avisos?lat=1&lon=2')
+    expect(within(link).getByText('2')).toHaveAttribute('aria-hidden', 'true')
   })
 
-  it('o botão Ouvir chama o controller e mostra quando está falando', async () => {
-    const props = setup()
+  it('sem ponto ou sem aviso ativo, o selo não aparece', () => {
+    setup({ alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null } })
 
-    const button = screen.getByRole('button', { name: 'Ouvir esta tela' })
-    expect(button).toHaveAttribute('aria-pressed', 'false')
-    await userEvent.click(button)
-
-    expect(props.listen.onToggle).toHaveBeenCalled()
+    const link = screen.getByRole('link', { name: 'Avisos' })
+    expect(link).not.toHaveTextContent(/\d/)
   })
 
-  it('mostra "Parar" enquanto lê', () => {
-    setup({
-      listen: {
-        supported: true,
-        speaking: true,
-        onToggle: vi.fn(),
-        label: 'Ouvir esta tela',
-        stopLabel: 'Parar a leitura',
-        text: 'Ouvir',
-        stopText: 'Parar',
-      },
-    })
-
-    const button = screen.getByRole('button', { name: 'Parar a leitura' })
-    expect(button).toHaveAttribute('aria-pressed', 'true')
-    expect(button).toHaveTextContent('Parar')
-  })
-
-  it('esconde o Ouvir quando o navegador não lê em voz alta', () => {
-    setup({
-      listen: {
-        supported: false,
-        speaking: false,
-        onToggle: vi.fn(),
-        label: 'Ouvir esta tela',
-        stopLabel: 'Parar a leitura',
-        text: 'Ouvir',
-        stopText: 'Parar',
-      },
-    })
-
-    expect(screen.queryByRole('button', { name: 'Ouvir esta tela' })).not.toBeInTheDocument()
-  })
-
-  it('troca o idioma e destaca o atual', async () => {
+  it('o idioma mostra PT | EN com o atual destacado e troca ao tocar', async () => {
     const props = setup()
 
     const toggle = screen.getByRole('button', { name: 'Trocar idioma: português ou inglês' })
+    expect(toggle).toHaveTextContent('PT|EN')
     expect(toggle.querySelector('[data-active="true"]')).toHaveTextContent('PT')
+    expect(toggle.querySelector('[data-active="false"]')).toHaveTextContent('EN')
     await userEvent.click(toggle)
 
     expect(props.lang.onToggle).toHaveBeenCalled()
   })
 
-  it('sem o Telegram configurado, não mostra o link', () => {
-    setup()
-    expect(screen.queryByRole('link', { name: 'Abrir no Telegram' })).not.toBeInTheDocument()
-  })
+  it('em inglês, destaca o EN', () => {
+    setup({
+      slogan: 'From space to the root.',
+      navLabel: 'Main',
+      community: { label: 'Community', to: '/comunidade' },
+      alerts: { label: 'Alerts', to: '/avisos', count: null, countLabel: null },
+      lang: { current: 'en', onToggle: vi.fn(), label: 'Switch language: Portuguese or English' },
+    })
 
-  it('com o Telegram configurado, mostra o link', () => {
-    setup({ telegram: { href: 'https://t.me/BotDoTime?start=1', label: 'Abrir no Telegram' } })
-
-    const link = screen.getByRole('link', { name: 'Abrir no Telegram' })
-    expect(link).toHaveAttribute('href', 'https://t.me/BotDoTime?start=1')
-    expect(link).toHaveAttribute('target', '_blank')
-  })
-
-  // Tela "Avisos" (tarefa 0046): botão ao lado da Comunidade, com o número de avisos ativos.
-  it('tem o botão Avisos ao lado da Comunidade, com o número em texto acessível', () => {
-    setup({ alerts: { label: 'Avisos', to: '/avisos', count: 2, countLabel: 'Avisos: 2 avisos ativos' } })
-
-    const link = screen.getByRole('link', { name: 'Avisos: 2 avisos ativos' })
-    expect(link).toHaveAttribute('href', '/avisos')
-    expect(link).toHaveTextContent('2')
-    const links = screen.getAllByRole('link').map((item) => item.getAttribute('href'))
-    expect(links.indexOf('/avisos')).toBe(links.indexOf('/comunidade?lat=-18.95&lon=-48.2') + 1)
-  })
-
-  it('sem aviso ativo, o botão Avisos fica sem número', () => {
-    setup({ alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null } })
-
-    const link = screen.getByRole('link', { name: 'Avisos' })
-    expect(link).not.toHaveTextContent(/\d/)
+    expect(screen.getByText('From space to the root.')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Community' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Alerts' })).toBeInTheDocument()
+    const toggle = screen.getByRole('button', { name: 'Switch language: Portuguese or English' })
+    expect(toggle.querySelector('[data-active="true"]')).toHaveTextContent('EN')
   })
 })

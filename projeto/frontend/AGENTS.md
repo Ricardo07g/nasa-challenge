@@ -106,9 +106,10 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   recomendação passa o `confirmadas` da URL para o `farm.recomendacao` (o cache do `farmService` separa
   por ele). Na fazenda de exemplo, com safra confirmada, com a terra trocada (`solo`) ou com uma faixa
   na URL diferente da do `/exemplo` (a do satélite), a recomendação vem do `/recomendacao` do ponto do
-  exemplo, não do `/exemplo` (tarefa 0049: a resposta e a URL dizem a mesma faixa). "Ver um exemplo
-  pronto" (`/exemplo`, `useExampleController`) abre a resposta com a faixa do satélite do exemplo
-  (`colheita_sugerida.faixa`; sem ela ou com falha, `meio`), não mais com `colheita=meio` fixo.
+  exemplo, não do `/exemplo` (tarefa 0049: a resposta e a URL dizem a mesma faixa). O exemplo pronto
+  (`/exemplo`, `useExampleController`) abre a resposta com a faixa do satélite do exemplo
+  (`colheita_sugerida.faixa`; sem ela ou com falha, `meio`), não mais com `colheita=meio` fixo. Desde a
+  tarefa 0052, a tela inicial não tem mais o botão "Ver um exemplo pronto": o exemplo entra por "Onde fica a lavoura".
 - **Safras confirmadas (tarefa 0039 do backend, RF-25):** a regra fica em
   `services/confirmedSeasonsService.ts` (ler e escrever o parâmetro, pôr a resposta do produtor no
   lugar do satélite com `fonte_ano: 'produtor'`, as linhas do bloco e o aviso "Não parece uma lavoura
@@ -207,10 +208,10 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   área carrega, o botão espera; se ela não carregar, a tela deixa seguir (o backend ainda responde
   `OUTSIDE_AREA` nas telas seguintes). **Área do MVP (tarefa 0051 do backend, RF-35):** a área não muda e as telas
   dizem que esta primeira versão funciona na região de Uberlândia e Uberaba (MG) e que vamos ampliar para todo o
-  Triângulo Mineiro: o selo e a frase da tela inicial (`start.region`, `start.mvpNote`), a frase sempre visível
-  junto do mapa de `/onde` (`where.mvpNote`), os avisos de fora da área (`where.outsideNotice`, `outsideText`), "De
-  onde vem cada dado" (`method.sourcesArea`) e a página inicial do Guia (`guide.mvpArea`). Mudou a área? Troque esses
-  textos junto, em pt e en.
+  Triângulo Mineiro: a frase sempre visível junto do mapa de `/onde` (`where.mvpNote`), os avisos de fora da área
+  (`where.outsideNotice`, `outsideText`), "De onde vem cada dado" (`method.sourcesArea`) e a página inicial do Guia
+  (`guide.mvpArea`). A tela inicial não fala mais do MVP (tarefa 0052: o selo e a frase saíram). Mudou a área? Troque
+  esses textos junto, em pt e en.
 - **Tela 3 "Quando você colhe" (tarefa 0042 do backend, RF-02, RF-16 e RF-27):** o campo do dia vem no
   topo, já com o dia do satélite (`colheita_sugerida.dia`, posto no ano da época da colheita por
   `services/harvestService.ts`); "Não sei o dia exato" abre as 3 faixas. **Sugestão = seleção:** a faixa
@@ -280,8 +281,45 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `chuva.fonte` (`rainSourceName`). Não há mais o botão "Como teria sido em 2024?" nem a regra antiga
   da data na tela (o sinal do outono continua). Links do Guia: `COMPARE_ARTICLES` e `PLAN_ARTICLES` (um
   teste confere que existem em pt e en).
+- **Cabeçalho e rodapé globais (remodelagem, tarefa 0052, RF-36):** valem para todas as telas (`ShellView`, estado no
+  `useShellController`). **Cabeçalho** (`design-system/components/Header.tsx`): logo, "Raiz Orbital" (nunca quebra
+  linha) e o slogan (some no celular) à esquerda; à direita, **só três itens**: Comunidade (pílula verde-clara, com o
+  nome escrito também no celular), Avisos (sino, nome e o selo laranja com o `contador` de `/api/avisos`; sem aviso,
+  sem selo; no celular, só o sino com o selo) e o idioma ("PT | EN"; no celular, só o outro idioma). Não ponha outro
+  item nem botão grande no cabeçalho. **Rodapé** (`Footer.tsx`, uma linha só): escudo com "Ajuda a decidir. Não
+  substitui o seu agrônomo." à esquerda; à direita, "Créditos e uso de IA" (abre o modal global) e "NASA Space Apps
+  2026 · Field Shift". Tem **duas variantes**, escolhidas pela rota no `useShellController`: na Início (`/`), só isso
+  (a faixa grande do agrônomo, logo acima, existe só lá); nas telas internas, também "Como a conta é feita ↗"
+  (`/como-funciona` com o caminho da URL). Contêiner das telas novas: `--page-width-v4` (1280 px) com
+  `--page-margin-v4` (52 px; 20 px até 900 px), que dá a mesma coluna de conteúdo das telas antigas.
+- **"Ouvir resumo" (regra geral, tarefa 0052):** o "Ouvir" **nunca lê a tela inteira**. Cada tela tem um resumo
+  falado próprio, de 2 ou 3 frases curtas, em pt e en (no bloco da tela das mensagens, ex.: `start.summary`), e o
+  botão é sempre o link discreto "Ouvir resumo" perto do título, nunca um botão no cabeçalho. Use o controller
+  `useListenSummary(texto, idioma)` (no controller da tela) e o componente `ListenSummary` do design system (só
+  props). A fala é a Web Speech API pelo `speechService` (melhor voz do `voicePicker`, pt-BR ou en-US, velocidade
+  0,95); enquanto fala, o link vira "Parar" com o quadrado e `aria-pressed="true"`; trocar o idioma ou sair da tela
+  para a fala; sem voz no navegador, o link não aparece. Por enquanto só a Início tem o dela: as outras telas ficam
+  sem "Ouvir" até o prompt de cada uma trazer o resumo.
+- **Modal reutilizável (`design-system/components/Modal.tsx`, tarefa 0052):** o padrão de todo "ver detalhes".
+  `<dialog>` nativo (`showModal`; sem ele, o atributo `open`): fecha com o X, com Esc e com clique fora (no fundo
+  escurecido); o foco entra no modal, fica preso nele (Tab e Shift+Tab dão a volta) e volta a quem o abriu. Quem
+  abre e fecha é o controller da tela (`open` / `onClose`); o conteúdo só existe com o modal aberto. No computador,
+  centralizado, até 560 px (`size="wide"`: 640 px), cantos de 18 px e fundo escuro com desfoque leve; até 900 px,
+  folha de baixo para cima, com a largura toda e até 88% da altura. Não crie outro modal: use este.
+- **Créditos e regras do NASA Space Apps (tarefa 0052):** o modal "Créditos e uso de IA" é **global**
+  (`views/CreditsModal.tsx`, estado no `useShellController`, aberto pelo rodapé de todas as telas; a tela que quiser
+  abri-lo usa o `openCredits` do contexto do `<Outlet>`, como o "Todas as fontes e créditos" da Início). O conteúdo
+  fica num arquivo só, `content/credits.ts`, em pt e en, **uma linha por fonte** (negrito com `**…**`, lido pelo
+  `parseInline` do `markdownService`, nunca HTML); um teste confere que os dois idiomas têm as mesmas linhas.
+  Fonte, código, fonte tipográfica, ícone ou imagem nova no app? Acrescente a linha lá, em pt e en. Regras do
+  NASA Space Apps em todas as telas: (1) nada de logo, bandeira ou identificador de missão da NASA: "NASA" só como
+  texto que cita a fonte do dado, e o ícone de satélite é o genérico do Lucide; (2) listar toda fonte, código, texto e
+  imagem usados (o modal de créditos), e mapa com OpenStreetMap mostra "© OpenStreetMap" sobre o próprio mapa; (3)
+  toda imagem ou vídeo gerado por IA leva a marca d'água visível "Imagem gerada por IA" (a foto da Início, do
+  Lovable, leva), e o uso de IA em código e textos fica declarado nos créditos.
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
-  não fala do Telegram. Só o link: o token do bot nunca entra no front.
+  não fala do Telegram. Só o link: o token do bot nunca entra no front. Desde a tarefa 0052, o link não fica no
+  cabeçalho nem na tela inicial: só na Sugestão e em "Como a conta é feita".
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).
   Nunca coloque segredo, token ou senha em `VITE_*`. Segredos ficam só no backend.
 - **Idioma:** textos da interface em português (produtor) e inglês (juízes), conforme o PRD (RNF-03).
@@ -289,7 +327,10 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
 - **Dependências:** `npm install <pacote>` (ou `-D` para dev). Biblioteca nova grande (mapa, gráficos,
   UI kit) → justifique na descrição do PR.
 - **Visual:** cores, tamanhos e raios só por variável de `design-system/tokens.css` (nunca hex solto).
-  A referência visual é a interface nova feita no Lovable (cabeçalho com slogan, rodapé com o aviso,
-  cartões com borda). Veja tudo junto em `/design-system` (só no ambiente local).
+  A referência visual são os protótipos da remodelagem (v4, 15/11/2026: tela Início, cabeçalho, rodapé e modais),
+  com as cores novas no bloco "Remodelagem v4" do `tokens.css` (`--color-info`, `--color-tint-green-soft`,
+  `--color-focus-ring` etc.; as cores iguais às de antes reaproveitam os tokens existentes). Nos componentes novos,
+  o foco visível é o contorno verde-claro de 3 px (`--color-focus-ring`). Veja tudo junto em `/design-system` (só no
+  ambiente local).
 - **Ícones:** sempre de `design-system/icons` (lucide por baixo, sempre `aria-hidden`). Não importe
   `lucide-react` direto nas telas: precisa de um ícone novo, adicione lá.

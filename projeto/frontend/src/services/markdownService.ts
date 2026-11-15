@@ -15,7 +15,8 @@ export type Block =
 
 const TOKEN = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(((?:[^()\s]|\([^()\s]*\))+)\)/g
 
-function parseInline(source: string): Inline[] {
+/** Uma linha só (negrito e links), sem blocos: usado também pelos créditos (`content/credits.ts`). */
+export function parseInline(source: string): Inline[] {
   const out: Inline[] = []
   const pushText = (text: string) => {
     if (!text) return

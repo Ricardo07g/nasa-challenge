@@ -1,28 +1,21 @@
 import { Link, NavLink } from 'react-router'
-import { AlertsIcon, CommunityIcon, LogoMark, SendIcon, SpeakerIcon, StopIcon } from '../icons'
+import { AlertsIcon, CommunityIcon, LogoMark } from '../icons'
 import styles from './Header.module.css'
 
 export type AppHeaderProps = {
   homeLabel: string
   slogan: string
-  /** Link do topo para a Comunidade (leva junto o ponto da lavoura, se houver). */
+  /** Nome da navegação ("Principal" / "Main"). */
+  navLabel: string
+  /** Comunidade: pílula verde-clara com o nome escrito, também no celular (leva junto o ponto da lavoura). */
   community: { label: string; to: string }
   /**
-   * Tela "Avisos" (tarefa 0046): ao lado da Comunidade, com o número de avisos ativos em texto
-   * (`countLabel` vira o nome acessível). Sem ponto ou sem aviso, `count` é null e o botão fica sem número.
+   * Avisos (tarefa 0046): sino, o nome e o selo laranja com o número de avisos ativos do último ponto
+   * (`/api/avisos`); `countLabel` vira o nome acessível. Sem ponto ou sem aviso, `count` é null e o selo
+   * não aparece. No celular, só o sino com o selo.
    */
-  alerts?: { label: string; to: string; count: number | null; countLabel: string | null }
-  /** P5: link do bot do Telegram (só quando configurado). */
-  telegram?: { href: string; label: string }
-  listen: {
-    supported: boolean
-    speaking: boolean
-    onToggle: () => void
-    label: string
-    stopLabel: string
-    text: string
-    stopText: string
-  }
+  alerts: { label: string; to: string; count: number | null; countLabel: string | null }
+  /** "PT | EN" no computador; no celular, só o outro idioma. */
   lang: {
     current: 'pt' | 'en'
     onToggle: () => void
@@ -30,61 +23,39 @@ export type AppHeaderProps = {
   }
 }
 
-export function AppHeader({ homeLabel, slogan, community, alerts, telegram, listen, lang }: AppHeaderProps) {
+/**
+ * Cabeçalho global (remodelagem, tarefa 0052): logo, nome e slogan à esquerda; à direita, só Comunidade,
+ * Avisos e o idioma. O "Ouvir" não fica mais aqui: cada tela tem o seu "Ouvir resumo" perto do título.
+ */
+export function AppHeader({ homeLabel, slogan, navLabel, community, alerts, lang }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link to="/" className={styles.logo} aria-label={homeLabel}>
-          <LogoMark />
+          <LogoMark size={44} />
           <span className={styles.brand} aria-hidden="true">
             <span className={styles.brandName}>Raiz Orbital</span>
             <span className={styles.slogan}>{slogan}</span>
           </span>
         </Link>
-        <div className={styles.actions}>
-          <NavLink to={community.to} className={styles.community} aria-label={community.label}>
-            <CommunityIcon />
-            <span className={styles.communityText}>{community.label}</span>
+        <nav className={styles.nav} aria-label={navLabel}>
+          <NavLink to={community.to} className={styles.community} data-variant="pill">
+            <CommunityIcon size={18} />
+            <span>{community.label}</span>
           </NavLink>
-          {alerts && (
-            <NavLink
-              to={alerts.to}
-              className={styles.community}
-              aria-label={alerts.count !== null && alerts.countLabel ? alerts.countLabel : alerts.label}
-            >
-              <AlertsIcon />
-              <span className={styles.communityText}>{alerts.label}</span>
-              {alerts.count !== null && (
-                <span className={styles.alertsCount} aria-hidden="true">
-                  {alerts.count}
-                </span>
-              )}
-            </NavLink>
-          )}
-          {telegram && (
-            <a
-              href={telegram.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${styles.community} ${styles.telegram}`}
-              aria-label={telegram.label}
-            >
-              <SendIcon />
-              <span className={styles.communityText}>Telegram</span>
-            </a>
-          )}
-          {listen.supported && (
-            <button
-              type="button"
-              className={styles.listen}
-              aria-label={listen.speaking ? listen.stopLabel : listen.label}
-              aria-pressed={listen.speaking}
-              onClick={listen.onToggle}
-            >
-              {listen.speaking ? <StopIcon /> : <SpeakerIcon />}
-              <span className={styles.listenText}>{listen.speaking ? listen.stopText : listen.text}</span>
-            </button>
-          )}
+          <NavLink
+            to={alerts.to}
+            className={styles.alerts}
+            aria-label={alerts.count !== null && alerts.countLabel ? alerts.countLabel : undefined}
+          >
+            <AlertsIcon size={18} />
+            <span className={styles.alertsLabel}>{alerts.label}</span>
+            {alerts.count !== null && (
+              <span className={styles.badge} aria-hidden="true">
+                {alerts.count}
+              </span>
+            )}
+          </NavLink>
           <button type="button" className={styles.lang} aria-label={lang.label} onClick={lang.onToggle}>
             <span data-active={lang.current === 'pt'}>PT</span>
             <span className={styles.divider} aria-hidden="true">
@@ -92,7 +63,7 @@ export function AppHeader({ homeLabel, slogan, community, alerts, telegram, list
             </span>
             <span data-active={lang.current === 'en'}>EN</span>
           </button>
-        </div>
+        </nav>
       </div>
     </header>
   )

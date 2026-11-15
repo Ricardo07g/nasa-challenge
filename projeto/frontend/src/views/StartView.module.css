@@ -1,56 +1,75 @@
+/*
+ * Tela Início (protótipo tela-0-inicio.html, remodelagem v4). No computador de 1280 × 800, a abertura, os
+ * passos, a faixa do agrônomo e o rodapé cabem sem rolar: a abertura cresce até o fim da primeira tela.
+ */
 .page {
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
+  background: var(--color-surface);
 }
 
-/* Foto do Cerrado de ponta a ponta, com um degradê claro do lado do texto */
+/* ---------- Abertura ---------- */
 .hero {
+  flex: 1 0 auto;
   position: relative;
+  display: flex;
   overflow: hidden;
-  min-height: 600px;
-  background: var(--color-hero-light);
+  background: var(--color-surface);
 }
 
+/* Foto (gerada por IA) nos 64% da direita, com degradê para branco na esquerda e embaixo */
 .photo {
   position: absolute;
-  inset: 0;
+  inset: 0 0 0 auto;
+  width: 64%;
+}
+
+.photo img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 60%;
+  object-position: center 62%;
 }
 
-.hero::after {
+.photo::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--hero-wash);
+  background: var(--hero-photo-fade);
 }
 
-.heroContent {
+.inner {
   position: relative;
-  z-index: 1;
-  max-width: var(--page-max-width);
-  margin-inline: auto;
-  padding: 63px var(--page-gutter) 58px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--page-width-v4);
+  margin: 0 auto;
+  padding: 44px var(--page-margin-v4) 28px;
 }
 
 .copy {
-  max-width: 560px;
-  display: flex;
-  flex-direction: column;
+  max-width: 440px;
+  margin-bottom: 32px;
 }
 
 .eyebrow {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: var(--font-size-caption);
+  gap: 10px;
+  margin: 0;
+  font-size: var(--font-size-tiny);
   font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
   color: var(--color-primary);
 }
 
-.dot {
+.eyebrow::before {
+  content: '';
+  flex: none;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -58,266 +77,481 @@
 }
 
 .title {
-  font-size: var(--font-size-hero);
-  max-width: 530px;
-  margin: 23px 0 17px;
+  margin: 18px 0 0;
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--color-text);
 }
 
 .slogan {
+  margin: 18px 0 0;
   font-family: var(--font-display);
-  font-size: 25px;
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-tight);
+  font-size: 21px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
   color: var(--color-primary);
-  margin-bottom: 18px;
 }
 
 .lead {
-  max-width: 420px;
-  margin-bottom: 25px;
-  font-size: var(--font-size-lead);
+  max-width: 400px;
+  margin: 12px 0 0;
+  font-size: var(--font-size-body);
   line-height: 1.7;
   color: var(--color-text-muted);
 }
 
-/* Tarefa 0051: o limite do MVP, sempre na tela (o selo da foto some no celular) */
-.mvp {
-  max-width: 420px;
-  margin: -10px 0 22px;
-  font-size: var(--font-size-caption);
-  line-height: 1.5;
-  color: var(--color-text);
+.listen {
+  margin-top: 10px;
 }
 
-.actions {
-  max-width: 340px;
+/* "Começar": botão principal verde, 58 px */
+.start {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 260px;
+  height: 58px;
+  margin-top: 22px;
+  padding: 0 36px;
+  border-radius: var(--radius-cta);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-cta);
+  color: var(--color-on-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  text-decoration: none;
+}
+
+.start:hover {
+  background: var(--color-primary-strong);
+  color: var(--color-on-primary);
+}
+
+.start svg {
+  flex: none;
+  transition: transform 0.15s;
+}
+
+.start:hover svg {
+  transform: translateX(3px);
+}
+
+/* Selo "Dados da NASA · Triângulo Mineiro · MG": abre o modal das fontes */
+.seal {
+  position: absolute;
+  z-index: 3;
+  top: 28px;
+  /* Alinhado à coluna do conteúdo (em 1280 px, igual à margem do protótipo). */
+  right: max(var(--page-margin-v4), calc((100% - var(--page-width-v4)) / 2 + var(--page-margin-v4)));
   display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.meta {
-  font-size: var(--font-size-tiny);
-  text-align: center;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 10px 12px;
+  border: 0;
+  border-radius: var(--radius-2xs);
+  background: var(--color-seal);
+  box-shadow: var(--shadow-seal);
   color: var(--color-text-muted);
-  margin-bottom: 2px;
+  font-size: var(--font-size-tiny);
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
 }
 
-/* P5: "Prefere conversar? Fale com o Raiz Orbital no Telegram" */
-.telegram {
-  font-size: var(--font-size-caption);
-  text-align: center;
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-
-.orbit {
-  position: absolute;
-  right: 30px;
-  top: 32px;
-  width: 250px;
-  color: var(--color-primary);
-  opacity: 0.85;
-}
-
-.photoLabel {
-  position: absolute;
-  right: 32px;
-  bottom: 28px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 17px;
-  border-radius: var(--radius-tag);
+.seal:hover {
   background: var(--color-surface);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-seal-hover);
+}
+
+.seal b {
+  display: block;
   color: var(--color-primary);
-  font-size: var(--font-size-caption);
-  line-height: 1.4;
+  font-weight: var(--font-weight-semibold);
 }
 
-.photoLabel svg {
-  flex: 0 0 auto;
+.sealIcon {
+  display: flex;
+  color: var(--color-primary);
 }
 
-/* Os 3 passos */
-.steps {
-  width: 100%;
-  max-width: var(--page-max-width);
-  margin-inline: auto;
-  padding: 35px var(--page-gutter) 39px;
+.sealMore {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-tint-green);
+  color: var(--color-primary);
 }
 
-.stepsHeading {
+/* Marca d'água obrigatória em imagem gerada por IA (regra do NASA Space Apps) */
+.aiMark {
+  position: absolute;
+  z-index: 3;
+  top: 92px;
+  right: max(var(--page-margin-v4), calc((100% - var(--page-width-v4)) / 2 + var(--page-margin-v4)));
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 23px;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--color-ai-mark);
+  color: var(--color-on-primary);
+  font-size: 11.5px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+  letter-spacing: 0.01em;
 }
 
-.stepsTitle {
-  font-size: 22px;
-}
-
-.stepsEyebrow {
-  flex: 0 0 auto;
-}
-
-.stepsGrid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* Os 3 passos: uma faixa só, presa ao fim da abertura */
+.steps {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-steps);
+  box-shadow: var(--shadow-steps);
+  backdrop-filter: blur(6px);
 }
 
 .step {
   display: flex;
   align-items: center;
-  gap: 17px;
-  padding: 23px;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  gap: 14px;
   min-width: 0;
+  padding: 20px 24px;
+}
+
+.step + .step {
+  border-left: 1px solid var(--color-border);
 }
 
 .stepIcon {
-  flex: 0 0 48px;
-  width: 48px;
-  height: 48px;
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--color-tint-green);
   color: var(--color-primary);
 }
 
 .stepIcon[data-tone='blue'] {
   background: var(--color-tint-blue);
-  color: var(--color-secondary);
+  color: var(--color-info);
 }
 
 .stepNumber {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--font-size-micro);
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
+  line-height: 1;
 }
 
 .stepTitle {
-  font-size: 18px;
-  margin-bottom: 5px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+  color: var(--color-text);
 }
 
 .stepText {
+  margin: 3px 0 0;
   font-size: var(--font-size-caption);
+  line-height: 1.4;
   color: var(--color-text-muted);
 }
 
-@media (min-width: 1500px) {
-  .hero {
-    min-height: 640px;
-  }
-
-  .heroContent {
-    padding-block: 80px;
-  }
+/* ---------- Faixa do agrônomo (acima do rodapé) ---------- */
+.agro {
+  background: var(--color-tint-green-soft);
+  border-top: 1px solid var(--color-border-agro);
 }
 
-@media (max-width: 1024px) {
-  .copy {
-    max-width: 490px;
+.agroInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: var(--page-width-v4);
+  margin: 0 auto;
+  padding: 16px var(--page-margin-v4);
+}
+
+.agroText {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  font-size: var(--font-size-small);
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.agroText b {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.agroIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xs);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.agroButton {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-2xs);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.agroButton:hover {
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+}
+
+/* ---------- Modal "De onde vêm os dados" ---------- */
+.sources {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+
+.sources li {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.sources li:first-child {
+  border-top: 0;
+}
+
+.sources b {
+  display: block;
+  color: var(--color-text);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+}
+
+.sources span:not(.sourceIcon) {
+  display: block;
+  margin-top: 2px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--color-text-soft);
+}
+
+.sourceIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-2xs);
+  background: var(--color-tint-green-soft);
+  color: var(--color-primary);
+}
+
+.sourcesNote {
+  margin: 8px 0 18px;
+  padding: 12px 14px;
+  border-radius: var(--radius-2xs);
+  background: var(--color-tint-green-soft);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.allCredits {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.allCredits:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Foco visível em tudo que é clicável: contorno verde-claro de 3 px */
+.start:focus-visible,
+.seal:focus-visible,
+.agroButton:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Celular e tablet (até 900 px) ---------- */
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
   }
 
-  .orbit {
-    width: 190px;
-    right: 15px;
+  /* A foto vem em cima, com 210 px e degradê para branco embaixo */
+  .photo {
+    position: relative;
+    inset: auto;
+    flex: none;
+    width: 100%;
+    height: 210px;
+  }
+
+  .photo img {
+    object-position: center 70%;
+  }
+
+  .photo::after {
+    background: var(--hero-photo-fade-mobile);
+  }
+
+  .inner {
+    padding-top: 4px;
+    padding-bottom: 28px;
+  }
+
+  .copy {
+    max-width: none;
+    margin-bottom: 24px;
+  }
+
+  .title {
+    margin-top: 16px;
+    font-size: 38px;
+  }
+
+  .slogan {
+    margin-top: 12px;
+    font-size: 19px;
+  }
+
+  .lead {
+    max-width: none;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .start {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    height: 56px;
+  }
+
+  .seal {
+    top: 14px;
+    right: 12px;
+    gap: 8px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .sealIcon {
+    display: none;
+  }
+
+  /* No celular, a marca d'água fica no canto inferior esquerdo da foto */
+  .aiMark {
+    top: 176px;
+    right: auto;
+    left: 12px;
+  }
+
+  .steps {
+    grid-template-columns: 1fr;
+    margin-top: 0;
+    border-color: transparent;
+    background: var(--color-tint-green-soft);
+    box-shadow: none;
   }
 
   .step {
-    padding: 18px;
-    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .step + .step {
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
   }
 
   .stepTitle {
     font-size: 16px;
   }
+
+  .agroInner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .agroText {
+    align-items: flex-start;
+    font-size: 14.5px;
+    line-height: 1.45;
+  }
+
+  .agroButton {
+    justify-content: center;
+    height: 48px;
+  }
 }
 
-@media (max-width: 768px) {
-  .hero {
-    min-height: 0;
-  }
-
-  .hero::after {
-    background: var(--hero-wash-mobile);
-  }
-
-  .photo {
-    object-position: 66% center;
-  }
-
-  .heroContent {
-    padding-block: 35px 40px;
-  }
-
-  .copy {
-    max-width: none;
-  }
-
+@media (max-width: 360px) {
   .title {
-    max-width: 360px;
-    margin-top: 18px;
-  }
-
-  .slogan {
-    font-size: 23px;
-  }
-
-  .lead {
-    max-width: 310px;
-    font-size: var(--font-size-body);
-  }
-
-  .actions {
-    max-width: none;
-  }
-
-  .meta {
-    font-size: 12px;
-  }
-
-  .orbit,
-  .photoLabel,
-  .stepsEyebrow,
-  .stepNumber {
-    display: none;
-  }
-
-  .steps {
-    padding-block: 26px;
-  }
-
-  .stepsTitle {
-    font-size: 20px;
-  }
-
-  .stepsGrid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .step {
-    padding: 19px;
-  }
-
-  .stepTitle {
-    font-size: 18px;
+    font-size: 34px;
   }
 }

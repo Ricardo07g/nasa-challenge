@@ -1,0 +1,34 @@
+/* "Ouvir resumo": link discreto numa linha própria (azul, 14 px, sem borda) */
+.listen {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-info);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.listen svg {
+  flex: none;
+}
+
+.listen:hover .label {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.listen[aria-pressed='true'] {
+  font-weight: var(--font-weight-semibold);
+}
+
+.listen:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}

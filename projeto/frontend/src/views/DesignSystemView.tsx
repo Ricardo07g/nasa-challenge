@@ -205,7 +205,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             <Button arrow detail={t.when.cta}>
               {t.when.nextStep}
             </Button>
-            <Button variant="outline">{t.start.example}</Button>
+            <Button variant="outline">{t.where.seeExample}</Button>
             <Button variant="outline-blue" icon={<CrosshairIcon />}>
               {t.where.useLocation}
             </Button>
