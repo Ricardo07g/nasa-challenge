@@ -73,8 +73,14 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
   lê o `code`). O `main.py` traduz os erros de domínio (404 `NOT_FOUND` / `OUTSIDE_AREA`, 422
   `VALIDATION_ERROR`) e o parâmetro inválido da requisição (422 `INVALID_REQUEST`, com a lista
   `invalid_params`: `name`, `in`, `reason`). Rota nova não precisa de nada para ganhar esse formato.
-- **Cache HTTP:** só `/recomendacao` manda `Cache-Control: public, max-age=86400` (plano técnico §8),
-  com `Vary: Accept-Language`, e só na resposta 200. Erro nunca vai com cache.
+- **Cache HTTP (que revalida):** só `/recomendacao` usa cache, e só na resposta 200:
+  `Cache-Control: public, no-cache` (pode guardar, mas pergunta à API toda vez), `ETag` forte (SHA-256
+  do corpo JSON, 32 dígitos hexadecimais, entre aspas) e `Vary: Accept-Language`. Com `If-None-Match`
+  igual ao ETag (comparação fraca: aceita `W/`, lista e `*`), a API responde **304** sem corpo, com os
+  mesmos `ETag`, `Cache-Control` e `Vary`. Erro nunca vai com cache nem ETag. O helper fica em
+  `app/controllers/http_cache.py` (`revalidated_json_response`). Isso ajusta o `max-age=86400` do
+  plano técnico §8: com ele, o dado carregado depois no banco ficava velho no navegador por até 24 h
+  (tarefa 0025).
 
 ## Banco (PostgreSQL + PostGIS)
 

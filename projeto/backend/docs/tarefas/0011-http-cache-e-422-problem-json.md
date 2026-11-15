@@ -2,7 +2,7 @@
 
 - **Identificador:** `0011`
 - **Título:** Cache HTTP em `/recomendacao` e 422 em problem+json
-- **Status:** Concluída
+- **Status:** Concluída (o cache foi ajustado pela [tarefa 0025](0025-cache-que-revalida.md): `public, no-cache` + `ETag` e 304, no lugar do `max-age=86400`)
 - **Prioridade:** Média (sinal fraco no campo; contrato de erro único para o front)
 - **Módulos afetados:** `projeto/backend/app/main.py`, `projeto/backend/app/controllers/recomendacao_controller.py`, `projeto/backend/tests/integration/controllers/test_recomendacao_controller.py`, `projeto/backend/AGENTS.md`
 - **Roteiro:** [R4.5](../roteiro-de-implementacao.md) (Fase 4)
