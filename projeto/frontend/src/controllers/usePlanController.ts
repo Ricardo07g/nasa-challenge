@@ -5,15 +5,7 @@ import type { ApiMode } from '../repositories/repositoryMode'
 import { farmService, type FarmService } from '../services/farmService'
 import { keepFlowQuery } from '../services/flowParams'
 import { PAST_YEARS } from '../services/pastSeasonService'
-import {
-  buildPlan,
-  findOption,
-  initialScenario,
-  normalizeHectares,
-  plantingRule,
-  testAreaTotals,
-  type PlanScenario,
-} from '../services/recomendacaoRules'
+import { buildPlan, initialScenario, plantingRule, type PlanScenario } from '../services/recomendacaoRules'
 import { useAnswerNav } from './useAnswerNav'
 import { useFlowRecomendacao } from './useFlowRecomendacao'
 
@@ -22,8 +14,8 @@ type Deps = { farm: FarmService; apiMode: ApiMode }
 const defaultDeps: Deps = { farm: farmService, apiMode: currentApiMode }
 
 /**
- * Tela 7 "Plano de 3 anos": sinal para o outono com Plano A / Plano B (RF-20) e os hectares para testar
- * com os totais em reais (RF-21).
+ * Tela 7 "Plano de 3 anos": sinal para o outono com Plano A / Plano B (RF-20). O bloco "Comece por um pedaço"
+ * (hectares e totais em reais, RF-21) saiu na tarefa 0040: nenhum valor em reais no produto.
  */
 export function usePlanController(deps: Deps = defaultDeps) {
   const { redirectTo, recomendacao, status } = useFlowRecomendacao(deps.farm)
@@ -36,18 +28,7 @@ export function usePlanController(deps: Deps = defaultDeps) {
   const scenario = chosen ?? initialScenario(data?.sinal)
   const chooseScenario = useCallback((value: PlanScenario | null) => value && setChosen(value), [])
 
-  // Hectares: o campo aceita qualquer texto; a conta usa o valor normalizado (padrão 50 ha).
-  const [areaInput, setAreaInput] = useState('50')
-  const hectares = normalizeHectares(areaInput)
-  const changeArea = useCallback((value: string) => setAreaInput(value), [])
-  const commitArea = useCallback(() => setAreaInput((value) => String(normalizeHectares(value))), [])
-  const stepArea = useCallback(
-    (delta: number) => setAreaInput((value) => String(Math.max(1, normalizeHectares(value) + delta))),
-    [],
-  )
-
   const plan = useMemo(() => (data ? buildPlan(data, scenario) : null), [data, scenario])
-  const firstYear = data && plan ? findOption(data.opcoes, plan.years[0]?.crop) : undefined
 
   return {
     redirectTo,
@@ -57,12 +38,6 @@ export function usePlanController(deps: Deps = defaultDeps) {
     signal: data?.sinal ?? null,
     scenario,
     chooseScenario,
-    areaInput,
-    hectares,
-    changeArea,
-    commitArea,
-    stepArea,
-    totals: testAreaTotals(firstYear, hectares),
     rule: data ? plantingRule(data) : null,
     plan,
     /** O estudo do ganho na soja é ilustrativo (não vem de dado nenhum): só com os dados de exemplo. */

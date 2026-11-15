@@ -27,7 +27,7 @@ function blockStatus(state: AsyncState<unknown>): BlockStatus {
 
 /**
  * Tela 8 "Na sua região": a área de soja parada na região pelo satélite (P3, `/api/regiao`) e o que
- * os vizinhos contam. Com a API real, a comunidade fica "Ainda não conectado"; a região fica
+ * os vizinhos contam. Com a API real, a comunidade fica "not-connected" (não aparece); a região fica
  * "outside" quando o ponto está fora das regiões que o satélite já mediu. Os vizinhos simulados e
  * os botões de demonstração só existem com os dados de exemplo.
  */
@@ -46,7 +46,7 @@ export function useCommunityController(deps: Deps = defaultDeps) {
   // P3: área parada na região, pelo satélite.
   const region = useAsync(() => deps.community.region(center, lang), [center, lang, deps.community])
   // Fora das regiões que o satélite já mediu (404 OUTSIDE_AREA) não é falha nem função desligada:
-  // estado próprio, que explica. "Ainda não conectado" fica só para quando o endpoint não existe.
+  // estado próprio. "not-connected" fica só para quando o endpoint não existe (nos dois, o bloco não aparece).
   const regionStatus: RegionStatus =
     region.status === 'error' && isOutsideArea(region.error) ? 'outside' : blockStatus(region)
   // Histórico da própria lavoura, para comparar com a região (quase sempre já no cache).

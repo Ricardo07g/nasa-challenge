@@ -13,15 +13,13 @@ function setup() {
 }
 
 describe('DesignSystemView (/design-system)', () => {
-  it('mostra o estado "Ainda não conectado" em linha e em bloco, igual ao das telas', () => {
+  it('não tem mais o estado "Ainda não conectado" (decisão D2) nem valor em reais (tarefa 0040)', () => {
     setup()
 
-    expect(screen.getByRole('region', { name: 'Choveu aqui' })).toHaveTextContent('Ainda não conectado')
-    const notes = screen.getAllByText('Ainda não conectado').map((text) => text.closest('[data-status="not-connected"]'))
-    expect(notes.some((note) => note?.textContent === 'Custo da semente: Ainda não conectado')).toBe(true)
-    const climate = screen.getByRole('heading', { name: 'Clima dos próximos anos' }).closest('[data-status]')
-    expect(climate).toHaveAttribute('data-status', 'unavailable')
-    expect(climate).toHaveTextContent('Ainda não conectado')
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('R$')
+    expect(screen.getByRole('button', { name: 'Renda' })).toBeInTheDocument()
+    expect(screen.getByText('Dá grão para vender')).toBeInTheDocument()
   })
 
   it('mostra o aviso do modo de demonstração', () => {

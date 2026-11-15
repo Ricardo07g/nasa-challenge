@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class RegrasClima:
-    """Aperto de água e calor por ano (PRD 7.2) e perda de produtividade pelo ISNA (PRD 7.5)."""
+    """Aperto de água e calor por ano (PRD 7.2)."""
 
     isna_grao: float
     isna_cobertura: float
@@ -16,10 +16,6 @@ class RegrasClima:
     janela_cobertura_dias: int
     calor_temp_c: float
     calor_min_dias: int
-    perda_isna_sem_perda: float
-    perda_isna_alta_abaixo: float
-    perda_fator_media: float
-    perda_fator_alta: float
 
 
 @dataclass(frozen=True)
@@ -41,8 +37,21 @@ class RegrasRotulos:
     chuva_medio_pct: float
     terra_bom: float
     terra_medio: float
-    dinheiro_bom: float
-    dinheiro_medio: float
+    renda_bom: float
+    renda_medio: float
+
+
+@dataclass(frozen=True)
+class RegrasRenda:
+    """Nota de renda sem preço nem custo (PRD 7.5, tarefa 0040).
+
+    A cultura cujo `tipo` (culturas.yaml) está em `tipos_com_grao` dá grão para vender: a nota de
+    renda é a segurança climática dela (anos bons / total x 100). As outras (cobertura, pousio) não
+    dão grão e ficam com `nota_sem_grao`.
+    """
+
+    tipos_com_grao: frozenset[str]
+    nota_sem_grao: float
 
 
 @dataclass(frozen=True)
@@ -229,6 +238,11 @@ class FrasesPorque:
     colheita_tarde: str
     # Histórico com safras confirmadas pelo produtor (tarefa 0039): {confirmadas} {vistas}
     historico_confirmado: str
+    # Renda só com fatos (tarefa 0040): dá grão ou não, e o risco de perder a lavoura
+    # ({anos_aperto} {total})
+    renda_com_grao: str
+    renda_sem_grao: str
+    renda_risco: str
 
 
 @dataclass(frozen=True)
@@ -238,6 +252,7 @@ class Regras:
     clima: RegrasClima
     nota_final: RegrasNotaFinal
     rotulos: RegrasRotulos
+    renda: RegrasRenda
     solo: RegrasSolo
     ndvi: RegrasNdvi
     historico_ndvi: RegrasHistoricoNdvi

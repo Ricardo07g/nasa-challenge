@@ -1,4 +1,4 @@
-import { NotConnected, StripLegend, TappableYearStrip, YearStrip } from '../design-system/components/Status'
+import { StripLegend, TappableYearStrip, YearStrip } from '../design-system/components/Status'
 import type { Messages } from '../i18n/messages.pt'
 import type { Opcao } from '../models/recomendacao'
 import type { RainSummary } from '../services/satelliteService'
@@ -30,33 +30,26 @@ export function RainYears({ t, option }: { t: Messages; option: Opcao }) {
   )
 }
 
-/** Sem o detalhe de cada ano na API (P1): o que falta aparece como "Ainda não conectado". */
-export function YearDetailNotConnected({ t }: { t: Messages }) {
-  return <NotConnected label={t.common.notConnected} what={t.answer.yearDetail} />
-}
-
 /** Legenda dos quadrinhos de chuva; com os detalhes dos anos, mostra também El Niño e La Niña. */
 export function RainLegend({ t, option, rain }: { t: Messages; option: Opcao; rain: RainSummary | null }) {
   const a = t.answer
   const detailed = Boolean(option.anos_detalhe?.length)
+  // Sem o detalhe de cada ano na API (P1), a faixa fica estática e nada avisa (decisão D2).
   return (
-    <>
-      <StripLegend
-        items={[
-          { state: 'good', label: a.rainEnough },
-          { state: 'bad', label: a.rainShort },
-        ]}
-        markers={
-          detailed
-            ? [
-                { kind: 'el_nino', label: a.ensoNino },
-                { kind: 'la_nina', label: a.ensoNina },
-              ]
-            : []
-        }
-        note={rainPeriodText(t, option.chuva.anos, rain)}
-      />
-      {!detailed && <YearDetailNotConnected t={t} />}
-    </>
+    <StripLegend
+      items={[
+        { state: 'good', label: a.rainEnough },
+        { state: 'bad', label: a.rainShort },
+      ]}
+      markers={
+        detailed
+          ? [
+              { kind: 'el_nino', label: a.ensoNino },
+              { kind: 'la_nina', label: a.ensoNina },
+            ]
+          : []
+      }
+      note={rainPeriodText(t, option.chuva.anos, rain)}
+    />
   )
 }

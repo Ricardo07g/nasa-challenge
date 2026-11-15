@@ -13,7 +13,7 @@ const byFinal = (a: Opcao, b: Opcao) => b.notas.final - a.notas.final
 
 const byAxis: Record<Eixo, (a: Opcao, b: Opcao) => number> = {
   chuva: (a, b) => b.chuva.anos_bons - a.chuva.anos_bons,
-  dinheiro: (a, b) => b.dinheiro.margem_ha - a.dinheiro.margem_ha,
+  renda: (a, b) => b.notas.renda - a.notas.renda,
   terra: (a, b) => b.terra.nota - a.terra.nota,
 }
 
@@ -31,9 +31,9 @@ export function sortOptions(options: readonly Opcao[], axis: Eixo | null): Opcao
 export function alternativeSummary(motive: Motivo, option: Opcao): string[] {
   switch (motive) {
     case 'menos_risco':
-      return [option.chuva.texto, option.dinheiro.texto]
-    case 'mais_dinheiro':
-      return [option.dinheiro.texto, option.terra.texto]
+      return [option.chuva.texto, option.renda.texto]
+    case 'mais_renda':
+      return [option.renda.texto, option.renda.risco]
     case 'cuidar_da_terra':
       return [option.terra.texto]
   }
@@ -175,27 +175,6 @@ export function scoreRows(recomendacao: Recomendacao): { id: CropId; nome: strin
 /** RF-20: o sinal de ano seco já marca o Plano B; normal, incerto ou sem sinal marcam o Plano A. */
 export function initialScenario(sinal: SinalOutono | null | undefined): PlanScenario {
   return sinal?.nivel === 'seco' ? 'seco' : 'normal'
-}
-
-/** RF-21: hectares do pedaço de teste. Vazio, zero ou inválido volta para o padrão de 50 ha. */
-export function normalizeHectares(value: string | number): number {
-  const number = Number(value)
-  return !Number.isFinite(number) || number <= 0 ? 50 : Math.max(1, Math.floor(number))
-}
-
-export type TestAreaTotals = { margin: number | null; seed: number | null; worstDry: number | null }
-
-/**
- * RF-21 (PRD §7.11): para a opção do 1º ano do plano marcado, quanto deve sobrar, o custo da semente e
- * o pior caso num ano seco, em reais. Sem o valor por hectare na API, aquele total fica de fora.
- */
-export function testAreaTotals(option: Opcao | undefined, hectares: number): TestAreaTotals {
-  const times = (perHectare: number | undefined) => (perHectare === undefined ? null : perHectare * hectares)
-  return {
-    margin: option ? option.dinheiro.margem_ha * hectares : null,
-    seed: times(option?.custo_semente_ha),
-    worstDry: times(option?.dinheiro.pior_ano_seco_ha),
-  }
 }
 
 export type PlantingRule = { text: string } | { date: string; planA: CropId; planB: CropId }

@@ -35,12 +35,10 @@ def _crop(
     tipo: str,
     limite: str | None,
     solo: tuple[int, int, int],
-    economia: tuple[float, float, float] = (0.0, 0.0, 0.0),
     n_kg: int = 0,
     steps_en: tuple[str, ...] = ("Step 1",),
 ) -> CropParams:
     palhada, nitrogenio, pragas = solo
-    produtividade, preco, custo = economia
     return CropParams(
         id=crop_id,
         nome=crop_id.replace("_", " ").title(),
@@ -55,23 +53,20 @@ def _crop(
         solo_nitrogenio=nitrogenio,
         solo_pragas=pragas,
         n_deixado_kg=n_kg,
-        produtividade_padrao_sc_ha=produtividade,
-        preco_padrao_saca=preco,
-        custo_padrao_ha=custo,
         como_fazer=("Passo 1",),
         como_fazer_en=steps_en,
     )
 
 
-# Pontos de solo da tabela 7.4 do PRD e dinheiro do culturas.yaml
+# Pontos de solo da tabela 7.4 do PRD (sem preço nem custo: a renda não usa reais, tarefa 0040)
 CROPS = [
     _crop("pousio", "pousio", None, (0, 0, 0)),
-    _crop("milho_safrinha", "grao", "02-28", (20, 0, 0), (80.0, 62.0, 3500.0)),
-    _crop("sorgo", "grao", "03-20", (20, 0, 15), (60.0, 49.6, 2200.0)),
-    _crop("milho_braquiaria", "consorcio", "02-28", (40, 0, 10), (76.0, 62.0, 3800.0)),
+    _crop("milho_safrinha", "grao", "02-28", (20, 0, 0)),
+    _crop("sorgo", "grao", "03-20", (20, 0, 15)),
+    _crop("milho_braquiaria", "consorcio", "02-28", (40, 0, 10)),
     # Milheto sem tradução dos passos: em inglês cai no português.
-    _crop("milheto", "cobertura", "03-15", (35, 0, 20), (0.0, 0.0, 600.0), steps_en=()),
-    _crop("crotalaria", "cobertura", "02-28", (25, 30, 30), (0.0, 0.0, 800.0), n_kg=80),
+    _crop("milheto", "cobertura", "03-15", (35, 0, 20), steps_en=()),
+    _crop("crotalaria", "cobertura", "02-28", (25, 30, 30), n_kg=80),
 ]
 
 
@@ -375,22 +370,79 @@ def test_should_rescale_soil_by_theoretical_maximum_when_nematoide_is_true() -> 
     assert soil_score(topo, None, regras) == 100.0
 
 
-def test_should_score_income_relative_to_best_margin_when_no_losses() -> None:
-    # PRD 7.5: margem = produtividade x fator x preço - custo; nota = 100 x margem / maior margem
-    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+# --- renda sem preço nem custo (tarefa 0040, seção 1 da remodelagem) --------------------------
+
+FOUR_DRY_YEARS = (2006, 2009, 2012, 2015)
+
+
+def test_should_score_income_of_grain_with_its_own_climate_safety() -> None:
+    # Grão e consórcio: nota de renda = segurança climática da própria opção (anos bons / total).
+    # Cobertura não dá grão: nota fixa do regras.yaml (renda.nota_sem_grao = 0).
+    rec = _service(FakeClimateRepository(dry_years=FOUR_DRY_YEARS)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
     milho = _opcao(rec, "milho_safrinha")
     braquiaria = _opcao(rec, "milho_braquiaria")
+
+    assert milho.notas.seguranca == 80.0
+    assert milho.notas.renda == 80.0
+    assert braquiaria.notas.renda == braquiaria.notas.seguranca
+    assert _opcao(rec, "sorgo").notas.renda == _opcao(rec, "sorgo").notas.seguranca
+    assert _opcao(rec, "crotalaria").notas.renda == 0.0
+    assert _opcao(rec, "milheto").notas.renda == 0.0
+    assert milho.rotulo_renda == "bom"  # 80 >= 70 (rotulos.renda_bom)
+    assert _opcao(rec, "crotalaria").rotulo_renda == "fraco"
+
+
+def test_should_state_income_facts_without_any_money_value() -> None:
+    rec = _service(FakeClimateRepository(dry_years=FOUR_DRY_YEARS)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+    milho = _opcao(rec, "milho_safrinha")
     crotalaria = _opcao(rec, "crotalaria")
 
-    assert milho.margem_ha == pytest.approx(80 * 62 - 3500)
-    assert milho.notas.renda == 100.0
-    assert braquiaria.notas.renda == pytest.approx(round(100 * (76 * 62 - 3800) / 1460, 1))
-    assert crotalaria.margem_ha == pytest.approx(-800.0)
-    assert crotalaria.notas.renda == 0.0
-    assert milho.texto_dinheiro == "Sobra perto de R$ 1.460 por hectare"
-    assert crotalaria.texto_dinheiro == "Custa perto de R$ 800 por hectare"
-    assert milho.rotulo_dinheiro == "bom"
-    assert crotalaria.rotulo_dinheiro == "fraco"
+    assert (milho.da_grao, _opcao(rec, "milho_braquiaria").da_grao) == (True, True)
+    assert crotalaria.da_grao is False
+    assert milho.texto_renda == "Dá grão para vender"
+    assert crotalaria.texto_renda == "Não dá grão: é investimento na terra"
+    # O N vem do motor (anos com aperto) e o total, da série
+    assert milho.texto_risco == (
+        "Risco de perder a lavoura: faltou água ou fez calor em 4 de 20 anos."
+    )
+    textos = [rec.texto_pousio] + [
+        texto
+        for o in rec.opcoes
+        for texto in (o.texto_chuva, o.texto_renda, o.texto_risco, o.texto_terra, *o.porque)
+    ]
+    assert not any("R$" in texto for texto in textos)
+
+
+def test_should_state_income_facts_in_english() -> None:
+    rec = _service(FakeClimateRepository(dry_years=FOUR_DRY_YEARS)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio", lang="en"
+    )
+
+    assert _opcao(rec, "sorgo").texto_renda == "Gives grain to sell"
+    assert _opcao(rec, "milheto").texto_renda == "No grain: it is an investment in the soil"
+    assert _opcao(rec, "milho_safrinha").texto_risco == (
+        "Risk of losing the crop: water ran short or it was too hot in 4 of 20 years."
+    )
+
+
+def test_should_take_grain_types_and_no_grain_score_from_injected_rules() -> None:
+    # Com só "grao" dando grão e nota 10 sem grão, o consórcio vira "sem grão" e a cobertura vale 10
+    base = load_default_rules()
+    renda = replace(base.renda, tipos_com_grao=frozenset({"grao"}), nota_sem_grao=10.0)
+
+    rec = _service(rules=replace(base, renda=renda)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+    braquiaria = _opcao(rec, "milho_braquiaria")
+
+    assert (braquiaria.da_grao, braquiaria.notas.renda) == (False, 10.0)
+    assert braquiaria.texto_renda == "Não dá grão: é investimento na terra"
+    assert _opcao(rec, "crotalaria").notas.renda == 10.0
+    assert _opcao(rec, "milho_safrinha").notas.renda == 100.0
 
 
 @pytest.mark.parametrize(
@@ -514,6 +566,8 @@ def test_should_score_dry_scenario_only_with_the_four_driest_years() -> None:
 
     assert milho.notas.seguranca == 80.0
     assert milho.notas_seco.seguranca == 0.0
+    # Tarefa 0040: no ano seco, a renda do grão também é a segurança dos 4 anos mais secos
+    assert (milho.notas.renda, milho.notas_seco.renda) == (80.0, 0.0)
     assert "2007, 2010, 2012, 2014" in rec.plano_seco.descricao
 
 
@@ -540,42 +594,16 @@ def test_should_give_fallow_future_100_when_cmip6_deltas_exist() -> None:
     assert rec.plano_hoje.nota == 45.0
 
 
-def test_should_give_margin_of_the_worst_dry_year_per_hectare() -> None:
-    # A1.2 / PRD 7.11: margem do pior ano entre os 4 mais secos (a base do plano B). Nos anos sem
-    # chuva de fevereiro a junho o milho perde 60% (ISNA abaixo de 0,55, PRD 7.5).
-    rec = _service(FakeClimateRepository(dry_years=(2007, 2010, 2012, 2014))).recommend(
-        lat=-18.95, lon=-48.20, colheita="meio"
-    )
-
-    assert _opcao(rec, "milho_safrinha").pior_ano_seco_ha == pytest.approx(
-        80 * (1 - 0.60) * 62 - 3500
-    )
-    # Cobertura não dá grão: em qualquer ano sobra só o custo (fica negativo, "faltaria" no front).
-    assert _opcao(rec, "crotalaria").pior_ano_seco_ha == pytest.approx(-800.0)
-
-
-def test_should_take_the_worst_dry_year_and_not_the_average_of_the_dry_years() -> None:
-    # Só 2007 sem chuva: entre os 4 anos mais secos, um perde 60% e três não perdem. A média daria
-    # 80 x (1 - 0,15) x 62 - 3500 = 716; o pior ano dá 80 x 0,4 x 62 - 3500 = -1516.
-    rec = _service(FakeClimateRepository(dry_years=(2007,))).recommend(
-        lat=-18.95, lon=-48.20, colheita="meio"
-    )
-    milho = _opcao(rec, "milho_safrinha")
-
-    assert milho.pior_ano_seco_ha == pytest.approx(80 * 0.4 * 62 - 3500)
-    assert milho.margem_ha > milho.pior_ano_seco_ha
-
-
-def test_should_take_number_of_dry_years_for_the_worst_year_from_injected_rules() -> None:
-    # Com 1 ano seco no regras.yaml, o "pior ano seco" é o mais seco de todos (2007, sem chuva).
+def test_should_score_fallow_income_in_the_plan_with_the_no_grain_score_from_rules() -> None:
+    # O pousio não dá grão: a renda dele no plano é a mesma nota fixa da cobertura (tarefa 0040).
+    # Sem CMIP6: (0,30 x 100 + 0,30 x 10) / 0,85 = 38,8.
     base = load_default_rules()
-    rules = replace(base, rotacao=replace(base.rotacao, anos_secos=1))
+    rules = replace(base, renda=replace(base.renda, nota_sem_grao=10.0))
 
-    rec = _service(FakeClimateRepository(dry_years=(2007,)), rules=rules).recommend(
-        lat=-18.95, lon=-48.20, colheita="meio"
-    )
+    rec = _service(rules=rules).recommend(lat=-18.95, lon=-48.20, colheita="tarde")
 
-    assert _opcao(rec, "milho_safrinha").pior_ano_seco_ha == pytest.approx(80 * 0.4 * 62 - 3500)
+    assert rec.plano_hoje.anos == ("pousio", "pousio", "pousio")
+    assert rec.plano_hoje.nota == pytest.approx(round((0.30 * 100 + 0.30 * 10) / 0.85, 1))
 
 
 def test_should_leave_autumn_signal_empty_without_signal_data() -> None:
@@ -689,15 +717,15 @@ def test_should_weight_final_score_with_injected_rules() -> None:
     assert all(o.notas.final == o.notas.solo for o in rec.opcoes)
 
 
-def test_should_label_money_with_thresholds_from_injected_rules() -> None:
+def test_should_label_income_with_thresholds_from_injected_rules() -> None:
     base = load_default_rules()
-    rotulos = replace(base.rotulos, dinheiro_bom=101.0)
+    rotulos = replace(base.rotulos, renda_bom=101.0)
     rec = _service(rules=replace(base, rotulos=rotulos)).recommend(
         lat=-18.95, lon=-48.20, colheita="meio"
     )
 
     assert _opcao(rec, "milho_safrinha").notas.renda == 100.0
-    assert _opcao(rec, "milho_safrinha").rotulo_dinheiro == "medio"
+    assert _opcao(rec, "milho_safrinha").rotulo_renda == "medio"
 
 
 def test_should_write_why_with_phrase_template_and_heat_number_from_injected_rules() -> None:
@@ -832,9 +860,10 @@ def _option(
         rotulo_chuva="medio",
         texto_chuva="",
         futuro=None,
-        margem_ha=0.0,
-        rotulo_dinheiro="medio",
-        texto_dinheiro="",
+        da_grao=renda > 0,
+        rotulo_renda="medio",
+        texto_renda="",
+        texto_risco="",
         rotulo_terra="medio",
         texto_terra="",
         notas=notas,
@@ -844,8 +873,20 @@ def _option(
     )
 
 
+def test_should_offer_more_income_when_an_option_gives_grain_and_the_best_does_not() -> None:
+    # Tarefa 0040: o eixo da renda chama `mais_renda` (antes `mais_dinheiro`)
+    opcoes = [
+        _option("crotalaria", seguranca=95.0, renda=0.0, solo=85.0, final=64.0),
+        _option("milho_braquiaria", seguranca=80.0, renda=80.0, solo=50.0, final=60.0),
+    ]
+
+    assert build_alternatives(opcoes, "crotalaria") == (
+        Alternativa(motivo="mais_renda", opcao="milho_braquiaria"),
+    )
+
+
 def test_should_offer_alternative_only_when_better_than_best_on_its_axis() -> None:
-    # Caso real (colheita meio): o milho já tem a maior renda, então não há "mais dinheiro";
+    # Caso real (colheita meio): o milho já tem a maior renda, então não há "mais renda";
     # antes saía o sorgo, com renda 18 contra 100. A crotalária não se repete em dois eixos:
     # empata com o milheto na segurança (95) e é a única maior na terra (85), então fica na terra.
     opcoes = [

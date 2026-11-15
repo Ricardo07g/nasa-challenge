@@ -11,7 +11,6 @@ export const en = {
     demoMode: 'Demo mode: sample data, not from NASA',
     disclaimer: 'It helps you decide. It does not replace your agronomist.',
     ready: 'Done',
-    notConnected: 'Not connected yet',
   },
   header: {
     home: 'Raiz Orbital, back to start',
@@ -48,7 +47,7 @@ export const en = {
   },
   axes: {
     chuva: 'Rain',
-    dinheiro: 'Money',
+    renda: 'Income',
     terra: 'Soil',
   },
   harvest: {
@@ -63,7 +62,7 @@ export const en = {
   },
   motives: {
     menos_risco: 'Less drought risk',
-    mais_dinheiro: 'More money in a good year',
+    mais_renda: 'More income',
     cuidar_da_terra: 'Take care of the soil',
   },
   crops: {
@@ -143,7 +142,6 @@ export const en = {
       `Rain in each month in the region, in mm. ${
         years === last - first + 1 ? `Average of ${first}–${last}` : `Average of ${years} years between ${first} and ${last}`
       }, ${source}.`,
-    chartTitle: 'Rain in each month in the region',
     months: { jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun' },
     soyWarning: (safra: string) =>
       `We did not see soybeans at this point in the last season (${safra}). Check that you marked the right field.`,
@@ -163,15 +161,11 @@ export const en = {
     ],
     found: (lat: string, lon: string) => `Field found: ${lat} / ${lon}`,
     rain: (years: number) => `${years} years of rain and heat read, day by day`,
-    rainWhat: 'Rain and heat',
     history: (years: number) => `${years} years of satellite history`,
-    historyWhat: 'Satellite history',
     /** Clima de 2041–2060 (NEX-GDDP-CMIP6); a previsão do outono aparece à parte. */
     future: (start: string, end: string) => `Climate for ${start}–${end} read`,
     futureRead: 'Future climate read',
-    futureWhat: 'Future climate',
     forecast: (signal: string) => `Autumn outlook: ${signal}`,
-    forecastWhat: 'Autumn outlook',
     ready: 'Answer ready',
     collected: (count: number) => `Data collected ${count}/6`,
     complete: 'Mission complete!',
@@ -192,7 +186,6 @@ export const en = {
     historyTitle: (idle: number, known: number, uncertain: number) =>
       `Your field was left idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,
     historySubtitle: 'What grew after soybeans, year by year:',
-    historyUnavailableTitle: 'What grew after soybeans',
     historyStripLabel: (planted: number, known: number, uncertain: number) =>
       `Planted in ${planted} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,
     historySource: (from: string, to: string) => `Seen by the MODIS satellite (NASA), from ${from} to ${to} each year`,
@@ -205,7 +198,6 @@ export const en = {
         skipped > 0 ? ` ${skipped === 1 ? '1 year was' : `${skipped} years were`} left out for missing data.` : ''
       }`,
     rainDaily: 'Day by day.',
-    rainUnavailableTitle: 'Rain right here',
     soilTitle: (texture: string) => `${texture} soil`,
     soilFromMap: 'From the soil map.',
     soilFromUser: 'You chose it.',
@@ -255,7 +247,6 @@ export const en = {
     future: '2041–2060 climate',
     futureYears: (good: number, total: number, range: { min: number; max: number } | null) =>
       `Would work in ${good} of ${total} years${range ? ` (${range.min} to ${range.max}, depending on the model)` : ''}`,
-    yearDetail: 'What happened each year',
     yearOpen: (year: number) => `See year ${year}`,
     ensoNino: 'El Niño',
     ensoNina: 'La Niña (NOAA)',
@@ -270,7 +261,7 @@ export const en = {
     sortLabel: 'Put first the best at:',
     rank: (position: number) => `${position}.`,
     fallowRain: 'Does not depend on rain',
-    fallowMoney: 'No income',
+    fallowIncome: 'No grain',
     fallowSoil: 'Soil stays bare',
     legend: (period: string) =>
       `Each square is one year (${period}). Filled: there was enough rain. Empty: rain was short when the crop needed it most.`,
@@ -299,18 +290,6 @@ export const en = {
     coveredAll: (total: number) => `Soil covered in all ${total} years`,
     coveredSome: (covered: number, total: number) => `Soil covered in ${covered} of ${total} years`,
     grainYears: (grain: number, total: number) => `Grain in ${grain} of ${total} years`,
-    startSmall: 'Start with a piece',
-    hectares: 'How many hectares would you like to try?',
-    decreaseArea: 'Decrease by 10 hectares',
-    increaseArea: 'Increase by 10 hectares',
-    areaMargin: (value: string) => `About R$ ${value} should remain`,
-    areaSeed: (value: string) => `Seeds cost about R$ ${value}`,
-    seedCost: 'Seed cost',
-    worstDry: 'Worst dry year',
-    areaDryNegative: (value: string) => `In the worst dry year, you would be short by about R$ ${value}`,
-    areaDryPositive: (value: string) => `In the worst dry year, about R$ ${value} would remain`,
-    areaRest: 'Keep the rest of the farm as it is, so you can compare.',
-    areaNote: 'Approximate values; check with your agronomist.',
     gainTitle: 'The gain shows up in the next soybean crop',
     gainText:
       'In a study in the Cerrado, soybeans after grain with brachiaria yielded 11% more than after idle land.',
@@ -354,7 +333,7 @@ export const en = {
       crop: 'Option',
       years: 'Years it worked',
       future: '2041–2060 climate',
-      margin: 'Left per hectare',
+      income: 'Income',
       soil: 'Soil',
     },
     yearsOf: (good: number, total: number) => `${good} of ${total}`,
@@ -368,7 +347,6 @@ export const en = {
   },
   community: {
     title: 'In your region',
-    regionTitle: 'Idle cropland in the region, by satellite',
     regionSubtitle: (km: number) => `Within ${km} km of your field · seen by satellite`,
     regionSubtitleAway: (km: number, distance: number) =>
       `${km} km radius around a point ${distance} km from your field · seen by satellite`,
@@ -386,7 +364,6 @@ export const en = {
     subtitle: (km: number, place: string, count: number) =>
       `Within ${km} km of ${place} · ${count} growers taking part`,
     neighborsTitle: (year: number) => `What neighbors planted after soybeans in ${year}`,
-    neighborsTitleGeneric: 'What neighbors planted after soybeans',
     liked: (liked: number, total: number) => `${liked} of ${total} liked it`,
     dotsLabel: (liked: number, total: number) => `${liked} of ${total} neighbors liked it`,
     dotsCaption: 'Each dot is a neighbor. Filled = liked the result.',
@@ -419,6 +396,11 @@ export const en = {
     validationTitle: 'Did it match what happened?',
     validationText:
       'Coming soon: calculated stress years compared with second-crop corn losses in Uberlândia (IBGE).',
+    incomeTitle: 'Income without money values',
+    incomeText:
+      'Income does not use prices or costs. Options that give grain to sell get the same income score as their safety score: in how many years it worked, from 0 to 100. Options with no grain (cover crops and fallow land) get a fixed income score, zero for now: they are an investment in the soil, and that counts in the soil score.',
+    incomeShown:
+      'In the answer, income shows only facts: whether it gives grain to sell and in how many years water ran short or it was too hot.',
     blindTitle: "What the satellite can't see",
     blindRain: (km: number) => `Rain comes in squares of about ${km} km, not from your field: your rain gauge is worth more.`,
     blindRainGeneric: 'Rain comes in squares several kilometers wide, not from your field: your rain gauge is worth more.',

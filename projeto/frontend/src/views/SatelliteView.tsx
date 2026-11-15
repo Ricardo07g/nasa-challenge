@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import { Button, TextButton } from '../design-system/components/Button'
-import { DataSourceCard } from '../design-system/components/Card'
+import { Card, DataSourceCard } from '../design-system/components/Card'
 import { ChipGroup, RadioCard } from '../design-system/components/Choice'
 import { PageHeading } from '../design-system/components/Content'
 import { BackLink } from '../design-system/components/Navigation'
@@ -34,7 +34,7 @@ export type SatelliteViewProps = {
   adjustTo: string
   /** Anos de chuva usados de fato; null sem dado de chuva. */
   rain: RainSummary | null
-  /** NEX-GDDP-CMIP6 no talhão; null sem ele (o clima dos próximos anos fica "Ainda não conectado"). */
+  /** NEX-GDDP-CMIP6 no talhão; null sem ele (o cartão do clima dos próximos anos não aparece, decisão D2). */
   climate: ClimateSummary | null
   soil: SoilSummary
   soilOpen: boolean
@@ -118,18 +118,9 @@ function HistoryCard({ t, lang, history, confirmations, onConfirmSeason, noSoy, 
       </DataSourceCard>
     )
   }
-  return (
-    <DataSourceCard
-      icon={<HistoryIcon />}
-      title={s.historyUnavailableTitle}
-      subtitle={null}
-      readyLabel={t.common.ready}
-      status="unavailable"
-      unavailableLabel={t.common.notConnected}
-    >
-      {confirm}
-    </DataSourceCard>
-  )
+  // Sem histórico do satélite, o cartão não aparece (decisão D2); com anos para confirmar, o produtor
+  // responde direto (5.6 do pedido: "Sem NDVI para o ponto, pergunte direto").
+  return confirm ? <Card>{confirm}</Card> : null
 }
 
 /** "Confirme as últimas safras": um grupo de botões por ano, com o que o satélite viu ao lado. */
@@ -183,15 +174,15 @@ function Cards(props: SatelliteViewProps) {
     <div className={layout.pageGrid}>
       <div className={layout.stack}>
         <HistoryCard {...props} />
-        <DataSourceCard
-          icon={<DropIcon />}
-          iconTone="blue"
-          title={rain ? s.rainTitle(rain.years) : s.rainUnavailableTitle}
-          subtitle={rain?.period ? s.rainSubtitle(rain.period.start, rain.period.end, rain.skipped) : s.rainDaily}
-          readyLabel={t.common.ready}
-          status={rain ? 'ready' : 'unavailable'}
-          unavailableLabel={t.common.notConnected}
-        />
+        {rain && (
+          <DataSourceCard
+            icon={<DropIcon />}
+            iconTone="blue"
+            title={s.rainTitle(rain.years)}
+            subtitle={rain.period ? s.rainSubtitle(rain.period.start, rain.period.end, rain.skipped) : s.rainDaily}
+            readyLabel={t.common.ready}
+          />
+        )}
       </div>
       <div className={layout.stack}>
         <DataSourceCard
@@ -217,15 +208,15 @@ function Cards(props: SatelliteViewProps) {
             </div>
           )}
         </DataSourceCard>
-        <DataSourceCard
-          icon={<ClimateIcon />}
-          iconTone="blue"
-          title={s.climateTitle}
-          subtitle={climate?.period ? s.climateSubtitle(climate.period.start, climate.period.end) : s.climateSubtitleGeneric}
-          readyLabel={t.common.ready}
-          status={climate ? 'ready' : 'unavailable'}
-          unavailableLabel={t.common.notConnected}
-        />
+        {climate && (
+          <DataSourceCard
+            icon={<ClimateIcon />}
+            iconTone="blue"
+            title={s.climateTitle}
+            subtitle={climate.period ? s.climateSubtitle(climate.period.start, climate.period.end) : s.climateSubtitleGeneric}
+            readyLabel={t.common.ready}
+          />
+        )}
         <Button onClick={onConfirm} arrow>
           {s.cta}
         </Button>

@@ -139,12 +139,11 @@ describe('SatelliteView (tela 4)', () => {
     expect(screen.getByText('Dia por dia.')).toBeInTheDocument()
   })
 
-  it('sem dado de chuva, o cartão da chuva fica tracejado e diz "Ainda não conectado" (sem o ✓)', () => {
+  it('sem dado de chuva, o cartão da chuva não aparece (decisão D2, nada de "Ainda não conectado")', () => {
     setup({ rain: null })
 
-    const card = screen.getByRole('heading', { name: 'Chuva daqui' }).closest('[data-status]')
-    expect(card).toHaveAttribute('data-status', 'unavailable')
-    expect(card).toHaveTextContent('Ainda não conectado')
+    expect(screen.queryByRole('heading', { name: 'Chuva daqui' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
     expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
   })
 
@@ -162,23 +161,21 @@ describe('SatelliteView (tela 4)', () => {
     expect(screen.getByText('Como a chuva e o calor devem mudar nos próximos anos.')).toBeInTheDocument()
   })
 
-  it('sem o CMIP6, o clima dos próximos anos não leva o ✓: diz "Ainda não conectado"', () => {
+  it('sem o CMIP6, o cartão do clima dos próximos anos não aparece (decisão D2)', () => {
     setup({ climate: null })
 
-    const card = screen.getByRole('heading', { name: 'Clima dos próximos anos' }).closest('[data-status]')
-    expect(card).toHaveAttribute('data-status', 'unavailable')
-    expect(card).toHaveTextContent('Ainda não conectado')
+    expect(screen.queryByRole('heading', { name: 'Clima dos próximos anos' })).not.toBeInTheDocument()
     expect(screen.queryByText(/Como a chuva e o calor devem mudar/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
     expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
   })
 
-  it('sem histórico do satélite, o cartão do histórico não some: diz "Ainda não conectado"', () => {
+  it('sem histórico do satélite e sem anos para confirmar, o cartão do histórico não aparece (decisão D2)', () => {
     setup({ history: null })
 
     expect(screen.queryByRole('heading', { name: /ficou parada/ })).not.toBeInTheDocument()
-    const card = screen.getByRole('heading', { name: 'O que cresceu depois da soja' }).closest('[data-status]')
-    expect(card).toHaveAttribute('data-status', 'unavailable')
-    expect(card).toHaveTextContent('Ainda não conectado')
+    expect(screen.queryByRole('heading', { name: 'O que cresceu depois da soja' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
     expect(screen.queryByRole('img', { name: /Plantou em/ })).not.toBeInTheDocument()
     expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
   })
@@ -220,13 +217,13 @@ describe('SatelliteView (tela 4)', () => {
       expect(props.onConfirmSeason).toHaveBeenNthCalledWith(2, 2025, null)
     })
 
-    it('sem histórico do satélite, o bloco fica no cartão "Ainda não conectado"', () => {
+    it('sem histórico do satélite, o produtor confirma direto, sem "Ainda não conectado" (decisão D2)', () => {
       setup({ history: null, confirmations: rows.map((row) => ({ ...row, satellite: null })) })
 
-      const card = screen.getByRole('heading', { name: 'O que cresceu depois da soja' }).closest('[data-status]')
-      expect(card).toHaveAttribute('data-status', 'unavailable')
-      expect(within(card as HTMLElement).getByRole('group', { name: 'Depois da soja de 2026' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Confirme as últimas safras' })).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: 'Depois da soja de 2026' })).toBeInTheDocument()
       expect(screen.queryByText(/O satélite viu/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
     })
 
     it('sem anos para confirmar (API antiga), o bloco não aparece', () => {
@@ -367,12 +364,9 @@ describe('SatelliteView (tela 4)', () => {
 
     expect(screen.getByRole('heading', { name: '17 years of rain right here' })).toBeInTheDocument()
     expect(screen.getByText('From 2005 to 2024, day by day. 3 years were left out for missing data.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Climate in the coming years' }).closest('[data-status]')).toHaveTextContent(
-      'Not connected yet',
-    )
-    expect(screen.getByRole('heading', { name: 'What grew after soybeans' }).closest('[data-status]')).toHaveTextContent(
-      'Not connected yet',
-    )
+    expect(screen.queryByRole('heading', { name: 'Climate in the coming years' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'What grew after soybeans' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Not connected yet/)).not.toBeInTheDocument()
   })
 
   it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {

@@ -33,8 +33,8 @@ const nav = {
   ],
 }
 
-function setup(overrides: Partial<PlanViewProps> = {}) {
-  const props: PlanViewProps = {
+function setupProps(overrides: Partial<PlanViewProps> = {}): PlanViewProps {
+  return {
     t: pt,
     lang: 'pt',
     nav,
@@ -43,11 +43,6 @@ function setup(overrides: Partial<PlanViewProps> = {}) {
     signal: rec.sinal ?? null,
     scenario: 'normal',
     onScenario: vi.fn(),
-    areaInput: '50',
-    onAreaChange: vi.fn(),
-    onAreaCommit: vi.fn(),
-    onAreaStep: vi.fn(),
-    totals: { margin: 35000, seed: 26000, worstDry: -9000 },
     rule: { text: 'No dia de plantar (até 28/fev), se a terra estiver seca, use o plano B: sorgo no lugar do milho.' },
     plan: buildPlan(rec, 'normal'),
     communityTo: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
@@ -55,6 +50,10 @@ function setup(overrides: Partial<PlanViewProps> = {}) {
     showGainReference: true,
     ...overrides,
   }
+}
+
+function setup(overrides: Partial<PlanViewProps> = {}) {
+  const props = setupProps(overrides)
   render(
     <MemoryRouter>
       <PlanView {...props} />
@@ -123,41 +122,26 @@ describe('PlanView (tela 7)', () => {
     )
   })
 
-  it('sem o sinal na API, o cartão do sinal não some: diz "Ainda não conectado" e o Plano A/B continua', () => {
+  it('sem o sinal na API, o sinal não aparece (nada de "Ainda não conectado") e o Plano A/B continua', () => {
     setup({ signal: null })
 
-    const signal = screen.getByRole('region', { name: 'Sinal para o outono de 2027' })
-    expect(signal).toHaveTextContent('Ainda não conectado')
-    expect(signal).not.toHaveTextContent('publicada por')
-    expect(within(signal).getByRole('button', { name: 'Plano A' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Sinal para o outono de 2027' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/publicada por/)).not.toBeInTheDocument()
+    const choice = screen.getByRole('region', { name: 'Qual plano seguir' })
+    expect(within(choice).getByRole('button', { name: 'Plano A' })).toBeInTheDocument()
   })
 
-  it('hectares para testar com os totais em reais (RF-21)', async () => {
-    const props = setup()
+  it('sem "Comece por um pedaço": nenhum hectare nem valor em reais (tarefa 0040)', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <PlanView {...setupProps()} />
+      </MemoryRouter>,
+    )
 
-    const area = screen.getByRole('region', { name: 'Comece por um pedaço' })
-    expect(within(area).getByLabelText('Quantos hectares quer testar?')).toHaveValue(50)
-    expect(area).toHaveTextContent('Deve sobrar perto de R$ 35 mil')
-    expect(area).toHaveTextContent('A semente custa perto de R$ 26 mil')
-    expect(area).toHaveTextContent('No pior ano seco, faltaria perto de R$ 9.000')
-    await userEvent.click(within(area).getByRole('button', { name: 'Aumentar 10 hectares' }))
-    expect(props.onAreaStep).toHaveBeenCalledWith(10)
-  })
-
-  it('sem o custo da semente e o pior ano na API, as linhas ficam com "Ainda não conectado" (sem número)', () => {
-    setup({ totals: { margin: 35000, seed: null, worstDry: null } })
-
-    const area = screen.getByRole('region', { name: 'Comece por um pedaço' })
-    expect(area).toHaveTextContent('Deve sobrar perto de R$ 35 mil')
-    expect(area).toHaveTextContent('Custo da semente: Ainda não conectado')
-    expect(area).toHaveTextContent('Pior ano seco: Ainda não conectado')
-    expect(area).not.toHaveTextContent('A semente custa')
-  })
-
-  it('pior ano seco que ainda sobra dinheiro', () => {
-    setup({ totals: { margin: 35000, seed: 8000, worstDry: 6000 } })
-
-    expect(screen.getByText('No pior ano seco, sobraria perto de R$ 6.000')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Comece por um pedaço' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Quantos hectares quer testar?')).not.toBeInTheDocument()
+    expect(container).not.toHaveTextContent('R$')
   })
 
   it('regra do dia de plantar sem o sinal: montada com a data limite', () => {
@@ -225,7 +209,7 @@ describe('PlanView (tela 7)', () => {
     expect(screen.getByText('El Niño and La Niña chances published by Fonte de teste on November 14.')).toBeInTheDocument()
     expect(screen.getByText('The signal marks Plan B, if it dries.')).toBeInTheDocument()
     expect(screen.getByText('Current soil moisture is for information only: it does not change the plan.')).toBeInTheDocument()
-    expect(screen.getByText('About R$ 35 thousand should remain')).toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('R$')
   })
 
   it('leva ao replay da safra passada (P4)', () => {

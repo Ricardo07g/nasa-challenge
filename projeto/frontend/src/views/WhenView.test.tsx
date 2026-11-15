@@ -130,12 +130,13 @@ describe('WhenView (tela 3)', () => {
     expect(screen.getByText(/Média de 2005 a 2024, GPM IMERG \(NASA\) \+ NASA POWER \+ outra\./)).toBeInTheDocument()
   })
 
-  it('sem o dado da API, o gráfico vira "Ainda não conectado"', () => {
+  it('sem o dado da API, o gráfico não aparece (decisão D2, nada de "Ainda não conectado")', () => {
     setup({ rainChart: null })
 
     const why = screen.getByRole('complementary', { name: 'Por que perguntamos isso?' })
     expect(why).toHaveTextContent('A chuva vai acabando depois de março.')
-    expect(why).toHaveTextContent('Chuva de cada mês na região: Ainda não conectado')
+    expect(why).not.toHaveTextContent('Ainda não conectado')
+    expect(why).not.toHaveTextContent('Chuva de cada mês na região')
     expect(screen.queryByRole('img', { name: /Chuva média por mês/ })).not.toBeInTheDocument()
   })
 

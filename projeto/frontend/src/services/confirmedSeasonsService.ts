@@ -42,7 +42,7 @@ export function withConfirmation(confirmadas: Confirmadas, year: number, value: 
 /**
  * O histórico com as respostas do produtor no lugar do satélite (`fonte_ano: 'produtor'`) e as contas
  * refeitas, a mesma regra do backend. Sem confirmação, o próprio histórico; sem histórico, null (o
- * cartão segue "Ainda não conectado" e o bloco de confirmação continua).
+ * cartão do histórico não aparece e o bloco de confirmação continua, decisão D2).
  */
 export function applyConfirmations(historico: Historico | null, confirmadas: Confirmadas): Historico | null {
   if (!historico || entries(confirmadas).length === 0) return historico

@@ -45,9 +45,6 @@ def _crop(crop_id: str, tipo: str, limite: str | None, nome_en: str = "") -> Cro
         solo_nitrogenio=0,
         solo_pragas=0,
         n_deixado_kg=0,
-        produtividade_padrao_sc_ha=0.0 if pousio else 80.0,
-        preco_padrao_saca=0.0 if pousio else 62.0,
-        custo_padrao_ha=0.0 if pousio else 3500.0,
     )
 
 

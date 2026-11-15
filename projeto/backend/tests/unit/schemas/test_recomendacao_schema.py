@@ -4,29 +4,23 @@ from datetime import date
 
 from app.main import app
 from app.models.recomendacao import AnoDetalhe
-from app.schemas.recomendacao import AnoDetalheSchema, DinheiroSchema, OpcaoSchema
+from app.schemas.recomendacao import AnoDetalheSchema, OpcaoSchema
 
 
-def test_should_keep_money_fields_in_openapi_docs() -> None:
-    # O serializador que tira a chave vazia não pode apagar os campos do `dinheiro` no /docs.
-    schema = app.openapi()["components"]["schemas"]["DinheiroSchema"]
+def test_should_describe_income_only_with_facts_in_openapi_docs() -> None:
+    # Tarefa 0040: o bloco `renda` (antes `dinheiro`) não tem margem, custo nem pior ano em reais.
+    schemas = app.openapi()["components"]["schemas"]
 
-    assert {"margem_ha", "rotulo", "texto", "pior_ano_seco_ha"} <= set(schema["properties"])
-
-
-def test_should_send_worst_dry_year_margin_in_money_block() -> None:
-    dinheiro = DinheiroSchema(margem_ha=1460.0, rotulo="bom", texto="x", pior_ano_seco_ha=-1516.0)
-
-    assert dinheiro.model_dump()["pior_ano_seco_ha"] == -1516.0
-
-
-def test_should_omit_worst_dry_year_margin_instead_of_sending_null() -> None:
-    # O front faz `pior_ano_seco_ha === undefined ? null : valor x hectares`: um null viraria
-    # "R$ 0" no pior caso (null x 50 = 0 no JavaScript). Sem valor, a chave não vai.
-    dinheiro = DinheiroSchema(margem_ha=1460.0, rotulo="bom", texto="x")
-
-    assert "pior_ano_seco_ha" not in dinheiro.model_dump()
-    assert "pior_ano_seco_ha" not in dinheiro.model_dump_json()
+    assert set(schemas["RendaSchema"]["properties"]) == {
+        "da_grao",
+        "anos_aperto",
+        "rotulo",
+        "texto",
+        "risco",
+    }
+    assert "renda" in schemas["OpcaoSchema"]["properties"]
+    assert "dinheiro" not in schemas["OpcaoSchema"]["properties"]
+    assert "DinheiroSchema" not in schemas
 
 
 def test_should_send_each_year_detail_in_the_front_contract() -> None:

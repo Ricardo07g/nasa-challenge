@@ -19,7 +19,7 @@ function isConnected(key: SourceKey, talhao: Talhao): boolean {
 /**
  * Tela 9, "De onde vem cada dado": quais fontes a API manda de fato para este talhão. Vale `dados[]`;
  * o SoilGrids conta pelo `solo.fonte` e o MODIS pelo `historico` (o talhão não os lista em `dados[]`).
- * As conectadas vêm primeiro, na ordem do produto; as outras ficam "Ainda não conectado".
+ * As conectadas vêm primeiro, na ordem do produto; a tela mostra só elas (decisão D2).
  */
 export function sourceStatuses(talhao: Talhao): SourceStatus[] {
   const all = ORDER.map((key) => ({ key, connected: isConnected(key, talhao) }))

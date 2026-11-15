@@ -2,9 +2,8 @@ import { Button } from '../design-system/components/Button'
 import { Card, SourceCard } from '../design-system/components/Card'
 import { NumberedSteps, PageHeading, ScoreTable } from '../design-system/components/Content'
 import { ErrorState, LoadingState } from '../design-system/components/Feedback'
-import { NotConnected } from '../design-system/components/Status'
 import { BackLink } from '../design-system/components/Navigation'
-import { ArrowUpRightIcon, SatelliteIcon, SendIcon, SproutIcon } from '../design-system/icons'
+import { ArrowUpRightIcon, GrainIcon, SatelliteIcon, SendIcon, SproutIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { Opcao } from '../models/recomendacao'
 import type { RainSummary } from '../services/satelliteService'
@@ -35,7 +34,6 @@ export function MethodView(props: MethodViewProps) {
   const m = t.method
   const h = m.scoresHeaders
   const years = rain ? rainPeriodText(t, rain.years, rain) : null
-  const noFuture = rows.length > 0 && rows.every(({ notas }) => notas.futuro === null)
   return (
     <div className={layout.page}>
       <BackLink to={backTo}>{t.nav.back}</BackLink>
@@ -56,6 +54,15 @@ export function MethodView(props: MethodViewProps) {
           </Card>
         </div>
       </div>
+      {/* Tarefa 0040: a renda sem preço nem custo (dá grão ou não, combinado com a segurança). */}
+      <Card as="section" aria-label={m.incomeTitle}>
+        <h2 className={layout.iconTitle}>
+          <GrainIcon />
+          {m.incomeTitle}
+        </h2>
+        <p>{m.incomeText}</p>
+        <p className={layout.muted}>{m.incomeShown}</p>
+      </Card>
       <Card tone="blue" as="section" aria-label={m.blindTitle}>
         <h2 className={layout.iconTitle} data-tone="blue">
           <SatelliteIcon />
@@ -73,15 +80,12 @@ export function MethodView(props: MethodViewProps) {
         )}
         {sources.status === 'ready' && (
           <div className={layout.optionGrid}>
-            {sources.rows.map(({ key, connected }) => (
-              <SourceCard
-                key={key}
-                what={m.sources[key].what}
-                source={m.sources[key].source}
-                scale={m.sources[key].scale}
-                notConnected={connected ? undefined : t.common.notConnected}
-              />
-            ))}
+            {/* Só as fontes ligadas de fato; a que a API não manda não aparece (decisão D2). */}
+            {sources.rows
+              .filter(({ connected }) => connected)
+              .map(({ key }) => (
+                <SourceCard key={key} what={m.sources[key].what} source={m.sources[key].source} scale={m.sources[key].scale} />
+              ))}
           </div>
         )}
       </section>
@@ -112,7 +116,6 @@ export function MethodView(props: MethodViewProps) {
                 values: [notas.seguranca, notas.futuro, notas.solo, notas.renda, notas.final],
               }))}
             />
-            {noFuture && <NotConnected label={t.common.notConnected} what={h.future} />}
             {example && <p className={layout.muted}>{m.exampleFarm}</p>}
           </>
         )}

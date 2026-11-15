@@ -143,7 +143,7 @@ describe('useWhenController (tela 3)', () => {
     })
   })
 
-  it('enquanto o talhão carrega, o gráfico espera (nada de "Ainda não conectado" piscando)', () => {
+  it('enquanto o talhão carrega, o gráfico espera (nada piscando)', () => {
     const d = deps(new Promise(() => {}))
     const { result } = renderHook(() => useWhenController(d), { wrapper: providers(`/quando?${point}`) })
 
@@ -181,7 +181,7 @@ describe('useWhenController (tela 3)', () => {
     expect(c.result.current.soyWarning).toBeNull()
   })
 
-  it('sem chuva_mensal na resposta ou se o talhão falhar, não há gráfico ("Ainda não conectado")', async () => {
+  it('sem chuva_mensal na resposta ou se o talhão falhar, não há gráfico (decisão D2)', async () => {
     const without = deps(Promise.resolve({ chuva_mensal: null }))
     const failed = deps(Promise.reject(new Error('rede')))
     const a = renderHook(() => useWhenController(without), { wrapper: providers(`/quando?${point}`) })

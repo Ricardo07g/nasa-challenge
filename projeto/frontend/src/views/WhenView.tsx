@@ -4,7 +4,6 @@ import { RainBarChart } from '../design-system/components/Charts'
 import { DateField, RadioCard } from '../design-system/components/Choice'
 import { PageHeading } from '../design-system/components/Content'
 import { BackLink, QuestionStepper } from '../design-system/components/Navigation'
-import { NotConnected } from '../design-system/components/Status'
 import { formatDayMonth, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
@@ -28,7 +27,7 @@ export type WhenViewProps = {
   onOpenDate: () => void
   onDateChange: (value: string) => void
   onConfirm: () => void
-  /** Chuva de cada mês na região (`chuva_mensal` do talhão): null = "Ainda não conectado"; 'loading' = carregando. */
+  /** Chuva de cada mês na região (`chuva_mensal` do talhão): null = sem gráfico (decisão D2); 'loading' = carregando. */
   rainChart: RainChart | null | 'loading'
   /** RF-24: o satélite não viu soja no ponto na última safra; null = nenhum aviso. */
   soyWarning: { safra: string } | null
@@ -131,7 +130,7 @@ export function WhenView({
         <Card as="aside" aria-label={w.whyTitle}>
           <h2 className={layout.cardTitle}>{w.whyTitle}</h2>
           <p>{w.whyText}</p>
-          {rainChart === 'loading' ? null : rainChart ? (
+          {rainChart && rainChart !== 'loading' && (
             <RainBarChart
               label={w.chartDataLabel(
                 rainChart.bars.map((bar) => w.chartMonthValue(w.months[bar.month], formatNumber(lang, bar.mm))).join(', '),
@@ -149,8 +148,6 @@ export function WhenView({
                 display: formatNumber(lang, bar.mm),
               }))}
             />
-          ) : (
-            <NotConnected label={t.common.notConnected} what={w.chartTitle} />
           )}
         </Card>
       </div>

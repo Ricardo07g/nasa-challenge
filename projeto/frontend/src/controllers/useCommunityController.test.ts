@@ -102,7 +102,7 @@ describe('useCommunityController (tela 8)', () => {
     expect(result.current.regionDistance).toBe(12.3)
   })
 
-  it('sem o endpoint da região no backend (404 sem código), a região fica "Ainda não conectado"', async () => {
+  it('sem o endpoint da região no backend (404 sem código), a região fica "not-connected" (a tela não mostra)', async () => {
     const d = deps()
     d.community.region = vi.fn().mockRejectedValue(new ApiError('/api/regiao', 404, null))
     const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
@@ -112,7 +112,7 @@ describe('useCommunityController (tela 8)', () => {
     expect(result.current.regionRadius).toBeNull()
   })
 
-  it('ponto fora das regiões que o satélite já mediu (404 OUTSIDE_AREA): estado próprio, nem erro nem "Ainda não conectado"', async () => {
+  it('ponto fora das regiões que o satélite já mediu (404 OUTSIDE_AREA): estado próprio, nem erro nem "not-connected"', async () => {
     const d = deps()
     d.community.region = vi.fn().mockRejectedValue(new ApiError('/api/regiao', 404, 'OUTSIDE_AREA'))
     const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
@@ -136,7 +136,7 @@ describe('useCommunityController (tela 8)', () => {
     await waitFor(() => expect(result.current.regionStatus).toBe('ready'))
   })
 
-  it('com a API real (comunidade sem versão http): nada de vizinho simulado, fica "Ainda não conectado"', async () => {
+  it('com a API real (comunidade sem versão http): nada de vizinho simulado, fica "not-connected" (a tela não mostra)', async () => {
     const d = deps(() => Promise.reject(new NotConnectedError('comunidade')))
     const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
 

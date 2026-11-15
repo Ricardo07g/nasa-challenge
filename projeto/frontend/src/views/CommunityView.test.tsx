@@ -129,13 +129,12 @@ describe('CommunityView (tela 8)', () => {
     expect(screen.getByText('Sua área: parada em 5 de 10 anos. Na região, em média 65% da área fica parada.')).toBeInTheDocument()
   })
 
-  it('sem a região na API, o bloco do satélite não some: diz "Ainda não conectado" e a comunidade continua', () => {
+  it('sem a região na API, o bloco do satélite não aparece (decisão D2) e a comunidade continua', () => {
     setup({ region: null, regionStatus: 'not-connected', regionRadius: null })
 
     expect(screen.queryByText(/da área de soja ficou parada/)).not.toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Área parada na região, pelo satélite' })).toHaveTextContent(
-      'Ainda não conectado',
-    )
+    expect(screen.queryByRole('region', { name: 'Área parada na região, pelo satélite' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'O que os vizinhos contam' })).toBeInTheDocument()
   })
 
@@ -146,15 +145,13 @@ describe('CommunityView (tela 8)', () => {
     expect(props.onRegionRetry).toHaveBeenCalled()
   })
 
-  it('comunidade ainda não conectada (API real): sem vizinho simulado, sem mapa e sem botão de demonstração', () => {
+  it('comunidade ainda não conectada (API real): os blocos não aparecem, sem vizinho simulado (decisão D2)', () => {
     setup({ status: 'not-connected', community: null, points: [] })
 
-    const community = screen.getByRole('region', { name: 'O que os vizinhos contam' })
-    expect(within(community).getByRole('region', { name: 'O que os vizinhos plantaram depois da soja' })).toHaveTextContent(
-      'Ainda não conectado',
-    )
-    expect(within(community).getByRole('region', { name: 'Choveu aqui' })).toHaveTextContent('Ainda não conectado')
-    expect(community).not.toHaveTextContent('Valores ilustrativos')
+    expect(screen.queryByRole('region', { name: 'O que os vizinhos contam' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Choveu aqui' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Valores ilustrativos')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Contar como foi a minha' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Registrar a chuva de hoje' })).not.toBeInTheDocument()
     expect(
@@ -163,13 +160,13 @@ describe('CommunityView (tela 8)', () => {
     expect(screen.queryByText(/mm · satélite/)).not.toBeInTheDocument()
   })
 
-  it('comunidade e região ainda não conectadas, em inglês', () => {
+  it('comunidade e região ainda não conectadas, em inglês: nada de "Not connected yet"', () => {
     setup({ t: en, status: 'not-connected', community: null, region: null, regionStatus: 'not-connected', regionRadius: null })
 
-    expect(screen.getByRole('region', { name: 'Idle cropland in the region, by satellite' })).toHaveTextContent(
-      'Not connected yet',
-    )
-    expect(screen.getByRole('region', { name: 'It rained here' })).toHaveTextContent('Not connected yet')
+    expect(screen.queryByRole('region', { name: 'Idle cropland in the region, by satellite' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'It rained here' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Not connected yet/)).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
   })
 
   it('o que os vizinhos plantaram: uma linha por opção, com as bolinhas', () => {

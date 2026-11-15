@@ -22,7 +22,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 
 | # | Seção do pedido | Tarefa | O que entra | Junto com | Estado |
 | --- | --- | --- | --- | --- | --- |
-| S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | a fazer |
+| S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | feita na branch `feat/remodelagem-s1-renda` (falta o merge em `feat/remodelagem` e a revisão); "Comece por um pedaço" já saiu aqui |
 | S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | feito na branch `feat/remodelagem-s8-guia` (19 artigos em pt e en; faltam 7 do tema, ver a tarefa 0048) |
 | S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | a fazer |
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | a fazer |
@@ -55,6 +55,13 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D11 | 15/11 | Artigos de cultura, plantio e manejo, e também os de geada, conta de água e palhada, saem como rascunho (`rascunho: sim`); a view põe "Rascunho: a revisar pela agrônoma." no topo. | Pedido do usuário; os números são hipótese do time. |
 | D12 | 15/11 | O Markdown vira uma árvore de blocos (`markdownService`) e a view desenha com React: nunca há `dangerouslySetInnerHTML`, e HTML no texto vira texto puro. | Segurança sem biblioteca nova. |
 | D13 | 15/11 | O Guia usa o requisito RF-26 do PRD. | Próximo RF livre no PRD. Se outra seção também pegar o RF-26, renumerar na hora do merge. |
+| D14 | 15/11 | Nota de renda (S1): quem dá grão tem a segurança climática da própria opção (anos bons ÷ total × 100; no cenário seco, só os anos secos); cobertura e pousio ficam com `renda.nota_sem_grao` = 0. Mesmos eixos e pesos na nota final. **A revisar.** | É a proposta do pedido; o PRD 5 já dava renda 0 às coberturas, e uma nota maior faria a cobertura subir duas vezes (ela já ganha no eixo do solo). |
+| D15 | 15/11 | "Dá grão" = `tipo` `grao` ou `consorcio` do `culturas.yaml` (`renda.tipos_com_grao`): o milho com braquiária dá grão. | PRD 5: "Grão + cobertura"; a lista fica no `regras.yaml` para a agrônoma mudar. |
+| D16 | 15/11 | Saem do `culturas.yaml` e do `CropParams` o preço, o custo e a produtividade, e do motor a perda de produtividade pelo ISNA (`perda_*`, `fator_perda`). | Nada mais usava depois da margem; o pedido manda remover o que ficar sem uso. |
+| D17 | 15/11 | Contrato: `dinheiro` vira `renda` (`da_grao`, `anos_aperto`, `rotulo`, `texto`, `risco`), o motivo `mais_dinheiro` vira `mais_renda` e os rótulos `dinheiro_*` viram `renda_*` (os mesmos 70 e 30). O selo Bom/Médio/Fraco da renda ficou. | A dimensão mudou de nome e o nome fica igual em toda a pilha; o selo mantém o cartão como está até a S5a redesenhar as linhas. |
+| D18 | 15/11 | "Ainda não conectado" saiu do design system (`NotConnected`, `NotConnectedCard` e o `status="unavailable"`), não só das telas; o estado interno `not-connected` dos controllers ficou. | Garante que nenhuma tela volte a mostrar o selo; o estado interno ainda separa "endpoint que não existe" de erro. |
+| D19 | 15/11 | D2 elemento a elemento: sem histórico do satélite, a tela 4 mostra só "Confirme as últimas safras"; na missão, a fase sem dado fica sem resultado; no relatório, as seções sem dado somem e a célula do clima futuro vira "—"; em "Como a conta é feita", só as fontes ligadas; na comunidade com a API real, os blocos dos vizinhos não aparecem. | "O elemento sem dado não aparece" (D2); a 5.6 do pedido manda perguntar direto quando não há NDVI. A comunidade é refeita na S7. |
+| D20 | 15/11 | O bloco "Comece por um pedaço" saiu inteiro já na S1 (a S5b também previa). | É todo em reais (hectares × sobra, semente e pior ano seco). |
 
 ## Revisão por seção
 
@@ -74,6 +81,11 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 - **"Deu certo" no pedido × motor:** o pedido diz "nenhum dia de 35 °C nessa fase"; o motor (`regras.yaml`, `calor_min_dias`) conta aperto com **3 dias ou mais** de 35 °C na fase crítica. Os textos seguem o motor; mudar a regra é decisão da agrônoma.
 - **Soja recente (RF-24):** 96% dos pixels da caixa piloto têm pico de NDVI ≥ 0,70 em jan–mar de 2026 (pasto e cerrado também ficam verdes na chuva). O aviso do começo pega cidade, água e solo exposto, mas não distingue soja de pasto.
 - **Região pelo satélite calibrada (tarefa 0036):** depois de tirar cana, café e pasto, a soja do ano é 45–58% da lavoura, mas "parado" ainda fica entre 0,7% e 6% (plantou 72–96%). Só 2 de 10 anos passam no critério de crível combinado com o usuário (parado entre 5% e 80%), então a região continua escondida. Pode ser real (safrinha comum no Triângulo) ou mato que rebrota com a chuva de março.
+- **S1, fazenda da UFU (banco local):** a nota "futuro" (CMIP6) sai igual à "segurança" em todas as
+  opções nos 3 cenários de colheita (ex.: milho 90/90, 80/80). Os deltas do CMIP6 não mudam nenhum ano
+  de "deu certo" para "faltou" nesse ponto; vale conferir na S4/S5a (linha "Clima 2041–2060").
+- **S1, Plano A da colheita cedo na UFU:** com a renda nova, milho com braquiária nos 3 anos (nota 85,0
+  contra 84,7 com crotalária no 3º ano). O PRD 7.7 não pune repetição; a S5b mostra a repetição como fato.
 
 ## O que não foi possível e por quê
 

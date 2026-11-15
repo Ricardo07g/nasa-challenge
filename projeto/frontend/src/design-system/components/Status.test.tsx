@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { MetricRow, NotConnected, StatusPill, StripLegend, TappableYearStrip, ToneBadge, YearStrip } from './Status'
+import * as Status from './Status'
+import { MetricRow, StatusPill, StripLegend, TappableYearStrip, ToneBadge, YearStrip } from './Status'
 
 describe('StatusPill', () => {
   it('mostra o rótulo com o tom certo', () => {
@@ -37,15 +38,15 @@ describe('MetricRow', () => {
     expect(screen.getByTestId('icone').parentElement).toHaveAttribute('data-tone', 'blue')
   })
 
-  it('sem valor (dado que a API ainda não manda), mostra o eixo e o conteúdo, sem frase vazia', () => {
+  it('sem valor, mostra o eixo e o conteúdo, sem frase vazia', () => {
     const { container } = render(
-      <MetricRow icon={<svg />} label="Clima 2041–2060">
-        <NotConnected label="Ainda não conectado" />
+      <MetricRow icon={<svg />} label="Renda">
+        <span>Risco de perder a lavoura</span>
       </MetricRow>,
     )
 
-    expect(screen.getByText('Clima 2041–2060')).toBeInTheDocument()
-    expect(screen.getByText('Ainda não conectado')).toBeInTheDocument()
+    expect(screen.getByText('Renda')).toBeInTheDocument()
+    expect(screen.getByText('Risco de perder a lavoura')).toBeInTheDocument()
     expect(container.querySelector('[class*="metricValue"]')).toBeNull()
   })
 })
@@ -205,20 +206,8 @@ describe('StripLegend com os pontos de El Niño e La Niña', () => {
   })
 })
 
-describe('NotConnected (dado que a API ainda não manda)', () => {
-  it('mostra o aviso com um traço no lugar do dado, marcado como não conectado', () => {
-    render(<NotConnected label="Ainda não conectado" />)
-
-    const note = screen.getByText('Ainda não conectado').closest('[data-status]')
-    expect(note).toHaveAttribute('data-status', 'not-connected')
-    expect(note?.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
-  })
-
-  it('pode dizer o que ainda não está conectado', () => {
-    render(<NotConnected label="Ainda não conectado" what="Custo da semente" />)
-
-    expect(screen.getByText('Ainda não conectado').closest('[data-status]')).toHaveTextContent(
-      'Custo da semente: Ainda não conectado',
-    )
+describe('sem o selo "Ainda não conectado" (decisão D2)', () => {
+  it('o design system não tem mais o componente: o elemento sem dado simplesmente não aparece', () => {
+    expect('NotConnected' in Status).toBe(false)
   })
 })

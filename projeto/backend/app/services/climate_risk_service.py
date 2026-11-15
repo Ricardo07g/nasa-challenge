@@ -32,14 +32,6 @@ class ClimateRiskService:
         month_str, day_str = crop.semeadura_limite_mes_dia.split("-")
         return (semeadura.month, semeadura.day) <= (int(month_str), int(day_str))
 
-    def loss_factor(self, isna: float) -> float:
-        """Perda de produtividade pelo ISNA (PRD 7.5): 0% (>= 0,65), 30% (0,55 a 0,65), 60%."""
-        if isna >= self._clima.perda_isna_sem_perda:
-            return 0.0
-        if isna >= self._clima.perda_isna_alta_abaixo:
-            return self._clima.perda_fator_media
-        return self._clima.perda_fator_alta
-
     @staticmethod
     def initial_bucket_fraction(smap_wetness: float | None) -> float:
         """Fração da CAD no balde do dia de plantar (PRD 7.2, US-03).
@@ -139,7 +131,6 @@ class ClimateRiskService:
                     aperto=falta_agua or calor,
                     isna=isna_val,
                     dias_calor=dias_calor,
-                    fator_perda=self.loss_factor(isna_val),
                     falta_agua=falta_agua,
                     calor=calor,
                 )

@@ -98,5 +98,5 @@ export function regionPlace(region: RegiaoSatelite): RegionPlace {
 
 export const communityService = createCommunityService()
 
-/** A API ainda não manda esse dado (sem endpoint ou sem versão http): "Ainda não conectado". */
+/** A API ainda não manda esse dado (sem endpoint ou sem versão http): o bloco não aparece (decisão D2). */
 export { isNotConnected } from '../repositories/httpClient'

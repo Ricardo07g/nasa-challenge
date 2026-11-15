@@ -100,7 +100,7 @@ describe('OptionCompareCard', () => {
         highlighted
         rows={[
           { label: 'Chuva', value: 'Deu certo em 14 de 20 anos' },
-          { label: 'Dinheiro', value: 'Sobra perto de R$ 700/ha' },
+          { label: 'Renda', value: 'Dá grão para vender' },
         ]}
       />,
     )
@@ -116,11 +116,11 @@ describe('OptionCompareCard', () => {
       <OptionCompareCard
         rank="Nº 1"
         name="Sorgo"
-        rows={[{ label: 'Clima 2041–2060', extra: <span>Ainda não conectado</span> }]}
+        rows={[{ label: 'Renda', extra: <span>Risco de perder a lavoura</span> }]}
       />,
     )
 
-    expect(screen.getByRole('article', { name: 'Sorgo' })).toHaveTextContent('Clima 2041–2060Ainda não conectado')
+    expect(screen.getByRole('article', { name: 'Sorgo' })).toHaveTextContent('RendaRisco de perder a lavoura')
     expect(container.querySelector('[class*="compareValue"]')).toBeNull()
   })
 })

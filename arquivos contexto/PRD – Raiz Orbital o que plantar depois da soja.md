@@ -104,19 +104,19 @@ Segundo o guia de submissão ([Project Submission Guide](https://www.spaceappsch
 | --- | --- | --- | --- | --- |
 | US-01 | produtor | marcar minha lavoura no mapa ou pelo GPS, com um toque | o app buscar os dados daquele lugar | Must |
 | US-02 | produtor | dizer quando colho a soja escolhendo entre três faixas, já sugeridas pelo satélite | o app saber quando a entressafra começa sem eu digitar data | Must |
-| US-03 | produtor | ver uma resposta clara (o que plantar, até quando) com chuva, dinheiro e terra em palavras | decidir rápido, sem precisar interpretar notas | Must |
+| US-03 | produtor | ver uma resposta clara (o que plantar, até quando) com chuva, renda e terra em palavras | decidir rápido, sem precisar interpretar notas | Must |
 | US-04 | produtor | ver alternativas para o que eu priorizo (menos risco, mais dinheiro, cuidar da terra) e todas as opções lado a lado | o resultado refletir o que importa para mim | Must |
 | US-05 | produtor | ler por que cada opção ganhou ou perdeu nota, com o dado da NASA citado | confiar na recomendação | Must |
 | US-06 | produtor | ver planos de rotação de 3 anos | sair da sucessão soja/milho ou soja/pousio | Must |
 | US-07 | produtor | ver o histórico do meu talhão (anos de pousio e de segunda safra) pelo satélite | entender de onde estou partindo | Should |
 | US-08 | produtor ou agrônomo | trocar a textura do solo e informar nematoide, só se eu quiser | ajustar o cálculo sem tornar o caminho principal mais longo | Could |
 | US-09 | produtor | saber se vem um outono seco, ter um plano B e ver como o plano se sai no clima de 2050 | não ser pego de surpresa e saber se o plano aguenta | Should |
-| US-10 | agrônomo | editar produtividade, preço e custo na tela "Como a conta é feita" | a renda ficar com a realidade do cliente | Could |
+| US-10 | agrônomo | ~~editar produtividade, preço e custo na tela "Como a conta é feita"~~ (saiu na tarefa 0040: a renda não usa reais) | a renda ficar com a realidade do cliente | — |
 | US-11 | jurado | abrir uma fazenda de exemplo em Uberlândia com um clique | ver o produto funcionando sem cadastro | Must |
 | US-12 | produtor com pouca leitura | tocar em "Ouvir" e escutar a tela | entender sem depender de ler | Should |
 | US-13 | produtor | usar o mesmo site no celular, no campo, e no computador, no escritório | não precisar de dois aplicativos | Must |
 | US-14 | produtor | ver o que o app está fazendo enquanto calcula, de um jeito que prenda a atenção | não achar que travou e entender de onde vem a resposta | Should |
-| US-15 | produtor | ver em reais quanto deve sobrar e quanto arrisco testando o plano num pedaço da fazenda | decidir quanto da área colocar no teste | Should |
+| US-15 | produtor | ~~ver em reais quanto deve sobrar e quanto arrisco testando o plano num pedaço da fazenda~~ (saiu na tarefa 0040: nenhum valor em reais no produto) | decidir quanto da área colocar no teste | — |
 
 ## 4. Como funciona: fluxo e requisitos funcionais
 
@@ -133,9 +133,9 @@ Princípios: **site responsivo** (cada tela é uma página só, que se ajusta do
 3. **Quando você colhe a soja (pergunta 2 de 2):** três botões (começo, meio, fim de fevereiro ou março), com a faixa sugerida pelo satélite já marcada.
    - **Calculando (entre as telas 3 e 4, novo na v3.1):** "Missão: sua lavoura". Enquanto a API busca os dados, o satélite entra em órbita, trava a mira na lavoura e passa por 6 fases (lavoura, terra, 20 anos de chuva e calor, histórico, clima que vem e sinal do outono, conta das 6 opções). Cada fase mostra o dado real que chegou e termina com uma conquista; no fim, "Missão completa" e o botão "Ver o que o satélite viu". Não revela a melhor opção. Tocar no satélite é só brincadeira e não acelera nada. Com `prefers-reduced-motion`, vira uma lista simples com ✓.
 4. **O satélite já viu o resto:** cartões de chuva (20 anos), histórico do talhão (plantou ou ficou parado, 10 anos), terra (do mapa de solos, com "Não é? Trocar") e clima até 2050.
-5. **A resposta:** a melhor opção e até quando plantar; chuva, dinheiro e terra com rótulo Bom/Médio/Fraco; "Por quê?" com o dado da NASA; "Como fazer" em 3 passos; alternativas "Se você prefere…".
+5. **A resposta:** a melhor opção e até quando plantar; chuva, renda e terra com rótulo Bom/Médio/Fraco; "Por quê?" com o dado da NASA; "Como fazer" em 3 passos; alternativas "Se você prefere…".
 
-**Telas de apoio:** 6. Todas as opções (reordenar por chuva, dinheiro ou terra) · 7. Plano de 3 anos (sinal para o outono, Plano A e Plano B, hectares para testar) · 8. Perto de você (comunidade, simulada) · 9. Como a conta é feita (para agrônomos e jurados).
+**Telas de apoio:** 6. Todas as opções (reordenar por chuva, renda ou terra) · 7. Plano de 3 anos (sinal para o outono, Plano A e Plano B) · 8. Perto de você (comunidade, simulada) · 9. Como a conta é feita (para agrônomos e jurados).
 
 A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: confundia mais do que ajudava. O produtor pode compartilhar o link do site pelo próprio navegador.
 
@@ -152,7 +152,7 @@ A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: co
 | RF-07 | Plano de 3 anos | Gerar as 216 combinações, aplicar as restrições da seção 7 e mostrar o melhor plano em ano normal e em ano seco | US-06 |
 | RF-08 | Histórico do talhão | Classificar cada entressafra de 2015 a 2025 como pousio ou segunda safra pelo NDVI | US-07 |
 | RF-09 | Testes de estresse | Recalcular com o ano mais seco da série e com o cenário 2041–2060 | US-09 |
-| RF-10 | Edição de economia | Produtividade, preço e custo editáveis por opção | US-10 |
+| RF-10 | ~~Edição de economia~~ | Saiu (tarefa 0040): a renda não usa produtividade, preço nem custo, e nenhum valor em reais aparece no produto | US-10 |
 | RF-11 | Fazenda de exemplo | Campo de soja de 48 ha da Fazenda Experimental do Glória (UFU), em Uberlândia (lat -18,9543, lon -48,1993), com dados pré-calculados; abre sem esperar. Área pública: não expõe dado de produtor. Confirmar com o ICIAG-UFU que o ponto cai em soja de sequeiro | US-11 |
 | RF-12 | Idioma | Interface em inglês (para os juízes) com botão para português; textos da API nas duas línguas | — |
 | RF-16 | Colheita sugerida | Estimar a faixa de colheita da soja pela queda do NDVI de janeiro a março (seção 7.9); sem dado, "meio" | US-02 |
@@ -160,7 +160,7 @@ A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: co
 | RF-18 | Site responsivo | Uma página por tela, layout fluido (flex-wrap e grid automático), sem largura fixa; testado em 390 px e 1280 px; a URL guarda lat, lon e colheita, para recarregar ou compartilhar a mesma resposta | US-13 |
 | RF-19 | Tela de cálculo (missão) | Rota `/calculando`: chama `/api/talhao` e `/api/recomendacao`, mostra 6 fases com os dados reais que chegam, cada fase com no mínimo 1,2 s; avança sozinha para a tela 4; depois de 20 s oferece a fazenda de exemplo; erro com mensagem calma; versão simples com `prefers-reduced-motion` | US-14 |
 | RF-20 | Sinal para o outono e Plano A / Plano B | Nível `normal`, `seco` ou `incerto` com o motivo em uma frase, pela previsão oficial do El Niño / La Niña da NOAA CPC para fevereiro a abril (chance de cada fase, publicada todo mês) e por quantos anos daquela fase (ONI, 2005–2024) a opção do 1º ano do Plano A deu certo: metade ou mais com problema (e o Plano B melhor nesses anos) = `seco`; nenhuma fase chega a 50%, ou menos de 5 anos daquela fase na série = `incerto` (hipóteses do time no `regras.yaml`, a revisar). Botões "Plano A" e "Plano B, se secar" marcados pelo sinal. Regra da data: "se nos 30 dias antes da data limite do Plano A chover menos que 60% da média desses dias na série da célula, vá de Plano B". O SMAP de agora aparece só como informação. Mostra chance, nunca certeza; sem a previsão, "Ainda não conectado". Substitui a hipótese GEOS-S2S + SMAP + IMERG da seção 7.10 (decisão de 15/11/2026) | US-09 (tarefa 0038) |
-| RF-21 | Hectares para testar | Campo numérico (padrão 50 ha) na tela 7; mostra quanto deve sobrar, o custo da semente e o pior caso num ano seco, em reais, para a opção do 1º ano do plano marcado; conta no front-end com os valores por hectare da API | US-15 |
+| RF-21 | Renda só com fatos, sem reais | Nenhum valor em reais na API nem em tela nenhuma (seção 1 da remodelagem). A dimensão "Renda" (antes "Dinheiro") mostra só fatos: "Dá grão para vender" ou "Não dá grão: é investimento na terra" e "Risco de perder a lavoura: faltou água ou fez calor em N de 20 anos." (N = anos com aperto do motor; o total vem da série). Contrato: bloco `renda` de cada opção (`da_grao`, `anos_aperto`, `rotulo`, `texto`, `risco`). Nota de renda pela regra da seção 7.5. O campo "Quantos hectares quer testar?" e os totais em reais (antiga RF-21 e seção 7.11) saíram | US-03 (tarefa 0040) |
 | RF-22 | Tocar num ano (P1) | Cada opção traz `anos_detalhe[]` em `/api/recomendacao`: para cada ano da série, se deu certo, a data da fase crítica, os dias sem chuva nela, a fase do El Niño / La Niña (ONI da NOAA, média de DJF a FMA; ±0,5) e uma frase pronta em pt e en. Os quadradinhos de chuva ficam tocáveis e mostram a frase; sem o arquivo do ONI, a frase sai sem a marca do ENSO | Plano de evolução §4.1 (tarefa 0035) |
 | RF-23 | Na sua região, pelo satélite (P3) | `GET /api/regiao?lat&lon`: na região mais perto cujo raio (30 km) contém o ponto, a porcentagem da **soja do ano** que ficou parada, que plantou e sem certeza na entressafra de cada ano (os 10 anos do histórico do talhão: 2017–2026 desde a RF-25; o arquivo medido em 15/11 tem 2016–2025). Máscara: os pixels de 250 m do MODIS dentro da classe 12 (lavouras) do MCD12Q1 que mostram a soja **e** a colheita (maior NDVI de 1/jan a 15/mar ≥ 0,70 e, depois do pico até 15/mai, uma observação ≤ 0,40, cuja data é a colheita; hipótese do time a revisar pela agrônoma, no `regras.yaml`, no lugar da máscara de soja do MapBiomas); perene, pasto e solo exposto ficam fora. Cada pixel de soja é classificado com a regra do histórico do talhão só com as observações depois da colheita até 31/jul; só totais e porcentagens, nenhum pixel (RNF-10). A resposta traz o centro do círculo e a distância do ponto até ele, e a tela diz "Até 30 km da sua lavoura" ou o raio em volta de um ponto a X km. Ponto fora das regiões medidas: 404 `OUTSIDE_AREA`, e o bloco da região não aparece (o produto resolve com as perguntas; a região, por enquanto, só cobre a fazenda da UFU) | Plano de evolução P3 (tarefas 0034 e 0036) |
 | RF-24 | Soja na última safra no ponto marcado | No começo do fluxo, `/api/talhao` traz `soja_recente` (`safra`, `vista`, `ndvi_pico`, `fonte`): no pixel de 250 m do MODIS, o maior NDVI das imagens boas (qualidade 0 ou 1, MOD13Q1 e MYD13Q1) de 1/jan a 15/mar da safra mais recente (2025/26) é 0,70 ou mais = soja vista; com menos de 2 imagens boas, sem dado (limites no `regras.yaml`, hipótese do time a revisar pela agrônoma). Com `vista: false`, a tela avisa e deixa seguir: "Não vimos soja neste ponto na última safra (2025/26). Confira se marcou a lavoura certa.", com "Ajustar no mapa" e "Seguir mesmo assim" (pt e en). Sem o dado ou fora da área medida: nenhum aviso | Decisão do usuário de 15/11/2026 (tarefa 0037) |
@@ -170,7 +170,7 @@ A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: co
 ### Exemplo de saída (números ilustrativos, serão trocados pelos calculados)
 
 > **A melhor opção: milho com braquiária.** Plante logo depois de colher a soja, até [data limite do ZARC].
-> Chuva: deu certo em 14 de 20 anos (Médio). Dinheiro: sobra perto de R$ 700 por hectare (Bom). Terra: fica coberta na seca (Bom).
+> Chuva: deu certo em 14 de 20 anos (Médio). Renda: dá grão para vender; risco de perder a lavoura em 6 de 20 anos. Terra: fica coberta na seca (Bom).
 > Por quê: plantando no meio de fevereiro, o milho floresce em abril; em 6 dos últimos 20 anos faltou chuva bem nessa hora (GPM IMERG + NASA POWER).
 >
 > **Se você prefere menos risco:** sorgo, deu certo em 17 de 20 anos.
@@ -203,14 +203,14 @@ Todos os números ficam em `culturas.yaml`, para a agrônoma do time ajustar sem
 
 | Opção | Função | Semeadura até | Dias até florescer / ciclo | Kc no pico (FAO-56) | Palhada | Nitrogênio deixado | Nematoide | Renda |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Pousio | Nenhuma | — | — | — | Muito baixa | 0 | Não quebra o ciclo e deixa o solo exposto | 0 |
-| Milho safrinha | Grão | \~28/fev (**hipótese otimista**: um estudo da UFU sobre o ZARC em Uberlândia sugere fechar até o 1º decêndio de fevereiro; conferir na Portaria SPA/MAPA nº 388/2025) | \~60 / \~120 dias | 1,20 | Média (cerca de 2,7 t/ha num estudo em Goiás) | 0 | Hospedeiro (o milho é altamente suscetível ao nematoide das lesões, como a soja) | Maior: milho a R$ 61–63/saca em Uberlândia (nov/2026); produtividade padrão 80 sc/ha (hipótese) |
-| Sorgo granífero | Grão | \~20 dias depois do limite do milho (Embrapa) | \~65 / \~115 dias | 1,05 | Média | 0 | Reduz o nematoide reniforme | Média: preço padrão 80% do milho, 60 sc/ha (hipóteses) |
-| Milho + braquiária ruziziensis | Grão + cobertura | Igual ao milho | Igual ao milho | 1,20 | Alta, com cobertura na seca | 0 | Braquiárias multiplicam alguns nematoides, mas reduzem o reniforme | Milho com desconto de 5% (hipótese) |
-| Milheto | Cobertura | Até março (hipótese) | \~50 / \~90 dias | 1,00 | Alta | 0 | Ajuda no controle do Pratylenchus | 0 (custo de semente) |
-| Crotalária spectabilis | Cobertura leguminosa | Até fevereiro (hipótese) | \~60 / \~100 dias | 1,00 | 3 a 6 t/ha de matéria seca | 60 a 100 kg/ha | Altamente resistente; quebra o ciclo | 0 (custo de semente) |
+| Pousio | Nenhuma | — | — | — | Muito baixa | 0 | Não quebra o ciclo e deixa o solo exposto | Não dá grão (nota 0) |
+| Milho safrinha | Grão | \~28/fev (**hipótese otimista**: um estudo da UFU sobre o ZARC em Uberlândia sugere fechar até o 1º decêndio de fevereiro; conferir na Portaria SPA/MAPA nº 388/2025) | \~60 / \~120 dias | 1,20 | Média (cerca de 2,7 t/ha num estudo em Goiás) | 0 | Hospedeiro (o milho é altamente suscetível ao nematoide das lesões, como a soja) | Dá grão (nota = segurança, 7.5) |
+| Sorgo granífero | Grão | \~20 dias depois do limite do milho (Embrapa) | \~65 / \~115 dias | 1,05 | Média | 0 | Reduz o nematoide reniforme | Dá grão (nota = segurança, 7.5) |
+| Milho + braquiária ruziziensis | Grão + cobertura | Igual ao milho | Igual ao milho | 1,20 | Alta, com cobertura na seca | 0 | Braquiárias multiplicam alguns nematoides, mas reduzem o reniforme | Dá grão (nota = segurança, 7.5) |
+| Milheto | Cobertura | Até março (hipótese) | \~50 / \~90 dias | 1,00 | Alta | 0 | Ajuda no controle do Pratylenchus | Não dá grão (nota 0) |
+| Crotalária spectabilis | Cobertura leguminosa | Até fevereiro (hipótese) | \~60 / \~100 dias | 1,00 | 3 a 6 t/ha de matéria seca | 60 a 100 kg/ha | Altamente resistente; quebra o ciclo | Não dá grão (nota 0) |
 
-**Base das referências.** Milho também suscetível e crotalária resistente ao nematoide ([Revista Cultivar / Embrapa](https://revistacultivar.com.br/noticias/rotacao-de-culturas-e-uma-das-indicacoes-para-controle-de-nematoides-fitoparasitos)); milheto contra Pratylenchus e braquiárias ([Agrolink / Embrapa](https://www.agrolink.com.br/noticias/rotacao-de-culturas-controla-nematoides-fitoparasitos_453196.html)); sorgo, nabo e gramíneas forrageiras reduzem o reniforme ([Notícias Agrícolas / Embrapa](https://www.noticiasagricolas.com.br/noticia/283964)); sorgo semeado até 20 dias depois do milho na segunda safra ([Notícias Agrícolas / Embrapa](https://www.noticiasagricolas.com.br/noticia/292308)); crotalária com 60 a 100 kg/ha de nitrogênio e 3 a 6 t/ha de matéria seca ([Aegro](https://aegro.com.br/tags/crotalaria-spectabilis/)); palhada de milho de 2,7 t/ha ([Pesquisa Agropecuária Tropical, UFG](https://revistas.ufg.br/pat/article/download/75032/39853/368616)); preço do milho ([Safras & Mercado](https://safras.com.br/?p=90328)).
+**Base das referências.** Milho também suscetível e crotalária resistente ao nematoide ([Revista Cultivar / Embrapa](https://revistacultivar.com.br/noticias/rotacao-de-culturas-e-uma-das-indicacoes-para-controle-de-nematoides-fitoparasitos)); milheto contra Pratylenchus e braquiárias ([Agrolink / Embrapa](https://www.agrolink.com.br/noticias/rotacao-de-culturas-controla-nematoides-fitoparasitos_453196.html)); sorgo, nabo e gramíneas forrageiras reduzem o reniforme ([Notícias Agrícolas / Embrapa](https://www.noticiasagricolas.com.br/noticia/283964)); sorgo semeado até 20 dias depois do milho na segunda safra ([Notícias Agrícolas / Embrapa](https://www.noticiasagricolas.com.br/noticia/292308)); crotalária com 60 a 100 kg/ha de nitrogênio e 3 a 6 t/ha de matéria seca ([Aegro](https://aegro.com.br/tags/crotalaria-spectabilis/)); palhada de milho de 2,7 t/ha ([Pesquisa Agropecuária Tropical, UFG](https://revistas.ufg.br/pat/article/download/75032/39853/368616)). Preço, custo e produtividade saíram da conta na tarefa 0040 (nenhum valor em reais no produto; renda pela seção 7.5).
 
 **Efeito na soja seguinte (para a nota de solo e para o pitch).** Num estudo no Cerrado, a soja depois de grão consorciado com braquiária ruziziensis rendeu 3.196 kg/ha, 11% a mais que depois do pousio ([Revista Cultivar](https://revistacultivar.com.br/noticias/consorcio-de-graos-com-forrageiras-controla-plantas-daninhas-na-soja)).
 
@@ -357,7 +357,7 @@ Se o produtor marcar nematoide = sim, a coluna de pragas vale 1,5 vez e o total 
 
 ### 7.5 Renda (0 a 100)
 
-Margem esperada = produtividade padrão × fator de segurança × preço − custo. O fator vem dos 20 anos simulados: perda de 0% com ISNA de 0,65 ou mais, 30% entre 0,55 e 0,65 e 60% abaixo de 0,55 (hipótese do time). Nota = 100 × margem ÷ maior margem entre as opções; margem negativa vale 0. Produtividade, preço e custo são editáveis.
+Sem preço, custo nem produtividade: nenhum valor em reais entra na conta (tarefa 0040, seção 1 da remodelagem). Quem dá grão para vender (milho safrinha, sorgo e milho + braquiária: `tipo` `grao` ou `consorcio` no `culturas.yaml`) tem a renda que o clima deixa colher: **nota de renda = segurança climática da própria opção** (anos sem aperto ÷ anos simulados × 100; no cenário seco do plano, só os anos secos). Quem não dá grão (milheto, crotalária e o pousio no plano) fica com uma nota fixa, hoje **0** (como a coluna Renda da seção 5): é investimento na terra, e isso conta no eixo do solo. A nota final continua com os mesmos eixos e pesos (7.6). Os números ficam no grupo `renda` do `regras.yaml` (`tipos_com_grao`, `nota_sem_grao`), hipótese do time a revisar. Na tela, a renda mostra só fatos (RF-21). A margem esperada e a perda de produtividade pelo ISNA (0%, 30% e 60%) saíram.
 
 ### 7.6 Nota final e explicação
 
@@ -366,7 +366,7 @@ Nota final = soma de (peso × nota) nos quatro eixos. **O pousio fica fora do ra
 | Eixo | Bom | Médio | Fraco |
 | --- | --- | --- | --- |
 | Chuva | 17 a 20 anos sem aperto | 12 a 16 | menos de 12 |
-| Dinheiro (nota de renda) | 70 ou mais | 30 a 69 | menos de 30 |
+| Renda (nota de renda, antes "Dinheiro") | 70 ou mais | 30 a 69 | menos de 30 |
 | Terra (nota de solo) | 50 ou mais | 20 a 49 | menos de 20 |
 
 Limiares em `regras.yaml` (hipótese do time). Cada nota gera uma frase por modelo de texto:
@@ -405,9 +405,9 @@ Hipótese a calibrar antes de publicar (detalhe no plano de evolução, ajuste A
 - **Validação:** rodar a regra nas previsões retrospectivas do GMAO para os anos da série e publicar na tela 9 em quantos anos o sinal teria acertado o ano seco. Com acerto baixo, a tela mostra só a regra do dia de plantar.
 - O Plano B é o melhor plano do cenário de ano seco da seção 7.7. A tela não usa El Niño como sinônimo de ano seco.
 
-### 7.11 Totais para o pedaço de teste (novo na v3.1)
+### 7.11 Totais para o pedaço de teste (saiu)
 
-Para a opção do 1º ano do plano marcado: sobra = `margem_ha` × hectares; semente = `custo_semente_ha` × hectares; pior caso = margem do pior ano entre os 4 mais secos da série × hectares. Valores arredondados ("perto de R$ 35 mil"). `custo_semente_ha` entra em `culturas.yaml` como hipótese até o agrônomo conferir.
+Saiu na tarefa 0040 (seção 1 da remodelagem): nenhum valor em reais no produto. O bloco "Comece por um pedaço" (hectares, sobra, custo da semente e pior ano seco) foi removido da tela 7, e a API não manda mais `margem_ha` nem `pior_ano_seco_ha`.
 
 ## 8. Arquitetura, modelo de dados e requisitos não funcionais
 
@@ -480,7 +480,7 @@ Time: **Rayanne** (produto, parâmetros, pitch e submissão), **Dev 1** (dados e
 | # | Tarefa | Quem | Estimativa | Pronto quando |
 | --- | --- | --- | --- | --- |
 | T-16 | Tela de cálculo em forma de missão (RF-19) | Dev 2 | 2 a 3 h | missão roda com o exemplo em uns 9 s e cai na tela 4; versão simples com reduced motion |
-| T-17 | Hectares para testar (RF-21): `custo_semente_ha` e `pior_ano_seco_ha` na API e o campo na tela 7 | Dev 1 + Dev 2 | 2 a 3 h | trocar os hectares muda os três valores na hora |
+| T-17 | ~~Hectares para testar (RF-21): `custo_semente_ha` e `pior_ano_seco_ha` na API e o campo na tela 7~~ (saiu na tarefa 0040) | Dev 1 + Dev 2 | 2 a 3 h | trocar os hectares muda os três valores na hora |
 | T-18 | Sinal para o outono (RF-20): GEOS-S2S no pipeline, regra da seção 7.10, campo `sinal` na API e o cartão Plano A / Plano B | Dev 1 + Dev 2 | 4 a 6 h | sinal aparece para o exemplo, com o motivo e a regra do dia de plantar |
 
 **Corte das novas:** T-16 vira a lista simples com ✓ (a versão de reduced motion); T-18 fica só com a regra do dia de plantar (SMAP) e o sinal sai da tela; T-17 mostra só a sobra em reais.

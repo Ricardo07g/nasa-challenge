@@ -52,7 +52,9 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
 
     const table = screen.getByRole('table', { name: 'Todas as opções' })
     expect(within(table).getAllByRole('row')).toHaveLength(6)
-    expect(table).toHaveTextContent('Milho com braquiária14 de 2012 de 20 (de 10 a 13)R$ 700Fica coberta na seca')
+    expect(table).toHaveTextContent('Milho com braquiária14 de 2012 de 20 (de 10 a 13)Dá grão para venderFica coberta na seca')
+    // Tarefa 0040: nenhum valor em reais
+    expect(screen.getByRole('article')).not.toHaveTextContent('R$')
     expect(within(table).getByRole('columnheader', { name: 'Anos que deram certo' })).toBeInTheDocument()
     expect(table).not.toHaveTextContent('(de 20)')
   })
@@ -64,16 +66,17 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
 
     const table = screen.getByRole('table', { name: 'Todas as opções' })
     const headers = within(table).getAllByRole('columnheader').map((header) => header.textContent)
-    expect(headers).toEqual(['Opção', 'Anos que deram certo', 'Clima 2041–2060', 'Sobra por hectare', 'Terra'])
-    expect(within(table).getByRole('row', { name: /Sorgo/ })).toHaveTextContent('Sorgo17 de 2019 de 20R$')
+    expect(headers).toEqual(['Opção', 'Anos que deram certo', 'Clima 2041–2060', 'Renda', 'Terra'])
+    expect(within(table).getByRole('row', { name: /Sorgo/ })).toHaveTextContent('Sorgo17 de 2019 de 20Dá grão para vender')
   })
 
-  it('sem o dado do CMIP6, a coluna do futuro fica com "Ainda não conectado"', () => {
+  it('sem o dado do CMIP6, a coluna do futuro fica com um traço, sem "Ainda não conectado" (decisão D2)', () => {
     const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
     setup({ recomendacao: { ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, futuro: null })) } })
 
     const row = within(screen.getByRole('table', { name: 'Todas as opções' })).getByRole('row', { name: /Sorgo/ })
-    expect(row.querySelector('[data-status="not-connected"]')).toHaveTextContent('Ainda não conectado')
+    expect(row).toHaveTextContent('Sorgo17 de 20—')
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
   })
 
   it('opção fora da janela: o aviso ocupa as colunas de anos e de clima futuro', () => {
@@ -107,15 +110,15 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
     expect(screen.getByRole('article')).toHaveTextContent('Visto pelo satélite MODIS (NASA), de abril a julho de cada ano')
   })
 
-  it('sem sinal e sem histórico na API, as seções ficam com "Ainda não conectado" (não somem)', () => {
+  it('sem sinal e sem histórico na API, essas seções não aparecem (decisão D2)', () => {
     const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
     setup({ recomendacao: { ...rec, sinal: undefined }, talhao: { ...buildTalhao(point, 'pt'), historico: null } })
 
     const sheet = screen.getByRole('article')
-    expect(sheet).toHaveTextContent('4. Sinal para o outono de 2027Ainda não conectado')
-    expect(sheet).toHaveTextContent('5. Histórico da áreaAinda não conectado')
-    expect(sheet).toHaveTextContent('6. Fontes')
-    expect(sheet).not.toHaveTextContent('Sem sinal claro')
+    expect(sheet).not.toHaveTextContent('Sinal para o outono')
+    expect(sheet).not.toHaveTextContent('Histórico da área')
+    expect(sheet).toHaveTextContent('4. Fontes')
+    expect(sheet).not.toHaveTextContent('Ainda não conectado')
   })
 
   it('outra lavoura mostra o lugar aproximado, não a fazenda de exemplo', () => {
