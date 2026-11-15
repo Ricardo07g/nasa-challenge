@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { PLANT_PHOTO_CROPS, PLANT_PHOTOS } from '../content/plantPhotos'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
@@ -69,5 +69,31 @@ describe('DesignSystemView (/design-system)', () => {
     expect(within(section).getAllByRole('img', { name: PLANT_PHOTOS.sorgo.alt.en })).toHaveLength(1)
     expect(within(section).getByText('photo shows the brachiaria')).toBeInTheDocument()
     expect(within(section).getByText('If the photo does not load')).toBeInTheDocument()
+  })
+})
+
+describe('DesignSystemView: seção "Pacote 2" (peças compartilhadas)', () => {
+  it('mostra o Voltar, o "Saiba mais" do Guia, o aviso das safras, o formulário e o botão do modal grande', () => {
+    const pacote2 = {
+      answers: {},
+      onAnswer: vi.fn(),
+      current: { choice: undefined, onChoose: vi.fn(), harvestDate: '2027-03-03', changeDateTo: '/design-system' },
+      modal: null,
+      openLarge: vi.fn(),
+      openSeasons: vi.fn(),
+      closeModal: vi.fn(),
+    }
+    render(
+      <MemoryRouter>
+        <DesignSystemView t={pt} apiMode="http" backend="ok" cropOptions={[]} cropOptionsError={false} pacote2={pacote2} />
+      </MemoryRouter>,
+    )
+
+    const section = screen.getByRole('region', { name: 'Pacote 2: peças compartilhadas' })
+    expect(within(section).getByRole('link', { name: 'Voltar' })).toHaveAttribute('data-back-button')
+    expect(within(section).getByRole('link', { name: 'Saiba mais: rotação de culturas (abre em nova aba)' })).toHaveAttribute('target', '_blank')
+    expect(within(section).getByRole('button', { name: 'Preencher agora' })).toBeInTheDocument()
+    expect(within(section).getByRole('group', { name: 'Soja na safra 2023/24' })).toBeInTheDocument()
+    expect(within(section).getByRole('button', { name: 'Abrir o modal grande' })).toBeInTheDocument()
   })
 })

@@ -49,6 +49,12 @@ import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { ApiStatus } from '../models/apiStatus'
 import type { CropOption } from '../models/cropOption'
+import type { Package2Demo } from '../controllers/useDesignSystemController'
+import { BackButton } from '../design-system/components/BackButton'
+import { GuideLink } from '../design-system/components/GuideLink'
+import { Modal } from '../design-system/components/Modal'
+import { MissingSeasonsNotice } from './MissingSeasonsNotice'
+import { SeasonAnswersForm } from './SeasonAnswersForm'
 import styles from './DesignSystemView.module.css'
 import layout from './layout.module.css'
 
@@ -110,14 +116,60 @@ type DesignSystemViewProps = {
   backend: ApiStatus
   cropOptions: CropOption[]
   cropOptionsError: boolean
+  /** Seção "Pacote 2" (peças compartilhadas); sem ela, a seção não aparece. */
+  pacote2?: Package2Demo
+}
+
+/** As safras de exemplo do formulário (o que o satélite viu): só para a vitrine. */
+const SAMPLE_SEASONS = [
+  { year: 2024, satellite: { soy: true, after: 'plantou' as const, ndvi: 0.71 } },
+  { year: 2025, satellite: { soy: true, after: 'parado' as const, ndvi: 0.32 } },
+  { year: 2026, satellite: null },
+]
+
+/** Pacote 2: o Voltar, o "Saiba mais" do Guia, o aviso "não preenchido", o formulário das safras e o modal grande. */
+function Package2({ t, demo }: { t: Messages; demo: Package2Demo }) {
+  const d = t.designSystem
+  const form = { seasons: SAMPLE_SEASONS, answers: demo.answers, onAnswer: demo.onAnswer, current: demo.current }
+  return (
+    <section className={styles.section} aria-labelledby="ds-pacote2">
+      <h2 id="ds-pacote2" className={layout.sectionTitle}>
+        {d.package2}
+      </h2>
+      <Card>
+        <BackButton to="/design-system">{t.nav.back}</BackButton>
+        <GuideLink slug="rotacao-de-culturas" newTabLabel={t.common.newTab}>
+          {d.package2Guide}
+        </GuideLink>
+        <Button variant="outline" onClick={demo.openLarge}>
+          {d.package2Large}
+        </Button>
+        <MissingSeasonsNotice
+          t={t}
+          lang="pt"
+          open={demo.modal === 'seasons'}
+          onOpen={demo.openSeasons}
+          onClose={demo.closeModal}
+          form={form}
+        />
+      </Card>
+      <Card>
+        <SeasonAnswersForm t={t} lang="pt" {...form} />
+      </Card>
+      <Modal open={demo.modal === 'large'} onClose={demo.closeModal} title={d.package2Large} closeLabel={t.common.close} size="large">
+        <p>{d.package2LargeText}</p>
+      </Modal>
+    </section>
+  )
 }
 
 /** Vitrine do design system (só no ambiente local): tokens, componentes e ambiente. */
-export function DesignSystemView({ t, lang, apiMode, backend, cropOptions, cropOptionsError }: DesignSystemViewProps) {
+export function DesignSystemView({ t, lang, apiMode, backend, cropOptions, cropOptionsError, pacote2 }: DesignSystemViewProps) {
   const d = t.designSystem
   return (
     <div className={layout.page}>
       <PageHeading title={d.title} subtitle={d.intro} />
+      {pacote2 && <Package2 t={t} demo={pacote2} />}
 
       <section className={styles.section} aria-labelledby="ds-env">
         <h2 id="ds-env" className={layout.sectionTitle}>
