@@ -49,6 +49,7 @@ describe('missionFacts', () => {
       signal: 'seco',
       signalSource: 'NOAA',
       options: null,
+      burned: null,
     })
   })
 
@@ -127,6 +128,9 @@ describe('missionFacts', () => {
     expect(fact.rainSource).toBe('GPM IMERG')
     expect(fact.smap).toEqual({ start: '2016', end: '2024' })
     expect(fact.options).toBe(3) // as 2 que cabem na janela e deixar parado
+    expect(fact.burned).toBeNull() // sem o arquivo do MCD64A1, a fonte não aparece
+    const comFogo = { ...comTudo, dados: [...comTudo.dados, { fonte: 'modis_mcd64a1', periodo: '2016-2025' }] } as Talhao
+    expect(missionFacts(comFogo, rec).burned).toEqual({ start: '2016', end: '2025' })
     expect(missionFacts({ ...talhao, solo: { textura: 'medio', cad_mm: 50, fonte: 'padrao' } } as Talhao, rec).soilSource).toBeNull()
   })
 })

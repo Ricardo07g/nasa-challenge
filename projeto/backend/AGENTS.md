@@ -795,6 +795,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   Para ligar o arquivo: **com uv**,
   `AREA_QUEIMADA_PATH=../../data/baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json` no `.env`
   desta pasta; **no compose**, já ligado. Lido uma vez por processo: reinicie o backend.
+  Com o arquivo cobrindo o ponto, o `/talhao` lista `{"fonte": "modis_mcd64a1", "periodo":
+  "2016-2025"}` em `dados` (tarefa 0049): a missão e "De onde vem cada dado" citam o MCD64A1 só aí.
 - **Aba Sugestão** (remodelagem S5a, tarefa 0044, RF-30): campos novos do `/recomendacao` e do
   `/exemplo`, todos opcionais no front (contrato em `docs/tarefas/0044-sugestao.md`). Regras nos
   services, números no `regras.yaml`:

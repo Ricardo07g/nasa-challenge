@@ -236,6 +236,7 @@ export const en = {
           : `${years} years of rain and heat read, day by day`,
     history: (years: number) => `${years} years of satellite history (MODIS NDVI)`,
     soilFrom: (soil: string, source: string) => `${soil} (${source})`,
+    burned: (start: string, end: string) => `Burned area: MODIS MCD64A1, ${start} to ${end}`,
     smap: (start: string, end: string) => `Soil moisture on sowing day: SMAP, ${start} to ${end}`,
     /** Clima de 2041–2060 (NEX-GDDP-CMIP6); a previsão do outono aparece à parte. */
     future: (start: string, end: string) => `Climate for ${start}–${end} read (NEX-GDDP-CMIP6)`,
@@ -965,6 +966,7 @@ export const en = {
       gpm_imerg: { what: 'More detailed rain', source: 'GPM IMERG (NASA)', scale: '10 km squares, daily' },
       smap: { what: 'Soil moisture', source: 'SMAP L4 (NASA)', scale: '9 km, every 3 hours' },
       modis: { what: 'Field history', source: 'MODIS (NASA)', scale: '250 m, every 16 days' },
+      modis_mcd64a1: { what: 'Fire near the point (burned area)', source: 'MODIS MCD64A1 (NASA)', scale: '500 m, monthly' },
       nex_gddp_cmip6: { what: '2041–2060 climate', source: 'NEX-GDDP-CMIP6 (NASA)', scale: 'about 28 km, daily' },
       soilgrids: { what: 'Soil type', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },

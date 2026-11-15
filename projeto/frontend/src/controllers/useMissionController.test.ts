@@ -82,6 +82,7 @@ describe('useMissionController (tela de cálculo, RF-19)', () => {
       signal: 'incerto',
       signalSource: null,
       options: null,
+      burned: null,
     })
     expect(result.current.place).toBe('Uberlândia (MG)')
   })

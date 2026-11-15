@@ -283,6 +283,13 @@ def get_recent_rain_repository() -> RecentRainRepository:
     return FileRecentRainRepository(get_settings().imerg_late_path)
 
 
+# Área queimada do MCD64A1 (alerta de fogo do raio-X, tarefa 0043; fonte do talhão, tarefa 0049):
+# vem do arquivo do AREA_QUEIMADA_PATH; sem ele, nada de fogo.
+@lru_cache
+def get_area_queimada_repository() -> AreaQueimadaRepository:
+    return FileAreaQueimadaRepository(get_settings().area_queimada_path)
+
+
 def get_talhao_service(
     climate_repo: Annotated[ClimateRepository, Depends(get_climate_repository)],
     soil_repo: Annotated[SoilRepository, Depends(get_soil_repository)],
@@ -295,6 +302,7 @@ def get_talhao_service(
     soja_recente_service: Annotated[SojaRecenteService, Depends(get_soja_recente_service)],
     risk_service: Annotated[ClimateRiskService, Depends(get_climate_risk_service)],
     rules: Annotated[Regras, Depends(get_rules)],
+    burned_area_repo: Annotated[AreaQueimadaRepository, Depends(get_area_queimada_repository)],
 ) -> TalhaoService:
     return TalhaoService(
         climate_repo=climate_repo,
@@ -308,6 +316,7 @@ def get_talhao_service(
         soja_recente_service=soja_recente_service,
         remaining_rain_service=RemainingRainService(rules),
         rain_end_service=RainEndService(rules),
+        burned_area_repo=burned_area_repo,
     )
 
 
@@ -441,10 +450,8 @@ def get_community_report_service(
 
 
 # Raio-X da sua terra (tela 4, remodelagem S4, tarefa 0043). A chuva da região e o solo da célula
-# vizinha só existem com banco; a área queimada vem do arquivo do AREA_QUEIMADA_PATH.
-@lru_cache
-def get_area_queimada_repository() -> AreaQueimadaRepository:
-    return FileAreaQueimadaRepository(get_settings().area_queimada_path)
+# vizinha só existem com banco; a área queimada (get_area_queimada_repository, acima do talhão)
+# vem do arquivo do AREA_QUEIMADA_PATH.
 
 
 def get_burned_area_service(

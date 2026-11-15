@@ -18,6 +18,7 @@ const facts = {
   signal: 'seco' as 'seco' | null,
   signalSource: 'NOAA' as string | null,
   options: 6 as number | null,
+  burned: { start: '2016', end: '2025' } as { start: string; end: string } | null,
 }
 
 function setup(overrides: Partial<MissionViewProps> = {}) {
@@ -98,19 +99,21 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
     expect(phases[1]).toHaveTextContent('Terra média (SoilGrids)')
     expect(phases[1]).toHaveTextContent('Umidade da terra no dia de plantar: SMAP, de 2016 a 2024')
     expect(phases[3]).toHaveTextContent('10 anos de histórico do satélite (MODIS NDVI)')
+    expect(phases[3]).toHaveTextContent('Área queimada: MODIS MCD64A1, de 2016 a 2025')
     expect(phases[4]).toHaveTextContent('Clima de 2041 a 2060 lido (NEX-GDDP-CMIP6)')
     expect(phases[5]).toHaveTextContent('Fazendo a conta das 3 opções')
     expect(screen.queryByText(/6 opções/)).not.toBeInTheDocument()
   })
 
   it('sem SMAP, sem IMERG e sem mapa de solos, a fase não cita a fonte que não foi usada', () => {
-    setup({ phase: 6, complete: true, facts: { ...facts, smap: null, rainSource: 'NASA POWER', soilSource: null, options: null } })
+    setup({ phase: 6, complete: true, facts: { ...facts, smap: null, rainSource: 'NASA POWER', soilSource: null, options: null, burned: null } })
 
     const phases = screen.getAllByRole('listitem')
     expect(phases[1]).not.toHaveTextContent('SMAP')
     expect(phases[1]).not.toHaveTextContent('SoilGrids')
     expect(phases[2]).toHaveTextContent('Chuva e calor do NASA POWER: 20 anos lidos, dia a dia')
     expect(phases[2]).not.toHaveTextContent('IMERG')
+    expect(phases[3]).not.toHaveTextContent('MCD64A1')
     expect(phases[5]).toHaveTextContent('Fazendo a conta')
   })
 
@@ -124,7 +127,7 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
   })
 
   it('sem chuva, histórico nem previsão do outono na API: a fase fica sem o dado, sem "Ainda não conectado" (D2)', () => {
-    setup({ phase: 6, complete: true, facts: { ...facts, rainYears: null, historyYears: null, signal: null } })
+    setup({ phase: 6, complete: true, facts: { ...facts, rainYears: null, historyYears: null, signal: null, burned: null } })
 
     const phases = screen.getAllByRole('listitem')
     expect(phases[2]).toHaveTextContent('Chuva e calor de cada ano')

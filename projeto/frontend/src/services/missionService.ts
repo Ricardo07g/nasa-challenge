@@ -39,6 +39,8 @@ export type MissionFacts = {
   signalSource: string | null
   /** Opções que entram na conta: as que cabem na janela de plantio e deixar parado; null sem a conta. */
   options: number | null
+  /** Anos do MODIS MCD64A1 (área queimada), só quando o arquivo cobre o ponto; null sem ele. */
+  burned: { start: string; end: string } | null
 }
 
 const SOURCE_NAMES: Record<string, string> = { gpm_imerg: 'GPM IMERG', nasa_power: 'NASA POWER' }
@@ -70,5 +72,6 @@ export function missionFacts(talhao: Talhao, recomendacao: Recomendacao): Missio
     signalSource: recomendacao.sinal?.fonte?.[0] ?? null,
     // Deixar parado também entra na conta (PRD 7.2), mas não está em `opcoes`.
     options: inWindow === undefined ? null : inWindow + 1,
+    burned: yearSpan(dados.find((dado) => dado.fonte === 'modis_mcd64a1')?.periodo),
   }
 }

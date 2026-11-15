@@ -72,7 +72,11 @@ function phaseResults(t: Messages, lang: Lang, facts: MissionFacts | null): (Pha
       extra: facts.smap ? m.smap(facts.smap.start, facts.smap.end) : undefined,
     },
     facts.rainYears !== null ? { text: m.rain(facts.rainYears, facts.rainSource) } : null,
-    facts.historyYears !== null ? { text: m.history(facts.historyYears) } : null,
+    facts.historyYears !== null
+      ? { text: m.history(facts.historyYears), extra: facts.burned ? m.burned(facts.burned.start, facts.burned.end) : undefined }
+      : facts.burned
+        ? { text: m.burned(facts.burned.start, facts.burned.end) }
+        : null,
     nextClimate,
     { text: m.ready },
   ]

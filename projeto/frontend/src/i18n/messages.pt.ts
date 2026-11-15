@@ -250,6 +250,7 @@ export const pt = {
           : `Chuva e calor de ${years} anos lidos, dia a dia`,
     history: (years: number) => `${years} anos de histórico do satélite (MODIS NDVI)`,
     soilFrom: (soil: string, source: string) => `${soil} (${source})`,
+    burned: (start: string, end: string) => `Área queimada: MODIS MCD64A1, de ${start} a ${end}`,
     smap: (start: string, end: string) => `Umidade da terra no dia de plantar: SMAP, de ${start} a ${end}`,
     /** Clima de 2041–2060 (NEX-GDDP-CMIP6); a previsão do outono aparece à parte. */
     future: (start: string, end: string) => `Clima de ${start} a ${end} lido (NEX-GDDP-CMIP6)`,
@@ -1008,6 +1009,7 @@ export const pt = {
       gpm_imerg: { what: 'Chuva mais detalhada', source: 'GPM IMERG (NASA)', scale: 'quadrados de 10 km, por dia' },
       smap: { what: 'Umidade da terra', source: 'SMAP L4 (NASA)', scale: '9 km, a cada 3 horas' },
       modis: { what: 'Histórico do talhão', source: 'MODIS (NASA)', scale: '250 m, a cada 16 dias' },
+      modis_mcd64a1: { what: 'Fogo perto do ponto (área queimada)', source: 'MODIS MCD64A1 (NASA)', scale: '500 m, por mês' },
       nex_gddp_cmip6: { what: 'Clima de 2041 a 2060', source: 'NEX-GDDP-CMIP6 (NASA)', scale: 'cerca de 28 km, por dia' },
       soilgrids: { what: 'Tipo de terra', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },
