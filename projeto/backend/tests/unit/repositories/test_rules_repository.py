@@ -185,6 +185,16 @@ def test_should_load_the_recent_soybean_rule_checked_at_the_start_of_the_flow() 
     assert soja.min_observacoes == 2
 
 
+def test_should_keep_the_recent_soybean_rule_equal_to_the_region_soybean_peak() -> None:
+    # Integração (tarefas 0036 e 0037): a soja do ponto e a soja do ano da região usam o mesmo
+    # limite e a mesma janela do pico, até os dois grupos do regras.yaml virarem um só.
+    regras = YamlRulesRepository(SHIPPED).get_rules()
+    soja, regiao = regras.soja_recente, regras.regiao_ndvi
+
+    assert soja.ndvi_minimo == regiao.pico_min_ndvi
+    assert (soja.janela_inicio, soja.janela_fim) == (regiao.pico_inicio, regiao.pico_fim)
+
+
 def test_should_refuse_a_recent_soybean_number_without_source(tmp_path: Path) -> None:
     raw = _shipped_raw()
     del raw["soja_recente"]["ndvi_minimo"]["fonte"]
