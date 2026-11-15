@@ -23,7 +23,13 @@ case "$1 $2" in
       echo "[{\"id\":\"dep-velho\",\"status\":\"SUCCESS\",\"meta\":{\"cliMessage\":\"${STUB_ULTIMA_MSG:-}\"}}]"
     fi
     ;;
-  "up projeto/backend" | "up projeto/frontend") echo '{"deploymentId":"dep-novo","logsUrl":"x"}' ;;
+  "up projeto/backend" | "up projeto/frontend")
+    if [[ -n "${STUB_UP_FALHA:-}" ]]; then
+      echo "$STUB_UP_FALHA"
+      exit 1
+    fi
+    echo '{"deploymentId":"dep-novo","logsUrl":"x"}'
+    ;;
   "logs --deployment") echo "log do deploy" ;;
   *) echo "chamada inesperada: $*" >&2; exit 9 ;;
 esac
@@ -110,7 +116,12 @@ roda backend "$c_frontend" STUB_ULTIMA_MSG="commit $c_base" STUB_STATUS_NOVO=FAI
 confere "deploy falhou: sai com erro" '[[ $r -ne 0 ]]'
 confere "deploy falhou: mostra o log" 'grep -q "log do deploy" "$tmp/saida"'
 
-# 9. Serviço desconhecido: erro.
+# 9. O up do CLI falha: sai com erro e mostra a mensagem dele (sem ela, não dá para saber a causa).
+roda frontend "$c_frontend" STUB_ULTIMA_MSG="" STUB_UP_FALHA="Unauthorized. Please check your RAILWAY_TOKEN" && r=0 || r=$?
+confere "up falhou: sai com erro" '[[ $r -ne 0 ]]'
+confere "up falhou: mostra a mensagem do CLI" 'grep -q "Unauthorized. Please check your RAILWAY_TOKEN" "$tmp/saida"'
+
+# 10. Serviço desconhecido: erro.
 roda banco "$c_frontend" && r=0 || r=$?
 confere "serviço desconhecido: erro" '[[ $r -eq 2 ]]'
 

@@ -28,6 +28,17 @@ intervalo_s=10
 
 publicou() { echo "publicou=$1" >>"$saida_gh"; }
 
+# Lista os deploys do serviço em JSON; se o CLI falhar, mostra a mensagem dele e para.
+deploys() {
+  local saida
+  if ! saida="$(railway deployment list --service "$servico" --json --limit "$1" 2>&1)"; then
+    echo "O railway deployment list falhou:" >&2
+    echo "$saida" >&2
+    exit 1
+  fi
+  echo "$saida"
+}
+
 # Arquivos do serviço que mudaram entre dois commits (no backend, sem a documentação).
 mudancas() {
   local desde="$1"
@@ -49,8 +60,8 @@ fi
 
 # 2. Mudou desde o último deploy que deu certo?
 if [[ "${FORCAR:-false}" != "true" ]]; then
-  ultimo="$(railway deployment list --service "$servico" --json --limit 50 |
-    jq -r '[.[] | select(.status == "SUCCESS")][0].meta.cliMessage // ""' |
+  lista_deploys="$(deploys 50)"
+  ultimo="$(jq -r '[.[] | select(.status == "SUCCESS")][0].meta.cliMessage // ""' <<<"$lista_deploys" |
     sed -nE 's/^commit ([0-9a-f]{40})$/\1/p')"
   if [[ -n "$ultimo" ]] && git cat-file -e "${ultimo}^{commit}" 2>/dev/null; then
     lista="$(mudancas "$ultimo")"
@@ -68,9 +79,13 @@ fi
 
 # 3. Publica e espera.
 echo "Enviando projeto/$servico (${commit:0:7}) para a Railway..."
-resposta="$(railway up "projeto/$servico" --path-as-root --service "$servico" \
-  --detach --json --message "commit $commit")"
-deploy_id="$(jq -r '.deploymentId // empty' <<<"$resposta")"
+if ! resposta="$(railway up "projeto/$servico" --path-as-root --service "$servico" \
+  --detach --json --message "commit $commit" 2>&1)"; then
+  echo "O railway up falhou:" >&2
+  echo "$resposta" >&2
+  exit 1
+fi
+deploy_id="$(grep -oE '"deploymentId" *: *"[^"]+"' <<<"$resposta" | head -n1 | sed -E 's/.*"([^"]+)"$/\1/' || true)"
 if [[ -z "$deploy_id" ]]; then
   echo "A Railway não devolveu o id do deploy:" >&2
   echo "$resposta" >&2
@@ -80,8 +95,8 @@ echo "Deploy: $deploy_id"
 
 passou=0
 while ((passou < espera_max_s)); do
-  status="$(railway deployment list --service "$servico" --json --limit 20 |
-    jq -r --arg id "$deploy_id" '.[] | select(.id == $id) | .status')"
+  lista_deploys="$(deploys 20)"
+  status="$(jq -r --arg id "$deploy_id" '.[] | select(.id == $id) | .status' <<<"$lista_deploys")"
   echo "  ${passou}s: ${status:-aguardando}"
   case "$status" in
     SUCCESS)
