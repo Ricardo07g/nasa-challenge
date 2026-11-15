@@ -2,16 +2,15 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useI18n } from '../i18n/useI18n'
 import type { Colheita } from '../models/talhao'
-import { apiMode as currentApiMode } from '../repositories'
-import type { ApiMode } from '../repositories/repositoryMode'
 import { farmService, type FarmService } from '../services/farmService'
 import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { harvestFromDate, harvestSuggestion, harvestWindow } from '../services/harvestService'
+import { rainChart, type RainChart } from '../services/monthlyRainService'
 import { useAsync } from './useAsync'
 
-type Deps = { farm: FarmService; today: () => Date; apiMode: ApiMode }
+type Deps = { farm: FarmService; today: () => Date }
 
-const defaultDeps: Deps = { farm: farmService, today: () => new Date(), apiMode: currentApiMode }
+const defaultDeps: Deps = { farm: farmService, today: () => new Date() }
 
 /**
  * Tela 3 "Quando você colhe a soja?" (pergunta 2 de 2): a faixa sugerida pelo satélite já vem marcada;
@@ -32,6 +31,7 @@ export function useWhenController(deps: Deps = defaultDeps) {
     [params?.lat, params?.lon, params?.exemplo, lang, deps.farm],
   )
   const suggestion = talhao.status === 'loading' ? null : harvestSuggestion(talhao.data)
+  const chart: RainChart | null | 'loading' = talhao.status === 'loading' ? 'loading' : rainChart(talhao.data)
 
   const window = useMemo(() => harvestWindow(deps.today()), [deps])
   const [band, setBand] = useState<Colheita | null>(params?.colheita ?? null)
@@ -60,8 +60,8 @@ export function useWhenController(deps: Deps = defaultDeps) {
   }, [params, selected, deps.farm, lang, navigate])
 
   return {
-    /** O desenho da chuva por mês é de exemplo (não vem da API): só com os dados de exemplo. */
-    rainChart: deps.apiMode === 'mock',
+    /** Chuva de cada mês na região (`chuva_mensal` do talhão); null = "Ainda não conectado". */
+    rainChart: chart,
     missingPoint: params === null,
     backTo: `/onde${keepFlowQuery(search.toString())}`,
     suggestion,

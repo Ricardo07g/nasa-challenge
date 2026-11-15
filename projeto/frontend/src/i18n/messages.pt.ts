@@ -138,9 +138,18 @@ export const pt = {
     whyTitle: 'Por que perguntamos isso?',
     whyText:
       'A chuva vai acabando depois de março. Quanto mais cedo você colhe a soja, mais chuva sobra para a próxima planta.',
+    /** Desenho de exemplo (só na página do design system). */
     chartLabel: 'Chuva média por mês: muita em janeiro, pouca em junho',
     chartCaption: 'Chuva de cada mês na região. Desenho de exemplo.',
-    /** Com a API real o desenho de exemplo sai e fica "Ainda não conectado". */
+    /** Com o dado da API (`chuva_mensal`): descrição acessível com os milímetros de cada mês. */
+    chartDataLabel: (values: string) => `Chuva média por mês, em milímetros: ${values}`,
+    chartMonthValue: (month: string, mm: string) => `${month} ${mm} mm`,
+    /** Legenda com o período e a fonte; com ano faltando na série, diz quantos anos entraram. */
+    chartSource: (first: number, last: number, years: number, source: string) =>
+      `Chuva de cada mês na região, em mm. ${
+        years === last - first + 1 ? `Média de ${first} a ${last}` : `Média de ${years} anos entre ${first} e ${last}`
+      }, ${source}.`,
+    /** Sem o dado da API, o gráfico vira "Ainda não conectado". */
     chartTitle: 'Chuva de cada mês na região',
     months: { jan: 'Jan', feb: 'Fev', mar: 'Mar', apr: 'Abr', may: 'Mai', jun: 'Jun' },
   },

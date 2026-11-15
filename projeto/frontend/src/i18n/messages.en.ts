@@ -137,6 +137,12 @@ export const en = {
       'Rain fades after March. The earlier you harvest your soybeans, the more rain is left for the next crop.',
     chartLabel: 'Average rain per month: a lot in January, little in June',
     chartCaption: 'Rain in each month in the region. Illustrative drawing.',
+    chartDataLabel: (values: string) => `Average rain per month, in millimeters: ${values}`,
+    chartMonthValue: (month: string, mm: string) => `${month} ${mm} mm`,
+    chartSource: (first: number, last: number, years: number, source: string) =>
+      `Rain in each month in the region, in mm. ${
+        years === last - first + 1 ? `Average of ${first}–${last}` : `Average of ${years} years between ${first} and ${last}`
+      }, ${source}.`,
     chartTitle: 'Rain in each month in the region',
     months: { jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun' },
   },

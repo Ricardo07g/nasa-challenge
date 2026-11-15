@@ -5,11 +5,12 @@ import { DateField, RadioCard } from '../design-system/components/Choice'
 import { PageHeading } from '../design-system/components/Content'
 import { BackLink, QuestionStepper } from '../design-system/components/Navigation'
 import { NotConnected } from '../design-system/components/Status'
-import { formatDayMonth } from '../i18n/format'
+import { formatDayMonth, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import { COLHEITAS, type Colheita } from '../models/talhao'
 import type { HarvestWindow } from '../services/harvestService'
+import type { RainChart } from '../services/monthlyRainService'
 import layout from './layout.module.css'
 
 export type WhenViewProps = {
@@ -27,13 +28,15 @@ export type WhenViewProps = {
   onOpenDate: () => void
   onDateChange: (value: string) => void
   onConfirm: () => void
-  /** Desenho de exemplo da chuva por mês: só com os dados de exemplo; com a API real, "Ainda não conectado". */
-  rainChart: boolean
+  /** Chuva de cada mês na região (`chuva_mensal` do talhão): null = "Ainda não conectado"; 'loading' = carregando. */
+  rainChart: RainChart | null | 'loading'
 }
 
-/** Chuva média por mês na região (desenho de exemplo): muita em janeiro, quase nada em junho. */
-const RAIN_BARS = [100, 83, 70, 35, 15, 7] as const
-const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun'] as const
+/** Nome da fonte como a tela "Como a conta é feita" escreve; chave desconhecida sai como veio. */
+function sourceLabel(t: Messages, key: string): string {
+  const sources = t.method.sources
+  return Object.hasOwn(sources, key) ? sources[key as keyof typeof sources].source : key
+}
 
 /** Tela 3 "Quando você colhe a soja?" (pergunta 2 de 2). */
 export function WhenView({
@@ -109,11 +112,23 @@ export function WhenView({
         <Card as="aside" aria-label={w.whyTitle}>
           <h2 className={layout.cardTitle}>{w.whyTitle}</h2>
           <p>{w.whyText}</p>
-          {rainChart ? (
+          {rainChart === 'loading' ? null : rainChart ? (
             <RainBarChart
-              label={w.chartLabel}
-              caption={w.chartCaption}
-              bars={MONTHS.map((month, index) => ({ label: w.months[month], value: RAIN_BARS[index], tone: 'strong' }))}
+              label={w.chartDataLabel(
+                rainChart.bars.map((bar) => w.chartMonthValue(w.months[bar.month], formatNumber(lang, bar.mm))).join(', '),
+              )}
+              caption={w.chartSource(
+                rainChart.firstYear,
+                rainChart.lastYear,
+                rainChart.years,
+                rainChart.sources.map((key) => sourceLabel(t, key)).join(' + '),
+              )}
+              bars={rainChart.bars.map((bar) => ({
+                label: w.months[bar.month],
+                value: bar.heightPct,
+                tone: 'strong',
+                display: formatNumber(lang, bar.mm),
+              }))}
             />
           ) : (
             <NotConnected label={t.common.notConnected} what={w.chartTitle} />

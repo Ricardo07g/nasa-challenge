@@ -4,7 +4,24 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
+import type { RainChart } from '../services/monthlyRainService'
 import { WhenView, type WhenViewProps } from './WhenView'
+
+/** Valores redondos de teste (não são do NASA POWER). */
+const CHART: RainChart = {
+  bars: [
+    { month: 'jan', mm: 200, heightPct: 100 },
+    { month: 'feb', mm: 150, heightPct: 75 },
+    { month: 'mar', mm: 100, heightPct: 50 },
+    { month: 'apr', mm: 50, heightPct: 25 },
+    { month: 'may', mm: 20, heightPct: 10 },
+    { month: 'jun', mm: 10, heightPct: 5 },
+  ],
+  firstYear: 2005,
+  lastYear: 2024,
+  years: 20,
+  sources: ['nasa_power'],
+}
 
 function setup(overrides: Partial<WhenViewProps> = {}) {
   const props: WhenViewProps = {
@@ -21,7 +38,7 @@ function setup(overrides: Partial<WhenViewProps> = {}) {
     onOpenDate: vi.fn(),
     onDateChange: vi.fn(),
     onConfirm: vi.fn(),
-    rainChart: true,
+    rainChart: CHART,
     ...overrides,
   }
   render(
@@ -83,22 +100,50 @@ describe('WhenView (tela 3)', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Escolha um dia dentro da época de colheita.')
   })
 
-  it('explica por que pergunta, com o gráfico da chuva por mês', () => {
+  it('explica por que pergunta, com o gráfico da chuva de cada mês, a fonte e o período', () => {
     setup()
 
     const why = screen.getByRole('complementary', { name: 'Por que perguntamos isso?' })
     expect(why).toHaveTextContent('A chuva vai acabando depois de março.')
-    expect(screen.getByRole('img', { name: 'Chuva média por mês: muita em janeiro, pouca em junho' })).toBeInTheDocument()
+    const chart = screen.getByRole('img', {
+      name: 'Chuva média por mês, em milímetros: Jan 200 mm, Fev 150 mm, Mar 100 mm, Abr 50 mm, Mai 20 mm, Jun 10 mm',
+    })
+    expect(chart.querySelectorAll('[data-bar]')).toHaveLength(6)
+    expect(chart.querySelector('[data-bar]')).toHaveStyle({ height: '100%' })
+    expect(chart).toHaveTextContent('200')
+    expect(why).toHaveTextContent('Chuva de cada mês na região, em mm. Média de 2005 a 2024, NASA POWER.')
+    expect(screen.queryByText(/Desenho de exemplo/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Ainda não conectado', { exact: false })).not.toBeInTheDocument()
   })
 
-  it('com a API real, o desenho de exemplo da chuva por mês sai: "Ainda não conectado"', () => {
-    setup({ rainChart: false })
+  it('com ano faltando na série, diz quantos anos entraram na média', () => {
+    setup({ rainChart: { ...CHART, years: 19 } })
+
+    expect(screen.getByText(/Média de 19 anos entre 2005 e 2024, NASA POWER\./)).toBeInTheDocument()
+  })
+
+  it('com mais de uma fonte, cita todas; fonte sem nome conhecido sai como veio', () => {
+    setup({ rainChart: { ...CHART, sources: ['gpm_imerg', 'nasa_power', 'outra'] } })
+
+    expect(screen.getByText(/Média de 2005 a 2024, GPM IMERG \(NASA\) \+ NASA POWER \+ outra\./)).toBeInTheDocument()
+  })
+
+  it('sem o dado da API, o gráfico vira "Ainda não conectado"', () => {
+    setup({ rainChart: null })
 
     const why = screen.getByRole('complementary', { name: 'Por que perguntamos isso?' })
     expect(why).toHaveTextContent('A chuva vai acabando depois de março.')
     expect(why).toHaveTextContent('Chuva de cada mês na região: Ainda não conectado')
     expect(screen.queryByRole('img', { name: /Chuva média por mês/ })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Desenho de exemplo/)).not.toBeInTheDocument()
+  })
+
+  it('enquanto o talhão carrega, nem gráfico nem "Ainda não conectado"', () => {
+    setup({ rainChart: 'loading' })
+
+    const why = screen.getByRole('complementary', { name: 'Por que perguntamos isso?' })
+    expect(why).toHaveTextContent('A chuva vai acabando depois de março.')
+    expect(why).not.toHaveTextContent('Ainda não conectado')
+    expect(screen.queryByRole('img', { name: /Chuva média por mês/ })).not.toBeInTheDocument()
   })
 
   it('em inglês', () => {
@@ -106,5 +151,11 @@ describe('WhenView (tela 3)', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'When do you harvest your soybeans?' })).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('February 18 counts as mid-February.')
+    expect(
+      screen.getByRole('img', {
+        name: 'Average rain per month, in millimeters: Jan 200 mm, Feb 150 mm, Mar 100 mm, Apr 50 mm, May 20 mm, Jun 10 mm',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Rain in each month in the region, in mm. Average of 2005–2024, NASA POWER.')).toBeInTheDocument()
   })
 })

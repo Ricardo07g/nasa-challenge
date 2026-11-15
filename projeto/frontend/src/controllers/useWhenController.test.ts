@@ -1,6 +1,6 @@
 import { act, renderHook, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import type { Talhao } from '../models/talhao'
+import type { ChuvaMensal, Talhao } from '../models/talhao'
 import type { FarmService } from '../services/farmService'
 import { providers } from '../test/providers'
 import { useWhenController } from './useWhenController'
@@ -9,10 +9,19 @@ const point = 'lat=-18.9543&lon=-48.1993'
 
 function deps(
   talhao: Promise<Partial<Talhao>> = Promise.resolve({ colheita_sugerida: { faixa: 'cedo', fonte: 'ndvi_modis', anos_usados: 9 } }),
-  apiMode: 'mock' | 'http' = 'mock',
 ) {
   const farm: FarmService = { talhao: vi.fn().mockReturnValue(talhao), recomendacao: vi.fn().mockResolvedValue({}) }
-  return { farm, today: () => new Date(2026, 10, 14), apiMode }
+  return { farm, today: () => new Date(2026, 10, 14) }
+}
+
+/** Valores redondos de teste (não são do NASA POWER). */
+const CHUVA: ChuvaMensal = {
+  meses: [
+    { mes: 1, media_mm: 200 },
+    { mes: 2, media_mm: 100 },
+  ],
+  anos: [2005, 2006],
+  fonte: 'nasa_power',
 }
 
 describe('useWhenController (tela 3)', () => {
@@ -101,13 +110,37 @@ describe('useWhenController (tela 3)', () => {
     expect(result.current.missingPoint).toBe(true)
   })
 
-  it('o desenho de exemplo da chuva por mês só aparece com os dados de exemplo', () => {
-    const mockDeps = deps(undefined, 'mock')
-    const httpDeps = deps(undefined, 'http')
-    const mock = renderHook(() => useWhenController(mockDeps), { wrapper: providers(`/quando?${point}`) })
-    expect(mock.result.current.rainChart).toBe(true)
+  it('o gráfico da chuva de cada mês vem do talhão (dado da API, nos dois modos)', async () => {
+    const d = deps(Promise.resolve({ chuva_mensal: CHUVA }))
+    const { result } = renderHook(() => useWhenController(d), { wrapper: providers(`/quando?${point}`) })
 
-    const http = renderHook(() => useWhenController(httpDeps), { wrapper: providers(`/quando?${point}`) })
-    expect(http.result.current.rainChart).toBe(false)
+    await waitFor(() => expect(result.current.rainChart).not.toBe('loading'))
+    expect(result.current.rainChart).toEqual({
+      bars: [
+        { month: 'jan', mm: 200, heightPct: 100 },
+        { month: 'feb', mm: 100, heightPct: 50 },
+      ],
+      firstYear: 2005,
+      lastYear: 2006,
+      years: 2,
+      sources: ['nasa_power'],
+    })
+  })
+
+  it('enquanto o talhão carrega, o gráfico espera (nada de "Ainda não conectado" piscando)', () => {
+    const d = deps(new Promise(() => {}))
+    const { result } = renderHook(() => useWhenController(d), { wrapper: providers(`/quando?${point}`) })
+
+    expect(result.current.rainChart).toBe('loading')
+  })
+
+  it('sem chuva_mensal na resposta ou se o talhão falhar, não há gráfico ("Ainda não conectado")', async () => {
+    const without = deps(Promise.resolve({ chuva_mensal: null }))
+    const failed = deps(Promise.reject(new Error('rede')))
+    const a = renderHook(() => useWhenController(without), { wrapper: providers(`/quando?${point}`) })
+    const b = renderHook(() => useWhenController(failed), { wrapper: providers(`/quando?${point}`) })
+
+    await waitFor(() => expect(a.result.current.rainChart).toBeNull())
+    await waitFor(() => expect(b.result.current.rainChart).toBeNull())
   })
 })
