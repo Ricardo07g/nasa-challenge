@@ -851,12 +851,17 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     taxa de acerto nos anos de cada fase contra os outros, com `clara` (5 anos ou mais da fase e
     25 pontos de diferença). Só informa;
   - **objetivos do produtor** (`objetivos`: `equilibrio`, `seguranca`, `renda`, `terra`; cada um
-    com `ordem`, `plano` e `nota_plano`): a ordem é a nota do eixo com desempate pela final; o plano
-    é o melhor do PRD 7.7 que começa pela 1ª da ordem (`RotationPlanService.best_plan_starting_with`;
-    nos objetivos, sem o pousio). **O Plano A (`plano_3_anos.normal`) é o plano do equilíbrio: começa
-    pela melhor opção**; o Plano B continua livre. A reordenação é no motor; o navegador só escolhe.
-    Desde a tarefa 0056, a `ordem` traz depois das no prazo as culturas fora do prazo do ZARC (mesma
-    regra do eixo); o `plano` continua só com as no prazo;
+    com `ordem`, `plano`, `nota_plano` e `motivos`): a ordem é a nota do eixo com desempate pela
+    final; o plano começa pela 1ª da ordem e sai da **mesma sugestão em cadeia do
+    `/api/plano/sugestao`** (tarefa 0065: `PlanSuggestionService.suggest` com o 1º ano fixo, a nota do
+    eixo em `axis` e, nos objetivos, sem o pousio, `allow_fallow=False`); `motivos` = o porquê de cada
+    ano, na ordem do `plano` (`null` no 1º). **O Plano A (`plano_3_anos.normal`) é o plano do
+    equilíbrio: começa pela melhor opção e é igual ao `/api/plano/sugestao?fixos=<melhor>` da mesma
+    faixa**, com os mesmos `motivos` (no `seco` e no `hoje`, `motivos: null`); o Plano B continua
+    livre (o `build_3_year_plans` do PRD 7.7, que nunca usou a regra antiga). A `nota_plano` e a
+    `nota` continuam a do PRD 7.7 (sem os pontos da cadeia). A reordenação é no motor; o navegador só
+    escolhe. Desde a tarefa 0056, a `ordem` traz depois das no prazo as culturas fora do prazo do
+    ZARC (mesma regra do eixo); o `plano` continua só com as no prazo;
   - **na célula** (`clima_futuro`, `geada`): **os mesmos objetos do raio-X** (tarefa 0049, S9), para
     a Sugestão e a tela 4 dizerem o mesmo número: `clima_futuro` = o cartão "Clima 2041–2060"
     (`FutureClimateService`: cada mês pesado pela chuva média do mês na célula, com
@@ -890,7 +895,11 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     (`rotacao.culturas_supressoras_nematoide`, PRD 7.7) e `usa_mm` (mediana da ETr do ciclo, o novo
     `AguaOpcao.usa_mm` do `WaterNeedService`). Desde a tarefa 0056: `fora_do_prazo` (a cultura
     passou do prazo do ZARC: vem com os números do motor, `na_janela: false`, e entra nas médias;
-    antes os números saíam `null`), `fixo` (sempre `true` aqui) e `motivo` (sempre `null` aqui);
+    antes os números saíam `null`), `fixo` (sempre `true` aqui) e `motivo` (sempre `null` aqui).
+    Desde a tarefa 0065: `data_limite` ("AAAA-MM-DD", o prazo do ZARC da cultura no ano daquele ano
+    do plano: o 1º = o ano da semeadura do motor, o mesmo `data_limite` do `/recomendacao`; o 2º e o
+    3º, um e dois anos depois) e `ciclo` (`dias_florescer` e `ciclo_dias` do `culturas.yaml`); os
+    dois `null` no pousio (também no `/api/plano/sugestao`);
   - `notas`: `seguranca` e `futuro` = média das notas do motor nos anos com lavoura na janela (o pousio
     fica de fora); `solo` (saúde da terra) = média da nota de solo dos 3 anos (pousio 0) + o bônus de
     diversidade do PRD 7.7 (`RotationPlanService.diversity_bonus`), até 100;
@@ -916,15 +925,18 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     plano e o `PlanEvaluationService.suggest` devolve **o mesmo JSON do `/api/plano`** do plano
     completado, com `anos[].fixo` (`false` nos sugeridos) e `anos[].motivo` (a frase pronta no
     idioma do `Accept-Language`, só nos sugeridos, sem o nome da cultura). Os anos sugeridos saem do
-    `RotationPlanService.best_plan_with_prefix` (o `best_plan_starting_with` generalizado para um
-    prefixo fixo; com 1 ano e sem a cadeia, o plano de antes) com `chain=True`: em cada ano sugerido
-    somam os pontos do grupo `plano_cadeia` (`transition_rules` / `transition_bonus`: milheto depois
-    de um pousio **fixo**, supressora do nematoide depois do milho, nenhuma função repetida do ano
-    anterior; hipótese do time, a revisar). Só culturas no prazo e o pousio são sugeridas. O
+    `RotationPlanService.best_plan_with_prefix`, **a regra única do plano sugerido** (tarefa 0065: o
+    Plano A e os planos de `objetivos` também saem dela; o `best_plan_starting_with` e o `chain`
+    saíram): em cada ano sugerido somam os pontos do grupo `plano_cadeia` (`transition_rules` /
+    `transition_bonus`: milheto depois de um pousio **fixo**, supressora do nematoide depois do milho,
+    nenhuma função repetida do ano anterior; hipótese do time, a revisar; com os pontos zerados, fica
+    só a conta do PRD 7.7). Só culturas no prazo e o pousio são sugeridas. O
     `motivo` é a frase do grupo `frases_plano` da 1ª regra que pesou: cobrir depois do parado,
     quebrar o nematoide depois do milho, prazo (sem o prazo do ZARC, uma cultura fora dele ganharia
     o ano), variar a função, melhor nota; com a sede `pouca`, "e aguenta a seca". O Plano A do
-    `/recomendacao` e os planos de `objetivos` **não** usam a cadeia. Sem 1 ou 2 anos fixos ou com
+    `/recomendacao` e os planos de `objetivos` usam a mesma cadeia e as mesmas frases (`motivos`,
+    tarefa 0065; o `/api/plano/sugestao` não recebe `nematoide`, `gado` nem `confirmadas`: com eles,
+    o Plano A pode ser outro). Sem 1 ou 2 anos fixos ou com
     cultura desconhecida: 422 `VALIDATION_ERROR`; sem `fixos`: 422 `INVALID_REQUEST`; ponto sem
     dados: 404 `OUTSIDE_AREA`. Sem cache HTTP, ~0,4 s.
 - **Região pelo satélite** (P3, tarefas 0034 e 0036): `GET /api/regiao?lat&lon`, no contrato do
@@ -1075,19 +1087,19 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   sede, `rotacao` com o bônus e as supressoras do nematoide, `plano_b`, `alertas` de geada, chuva forte e fogo,
   `avisos` e `sinal`). Só números (as frases são do front), sem banco e sem cache HTTP. Os schemas têm o prefixo
   `Metodo` para não colidir no OpenAPI com os do `/recomendacao`.
-- **Avisos do ponto marcado** (`GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas]`, tela "Avisos",
-  remodelagem S6, tarefa 0046, RF-31). Roda o motor uma vez (`RecommendationService.recommend`, com a mesma
-  colheita, solo e safras confirmadas do `/recomendacao`) e junta quatro grupos. O `AvisosService` só busca e
+- **Avisos do ponto marcado** (`GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas][&cultura]`, tela
+  "Avisos", remodelagem S6, tarefa 0046, RF-31). Roda o motor uma vez (`RecommendationService.recommend`, com a
+  mesma colheita, solo e safras confirmadas do `/recomendacao`) e junta os grupos. O `AvisosService` só busca e
   monta; as regras ficam em `AvisosAgoraService`, `AvisosMudancaService` e `AvisosVizinhosService`, com os números
   no grupo `avisos_tela` do `regras.yaml` (à parte do `avisos` do replay P4/P6, que não muda). Reaproveita sem
   repetir: o dia seco (`avisos.dia_seco_abaixo_mm`), o calor (`clima.calor_temp_c`), as janelas de março a maio do
   raio-X (`raio_x.veranico_*`, `calor_*`), o fim das chuvas (`RainEndService`), a estação e a chance mínima da
   previsão do ENSO (`sinal_enso`), o raio da comunidade (`comunidade.raio_km`) e a regra de avisos do replay
   (`CropAlertService`). Só números: as frases são do front.
-  - **Resposta:** `ponto`, `celula_id`, `hoje` (dia de Uberlândia, UTC−3), `contador` (avisos de `agora` e de
-    `perto`; desde a tarefa 0062 o front não usa mais esse número: o sino e o resumo da tela contam só os cartões
-    de `agora`, porque o "Perto de você" saiu da tela), `agora`, `mudou`, `periodo` (`recente_inicio`, `recente_fim`,
-    `antes_inicio`, `antes_fim`), `recordes`, `perto`, `raio_km`, `vizinhos_dias` e `safrinha` (`em_andamento`,
+  - **Resposta:** `ponto`, `celula_id`, `hoje` (dia de Uberlândia, UTC−3), `contador` (só os avisos de `agora`,
+    desde a tarefa 0065; o front conta os cartões de `agora` que sabe escrever), `agora`, `mudou`, `periodo`
+    (`recente_inicio`, `recente_fim`, `antes_inicio`, `antes_fim`), `recordes`, `perto` (sempre `null` desde a
+    tarefa 0065, abaixo), `raio_km`, `vizinhos_dias` e `safrinha` (`em_andamento`,
     `cultura`, `nome`, `semeadura`, `colheita`, `explorar_ano`). Cada grupo é `{avisos, ultima_leitura}`: `null` =
     sem dado (o front não desenha); `avisos: []` = "Nada fora do normal" com a `ultima_leitura`.
   - **Cada aviso:** `tipo`, `nivel` (`atencao` ou `fique_de_olho`), `fontes` (`smap`, `nasa_power`, `gpm_imerg`,
@@ -1116,8 +1128,17 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `/api/safra-passada` daquele ano e os recordes do mesmo ano).
   - **Falta de água** do grupo `mudou`: ETc − ETr no ciclo da melhor opção, com o balde do motor (SMAP do dia de
     plantar ou 50% da CAD; `cycle_deficits` em `avisos_mudanca_service.py`).
-  - Sem banco, `perto` é `null` (a comunidade responde 503 por dentro). Erros como no `/recomendacao` (404
-    `OUTSIDE_AREA`, 422). Sem cache HTTP.
+  - **Cultura do plano** (`cultura`, tarefa 0065, opcional: id do `culturas.yaml`): com ela, a falta de água
+    (`mudou_falta_agua`) e o "deu certo" (`mudou_deu_certo`) usam essa cultura (a conta do motor dela, no prazo ou
+    em `opcoes_fora_do_prazo`, e o ciclo e o Kc dela no balde); no pousio, os dois não vêm. Sem ela, a melhor opção
+    do motor. Cultura desconhecida: 422 `VALIDATION_ERROR` (antes de rodar o motor). O `enso` e a safrinha
+    continuam pela melhor opção. O front manda a cultura do 1º ano do plano.
+  - **"Perto de você" desligado** (tarefa 0065, a comunidade está "em breve"): o `perto` vem `null` e a API não
+    lê a comunidade. O `AvisosVizinhosService` continua no código: o `AvisosService` só monta o grupo com o
+    `vizinhos_service` e o `community_service` injetados, e o `dependencies.py` passa `None` nos dois. Para
+    religar, injete os dois (sem banco, a comunidade responde 503 por dentro e o grupo continua `null`); mesmo
+    religado, o `contador` não conta o `perto`. Erros como no `/recomendacao` (404 `OUTSIDE_AREA`, 422). Sem cache
+    HTTP.
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
   ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre

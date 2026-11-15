@@ -177,10 +177,15 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `repositories/savedPointRepository.ts` (chave `raiz-orbital.avisos.ponto`, toda leitura e escrita em try/catch)
   guarda o último ponto do fluxo com a colheita, o solo, as safras, a escolha atual e, desde o pacote 3, a `escolha` e
   o `objetivo` da tela 5; **nunca a lavoura de demonstração** (`pointFromFlow`). Quem guarda é o
-  `controllers/useAlertsBadge.ts`, usado pelo `useShellController`. O `avisosService` faz um pedido por ponto e idioma
-  na visita (o sino e a tela usam o mesmo). **Número do sino = número do resumo** (`activeCount`, usado pelo
-  `headerCount` e pelo `alertsSummary`): só os avisos que a tela mostra, os cartões de "Agora". **O `contador` da API
-  ainda soma o "Perto de você"** (relatos de vizinhos), que saiu da tela: não use esse número. Sem aviso, sem número.
+  `controllers/useAlertsBadge.ts`, usado pelo `useShellController`. O `avisosService` faz um pedido por ponto, idioma
+  e cultura na visita (`get(point, lang, cultura)`; o cache separa por cultura). **A cultura do 1º ano do plano vai à
+  API** (tarefa 0065 do backend, `&cultura=`): o `useAvisosController` espera a recomendação da tela 5 e manda o
+  `planCropOf` (sem colheita ou com a recomendação em erro, a escolha da URL ou nenhuma: a API usa a melhor opção);
+  assim a falta de água e o "deu certo" são da cultura do plano, mesmo quando ela não é a melhor opção. O sino pede
+  sem a cultura (o "Agora" não depende dela). **Número do sino = número do resumo** (`activeCount`, usado pelo
+  `headerCount` e pelo `alertsSummary`): só os avisos que a tela mostra, os cartões de "Agora". O `contador` da API
+  agora também é só o "Agora" (tarefa 0065), mas conta tipos que a tela não sabe escrever: continue com o
+  `activeCount`. O `perto` vem `null` (os dados de exemplo também). Sem aviso, sem número.
   O botão do cabeçalho fica logo depois do Guia. **Tela** (protótipo `tela-7-avisos.html`): "← Voltar", "Avisos",
   "{lugar} · atualizado em **{data}**", "Ouvir resumo" e "Como ler os avisos" (`GuideLink`); o **resumo** (verde sem
   aviso, azul só com "Fique de olho", laranja com algum "Atenção"; `data-summary` com o tom) com a legenda dos níveis
@@ -195,13 +200,14 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   a âncora do "Ver alertas oficiais" da tela 6; o controller rola até ela de novo quando os dados chegam): `sms:40199`,
   `https://wa.me/556120344611?text=Oi` (nova aba), `tel:193`, `tel:199` e o Guia `alertas-defesa-civil`. **"Como a sua
   área está mudando"** (`changeTiles`: até 4 quadros, veranico, fim das chuvas, falta de água, deu certo e o calor se
-  couber; os da cultura só quando a conta da API é da cultura do 1º ano do plano) e **"Já aconteceu aqui"**
+  couber; os da cultura só quando a conta da API é da cultura do 1º ano do plano, a que a tela mandou) e **"Já
+  aconteceu aqui"**
   (`recordTiles`, os 4 recordes): o valor antigo riscado, o novo em laranja quando piorou, "2005–19 → 2020–24".
   Cada cartão e cada quadro abre o mesmo `Modal` (o controller guarda `detail = {kind, index}`): nível, título, número
   grande, "O que significa", "O que fazer", fonte com a data ("leitura de" em "Agora", "dados até" nas séries) e o
   "Saiba mais" em nova aba (`conta-de-agua`, `veranico`, `calor-35-graus`, `el-nino-la-nina`, `quando-a-chuva-acaba`,
-  `deu-certo`). No fim, a comunidade **"Em breve"** (sem botão). **O "Perto de você" saiu da tela** (a API ainda manda
-  `perto`; o backend da comunidade continua). "Ouvir resumo": `alertsListen` (quantos avisos e o "título: o que fazer"
+  `deu-certo`). No fim, a comunidade **"Em breve"** (sem botão). **O "Perto de você" saiu da tela** (desde a tarefa 0065, a API manda
+  `perto: null`; o backend da comunidade continua). "Ouvir resumo": `alertsListen` (quantos avisos e o "título: o que fazer"
   de cada cartão; sem aviso, "Nada fora do normal agora…"). No El Niño / La Niña, o "o que fazer" do modal segue o
   `valores.sinal` (o mesmo conselho do Plano de 3 anos). Cores novas no bloco "Pacote 3 · tela 7" do `tokens.css`.
 - **Pacote 2: regras gerais de todas as telas (tarefa 0054, RF-38).** Valem para toda tela nova ou refeita:
@@ -409,7 +415,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   relatório" e "Mudar o plano"), "O que fazer agora" (passos por regra: agora, fevereiro com a previsão da NOAA do
   `sinal` e a etiqueta "Plano B: X" do `plano_ab`, que some sem Plano B ou com o 1º ano igual a ele; colheita; plantio
   até o `data_limite`, em laranja com `fora_do_prazo`; a fase da água pelo `ciclo` e o `criterio` do `/recomendacao`;
-  o fim do ciclo pelo `renda.da_grao`; out–nov; **sem "Adicionar à agenda"**), alertas da área (até 3, cada um só com
+  o fim do ciclo pelo `renda.da_grao`; out–nov, com o prazo do 2º ano no texto, o `data_limite` do `anos[1]` do
+  `/api/plano` (tarefa 0065; em laranja fora do prazo, sem passo novo); **sem "Adicionar à agenda"**), alertas da área (até 3, cada um só com
   dado: o `sinal`, `alertas.chuva_forte` e `alertas.fogo` do raio-X; "Saiba mais" pelo `GuideLink` com os slugs
   `como-evitar-erosao` e `fogo-na-palha`; a faixa da Defesa Civil com "Ver alertas oficiais" para
   `/avisos…#alertas-oficiais`, o id do bloco oficial da tela de Avisos), passado e futuro (`anos[].anos_bons` e
@@ -418,7 +425,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   o `MissingSeasonsNotice`). **Relatório:** os dois "Imprimir relatório" chamam `window.print()` (injetado no controller);
   o `PlanReport` fica num portal no `<body>`, `hidden` na tela, e o CSS de impressão esconde o resto (cabeçalho em
   `<div>`: o `global.css` esconde todo `<header>`); 7 seções (Sua terra, Últimas safras, Opções comparadas, Plano de 3 anos
-  com Prós e Contras pelos `prosTexts`/`consTexts` da tela 5 e "Como o plano ajuda a ganhar", O que fazer e quando,
+  com o Prazo de cada ano (`PlanCard.deadline` = o `data_limite` do `/api/plano`, `planDeadlineText`; tarefa 0065), Prós
+  e Contras pelos `prosTexts`/`consTexts` da tela 5 e "Como o plano ajuda a ganhar", O que fazer e quando,
   Alertas e clima, Fontes e aviso), 2 folhas A4 na lavoura de demonstração. Os cartões dos anos no celular: foto de 108 px
   à esquerda; a 360 px as barras do "Deu certo" ficam com 56 px e o "X de 20" desce se não couber (sem rolagem lateral).
   É a **única tela com "Imprimir relatório"**.
