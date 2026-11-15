@@ -27,7 +27,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | ✅ na branch (15/11 ~02:17), revisada |
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | ✅ na branch (15/11 ~02:57), revisada |
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | ✅ na branch (15/11 ~04:00), revisada; extração completa do MCD64A1 rodando |
-| S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | feito na branch `feat/remodelagem-s5a-sugestao` (15/11 ~04:10; falta o merge e a revisão; irrigação opcional não feita) |
+| S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | ✅ na branch (15/11 ~04:12), revisada; irrigação opcional não feita |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | a fazer |
 | S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~03:10), revisada |
@@ -124,6 +124,36 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D80 | 15/11 | "Como fazer": manejo = os passos do `culturas.yaml` com "Rascunho: a revisar pela agrônoma." (são rascunho no YAML); "o que observar" = veranico típico (mediana, para baixo) e anos de calor da fase crítica, do motor, e o fim das chuvas do `/talhao` (S3). Irrigação (opcional da 5.3) não foi feita. | Regra geral: nada de recomendação agronômica nova. A irrigação fica atrás de uma opção desligada e não muda o "deu certo"; ficou para depois por tempo. |
 
 ## Revisão por seção
+
+### S5a — Abas, objetivo, Sugestão e Água (revisada em 15/11 ~04:20)
+
+Conferida em 1280 e 390 px, pt e en, com dado real na fazenda de exemplo (colheita meio e tarde).
+
+- ✅ Abas "Sugestão", "Comparar" e "Plano de 3 anos", nessa ordem. As URLs ficaram (`/resposta`, `/opcoes`,
+  `/plano`); `/safra-passada?…&ano=2024` leva para `/resposta?…&ano=2024` e `/relatorio` saiu.
+- ✅ 5.1 "O que você quer mais?" no topo das três abas, guardado na URL. A ordem e o plano de cada objetivo vêm
+  prontos do motor. Com "Mais segurança", a 1ª opção vira crotalária (19 de 20).
+- ✅ 5.2 Imagem da planta (SVG próprio) nos cartões, na miniatura do plano, em "Se você prefere…", no Comparar e
+  no Plano.
+- ✅ 5.3 Selo de sede (milho com braquiária: muita; sorgo: média; crotalária e milheto: pouca) e linha Água:
+  "Precisa de 346 mm · Costuma chover 400 mm · Falta 116 mm em ano normal e 158 mm em ano seco" e a versão
+  2041–2060 (128 mm, de 112 a 143). Palhada, enxurrada e água da próxima safra só no Guia, sem número.
+- ✅ 5.4 "Ano 1 do seu plano" com os 3 anos em miniatura e "Explorar o plano"; "deu certo" explicado com o
+  critério da API (55% da água e menos de 3 dias de 35 °C); explorador com barras de 2005 a 2024, linha de
+  corte de 55%, "N" e "L" escritos e anos de aperto listrados.
+- ✅ Detalhe do ano (2024): semeadura 18/fev, floração 18/abr, 14 dias sem chuva, 0 dias de 35 °C, El Niño,
+  SMAP de 35% da água que a terra guarda, o motivo e a safra dia a dia (aviso de 10 dias sem chuva em 28/abr).
+- ✅ Linhas na ordem pedida (Deu certo, Água, Clima 2041–2060, Renda, Terra); "Como fazer" em 4 partes com
+  "Passo a passo completo"; na colheita tarde, um aviso só ("milho sozinho, milho com braquiária e
+  crotalária") com a linha do ZARC e o link; o relatório saiu.
+- ❌ **Clima 2041–2060 diz coisas diferentes em duas telas para a mesma célula:** na Sugestão, "Chuva de março
+  a maio: −0,7%, 2 de 3 modelos indicam menos chuva"; no raio-X (S4), "+2,2%, 2 de 3 modelos indicam mais
+  chuva". A S4 pesa a variação de cada mês pela chuva média do mês (D64); a S5a faz uma conta própria
+  (`clima_futuro_sugestao`, D77). A conta da S4 é a certa para o total de março a maio. Corrigir na S9: a
+  Sugestão passa a usar o `FutureClimateService`.
+- ⚠️ No celular, os botões do objetivo quebram em 2 ou 3 linhas ("Cuidar da terra").
+- ⚠️ O Plano ainda tem o botão "Como teria sido em 2024?" e o Plano A/B antigo: ficam para a S5b.
+- ⚠️ Irrigação opcional (5.3) não feita (ver "O que não foi possível").
 
 ### S4 — Raio-X da sua terra (revisada em 15/11 ~04:10)
 
@@ -287,6 +317,12 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
 - **S4, ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568):** o raio-X mostra solo, água, chuva e
   região normalmente, e o bloco do verde diz "Pico da soja 2025/26: 0,33" mesmo sem soja (ver a revisão da S4).
   O aviso "Não parece uma lavoura de soja" aparece certo.
+
+- **S5a × S4, clima 2041–2060 com sinais opostos na mesma célula:** −0,7% na Sugestão e +2,2% no raio-X
+  (chuva de março a maio). Ver a revisão da S5a; corrigir na S9.
+- **S5a, plano "Cuidar da terra" na fazenda: crotalária nos 3 anos.** Repetir a mesma cobertura três vezes
+  vai contra a diversidade que o próprio PRD 7.7 premia na rotação; o plano de renda repete milho com
+  braquiária. Vale a S5b (plano editável) e a agrônoma olharem.
 
 ## O que não foi possível e por quê
 
