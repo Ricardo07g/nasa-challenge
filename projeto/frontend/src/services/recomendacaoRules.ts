@@ -61,7 +61,13 @@ export function futureSummary(option: Opcao): FutureSummary | null {
   }
 }
 
-/** Tela 9 (para o agrônomo): as notas de 0 a 100 de cada opção, da maior nota final para a menor. */
+/**
+ * Tela 9 (para o agrônomo): as notas de 0 a 100 de cada opção no prazo, da maior nota final para a menor.
+ * Desde a tarefa 0056 o `/recomendacao` traz também as culturas fora do prazo (`na_janela: false`), que ficam de fora.
+ */
 export function scoreRows(recomendacao: Recomendacao): { id: CropId; nome: string; notas: Opcao['notas'] }[] {
-  return [...recomendacao.opcoes].sort(byFinal).map(({ id, nome, notas }) => ({ id, nome, notas }))
+  return recomendacao.opcoes
+    .filter((opcao) => opcao.na_janela !== false)
+    .sort(byFinal)
+    .map(({ id, nome, notas }) => ({ id, nome, notas }))
 }
