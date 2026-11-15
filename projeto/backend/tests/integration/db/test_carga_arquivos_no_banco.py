@@ -1,4 +1,4 @@
-"""Carga dos arquivos do CMIP6 e do NDVI no PostGIS de teste (tarefa 0022).
+"""Carga dos arquivos do CMIP6, do NDVI e do SMAP no PostGIS de teste (tarefas 0022 e 0029).
 
 Repositories e banco de verdade; os arquivos ficam em `tmp_path`, com valores de teste
 (`MODELO-TESTE`, versões `teste-*`), não dado real. O `versao_dados` usa a chave de fonte real
@@ -17,6 +17,7 @@ from app.models.climate import ClimateSeason
 from app.repositories.climate_repository import PostgisClimateRepository
 from app.repositories.cmip6_repository import PostgisCmip6Repository
 from app.repositories.ndvi_repository import PostgisNdviRepository
+from app.repositories.smap_repository import PostgisSmapRepository
 from pipeline.load_files_to_db import build_loader
 from tests.integration.db.support import count_rows
 
@@ -142,3 +143,36 @@ def test_should_save_nothing_when_no_cell_of_the_grid_is_covered(
 
     assert count_rows(db_url, "cmip6_delta") == 0
     assert count_rows(db_url, "data_run") == 0
+
+
+def _smap_file(tmp_path: Path) -> Path:
+    serie = [
+        {"data": "2016-02-08", "sm_rootzone_wetness": 0.61, "sm_rootzone_m3_m3": 0.31},
+        {
+            "data": "2016-02-18",
+            "sm_rootzone_wetness": 0.55,
+            "sm_rootzone_m3_m3": 0.29,
+            "sm_surface_m3_m3": 0.27,
+        },
+    ]
+    pontos = [
+        {"lat": -18.95, "lon": -48.15, "serie": serie},
+        {"lat": -19.05, "lon": -48.15, "serie": serie[:1]},
+    ]
+    return _write(tmp_path / "smap.json", "smap", "teste-smap", pontos)
+
+
+def test_should_load_the_smap_file_once_even_when_run_twice(db_url: str, tmp_path: Path) -> None:
+    path = _smap_file(tmp_path)
+    loader = build_loader(db_url)
+
+    loader.run(loader.plan(smap_path=path))
+    loader.run(loader.plan(smap_path=path))
+
+    series = PostgisSmapRepository(db_url).get_smap_series(-18.95, -48.15)
+    assert [(r.data, r.sm_rootzone_wetness, r.sm_surface_m3_m3) for r in series] == [
+        (date(2016, 2, 8), 0.61, None),
+        (date(2016, 2, 18), 0.55, 0.27),
+    ]
+    assert count_rows(db_url, "smap_point") == 3
+    assert _runs(db_url) == [("smap", "teste-smap"), ("smap", "teste-smap")]

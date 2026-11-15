@@ -1,14 +1,16 @@
-"""Carrega no PostGIS os arquivos do CMIP6 (R2.1), do NDVI (R2.2) e do IMERG (R2.4).
+"""Carrega no PostGIS os arquivos do CMIP6 (R2.1), do NDVI (R2.2), do IMERG (R2.4) e do SMAP (R2.3).
 
 Os scripts de dados gravam arquivos no "Contrato dos dados das fontes" (`AGENTS.md` do backend) e
 a API já lê os do CMIP6 e do NDVI (`CMIP6_PATH`, `NDVI_CACHE_PATH`). Esta carga copia o conteúdo
-deles para o banco: `cmip6_delta`, `ndvi_point` e a chuva do `climate_season`. Não busca nada na
-rede.
+deles para o banco: `cmip6_delta`, `ndvi_point`, a chuva do `climate_season` e `smap_point`.
+Não busca nada na rede.
 
 Uso (a partir de projeto/backend, com DATABASE_URL apontando para o banco que recebe a carga):
 
-    uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --dry-run
-    uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq>
+    uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --dry-run
+    uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --smap <arq>
+
+Dá para passar só os arquivos que quiser (um ou mais de --cmip6, --ndvi, --imerg e --smap).
 
 - CMIP6: cada célula que já está em `grid_cell` (o `cmip6_delta` exige a célula) recebe os
   deltas do ponto do arquivo cuja `cobertura` contém o centro dela, pela leitura do
@@ -20,6 +22,8 @@ Uso (a partir de projeto/backend, com DATABASE_URL apontando para o banco que re
   dias desde 1/jan), a chuva passa a ser a do IMERG e o `rain_source` passa a `gpm_imerg`, **só
   quando o ano do IMERG está completo** (nenhum dia nulo). Ano incompleto continua com o NASA
   POWER. Nenhuma temporada é criada.
+- SMAP: a série de cada ponto do arquivo (o centro de uma célula de 0,1°), lida pelo
+  `FileSmapRepository` (registro fora do contrato recusa o arquivo inteiro).
 - Os arquivos são lidos e conferidos antes de gravar: arquivo ausente, sem `versao_dados`, de
   outra fonte ou fora do contrato para a carga sem gravar nada.
 - Idempotente: as tabelas recebem upsert (a chuva, update). Cada fonte com alguma linha gravada
@@ -36,7 +40,7 @@ from typing import Final, Protocol
 
 from app.config import get_settings
 from app.constants import CLIMATE_SEASON_DAYS, IMERG_RAIN_SOURCE
-from app.models.climate import Cmip6Delta
+from app.models.climate import Cmip6Delta, SmapSoilMoisture
 from app.models.data_run import DataRun
 from app.models.talhao import NdviRecord
 from app.repositories.climate_repository import PostgisClimateRepository, SeasonWindow
@@ -44,10 +48,12 @@ from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6R
 from app.repositories.data_run_repository import PostgisDataRunRepository
 from app.repositories.imerg_repository import FileImergRepository
 from app.repositories.ndvi_repository import CachedNdviRepository, PostgisNdviRepository
+from app.repositories.smap_repository import FileSmapRepository, PostgisSmapRepository
 
 CMIP6_SOURCE: Final[str] = "nex_gddp_cmip6"
 NDVI_SOURCE: Final[str] = "modis_mod13q1"
 IMERG_SOURCE: Final[str] = IMERG_RAIN_SOURCE
+SMAP_SOURCE: Final[str] = "smap"
 SCRIPT_NAME: Final[str] = "pipeline.load_files_to_db"
 # A tabela guarda o NDVI físico (-0,2 a 1). Acima de 1 em módulo é o bruto do MOD13Q1 (fator
 # 0,0001 não aplicado), a mesma regra do `scaled_ndvi` do histórico do talhão.
@@ -70,6 +76,10 @@ class Cmip6Writer(Protocol):
 
 class NdviWriter(Protocol):
     def save_ndvi_history(self, lat: float, lon: float, records: list[NdviRecord]) -> None: ...
+
+
+class SmapWriter(Protocol):
+    def save_smap_series(self, records: list[SmapSoilMoisture]) -> None: ...
 
 
 class RunWriter(Protocol):
@@ -165,10 +175,29 @@ class ImergPlan:
 
 
 @dataclass(frozen=True)
+class SmapPlan:
+    """O que vai para o `smap_point`: a série de cada ponto do arquivo que tem série."""
+
+    file_name: str
+    file_run: DataRun
+    points: tuple[tuple[SmapSoilMoisture, ...], ...]
+    points_total: int
+
+    @property
+    def points_with_series(self) -> int:
+        return len(self.points)
+
+    @property
+    def rows(self) -> int:
+        return sum(len(records) for records in self.points)
+
+
+@dataclass(frozen=True)
 class LoadPlan:
     cmip6: Cmip6Plan | None = None
     ndvi: NdviPlan | None = None
     imerg: ImergPlan | None = None
+    smap: SmapPlan | None = None
 
 
 def _fits_ndvi_table(record: NdviRecord) -> bool:
@@ -276,6 +305,23 @@ def plan_imerg(path: Path, windows: Sequence[SeasonWindow]) -> ImergPlan:
     )
 
 
+def plan_smap(path: Path) -> SmapPlan:
+    """Lê o arquivo do SMAP e monta a série de cada ponto (sem gravar)."""
+    _require_file(path)
+    reader = FileSmapRepository(path)
+    try:
+        run = _checked_run(path, reader.get_data_run(), SMAP_SOURCE)
+        series = reader.list_point_series()
+    except (KeyError, TypeError, ValueError) as exc:
+        raise LoadError(f"{path}: fora do contrato ({exc!r})") from exc
+    return SmapPlan(
+        file_name=path.name,
+        file_run=run,
+        points=tuple(point.records for point in series if point.records),
+        points_total=len(series),
+    )
+
+
 def _utc_now() -> datetime:
     return datetime.now(UTC)
 
@@ -292,6 +338,7 @@ class FilesToDbLoader:
         grid_repo: GridCellRepository,
         cmip6_repo: Cmip6Writer,
         ndvi_repo: NdviWriter,
+        smap_repo: SmapWriter,
         run_repo: RunWriter,
         season_repo: SeasonRainRepository,
         clock: Callable[[], datetime] = _utc_now,
@@ -299,6 +346,7 @@ class FilesToDbLoader:
         self._grid_repo = grid_repo
         self._cmip6_repo = cmip6_repo
         self._ndvi_repo = ndvi_repo
+        self._smap_repo = smap_repo
         self._run_repo = run_repo
         self._season_repo = season_repo
         self._clock = clock
@@ -308,6 +356,7 @@ class FilesToDbLoader:
         cmip6_path: Path | None = None,
         ndvi_path: Path | None = None,
         imerg_path: Path | None = None,
+        smap_path: Path | None = None,
     ) -> LoadPlan:
         """Lê e confere os arquivos. Qualquer problema levanta `LoadError` antes de gravar."""
         cmip6 = None
@@ -317,7 +366,8 @@ class FilesToDbLoader:
         imerg = None
         if imerg_path is not None:
             imerg = plan_imerg(imerg_path, self._season_repo.list_season_windows())
-        return LoadPlan(cmip6=cmip6, ndvi=ndvi, imerg=imerg)
+        smap = plan_smap(smap_path) if smap_path is not None else None
+        return LoadPlan(cmip6=cmip6, ndvi=ndvi, imerg=imerg, smap=smap)
 
     def run(self, plan: LoadPlan) -> None:
         """Grava o plano (upsert) e uma linha de `data_run` por fonte com linhas gravadas."""
@@ -355,6 +405,17 @@ class FilesToDbLoader:
                 temporadas_trocadas=replaced,
                 temporadas_incompletas=plan.imerg.incomplete,
                 temporadas_sem_clima=plan.imerg.without_climate,
+            )
+        if plan.smap is not None and plan.smap.rows:
+            for records in plan.smap.points:
+                self._smap_repo.save_smap_series(list(records))
+            self._record_run(
+                SMAP_SOURCE,
+                plan.smap.file_name,
+                plan.smap.file_run,
+                pontos=plan.smap.points_total,
+                pontos_gravados=plan.smap.points_with_series,
+                linhas=plan.smap.rows,
             )
 
     def _record_run(self, source: str, file_name: str, file_run: DataRun, **counts: int) -> None:
@@ -403,6 +464,12 @@ def describe_plan(plan: LoadPlan, dry_run: bool = False) -> str:
             f"para {IMERG_SOURCE} ({verb}); {i.incomplete} incompletas (ficam com o NASA POWER); "
             f"{i.without_climate} sem a mesma temporada no climate_season (nada para elas)."
         )
+    if plan.smap is not None:
+        m = plan.smap
+        lines.append(
+            f"SMAP ({m.file_name}, versão {m.file_run.version}): {m.points_total} pontos no "
+            f"arquivo, {m.points_with_series} com série; {m.rows} linhas em smap_point ({verb})."
+        )
     return "\n".join(lines)
 
 
@@ -416,6 +483,9 @@ class _EmptyDatabase:
         raise RuntimeError("sem DATABASE_URL não há onde gravar")
 
     def save_ndvi_history(self, lat: float, lon: float, records: list[NdviRecord]) -> None:
+        raise RuntimeError("sem DATABASE_URL não há onde gravar")
+
+    def save_smap_series(self, records: list[SmapSoilMoisture]) -> None:
         raise RuntimeError("sem DATABASE_URL não há onde gravar")
 
     def save_run(self, run: DataRun) -> None:
@@ -435,7 +505,12 @@ def build_loader(database_url: str | None) -> FilesToDbLoader:
     if not database_url:
         empty = _EmptyDatabase()
         return FilesToDbLoader(
-            grid_repo=empty, cmip6_repo=empty, ndvi_repo=empty, run_repo=empty, season_repo=empty
+            grid_repo=empty,
+            cmip6_repo=empty,
+            ndvi_repo=empty,
+            smap_repo=empty,
+            run_repo=empty,
+            season_repo=empty,
         )
     # Sem reserva: as células e as temporadas são só as do banco.
     climate = PostgisClimateRepository(database_url)
@@ -443,6 +518,7 @@ def build_loader(database_url: str | None) -> FilesToDbLoader:
         grid_repo=climate,
         cmip6_repo=PostgisCmip6Repository(database_url),
         ndvi_repo=PostgisNdviRepository(database_url),
+        smap_repo=PostgisSmapRepository(database_url),
         run_repo=PostgisDataRunRepository(database_url),
         season_repo=climate,
     )
@@ -469,6 +545,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="arquivo da chuva do IMERG (saída do pipeline.fetch_imerg): troca a chuva do POWER",
     )
     parser.add_argument(
+        "--smap",
+        type=Path,
+        metavar="ARQUIVO",
+        help="arquivo do SMAP L4 (saída do pipeline.fetch_smap, contrato SMAP)",
+    )
+    parser.add_argument(
         "--dry-run", action="store_true", help="só lê os arquivos e mostra o resumo: não grava"
     )
     return parser
@@ -477,8 +559,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.cmip6 is None and args.ndvi is None and args.imerg is None:
-        parser.error("informe ao menos um arquivo: --cmip6, --ndvi ou --imerg")
+    if args.cmip6 is None and args.ndvi is None and args.imerg is None and args.smap is None:
+        parser.error("informe ao menos um arquivo: --cmip6, --ndvi, --imerg ou --smap")
     database_url = get_settings().database_url
     if not database_url and not args.dry_run:
         print("Defina DATABASE_URL (o banco que recebe a carga).", file=sys.stderr)
@@ -486,7 +568,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     loader = build_loader(database_url)
     try:
-        plan = loader.plan(cmip6_path=args.cmip6, ndvi_path=args.ndvi, imerg_path=args.imerg)
+        plan = loader.plan(
+            cmip6_path=args.cmip6, ndvi_path=args.ndvi, imerg_path=args.imerg, smap_path=args.smap
+        )
     except LoadError as exc:
         print(f"Nada foi gravado: {exc}", file=sys.stderr)
         return 1
