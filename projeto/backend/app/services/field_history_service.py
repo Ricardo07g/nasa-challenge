@@ -1,7 +1,11 @@
-"""Histórico do talhão pelo NDVI do MODIS e faixa de colheita sugerida (PRD 7.8 e 7.9)."""
+"""Histórico do talhão pelo NDVI do MODIS e faixa de colheita sugerida (PRD 7.8 e 7.9).
+
+A soja do ano (pico e colheita, grupo `regiao_ndvi` do `regras.yaml`) fica aqui, num lugar só:
+o talhão e cada pixel da região pelo satélite (`RegionClassifier`) usam a mesma regra.
+"""
 
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import date
 from statistics import median
 
@@ -35,6 +39,10 @@ def month_day(text: str) -> tuple[int, int]:
     return int(month), int(day)
 
 
+# Uma observação boa (qualidade 0 ou 1) do pixel: o dia e o NDVI (bruto ou físico).
+Observation = tuple[date, float]
+
+
 def _source_label(records: Sequence[NdviRecord]) -> str:
     """'MODIS MOD13Q1 + MYD13Q1' com os produtos da série; o cache antigo não diz o produto."""
     produtos = sorted({rec.produto for rec in records if rec.produto})
@@ -48,45 +56,104 @@ class FieldHistoryService:
         regras = rules if rules is not None else load_default_rules()
         self._ndvi = regras.ndvi
         self._historico = regras.historico_ndvi
+        self._soja = regras.regiao_ndvi
 
     def classify_entressafra(self, ndvi_records: Sequence[NdviRecord]) -> HistoricoTalhao:
-        """Cada ano da janela pelo maior NDVI de 1/abr a 31/jul (guia NDVI, "Regra do talhão").
+        """Cada ano da janela: a soja do ano e a entressafra depois da colheita (tarefa 0039).
 
         As observações já chegam com qualidade 0 ou 1 (o repository descarta neve e nuvem).
-        Os anos, a janela, os limites e o mínimo de observações vêm do `regras.yaml`.
+        Os anos, os limites e o mínimo de observações vêm do `historico_ndvi` do `regras.yaml`;
+        o pico, a colheita e o fim da entressafra, do `regiao_ndvi` (`classify_soy_year`).
         """
         regra = self._historico
-        by_year: dict[int, list[float]] = defaultdict(list)
+        by_year: dict[int, list[Observation]] = defaultdict(list)
         for rec in ndvi_records:
-            if self.in_entressafra(rec.data):
-                by_year[rec.data.year].append(scaled_ndvi(rec.ndvi))
+            by_year[rec.data.year].append((rec.data, rec.ndvi))
 
         anos = tuple(
-            self.classify_year(ano, by_year.get(ano, []))
+            self.classify_soy_year(ano, by_year.get(ano, []))
             for ano in range(regra.ano_inicio, regra.ano_fim + 1)
         )
-        parado = sum(1 for a in anos if a.situacao == "parado")
-        plantou = sum(1 for a in anos if a.situacao == "plantou")
         return HistoricoTalhao(
             anos=anos,
-            parado=parado,
-            plantou=plantou,
-            sem_certeza=len(anos) - parado - plantou,
+            parado=sum(1 for a in anos if a.situacao == "parado"),
+            plantou=sum(1 for a in anos if a.situacao == "plantou"),
+            sem_certeza=sum(1 for a in anos if a.situacao in ("incerto", "sem_dado")),
             total=len(anos),
             fonte=_source_label(ndvi_records),
             janela=f"{regra.janela_inicio} a {regra.janela_fim}",
+            sem_soja=sum(1 for a in anos if a.situacao == "sem_soja"),
         )
 
-    def in_entressafra(self, day: date) -> bool:
-        """O dia cai na janela da entressafra (`janela_inicio` a `janela_fim`, inclusive)?"""
-        regra = self._historico
-        inicio, fim = month_day(regra.janela_inicio), month_day(regra.janela_fim)
+    def classify_soy_year(self, ano: int, observations: Iterable[Observation]) -> HistoricoAno:
+        """Um ano do talhão: só conta como entressafra depois da soja se o pixel mostrou a soja.
+
+        Sem nenhuma observação boa na janela do pico (o satélite não viu o verão): `sem_dado`.
+        Sem pico ou sem colheita (cidade, cana, pasto): `sem_soja`. Com a soja, a regra de hoje
+        (`classify_year`) com as observações depois da colheita até o fim da entressafra.
+        """
+        do_ano = [(day, ndvi) for day, ndvi in observations if day.year == ano]
+        if not any(self._in_soy_peak_window(day) for day, _ in do_ano):
+            return HistoricoAno(ano=ano, situacao="sem_dado", ndvi_max=None, n_obs=0)
+        valores = self.post_harvest_values(ano, do_ano)
+        if valores is None:
+            return HistoricoAno(ano=ano, situacao="sem_soja", ndvi_max=None, n_obs=0)
+        return self.classify_year(ano, valores)
+
+    def soy_harvest_date(self, ano: int, observations: Iterable[Observation]) -> date | None:
+        """Data da colheita da soja do ano no pixel; None se o pixel não mostrou a soja.
+
+        Pico: o maior NDVI de `pico_inicio` a `pico_fim` precisa chegar a `pico_min_ndvi` (com
+        o mesmo valor em duas datas, vale a última). Colheita: a primeira observação depois do
+        pico, até `colheita_fim`, com NDVI até `colheita_max_ndvi`. Sem pico ou sem colheita
+        (cana, café, pasto, solo exposto), None. As observações já chegam boas (qualidade 0/1).
+        """
+        regra = self._soja
+        serie = sorted((day, scaled_ndvi(ndvi)) for day, ndvi in observations if day.year == ano)
+        janela = [(day, ndvi) for day, ndvi in serie if self._in_soy_peak_window(day)]
+        if not janela:
+            return None
+        pico = max(ndvi for _, ndvi in janela)
+        if pico < regra.pico_min_ndvi:
+            return None
+        dia_pico = max(day for day, ndvi in janela if ndvi == pico)
+        limite = month_day(regra.colheita_fim)
+        return next(
+            (
+                day
+                for day, ndvi in serie
+                if day > dia_pico
+                and (day.month, day.day) <= limite
+                and ndvi <= regra.colheita_max_ndvi
+            ),
+            None,
+        )
+
+    def post_harvest_values(
+        self, ano: int, observations: Iterable[Observation]
+    ) -> list[float] | None:
+        """NDVI físico das observações depois da colheita até `entressafra_fim` (a observação da
+        colheita fica de fora); None se o pixel não mostrou a soja do ano.
+        """
+        observations = list(observations)
+        colheita = self.soy_harvest_date(ano, observations)
+        if colheita is None:
+            return None
+        fim = month_day(self._soja.entressafra_fim)
+        return [
+            scaled_ndvi(ndvi)
+            for day, ndvi in observations
+            if day.year == ano and day > colheita and (day.month, day.day) <= fim
+        ]
+
+    def _in_soy_peak_window(self, day: date) -> bool:
+        inicio, fim = month_day(self._soja.pico_inicio), month_day(self._soja.pico_fim)
         return inicio <= (day.month, day.day) <= fim
 
     def classify_year(self, ano: int, valores: Sequence[float]) -> HistoricoAno:
-        """Um ano pelas observações boas da janela, já no NDVI físico (o talhão e cada pixel da
-        região usam esta regra). Poucas observações: sem_dado; > limite_plantou: plantou;
-        < limite_parado: parado; senão incerto.
+        """Uma entressafra pelas observações boas depois da colheita, já no NDVI físico (o talhão
+        e cada pixel da região usam esta regra). Poucas observações: sem_dado;
+        > limite_plantou: plantou; < limite_parado: parado; senão incerto.
         """
         regra = self._historico
         if len(valores) < regra.min_observacoes:

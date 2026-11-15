@@ -3,10 +3,11 @@
 Duas partes:
 
 - `RegionClassifier`: em cada pixel da máscara de lavoura, acha a soja do ano (pico e colheita,
-  grupo `regiao_ndvi` do `regras.yaml`, tarefa 0036) e classifica a entressafra depois da colheita
-  com a regra do histórico do talhão (`FieldHistoryService`, grupo `historico_ndvi`), para as duas
-  telas nunca discordarem; depois soma os pixels em percentuais. Quem usa é o
-  `pipeline/fetch_regiao_ndvi.py`, offline (nenhum pixel sai do pipeline, RNF-10);
+  grupo `regiao_ndvi` do `regras.yaml`, tarefa 0036) e classifica a entressafra depois da colheita,
+  as duas com a regra do histórico do talhão (`FieldHistoryService`, que desde a tarefa 0039 também
+  confere a soja de cada ano do talhão), para as duas telas nunca discordarem; depois soma os
+  pixels em percentuais. Quem usa é o `pipeline/fetch_regiao_ndvi.py`, offline (nenhum pixel sai
+  do pipeline, RNF-10);
 - `RegionService`: a resposta de `GET /api/regiao`, lida do arquivo que o pipeline grava.
 """
 
@@ -23,14 +24,16 @@ from app.models.talhao import SituacaoAno
 from app.repositories.regiao_repository import RegionRepository
 from app.repositories.rules_repository import load_default_rules
 from app.services.errors import OutsideAreaError
-from app.services.field_history_service import FieldHistoryService, month_day, scaled_ndvi
+from app.services.field_history_service import FieldHistoryService, Observation
 
 # Percentual com 1 casa, como a tela mostra ("62%") e o guia NDVI ("60,5").
 PCT_DECIMALS: Final[int] = 1
 # Distância do ponto ao centro da região com 1 casa ("a 12,3 km da sua lavoura").
 DISTANCE_DECIMALS: Final[int] = 1
 M_PER_KM: Final[float] = 1000.0
-SITUACOES: Final[tuple[str, ...]] = get_args(SituacaoAno)
+# O pixel sem a soja do ano fica fora da contagem (classify_pixel devolve None): `sem_soja`, a
+# situação do talhão, nunca entra nos percentuais.
+SITUACOES: Final[tuple[str, ...]] = tuple(s for s in get_args(SituacaoAno) if s != "sem_soja")
 CLASSIFIED: Final[tuple[str, ...]] = ("parado", "plantou", "incerto")
 
 
@@ -46,64 +49,28 @@ def _pct(part: int, whole: int) -> float:
     return round(100.0 * part / whole, PCT_DECIMALS)
 
 
-Observation = tuple[date, float]
-
-
 class RegionClassifier:
     """A soja do ano em cada pixel, a regra do talhão depois da colheita e os percentuais."""
 
     def __init__(self, rules: Regras | None = None) -> None:
         regras = rules if rules is not None else load_default_rules()
         self._history = FieldHistoryService(regras)
-        self._soja = regras.regiao_ndvi
 
     def harvest_date(self, ano: int, observations: Iterable[Observation]) -> date | None:
-        """Data da colheita da soja do ano no pixel; None se o pixel não mostrou a soja.
-
-        Pico: o maior NDVI de `pico_inicio` a `pico_fim` precisa chegar a `pico_min_ndvi` (com
-        o mesmo valor em duas datas, vale a última). Colheita: a primeira observação depois do
-        pico, até `colheita_fim`, com NDVI até `colheita_max_ndvi`. Sem pico ou sem colheita
-        (cana, café, pasto, solo exposto), None. As observações já chegam boas (qualidade 0/1).
-        """
-        regra = self._soja
-        inicio, fim = month_day(regra.pico_inicio), month_day(regra.pico_fim)
-        serie = sorted((day, scaled_ndvi(ndvi)) for day, ndvi in observations if day.year == ano)
-        janela = [(day, ndvi) for day, ndvi in serie if inicio <= (day.month, day.day) <= fim]
-        if not janela:
-            return None
-        pico = max(ndvi for _, ndvi in janela)
-        if pico < regra.pico_min_ndvi:
-            return None
-        dia_pico = max(day for day, ndvi in janela if ndvi == pico)
-        limite = month_day(regra.colheita_fim)
-        return next(
-            (
-                day
-                for day, ndvi in serie
-                if day > dia_pico
-                and (day.month, day.day) <= limite
-                and ndvi <= regra.colheita_max_ndvi
-            ),
-            None,
-        )
+        """Data da colheita da soja do ano no pixel (`FieldHistoryService.soy_harvest_date`)."""
+        return self._history.soy_harvest_date(ano, observations)
 
     def classify_pixel(self, ano: int, observations: Iterable[Observation]) -> SituacaoAno | None:
         """Situação da entressafra do pixel no ano; None se ele não foi soja naquele ano.
 
         Com a soja e a colheita, a regra do talhão (`classify_year`: mínimo de observações e os
         limites do `historico_ndvi`) olha só as observações depois da data da colheita, até
-        `entressafra_fim`. A própria observação da colheita fica de fora.
+        `entressafra_fim`. A própria observação da colheita fica de fora. Diferente do talhão,
+        o pixel sem nenhuma observação no verão também fica fora (None), e não `sem_dado`.
         """
-        observations = list(observations)
-        colheita = self.harvest_date(ano, observations)
-        if colheita is None:
+        valores = self._history.post_harvest_values(ano, observations)
+        if valores is None:
             return None
-        fim = month_day(self._soja.entressafra_fim)
-        valores = [
-            scaled_ndvi(ndvi)
-            for day, ndvi in observations
-            if day.year == ano and day > colheita and (day.month, day.day) <= fim
-        ]
         return self._history.classify_year(ano, valores).situacao
 
     def summarize(

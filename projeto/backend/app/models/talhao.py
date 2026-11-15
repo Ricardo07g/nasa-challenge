@@ -56,15 +56,18 @@ class NdviRecord:
 
 
 # Situação da entressafra de um ano (guia do histórico NDVI): a tela mostra plantou (verde),
-# parado (laranja) e "sem certeza" (cinza, juntando incerto e sem_dado).
-SituacaoAno = Literal["plantou", "parado", "incerto", "sem_dado"]
+# parado (laranja) e "sem certeza" (cinza, juntando incerto e sem_dado). `sem_soja` (decisão de
+# 15/11/2026): o pixel não mostrou a soja e a colheita no verão; o ano não é entressafra depois
+# da soja e não conta como parado, plantou nem sem certeza.
+SituacaoAno = Literal["plantou", "parado", "incerto", "sem_dado", "sem_soja"]
 
 
 @dataclass(frozen=True)
 class HistoricoAno:
     """Uso da entressafra de um ano pelo NDVI do MODIS (PRD 7.8).
 
-    `n_obs` = observações boas na janela; `ndvi_max` é None quando o ano fica `sem_dado`.
+    `n_obs` = observações boas da entressafra (depois da colheita da soja até 31/jul);
+    `ndvi_max` é None quando o ano fica `sem_dado` ou `sem_soja` (aí `n_obs` é 0).
     """
 
     ano: int
@@ -77,7 +80,8 @@ class HistoricoAno:
 class HistoricoTalhao:
     """Resumo das entressafras da janela de anos (guia do histórico NDVI, "Contrato da API").
 
-    `sem_certeza` = incerto + sem_dado; `total` = anos da janela; `janela` = "MM-DD a MM-DD".
+    `sem_certeza` = incerto + sem_dado; `sem_soja` = anos sem a soja no verão; `total` = anos da
+    janela (parado + plantou + sem_certeza + sem_soja); `janela` = "MM-DD a MM-DD".
     """
 
     anos: tuple[HistoricoAno, ...]
@@ -87,6 +91,7 @@ class HistoricoTalhao:
     total: int
     fonte: str
     janela: str
+    sem_soja: int = 0
 
 
 @dataclass(frozen=True)

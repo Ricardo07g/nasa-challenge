@@ -149,16 +149,25 @@ class FakeIngestionService:
 
 
 class FakeNdviRepository:
-    """Série de NDVI de teste: 3 observações boas por entressafra, com o maior valor em maio."""
+    """Série de NDVI de teste: a soja (pico em 17/jan, colhida em 6/mar) e 3 observações boas por
+    entressafra, com o maior valor em maio. Nos anos de `no_soy`, o verão não passa de 0,30.
+    """
 
-    def __init__(self, peaks: dict[int, float]) -> None:
+    def __init__(self, peaks: dict[int, float], no_soy: frozenset[int] = frozenset()) -> None:
         self._peaks = peaks
+        self._no_soy = no_soy
 
     def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
         return [
             NdviRecord(data=date(year, month, day), ndvi=ndvi, qualidade=0, produto="MOD13Q1")
             for year, peak in self._peaks.items()
-            for month, day, ndvi in ((4, 7, 0.22), (5, 9, peak), (6, 10, 0.22))
+            for month, day, ndvi in (
+                (1, 17, 0.30 if year in self._no_soy else 0.85),
+                (3, 6, 0.30),
+                (4, 7, 0.22),
+                (5, 9, peak),
+                (6, 10, 0.22),
+            )
         ]
 
 
@@ -730,8 +739,13 @@ def test_should_explain_the_field_history_in_english() -> None:
 
 @pytest.mark.parametrize(
     "ndvi",
-    [None, FakeNdviRepository({}), FakeNdviRepository({2016: 0.52, 2017: 0.50})],
-    ids=["sem-repositorio", "sem-serie", "sem-ano-certo"],
+    [
+        None,
+        FakeNdviRepository({}),
+        FakeNdviRepository({2017: 0.52, 2018: 0.50}),
+        FakeNdviRepository(PEAKS, no_soy=frozenset(PEAKS)),
+    ],
+    ids=["sem-repositorio", "sem-serie", "sem-ano-certo", "sem-soja"],
 )
 def test_should_not_explain_history_without_a_year_seen_with_certainty(
     ndvi: FakeNdviRepository | None,
@@ -740,6 +754,18 @@ def test_should_not_explain_history_without_a_year_seen_with_certainty(
     rec = _service(ndvi=ndvi).recommend(lat=-18.95, lon=-48.20, colheita="meio")
 
     assert not any("NDVI" in frase for o in rec.opcoes for frase in o.porque)
+
+
+def test_should_not_count_years_without_soybean_in_the_history_phrase() -> None:
+    # 2017 e 2023 (parados) sem soja no verão: saem da conta -> 1 de 6 anos certos parados
+    rec = _service(ndvi=FakeNdviRepository(PEAKS, no_soy=frozenset({2017, 2023}))).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert _opcao(rec, "sorgo").porque[-1] == (
+        "Seu talhão ficou em pousio em 1 de 6 entressafras vistas pelo satélite "
+        "de 2017 a 2026 (NDVI do MODIS)."
+    )
 
 
 def test_should_write_history_with_phrase_template_from_injected_rules() -> None:

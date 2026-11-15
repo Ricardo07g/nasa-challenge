@@ -34,7 +34,7 @@ class ColheitaSugeridaSchema(_Frozen):
 class HistoricoAnoSchema(_Frozen):
     ano: int
     situacao: SituacaoAno
-    ndvi_max: float | None  # null quando o ano fica sem_dado
+    ndvi_max: float | None  # null quando o ano fica sem_dado ou sem_soja
     n_obs: int
 
 
@@ -43,9 +43,10 @@ class HistoricoSchema(_Frozen):
     parado: int
     plantou: int
     sem_certeza: int  # incerto + sem_dado
-    total: int  # anos da janela
+    total: int  # anos da janela (parado + plantou + sem_certeza + sem_soja)
     fonte: str
     janela: str
+    sem_soja: int = 0  # anos sem a soja e a colheita no verão (tarefa 0039)
 
     @classmethod
     def from_model(cls, historico: HistoricoTalhao) -> "HistoricoSchema":
@@ -62,6 +63,7 @@ class HistoricoSchema(_Frozen):
             total=historico.total,
             fonte=historico.fonte,
             janela=historico.janela,
+            sem_soja=historico.sem_soja,
         )
 
 

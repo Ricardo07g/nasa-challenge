@@ -16,7 +16,7 @@ from app.repositories.rules_repository import load_default_rules
 from app.repositories.soja_recente_repository import FileSojaRecenteRepository
 
 UFU = {"lat": -18.9543, "lon": -48.1993}
-SITUACOES = {"plantou", "parado", "incerto", "sem_dado"}
+SITUACOES = {"plantou", "parado", "incerto", "sem_dado", "sem_soja"}
 
 
 def test_should_return_field_inspection_in_the_contract_shape(client: TestClient) -> None:
@@ -42,6 +42,7 @@ def test_should_return_the_full_ndvi_history_contract(client: TestClient) -> Non
         "parado": 3,
         "plantou": 5,
         "sem_certeza": 2,
+        "sem_soja": 0,
         "total": 10,
         "fonte": "MODIS MOD13Q1 + MYD13Q1",
         "janela": "04-01 a 07-31",
@@ -163,6 +164,39 @@ def test_should_read_history_and_harvest_band_from_the_ndvi_file(
     ]
     # Mesma série, de janeiro a março: a soja seca no dia 41 (10/fev) -> colheita "cedo"
     assert body["colheita_sugerida"] == {"faixa": "cedo", "fonte": "ndvi_modis", "anos_usados": 10}
+
+
+def test_should_say_sem_soja_when_the_point_never_shows_soybean(
+    client: TestClient, tmp_path: Path
+) -> None:
+    # Valores de teste de um ponto que nunca passa de 0,30 (cidade, pasto seco): sem soja.
+    serie = [
+        _obs(f"{year}-{month_day}", 0.30)
+        for year in range(2017, 2027)
+        for month_day in ("01-17", "02-18", "04-07", "05-09", "06-10")
+    ]
+    path = tmp_path / "ndvi.json"
+    path.write_text(
+        json.dumps(
+            {
+                "versao_dados": TEST_RUN,
+                "pontos": [{"lat": UFU["lat"], "lon": UFU["lon"], "serie": serie}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    app.dependency_overrides[get_ndvi_repository] = lambda: CachedNdviRepository(path)
+
+    historico = client.get("/api/talhao", params=UFU).json()["historico"]
+
+    assert (historico["parado"], historico["plantou"], historico["sem_certeza"]) == (0, 0, 0)
+    assert (historico["sem_soja"], historico["total"]) == (10, 10)
+    assert historico["anos"][0] == {
+        "ano": 2017,
+        "situacao": "sem_soja",
+        "ndvi_max": None,
+        "n_obs": 0,
+    }
 
 
 def test_should_return_null_history_when_the_ndvi_file_has_no_point_near_the_field(

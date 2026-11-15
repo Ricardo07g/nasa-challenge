@@ -251,6 +251,13 @@ def test_should_leave_classes_empty_when_every_pixel_has_no_data() -> None:
     )
 
 
+def test_should_never_count_a_pixel_without_soybean_in_the_region() -> None:
+    # Pixel sem a soja do ano fica fora dos percentuais (classify_pixel devolve None): a situação
+    # "sem_soja" do talhão não entra na contagem da região.
+    with pytest.raises(ValueError, match="sem_soja"):
+        RegionClassifier().summarize(2022, {"parado": 3, "sem_soja": 1})
+
+
 def test_should_reject_unknown_class() -> None:
     with pytest.raises(ValueError, match="nuvem"):
         RegionClassifier().summarize(2025, {"nuvem": 3})
