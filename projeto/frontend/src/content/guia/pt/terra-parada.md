@@ -12,12 +12,13 @@ Colher a soja e **não plantar nada** até a próxima soja. No app, "Deixar para
 
 ## Por que importa
 
-Sem planta, não há palhada nova. A Embrapa lembra que a palhada protege o solo do impacto da chuva, e a erosão volta quando falta palha. Por isso a terra parada é a base para comparar as outras opções.
+Sem planta, não se forma palha nova. Estudos de erosão mostram que a palha sobre a terra é o fator mais importante para amortecer o impacto das gotas de chuva, o que evita que os grãos de solo se soltem. Por isso a terra parada é a base para comparar as outras opções.
 
 ## Conheça
 
 - **Serve para:** nada. É a escolha de não plantar.
-- **Palhada:** não forma palha nova.
+- **Palha:** não forma palha nova.
+- **Terra:** fica mais exposta ao impacto da chuva.
 - **No app:** serve de comparação para as outras opções.
 
 ## Passo a passo
@@ -32,4 +33,4 @@ O app mostra o histórico de anos parados em [O que o satélite viu](/satelite) 
 
 ## Fontes
 
-- [Embrapa: rotação e plantas de cobertura no plantio direto](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
+- [Panachuki et al. (2011), Revista Brasileira de Ciência do Solo: perdas de solo e de água em sistemas de manejo](https://www.redalyc.org/pdf/1802/180221126032.pdf)

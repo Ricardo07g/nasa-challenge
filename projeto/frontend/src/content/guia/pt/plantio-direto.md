@@ -7,13 +7,13 @@ rascunho: nao
 
 ## Em uma frase
 
-No plantio direto, a semente vai para a terra **sem aração nem gradagem**, por baixo da palha da cultura anterior.
+No plantio direto, a semente vai para a terra **sem revirar o solo**, por baixo da palha da cultura anterior.
 
 ## Por que importa
 
-A palhada protege o solo do impacto da chuva e, com a matéria orgânica, deixa a terra mais resistente à erosão. Rotação de culturas e plantas de cobertura são os pilares do sistema: ajudam no controle de pragas, doenças, mato e nematoides, protegem o solo do calor e ajudam a reter umidade.
+O plantio direto se apoia em três pilares: **mexer o mínimo na terra**, **manter a palha** na superfície e **fazer rotação de culturas**. Ele reduz a quantidade de plantas daninhas e ajuda a conservar a umidade da terra. A palha também é o fator mais importante para amortecer o impacto das gotas de chuva.
 
-Sem palha suficiente e sem rotação, a erosão volta.
+Mas, sozinho, o plantio direto não basta para segurar a erosão quando a enxurrada é grande.
 
 ## Na sua lavoura
 
@@ -25,6 +25,7 @@ Como secar a cobertura antes de plantar e qual máquina usar ficam com o seu agr
 
 ## Fontes
 
-- [Embrapa: o que é o plantio direto e a função da palhada](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2098787/dia-de-campo-aborda-manejo-e-conservacao-do-solo-e-plantio-direto)
-- [Embrapa: rotação e plantas de cobertura no plantio direto](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
-- [Embrapa: milheto para a palhada do plantio direto](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)
+- [Oliveira et al. (2013), Pesquisa Agropecuária Tropical: milho conforme a cultura anterior, no plantio direto](https://www.redalyc.org/pdf/2530/253028469004.pdf)
+- [Freitas et al. (2021), Revista Brasileira de Ciência do Solo: terraços aumentam a água disponível às plantas](https://doi.org/10.36783/18069657rbcs20210046)
+- [Panachuki et al. (2011), Revista Brasileira de Ciência do Solo: perdas de solo e de água em sistemas de manejo](https://www.redalyc.org/pdf/1802/180221126032.pdf)
+- [Londero et al. (2021), Hydrological Processes: plantio direto, terraços e perda de solo no Sul do Brasil](https://doi.org/10.1002/hyp.14286)

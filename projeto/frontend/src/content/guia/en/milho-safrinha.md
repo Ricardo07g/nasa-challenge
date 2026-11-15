@@ -8,23 +8,24 @@ planta: milho_safrinha
 
 ## In one sentence
 
-Corn planted right after soybeans, to harvest grain in winter. In the app it appears as **"Corn alone"**.
+Corn planted right after soybeans, to harvest grain in autumn and winter. In the app it appears as **"Corn alone"**.
 
 ## Why it matters
 
-In June, second-crop corn is in a sensitive phase, and **frost** can hurt grain filling. Sowing little by little, as the soybeans are harvested, avoids losing everything at once.
+In corn, water limits yield mainly at germination, **flowering** and **grain filling**. In the second crop, sowing late raises the chance of losses, and **frost** also weighs in: it can cut yield sharply when it hits the plant near flowering or early in grain filling.
 
 ## Get to know it
 
 - **Use:** grain.
-- **When to plant:** the deadline comes from the ZARC, published by the Ministry of Agriculture for each municipality.
-- **Fears:** frost in June.
+- **Phases most sensitive to water shortage:** germination, flowering and grain filling.
+- **Fears:** drought and frost near flowering.
+- **When to plant:** the deadline comes from the ZARC for your municipality.
 
 ## Step by step
 
 1. **Check the deadline** in the ZARC for your municipality.
-2. **Sow** right after harvesting the soybeans, little by little if the harvest advances.
-3. **Keep an eye** on June frost.
+2. **Sow** right after harvesting the soybeans: sowing late raises the risk of losses.
+3. **Keep an eye** on rain and cold at flowering.
 
 ## In your field
 
@@ -32,5 +33,6 @@ See corn alone in the [Suggestion](/resposta) and in [Compare](/opcoes). Also re
 
 ## Sources
 
-- [Embrapa: frost and staggered sowing in second-crop corn](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
-- [Ministry of Agriculture: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
+- [Sans et al. (2001), Revista Brasileira de Agrometeorologia: climate risk zoning for maize in Minas Gerais and the Center-West](https://www.alice.cnptia.embrapa.br/handle/doc/485595)
+- [Embrapa Milho e Sorgo (2011), book O produtor pergunta, a Embrapa responde: second-crop corn chapter](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/927317/1/Milhosafrinha.pdf)
+- [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

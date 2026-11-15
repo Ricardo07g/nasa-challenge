@@ -7,11 +7,11 @@ rascunho: nao
 
 ## Em uma frase
 
-Veranico é um **curto período de estiagem** no meio da época das chuvas.
+Veranico é um período de **dias seguidos sem chuva** no meio da época das chuvas.
 
 ## Por que importa
 
-Segundo a Embrapa, os veranicos prejudicam o desenvolvimento da soja. O total de chuva do ano pode ser bom e, mesmo assim, uma pausa na hora errada faz a planta sofrer.
+No Cerrado, um estudo com 100 estações de chuva, cada uma com 20 anos ou mais de dados, mapeou veranicos de 10, 15 e 20 dias e os tratou como um limite climático crítico para a lavoura sem irrigação. O total de chuva do ano pode ser bom e, mesmo assim, uma pausa na hora errada faz a planta sofrer.
 
 ## Na sua lavoura
 
@@ -23,5 +23,5 @@ O que fazer? O [Plano de 3 anos](/plano) traz o Plano B, uma alternativa se o ou
 
 ## Fontes
 
-- [Embrapa: veranicos são curtos períodos de estiagem na época de chuvas](https://www.embrapa.br/en/busca-de-noticias/-/noticia/43736399/soja-tolerante-a-veranicos-e-lancada-na-bahia)
-- [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)
+- [Assad et al. (1993), Pesquisa Agropecuária Brasileira: veranicos no Cerrado](https://doi.org/10.1590/S1678-3921.pab1993.v28.3962)
+- [Huffman et al. (2020), livro Satellite Precipitation Measurement (Springer): capítulo do IMERG](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)

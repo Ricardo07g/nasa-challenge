@@ -11,7 +11,7 @@ Rotation is **changing what you plant**, year after year, instead of repeating t
 
 ## Why it matters
 
-According to Embrapa, crop rotation and cover plants help control pests, diseases, weeds and nematodes, protect the soil from heat and help retain moisture. Choosing the plants takes planning.
+Rotation helps control diseases: without the host plant, many fungi that live on crop residue run out of food and lose strength, and the soil can gain microorganisms that compete with them. It is also one of the pillars of no-till. And plants such as crotalaria help against some nematodes.
 
 ## In your field
 
@@ -27,5 +27,6 @@ See each crop in the [Suggestion](/resposta), for example [crotalaria](/guia/cro
 
 ## Sources
 
-- [Embrapa: crop rotation and cover crops](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
-- [Embrapa: nematodes and rotation](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
+- [Reis, Casa and Bianchin (2011), Summa Phytopathologica: plant disease control by crop rotation](https://scielo.br/j/sp/i/2011.v37n3/)
+- [Oliveira et al. (2013), Pesquisa Agropecuária Tropical: maize according to the previous crop, in no-till](https://www.redalyc.org/pdf/2530/253028469004.pdf)
+- [Santana-Gomes et al. (2019), Revista Caatinga: root lesion nematodes in cover crops](https://doi.org/10.1590/1983-21252019v32n201rc)

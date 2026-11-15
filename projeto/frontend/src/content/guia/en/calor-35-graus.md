@@ -11,7 +11,7 @@ The app looks at **heat at flowering**, using each day's maximum temperature mea
 
 ## Why it matters
 
-NASA POWER is a NASA project focused on agroclimatology, among others, and provides daily climate data since 1981. The app takes each day's maximum temperature from it.
+NASA POWER is a NASA climate database built from satellites and models. A study from USP/ESALQ compared NASA POWER with INMET weather stations across Brazil and found good performance for average, minimum and maximum temperature. It concluded that it can be used in agriculture with reasonable confidence at a regional scale.
 
 ## In your field
 
@@ -25,4 +25,4 @@ How much heat your crop tolerates at flowering is up to your agronomist.
 
 ## Sources
 
-- [NASA: the POWER project, daily temperature](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
+- [Monteiro, Sentelhas and Pedra (2018), International Journal of Climatology: NASA POWER in Brazil](https://doi.org/10.1002/joc.5282)

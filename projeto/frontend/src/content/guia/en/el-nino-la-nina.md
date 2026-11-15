@@ -26,4 +26,4 @@ The app puts a mark on each second-crop year, in the [Suggestion](/resposta), an
 
 ## Sources
 
-- [NOAA: ONI index of El Niño and La Niña](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)
+- [NOAA: El Niño and La Niña ONI index (official definition)](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)

@@ -25,5 +25,5 @@ See also [Dry spell](/guia/veranico) and [The water math of your field](/guia/co
 
 ## Sources
 
-- [NASA: GPM IMERG rainfall](https://gpm.nasa.gov/data/imerg)
-- [NASA: the POWER project](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
+- [Huffman et al. (2020), book Satellite Precipitation Measurement (Springer): IMERG chapter](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)
+- [Monteiro, Sentelhas and Pedra (2018), International Journal of Climatology: NASA POWER in Brazil](https://doi.org/10.1002/joc.5282)

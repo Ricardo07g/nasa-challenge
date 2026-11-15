@@ -8,17 +8,16 @@ planta: milheto
 
 ## Em uma frase
 
-Planta de cobertura que dá **muita palha** para o plantio direto. No app, não dá grão.
+Planta de cobertura que faz **muita palha** para o plantio direto. No app, não dá grão.
 
 ## Por que importa
 
-Segundo a Embrapa, o milheto pede pouca água, aguenta bem solo fraco e falta de água e é útil na rotação de culturas. A palha cobre a terra e facilita o plantio direto da soja.
+Num estudo em Goiás, no Cerrado, o milheto foi a planta de cobertura que mais fez palha seca no começo da entressafra, comparado com braquiárias e com a terra parada. A palha cobre a terra e prepara o plantio direto da soja.
 
 ## Conheça
 
 - **Serve para:** cobertura.
-- **Água:** baixa exigência.
-- **Solo:** boa persistência em solo fraco e com falta de água.
+- **Palha:** foi a que mais fez palha no começo da entressafra, no estudo em Goiás.
 - **Quando plantar:** a data limite vem do ZARC do seu município.
 
 ## Passo a passo
@@ -34,4 +33,5 @@ Veja o milheto em [Comparar](/opcoes) e dentro do [Plano de 3 anos](/plano). Lei
 
 ## Fontes
 
-- [Embrapa: milheto é cultura alternativa para cobertura de solo](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)
+- [Pacheco et al. (2011), Pesquisa Agropecuária Brasileira: palha e nutrientes de plantas de cobertura na safrinha](https://www.alice.cnptia.embrapa.br/handle/doc/882280)
+- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

@@ -11,7 +11,9 @@ Na safrinha, o tempo entre a colheita da soja e o plantio da próxima planta **c
 
 ## Por que importa
 
-Cada cultura tem uma data limite de plantio no ZARC, publicado pelo Ministério da Agricultura. Em muitas fazendas, a safrinha é semeada aos poucos, conforme a colheita da soja avança, o que evita perder tudo de uma vez.
+No milho safrinha, semear tarde aumenta a chance de perda. No milho, a água limita a produção principalmente na floração e no enchimento dos grãos: atrasar a semeadura empurra essas fases para mais perto do fim das chuvas.
+
+Cada cultura tem a sua data limite de plantio no ZARC, publicado pelo Ministério da Agricultura para cada município.
 
 ## Na sua lavoura
 
@@ -23,5 +25,6 @@ Veja [O prazo de plantio e o ZARC](/guia/prazo-de-plantio-zarc) e [Quando a chuv
 
 ## Fontes
 
-- [Ministério da Agricultura: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
-- [Embrapa: safrinha semeada conforme a colheita da soja](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
+- [Embrapa Milho e Sorgo (2011), livro O produtor pergunta, a Embrapa responde: capítulo Milho safrinha](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/927317/1/Milhosafrinha.pdf)
+- [Sans et al. (2001), Revista Brasileira de Agrometeorologia: zoneamento de riscos climáticos do milho em Minas Gerais e no Centro-Oeste](https://www.alice.cnptia.embrapa.br/handle/doc/485595)
+- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

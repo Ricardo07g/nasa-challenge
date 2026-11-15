@@ -8,17 +8,17 @@ planta: crotalaria
 
 ## Em uma frase
 
-Leguminosa de cobertura que **fixa nitrogênio** e ajuda a controlar o nematoide.
+Leguminosa de cobertura que **fixa nitrogênio do ar** e ajuda contra alguns nematoides.
 
 ## Por que importa
 
-Segundo a Embrapa, a crotalária fixa nitrogênio do ar, o que reduz a necessidade de adubo nitrogenado, controla nematoides do solo e cobre bem a terra.
+A crotalária é muito usada em rotação por ter grande potencial de fixar nitrogênio do ar. Num estudo publicado na Revista Caatinga, *Crotalaria juncea* e *C. spectabilis* multiplicaram pouco dois nematoides das lesões radiculares e foram indicadas como opções de rotação ou sucessão contra eles.
 
 ## Conheça
 
 - **Serve para:** cobertura e nitrogênio.
-- **Terra:** boa cobertura do solo.
-- **Pragas:** ajuda a controlar nematoides.
+- **Nitrogênio:** grande potencial de fixação biológica.
+- **Nematoides:** opção contra os nematoides das lesões radiculares, segundo o estudo.
 - **Quando plantar:** a data limite vem do ZARC do seu município.
 
 ## Passo a passo
@@ -34,5 +34,6 @@ O app mostra a crotalária em [Comparar](/opcoes) e no [Plano de 3 anos](/plano)
 
 ## Fontes
 
-- [Embrapa: crotalária, nitrogênio e nematoides](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2380275/crotalaria-e-uma-boa-alternativa-para-a-renovacao-de-canaviais)
-- [Embrapa: nematoides no milho e rotação](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
+- [Costa et al. (2006), Ciência e Agrotecnologia: crescimento e nutrição da Crotalaria juncea](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/203830/1/CAv30n5costa.pdf)
+- [Santana-Gomes et al. (2019), Revista Caatinga: nematoides das lesões radiculares em plantas de cobertura](https://doi.org/10.1590/1983-21252019v32n201rc)
+- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

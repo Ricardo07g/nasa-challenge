@@ -7,11 +7,11 @@ rascunho: nao
 
 ## In one sentence
 
-A dry spell is a **short period of drought** in the middle of the rainy season.
+A dry spell is a stretch of **days in a row without rain** in the middle of the rainy season.
 
 ## Why it matters
 
-According to Embrapa, dry spells hurt soybean development. The year's total rain can be good and still a pause at the wrong time makes the plant suffer.
+In the Cerrado, a study with 100 rain stations, each with 20 or more years of data, mapped dry spells of 10, 15 and 20 days and treated them as a critical climate limit for rainfed farming. The year's total rain can be good and still a pause at the wrong time makes the plant suffer.
 
 ## In your field
 
@@ -23,5 +23,5 @@ What to do? The [3-year plan](/plano) brings Plan B, an alternative if autumn tu
 
 ## Sources
 
-- [Embrapa: dry spells are short droughts in the rainy season](https://www.embrapa.br/en/busca-de-noticias/-/noticia/43736399/soja-tolerante-a-veranicos-e-lancada-na-bahia)
-- [NASA: GPM IMERG rainfall](https://gpm.nasa.gov/data/imerg)
+- [Assad et al. (1993), Pesquisa Agropecuária Brasileira: dry spells in the Cerrado](https://doi.org/10.1590/S1678-3921.pab1993.v28.3962)
+- [Huffman et al. (2020), book Satellite Precipitation Measurement (Springer): IMERG chapter](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)

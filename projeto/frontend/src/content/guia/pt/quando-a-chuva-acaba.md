@@ -25,5 +25,5 @@ Veja também [Veranico](/guia/veranico) e [A conta de água da lavoura](/guia/co
 
 ## Fontes
 
-- [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)
-- [NASA: o projeto POWER](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
+- [Huffman et al. (2020), livro Satellite Precipitation Measurement (Springer): capítulo do IMERG](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)
+- [Monteiro, Sentelhas e Pedra (2018), International Journal of Climatology: o NASA POWER no Brasil](https://doi.org/10.1002/joc.5282)

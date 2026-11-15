@@ -8,17 +8,17 @@ planta: crotalaria
 
 ## In one sentence
 
-A cover legume that **fixes nitrogen** and helps control nematodes.
+A cover legume that **fixes nitrogen from the air** and helps against some nematodes.
 
 ## Why it matters
 
-According to Embrapa, crotalaria fixes nitrogen from the air, which reduces the need for nitrogen fertilizer, controls soil nematodes and covers the soil well.
+Crotalaria is widely used in rotation because of its great potential to fix nitrogen from the air. In a study published in Revista Caatinga, *Crotalaria juncea* and *C. spectabilis* let two root lesion nematodes multiply little and were recommended as rotation or succession options against them.
 
 ## Get to know it
 
 - **Use:** cover and nitrogen.
-- **Soil:** good soil cover.
-- **Pests:** helps control nematodes.
+- **Nitrogen:** great potential for biological fixation.
+- **Nematodes:** an option against root lesion nematodes, according to the study.
 - **When to plant:** the deadline comes from the ZARC for your municipality.
 
 ## Step by step
@@ -34,5 +34,6 @@ The app shows crotalaria in [Compare](/opcoes) and in the [3-year plan](/plano).
 
 ## Sources
 
-- [Embrapa: crotalaria, nitrogen and nematodes](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2380275/crotalaria-e-uma-boa-alternativa-para-a-renovacao-de-canaviais)
-- [Embrapa: nematodes in corn and rotation](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
+- [Costa et al. (2006), Ciência e Agrotecnologia: growth and nutrition of Crotalaria juncea](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/203830/1/CAv30n5costa.pdf)
+- [Santana-Gomes et al. (2019), Revista Caatinga: root lesion nematodes in cover crops](https://doi.org/10.1590/1983-21252019v32n201rc)
+- [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

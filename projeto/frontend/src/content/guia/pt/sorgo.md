@@ -8,23 +8,24 @@ planta: sorgo
 
 ## Em uma frase
 
-Cereal de grão **mais tolerante à falta de água** que outros cereais.
+Cereal de grão que **aguenta melhor a falta de água** que o milho.
 
 ## Por que importa
 
-A Embrapa recomenda o sorgo para a safrinha: ele aguenta melhor o estresse hídrico. A recomendação de plantio vem do zoneamento climático e considera o solo.
+Uma revisão de pesquisadores da Universidade de Delaware e da Embrapa Milho e Sorgo mostra que o sorgo tolera melhor estresses como a seca do que o milho. Raízes mais fundas ajudam a planta a buscar a água que fica no fundo da terra.
 
 ## Conheça
 
 - **Serve para:** grão.
-- **Água:** é mais tolerante ao estresse hídrico que outros cereais.
+- **Água:** tolera a seca melhor que o milho.
+- **Raiz:** raízes fundas ajudam na seca.
 - **Quando plantar:** a data limite vem do ZARC do seu município.
 
 ## Passo a passo
 
 1. **Confira o prazo** do ZARC no seu município.
 2. **Semeie** logo depois de colher a soja.
-3. **Deixe a palhada** para a próxima soja.
+3. **Observe a chuva** na floração.
 
 ## Na sua lavoura
 
@@ -32,4 +33,5 @@ O app mostra o sorgo na [Sugestão](/resposta) e em [Comparar](/opcoes). O selo 
 
 ## Fontes
 
-- [Embrapa: sorgo é recomendado para a safrinha](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18856249/sorgo-e-recomendado-para-a-safrinha)
+- [Hostetler, Tinoco e Sparks (2024), Journal of Experimental Botany: raízes do milho e do sorgo sob estresse](https://doi.org/10.1093/jxb/erad390)
+- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

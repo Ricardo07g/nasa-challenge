@@ -11,7 +11,7 @@ rascunho: nao
 
 ## Por que importa
 
-O app olha **20 anos** de clima, de 2005 a 2024, e conta em quantos deles a opção teria dado certo. Essa conta vira o rótulo de chuva: Bom, Médio ou Fraco, conforme o número de anos.
+No milho, a água limita a produção principalmente na floração e no enchimento dos grãos. O app olha **20 anos** de clima, de 2005 a 2024, e conta em quantos deles a opção teria dado certo. Essa conta vira o rótulo de chuva: Bom, Médio ou Fraco, conforme o número de anos.
 
 ## Na sua lavoura
 
@@ -26,5 +26,6 @@ Veja o número na [Sugestão](/resposta) e a conta aberta em [Como a conta é fe
 
 ## Fontes
 
-- [NASA: o projeto POWER, dados diários de clima](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
-- [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)
+- [Sans et al. (2001), Revista Brasileira de Agrometeorologia: zoneamento de riscos climáticos do milho em Minas Gerais e no Centro-Oeste](https://www.alice.cnptia.embrapa.br/handle/doc/485595)
+- [Huffman et al. (2020), livro Satellite Precipitation Measurement (Springer): capítulo do IMERG](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)
+- [Monteiro, Sentelhas e Pedra (2018), International Journal of Climatology: o NASA POWER no Brasil](https://doi.org/10.1002/joc.5282)

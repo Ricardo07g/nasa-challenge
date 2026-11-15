@@ -11,17 +11,16 @@ A nematode is a tiny soil creature that **attacks the roots** of plants.
 
 ## Why it matters
 
-According to Embrapa, one control measure is **rotation** with a species the nematode cannot use, like crotalaria. Crop rotation explains part of the smaller nematode problems in southern Brazil.
+One control measure is **rotation or succession** with plants in which the nematode multiplies little. In a study published in Revista Caatinga, *Crotalaria juncea*, *C. spectabilis* and pigeon pea IPR 43 were poor hosts of two root lesion nematodes and were recommended for this use.
 
 ## In your field
 
 You can tell the app whether there are nematodes in the area. If you say yes, the app changes the math: pest control counts more in the soil score, and the [3-year plan](/plano) takes that into account.
 
-See [crotalaria](/guia/crotalaria), the species Embrapa cites for control.
+See [crotalaria](/guia/crotalaria), one of the plants in the study.
 
 Which nematode species you have and which resistant variety to use are up to your agronomist.
 
 ## Sources
 
-- [Embrapa: nematodes in corn and rotation with crotalaria](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
-- [Embrapa: crop rotation and nematodes](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
+- [Santana-Gomes et al. (2019), Revista Caatinga: root lesion nematodes in cover crops](https://doi.org/10.1590/1983-21252019v32n201rc)

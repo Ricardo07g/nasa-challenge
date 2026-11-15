@@ -11,7 +11,9 @@ In the second crop, the time between the soybean harvest and planting the next p
 
 ## Why it matters
 
-Each crop has a planting deadline in the ZARC, published by the Ministry of Agriculture. On many farms, the second crop is sown little by little, as the soybean harvest advances, which avoids losing everything at once.
+In second-crop corn, sowing late raises the chance of losses. In corn, water limits yield mainly at flowering and grain filling: delaying sowing pushes these phases closer to the end of the rains.
+
+Each crop has its planting deadline in the ZARC, published by the Ministry of Agriculture for each municipality.
 
 ## In your field
 
@@ -23,5 +25,6 @@ See [The planting deadline and the ZARC](/guia/prazo-de-plantio-zarc) and [When 
 
 ## Sources
 
-- [Ministry of Agriculture: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
-- [Embrapa: second crop sown as the soybean harvest advances](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
+- [Embrapa Milho e Sorgo (2011), book O produtor pergunta, a Embrapa responde: second-crop corn chapter](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/927317/1/Milhosafrinha.pdf)
+- [Sans et al. (2001), Revista Brasileira de Agrometeorologia: climate risk zoning for maize in Minas Gerais and the Center-West](https://www.alice.cnptia.embrapa.br/handle/doc/485595)
+- [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

@@ -8,23 +8,24 @@ planta: sorgo
 
 ## In one sentence
 
-A grain cereal that is **more tolerant of water shortage** than other cereals.
+A grain cereal that **handles water shortage better** than corn.
 
 ## Why it matters
 
-Embrapa recommends sorghum for the second crop: it handles water stress better. The planting recommendation comes from the climate zoning and takes the soil into account.
+A review by researchers from the University of Delaware and Embrapa Maize and Sorghum shows that sorghum tolerates stresses such as drought better than corn. Deeper roots help the plant reach the water that sits deep in the soil.
 
 ## Get to know it
 
 - **Use:** grain.
-- **Water:** it is more tolerant of water stress than other cereals.
+- **Water:** tolerates drought better than corn.
+- **Roots:** deep roots help in drought.
 - **When to plant:** the deadline comes from the ZARC for your municipality.
 
 ## Step by step
 
 1. **Check the deadline** in the ZARC for your municipality.
 2. **Sow** right after harvesting the soybeans.
-3. **Leave the straw** for the next soybeans.
+3. **Watch the rain** at flowering.
 
 ## In your field
 
@@ -32,4 +33,5 @@ The app shows sorghum in the [Suggestion](/resposta) and in [Compare](/opcoes). 
 
 ## Sources
 
-- [Embrapa: sorghum is recommended for the second crop](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18856249/sorgo-e-recomendado-para-a-safrinha)
+- [Hostetler, Tinoco and Sparks (2024), Journal of Experimental Botany: maize and sorghum roots under stress](https://doi.org/10.1093/jxb/erad390)
+- [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

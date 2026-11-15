@@ -7,13 +7,13 @@ rascunho: nao
 
 ## In one sentence
 
-In no-till planting, the seed goes into the soil **without plowing or disking**, under the straw of the previous crop.
+In no-till planting, the seed goes into the soil **without turning it over**, under the straw of the previous crop.
 
 ## Why it matters
 
-The straw protects the soil from the impact of rain and, with organic matter, makes the soil more resistant to erosion. Crop rotation and cover plants are the pillars of the system: they help control pests, diseases, weeds and nematodes, protect the soil from heat and help retain moisture.
+No-till rests on three pillars: **disturbing the soil as little as possible**, **keeping the straw** on the surface and **rotating crops**. It reduces the number of weeds and helps conserve soil moisture. The straw is also the most important factor in absorbing the impact of raindrops.
 
-Without enough straw and without rotation, erosion comes back.
+But no-till alone is not enough to hold back erosion when runoff is heavy.
 
 ## In your field
 
@@ -25,6 +25,7 @@ How to dry down the cover before planting and which machine to use are up to you
 
 ## Sources
 
-- [Embrapa: what no-till is and what straw does](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2098787/dia-de-campo-aborda-manejo-e-conservacao-do-solo-e-plantio-direto)
-- [Embrapa: rotation and cover crops in no-till](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
-- [Embrapa: pearl millet for no-till straw](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)
+- [Oliveira et al. (2013), Pesquisa Agropecuária Tropical: maize according to the previous crop, in no-till](https://www.redalyc.org/pdf/2530/253028469004.pdf)
+- [Freitas et al. (2021), Revista Brasileira de Ciência do Solo: terracing increases soil water available to plants](https://doi.org/10.36783/18069657rbcs20210046)
+- [Panachuki et al. (2011), Revista Brasileira de Ciência do Solo: soil and water losses under management systems](https://www.redalyc.org/pdf/1802/180221126032.pdf)
+- [Londero et al. (2021), Hydrological Processes: no-till, terraces and sediment yield in southern Brazil](https://doi.org/10.1002/hyp.14286)

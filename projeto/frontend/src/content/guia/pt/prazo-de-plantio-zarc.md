@@ -11,7 +11,9 @@ O ZARC mostra, para cada município, **a melhor época de plantio** de cada cult
 
 ## Por que importa
 
-O ZARC é o Zoneamento Agrícola de Risco Climático, um instrumento de política agrícola e de gestão de riscos. Ele analisa clima, solo e ciclo das cultivares, e o resultado sai em portarias do Ministério da Agricultura.
+O ZARC é o Zoneamento Agrícola de Risco Climático, uma ferramenta de política agrícola e de gestão de risco. Ele analisa clima, solo e ciclo das cultivares, e o resultado sai em portarias do Ministério da Agricultura.
+
+No zoneamento do milho para Minas Gerais e o Centro-Oeste, os pesquisadores fizeram a conta de água da cultura para cada tipo de solo. Semear depois da melhor época aumentou o risco de faltar água no enchimento dos grãos, ainda mais nos solos que guardam pouca água.
 
 ## Na sua lavoura
 
@@ -19,9 +21,7 @@ Cada município tem as suas datas. Confira a portaria do Ministério da Agricult
 
 Na tela [Quando você colhe](/quando), você diz quando colhe a soja: começo de fevereiro, meio ou fim de fevereiro e março. Se uma cultura passou do prazo, a [Sugestão](/resposta) avisa.
 
-Semear em datas escalonadas, conforme a colheita da soja avança, evita perder tudo de uma vez.
-
 ## Fontes
 
-- [Ministério da Agricultura: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
-- [Embrapa: semeadura escalonada no milho safrinha](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
+- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
+- [Sans et al. (2001), Revista Brasileira de Agrometeorologia: zoneamento de riscos climáticos do milho em Minas Gerais e no Centro-Oeste](https://www.alice.cnptia.embrapa.br/handle/doc/485595)

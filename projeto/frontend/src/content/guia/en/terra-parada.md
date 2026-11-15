@@ -12,12 +12,13 @@ Harvest the soybeans and **plant nothing** until the next soybeans. In the app, 
 
 ## Why it matters
 
-With no plant, there is no new straw. Embrapa notes that straw protects the soil from the impact of rain, and erosion comes back when straw is short. That is why fallow is the baseline to compare the other options.
+With no plant, no new straw forms. Erosion studies show that straw on the soil is the most important factor in absorbing the impact of raindrops, which keeps soil grains from breaking loose. That is why fallow is the baseline to compare the other options.
 
 ## Get to know it
 
 - **Use:** nothing. It is the choice of not planting.
 - **Straw:** forms no new straw.
+- **Soil:** more exposed to the impact of rain.
 - **In the app:** it is the comparison for the other options.
 
 ## Step by step
@@ -32,4 +33,4 @@ The app shows the history of fallow years in [What the satellite saw](/satelite)
 
 ## Sources
 
-- [Embrapa: rotation and cover crops in no-till](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
+- [Panachuki et al. (2011), Revista Brasileira de Ciência do Solo: soil and water losses under management systems](https://www.redalyc.org/pdf/1802/180221126032.pdf)

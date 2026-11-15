@@ -11,7 +11,7 @@ O app olha o **calor na floração**, com a temperatura máxima de cada dia medi
 
 ## Por que importa
 
-O NASA POWER é um projeto da NASA com foco em agroclimatologia, entre outros, e traz dados diários de clima desde 1981. É dele que o app tira a temperatura máxima de cada dia.
+O NASA POWER é uma base de dados de clima da NASA, feita com satélites e modelos. Um estudo da USP/ESALQ comparou o NASA POWER com as estações do INMET em todo o Brasil e achou bom desempenho para a temperatura média, a mínima e a máxima. A conclusão foi que dá para usá-lo na agricultura com confiança razoável em escala regional.
 
 ## Na sua lavoura
 
@@ -25,4 +25,4 @@ Quanto calor a sua cultura aguenta na floração fica com o seu agrônomo.
 
 ## Fontes
 
-- [NASA: o projeto POWER, temperatura diária](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
+- [Monteiro, Sentelhas e Pedra (2018), International Journal of Climatology: o NASA POWER no Brasil](https://doi.org/10.1002/joc.5282)

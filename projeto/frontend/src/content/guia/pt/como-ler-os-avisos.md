@@ -28,7 +28,7 @@ Para os alertas oficiais, veja [Alertas oficiais da Defesa Civil](/guia/alertas-
 
 ## Fontes
 
-- [NSIDC: SMAP L4, umidade da terra](https://nsidc.org/data/spl4smgp/versions/8)
-- [NASA: dados do NASA POWER](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
-- [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)
-- [NOAA: índice ONI do El Niño e da La Niña](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)
+- [Reichle et al. (2019), Journal of Advances in Modeling Earth Systems: umidade do solo SMAP Level-4](https://doi.org/10.1029/2019MS001729)
+- [Monteiro, Sentelhas e Pedra (2018), International Journal of Climatology: o NASA POWER no Brasil](https://doi.org/10.1002/joc.5282)
+- [Huffman et al. (2020), livro Satellite Precipitation Measurement (Springer): capítulo do IMERG](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)
+- [NOAA: índice ONI do El Niño e da La Niña (definição oficial)](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)

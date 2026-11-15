@@ -116,6 +116,16 @@ describe('conteúdo do Guia', () => {
     }
   })
 
+  it('toda fonte é artigo científico, livro técnico ou fonte oficial, nunca notícia', () => {
+    for (const s of VERIFIED_SOURCES) {
+      expect(['article', 'book', 'official'], s.url).toContain(s.kind)
+      expect(s.citation.length, s.url).toBeGreaterThan(10)
+      expect(s.url, s.url).not.toMatch(/busca-de-noticias/)
+      if (s.kind === 'official') expect(s.url, s.url).toMatch(/\.gov(\.br)?\//)
+      else expect(s.url, s.url).not.toMatch(/noticia/)
+    }
+  })
+
   it('a lista de fontes conferidas diz o que cada página confirma', () => {
     for (const s of VERIFIED_SOURCES) {
       expect(s.confirms.length, s.url).toBeGreaterThan(10)

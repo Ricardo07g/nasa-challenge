@@ -8,17 +8,16 @@ planta: milheto
 
 ## In one sentence
 
-A cover plant that gives **a lot of straw** for no-till. In the app, it gives no grain.
+A cover plant that makes **a lot of straw** for no-till. In the app, it gives no grain.
 
 ## Why it matters
 
-According to Embrapa, pearl millet needs little water, copes well with poor soil and water shortage and is useful in crop rotation. The straw covers the soil and makes direct planting of soybeans easier.
+In a study in Goiás, in the Cerrado, pearl millet was the cover plant that made the most dry straw at the start of the off-season, compared with brachiaria grasses and fallow land. The straw covers the soil and prepares no-till planting of soybeans.
 
 ## Get to know it
 
 - **Use:** cover.
-- **Water:** low demand.
-- **Soil:** persists well in poor soil and with water shortage.
+- **Straw:** it made the most straw at the start of the off-season in the Goiás study.
 - **When to plant:** the deadline comes from the ZARC for your municipality.
 
 ## Step by step
@@ -34,4 +33,5 @@ See pearl millet in [Compare](/opcoes) and inside the [3-year plan](/plano). Als
 
 ## Sources
 
-- [Embrapa: pearl millet as an alternative soil cover](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)
+- [Pacheco et al. (2011), Pesquisa Agropecuária Brasileira: phytomass and nutrients of second-season cover crops](https://www.alice.cnptia.embrapa.br/handle/doc/882280)
+- [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

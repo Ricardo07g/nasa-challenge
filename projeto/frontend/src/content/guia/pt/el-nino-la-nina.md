@@ -26,4 +26,4 @@ O app põe uma marca no ano de cada safrinha, na [Sugestão](/resposta), e mostr
 
 ## Fontes
 
-- [NOAA: índice ONI do El Niño e La Niña](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)
+- [NOAA: índice ONI do El Niño e da La Niña (definição oficial)](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)

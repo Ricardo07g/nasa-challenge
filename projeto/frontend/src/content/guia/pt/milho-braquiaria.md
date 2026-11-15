@@ -12,20 +12,20 @@ planta: milho_braquiaria
 
 ## Por que importa
 
-Esse consórcio é o Sistema Santa Fé, da Embrapa. A palhada espessa do capim evita erosão e controla o mato, e, ao se decompor, devolve parte dos nutrientes. A braquiária entrou nos sistemas agrícolas por causa do plantio direto.
+Esse consórcio ficou conhecido como **Sistema Santa Fé**. No plantio direto, a braquiária semeada com o milho serve de pasto do fim do verão ao começo da primavera e, depois, forma a palha da próxima safra. Num estudo no Cerrado, as braquiárias acumularam palha e nutrientes até o fim da entressafra.
 
 ## Conheça
 
 - **Serve para:** grão e cobertura.
-- **Como funciona:** consórcio de grão com capim, principalmente braquiária.
-- **Quando plantar:** a data limite vem do ZARC do seu município.
+- **Como funciona:** milho e braquiária semeados juntos.
+- **Quando plantar:** a data limite vem do ZARC do seu município. O consórcio de milho safrinha com braquiária foi incluído no ZARC.
 
 ## Passo a passo
 
 1. **Confira o prazo** do ZARC no seu município.
 2. **Semeie o capim junto com o milho.**
 3. **Colha o milho.** O capim fica cobrindo a terra.
-4. **Plante a próxima soja** em cima da palhada, no plantio direto.
+4. **Plante a próxima soja** em cima da palha, no plantio direto.
 
 ## Na sua lavoura
 
@@ -33,5 +33,6 @@ O app compara o milho com braquiária com as outras opções em [Comparar](/opco
 
 ## Fontes
 
-- [Embrapa: Sistema Santa Fé](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)
-- [Embrapa: braquiária além da alimentação animal](https://www.embrapa.br/en/tema-integracao-lavoura-pecuaria-floresta-ilpf/busca-de-noticias/-/noticia/31795514/braquiaria-muito-alem-da-alimentacao-animal)
+- [Borghi e Crusciol (2007), Pesquisa Agropecuária Brasileira: milho consorciado com Brachiaria brizantha no plantio direto](https://apct.sede.embrapa.br/pab/article/download/7551/4470/23900)
+- [Ceccon, Borghi e Crusciol, livro Consórcio Milho-Braquiária (Embrapa), capítulo 2](https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/982617/1/Cap2.pdf)
+- [Pacheco et al. (2011), Pesquisa Agropecuária Brasileira: palha e nutrientes de plantas de cobertura na safrinha](https://www.alice.cnptia.embrapa.br/handle/doc/882280)
