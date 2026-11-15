@@ -20,7 +20,12 @@ const SEASONS: SeasonsModel = {
     { year: 2026, satellite: { soy: true, after: 'plantou', ndvi: 0.89 } },
   ],
   answers: {},
-  current: { choice: null, harvestDate: '2027-03-03', changeDateTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=tarde&data=2027-03-03' },
+  current: {
+    choice: null,
+    harvestDate: '2027-03-03',
+    harvestBand: 'tarde',
+    changeDateTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=tarde&data=2027-03-03',
+  },
   answered: 0,
   seen: { kind: 'all', count: 3 },
 }
@@ -225,6 +230,15 @@ describe('SatelliteView (tela 4: raio-X e últimas safras)', () => {
         within(screen.getByRole('group', { name: 'O que você pensa plantar depois da soja 2026/27' })).getByRole('button', { name: 'Milheto' }),
       )
       expect(props.onChooseCurrent).toHaveBeenCalledWith('milheto')
+    })
+
+    it('só com a época da colheita (sem `data`), a safra atual diz a época da tela 2', () => {
+      setup({
+        seasons: { ...SEASONS, current: { ...SEASONS.current, harvestDate: null, harvestBand: 'meio', changeDateTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=meio' } },
+      })
+
+      expect(screen.getByText('colheita prevista no meio de fevereiro')).toBeInTheDocument()
+      expect(screen.queryByText('colheita prevista no começo de 2027')).not.toBeInTheDocument()
     })
 
     it('rodapé: para que servem as respostas e o "Saiba mais: rotação de culturas" em nova aba', () => {

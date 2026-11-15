@@ -6,7 +6,7 @@ import type { CulturaRelato } from '../models/community'
 import type { RaioX } from '../models/raioX'
 import type { CurrentChoice, SeasonAnswer, SeasonAnswers, SeasonRow } from '../models/seasonAnswers'
 import type { ScreenStatus } from '../models/screenStatus'
-import type { Textura } from '../models/talhao'
+import type { Colheita, Textura } from '../models/talhao'
 import {
   communityService,
   plantingReport,
@@ -64,8 +64,8 @@ export type SeasonsModel = {
   /** As 3 últimas safras com o que o satélite viu (o formulário `SeasonAnswersForm`). */
   rows: SeasonRow[]
   answers: SeasonAnswers
-  /** A safra atual: a escolha (`pensa`), a data da colheita da tela 2 (`data`) e o "Trocar data". */
-  current: { choice: CurrentChoice | null; harvestDate: string | null; changeDateTo: string }
+  /** A safra atual: a escolha (`pensa`), a data da colheita da tela 2 (`data`), a época (`colheita`) e o "Trocar data". */
+  current: { choice: CurrentChoice | null; harvestDate: string | null; harvestBand: Colheita | null; changeDateTo: string }
   /** Quantas das 3 safras estão respondidas (nada é obrigatório). */
   answered: number
   seen: SoySeen
@@ -148,6 +148,7 @@ export function useSatelliteController(deps: SatelliteDeps = defaultDeps) {
     current: {
       choice: params?.pensa ?? null,
       harvestDate: params?.data ?? null,
+      harvestBand: params?.colheita ?? null,
       changeDateTo: `/quando${query}`,
     },
     answered: answeredCount(answers),

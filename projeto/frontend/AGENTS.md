@@ -310,7 +310,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   tracejada; **nada dentro das barras** (regra geral 5); a coluna da direita traz a resposta do produtor ou o que o
   satélite viu (no celular, sai da vista e fica para o leitor de tela); o título conta as safras paradas pelas
   respostas. As 5 cores do NDVI (`--color-ndvi-1..5`, cortes `NDVI_BREAKS`) têm legenda numérica. Embaixo, o
-  `SeasonAnswersForm` com a safra atual (data do `data` da tela 2 e "Trocar data" para `/quando` com o fluxo).
+  `SeasonAnswersForm` com a safra atual (data do `data` da tela 2 ou, só com a época, `harvestBand` = `colheita`:
+  "colheita prevista no meio de fevereiro", com o `harvest.*.inline`; e "Trocar data" para `/quando` com o fluxo).
   "Ver o que plantar" leva o fluxo inteiro para `/resposta`; no celular, fica preso embaixo com "{n} de 3 safras
   confirmadas" e a tela põe o espaço embaixo do `body` (`:global(body):has(...)`). "Ouvir resumo": `xraySummary`.
   Sem o raio-X (API antiga ou falha), o painel não aparece e a terra fica num cartão claro com a troca. O

@@ -55,6 +55,8 @@ export const pt = {
     soyPlanted: 'Soja plantada',
     harvestExpected: (date: string) => `colheita prevista em ${date}`,
     harvestExpectedEarly: (year: string) => `colheita prevista no começo de ${year}`,
+    /** Só com a época da tela 2 (`colheita`, sem `data`): "colheita prevista no meio de fevereiro" (`harvest.*.inline`). */
+    harvestExpectedBand: (band: string) => `colheita prevista no ${band}`,
     changeDate: 'Trocar data',
     /** "depois de colher (3 de março) até julho de 2027: o que você pensa plantar". */
     currentQuestion: (date: string, year: string) => `depois de colher (${date}) até julho de ${year}: o que você pensa plantar`,

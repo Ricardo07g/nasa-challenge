@@ -390,6 +390,7 @@ function SeasonsSection(props: SatelliteViewProps) {
             choice: seasons.current.choice,
             onChoose: onChooseCurrent,
             harvestDate: seasons.current.harvestDate,
+            harvestBand: seasons.current.harvestBand,
             changeDateTo: seasons.current.changeDateTo,
           }}
         />

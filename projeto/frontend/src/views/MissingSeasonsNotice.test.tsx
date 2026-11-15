@@ -57,6 +57,16 @@ describe('MissingSeasonsNotice ("Você não preencheu as últimas safras", regra
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
+  it('no modal, a safra atual só com a época da colheita diz a época, como na tela 4', () => {
+    setup({
+      open: true,
+      form: { seasons: [], answers: {}, onAnswer: vi.fn(), current: { choice: undefined, onChoose: vi.fn(), harvestBand: 'tarde' } },
+    })
+
+    const dialog = screen.getByRole('dialog', { name: 'Suas últimas safras' })
+    expect(within(dialog).getByText('colheita prevista no fim de fevereiro ou em março')).toBeInTheDocument()
+  })
+
   it('em inglês', () => {
     setup({ t: en, lang: 'en', open: true })
 

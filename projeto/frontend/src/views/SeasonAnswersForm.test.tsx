@@ -147,6 +147,26 @@ describe('SeasonAnswersForm ("Confirme as últimas safras", telas 4 e 5)', () =>
     expect(screen.queryByRole('link', { name: 'Trocar data' })).not.toBeInTheDocument()
   })
 
+  it('sem a data, mas com a época da tela 2 (`colheita`), diz a época com o texto da tela 2', () => {
+    const { rerender } = setup({ current: { choice: undefined, onChoose: vi.fn(), harvestBand: 'meio' } })
+
+    expect(screen.getByText('colheita prevista no meio de fevereiro')).toBeInTheDocument()
+    expect(screen.queryByText('colheita prevista no começo de 2027')).not.toBeInTheDocument()
+
+    rerender({ current: { choice: undefined, onChoose: vi.fn(), harvestBand: 'cedo' } })
+    expect(screen.getByText('colheita prevista no começo de fevereiro')).toBeInTheDocument()
+
+    rerender({ current: { choice: undefined, onChoose: vi.fn(), harvestBand: 'tarde' } })
+    expect(screen.getByText('colheita prevista no fim de fevereiro ou em março')).toBeInTheDocument()
+  })
+
+  it('com a data e a época, vale a data (como hoje)', () => {
+    setup({ current: { choice: undefined, onChoose: vi.fn(), harvestDate: '2027-03-03', harvestBand: 'tarde' } })
+
+    expect(screen.getByText('colheita prevista em 3 de março de 2027')).toBeInTheDocument()
+    expect(screen.queryByText('colheita prevista no fim de fevereiro ou em março')).not.toBeInTheDocument()
+  })
+
   it('sem a safra atual (current ausente), só as safras passadas', () => {
     setup({ current: undefined })
 
@@ -163,5 +183,11 @@ describe('SeasonAnswersForm ("Confirme as últimas safras", telas 4 e 5)', () =>
     expect(screen.getByText('satellite saw planting · green 0.71')).toBeInTheDocument()
     expect(screen.getByText('harvest expected on March 3, 2027')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Not sure yet' })).toBeInTheDocument()
+  })
+
+  it('em inglês, só com a época da colheita', () => {
+    setup({ t: en, lang: 'en', current: { choice: undefined, onChoose: vi.fn(), harvestBand: 'meio' } })
+
+    expect(screen.getByText('harvest expected in mid-February')).toBeInTheDocument()
   })
 })
