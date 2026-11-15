@@ -20,7 +20,10 @@ from app.repositories.climate_repository import (
 from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6Repository
 from app.repositories.recent_rain_repository import FileRecentRainRepository
 from app.repositories.regiao_repository import FileRegionRepository
-from app.repositories.sinal_outono_repository import NoAutumnSignalDataRepository
+from app.repositories.sinal_outono_repository import (
+    FileRecentSoilMoistureRepository,
+    NoAutumnSignalDataRepository,
+)
 from app.repositories.smap_repository import (
     FileSmapRepository,
     LayeredSmapRepository,
@@ -52,6 +55,7 @@ def _clear_caches() -> None:
     dependencies.get_region_repository.cache_clear()
     dependencies.get_recent_rain_repository.cache_clear()
     dependencies.get_smap_repository.cache_clear()
+    dependencies.get_recent_soil_moisture_repository.cache_clear()
 
 
 @pytest.fixture
@@ -62,6 +66,7 @@ def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None
         regiao_path: Path | None = None,
         imerg_late_path: Path | None = None,
         smap_path: Path | None = None,
+        smap_recente_path: Path | None = None,
     ) -> None:
         settings = Settings(
             _env_file=None,
@@ -70,6 +75,7 @@ def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None
             regiao_path=regiao_path,
             imerg_late_path=imerg_late_path,
             smap_path=smap_path,
+            smap_recente_path=smap_recente_path,
         )
         monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
         _clear_caches()
@@ -275,3 +281,16 @@ def test_should_read_smap_only_from_the_file_of_smap_path_without_database(
 
     assert isinstance(smap, FileSmapRepository)
     assert smap._path == tmp_path / "smap.json"
+
+
+def test_should_read_the_recent_smap_from_smap_recente_path_and_keep_the_forecast_empty(
+    use_settings: Callable[..., None], tmp_path: Path
+) -> None:
+    use_settings(None, smap_recente_path=tmp_path / "smap_recente.json")
+
+    soil = dependencies.get_recent_soil_moisture_repository()
+
+    assert isinstance(soil, FileRecentSoilMoistureRepository)
+    assert soil._path == tmp_path / "smap_recente.json"
+    # O GEOS-S2S (A2.1) ainda não chegou; a chuva recente (A2.3) tem o próprio teste, acima
+    assert isinstance(dependencies.get_seasonal_forecast_repository(), NoAutumnSignalDataRepository)

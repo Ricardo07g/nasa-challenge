@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # Umidade do SMAP L4 nos dias de semeadura por célula de 0,1° (saída do pipeline/fetch_smap.py).
     # Sem arquivo (e sem linhas na tabela `smap_point`): o balde começa em 50% da CAD (PRD 7.2).
     smap_path: Path | None = None
+    # SMAP recente com o percentil na climatologia (saída do pipeline/fetch_smap.py --recente),
+    # para o sinal para o outono (A2.2). Sem arquivo: sem o dado da terra agora.
+    smap_recente_path: Path | None = None
 
     # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
     # usam; a API não precisa de nenhuma (ADR-0005).

@@ -15,6 +15,7 @@ DATA_ENV_VARS = (
     "REGIAO_PATH",
     "IMERG_LATE_PATH",
     "SMAP_PATH",
+    "SMAP_RECENTE_PATH",
 )
 CREDENTIAL_ENV_VARS = (
     "EARTHDATA_TOKEN",
@@ -137,6 +138,16 @@ def test_smap_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> 
     monkeypatch.setenv("SMAP_PATH", str(tmp_path / "smap.json"))
 
     assert Settings(_env_file=None).smap_path == tmp_path / "smap.json"
+
+
+def test_smap_recente_path_defaults_to_none_so_there_is_no_soil_signal_without_the_file() -> None:
+    assert Settings(_env_file=None).smap_recente_path is None
+
+
+def test_smap_recente_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("SMAP_RECENTE_PATH", str(tmp_path / "smap_recente.json"))
+
+    assert Settings(_env_file=None).smap_recente_path == tmp_path / "smap_recente.json"
 
 
 def test_rules_path_defaults_to_file_shipped_with_the_app() -> None:
