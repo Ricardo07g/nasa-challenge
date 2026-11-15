@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-O ZARC diz, para cada município, até quando plantar com o risco de clima mais baixo.
+O ZARC diz, para cada município, **até quando plantar** com o risco de clima mais baixo.
 
 ## Por que importa
 
@@ -19,9 +19,9 @@ O ZARC é o Zoneamento Agrícola de Risco Climático. Estuda clima, solo e ciclo
 
 O app usa estes limites, que são hipótese do time:
 
-- Milho safrinha, milho com braquiária e crotalária: 28 de fevereiro.
-- Milheto: 15 de março.
-- Sorgo: 20 de março.
+- Milho safrinha, milho com braquiária e crotalária: **28 de fevereiro**.
+- Milheto: **15 de março**.
+- Sorgo: **20 de março**.
 
 Na tela [Quando você colhe](/quando), você diz quando colhe a soja: começo de fevereiro, meio ou fim de fevereiro e março. Se não dá tempo de semear a tempo, a [Sugestão](/resposta) avisa: "o plantio vai só até tal data (ZARC), e com a colheita tarde não dá tempo".
 

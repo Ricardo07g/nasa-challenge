@@ -7,7 +7,7 @@ rascunho: nao
 
 ## In one sentence
 
-The app treats the soil as a bucket: rain fills it, the plant empties it, and what is missing is thirst.
+The app treats the soil as a **bucket**: rain fills it, the plant empties it, and what is missing is thirst.
 
 ## Why it matters
 
@@ -17,10 +17,10 @@ What decides the second crop is not just the year's rain. It is how much water t
 
 Every day, the app does the math:
 
-1. Rain comes in, seen by the GPM IMERG satellite.
-2. The plant uses water. The use comes from heat and sun (NASA POWER) and the crop coefficient.
-3. The bucket size comes from the soil: clay soil holds more than sandy soil.
-4. The bucket starts at 50% of the available water, or at the moisture measured by SMAP, when there is any.
+1. **Rain comes in**, seen by the GPM IMERG satellite.
+2. **The plant uses water.** The use comes from heat and sun (NASA POWER) and the crop coefficient.
+3. **The bucket size** comes from the soil: clay soil holds more than sandy soil.
+4. **The bucket starts** at 50% of the available water, or at the moisture measured by SMAP, when there is any.
 
 When the bucket runs dry, water is short. How much was missing becomes the index in the article [What "it worked" means](/guia/deu-certo).
 

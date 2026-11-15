@@ -7,7 +7,7 @@ rascunho: nao
 
 ## In one sentence
 
-Heat of 35 °C or more at flowering can drop flowers and cut the grain.
+Heat of **35 °C or more** at flowering can make flowers drop and cut the grain.
 
 ## Why it matters
 
@@ -15,15 +15,15 @@ Flowering is the most delicate phase. If it falls on very hot days, the year cou
 
 ## In your field
 
-The app looks at each day's maximum temperature, from NASA POWER. There is heat stress when the maximum reaches 35 °C or more on 3 days or more in the critical phase, which runs from 15 days before to 15 days after flowering.
+The app looks at each day's maximum temperature, from NASA POWER. There is heat stress when the maximum reaches **35 °C or more** on **3 days or more** in the critical phase, which runs from 15 days before to 15 days after flowering.
 
-In the season tracking, the heat warning goes out with 2 days in a row of a maximum of 35 °C or more.
+In crop tracking, the heat alert goes out with **2 days in a row** of a maximum of 35 °C or more.
 
 In years with heat at flowering, the year did not "work". See [What "it worked" means](/guia/deu-certo).
 
-Heat shows up as a block in the [What the satellite saw](/satelite) panel. Sowing on time helps flowering fall on milder days. See [the planting deadline](/guia/prazo-de-plantio-zarc).
+Heat shows up as a block on the [What the satellite saw](/satelite) panel. Sowing in time helps flowering fall on milder days. See [the planting deadline](/guia/prazo-de-plantio-zarc).
 
-The 35 °C limit comes from the PRD. The link to flower loss is the rule the team adopted.
+The 35 °C limit comes from the PRD. The link to flower drop is the rule the team adopted.
 
 ## Sources
 

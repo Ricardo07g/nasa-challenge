@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-El Niño e La Niña são fases em que o Oceano Pacífico fica mais quente ou mais frio que o normal.
+El Niño e La Niña são fases em que o **Oceano Pacífico** fica mais quente ou mais frio que o normal.
 
 ## Por que importa
 
@@ -15,7 +15,10 @@ Essas fases podem mudar a chuva em muitas regiões. O app só informa a fase de 
 
 ## Na sua lavoura
 
-Quem mede a fase é a NOAA, dos Estados Unidos, e não a NASA. A medida é o ONI: a temperatura do mar numa região do Pacífico, em média de 3 meses. O app usa +0,5 °C ou mais para El Niño e -0,5 °C ou menos para La Niña.
+Quem mede a fase é a NOAA, dos Estados Unidos, e não a NASA. A medida é o ONI: a temperatura do mar numa região do Pacífico, em média de 3 meses. O app usa:
+
+- **El Niño:** **+0,5 °C** ou mais.
+- **La Niña:** **-0,5 °C** ou menos.
 
 Para cada safrinha, o app faz a média do ONI de dezembro a abril (DJF, JFM e FMA) e põe uma marca no ano, na [Sugestão](/resposta).
 

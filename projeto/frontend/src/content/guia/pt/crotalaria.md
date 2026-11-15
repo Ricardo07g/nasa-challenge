@@ -8,7 +8,7 @@ planta: crotalaria
 
 ## Em uma frase
 
-Uma leguminosa de cobertura que deixa nitrogênio na terra e atrapalha o nematoide.
+Leguminosa de cobertura que **deixa nitrogênio na terra** e atrapalha o nematoide.
 
 ## Por que importa
 
@@ -16,17 +16,17 @@ Ela aduba a terra e quebra o ciclo de pragas do solo. É a cobertura que mais aj
 
 ## Conheça
 
-- Serve para: cobertura e nitrogênio.
-- Água: pede pouca (coeficiente 1,00 no pico).
-- Deixa na terra: 80 kg/ha de nitrogênio no app, nota máxima de nitrogênio (30 de 30), pragas 30 de 30 e palha 25 de 40.
-- Tem medo de: falta de água nos primeiros 30 dias.
+- **Serve para:** cobertura e nitrogênio.
+- **Água:** pede pouca (coeficiente **1,00** no pico).
+- **Deixa na terra:** **80 kg/ha** de nitrogênio no app, nota máxima de nitrogênio (**30 de 30**), pragas **30 de 30** e palha **25 de 40**.
+- **Tem medo de:** falta de água nos primeiros 30 dias.
 
 ## Passo a passo
 
-1. Semeie a crotalária a lanço ou em linha. O limite do ZARC no app é 28 de fevereiro.
-2. Deixe crescer até florescer, com cerca de 60 dias. O ciclo todo leva cerca de 100.
-3. Roce.
-4. Plante a soja em cima da palhada.
+1. **Semeie** a lanço ou em linha. O limite do ZARC no app é **28 de fevereiro**.
+2. **Deixe crescer** até florescer, com cerca de 60 dias. O ciclo todo leva cerca de 100.
+3. **Roce.**
+4. **Plante a soja** em cima da palhada.
 
 ## Na sua lavoura
 

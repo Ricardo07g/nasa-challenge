@@ -8,29 +8,29 @@ planta: milheto
 
 ## Em uma frase
 
-Uma planta de cobertura que cresce rápido e faz muita palha, sem dar grão no app.
+Planta de cobertura que cresce rápido e faz muita palha. No app, não dá grão.
 
 ## Por que importa
 
-A palha cobre a terra, segura a umidade e deixa o plantio direto da soja mais fácil.
+A palha cobre a terra, segura a umidade e facilita o plantio direto da soja.
 
 ## Conheça
 
-- Serve para: cobertura.
-- Água: pede pouca (coeficiente 1,00 no pico). Nos primeiros 30 dias, o app olha se a chuva deu conta.
-- Deixa na terra: palha boa (35 de 40 pontos) e ajuda contra pragas (20 de 30).
-- Tem medo de: falta de água logo depois de nascer.
+- **Serve para:** cobertura.
+- **Água:** pede pouca (coeficiente **1,00** no pico). Nos primeiros 30 dias, o app confere se a chuva deu conta.
+- **Deixa na terra:** palha boa (**35 de 40** pontos) e ajuda contra pragas (**20 de 30**).
+- **Tem medo de:** falta de água logo depois de nascer.
 
 ## Passo a passo
 
-1. Semeie logo depois da soja. O limite do ZARC no app é 15 de março.
-2. A floração vem com cerca de 50 dias. O ciclo todo leva cerca de 90.
-3. Deixe crescer e formar palha.
-4. Plante a soja direto sobre a palha.
+1. **Semeie** logo depois da soja. O limite do ZARC no app é **15 de março**.
+2. **Espere a floração**, com cerca de 50 dias. O ciclo todo leva cerca de 90.
+3. **Deixe crescer** e formar palha.
+4. **Plante a soja** direto sobre a palha.
 
 ## Na sua lavoura
 
-O app mostra o milheto em [Comparar](/opcoes) e dentro do [Plano de 3 anos](/plano). Veja também [a palhada](/guia/palhada).
+Veja o milheto em [Comparar](/opcoes) e dentro do [Plano de 3 anos](/plano). Leia também sobre [a palhada](/guia/palhada).
 
 ## Fontes
 

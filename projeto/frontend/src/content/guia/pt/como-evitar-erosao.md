@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-Erosão é a chuva levando embora a camada boa da terra, e ela é maior quando a terra fica descoberta.
+Erosão é a chuva **levando embora a camada boa da terra**, e ela é maior quando a terra fica descoberta.
 
 ## Por que importa
 
@@ -25,7 +25,7 @@ Só o plantio direto não basta. Com pouca palha, sem rotação e com a terra co
 
 Logo depois da colheita da soja, em fevereiro e março, a terra pode ficar descoberta na época das chuvas fortes. Na tela [O que o satélite viu](/satelite), o alerta de chuva forte diz quantos dias por ano choveu muito nessa época, pelo satélite GPM IMERG da NASA.
 
-Plantar logo depois da colheita deixa a terra coberta mais cedo. Veja na [Sugestão](/resposta) e no [Comparar](/opcoes) quanta palha cada opção deixa, e leia [Palhada: por que cobrir a terra](/guia/palhada).
+Plantar logo depois da colheita deixa a terra coberta mais cedo. Veja na [Sugestão](/resposta) e em [Comparar](/opcoes) quanta palha cada opção deixa, e leia [Palhada: por que cobrir a terra](/guia/palhada).
 
 Onde fazer terraço e a distância entre eles ficam com o seu agrônomo.
 

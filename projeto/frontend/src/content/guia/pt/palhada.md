@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-Palhada é a camada de restos de planta que cobre a terra depois da colheita.
+Palhada é a **camada de restos de planta** que cobre a terra depois da colheita.
 
 ## Por que importa
 
@@ -15,13 +15,13 @@ A terra coberta fica protegida do calor e segura mais umidade. A palhada também
 
 ## Na sua lavoura
 
-O app dá até 40 pontos de palhada na nota de terra. Veja quanto cada opção deixa:
+O app dá até **40 pontos** de palhada na nota de terra. Veja quanto cada opção deixa:
 
-- Milho com braquiária: 40.
-- Milheto: 35.
-- Crotalária: 25.
-- Milho safrinha e sorgo: 20.
-- Deixar parado: 0.
+- Milho com braquiária: **40**.
+- Milheto: **35**.
+- Crotalária: **25**.
+- Milho safrinha e sorgo: **20**.
+- Deixar parado: **0**.
 
 Veja o efeito na linha Terra de [Comparar](/opcoes) e na [Sugestão](/resposta). Quem quer palha, olhe o [milheto](/guia/milheto) ou o [milho com braquiária](/guia/milho-braquiaria).
 

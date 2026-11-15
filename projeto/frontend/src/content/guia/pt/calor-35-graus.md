@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-Calor de 35 °C ou mais na floração pode derrubar flores e reduzir o grão.
+Calor de **35 °C ou mais** na floração pode derrubar flores e reduzir o grão.
 
 ## Por que importa
 
@@ -15,9 +15,9 @@ A floração é a fase mais delicada. Se ela cai em dias muito quentes, o ano co
 
 ## Na sua lavoura
 
-O app olha a temperatura máxima de cada dia, do NASA POWER. Há aperto por calor quando a máxima chega a 35 °C ou mais em 3 dias ou mais na fase crítica, que vai de 15 dias antes a 15 dias depois da floração.
+O app olha a temperatura máxima de cada dia, do NASA POWER. Há aperto por calor quando a máxima chega a **35 °C ou mais** em **3 dias ou mais** na fase crítica, que vai de 15 dias antes a 15 dias depois da floração.
 
-No acompanhamento da safra, o aviso de calor sai com 2 dias seguidos de máxima de 35 °C ou mais.
+No acompanhamento da safra, o aviso de calor sai com **2 dias seguidos** de máxima de 35 °C ou mais.
 
 Nos anos com calor na floração, o ano não "deu certo". Veja [O que significa "deu certo"](/guia/deu-certo).
 

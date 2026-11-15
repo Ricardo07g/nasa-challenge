@@ -7,7 +7,7 @@ rascunho: nao
 
 ## In one sentence
 
-Erosion is rain carrying away the good top layer of the soil, and it is worse when the soil is bare.
+Erosion is rain **carrying away the good top layer of the soil**, and it is worse when the soil is bare.
 
 ## Why it matters
 

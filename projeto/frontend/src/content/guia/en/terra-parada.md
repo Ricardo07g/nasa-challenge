@@ -8,7 +8,7 @@ planta: pousio
 
 ## In one sentence
 
-Harvest the soybeans and plant nothing until the next soybeans. In the app, "Leave it fallow".
+Harvest the soybeans and **plant nothing** until the next soybeans. In the app, "Leave it fallow".
 
 ## Why it matters
 
@@ -16,20 +16,20 @@ It costs no seed, but it does not cover the soil, leaves no nitrogen and does no
 
 ## Get to know it
 
-- Use: nothing. It is the choice of not planting.
-- Water: it asks for none, and the rain falls on bare soil.
-- Leaves in the soil: nothing in the soil score (0 of 100).
-- Fears: nothing, because there is no plant. But bare soil suffers from heavy rain and weeds.
+- **Use:** nothing. It is the choice of not planting.
+- **Water:** asks for none, and the rain falls on bare soil.
+- **Leaves in the soil:** nothing in the soil score (**0 of 100**).
+- **Fears:** nothing, because there is no plant. But bare soil suffers from heavy rain and weeds.
 
 ## Step by step
 
-1. Harvest the soybeans and leave the area unplanted.
-2. Control the weeds that come up until the next soybeans.
-3. Burn down the area before planting the next soybeans.
+1. **Harvest the soybeans** and leave the area unplanted.
+2. **Control the weeds** that come up until the next soybeans.
+3. **Burn down the area** before planting the next soybeans.
 
 ## In your field
 
-The app shows the history of fallow years in [What the satellite saw](/satelite) and compares fallow with the other options in [Compare](/opcoes). See what covering the soil changes in [straw](/guia/palhada).
+The app shows the history of fallow years in [What the satellite saw](/satelite) and compares fallow with the other options in [Compare](/opcoes). See what changes when the soil is covered in [straw](/guia/palhada).
 
 ## Sources
 

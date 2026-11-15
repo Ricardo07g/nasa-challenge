@@ -7,22 +7,22 @@ rascunho: nao
 
 ## In one sentence
 
-Rotation is changing what you plant, year after year, instead of repeating the same crop.
+Rotation is **changing what you plant**, year after year, instead of repeating the same crop.
 
 ## Why it matters
 
-Each plant leaves something different in the soil. Switching helps cover the soil, break pests and nematodes and hold moisture.
+Each plant leaves something different in the soil. Changing helps cover the soil, break pests and nematodes and hold moisture.
 
 ## In your field
 
-The [3-year plan](/plano) tests every combination of 6 options over 3 seasons, 216 in all, and shows the best ones.
+The [3-year plan](/plano) tests every combination of 6 options over 3 seasons, **216** in all, and shows the best ones.
 
 How to read it:
 
 - Each column is a year, with the off-season option.
-- The app gives a bonus for variety: +5 points with 2 different functions and +10 with 3 (grain, grass cover and legume cover).
-- No plan shows more than 2 fallow years in a row.
-- With nematodes in the field, the plan needs crotalaria or millet.
+- The app gives a diversity bonus: **+5** points with 2 different roles and **+10** with 3 (grain, grass cover and legume cover).
+- No plan appears with more than **2 fallows** in a row.
+- With nematodes in the area, the plan needs crotalaria or pearl millet.
 
 You can swap an option and see the score right away. See each crop in the [Suggestion](/resposta), for example [crotalaria](/guia/crotalaria).
 

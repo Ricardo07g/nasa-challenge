@@ -7,7 +7,7 @@ rascunho: nao
 
 ## In one sentence
 
-A dry spell is a stretch of days in a row without rain in the middle of the rainy season.
+A dry spell is a stretch of **days in a row without rain** in the middle of the rainy season.
 
 ## Why it matters
 
@@ -15,7 +15,7 @@ The year's total rain can be good and still a pause at the wrong time makes the 
 
 ## In your field
 
-The app counts a day with less than 1 mm of rain as a dry day. It warns of a dry spell when it finds 10 dry days or more in the crop's critical phase.
+The app counts a day with **less than 1 mm** of rain as a dry day. It warns of a dry spell when it finds **10 dry days or more** in the crop's critical phase.
 
 The rain comes from the GPM IMERG satellite. A day without rain is not water shortage right then: the soil stores water, and the app does that math in the bucket. See [The water math of your field](/guia/conta-de-agua).
 

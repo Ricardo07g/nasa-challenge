@@ -7,29 +7,33 @@ rascunho: nao
 
 ## In one sentence
 
-In the second crop, each day between the soybean harvest and sowing the next crop is one day less of rain for it.
+In the second crop, **every day** between the soybean harvest and planting the next plant is one less day of rain for it.
 
 ## Why it matters
 
-After March, the rain fades. Sowing later pushes the stage when the plant needs water most into drier days.
+After March, the rain fades out. Planting later pushes the phase when the plant needs water most into drier days.
 
-Each crop also has a planting deadline, ZARC. After the deadline, the climate risk goes up.
+Each crop also has a planting deadline, the ZARC. Past the deadline, the climate risk goes up.
 
 ## In your field
 
-The app assumes you sow 3 days after harvesting the soybeans. For each harvest period, the calculation uses one sowing day:
+The app assumes you plant **3 days after** harvesting the soybeans. For each harvest time, the math uses one planting day:
 
-- Early February: harvest on the 5th and sowing on February 8.
-- Mid-February: harvest on the 15th and sowing on February 18.
-- Late February or March: harvest on February 28 and sowing on March 3.
+- **Early February:** harvest on the 5th and planting on February 8.
+- **Mid-February:** harvest on the 15th and planting on February 18.
+- **Late February or March:** harvest on February 28 and planting on March 3.
 
-On the [When you harvest](/quando) screen, the "What a later harvest costs" block shows, for each period, the best option of the app and in how many of the 20 years it worked. The best option can change from one period to another. Harvesting late, some crops are already past the deadline and leave the list.
+On the [When you harvest](/quando) screen, the "What harvesting later costs" block shows, for each time, the app's best option and in how many of the 20 years it worked. When you harvest late, some crops pass their deadline and drop off the list.
 
-The deadlines the app uses, a team hypothesis: second-crop corn, corn with brachiaria and crotalaria until February 28; pearl millet until March 15; sorghum until March 20.
+The deadlines the app uses are a team hypothesis:
+
+- Corn alone, corn with brachiaria and crotalaria: **February 28**.
+- Pearl millet: **March 15**.
+- Sorghum: **March 20**.
 
 On many farms, the second crop is sown little by little, as the soybean harvest advances. Talk to your agronomist about how to gain days between harvest and sowing.
 
-See [The planting deadline and ZARC](/guia/prazo-de-plantio-zarc) and [When the rain ends](/guia/quando-a-chuva-acaba).
+See [The planting deadline and the ZARC](/guia/prazo-de-plantio-zarc) and [When the rain ends](/guia/quando-a-chuva-acaba).
 
 ## Sources
 

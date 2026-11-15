@@ -7,7 +7,7 @@ rascunho: nao
 
 ## In one sentence
 
-The straw that covers the soil protects it, but it dries in winter and can catch fire.
+The straw that covers the soil protects it, but it **dries in winter and can catch fire**.
 
 ## Why it matters
 
@@ -17,17 +17,17 @@ When the straw burns, the soil is left bare. It loses its protection from the su
 
 ## In your field
 
-On the [What the satellite saw](/satelite) screen, the fire alert tells in how many of the last 10 years there was burned area within 5 km of your point. The data comes from the MCD64A1 product, from NASA's Terra and Aqua satellites, which maps burned area month by month in 500 m squares. A small fire may not show up.
+On the [What the satellite saw](/satelite) screen, the fire alert tells in how many of the last **10 years** there was burned area within **5 km** of your point. The data comes from the MCD64A1 product, from NASA's Terra and Aqua satellites, which maps burned area month by month in 500 m squares. A small fire may not show up.
 
 What helps:
 
-- Keep a strip with no straw and no weeds around the field, so the fire cannot cross.
-- Do not use fire to clear crop residue.
-- Agree with your neighbors to look after the borders.
+- **Keep a strip** with no straw and no weeds around the field, so the fire cannot cross.
+- **Do not use fire** to clear crop residue.
+- **Agree with your neighbors** to look after the borders.
 
 How to make the strip, and how wide, is up to your agronomist.
 
-In case of fire, call 193 (Fire Department). See also [Official Civil Defense alerts](/guia/alertas-defesa-civil) and [Straw: why cover the soil](/guia/palhada).
+In case of fire, call **193** (Fire Department). See also [Official Civil Defense alerts](/guia/alertas-defesa-civil) and [Straw: why cover the soil](/guia/palhada).
 
 ## Sources
 

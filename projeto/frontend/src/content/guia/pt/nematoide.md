@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-Nematoide é um bichinho do solo, muito pequeno, que ataca as raízes e tira força da planta.
+Nematoide é um bichinho do solo, muito pequeno, que **ataca as raízes** e tira força da planta.
 
 ## Por que importa
 
@@ -19,7 +19,7 @@ A forma de reduzir é rotacionar com uma espécie que o nematoide não aproveita
 
 Se informar que sim, o app muda a conta:
 
-- A coluna de pragas vale 1,5 vez mais na nota de terra.
+- A coluna de pragas vale **1,5 vez** mais na nota de terra.
 - O [Plano de 3 anos](/plano) só mostra planos com crotalária ou milheto, quando uma delas cabe na janela.
 
 Veja a [crotalária](/guia/crotalaria) e o [milheto](/guia/milheto), as duas opções que o app usa contra nematoide.

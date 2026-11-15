@@ -95,7 +95,7 @@
 }
 
 .prose h2 {
-  margin: var(--space-4) 0 0;
+  margin: var(--space-2) 0 0;
   font-family: var(--font-display);
   font-size: var(--font-size-title);
   font-weight: var(--font-weight-semibold);
@@ -126,4 +126,25 @@
 .prose a {
   color: var(--color-secondary-strong);
   text-decoration: underline;
+}
+
+/* Frase de abertura ("Em uma frase"): em destaque, com faixa verde */
+.prose > h2:first-child + p {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-lead);
+  color: var(--color-text-on-green-tint);
+  background: var(--color-tint-green);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-xs);
+}
+
+/* Divisória leve antes de cada seção, menos a primeira */
+.prose > h2:not(:first-child) {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.prose li::marker {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
 }

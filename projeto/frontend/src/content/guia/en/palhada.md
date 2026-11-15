@@ -7,25 +7,25 @@ rascunho: nao
 
 ## In one sentence
 
-Straw is the layer of plant remains that covers the soil after harvest.
+Straw is the **layer of plant residue** that covers the soil after harvest.
 
 ## Why it matters
 
-Covered soil is protected from heat and holds more moisture. Straw also prevents erosion and controls weeds. As it breaks down, it returns part of the nutrients.
+Covered soil is protected from heat and holds more moisture. Straw also prevents erosion and controls weeds. As it decomposes, it gives back part of the nutrients.
 
 ## In your field
 
-The app gives up to 40 straw points in the soil score. See how much each option leaves:
+The app gives up to **40 points** for straw in the soil score. See how much each option leaves:
 
-- Corn with brachiaria: 40.
-- Pearl millet: 35.
-- Crotalaria: 25.
-- Second-crop corn and sorghum: 20.
-- Leave it fallow: 0.
+- Corn with brachiaria: **40**.
+- Pearl millet: **35**.
+- Crotalaria: **25**.
+- Corn alone and sorghum: **20**.
+- Leave it fallow: **0**.
 
 See the effect in the Soil row of [Compare](/opcoes) and in the [Suggestion](/resposta). If you want straw, look at [pearl millet](/guia/milheto) or [corn with brachiaria](/guia/milho-braquiaria).
 
-The straw should stay on the surface. How much straw your soil needs is up to your agronomist.
+The straw should be kept on the surface. How much straw your soil needs is up to your agronomist.
 
 ## Sources
 

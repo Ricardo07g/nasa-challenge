@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-No plantio direto, a semente vai para a terra sem aração nem gradagem, por baixo da palha da cultura anterior.
+No plantio direto, a semente vai para a terra **sem aração nem gradagem**, por baixo da palha da cultura anterior.
 
 ## Por que importa
 
@@ -24,7 +24,7 @@ Sem palha suficiente e sem rotação, o sistema perde força.
 
 A entressafra depois da soja é a hora de produzir a palha da próxima safra. As plantas de cobertura, como o [milheto](/guia/milheto), e o [milho com braquiária](/guia/milho-braquiaria) deixam muita palha. Deixar a terra parada não deixa nada.
 
-O app mostra quanta palha cada opção deixa na linha Terra da [Sugestão](/resposta) e do [Comparar](/opcoes). O [Plano de 3 anos](/plano) ajuda a montar a rotação. Leia também [Palhada: por que cobrir a terra](/guia/palhada), [Rotação de culturas](/guia/rotacao-de-culturas) e [Como evitar erosão](/guia/como-evitar-erosao).
+O app mostra quanta palha cada opção deixa na linha Terra da [Sugestão](/resposta) e de [Comparar](/opcoes). O [Plano de 3 anos](/plano) ajuda a montar a rotação. Leia também [Palhada: por que cobrir a terra](/guia/palhada), [Rotação de culturas](/guia/rotacao-de-culturas) e [Como evitar erosão](/guia/como-evitar-erosao).
 
 Como secar a cobertura antes de plantar e qual máquina usar ficam com o seu agrônomo.
 

@@ -8,7 +8,7 @@ planta: pousio
 
 ## Em uma frase
 
-Colher a soja e não plantar nada até a próxima soja. No app, "Deixar parado".
+Colher a soja e **não plantar nada** até a próxima soja. No app, "Deixar parado".
 
 ## Por que importa
 
@@ -16,20 +16,20 @@ Não gasta com semente, mas também não cobre a terra, não deixa nitrogênio e
 
 ## Conheça
 
-- Serve para: nada. É a escolha de não plantar.
-- Água: não pede, e a chuva cai na terra descoberta.
-- Deixa na terra: nada na nota de terra (0 de 100).
-- Tem medo de: nada, porque não há planta. Mas a terra descoberta sofre com chuva forte e mato.
+- **Serve para:** nada. É a escolha de não plantar.
+- **Água:** não pede, e a chuva cai na terra descoberta.
+- **Deixa na terra:** nada na nota de terra (**0 de 100**).
+- **Tem medo de:** nada, porque não há planta. Mas a terra descoberta sofre com chuva forte e mato.
 
 ## Passo a passo
 
-1. Colha a soja e deixe a área sem plantar.
-2. Controle o mato que nascer até a próxima soja.
-3. Desseque a área antes de plantar a próxima soja.
+1. **Colha a soja** e deixe a área sem plantar.
+2. **Controle o mato** que nascer até a próxima soja.
+3. **Desseque a área** antes de plantar a próxima soja.
 
 ## Na sua lavoura
 
-O app mostra o histórico de anos parados em [O que o satélite viu](/satelite) e compara o pousio com as outras opções em [Comparar](/opcoes). Veja o que cobrir a terra muda em [palhada](/guia/palhada).
+O app mostra o histórico de anos parados em [O que o satélite viu](/satelite) e compara o pousio com as outras opções em [Comparar](/opcoes). Veja o que muda quando a terra fica coberta em [palhada](/guia/palhada).
 
 ## Fontes
 

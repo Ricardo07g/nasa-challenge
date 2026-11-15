@@ -7,25 +7,25 @@ rascunho: nao
 
 ## In one sentence
 
-ZARC says, for each municipality, until when you can plant with the lowest climate risk.
+The ZARC tells you, for each municipality, **how late you can plant** with the lowest climate risk.
 
 ## Why it matters
 
-Planting after the deadline pushes flowering into the end of the rains. Then the chance of water shortage goes up.
+Planting after the deadline pushes flowering to the end of the rains. Then the chance of water shortage goes up.
 
 ## In your field
 
-ZARC is the Agricultural Climate Risk Zoning. It studies climate, soil and cultivar cycle, and is published in ordinances by the Ministry of Agriculture.
+The ZARC is the Agricultural Climate Risk Zoning (Zoneamento Agrícola de Risco Climático). It studies climate, soil and the cultivar's cycle, and is published in orders from the Ministry of Agriculture.
 
 The app uses these limits, which are a team hypothesis:
 
-- Second-crop corn, corn with brachiaria and crotalaria: February 28.
-- Pearl millet: March 15.
-- Sorghum: March 20.
+- Corn alone, corn with brachiaria and crotalaria: **February 28**.
+- Pearl millet: **March 15**.
+- Sorghum: **March 20**.
 
-On the [When you harvest](/quando) screen, you say when you harvest the soybeans: early February, mid-February, or late February and March. If there is no time to sow in time, the [Suggestion](/resposta) warns: "sowing only until this date (ZARC), and with a late harvest there is no time".
+On the [When you harvest](/quando) screen, you say when you harvest the soybeans: early February, mid-February or late February and March. If there is no time to sow in time, the [Suggestion](/resposta) warns you: "planting goes only until a given date (ZARC), and with a late harvest there is no time".
 
-Harvesting soybeans earlier opens room. Sowing on staggered dates, as the harvest advances, avoids losing everything at once.
+Harvesting soybeans earlier opens up room. Sowing on staggered dates, as the harvest advances, avoids losing everything at once.
 
 ## Sources
 

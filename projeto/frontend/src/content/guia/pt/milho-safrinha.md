@@ -8,29 +8,29 @@ planta: milho_safrinha
 
 ## Em uma frase
 
-Milho plantado logo depois da soja, para colher grão no inverno. No app aparece como "Milho sozinho".
+Milho plantado logo depois da soja, para colher grão no inverno. No app, aparece como **"Milho sozinho"**.
 
 ## Por que importa
 
-É a opção de grão mais conhecida. Mas se a semeadura atrasa, a floração cai no fim da chuva, e falta água justo quando a planta mais precisa.
+É a opção de grão mais conhecida. Mas, se a semeadura atrasa, a floração cai no fim da chuva e falta água justo quando a planta mais precisa.
 
 ## Conheça
 
-- Serve para: grão.
-- Água: pede muita. No pico, o app usa o coeficiente 1,20, o maior de todos.
-- Deixa na terra: pouca palha (20 de 40 pontos) e nenhum nitrogênio.
-- Tem medo de: seca e calor de 35 °C ou mais na floração.
+- **Serve para:** grão.
+- **Água:** pede muita. No pico, o app usa o coeficiente **1,20**, o maior de todos.
+- **Deixa na terra:** pouca palha (**20 de 40** pontos) e nenhum nitrogênio.
+- **Tem medo de:** seca e calor de **35 °C ou mais** na floração.
 
 ## Passo a passo
 
-1. Semeie logo depois de colher a soja. O limite do ZARC no app é 28 de fevereiro.
-2. A floração vem com cerca de 60 dias. O ciclo todo leva cerca de 120.
-3. Olhe a chuva e o calor na floração.
-4. Colha no inverno. Se der, cubra a terra antes da próxima soja.
+1. **Semeie** logo depois de colher a soja. O limite do ZARC no app é **28 de fevereiro**.
+2. **Espere a floração**, com cerca de 60 dias. O ciclo todo leva cerca de 120.
+3. **Olhe a chuva e o calor** na floração.
+4. **Colha** no inverno. Se der, cubra a terra antes da próxima soja.
 
 ## Na sua lavoura
 
-O app mostra o milho safrinha na [Sugestão](/resposta) e em [Comparar](/opcoes). Veja também [o prazo de plantio](/guia/prazo-de-plantio-zarc) e [a geada](/guia/geada-na-safrinha).
+Veja o milho safrinha na [Sugestão](/resposta) e em [Comparar](/opcoes). Leia também sobre [o prazo de plantio](/guia/prazo-de-plantio-zarc) e [a geada](/guia/geada-na-safrinha).
 
 ## Fontes
 

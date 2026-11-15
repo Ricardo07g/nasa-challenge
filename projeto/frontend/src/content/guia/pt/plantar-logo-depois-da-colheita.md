@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-Na safrinha, cada dia entre a colheita da soja e o plantio da próxima planta é um dia a menos de chuva para ela.
+Na safrinha, **cada dia** entre a colheita da soja e o plantio da próxima planta é um dia a menos de chuva para ela.
 
 ## Por que importa
 
@@ -17,15 +17,19 @@ Cada cultura também tem um prazo de plantio, o ZARC. Passou do prazo, o risco d
 
 ## Na sua lavoura
 
-O app conta que você planta 3 dias depois de colher a soja. Para cada época de colheita, a conta usa um dia de plantio:
+O app conta que você planta **3 dias depois** de colher a soja. Para cada época de colheita, a conta usa um dia de plantio:
 
-- Começo de fevereiro: colheita em 5 e plantio em 8 de fevereiro.
-- Meio de fevereiro: colheita em 15 e plantio em 18 de fevereiro.
-- Fim de fevereiro ou março: colheita em 28 de fevereiro e plantio em 3 de março.
+- **Começo de fevereiro:** colheita em 5 e plantio em 8 de fevereiro.
+- **Meio de fevereiro:** colheita em 15 e plantio em 18 de fevereiro.
+- **Fim de fevereiro ou março:** colheita em 28 de fevereiro e plantio em 3 de março.
 
-Na tela [Quando você colhe](/quando), o bloco "Quanto custa colher mais tarde" mostra, para cada época, a melhor opção do app e em quantos dos 20 anos ela deu certo. A melhor opção pode mudar de uma época para outra. Colhendo tarde, algumas culturas já passaram do prazo e saem da lista.
+Na tela [Quando você colhe](/quando), o bloco "Quanto custa colher mais tarde" mostra, para cada época, a melhor opção do app e em quantos dos 20 anos ela deu certo. Colhendo tarde, algumas culturas passam do prazo e saem da lista.
 
-Os prazos que o app usa, hipótese do time: milho safrinha, milho com braquiária e crotalária até 28 de fevereiro; milheto até 15 de março; sorgo até 20 de março.
+Os prazos que o app usa são hipótese do time:
+
+- Milho safrinha, milho com braquiária e crotalária: **28 de fevereiro**.
+- Milheto: **15 de março**.
+- Sorgo: **20 de março**.
 
 Em muitas fazendas, a safrinha é semeada aos poucos, conforme a colheita da soja avança. Converse com o agrônomo sobre como ganhar dias entre a colheita e o plantio.
 

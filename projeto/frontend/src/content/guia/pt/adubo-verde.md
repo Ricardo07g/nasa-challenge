@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-Adubo verde é uma planta que se cultiva para deixar nutrientes na terra, não para colher.
+Adubo verde é uma planta cultivada para **deixar nutrientes na terra**, não para colher.
 
 ## Por que importa
 
@@ -15,9 +15,9 @@ Leguminosas, como a crotalária, fixam nitrogênio do ar com a ajuda de bactéri
 
 ## Na sua lavoura
 
-No app, só a crotalária deixa nitrogênio: 80 kg/ha, e nota 30 de 30 no item nitrogênio. As outras opções ficam com 0.
+No app, só a crotalária deixa nitrogênio: **80 kg/ha**, e nota **30 de 30** no item nitrogênio. As outras opções ficam com 0.
 
-O app dá o valor médio como hipótese do time. O número real muda com a terra, a cultivar e a chuva.
+O app usa o valor médio como hipótese do time. O número real muda com a terra, a cultivar e a chuva.
 
 Veja a linha Terra em [Comparar](/opcoes). Conheça a [crotalária](/guia/crotalaria) e a [palhada](/guia/palhada), que ela também deixa.
 

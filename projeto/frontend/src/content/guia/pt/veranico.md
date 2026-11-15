@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-Veranico é um período de dias seguidos sem chuva no meio da época das chuvas.
+Veranico é um período de **dias seguidos sem chuva** no meio da época das chuvas.
 
 ## Por que importa
 
@@ -15,7 +15,7 @@ O total de chuva do ano pode ser bom e, mesmo assim, uma pausa na hora errada fa
 
 ## Na sua lavoura
 
-O app conta como dia seco o dia com menos de 1 mm de chuva. Ele avisa de veranico quando acha 10 dias secos ou mais na fase crítica da cultura.
+O app conta como dia seco o dia com **menos de 1 mm** de chuva. Ele avisa de veranico quando acha **10 dias secos ou mais** na fase crítica da cultura.
 
 A chuva vem do satélite GPM IMERG. Dia sem chuva não é falta de água na hora: a terra guarda água, e o app faz essa conta no balde. Veja [A conta de água da lavoura](/guia/conta-de-agua).
 

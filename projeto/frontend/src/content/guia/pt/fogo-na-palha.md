@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-A palha que cobre a terra protege o solo, mas seca no inverno e pode pegar fogo.
+A palha que cobre a terra protege o solo, mas **seca no inverno e pode pegar fogo**.
 
 ## Por que importa
 
@@ -17,17 +17,17 @@ Quando a palha queima, a terra fica descoberta. Ela perde a proteção contra o 
 
 ## Na sua lavoura
 
-Na tela [O que o satélite viu](/satelite), o alerta de fogo diz em quantos dos últimos 10 anos houve área queimada a até 5 km do seu ponto. O dado é do produto MCD64A1, dos satélites Terra e Aqua da NASA, que marca a área queimada mês a mês em quadrados de 500 m. Uma queimada pequena pode não aparecer.
+Na tela [O que o satélite viu](/satelite), o alerta de fogo diz em quantos dos últimos **10 anos** houve área queimada a até **5 km** do seu ponto. O dado é do produto MCD64A1, dos satélites Terra e Aqua da NASA, que marca a área queimada mês a mês em quadrados de 500 m. Uma queimada pequena pode não aparecer.
 
 O que ajuda:
 
-- Manter uma faixa sem palha e sem mato em volta da lavoura, para o fogo não passar.
-- Não usar fogo para limpar restos de cultura.
-- Combinar com os vizinhos o cuidado nas divisas.
+- **Manter uma faixa** sem palha e sem mato em volta da lavoura, para o fogo não passar.
+- **Não usar fogo** para limpar restos de cultura.
+- **Combinar com os vizinhos** o cuidado nas divisas.
 
 Como fazer a faixa e a largura dela ficam com o seu agrônomo.
 
-Em caso de fogo, ligue 193 (Bombeiros). Veja também [Alertas oficiais da Defesa Civil](/guia/alertas-defesa-civil) e [Palhada: por que cobrir a terra](/guia/palhada).
+Em caso de fogo, ligue **193** (Bombeiros). Veja também [Alertas oficiais da Defesa Civil](/guia/alertas-defesa-civil) e [Palhada: por que cobrir a terra](/guia/palhada).
 
 ## Fontes
 

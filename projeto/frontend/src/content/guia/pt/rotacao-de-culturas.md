@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-Rotação é trocar o que se planta, ano após ano, em vez de repetir a mesma cultura.
+Rotação é **trocar o que se planta**, ano após ano, em vez de repetir a mesma cultura.
 
 ## Por que importa
 
@@ -15,13 +15,13 @@ Cada planta deixa algo diferente na terra. Trocar ajuda a cobrir o solo, a quebr
 
 ## Na sua lavoura
 
-O [Plano de 3 anos](/plano) testa todas as combinações de 6 opções em 3 safras, 216 no total, e mostra as melhores.
+O [Plano de 3 anos](/plano) testa todas as combinações de 6 opções em 3 safras, **216** no total, e mostra as melhores.
 
 Como ler:
 
 - Cada coluna é um ano, com a opção da entressafra.
-- O app dá bônus à variedade: +5 pontos com 2 funções diferentes e +10 com 3 (grão, cobertura de gramínea e cobertura de leguminosa).
-- Não aparece plano com mais de 2 pousios seguidos.
+- O app dá bônus à diversidade: **+5** pontos com 2 funções diferentes e **+10** com 3 (grão, cobertura de gramínea e cobertura de leguminosa).
+- Não aparece plano com mais de **2 pousios** seguidos.
 - Com nematoide na área, o plano precisa de crotalária ou milheto.
 
 Você pode trocar uma opção e ver a nota na hora. Veja cada cultura na [Sugestão](/resposta), por exemplo a [crotalária](/guia/crotalaria).

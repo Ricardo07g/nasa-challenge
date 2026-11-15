@@ -7,7 +7,7 @@ rascunho: nao
 
 ## Em uma frase
 
-A geada de junho pode machucar o milho safrinha que ainda está enchendo grão.
+A **geada de junho** pode machucar o milho safrinha que ainda está enchendo grão.
 
 ## Por que importa
 
@@ -19,8 +19,8 @@ Segundo a Embrapa, em junho o milho está em fase sensível e a geada pode preju
 
 O que ajuda:
 
-- Semear dentro do prazo. Veja [o prazo de plantio e o ZARC](/guia/prazo-de-plantio-zarc).
-- Escalonar a semeadura, conforme a colheita da soja avança. Assim a geada não pega tudo de uma vez.
+- **Semear dentro do prazo.** Veja [o prazo de plantio e o ZARC](/guia/prazo-de-plantio-zarc).
+- **Escalonar a semeadura**, conforme a colheita da soja avança. Assim a geada não pega tudo de uma vez.
 
 No app, a [Sugestão](/resposta) indica até quando semear. A tela [O que o satélite viu](/satelite) mostra os alertas da sua área.
 

@@ -7,7 +7,7 @@ rascunho: nao
 
 ## In one sentence
 
-A June frost can hurt second-crop corn that is still filling grain.
+A **June frost** can hurt second-crop corn that is still filling grain.
 
 ## Why it matters
 
@@ -19,8 +19,8 @@ According to Embrapa, in June corn is in a sensitive phase and frost can hurt gr
 
 What helps:
 
-- Sowing within the deadline. See [the planting deadline and ZARC](/guia/prazo-de-plantio-zarc).
-- Staggering the sowing, as the soybean harvest advances. That way frost does not catch everything at once.
+- **Sowing within the deadline.** See [the planting deadline and ZARC](/guia/prazo-de-plantio-zarc).
+- **Staggering the sowing**, as the soybean harvest advances. That way frost does not catch everything at once.
 
 In the app, the [Suggestion](/resposta) shows until when to sow. The [What the satellite saw](/satelite) screen shows the alerts for your area.
 
