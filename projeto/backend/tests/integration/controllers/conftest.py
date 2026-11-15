@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from app.dependencies import (
     get_climate_repository,
     get_crop_params_repository,
+    get_enso_repository,
     get_ndvi_repository,
     get_satellite_ingestion_service,
     get_soil_repository,
@@ -16,6 +17,7 @@ from app.dependencies import (
 from app.main import app
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
+from app.models.enso import OniYear
 from app.models.talhao import NdviRecord, SoloInfo
 from app.repositories.climate_repository import cell_id_for
 
@@ -155,12 +157,25 @@ class FakeNdviRepository:
         return records
 
 
+class FakeEnsoRepository:
+    """Valores de teste (não são da NOAA): 2007 de El Niño e 2014 de La Niña; os outros, neutros."""
+
+    def get_oni_years(self) -> list[OniYear]:
+        return [
+            OniYear(2007, 0.9, "el_nino"),
+            OniYear(2010, 0.1, None),
+            OniYear(2014, -0.9, "la_nina"),
+        ]
+
+
 @pytest.fixture
 def client() -> Iterator[TestClient]:
     app.dependency_overrides[get_crop_params_repository] = FakeCropParamsRepository
     app.dependency_overrides[get_climate_repository] = FakeClimateRepository
     app.dependency_overrides[get_soil_repository] = FakeSoilRepository
     app.dependency_overrides[get_ndvi_repository] = FakeNdviRepository
+    # O arquivo do ONI da máquina (ONI_PATH) nunca entra nos testes
+    app.dependency_overrides[get_enso_repository] = FakeEnsoRepository
     # Sem busca sob demanda: ponto sem dados fica fora da área (nada de rede real nos testes).
     app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)

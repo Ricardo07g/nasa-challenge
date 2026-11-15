@@ -151,3 +151,23 @@ def test_should_read_cmip6_from_the_file_of_cmip6_path_without_database(
     deltas = dependencies.get_climate_repository().get_cmip6_deltas("-190_-482")
 
     assert [(d.model, d.month, d.tmin_c) for d in deltas] == [("MODELO-TESTE", 2, 1.0)]
+
+
+def test_should_read_the_enso_phase_of_each_year_from_the_file_of_oni_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Valores de teste no formato do contrato do ONI (não são da NOAA)
+    path = tmp_path / "oni.json"
+    versao = {"fonte": "noaa_oni", "parametros": {}, "fim": "2026-11-14T13:00:00Z", "versao": "x"}
+    anos = [{"ano": 2016, "oni": 2.13, "fase": "el_nino"}]
+    path.write_text(json.dumps({"versao_dados": versao, "anos": anos}), encoding="utf-8")
+    settings = Settings(_env_file=None, oni_path=path)
+    monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
+    dependencies.get_enso_repository.cache_clear()
+
+    try:
+        years = dependencies.get_enso_repository().get_oni_years()
+    finally:
+        dependencies.get_enso_repository.cache_clear()
+
+    assert [(y.ano, y.fase) for y in years] == [(2016, "el_nino")]
