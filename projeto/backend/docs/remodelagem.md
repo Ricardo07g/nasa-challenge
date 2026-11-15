@@ -22,7 +22,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 
 | # | Seção do pedido | Tarefa | O que entra | Junto com | Estado |
 | --- | --- | --- | --- | --- | --- |
-| S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | feita na branch `feat/remodelagem-s1-renda` (falta o merge em `feat/remodelagem` e a revisão); "Comece por um pedaço" já saiu aqui |
+| S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | ✅ na branch (15/11 ~03:20), revisada |
 | S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | feito na branch `feat/remodelagem-s8-guia` (19 artigos em pt e en; faltam 7 do tema, ver a tarefa 0048) |
 | S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | a fazer |
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | a fazer |
@@ -65,6 +65,15 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 
 ## Revisão por seção
 
+### S1 — Renda sem reais e sem "Ainda não conectado" (revisada em 15/11 ~03:25)
+
+- ✅ Nenhum `R$` na API (conferido no JSON de `/recomendacao` nos 3 cenários de colheita) nem no front (busca no código, fora dos testes).
+- ✅ "Renda" com fatos: "Dá grão para vender" ou "Não dá grão: é investimento na terra" e "Risco de perder a lavoura: faltou água ou fez calor em N de 20 anos" (na UFU, colheita meio: milho com braquiária, 4 de 20).
+- ✅ Nota de renda sem preço nem custo, no grupo `renda` do `regras.yaml` (D14 a D16), explicada em "Como a conta é feita".
+- ✅ "Comece por um pedaço" saiu inteiro (D20). Nenhum selo "Ainda não conectado" na tela; só comentários no código citam a regra (D18, D19).
+- ⚠️ A melhor opção da UFU mudou com a renda nova: colheita cedo e meio passaram de milho sozinho para **milho com braquiária**; tarde continua milheto.
+- ⚠️ Ainda na tela até as próximas seções: o botão "Relatório para banco ou seguro" (sai na S5a) e "Como teria sido em 2024?" (sai na S5b).
+
 ### S8 — Guia (revisada em 15/11 ~02:45)
 
 - ✅ `/guia` com os 5 temas e busca por título; `/guia/<artigo>` com a estrutura fixa (Em uma frase, Por que importa, Na sua lavoura, Fontes; nas culturas, Conheça e Passo a passo). Conferido no Chrome sem interface em 1280 e 390 px.
@@ -78,6 +87,9 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 
 ## Números estranhos encontrados
 
+- **Renda e chuva com rótulos diferentes na mesma opção:** milho com braquiária na UFU (16 de 20) sai "Médio" na chuva e "Bom" na renda, porque os cortes são 85/60 na chuva e 70/30 na renda. A segurança pesa duas vezes para quem dá grão (segurança 30% + renda 30%).
+- **Plano A da UFU (colheita cedo e meio):** milho com braquiária em 2027 e 2028; e a regra da data diz "siga o plano B; o 1º ano continua com milho com braquiária", porque o 1º ano do Plano B é a mesma cultura. A frase fica estranha; a S5b refaz o Plano A/B.
+- **CMIP6 na UFU:** a nota de futuro sai igual à de segurança em todas as opções (os deltas não mudam nenhum ano de "deu certo" para "faltou" nesse ponto). Conferir na S4/S5a.
 - **"Deu certo" no pedido × motor:** o pedido diz "nenhum dia de 35 °C nessa fase"; o motor (`regras.yaml`, `calor_min_dias`) conta aperto com **3 dias ou mais** de 35 °C na fase crítica. Os textos seguem o motor; mudar a regra é decisão da agrônoma.
 - **Soja recente (RF-24):** 96% dos pixels da caixa piloto têm pico de NDVI ≥ 0,70 em jan–mar de 2026 (pasto e cerrado também ficam verdes na chuva). O aviso do começo pega cidade, água e solo exposto, mas não distingue soja de pasto.
 - **Região pelo satélite calibrada (tarefa 0036):** depois de tirar cana, café e pasto, a soja do ano é 45–58% da lavoura, mas "parado" ainda fica entre 0,7% e 6% (plantou 72–96%). Só 2 de 10 anos passam no critério de crível combinado com o usuário (parado entre 5% e 80%), então a região continua escondida. Pode ser real (safrinha comum no Triângulo) ou mato que rebrota com a chuva de março.
