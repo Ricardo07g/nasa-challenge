@@ -53,6 +53,7 @@ from app.constants import (
     CLIMATE_SEASON_DAYS,
     HISTORICAL_END_YEAR,
     HISTORICAL_START_YEAR,
+    IMERG_RAIN_SOURCE,
     PILOT_MAX_LAT,
     PILOT_MAX_LON,
     PILOT_MIN_LAT,
@@ -72,7 +73,7 @@ from pipeline.preload_pilot_box import pilot_box_cells
 
 logger = logging.getLogger(__name__)
 
-SOURCE_KEY = "gpm_imerg"
+SOURCE_KEY = IMERG_RAIN_SOURCE
 PRODUCT = "GPM_3IMERGDF"
 PRODUCT_VERSION = "07"
 VARIABLE = "precipitation"

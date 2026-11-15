@@ -17,10 +17,10 @@ from pathlib import Path
 
 import pytest
 
-from app.models.climate import ImergCellSeries, ImergSeason
 from app.models.data_run import DataRun
 from app.repositories.climate_repository import cell_center
 from app.repositories.external.http_client import HttpRequest, HttpResponse
+from app.repositories.imerg_repository import imerg_series_from_json
 from pipeline.fetch_cmip6_deltas import repo_root
 from pipeline.fetch_imerg import (
     CMR_GRANULES_URL,
@@ -705,22 +705,6 @@ def _payload(tmp_path: Path) -> dict[str, object]:
     return json.loads((tmp_path / "imerg.json").read_text(encoding="utf-8"))
 
 
-def _series_from_json(item: dict[str, object]) -> ImergCellSeries:
-    return ImergCellSeries(
-        cell_id=str(item["celula"]),
-        latitude=float(item["lat"]),  # type: ignore[arg-type]
-        longitude=float(item["lon"]),  # type: ignore[arg-type]
-        seasons=tuple(
-            ImergSeason(
-                year=int(season["ano"]),
-                start_date=date.fromisoformat(season["inicio"]),
-                rain_mm=tuple(season["chuva_mm"]),
-            )
-            for season in item["temporadas"]  # type: ignore[union-attr]
-        ),
-    )
-
-
 def test_main_should_write_the_imerg_contract_for_every_pilot_cell(tmp_path: Path) -> None:
     fake = FakeGesDisc()
 
@@ -746,7 +730,7 @@ def test_main_should_write_the_imerg_contract_for_every_pilot_cell(tmp_path: Pat
         version=run["versao"],  # type: ignore[index]
     )
 
-    cells = [_series_from_json(item) for item in payload["celulas"]]  # type: ignore[union-attr]
+    cells = [imerg_series_from_json(item) for item in payload["celulas"]]  # type: ignore[union-attr]
     assert [c.cell_id for c in cells] == pilot_cells()
     farm = next(c for c in cells if c.cell_id == FARM_CELL)
     assert (farm.latitude, farm.longitude) == pytest.approx((-18.95, -48.15))
