@@ -6,7 +6,10 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 
 ## Como trabalhamos
 
-- **Ordem do pedido, uma entrega (PR) por seção.** No máximo duas seções em paralelo, só quando não mexem
+- **Uma branch e um PR só, sem merge** (pedido do usuário, 15/11 ~02:10): tudo entra em `feat/remodelagem`;
+  o PR para o `main` fica aberto para o usuário revisar e decidir. Cada seção é uma branch
+  `feat/remodelagem-sN-...` criada de `feat/remodelagem` e juntada nela com merge, sem PR próprio.
+- **Ordem do pedido, uma entrega por seção.** No máximo duas seções em paralelo, só quando não mexem
   nos mesmos arquivos (coluna "Junto com").
 - **TDD e camadas** como em todo o repositório. Cada seção tem a tarefa em `docs/tarefas/` (número abaixo)
   e o requisito no PRD no mesmo PR.
@@ -45,6 +48,7 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D4 | 15/11 | Imagens das plantas: ilustrações próprias em SVG, simples, feitas no repositório. | O pedido proíbe IA sem marca d'água; SVG próprio não tem licença a conferir. |
 | D5 | 15/11 | O histórico usa **2017–2026** (10 anos até a entressafra mais recente, decisão de 15/11, tarefa 0039), não 2016–2025 como está escrito na seção 4. | Decisão mais recente do usuário. |
 | D6 | 15/11 | O Guia (S8) é escrito com o modelo Sonnet; as seções de código, com o modelo padrão. | Poupa a janela de uso no trabalho de texto, sem perder a revisão (o orquestrador revisa). |
+| D8 | 15/11 | Tudo numa branch (`feat/remodelagem`) e num PR sem merge; as telas são revisadas num segundo ambiente local (API na porta 8001 e front na 5174, a partir do worktree da branch), sem mexer no checkout que o Docker do usuário usa. | Pedido do usuário; o checkout principal segue no `main`, que ele usa para testar. |
 | D7 | 15/11 | O orquestrador não consegue ler o percentual da janela de 5 horas. Mitigação: no máximo 2 subagentes ao mesmo tempo, entregas pequenas e commitadas, e a retomada automática a cada 30 min continua depois que a janela libera. | Não há ferramenta que mostre o uso; o que dá para garantir é não perder trabalho. |
 
 ## Revisão por seção
