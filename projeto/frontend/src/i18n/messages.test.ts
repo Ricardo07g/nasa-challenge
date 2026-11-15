@@ -48,3 +48,30 @@ describe('lavoura de demonstração (tarefa 0053)', () => {
     expect(texts(en).filter((text) => wrong.test(text))).toEqual([])
   })
 })
+
+describe('sem revisão pendente da agrônoma (15/11/2026)', () => {
+  const texts = (obj: unknown): string[] =>
+    typeof obj === 'string'
+      ? [obj]
+      : typeof obj === 'function'
+        ? [String((obj as (...args: string[]) => unknown)('x', 'x', 'x', 'x', 'x', 'x'))]
+        : obj && typeof obj === 'object'
+          ? Object.values(obj).flatMap(texts)
+          : []
+  const pending =
+    /agr[oô]nom[ao][^.\n]*(revis|review)|(revis|review)[^.\n]*agr[oô]nom|ajustad[oa]s com agr[oô]nom|tuned with local agronomists|rascunho|\bdraft\b/i
+
+  it('nenhum texto da interface diz que falta a revisão da agrônoma nem fala em rascunho, em pt e en', () => {
+    expect(texts(pt).filter((text) => pending.test(text))).toEqual([])
+    expect(texts(en).filter((text) => pending.test(text))).toEqual([])
+  })
+
+  it('as hipóteses do time aparecem como "ainda não validadas em campo"', () => {
+    expect(pt.method.rules.intro).toContain('ainda não foram validados em campo')
+    expect(en.method.rules.intro).toContain('have not been validated in the field yet')
+    expect(pt.method.blindRest).toContain('ainda não foram validados em campo')
+    expect(en.method.blindRest).toContain('have not been validated in the field yet')
+    expect(pt.choose.cell.soilText).toContain('hipótese do time, ainda não validada em campo')
+    expect(en.choose.cell.soilText).toContain('team hypothesis, not yet validated in the field')
+  })
+})

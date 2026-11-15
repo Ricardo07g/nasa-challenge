@@ -58,7 +58,6 @@ export function GuideView({ t, backTo, groups, query, onQuery, count, listen }: 
                 <li key={article.slug} className={styles.item}>
                   <Link to={`/guia/${article.slug}`} className={styles.link}>
                     {article.title}
-                    {article.draft && <span className={styles.badge}>{g.draftBadge}</span>}
                   </Link>
                 </li>
               ))}
@@ -145,7 +144,6 @@ export function GuideArticleView({
       <BackButton to="/guia">{g.back}</BackButton>
       {article ? (
         <article className={styles.article}>
-          {article.draft && <p className={styles.draftNote}>{g.draft}</p>}
           {article.plant && <PlantPhoto {...plantPhotoProps(article.plant, lang)} height={200} />}
           <h1 className={layout.sectionTitle}>{article.title}</h1>
           <ListenSummary

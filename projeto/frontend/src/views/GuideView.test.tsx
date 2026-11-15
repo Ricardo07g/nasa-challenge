@@ -47,14 +47,12 @@ describe('GuideView (página inicial)', () => {
     expect(props.listen.toggle).toHaveBeenCalled()
   })
 
-  it('mostra os temas e os artigos com link, e marca o rascunho com texto', () => {
+  it('mostra os temas e os artigos com link, sem selo de rascunho (15/11/2026)', () => {
     setupIndex()
     expect(screen.getByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
     const cultures = screen.getByRole('region', { name: 'Culturas' })
     expect(within(cultures).getByRole('link', { name: /Sorgo/ })).toHaveAttribute('href', '/guia/sorgo')
-    expect(within(cultures).getByText('Rascunho')).toBeInTheDocument()
-    const climate = screen.getByRole('region', { name: 'Clima, água e dados' })
-    expect(within(climate).queryByText('Rascunho')).toBeNull()
+    expect(screen.queryByText(/Rascunho/)).toBeNull()
   })
 
   it('diz a área do MVP logo abaixo do título, sem mexer nos artigos (tarefa 0051)', () => {
@@ -111,10 +109,10 @@ describe('GuideArticleView', () => {
     expect(listen.toggle).toHaveBeenCalled()
   })
 
-  it('título, aviso de rascunho no topo, foto real da planta com crédito e texto', () => {
+  it('título, foto real da planta com crédito e texto, sem aviso de rascunho mesmo marcado (15/11/2026)', () => {
     setup(article)
     expect(screen.getByRole('heading', { level: 1, name: 'Sorgo' })).toBeInTheDocument()
-    expect(screen.getByText('Rascunho: a revisar pela agrônoma.')).toBeInTheDocument()
+    expect(screen.queryByText(/Rascunho|agrônoma/)).toBeNull()
     expect(screen.getByRole('img', { name: /Lavoura de sorgo com os cachos de grão maduros/ })).toHaveAttribute('src', '/fotos/sorgo.jpg')
     expect(screen.getByRole('link', { name: /Josue Marinho/ })).toHaveAttribute('href', expect.stringContaining('commons.wikimedia.org'))
     expect(screen.getByText(/CC BY 3\.0/)).toBeInTheDocument()
@@ -138,9 +136,9 @@ describe('GuideArticleView', () => {
     expect(screen.queryByRole('img')).toBeNull()
   })
 
-  it('aviso em inglês', () => {
+  it('em inglês, também sem aviso de rascunho', () => {
     setup(article, en, 'en')
-    expect(screen.getByText('Draft: to be reviewed by the agronomist.')).toBeInTheDocument()
+    expect(screen.queryByText(/Draft|agronomist/)).toBeNull()
   })
 
   it('em inglês, a foto vem com o texto alternativo e o crédito em inglês', () => {

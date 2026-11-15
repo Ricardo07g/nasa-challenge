@@ -214,7 +214,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   lavoura", "Fontes" (cultura tem também "Conheça" e "Passo a passo"; em inglês "In one sentence", "Why it
   matters", "In your field", "Sources", "Get to know it", "Step by step"). De 100 a 300 palavras, frases
   curtas. Desde 15/11/2026 nenhum artigo é rascunho (`rascunho: nao`) e nenhum texto cita revisão pendente
-  da agrônoma; em compensação, **o artigo só afirma o que uma fonte conferida confirma**: artigo científico
+  da agrônoma (nem nas telas: o `messages.test.ts` barra "rascunho" e revisão pendente; o número que é hipótese do
+  time aparece como "ainda não validado em campo"); em compensação, **o artigo só afirma o que uma fonte conferida confirma**: artigo científico
   revisado por pares, livro técnico ou fonte oficial do governo (lei, ZARC, Defesa Civil, NOAA). Nada de
   notícia nem de número que seja hipótese do time (prazos do ZARC por cultura, coeficientes, pontos da nota,
   limites do `regras.yaml`): esses ficam na tela "Como a conta é feita". Link externo só de publicação
