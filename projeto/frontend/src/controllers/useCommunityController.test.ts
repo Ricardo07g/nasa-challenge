@@ -100,6 +100,15 @@ describe('useCommunityController (tela 8)', () => {
     expect(result.current.regionRadius).toBeNull()
   })
 
+  it('ponto fora das regiões que o satélite já calculou (404 OUTSIDE_AREA): "Ainda não conectado", sem erro', async () => {
+    const d = deps()
+    d.community.region = vi.fn().mockRejectedValue(new ApiError('/api/regiao', 404, 'OUTSIDE_AREA'))
+    const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
+
+    await waitFor(() => expect(result.current.regionStatus).toBe('not-connected'))
+    expect(result.current.region).toBeNull()
+  })
+
   it('se a região falhar por outro motivo, mostra o erro e tenta de novo', async () => {
     let calls = 0
     const d = deps()
