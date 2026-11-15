@@ -6,6 +6,7 @@
  * aviso traz o nível, o tipo, os números da frase, as fontes e a data da leitura; as frases ficam no
  * bloco `alerts` das mensagens (pt e en).
  */
+import type { CurrentChoice } from './seasonAnswers'
 import type { Colheita, Ponto, Textura } from './talhao'
 
 export type NivelAviso = 'atencao' | 'fique_de_olho'
@@ -94,6 +95,17 @@ export type Avisos = {
 }
 
 /** O ponto dos avisos: o último marcado no fluxo, guardado no aparelho (sem cadastro). */
-export type PontoAvisos = Ponto & { colheita?: Colheita; solo?: Textura; confirmadas?: string }
+/**
+ * O ponto dos avisos, salvo no aparelho. Desde o pacote 2 (tarefa 0054), guarda junto a data da colheita
+ * (`data`), as respostas das últimas safras (`safras`) e a escolha atual (`pensa`), no formato da URL.
+ */
+export type PontoAvisos = Ponto & {
+  colheita?: Colheita
+  solo?: Textura
+  confirmadas?: string
+  data?: string
+  safras?: string
+  pensa?: CurrentChoice
+}
 
 export type GrupoAvisosChave = 'agora' | 'mudou' | 'recordes' | 'perto'

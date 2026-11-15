@@ -42,6 +42,23 @@ describe('savedPointRepository (ponto dos avisos salvo no aparelho, sem cadastro
     })
   })
 
+  it('pacote 2: guarda junto a data da colheita, as respostas das safras e a escolha atual', () => {
+    const storage = memoryStorage()
+    const point = { lat: -18.9, lon: -48.2, data: '2027-02-18', safras: '2024:milho_braquiaria,2026:sem_soja', pensa: 'nao_sei' as const }
+
+    createLocalSavedPointRepository(() => storage).save(point)
+
+    expect(createLocalSavedPointRepository(() => storage).get()).toEqual(point)
+  })
+
+  it('pacote 2: data, safras ou escolha atual estragadas ficam de fora', () => {
+    const repo = createLocalSavedPointRepository(() =>
+      memoryStorage({ [KEY]: '{"lat":-18.9,"lon":-48.2,"data":"amanhã","safras":"2024:<b>","pensa":"<i>sorgo</i>"}' }),
+    )
+
+    expect(repo.get()).toEqual({ lat: -18.9, lon: -48.2 })
+  })
+
   it('ignora o que não é um ponto válido (outro formato ou valor estragado)', () => {
     const broken = createLocalSavedPointRepository(() => memoryStorage({ [KEY]: '{"lat":"x"}' }))
     const notJson = createLocalSavedPointRepository(() => memoryStorage({ [KEY]: 'não é json' }))

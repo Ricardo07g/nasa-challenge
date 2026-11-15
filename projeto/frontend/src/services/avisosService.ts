@@ -4,6 +4,7 @@ import { avisosRepository as defaultRepository, savedPointRepository as defaultS
 import type { AvisosRepository } from '../repositories/avisosRepository'
 import type { SavedPointRepository } from '../repositories/savedPointRepository'
 import { buildFlowQuery, type FlowParams } from './flowParams'
+import { confirmadasFromAnswers, parseSeasonAnswers } from './seasonAnswersService'
 
 export type AvisosService = {
   /** Os avisos do ponto; o mesmo pedido serve o botão do cabeçalho e a tela (um por visita). */
@@ -48,7 +49,12 @@ export function pointFromFlow(params: (FlowParams & { exemplo: boolean }) | null
   const point: PontoAvisos = { lat: params.lat, lon: params.lon }
   if (params.colheita) point.colheita = params.colheita
   if (params.solo) point.solo = params.solo
-  if (params.confirmadas) point.confirmadas = params.confirmadas
+  // Pacote 2 (tarefa 0054): com as respostas das safras, o `confirmadas` dos avisos sai delas.
+  const confirmadas = params.safras ? confirmadasFromAnswers(parseSeasonAnswers(params.safras)) : params.confirmadas
+  if (confirmadas) point.confirmadas = confirmadas
+  if (params.data) point.data = params.data
+  if (params.safras) point.safras = params.safras
+  if (params.pensa) point.pensa = params.pensa
   return point
 }
 

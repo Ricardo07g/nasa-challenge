@@ -65,6 +65,26 @@ describe('avisosService (tela "Avisos")', () => {
     expect(pointFromFlow({ lat: -18.9, lon: -48.2, exemplo: false, confirmadas: '' })).toEqual({ lat: -18.9, lon: -48.2 })
   })
 
+  it('pacote 2: guarda junto a data, as respostas das safras e a escolha atual; o confirmadas sai das respostas', () => {
+    expect(
+      pointFromFlow({
+        lat: -18.9,
+        lon: -48.2,
+        exemplo: false,
+        data: '2027-02-18',
+        safras: '2024:milho_braquiaria,2025:pousio,2026:soja',
+        pensa: 'sorgo',
+      }),
+    ).toEqual({
+      lat: -18.9,
+      lon: -48.2,
+      data: '2027-02-18',
+      safras: '2024:milho_braquiaria,2025:pousio,2026:soja',
+      pensa: 'sorgo',
+      confirmadas: '2024:plantou,2025:parado',
+    })
+  })
+
   it('o ponto da URL vem antes do salvo; sem nenhum, não há avisos', () => {
     const saved = { lat: -19.5, lon: -48.9 }
 

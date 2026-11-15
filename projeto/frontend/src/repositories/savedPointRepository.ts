@@ -38,6 +38,11 @@ function parsePoint(raw: string | null): PontoAvisos | null {
   if (typeof item.confirmadas === 'string' && /^[0-9a-z:,_]+$/.test(item.confirmadas)) {
     point.confirmadas = item.confirmadas
   }
+  // Pacote 2 (tarefa 0054): a data da colheita, as respostas das safras e a escolha atual. Aqui só o formato
+  // seguro; quem lê os valores é o `seasonAnswersService`.
+  if (typeof item.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item.data)) point.data = item.data
+  if (typeof item.safras === 'string' && /^[0-9a-z:,_]+$/.test(item.safras)) point.safras = item.safras
+  if (typeof item.pensa === 'string' && /^[a-z_]+$/.test(item.pensa)) point.pensa = item.pensa as PontoAvisos['pensa']
   return point
 }
 
