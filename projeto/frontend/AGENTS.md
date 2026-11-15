@@ -110,6 +110,9 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   (`/exemplo`, `useExampleController`) abre a resposta com a faixa do satélite do exemplo
   (`colheita_sugerida.faixa`; sem ela ou com falha, `meio`), não mais com `colheita=meio` fixo. Desde a
   tarefa 0052, a tela inicial não tem mais o botão "Ver um exemplo pronto": o exemplo entra por "Onde fica a lavoura".
+  Desde o pacote 2 (tarefa 0054), a URL guarda também `data` (a data da colheita da tela 2, `AAAA-MM-DD`, só
+  data que existe), `safras` e `pensa` (as respostas das últimas safras, ver "Pacote 2" abaixo), no fim e
+  legíveis. O `confirmadas` e o `hoje` continuam no `FlowParams` para as telas que ainda não mudaram.
 - **Safras confirmadas (tarefa 0039 do backend, RF-25):** a regra fica em
   `services/confirmedSeasonsService.ts` (ler e escrever o parâmetro, pôr a resposta do produtor no
   lugar do satélite com `fonte_ano: 'produtor'`, as linhas do bloco e o aviso "Não parece uma lavoura
@@ -144,7 +147,9 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   por célula de 0,1° (nunca uma fazenda), com ícone e número por tipo e a legenda em texto. Na tela 4,
   depois de confirmar as safras, "Compartilhar com a comunidade" (`views/ShareSeasons.tsx`, estado no
   `useSatelliteController`) grava o relato de plantio de cada safra confirmada. Os campos dos relatos
-  ficam em `views/CommunityForms.tsx`, usados pelas duas telas.
+  ficam em `views/CommunityForms.tsx`, usados pelas duas telas. Pacote 2: o ano do relato de plantio aparece pela
+  safra (`seasonName`: "depois da soja 2025/26", "Em que safra?" com "2025/26", "Milheto, safra 2025/26"), e a
+  região pelo satélite também ("Na safra 2024/25, …").
 - **Avisos (`/avisos`, tarefa 0046 do backend, RF-31):** o contrato está em `models/avisos.ts`; as regras (o que vira
   aviso, o nível e o contador) ficam no backend (`GET /api/avisos`), e o front só escreve as frases (bloco `alerts`
   das mensagens, montadas em `views/alertTexts.ts` com os `valores` de cada `tipo`). **Ponto salvo no aparelho, sem
@@ -164,6 +169,39 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   (nunca para `/safra-passada`). O rodapé fixo "Alertas oficiais" aparece sempre (com ou sem ponto), com os botões
   `sms:40199`, `https://wa.me/556120344611`, `tel:193` e `tel:199` e o link `/guia/alertas-defesa-civil`. Até 480 px,
   o cabeçalho fica mais justo e, se não couber, os botões descem uma linha.
+- **Pacote 2: regras gerais de todas as telas (tarefa 0054, RF-38).** Valem para toda tela nova ou refeita:
+  - **Navegação:** nada de "Pergunta X de 2" nem barra de progresso. Toda tela interna tem o "← Voltar" de
+    verdade acima do título: `BackButton` do design system (`to`, `children` = `t.nav.back`); não desenhe outro.
+  - **Clicar não rola:** escolha que vai para a URL usa `useReplaceFlow()` (mesma rota, recebe o `FlowParams`)
+    ou `useReplaceUrl()` (endereço pronto), que trocam com `replace` e `preventScrollReset` (o `ScrollRestoration`
+    do `ShellPage` sobe a tela em toda outra navegação). Listas com `key` estável e botão que muda de estado sem
+    mudar de tamanho. Teste de referência: `useReplaceFlow.test.tsx` (confere o `window.scrollY`). Para ir a outra
+    tela, `navigate` comum.
+  - **"Saiba mais" do Guia:** sempre `GuideLink` (`slug`, `newTabLabel={t.common.newTab}`, `children`), que abre em
+    nova aba com o ícone e "(abre em nova aba)" escondido. O `slug` é tipado por `content/guia/slugs.ts`
+    (`GUIDE_SLUGS`, igual aos arquivos, com teste): artigo novo entra lá no mesmo PR. Link de navegação dentro do
+    Guia (lista e links do texto) continua no app.
+  - **Safra, não ano:** toda tela nomeia pela safra, contada pelo ano da colheita da soja (2026 = "2025/26"), com
+    o `seasonService`: `CURRENT_SEASON` (2027 = safra 2026/27, a única constante), `LAST_SEASONS` (2024 a 2026),
+    `seasonName`, `satellitePeriod` ("jan–jul 2024"), `afterSoyPeriod` ("mar–jul de 2027"), `afterSoyMonths`
+    ("de março a julho de 2024") e `soyPeriod` ("plantada no fim de 2023, colhida no começo de 2024"), em pt e en.
+  - **Respostas das últimas safras** (o contrato das telas 4 e 5): `models/seasonAnswers.ts` e
+    `services/seasonAnswersService.ts`. Na URL, `safras=2024:milho_braquiaria,2025:pousio,2026:sem_soja` (cultura
+    do `culturas.yaml`, `soja` = plantou a soja e não disse o depois, `sem_soja` = não plantou) e
+    `pensa=<cultura>|nao_sei` (a "escolha atual" da safra 2026/27); no aparelho, junto com o ponto salvo. Leia com
+    `seasonAnswersFromFlow` (lê também o `confirmadas` e o `hoje` dos links velhos) e grave com
+    `flowWithSeasonAnswers` + `useReplaceFlow` (tira o `confirmadas` e o `hoje`). Para a API: `confirmadasFromAnswers`
+    (o `confirmadas` do `/recomendacao`) e `todayCrops` (as 3 culturas do "como é hoje" do `/api/plano`, ou `null`).
+    `answeredCount` conta as safras respondidas; `currentChoiceCrop`, a cultura do `pensa`; `seasonRows(historico)`,
+    as linhas do formulário pelo `/talhao`. A tela usa o `SeasonAnswersForm` (controlado: `seasons`, `answers`,
+    `onAnswer`, `current?`), que serve a tela 4 e o modal da tela 5.
+  - **Resposta que faltou não trava:** pergunta opcional sem resposta fica indefinida e o produtor segue. Onde a
+    informação faz falta, `MissingSeasonsNotice` ("Você não preencheu as últimas safras" + "Preencher agora", que
+    abre o modal com o formulário; `text?` para dizer o que faltou).
+  - **Modais:** o mesmo `Modal`, normal (padrão) ou `size="large"` para "ver detalhes" com gráficos.
+  - **360 px:** nada rola para o lado de 360 a 1440 px; confira em print.
+  - **"Ouvir resumo" em toda tela** (ver o item abaixo).
+  - A vitrine `/design-system` tem a seção "Pacote 2: peças compartilhadas" com tudo isso funcionando.
 - **Gráfico com dado real:** tudo o que é desenhado vem da API, com a fonte e o período na legenda (ex.:
   "Média de 2005 a 2024, NASA POWER"). O mock traz o mesmo campo, no formato do contrato.
 - **Guia (`/guia`, tarefa 0048, RF-26):** os artigos são arquivos Markdown em
@@ -178,8 +216,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   agrônoma." no topo). Números só de `culturas.yaml`, `regras.yaml` e do PRD. Link externo só de página
   aberta e conferida, e a página entra antes em `src/content/guia/verifiedSources.ts` (url, o que confirma,
   data); `guideContent.test.ts` barra link fora da lista, artigo fora do tamanho, sem a estrutura, sem par
-  em outro idioma ou com link interno quebrado. Para ligar uma tela a um artigo, use o link
-  `/guia/<slug>`. O Markdown é lido por `services/markdownService.ts` (títulos, parágrafos, listas, negrito
+  em outro idioma ou com link interno quebrado. Para ligar uma tela a um artigo, use o `GuideLink`
+  (pacote 2: abre em nova aba; o `slug` só aceita os de `GUIDE_SLUGS`). O Markdown é lido por `services/markdownService.ts` (títulos, parágrafos, listas, negrito
   e links; HTML vira texto puro e a view nunca usa `dangerouslySetInnerHTML`). Não adicione biblioteca de
   Markdown.
 - **Endereço aproximado (serviço externo, tela "Onde fica a lavoura", tarefas 0041 e 0053, RF-01):** instância
@@ -208,7 +246,10 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   "Ver a área inteira" trocam o `seq`; tocar e arrastar não mexem). O crédito do Leaflet vai sem a bandeira (regra
   do NASA Space Apps) e o "© OpenStreetMap" fica sempre visível. Os dois modais usam o `Modal` do design system.
   No celular (até 900 px), o "Confirmar local" fica numa barra fixa com o estado numa linha, e a própria tela põe o
-  espaço embaixo do `body` (`:global(body):has(...)` no CSS dela) para a barra não cobrir o rodapé.
+  espaço embaixo do `body` (`:global(body):has(...)` no CSS dela) para a barra não cobrir o rodapé. **Pacote 2:** sem
+  `lat`/`lon` na URL, a tela abre com a lavoura de demonstração marcada e o "Confirmar" ligado
+  (`VITE_ABRIR_COM_DEMONSTRACAO`, ligado por padrão; `OPEN_WITH_DEMO` do `locationService`, que o controller recebe
+  como `openWithDemo` nas dependências); o botão da demonstração fica em destaque, com o selo "Bom para testar".
 - **"Como a conta é feita" (tela 9, tarefa 0049 do backend):** as regras novas (deu certo, pesos da nota, renda sem
   preço, água, sede da cultura, nota da rotação, Plano B, geada, chuva forte, fogo, avisos, sinal do outono e raio-X)
   aparecem no bloco "As regras da conta", com os números de `GET /api/metodo` (`repositories/metodoRepository.ts`,
@@ -298,7 +339,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   linha) e o slogan (some no celular) à esquerda; à direita, **só três itens**: Comunidade (pílula verde-clara, com o
   nome escrito também no celular), Avisos (sino, nome e o selo laranja com o `contador` de `/api/avisos`; sem aviso,
   sem selo; no celular, só o sino com o selo) e o idioma ("PT | EN"; no celular, só o outro idioma). Não ponha outro
-  item nem botão grande no cabeçalho. **Rodapé** (`Footer.tsx`, uma linha só): escudo com "Ajuda a decidir. Não
+  item nem botão grande no cabeçalho. Abaixo de 380 px (pacote 2): logo de 30 px, nome de 15,5 px e "Comunidade" de
+  12,5 px. **Rodapé** (`Footer.tsx`, uma linha só): escudo com "Ajuda a decidir. Não
   substitui o seu agrônomo." à esquerda; à direita, "Créditos e uso de IA" (abre o modal global) e "NASA Space Apps
   2026 · Field Shift". Tem **duas variantes**, escolhidas pela rota no `useShellController`: na Início (`/`), só isso
   (a faixa grande do agrônomo, logo acima, existe só lá); nas telas internas, também "Como a conta é feita ↗"
@@ -310,14 +352,18 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `useListenSummary(texto, idioma)` (no controller da tela) e o componente `ListenSummary` do design system (só
   props). A fala é a Web Speech API pelo `speechService` (melhor voz do `voicePicker`, pt-BR ou en-US, velocidade
   0,95); enquanto fala, o link vira "Parar" com o quadrado e `aria-pressed="true"`; trocar o idioma ou sair da tela
-  para a fala; sem voz no navegador, o link não aparece. Por enquanto só a Início tem o dela: as outras telas ficam
-  sem "Ouvir" até o prompt de cada uma trazer o resumo.
+  para a fala; sem voz no navegador, o link não aparece. **Desde o pacote 2, toda tela tem o seu**, montado com os números
+  dela no controller (ex.: avisos = o lugar e quantos avisos ativos; comunidade = o raio e o plantio da safra mais
+  recente; artigo do Guia = o título e o "Em uma frase", `articleSummary`). O texto não deve mudar a cada segundo
+  (cada troca para a fala): na missão, nada de fase; no Guia, o total de artigos, não o da busca.
 - **Modal reutilizável (`design-system/components/Modal.tsx`, tarefa 0052):** o padrão de todo "ver detalhes".
   `<dialog>` nativo (`showModal`; sem ele, o atributo `open`): fecha com o X, com Esc e com clique fora (no fundo
   escurecido); o foco entra no modal, fica preso nele (Tab e Shift+Tab dão a volta) e volta a quem o abriu. Quem
   abre e fecha é o controller da tela (`open` / `onClose`); o conteúdo só existe com o modal aberto. No computador,
   centralizado, até 560 px (`size="wide"`: 640 px), cantos de 18 px e fundo escuro com desfoque leve; até 900 px,
-  folha de baixo para cima, com a largura toda e até 88% da altura. Não crie outro modal: use este.
+  folha de baixo para cima, com a largura toda e até 88% da altura. `size="large"` (pacote 2): quase a tela toda,
+  centralizado também no celular, com `--modal-large-gap` em volta (24 px; 8 px até 900 px), título fixo e o miolo
+  rolando sobre o fundo da página. Não crie outro modal: use este.
 - **Créditos e regras do NASA Space Apps (tarefa 0052):** o modal "Créditos e uso de IA" é **global**
   (`views/CreditsModal.tsx`, estado no `useShellController`, aberto pelo rodapé de todas as telas; a tela que quiser
   abri-lo usa o `openCredits` do contexto do `<Outlet>`, como o "Todas as fontes e créditos" da Início). O conteúdo
@@ -343,7 +389,10 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   não fala do Telegram. Só o link: o token do bot nunca entra no front. Desde a tarefa 0052, o link não fica no
   cabeçalho nem na tela inicial: só na Sugestão e em "Como a conta é feita".
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).
-  Nunca coloque segredo, token ou senha em `VITE_*`. Segredos ficam só no backend.
+  Nunca coloque segredo, token ou senha em `VITE_*`. Segredos ficam só no backend. Os nomes ficam em
+  `projeto/frontend/.env.example` (para o `npm run dev`, copie para `.env.local`) e em `projeto/.env.example` (compose):
+  `VITE_API_MODE`, `VITE_TELEGRAM_BOT_URL` e `VITE_ABRIR_COM_DEMONSTRACAO` (pacote 2; só `false`, `0` ou `nao`
+  desligam). Nos testes, o `test.env` do `vite.config.ts` fixa o valor.
 - **Idioma:** textos da interface em português (produtor) e inglês (juízes), conforme o PRD (RNF-03).
 - **Celular:** a interface precisa funcionar em tela de celular (RNF-04).
 - **Dependências:** `npm install <pacote>` (ou `-D` para dev). Biblioteca nova grande (mapa, gráficos,
