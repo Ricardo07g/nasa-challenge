@@ -28,6 +28,8 @@ tabela `smap_point`.
 | Estrutura | `<granulo>.dmr` (com token, pelo orquestrador) | `y` = 1624, `x` = 3856 (EASE-Grid 2.0 de 9 km); `/cell_lat`, `/cell_lon` e `/Geophysical_Data/` |
 | Recorte | `<granulo>.dap.csv?dap4.ce=/Geophysical_Data/sm_rootzone%5B1000:1:1001%5D%5B1300:1:1301%5D` | 200 em 1,7 s; `Dataset: ...` e uma linha por linha da grade (`var[i], v, v`) |
 | Versões do granulo | nome do arquivo | `Vv8010` (2016–2023) e `Vv8012`/`Vv8013` (recentes), todas da coleção `C3480440870-NSIDC_CPRD` |
+| Unidades no DMR real (download de 14/11, à noite) | `.dmr` do granulo `SMAP_L4_SM_gph_20160208T013000_Vv8010_001.h5` | `cell_lat` e `cell_lon` em `degrees` (não `degrees_north`/`degrees_east`); `sm_rootzone` e `sm_surface` em `m3 m-3`; `sm_rootzone_wetness` em `dimensionless`; `_FillValue` −9999. O script passou a aceitar `degrees` |
+| Recorte de uma coluna só | `/cell_lat%5B0:1:3%5D%5B0:1:0%5D` | as linhas vêm **sem os valores** (`/cell_lat[0], `); com duas colunas (`[0:1:1]`) ou com uma linha só, vem completo. A coluna do `cell_lat` passou a ser pedida com duas colunas (`lat_column_window`), e o servidor falso dos testes imita o comportamento |
 
 ## 3. Como funciona
 
