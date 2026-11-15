@@ -138,6 +138,18 @@ class RegrasSinalOutono:
 
 
 @dataclass(frozen=True)
+class RegrasSinalEnso:
+    """Sinal para o outono pela previsão do ENSO e o histórico da opção (tarefa 0038)."""
+
+    estacao_previsao: str  # estação da previsão que vale para o outono da safrinha (ex.: FMA)
+    fase_chance_min_pct: int  # chance mínima (%) da fase mais provável para haver sinal
+    anos_fase_min: int  # mínimo de anos daquela fase na série para contar o histórico
+    fracao_anos_ruins_seco: float  # anos ruins do Plano A na fase a partir dos quais é seco
+    dias_regra_data: int  # dias antes da data limite somados na regra da data
+    smap_faixas_pct: tuple[float, ...]  # percentis do SMAP que separam as faixas da frase
+
+
+@dataclass(frozen=True)
 class RegrasAvisos:
     """Avisos de veranico e calor da safra (plano de evolução 4.4: replay P4 e acompanhamento P6).
 
@@ -234,3 +246,4 @@ class Regras:
     enso: RegrasEnso
     frases_ano: dict[str, FrasesAno]  # "pt" e "en"
     soja_recente: RegrasSojaRecente
+    sinal_enso: RegrasSinalEnso

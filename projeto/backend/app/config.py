@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     # pipeline/fetch_soja_recente.py, RF-24): a checagem da soja no começo do fluxo. Sem arquivo:
     # o /talhao responde soja_recente: null e o front não avisa.
     soja_recente_path: Path | None = None
+    # Previsão do El Niño / La Niña da NOAA CPC (saída do pipeline/fetch_enso_previsao.py,
+    # tarefa 0038). Sem arquivo: o sinal para o outono sai nulo ("Ainda não conectado").
+    enso_previsao_path: Path | None = None
 
     # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
     # usam; a API não precisa de nenhuma (ADR-0005).

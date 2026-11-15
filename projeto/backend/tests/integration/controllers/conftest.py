@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from app.dependencies import (
     get_climate_repository,
     get_crop_params_repository,
+    get_enso_forecast_repository,
     get_enso_repository,
     get_ndvi_repository,
     get_recent_rain_repository,
@@ -174,6 +175,13 @@ class FakeEnsoRepository:
         ]
 
 
+class NoEnsoForecastRepository:
+    """Sem a previsão do ENSO por padrão: o `sinal` sai nulo (tarefa 0038)."""
+
+    def get_enso_forecast(self) -> None:
+        return None
+
+
 class FakeSmapRepository:
     """Sem SMAP por padrão (o balde começa em 50% da CAD)."""
 
@@ -192,6 +200,8 @@ def client() -> Iterator[TestClient]:
     app.dependency_overrides[get_ndvi_repository] = FakeNdviRepository
     # O arquivo do ONI da máquina (ONI_PATH) nunca entra nos testes
     app.dependency_overrides[get_enso_repository] = FakeEnsoRepository
+    # Nem a previsão do ENSO do ENSO_PREVISAO_PATH da máquina (o compose aponta para data/baixados)
+    app.dependency_overrides[get_enso_forecast_repository] = NoEnsoForecastRepository
     # Sem a chuva recente do IMERG_LATE_PATH do ambiente (o compose aponta para data/baixados).
     app.dependency_overrides[get_recent_rain_repository] = NoAutumnSignalDataRepository
     app.dependency_overrides[get_smap_repository] = FakeSmapRepository

@@ -203,6 +203,28 @@ def test_should_refuse_a_recent_soybean_number_without_source(tmp_path: Path) ->
         YamlRulesRepository(_write(tmp_path, raw)).get_rules()
 
 
+def test_should_load_the_enso_forecast_signal_rules() -> None:
+    # Tarefa 0038 (hipótese do time, a revisar): previsão de FMA; fase dominante com 50% ou mais;
+    # 5 anos da fase no mínimo; seco quando o 1º ano do Plano A deu errado em metade ou mais deles;
+    # regra da data com a chuva dos 30 dias antes da data limite; faixas do SMAP de agora
+    sinal = YamlRulesRepository(SHIPPED).get_rules().sinal_enso
+
+    assert sinal.estacao_previsao == "FMA"
+    assert sinal.fase_chance_min_pct == 50
+    assert sinal.anos_fase_min == 5
+    assert sinal.fracao_anos_ruins_seco == 0.5
+    assert sinal.dias_regra_data == 30
+    assert sinal.smap_faixas_pct == (20.0, 45.0, 55.0, 80.0)
+
+
+def test_should_refuse_an_enso_signal_number_without_source(tmp_path: Path) -> None:
+    raw = _shipped_raw()
+    del raw["sinal_enso"]["anos_fase_min"]["fonte"]
+
+    with pytest.raises(ValueError, match="sinal_enso.anos_fase_min"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
 def test_should_load_year_detail_texts_in_portuguese_and_english() -> None:
     # P1: a frase de cada ano sai de um modelo do regras.yaml, sem IA generativa (RF-06)
     frases = YamlRulesRepository(SHIPPED).get_rules().frases_ano

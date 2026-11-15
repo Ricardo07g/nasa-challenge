@@ -396,6 +396,7 @@ class RecommendationService:
                     plano_b=plano_seco,
                     opcoes=opcoes,
                     semeadura=semeadura,
+                    seasons=seasons,
                     lang=lang,
                 )
                 if self._sinal_service is not None
