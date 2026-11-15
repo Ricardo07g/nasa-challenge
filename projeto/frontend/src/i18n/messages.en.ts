@@ -1544,8 +1544,8 @@ export const en = {
         `Heavy rain (soil X-ray): days with ${mm} mm or more from ${from} to ${to} (GPM IMERG), when bare soil loses earth.`,
       fire: (km: string) =>
         `Fire (soil X-ray): fire within ${km} km of the point (MODIS MCD64A1, burned area). It only shows when the burned area file was downloaded.`,
-      alerts: (pct: string, dry: string, hot: string, temp: string, window: string, days: string, km: string) =>
-        `Alerts: dry soil with SMAP at percentile ${pct} or lower; ${dry} days in a row without rain or ${hot} days at ${temp} °C in the last ${window} (NASA POWER); neighbor reports from the last ${days} days, within ${km} km, always as unconfirmed.`,
+      alerts: (pct: string, dry: string, hot: string, temp: string, window: string) =>
+        `Alerts: dry soil with SMAP at percentile ${pct} or lower; ${dry} days in a row without rain or ${hot} days at ${temp} °C in the last ${window} (NASA POWER).`,
       signal: (chance: string, years: string, bad: string) =>
         `Autumn signal: NOAA forecast of El Niño or La Niña at ${chance}% or more, with at least ${years} years of that phase in the series. If the plan A crop had trouble in ${bad}% or more of those years and the plan B crop did better, the signal marks plan B.`,
       xray: 'Soil X-ray: each block shows the source and the size of the measured square (e.g. SMAP 9 km, NASA POWER about 50 km). It applies to the area around the point, not to the exact field.',

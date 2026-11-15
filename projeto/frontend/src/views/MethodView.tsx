@@ -61,14 +61,13 @@ function Rules({ t, lang, rules }: { t: Messages; lang: Lang; rules: MetodoRegra
     r.frost(n(alertas.geada_temp_c), monthDay(lang, alertas.geada_inicio), monthDay(lang, alertas.geada_fim)),
     r.heavyRain(n(alertas.chuva_forte_mm), monthDay(lang, alertas.chuva_forte_inicio), monthDay(lang, alertas.chuva_forte_fim)),
     r.fire(n(alertas.fogo_raio_km)),
+    // Sem os relatos de vizinhos (comunidade "em breve"): o `vizinhos_dias` e o `raio_km` da API não aparecem.
     r.alerts(
       n(avisos.terra_seca_percentil_max),
       n(avisos.dias_sem_chuva_min),
       n(avisos.calor_dias_min),
       n(d.calor_temp_c),
       n(avisos.calor_janela_dias),
-      n(avisos.vizinhos_dias),
-      n(avisos.raio_km),
     ),
     r.signal(n(sinal.fase_chance_min_pct), n(sinal.anos_fase_min), n(sinal.anos_ruins_seco_pct)),
     r.xray,

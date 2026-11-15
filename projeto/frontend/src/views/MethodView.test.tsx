@@ -150,7 +150,8 @@ describe('MethodView (tela 9)', () => {
     expect(rules).toHaveTextContent('fogo a até 6 km do ponto')
     expect(rules).toHaveTextContent('percentil 18 ou menos')
     expect(rules).toHaveTextContent('9 dias seguidos sem chuva ou 4 dias de 34 °C nos últimos 11')
-    expect(rules).toHaveTextContent('últimos 8 dias, a até 31 km')
+    expect(rules).not.toHaveTextContent(/vizinh|relato/i)
+    expect(rules).not.toHaveTextContent('31 km')
     expect(rules).toHaveTextContent('52% ou mais')
     expect(rules).toHaveTextContent('51% ou mais')
     expect(rules).toHaveTextContent('Raio-X')
@@ -171,6 +172,9 @@ describe('MethodView (tela 9)', () => {
     const rules = screen.getByRole('region', { name: 'The rules of the calculation' })
     expect(rules).toHaveTextContent('at least 61% of the water it needed')
     expect(rules).toHaveTextContent('from May 1 to July 31')
+    expect(rules).toHaveTextContent('9 days in a row without rain or 4 days at 34 °C in the last 11 (NASA POWER).')
+    expect(rules).not.toHaveTextContent(/neighbo|report/i)
+    expect(rules).not.toHaveTextContent('31 km')
   })
 
   it('a renda em inglês', () => {
