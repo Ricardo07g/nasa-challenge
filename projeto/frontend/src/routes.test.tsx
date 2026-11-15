@@ -55,7 +55,8 @@ describe('rotas', () => {
     renderAt('/quando?lat=-18.9543&lon=-48.1993')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: /Meio de fevereiro/ })).toHaveAttribute('aria-pressed', 'true')
+    // Tarefa 0042: o dia do satélite (dados de exemplo: 15/fev) já vem no campo, com a faixa dele.
+    expect(await screen.findByText('Dia 15 de fevereiro: conta como meio de fevereiro.')).toBeInTheDocument()
     expect(document.title).toBe('Raiz Orbital – Quando você colhe a soja?')
   })
 

@@ -143,32 +143,86 @@ export const pt = {
   },
   when: {
     title: 'Quando você colhe a soja?',
+    /** Faixa azul: o que o satélite viu (tarefa 0042). Com o dia, a faixa vem do próprio dia. */
+    suggestionDate: (date: string, band: string) =>
+      `Pelo satélite (NDVI do MODIS), a soja daqui costuma secar por volta de ${date} (${band}).`,
     suggestionPrefix: 'Pelo satélite, a soja daqui costuma secar no',
+    suggestionApplied: 'Já deixamos esse dia no campo.',
     suggestionSuffix: 'Já deixamos marcado.',
+    useSuggestion: 'Usar o dia do satélite',
+    /** Sem dado do satélite; "deixamos marcado" só enquanto o meio de fevereiro está marcado. */
+    noSatellite: 'Não deu para ver pelo satélite quando a soja daqui seca.',
+    defaultMarked: 'Deixamos marcado o meio de fevereiro.',
     defaultSuggestion: 'Não deu para ver pelo satélite. Deixamos marcado o meio de fevereiro.',
     hint: 'Não tem certeza? Deixe como está. Dá para mudar depois.',
     nextStep: 'Próximo passo',
     cta: 'Ver a resposta',
-    dateOption: 'Colocar a data exata',
-    dateOptionHint: 'Se você já sabe o dia',
     dateLabel: 'Dia da colheita',
     dateBand: (date: string, band: string) => `Dia ${date}: conta como ${band}.`,
     dateNeed: 'Escolha um dia dentro da época de colheita.',
+    dateEmpty: 'Coloque o dia ou toque em "Não sei o dia exato".',
+    dontKnow: 'Não sei o dia exato',
     whyTitle: 'Por que perguntamos isso?',
     whyText:
       'A chuva vai acabando depois de março. Quanto mais cedo você colhe a soja, mais chuva sobra para a próxima planta.',
     /** Desenho de exemplo (só na página do design system). */
     chartLabel: 'Chuva média por mês: muita em janeiro, pouca em junho',
     chartCaption: 'Chuva de cada mês na região. Desenho de exemplo.',
-    /** Com o dado da API (`chuva_mensal`): descrição acessível com os milímetros de cada mês. */
-    chartDataLabel: (values: string) => `Chuva média por mês, em milímetros: ${values}`,
-    chartMonthValue: (month: string, mm: string) => `${month} ${mm} mm`,
-    /** Legenda com o período e a fonte; com ano faltando na série, diz quantos anos entraram. */
-    chartSource: (first: number, last: number, years: number, source: string) =>
-      `Chuva de cada mês na região, em mm. ${
-        years === last - first + 1 ? `Média de ${first} a ${last}` : `Média de ${years} anos entre ${first} e ${last}`
-      }, ${source}.`,
     months: { jan: 'Jan', feb: 'Fev', mar: 'Mar', apr: 'Abr', may: 'Mai', jun: 'Jun' },
+    /** "Saiba mais" para os artigos do Guia (seção 8). */
+    learnMore: (title: string) => `Saiba mais: ${title}`,
+    articles: {
+      rainEnd: 'Quando a chuva acaba',
+      sowSoon: 'Plantar logo depois da colheita',
+      water: 'A conta de água da lavoura',
+      worked: 'O que significa "deu certo"',
+    },
+    /** Chuva que sobra depois da colheita (até 30/jun; mediana e ano seco, tarefa 0042). */
+    leftTitle: 'Chuva que sobra depois da colheita',
+    leftExact: (date: string, median: string, dry: string) =>
+      `Colhendo em ${date}, sobram em média ${median} mm; num ano seco, ${dry} mm.`,
+    leftBand: (band: string, date: string, median: string, dry: string) =>
+      `Colhendo no ${band} (por volta de ${date}), sobram em média ${median} mm; num ano seco, ${dry} mm.`,
+    leftChartLabel: (date: string, median: string, dry: string) =>
+      `Gráfico: quanto mais tarde a colheita, menos chuva sobra. Colhendo em ${date}, sobram ${median} mm em média e ${dry} mm num ano seco.`,
+    leftLegendMedian: 'Em média',
+    leftLegendDry: 'Ano seco',
+    leftCaption: (end: string, first: number, last: number, source: string, pct: number) =>
+      `Chuva somada do dia da colheita até ${end}. "Em média" é a mediana de ${first} a ${last}; num "ano seco", só ${pct}% dos anos tiveram menos chuva. Chuva medida pelo ${source}.`,
+    /** Fim das chuvas na célula (regra no regras.yaml do backend). */
+    endTitle: 'Quando a chuva acaba',
+    endText: (median: string, earliest: string, latest: string) =>
+      `Em metade dos anos, a chuva acabou até ${median}; o mais cedo foi ${earliest} e o mais tarde ${latest}.`,
+    endYear: (date: string, year: number) => `${date} de ${year}`,
+    endRule: (start: string, days: number, mm: string, source: string, first: number, last: number) =>
+      `Fim da chuva: o primeiro dia, a partir de ${start}, que começa ${days} dias seguidos com menos de ${mm} mm somados. Chuva do ${source}, de ${first} a ${last}.`,
+    /** Chuva e o que a lavoura gasta (ETo), mês a mês. */
+    etoTitle: 'Chuva e o que a lavoura gasta, mês a mês',
+    etoDeficit: (month: string) => `Em ${month}, a chuva média fica menor que o que a lavoura gasta.`,
+    etoNoDeficit: 'De janeiro a junho, a chuva média cobre o que a lavoura gasta.',
+    etoLegendRain: 'Chuva',
+    etoLegendEto: 'Gasto da lavoura',
+    etoTag: 'chove menos',
+    etoChartLabel: (values: string) => `Chuva e gasto da lavoura em cada mês, em milímetros: ${values}`,
+    etoMonthValue: (month: string, rain: string, eto: string) => `${month}, chuva ${rain} e gasto ${eto}`,
+    etoCaption: (first: number, last: number, years: number, rainSource: string, etoSource: string) =>
+      `${
+        years === last - first + 1 ? `Média de ${first} a ${last}` : `Média de ${years} anos entre ${first} e ${last}`
+      }, em mm. Chuva medida pelo ${rainSource}. Gasto da lavoura: a evapotranspiração de referência (ETo), calculada com o clima do ${etoSource}.`,
+    /** Custo do atraso: a melhor opção do motor em cada faixa (tarefa 0042). */
+    delayTitle: 'Quanto custa colher mais tarde',
+    delayBand: { cedo: 'cedo', meio: 'no meio', tarde: 'tarde' },
+    delayFirst: (band: string, good: number, total: number, crop: string | null) =>
+      crop
+        ? `Colhendo ${band}, ${crop} deu certo em ${good} de ${total} anos`
+        : `Colhendo ${band}, deu certo em ${good} de ${total} anos`,
+    delayNext: (band: string, good: number, total: number, crop: string | null) =>
+      crop ? `${band}, ${crop}, ${good} de ${total}` : `${band}, ${good} de ${total}`,
+    delaySame: (crop: string) => `A melhor opção é ${crop} nas três épocas.`,
+    delayDiffers: 'A melhor opção muda com a época da colheita.',
+    delayRow: (crop: string, good: number, total: number) => `${crop}, deu certo em ${good} de ${total} anos`,
+    delayYours: 'sua escolha',
+    delayNote: 'Resultado da conta do app para a melhor opção de cada época, com a chuva e o calor de cada ano.',
     /** RF-24: o satélite não viu soja no ponto marcado na última safra (aviso que deixa seguir). */
     soyWarning: (safra: string) =>
       `Não vimos soja neste ponto na última safra (${safra}). Confira se marcou a lavoura certa.`,

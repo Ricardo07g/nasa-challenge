@@ -14,8 +14,11 @@ from app.models.regras import (
     FrasesSafra,
     Regras,
     RegrasAvisos,
+    RegrasChuvaQueSobra,
     RegrasClima,
+    RegrasColheita,
     RegrasEnso,
+    RegrasFimDasChuvas,
     RegrasHistoricoNdvi,
     RegrasNdvi,
     RegrasNotaFinal,
@@ -99,6 +102,9 @@ class YamlRulesRepository:
             frases_ano=_texts(raw, "frases_ano", FrasesAno),
             soja_recente=_group(raw, "soja_recente", RegrasSojaRecente),
             sinal_enso=_group(raw, "sinal_enso", RegrasSinalEnso),
+            colheita=_group(raw, "colheita", RegrasColheita),
+            chuva_que_sobra=_group(raw, "chuva_que_sobra", RegrasChuvaQueSobra),
+            fim_das_chuvas=_group(raw, "fim_das_chuvas", RegrasFimDasChuvas),
         )
         return self._cache
 

@@ -1,13 +1,22 @@
 """JSON de GET /api/talhao (plano técnico §3.1; `historico` no formato do guia do NDVI).
 
-`chuva_mensal` é o gráfico "Chuva de cada mês na região" da tela 3 (tarefa 0028);
-`soja_recente` é a checagem da soja no começo do fluxo (RF-24, tarefa 0037).
+`chuva_mensal` é o gráfico "Chuva de cada mês na região" da tela 3 (tarefa 0028), com a ETo de
+cada mês desde a tarefa 0042; `soja_recente` é a checagem da soja no começo do fluxo (RF-24,
+tarefa 0037); `chuva_que_sobra` e `fim_das_chuvas` são a tela 3 nova (tarefa 0042).
 """
 
 from pydantic import BaseModel, ConfigDict
 
 from app.models.soja_recente import SojaRecente
-from app.models.talhao import ChuvaMensal, FonteAno, HistoricoTalhao, SituacaoAno, Talhao
+from app.models.talhao import (
+    ChuvaMensal,
+    ChuvaQueSobra,
+    FimDasChuvas,
+    FonteAno,
+    HistoricoTalhao,
+    SituacaoAno,
+    Talhao,
+)
 
 
 class _Frozen(BaseModel):
@@ -29,6 +38,8 @@ class ColheitaSugeridaSchema(_Frozen):
     faixa: str
     fonte: str
     anos_usados: int
+    # "MM-DD" em que a soja costuma secar pelo NDVI (tarefa 0042); null sem NDVI (fonte padrao)
+    dia: str | None = None
 
 
 class HistoricoAnoSchema(_Frozen):
@@ -76,19 +87,87 @@ class HistoricoSchema(_Frozen):
 class ChuvaMesSchema(_Frozen):
     mes: int  # 1 = janeiro
     media_mm: float  # média, entre os anos, da chuva total do mês
+    eto_media_mm: float | None = None  # média da ETo do mês (tarefa 0042); null sem ETo
 
 
 class ChuvaMensalSchema(_Frozen):
     meses: list[ChuvaMesSchema]  # janeiro a junho
     anos: list[int]  # anos que entraram na média, em ordem
     fonte: str  # rain_source das temporadas (ex.: nasa_power); mais de uma, separadas por "+"
+    fonte_eto: str | None = None  # nasa_power (a ETo é calculada com o clima do POWER)
+    mes_chuva_abaixo_eto: int | None = None  # 1º mês com chuva média menor que a ETo média
 
     @classmethod
     def from_model(cls, chuva: ChuvaMensal) -> "ChuvaMensalSchema":
         return cls(
-            meses=[ChuvaMesSchema(mes=m.mes, media_mm=m.media_mm) for m in chuva.meses],
+            meses=[
+                ChuvaMesSchema(mes=m.mes, media_mm=m.media_mm, eto_media_mm=m.eto_media_mm)
+                for m in chuva.meses
+            ],
             anos=list(chuva.anos),
             fonte=chuva.fonte,
+            fonte_eto=chuva.fonte_eto,
+            mes_chuva_abaixo_eto=chuva.mes_chuva_abaixo_eto,
+        )
+
+
+class ChuvaQueSobraDiaSchema(_Frozen):
+    dia: str  # "MM-DD" do dia da colheita
+    mediana_mm: float  # chuva do dia até `fim`: mediana dos anos
+    seco_mm: float  # a mesma, num ano seco (percentil `percentil_seco`)
+
+
+class ChuvaQueSobraSchema(_Frozen):
+    """Chuva que sobra depois da colheita (tela 3, tarefa 0042)."""
+
+    fim: str  # "MM-DD", inclusive (06-30)
+    percentil_seco: int  # 20
+    dias: list[ChuvaQueSobraDiaSchema]  # um por dia da época da colheita (15/jan a 31/mar)
+    anos: list[int]
+    fonte: str  # rain_source dos anos (gpm_imerg; mais de uma, separadas por "+")
+
+    @classmethod
+    def from_model(cls, sobra: ChuvaQueSobra) -> "ChuvaQueSobraSchema":
+        return cls(
+            fim=sobra.fim,
+            percentil_seco=sobra.percentil_seco,
+            dias=[
+                ChuvaQueSobraDiaSchema(dia=d.dia, mediana_mm=d.mediana_mm, seco_mm=d.seco_mm)
+                for d in sobra.dias
+            ],
+            anos=list(sobra.anos),
+            fonte=sobra.fonte,
+        )
+
+
+class DiaDoAnoSchema(_Frozen):
+    dia: str  # "MM-DD"
+    ano: int
+
+
+class FimDasChuvasSchema(_Frozen):
+    """Fim das chuvas na célula (tela 3, tarefa 0042)."""
+
+    mediana: str  # em metade dos anos, a chuva acabou até esse dia ("MM-DD")
+    mais_cedo: DiaDoAnoSchema
+    mais_tarde: DiaDoAnoSchema
+    anos: list[int]
+    fonte: str
+    inicio: str  # a regra do regras.yaml: a partir deste dia ("MM-DD")...
+    dias: int  # ...este número de dias seguidos...
+    chuva_max_mm: float  # ...com menos que estes mm somados
+
+    @classmethod
+    def from_model(cls, fim: FimDasChuvas) -> "FimDasChuvasSchema":
+        return cls(
+            mediana=fim.mediana,
+            mais_cedo=DiaDoAnoSchema(dia=fim.mais_cedo.dia, ano=fim.mais_cedo.ano),
+            mais_tarde=DiaDoAnoSchema(dia=fim.mais_tarde.dia, ano=fim.mais_tarde.ano),
+            anos=list(fim.anos),
+            fonte=fim.fonte,
+            inicio=fim.inicio,
+            dias=fim.dias,
+            chuva_max_mm=fim.chuva_max_mm,
         )
 
 
@@ -124,6 +203,9 @@ class TalhaoResponse(_Frozen):
     soja_recente: SojaRecenteSchema | None  # null sem o arquivo ou com o ponto fora da grade
     # Entressafras que o produtor pode confirmar na tela 4 (as 3 últimas, tarefa 0039)
     anos_confirmaveis: list[int]
+    # Tela 3 (tarefa 0042): null fora da área, sem temporada completa ou (fim) com ano sem fim
+    chuva_que_sobra: ChuvaQueSobraSchema | None = None
+    fim_das_chuvas: FimDasChuvasSchema | None = None
 
     @classmethod
     def from_model(cls, talhao: Talhao) -> "TalhaoResponse":
@@ -140,6 +222,7 @@ class TalhaoResponse(_Frozen):
                 faixa=talhao.colheita_sugerida.faixa,
                 fonte=talhao.colheita_sugerida.fonte,
                 anos_usados=talhao.colheita_sugerida.anos_usados,
+                dia=talhao.colheita_sugerida.dia,
             ),
             historico=(
                 HistoricoSchema.from_model(talhao.historico)
@@ -163,4 +246,14 @@ class TalhaoResponse(_Frozen):
                 else None
             ),
             anos_confirmaveis=list(talhao.anos_confirmaveis),
+            chuva_que_sobra=(
+                ChuvaQueSobraSchema.from_model(talhao.chuva_que_sobra)
+                if talhao.chuva_que_sobra is not None
+                else None
+            ),
+            fim_das_chuvas=(
+                FimDasChuvasSchema.from_model(talhao.fim_das_chuvas)
+                if talhao.fim_das_chuvas is not None
+                else None
+            ),
         )

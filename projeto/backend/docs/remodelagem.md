@@ -25,7 +25,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | ✅ na branch (15/11 ~03:20), revisada |
 | S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | feito na branch `feat/remodelagem-s8-guia` (19 artigos em pt e en; faltam 7 do tema, ver a tarefa 0048) |
 | S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | ✅ na branch (15/11 ~04:00), revisada |
-| S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | a fazer |
+| S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | feito na branch `feat/remodelagem-s3-quando` (15/11 ~05:10): tudo do pedido, mais os artigos "Quando a chuva acaba" e "Plantar logo depois da colheita"; falta o merge e a revisão |
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | a fazer |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | a fazer |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
@@ -72,6 +72,17 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D28 | 15/11 | Botão "Ver a área inteira" na legenda do mapa: afasta o mapa até a área caber, sem tirar o alfinete do ponto. | No zoom de marcar a lavoura (12), a caixa de 1,5° fica fora da tela: sem o botão, o limite desenhado quase nunca seria visto. |
 | D29 | 15/11 | O aviso "Por enquanto só temos dados da região de Uberlândia e Uberaba." entrou numa chave nova (`where.outsideNotice`); o `where.outsideText`, usado pelas telas 4 a 7 (`FlowStates`), ficou igual. | Mudar o texto antigo mexeria em telas e testes da S1 e da S4. |
 | D30 | 15/11 | No modo `mock` (e nos testes), a busca e o endereço aproximado são de exemplo (6 cidades, sem rede), escolhidos em `repositories/index.ts` como os outros dados. | Nenhum teste pode chamar o Photon de verdade, e as telas abertas nos testes de rota usam os repositories padrão. |
+| D31 | 15/11 | A regra das faixas da tela 3 (até 10/fev, e janeiro, cedo; 11 a 20/fev meio; depois, tarde) foi para o `regras.yaml` (grupo `colheita`) e vale também para a faixa sugerida pelo NDVI; saiu o limite de 22/fev (`MID_HARVEST_DOY_LIMIT`) do backend. | Sugestão = seleção: com 22/fev, o satélite dizia "meio" para um dia que o campo de data chamava de "tarde". A regra é a que a tela e os rótulos ("dia 11 a 20") já usavam. |
+| D32 | 15/11 | O dia sugerido é a mediana dos dias de queda do NDVI, contada num ano comum (29/fev = 28/fev) e arredondada para baixo; a faixa sai do dia. | O campo de data precisa de um dia que existe, e o mesmo dia não pode cair em faixas diferentes no backend e no front. |
+| D33 | 15/11 | A faixa da URL (voltando da tela 4 ou o `colheita=meio` do "Ver um exemplo pronto") continua valendo mais que o dia do satélite; aí o campo fica vazio, a faixa azul não diz "já deixamos" e oferece "Usar o dia do satélite". O dia exato não vai para a URL. | Era a causa da inconsistência da faixa azul. Mantém a escolha de quem volta da tela 4 sem a faixa azul mentir, e não mexe no `flowParams` (comum a todas as telas). |
+| D34 | 15/11 | Chuva que sobra, ETo de cada mês e fim das chuvas vão no `/talhao`; o custo do atraso é um endpoint novo, `GET /api/custo-atraso`. | As três primeiras são contas leves da mesma série; o custo roda o motor 3 vezes (~1 s) e deixaria lento o `/talhao`, pedido já na tela 2. |
+| D35 | 15/11 | "20 dias seguidos com menos de 10 mm" = a soma dos 20 dias abaixo de 10 mm. | Com 10 mm por dia, quase todo dia de março já "acabaria" a chuva; a soma pega o fim do período chuvoso. |
+| D36 | 15/11 | Fim das chuvas: mediana arredondada para baixo (num ano comum); se algum ano não tem fim dentro da série (até 31/jul), o bloco não aparece. | "Em metade dos anos, a chuva acabou até [data]" continua verdade; sem o fim de um ano, a mediana e o mais tarde sairiam errados. |
+| D37 | 15/11 | Ano seco = percentil 20 com interpolação linear entre os anos ordenados (o padrão do numpy); a frase diz "em média" (texto do pedido), e a legenda explica que é a mediana e o que é o ano seco ("só 20% dos anos tiveram menos chuva"). | É o texto pedido; a legenda deixa claro o número. |
+| D38 | 15/11 | Só com a faixa ("Não sei o dia exato"), a chuva que sobra usa o dia de colheita da faixa no motor: 5/fev, 15/fev e 28/fev. | PRD 7.1: semeadura = colheita + 3 dias (08/02, 18/02 e 03/03); é o mesmo dia da conta da recomendação. |
+| D39 | 15/11 | A ETo de cada mês é a do motor (`ClimateRiskService.reference_eto`: a gravada, POWER com FAO-56, ou Hargreaves-Samani), e o mês em destaque, o primeiro em que a chuva média fica menor que a ETo média, sai do backend (`mes_chuva_abaixo_eto`). | O mesmo número da conta de água; a regra fica num lugar só. |
+| D40 | 15/11 | Gráficos: a chuva que sobra é uma curva de 15/jan a 31/mar (mediana em linha cheia, ano seco tracejado, marca no dia escolhido); a chuva × ETo tem a chuva cheia e o gasto listrado, e o mês em destaque ganha contorno e o texto "chove menos". | Nenhuma informação só por cor; a curva mostra que cada dia de atraso tira chuva. |
+| D41 | 15/11 | Os dois artigos novos do Guia ("Quando a chuva acaba", sem rascunho por ser de clima e dados; "Plantar logo depois da colheita", rascunho por ser de plantio) citam só páginas já na lista conferida, reabertas em 15/11. | Regra do Guia: só fonte aberta e conferida; números só do `regras.yaml`, `culturas.yaml` e PRD. |
 
 ## Revisão por seção
 
@@ -117,6 +128,21 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
   de "deu certo" para "faltou" nesse ponto; vale conferir na S4/S5a (linha "Clima 2041–2060").
 - **S1, Plano A da colheita cedo na UFU:** com a renda nova, milho com braquiária nos 3 anos (nota 85,0
   contra 84,7 com crotalária no 3º ano). O PRD 7.7 não pune repetição; a S5b mostra a repetição como fato.
+- **S3, custo do atraso na UFU parece "premiar" a colheita tarde:** cedo, milho com braquiária deu certo
+  em 18 de 20; meio, milho com braquiária, 16 de 20; tarde, **milheto, 20 de 20**. A melhor muda para uma
+  cobertura, que tem outro critério de "deu certo" (ISNA 0,50 nos primeiros 30 dias, contra 0,55 na
+  floração do grão). A frase diz a cultura de cada faixa, mas a leitura rápida é "colher tarde é melhor".
+  Vale decidir (agrônoma/produto) se o custo do atraso deve comparar a mesma cultura nas três faixas.
+- **S3, fim das chuvas na UFU vai de 16/mar (2021) a 22/jun (2012)**, com a mediana em 21/abr. A regra pega
+  o primeiro trecho de 20 dias com menos de 10 mm a partir de 1º/mar: um veranico em março já conta como
+  fim (2005: 26/mar, apesar de 94 mm em maio e junho), e uma chuva fora de época empurra o fim (2012: 108 mm
+  em maio e junho, fim em 22/jun). O IMERG da célula confirma a chuva; o número é real, mas a regra é
+  sensível. Cabe à agrônoma calibrar (ex.: exigir também pouca chuva nos 30 dias seguintes).
+- **S3, "em média" é a mediana:** o texto pedido diz "sobram em média X mm", e o número é a mediana (367 mm
+  em 25/fev na UFU). A legenda explica; se preferirem a média de verdade, é uma linha no service.
+- **S3, dia sugerido na UFU é 25/fev** (10 anos de NDVI), na faixa "fim de fevereiro ou março". O MOD13Q1 é
+  de 16 dias (Terra e Aqua defasados em 8): o dia é a data da composição em que o NDVI caiu, não o dia exato
+  da colheita. Com a regra nova (D31), um ponto com mediana em 21 ou 22/fev passa de "meio" para "tarde".
 
 ## O que não foi possível e por quê
 
@@ -125,3 +151,10 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
   colar o link completo, ou colar as coordenadas.
 - **S2, graus, minutos e segundos** colados como texto (`18°57'15.6"S 48°11'57.4"W`) não são lidos (o
   pedido só cita o formato decimal). O link do Google com esse nome funciona, pelo pino `!3d`/`!4d`.
+- **S3, o dia exato não sobrevive à volta da tela 4:** a URL guarda só a faixa (D33). Voltando, o campo traz
+  o dia do satélite (se a faixa é a dele) ou fica vazio com a faixa marcada.
+- **S3, "Ver um exemplo pronto" continua com `colheita=meio` fixo** (`ExamplePage`), enquanto o `/exemplo`
+  recomenda com a faixa do satélite (tarde na UFU). Na tela 3 isso já não engana (D33), mas a resposta do
+  exemplo e a URL dizem faixas diferentes; fica para a S9 (consistência) ou para quem mexer no exemplo.
+- **S3, artigos do Guia:** com os dois desta seção, faltam 5 (plantio direto, sementes, erosão, raio-X e fogo
+  na palha), como na S8.

@@ -1,6 +1,14 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { NeighborDots, NeighborRow, RainBarChart, RainReadingRow, RegionMap } from './Charts'
+import {
+  NeighborDots,
+  NeighborRow,
+  RainBarChart,
+  RainEtoChart,
+  RainLeftChart,
+  RainReadingRow,
+  RegionMap,
+} from './Charts'
 
 describe('RainBarChart', () => {
   it('desenha uma barra por mês com descrição acessível', () => {
@@ -105,5 +113,63 @@ describe('RainBarChart com o valor em cima das barras', () => {
     render(<RainBarChart label="Chuva" caption="Exemplo" bars={[{ label: 'Jan', value: 100, tone: 'strong' }]} />)
 
     expect(screen.getByRole('img', { name: 'Chuva' })).not.toHaveAttribute('data-values')
+  })
+})
+
+describe('RainLeftChart (chuva que sobra, tela 3)', () => {
+  const points = [
+    { median: 600, dry: 450 },
+    { median: 400, dry: 300 },
+    { median: 200, dry: 100 },
+  ]
+
+  it('desenha a mediana (linha cheia) e o ano seco (tracejada), com a marca no dia escolhido', () => {
+    render(
+      <RainLeftChart
+        label="Colhendo em 25 de fevereiro, sobram 400 mm"
+        caption="Mediana de 2005 a 2024"
+        points={points}
+        max={600}
+        selectedIndex={1}
+        ticks={[
+          { index: 0, label: '15 jan' },
+          { index: 2, label: '31 mar' },
+        ]}
+        legend={{ median: 'Em média', dry: 'Ano seco' }}
+      />,
+    )
+
+    const chart = screen.getByRole('img', { name: 'Colhendo em 25 de fevereiro, sobram 400 mm' })
+    expect(chart.querySelector('[data-line="median"]')).not.toHaveAttribute('stroke-dasharray')
+    expect(chart.querySelector('[data-line="dry"]')).toHaveAttribute('stroke-dasharray')
+    expect(chart.querySelector('[data-marker]')).toBeInTheDocument()
+    expect(screen.getByText('15 jan')).toBeInTheDocument()
+    expect(screen.getByText('Em média')).toBeInTheDocument()
+    expect(screen.getByText('Ano seco')).toBeInTheDocument()
+    expect(screen.getByText('Mediana de 2005 a 2024')).toBeInTheDocument()
+  })
+})
+
+describe('RainEtoChart (chuva e gasto da lavoura, tela 3)', () => {
+  it('duas barras por mês (chuva e gasto, com padrão diferente) e o mês em destaque escrito', () => {
+    render(
+      <RainEtoChart
+        label="Chuva e gasto por mês"
+        caption="Média de 2005 a 2024"
+        legend={{ rain: 'Chuva', eto: 'Gasto da lavoura' }}
+        bars={[
+          { label: 'Mar', rainPct: 100, etoPct: 60, rainDisplay: '207', etoDisplay: '122' },
+          { label: 'Abr', rainPct: 43, etoPct: 52, rainDisplay: '90', etoDisplay: '109', tag: 'chove menos' },
+        ]}
+      />,
+    )
+
+    const chart = screen.getByRole('img', { name: 'Chuva e gasto por mês' })
+    expect(chart.querySelectorAll('[data-bar="rain"]')).toHaveLength(2)
+    expect(chart.querySelectorAll('[data-bar="eto"]')).toHaveLength(2)
+    expect(chart.querySelector('[data-bar="rain"]')).toHaveStyle({ height: '100%' })
+    expect(chart.querySelectorAll('[data-highlight="true"]')).toHaveLength(1)
+    expect(screen.getByText('chove menos')).toBeInTheDocument()
+    expect(screen.getByText('Gasto da lavoura')).toBeInTheDocument()
   })
 })

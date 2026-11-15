@@ -235,7 +235,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             />
             <RadioCard title={t.harvest.meio.title} sub={t.harvest.meio.sub} selected onSelect={noop} />
             <RadioCard title={t.harvest.tarde.title} sub={t.harvest.tarde.sub} selected={false} onSelect={noop} />
-            <RadioCard title={t.when.dateOption} sub={t.when.dateOptionHint} selected={false} expanded onSelect={noop} />
+            <RadioCard title={t.harvest.cedo.title} sub={t.harvest.cedo.sub} selected={false} onSelect={noop} />
             <DateField
               label={t.when.dateLabel}
               value="2027-02-18"

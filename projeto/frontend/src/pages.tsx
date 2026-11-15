@@ -92,16 +92,21 @@ export function WhenPage() {
       lang={lang}
       backTo={state.backTo}
       suggestion={state.suggestion}
+      suggestionApplied={state.suggestionApplied}
+      onUseSuggestion={state.applySuggestedDate}
       selected={state.selected}
-      dateOpen={state.dateOpen}
       date={state.date}
       dateBand={state.dateBand}
       window={state.window}
-      onSelect={state.select}
-      onOpenDate={state.openDate}
       onDateChange={state.changeDate}
+      bandsOpen={state.bandsOpen}
+      onToggleBands={state.toggleBands}
+      onSelect={state.select}
       onConfirm={state.confirm}
       rainChart={state.rainChart}
+      rainLeft={state.rainLeft}
+      rainEnd={state.rainEnd}
+      delayCost={state.delayCost}
       soyWarning={state.soyWarning}
       onDismissSoyWarning={state.dismissSoyWarning}
     />

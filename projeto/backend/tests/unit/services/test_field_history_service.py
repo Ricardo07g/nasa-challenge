@@ -224,6 +224,81 @@ def test_should_suggest_harvest_band_from_interleaved_terra_and_aqua_observation
     assert (suggestion.faixa, suggestion.fonte, suggestion.anos_usados) == ("cedo", "ndvi_modis", 6)
 
 
+# --- dia sugerido e a mesma regra da data exata (tela 3, tarefa 0042) ------------------------
+
+
+def _drops(day_by_year: dict[int, str]) -> list[NdviRecord]:
+    """Soja de teste que seca (abaixo de 50% do pico) no dia "MM-DD" de cada ano."""
+    records: list[NdviRecord] = []
+    for year, day in day_by_year.items():
+        records += [_obs(f"{year}-01-17", 0.84), _obs(f"{year}-{day}", 0.30)]
+    return records
+
+
+@pytest.mark.parametrize(
+    ("day", "band"),
+    [
+        ("01-20", "cedo"),
+        ("02-10", "cedo"),
+        ("02-11", "meio"),
+        ("02-20", "meio"),
+        ("02-21", "tarde"),
+        ("03-31", "tarde"),
+    ],
+)
+def test_should_turn_a_harvest_day_into_a_band_with_the_screen_three_rule(
+    day: str, band: str
+) -> None:
+    # A regra que a tela 3 já usava (regras.yaml, grupo colheita): até 10/fev cedo, 11 a 20 meio.
+    month, dom = (int(part) for part in day.split("-"))
+
+    assert FieldHistoryService().harvest_band(month, dom) == band
+
+
+def test_should_suggest_the_median_day_the_soy_dried() -> None:
+    records = _drops({2019: "02-18", 2020: "02-18", 2021: "02-26", 2022: "02-26", 2023: "02-18"})
+
+    suggestion = FieldHistoryService().suggest_harvest_band(records)
+
+    assert suggestion.dia == "02-18"
+    assert (suggestion.faixa, suggestion.anos_usados) == ("meio", 5)
+
+
+def test_should_suggest_the_band_of_the_suggested_day() -> None:
+    # Sugestão = seleção: secou em 21/fev (dia 52). Antes, o limite de 22/fev (dia 53) dava "meio",
+    # mas a mesma data posta no campo da tela 3 vira "tarde".
+    records = _drops(dict.fromkeys(range(2019, 2024), "02-21"))
+
+    suggestion = FieldHistoryService().suggest_harvest_band(records)
+
+    assert (suggestion.dia, suggestion.faixa) == ("02-21", "tarde")
+
+
+def test_should_round_down_the_median_of_an_even_number_of_years() -> None:
+    # Dias 41 (10/fev) e 49 (18/fev), 3 anos cada: mediana 45 = 14/fev, meio.
+    records = _drops({2019: "02-10", 2020: "02-10", 2021: "02-10", 2022: "02-18", 2023: "02-18"})
+    records += _drops({2024: "02-18"})
+
+    suggestion = FieldHistoryService().suggest_harvest_band(records)
+
+    assert (suggestion.dia, suggestion.faixa) == ("02-14", "meio")
+
+
+def test_should_count_march_days_of_leap_years_in_the_same_calendar() -> None:
+    # 5/mar é o dia 65 nos anos bissextos e 64 nos outros: o dia sugerido continua 5/mar.
+    records = _drops(dict.fromkeys((2004, 2008, 2012, 2016, 2020), "03-05"))
+
+    suggestion = FieldHistoryService().suggest_harvest_band(records)
+
+    assert suggestion.dia == "03-05"
+
+
+def test_should_not_suggest_a_day_without_enough_years() -> None:
+    suggestion = FieldHistoryService().suggest_harvest_band(_drops({2024: "02-18"}))
+
+    assert (suggestion.dia, suggestion.fonte) == (None, "padrao")
+
+
 # --- soja do ano antes da entressafra (decisão de 15/11/2026, a mesma regra da região) --------
 
 

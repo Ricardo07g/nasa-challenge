@@ -72,6 +72,46 @@ class RegrasNdvi:
 
 
 @dataclass(frozen=True)
+class RegrasColheita:
+    """Faixas de colheita da tela 3 e a época da colheita da soja (tarefa 0042).
+
+    Datas "MM-DD", inclusivas: até `cedo_ate` (e janeiro) é cedo; até `meio_ate`, meio; depois,
+    tarde. A data exata do produtor e a faixa sugerida pelo NDVI usam a mesma regra. A época vai de
+    `janela_inicio` a `janela_fim` (a do campo de data da tela 3).
+    """
+
+    cedo_ate: str
+    meio_ate: str
+    janela_inicio: str
+    janela_fim: str
+
+
+@dataclass(frozen=True)
+class RegrasChuvaQueSobra:
+    """Chuva que sobra depois da colheita (tela 3, tarefa 0042).
+
+    Do dia da colheita até `fim` ("MM-DD", inclusive): a mediana dos anos e o ano seco
+    (`percentil_seco`, de 0 a 100).
+    """
+
+    fim: str
+    percentil_seco: int
+
+
+@dataclass(frozen=True)
+class RegrasFimDasChuvas:
+    """Fim das chuvas na célula (tela 3, tarefa 0042).
+
+    Primeiro dia, a partir de `inicio` ("MM-DD"), que começa `dias` dias seguidos com menos de
+    `chuva_max_mm` mm somados.
+    """
+
+    inicio: str
+    dias: int
+    chuva_max_mm: float
+
+
+@dataclass(frozen=True)
 class RegrasHistoricoNdvi:
     """Histórico do talhão pelo NDVI do MODIS (PRD 7.8 e guia do histórico NDVI).
 
@@ -266,3 +306,6 @@ class Regras:
     frases_ano: dict[str, FrasesAno]  # "pt" e "en"
     soja_recente: RegrasSojaRecente
     sinal_enso: RegrasSinalEnso
+    colheita: RegrasColheita
+    chuva_que_sobra: RegrasChuvaQueSobra
+    fim_das_chuvas: RegrasFimDasChuvas

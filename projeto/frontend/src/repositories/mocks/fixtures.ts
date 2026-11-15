@@ -8,7 +8,17 @@ import type { Lang } from '../../i18n/language'
 import type { Community } from '../../models/community'
 import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo } from '../../models/recomendacao'
 import { MOCK_PILOT_AREA as AREA } from './mockLocation'
-import type { ChuvaMensal, Colheita, Ponto, SituacaoAno, Talhao } from '../../models/talhao'
+import type { CustoAtraso, CustoAtrasoParams } from '../../models/custoAtraso'
+import {
+  COLHEITAS,
+  type ChuvaMensal,
+  type ChuvaQueSobra,
+  type Colheita,
+  type FimDasChuvas,
+  type Ponto,
+  type SituacaoAno,
+  type Talhao,
+} from '../../models/talhao'
 
 /** O backend responde `dentro_da_area: false` fora da caixa preparada; o mock imita isso. */
 function insideBox({ lat, lon }: Ponto): boolean {
@@ -265,10 +275,69 @@ export function cellId({ lat, lon }: Ponto): string {
 }
 
 /** Chuva de cada mês, de janeiro a junho: os números da fazenda de exemplo (NASA POWER, 2005 a 2024). */
+const YEARS_2005_2024 = Array.from({ length: 20 }, (_, index) => 2005 + index)
+
+/** Chuva e gasto da lavoura (ETo) de cada mês, de exemplo: a chuva fica abaixo do gasto em abril. */
+const ETO_BY_MONTH = [130.2, 118.4, 120.1, 105.3, 95.6, 88.0]
 const MONTHLY_RAIN: ChuvaMensal = {
-  meses: [212.7, 161.0, 156.8, 74.7, 31.3, 12.6].map((media_mm, index) => ({ mes: index + 1, media_mm })),
-  anos: Array.from({ length: 20 }, (_, index) => 2005 + index),
+  meses: [212.7, 161.0, 156.8, 74.7, 31.3, 12.6].map((media_mm, index) => ({
+    mes: index + 1,
+    media_mm,
+    eto_media_mm: ETO_BY_MONTH[index],
+  })),
+  anos: YEARS_2005_2024,
   fonte: 'nasa_power',
+  fonte_eto: 'nasa_power',
+  mes_chuva_abaixo_eto: 4,
+}
+
+/** Dias de 15/jan a 31/mar ("MM-DD"), num ano comum, como a API manda. */
+function harvestDays(): string[] {
+  const days: string[] = []
+  for (let day = new Date(Date.UTC(2023, 0, 15)); day <= new Date(Date.UTC(2023, 2, 31)); day.setUTCDate(day.getUTCDate() + 1)) {
+    days.push(`${String(day.getUTCMonth() + 1).padStart(2, '0')}-${String(day.getUTCDate()).padStart(2, '0')}`)
+  }
+  return days
+}
+
+/** Chuva que sobra de exemplo: cai de ~620 mm (15/jan) a ~140 mm (31/mar); o ano seco é ~75% disso. */
+const RAIN_LEFT: ChuvaQueSobra = {
+  fim: '06-30',
+  percentil_seco: 20,
+  dias: harvestDays().map((dia, index, all) => {
+    const mediana = Math.round((620 - (480 * index) / (all.length - 1)) * 10) / 10
+    return { dia, mediana_mm: mediana, seco_mm: Math.round(mediana * 7.5) / 10 }
+  }),
+  anos: YEARS_2005_2024,
+  fonte: 'nasa_power',
+}
+
+const RAIN_END: FimDasChuvas = {
+  mediana: '04-18',
+  mais_cedo: { dia: '03-20', ano: 2016 },
+  mais_tarde: { dia: '05-25', ano: 2009 },
+  anos: YEARS_2005_2024,
+  fonte: 'nasa_power',
+  inicio: '03-01',
+  dias: 20,
+  chuva_max_mm: 10,
+}
+
+/** Custo do atraso de exemplo: a melhor opção da recomendação de exemplo em cada faixa. */
+export function buildCustoAtraso(params: CustoAtrasoParams, lang: Lang): CustoAtraso {
+  const faixas = COLHEITAS.map((colheita) => {
+    const rec = buildRecomendacao({ ...params, colheita }, lang)
+    const best = rec.opcoes.find((opcao) => opcao.id === rec.melhor)!
+    return {
+      colheita,
+      semeadura: rec.entrada.semeadura,
+      melhor: best.id,
+      nome: best.nome,
+      anos_bons: best.chuva.anos_bons,
+      total_anos: best.chuva.anos,
+    }
+  })
+  return { faixas, mesma_cultura: new Set(faixas.map((faixa) => faixa.melhor)).size === 1 }
 }
 
 /** As 3 últimas entressafras, que o produtor confirma na tela 4 (como a API manda). */
@@ -288,6 +357,8 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
       chuva_mensal: null,
       soja_recente: null,
       anos_confirmaveis: CONFIRMABLE_YEARS,
+      chuva_que_sobra: null,
+      fim_das_chuvas: null,
     }
   }
   // Exemplo do guia do NDVI, de 2017 a 2026: 5 anos parados, 4 plantados e 1 em que o satélite não
@@ -324,7 +395,7 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
     celula_id: cellId(point),
     dentro_da_area: true,
     solo: { textura: 'medio', cad_mm: 50, fonte: 'soilgrids' },
-    colheita_sugerida: { faixa: 'meio', fonte: 'ndvi_modis', anos_usados: 9 },
+    colheita_sugerida: { faixa: 'meio', fonte: 'ndvi_modis', anos_usados: 9, dia: '02-15' },
     historico: {
       anos,
       parado: count('parado'),
@@ -344,6 +415,8 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
     // Soja vista na última safra: no modo de demonstração, a tela 3 não avisa (RF-24).
     soja_recente: { safra: '2025/26', vista: true, ndvi_pico: 0.86, fonte: 'MODIS MOD13Q1 + MYD13Q1' },
     anos_confirmaveis: CONFIRMABLE_YEARS,
+    chuva_que_sobra: RAIN_LEFT,
+    fim_das_chuvas: RAIN_END,
   }
 }
 

@@ -1,7 +1,8 @@
 """Olhar o talhão: área com dados, solo, histórico pelo NDVI, chuva de cada mês, soja e fontes.
 
 Plano técnico §3.1; a chuva de cada mês é o gráfico da tela 3 (tarefa 0028); a soja da safra
-mais recente é a checagem do começo do fluxo (RF-24, tarefa 0037).
+mais recente é a checagem do começo do fluxo (RF-24, tarefa 0037); a chuva que sobra depois da
+colheita, a ETo de cada mês e o fim das chuvas são a tela 3 nova (tarefa 0042).
 """
 
 from collections.abc import Iterable
@@ -16,6 +17,8 @@ from app.repositories.soil_repository import SoilRepository
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.field_history_service import FieldHistoryService
 from app.services.monthly_rain_service import MonthlyRainService
+from app.services.rain_end_service import RainEndService
+from app.services.remaining_rain_service import RemainingRainService
 from app.services.soja_recente_service import SojaRecenteService
 
 CMIP6_PERIOD = "2041-2060"
@@ -35,6 +38,8 @@ class TalhaoService:
         monthly_rain_service: MonthlyRainService | None = None,
         smap_repo: CellSmapRepository | None = None,
         soja_recente_service: SojaRecenteService | None = None,
+        remaining_rain_service: RemainingRainService | None = None,
+        rain_end_service: RainEndService | None = None,
     ) -> None:
         self._climate_repo = climate_repo
         self._soil_repo = soil_repo
@@ -44,6 +49,8 @@ class TalhaoService:
         self._monthly_rain_service = monthly_rain_service or MonthlyRainService()
         self._smap_repo = smap_repo
         self._soja_recente_service = soja_recente_service
+        self._remaining_rain_service = remaining_rain_service or RemainingRainService()
+        self._rain_end_service = rain_end_service or RainEndService()
 
     def inspect_talhao(
         self, lat: float, lon: float, confirmadas: Iterable[tuple[int, str]] = ()
@@ -70,11 +77,10 @@ class TalhaoService:
         )
         colheita_sugerida = self._history_service.suggest_harvest_band(serie_ndvi)
 
-        chuva_mensal = (
-            self._monthly_rain_service.summarize(self._climate_repo.get_seasons(cell_id))
-            if cell_id is not None
-            else None
-        )
+        seasons = self._climate_repo.get_seasons(cell_id) if cell_id is not None else []
+        chuva_mensal = self._monthly_rain_service.summarize(seasons)
+        chuva_que_sobra = self._remaining_rain_service.summarize(seasons)
+        fim_das_chuvas = self._rain_end_service.summarize(seasons)
 
         # Independe da célula do clima: é o pixel de 250 m do ponto no arquivo da soja recente.
         soja_recente = (
@@ -85,10 +91,7 @@ class TalhaoService:
         if dentro_da_area and cell_id is not None:
             dados_fontes.append(FonteDado(fonte="nasa_power", periodo=CLIMATE_PERIOD))
             # Chuva do IMERG (tarefa 0027): os anos completos trocaram a do POWER na célula.
-            if any(
-                season.rain_source == IMERG_RAIN_SOURCE
-                for season in self._climate_repo.get_seasons(cell_id)
-            ):
+            if any(season.rain_source == IMERG_RAIN_SOURCE for season in seasons):
                 dados_fontes.append(FonteDado(fonte=IMERG_RAIN_SOURCE, periodo=CLIMATE_PERIOD))
             deltas = (
                 self._climate_repo.get_cmip6_deltas(cell_id)
@@ -125,6 +128,8 @@ class TalhaoService:
             chuva_mensal=chuva_mensal,
             soja_recente=soja_recente,
             anos_confirmaveis=self._history_service.confirmable_years(),
+            chuva_que_sobra=chuva_que_sobra,
+            fim_das_chuvas=fim_das_chuvas,
         )
 
     def obter_talhao(self, lat: float, lon: float) -> Talhao:

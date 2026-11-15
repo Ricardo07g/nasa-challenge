@@ -310,3 +310,47 @@ def test_should_refuse_a_field_history_rule_without_source(tmp_path: Path) -> No
 
 def test_should_load_default_rules_from_file_shipped_with_the_app() -> None:
     assert load_default_rules() == YamlRulesRepository(SHIPPED).get_rules()
+
+
+# --- tela 3 "Quando você colhe a soja?" (tarefa 0042) -------------------------------------------
+
+
+def test_should_load_the_harvest_band_rule_of_screen_three() -> None:
+    # A regra que a tela 3 já usava (até 10/fev cedo, 11 a 20/fev meio, depois tarde) e a época
+    # da colheita da soja (15/jan a 31/mar), as mesmas do front (harvestService).
+    colheita = YamlRulesRepository(SHIPPED).get_rules().colheita
+
+    assert (colheita.cedo_ate, colheita.meio_ate) == ("02-10", "02-20")
+    assert (colheita.janela_inicio, colheita.janela_fim) == ("01-15", "03-31")
+
+
+def test_should_load_the_rain_left_after_harvest_rule() -> None:
+    # Pedido da remodelagem, seção 3: da data escolhida até 30/jun, mediana e percentil 20.
+    regra = YamlRulesRepository(SHIPPED).get_rules().chuva_que_sobra
+
+    assert (regra.fim, regra.percentil_seco) == ("06-30", 20)
+
+
+def test_should_load_the_end_of_rains_rule() -> None:
+    # Pedido da remodelagem, seção 3: a partir de 1º/mar, 20 dias seguidos com menos de 10 mm.
+    regra = YamlRulesRepository(SHIPPED).get_rules().fim_das_chuvas
+
+    assert (regra.inicio, regra.dias, regra.chuva_max_mm) == ("03-01", 20, 10.0)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ("colheita", "meio_ate"),
+        ("chuva_que_sobra", "percentil_seco"),
+        ("fim_das_chuvas", "chuva_max_mm"),
+    ],
+)
+def test_should_refuse_a_screen_three_number_without_source(
+    tmp_path: Path, path: tuple[str, str]
+) -> None:
+    raw = _shipped_raw()
+    del raw[path[0]][path[1]]["fonte"]
+
+    with pytest.raises(ValueError, match=".".join(path)):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()

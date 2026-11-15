@@ -2,19 +2,27 @@
 
 import json
 from dataclasses import replace
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
 from fastapi.testclient import TestClient
 
 from app.constants import PROBLEM_JSON_MEDIA_TYPE
-from app.dependencies import get_ndvi_repository, get_rules_repository, get_soja_recente_repository
+from app.dependencies import (
+    get_climate_repository,
+    get_ndvi_repository,
+    get_rules_repository,
+    get_soja_recente_repository,
+)
 from app.main import app
+from app.models.climate import ClimateSeason
 from app.models.regras import Regras
 from app.models.soja_recente import MODIS_250M_PIXEL_M
 from app.repositories.ndvi_repository import CachedNdviRepository
 from app.repositories.rules_repository import load_default_rules
 from app.repositories.soja_recente_repository import FileSojaRecenteRepository
+from tests.integration.controllers.conftest import FakeClimateRepository
 
 UFU = {"lat": -18.9543, "lon": -48.1993}
 SITUACOES = {"plantou", "parado", "incerto", "sem_dado", "sem_soja"}
@@ -29,7 +37,13 @@ def test_should_return_field_inspection_in_the_contract_shape(client: TestClient
     assert body["celula_id"] == "-190_-482"
     assert body["dentro_da_area"] is True
     assert body["solo"] == {"textura": "argiloso", "cad_mm": 60.0, "fonte": "soilgrids"}
-    assert body["colheita_sugerida"] == {"faixa": "meio", "fonte": "ndvi_modis", "anos_usados": 10}
+    # Tarefa 0042: o dia em que a soja costuma secar (NDVI falso: 18/fev) e a faixa desse dia.
+    assert body["colheita_sugerida"] == {
+        "faixa": "meio",
+        "fonte": "ndvi_modis",
+        "anos_usados": 10,
+        "dia": "02-18",
+    }
     assert body["dados"] == [
         {"fonte": "nasa_power", "periodo": "2005-2024", "cenario": None, "modelos": None}
     ]
@@ -122,18 +136,80 @@ def test_should_return_the_rain_of_each_month_from_january_to_june(client: TestC
     # Clima falso do conftest: 8 mm/dia, sem chuva de fevereiro a junho em 2007 e 2014.
     # Fevereiro = (13 anos x 224 + 5 bissextos x 232 + 2 secos x 0) / 20 = 203,6
     body = client.get("/api/talhao", params=UFU).json()
+    chuva = body["chuva_mensal"]
 
-    assert body["chuva_mensal"] == {
-        "meses": [
-            {"mes": 1, "media_mm": 248.0},
-            {"mes": 2, "media_mm": 203.6},
-            {"mes": 3, "media_mm": 223.2},
-            {"mes": 4, "media_mm": 216.0},
-            {"mes": 5, "media_mm": 223.2},
-            {"mes": 6, "media_mm": 216.0},
-        ],
+    assert [(m["mes"], m["media_mm"]) for m in chuva["meses"]] == [
+        (1, 248.0),
+        (2, 203.6),
+        (3, 223.2),
+        (4, 216.0),
+        (5, 223.2),
+        (6, 216.0),
+    ]
+    assert chuva["anos"] == list(range(2005, 2025))
+    assert chuva["fonte"] == "nasa_power"
+
+
+def test_should_send_the_evapotranspiration_of_each_month_with_the_rain(
+    client: TestClient,
+) -> None:
+    # Tarefa 0042: a ETo do motor. O clima falso não traz ETo: vale a Hargreaves-Samani do
+    # ClimateRiskService, como no balanço hídrico. Com 8 mm/dia, a chuva nunca fica abaixo dela.
+    chuva = client.get("/api/talhao", params=UFU).json()["chuva_mensal"]
+
+    assert all(0 < m["eto_media_mm"] < m["media_mm"] for m in chuva["meses"])
+    assert chuva["fonte_eto"] == "nasa_power"
+    assert chuva["mes_chuva_abaixo_eto"] is None
+
+
+def test_should_send_the_rain_left_after_each_harvest_day(client: TestClient) -> None:
+    # Clima falso: 8 mm/dia, 2007 e 2014 sem chuva de fevereiro a junho. De 31/mar a 30/jun,
+    # 92 x 8 = 736 mm em 18 anos e 0 nos 2 secos: mediana e percentil 20 (posição 3,8) = 736.
+    sobra = client.get("/api/talhao", params=UFU).json()["chuva_que_sobra"]
+
+    assert (sobra["fim"], sobra["percentil_seco"], sobra["fonte"]) == ("06-30", 20, "nasa_power")
+    assert sobra["anos"] == list(range(2005, 2025))
+    assert sobra["dias"][0]["dia"] == "01-15"
+    assert sobra["dias"][-1] == {"dia": "03-31", "mediana_mm": 736.0, "seco_mm": 736.0}
+    assert len(sobra["dias"]) == 76
+
+
+def test_should_leave_the_end_of_rains_null_when_a_year_never_dries(client: TestClient) -> None:
+    # Clima falso: chove 8 mm todo dia até 31/jul nos anos normais (nunca 20 dias com < 10 mm).
+    assert client.get("/api/talhao", params=UFU).json()["fim_das_chuvas"] is None
+
+
+class RainUntilMarchClimate(FakeClimateRepository):
+    """Clima de teste em que chove 8 mm por dia até 31/mar e nada depois, em todos os anos."""
+
+    def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
+        seasons = super().get_seasons(cell_id)
+        return [
+            replace(
+                season,
+                rain_mm=tuple(
+                    8.0 if season.start_date + timedelta(days=i) <= date(season.year, 3, 31) else 0
+                    for i in range(len(season.rain_mm))
+                ),
+            )
+            for season in seasons
+        ]
+
+
+def test_should_send_the_end_of_rains_of_the_cell(client: TestClient) -> None:
+    app.dependency_overrides[get_climate_repository] = RainUntilMarchClimate
+
+    fim = client.get("/api/talhao", params=UFU).json()["fim_das_chuvas"]
+
+    assert fim == {
+        "mediana": "03-31",
+        "mais_cedo": {"dia": "03-31", "ano": 2005},
+        "mais_tarde": {"dia": "03-31", "ano": 2024},
         "anos": list(range(2005, 2025)),
         "fonte": "nasa_power",
+        "inicio": "03-01",
+        "dias": 20,
+        "chuva_max_mm": 10.0,
     }
 
 
@@ -211,7 +287,12 @@ def test_should_read_history_and_harvest_band_from_the_ndvi_file(
         {"ano": 2018, "situacao": "parado", "ndvi_max": 0.31, "n_obs": 3, "fonte_ano": "satelite"},
     ]
     # Mesma série, de janeiro a março: a soja seca no dia 41 (10/fev) -> colheita "cedo"
-    assert body["colheita_sugerida"] == {"faixa": "cedo", "fonte": "ndvi_modis", "anos_usados": 10}
+    assert body["colheita_sugerida"] == {
+        "faixa": "cedo",
+        "fonte": "ndvi_modis",
+        "anos_usados": 10,
+        "dia": "02-10",
+    }
 
 
 def test_should_say_sem_soja_when_the_point_never_shows_soybean(
@@ -259,7 +340,12 @@ def test_should_return_null_history_when_the_ndvi_file_has_no_point_near_the_fie
 
     assert body["dentro_da_area"] is True
     assert body["historico"] is None
-    assert body["colheita_sugerida"] == {"faixa": "meio", "fonte": "padrao", "anos_usados": 0}
+    assert body["colheita_sugerida"] == {
+        "faixa": "meio",
+        "fonte": "padrao",
+        "anos_usados": 0,
+        "dia": None,
+    }
 
 
 # --- soja na safra mais recente (RF-24, tarefa 0037) ------------------------------------------

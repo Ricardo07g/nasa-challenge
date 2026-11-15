@@ -67,10 +67,14 @@ from app.services.climate_risk_service import ClimateRiskService
 from app.services.crop_alert_service import CropAlertService
 from app.services.crop_option_service import CropOptionService
 from app.services.field_history_service import FieldHistoryService
+from app.services.harvest_delay_service import HarvestDelayService
+from app.services.monthly_rain_service import MonthlyRainService
 from app.services.past_season_service import PastSeasonService
 from app.services.pilot_area_service import PilotAreaService
+from app.services.rain_end_service import RainEndService
 from app.services.recommendation_service import RecommendationService
 from app.services.region_service import RegionService
+from app.services.remaining_rain_service import RemainingRainService
 from app.services.rotation_plan_service import RotationPlanService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
 from app.services.sinal_outono_service import SinalOutonoService
@@ -260,6 +264,8 @@ def get_talhao_service(
     ],
     smap_repo: Annotated[CellSmapRepository, Depends(get_smap_repository)],
     soja_recente_service: Annotated[SojaRecenteService, Depends(get_soja_recente_service)],
+    risk_service: Annotated[ClimateRiskService, Depends(get_climate_risk_service)],
+    rules: Annotated[Regras, Depends(get_rules)],
 ) -> TalhaoService:
     return TalhaoService(
         climate_repo=climate_repo,
@@ -267,8 +273,12 @@ def get_talhao_service(
         ndvi_repo=ndvi_repo,
         history_service=history_service,
         ingestion_service=ingestion_service,
+        # A ETo de cada mês é a mesma do balanço hídrico do motor (tarefa 0042)
+        monthly_rain_service=MonthlyRainService(reference_eto=risk_service.reference_eto),
         smap_repo=smap_repo,
         soja_recente_service=soja_recente_service,
+        remaining_rain_service=RemainingRainService(rules),
+        rain_end_service=RainEndService(rules),
     )
 
 
@@ -334,6 +344,13 @@ def get_recommendation_service(
         year_detail_service=year_detail_service,
         smap_repo=smap_repo,
     )
+
+
+def get_harvest_delay_service(
+    recommender: Annotated[RecommendationService, Depends(get_recommendation_service)],
+) -> HarvestDelayService:
+    """Custo do atraso da colheita (tela 3, tarefa 0042): o motor do /recomendacao por faixa."""
+    return HarvestDelayService(recommender)
 
 
 def get_crop_alert_service(rules: Annotated[Regras, Depends(get_rules)]) -> CropAlertService:

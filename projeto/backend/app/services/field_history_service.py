@@ -4,6 +4,7 @@ A soja do ano (pico e colheita, grupo `regiao_ndvi` do `regras.yaml`) fica aqui,
 o talhão e cada pixel da região pelo satélite (`RegionClassifier`) usam a mesma regra.
 """
 
+import math
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import replace
@@ -12,8 +13,6 @@ from statistics import median
 from typing import cast
 
 from app.constants import (
-    EARLY_HARVEST_DOY_LIMIT,
-    MID_HARVEST_DOY_LIMIT,
     MIN_NDVI_YEARS_FOR_SUGGESTION,
     NDVI_DECIMALS,
     NDVI_SCALE_FACTOR,
@@ -30,6 +29,7 @@ from app.models.talhao import (
     SituacaoAno,
 )
 from app.repositories.rules_repository import load_default_rules
+from app.services.calendar_days import common_day_of_year, month_day, month_day_text
 from app.services.errors import ValidationDomainError
 
 
@@ -37,12 +37,6 @@ def scaled_ndvi(value: float) -> float:
     """NDVI físico (-1 a 1) na precisão do MOD13Q1. O bruto vem inteiro com fator 0,0001."""
     physical = value * NDVI_SCALE_FACTOR if abs(value) > 1.0 else value
     return round(physical, NDVI_DECIMALS)
-
-
-def month_day(text: str) -> tuple[int, int]:
-    """'04-01' -> (4, 1), para comparar datas de anos diferentes sem montar `date`."""
-    month, day = text.split("-")
-    return int(month), int(day)
 
 
 # Uma observação boa (qualidade 0 ou 1) do pixel: o dia e o NDVI (bruto ou físico).
@@ -63,6 +57,7 @@ class FieldHistoryService:
         self._ndvi = regras.ndvi
         self._historico = regras.historico_ndvi
         self._soja = regras.regiao_ndvi
+        self._colheita = regras.colheita
 
     def classify_entressafra(
         self,
@@ -214,8 +209,26 @@ class FieldHistoryService:
             situacao = "incerto"
         return HistoricoAno(ano=ano, situacao=situacao, ndvi_max=maior, n_obs=len(valores))
 
+    def harvest_band(self, month: int, day: int) -> str:
+        """Faixa de colheita de um dia (grupo `colheita` do regras.yaml, tarefa 0042).
+
+        A mesma regra da data exata da tela 3: até `cedo_ate` (e janeiro) é cedo; até `meio_ate`,
+        meio; depois, tarde.
+        """
+        if (month, day) <= month_day(self._colheita.cedo_ate):
+            return "cedo"
+        if (month, day) <= month_day(self._colheita.meio_ate):
+            return "meio"
+        return "tarde"
+
     def suggest_harvest_band(self, ndvi_records: Sequence[NdviRecord]) -> ColheitaSugerida:
-        """Primeira imagem de jan a mar abaixo de 50% do pico; mediana dos anos vira a faixa."""
+        """Dia em que a soja seca (PRD 7.9) e a faixa desse dia (tarefa 0042).
+
+        Em cada ano, a primeira imagem de fevereiro ou março abaixo de 50% do pico de jan a mar. O
+        dia sugerido é a mediana desses dias (num ano comum, arredondada para baixo); a faixa sai
+        dele pela regra da data exata (`harvest_band`), para a sugestão e a seleção da tela 3 serem
+        sempre a mesma.
+        """
         by_year: dict[int, list[tuple[date, float]]] = defaultdict(list)
         for rec in ndvi_records:
             if 1 <= rec.data.month <= 3:
@@ -229,16 +242,15 @@ class FieldHistoryService:
                 (day for day, val in pts if day.month >= 2 and val <= threshold), None
             )
             if harvest_day is not None:
-                drop_doys.append(harvest_day.timetuple().tm_yday)
+                drop_doys.append(common_day_of_year(harvest_day))
 
         if len(drop_doys) < MIN_NDVI_YEARS_FOR_SUGGESTION:
             return ColheitaSugerida(faixa="meio", fonte="padrao", anos_usados=0)
 
-        med_doy = median(drop_doys)
-        if med_doy <= EARLY_HARVEST_DOY_LIMIT:
-            faixa = "cedo"
-        elif med_doy <= MID_HARVEST_DOY_LIMIT:
-            faixa = "meio"
-        else:
-            faixa = "tarde"
-        return ColheitaSugerida(faixa=faixa, fonte="ndvi_modis", anos_usados=len(drop_doys))
+        dia = month_day_text(math.floor(median(drop_doys)))
+        return ColheitaSugerida(
+            faixa=self.harvest_band(*month_day(dia)),
+            fonte="ndvi_modis",
+            anos_usados=len(drop_doys),
+            dia=dia,
+        )

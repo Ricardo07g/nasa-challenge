@@ -7,13 +7,14 @@ import type { Lang } from '../../i18n/language'
 import { EXAMPLE_FARM } from '../../models/area'
 import type { TipoEvento } from '../../models/pastSeason'
 import type { CommunityRepository } from '../communityRepository'
+import type { CustoAtrasoRepository } from '../custoAtrasoRepository'
 import type { ExemploRepository } from '../exemploRepository'
 import type { PastSeasonRepository } from '../pastSeasonRepository'
 import type { RecomendacaoRepository } from '../recomendacaoRepository'
 import type { RegionRepository } from '../regionRepository'
 import type { TalhaoRepository } from '../talhaoRepository'
 import { delay } from './delay'
-import { buildCommunity, buildRecomendacao, buildTalhao } from './fixtures'
+import { buildCommunity, buildCustoAtraso, buildRecomendacao, buildTalhao } from './fixtures'
 
 /** Talhão com dados de exemplo. */
 export function createMockTalhaoRepository(delayMs = 500): TalhaoRepository {
@@ -42,6 +43,16 @@ export function createMockExemploRepository(delayMs = 0): ExemploRepository {
         talhao: buildTalhao(EXAMPLE_FARM, lang),
         recomendacao: buildRecomendacao({ ...EXAMPLE_FARM, colheita: 'meio' }, lang),
       }
+    },
+  }
+}
+
+/** Custo do atraso (tela 3): a melhor opção de cada faixa, com números de exemplo. */
+export function createMockCustoAtrasoRepository(delayMs = 400): CustoAtrasoRepository {
+  return {
+    async get(params, lang) {
+      await delay(delayMs)
+      return buildCustoAtraso(params, lang)
     },
   }
 }

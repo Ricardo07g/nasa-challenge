@@ -106,6 +106,48 @@ ndvi:
     valor: 0.50
     fonte: "PRD 7.9: soja secando quando o NDVI cai abaixo de 50% do pico do verão"
 
+colheita:
+  # Tela 3 "Quando você colhe a soja?" (tarefa 0042). A data exata vira uma das três faixas do motor
+  # (cedo, meio, tarde); a faixa sugerida pelo NDVI (PRD 7.9) usa a mesma regra, para a sugestão e a
+  # seleção serem sempre a mesma. Datas "MM-DD", inclusivas.
+  cedo_ate:
+    valor: "02-10"
+    fonte: "Regra que a tela 3 já usava para a data exata (harvestService.harvestFromDate) e os rótulos das faixas ('até dia 10'); janeiro também conta como cedo"
+  meio_ate:
+    valor: "02-20"
+    fonte: "Regra que a tela 3 já usava para a data exata e os rótulos das faixas ('dia 11 a 20', 'depois do dia 20'). Tarefa 0042: a faixa sugerida pelo NDVI usava até 22/fev (dia 53, app/constants.py) e passou a usar esta, para a sugestão e a seleção serem a mesma"
+  janela_inicio:
+    valor: "01-15"
+    fonte: "Época da colheita da soja na tela 3 (harvestService.harvestWindow, de 15/jan a 31/mar; a decisão acontece de dezembro a março, PRD §3). Primeiro dia da tabela da chuva que sobra"
+  janela_fim:
+    valor: "03-31"
+    fonte: "Época da colheita da soja na tela 3 (harvestService.harvestWindow). Último dia da tabela da chuva que sobra"
+
+chuva_que_sobra:
+  # "Chuva que sobra depois da colheita" (tela 3, tarefa 0042): para cada dia de colheita da época, a
+  # chuva somada do dia até `fim` em cada ano da célula (GPM IMERG; nos anos sem IMERG, NASA POWER), a
+  # mediana dos anos e o ano seco (percentil, com interpolação linear entre os anos ordenados).
+  fim:
+    valor: "06-30"
+    fonte: "Pedido da remodelagem, seção 3 ('da data escolhida até junho'): até 30 de junho, inclusive"
+  percentil_seco:
+    valor: 20
+    fonte: "Pedido da remodelagem, seção 3 ('a de um ano seco, percentil 20'): 1 em cada 5 anos teve menos chuva que isso. Hipótese do time, a revisar"
+
+fim_das_chuvas:
+  # Fim das chuvas na célula (tela 3, tarefa 0042; o raio-X da seção 4 usa o mesmo): em cada ano, o
+  # primeiro dia, a partir de `inicio`, que começa `dias` dias seguidos com menos de `chuva_max_mm` mm
+  # SOMADOS (não por dia). Ano sem nenhum dia assim dentro da série (até 31/jul): sem resultado.
+  inicio:
+    valor: "03-01"
+    fonte: "Pedido da remodelagem, seção 3 ('primeiro dia, a partir de 1º de março'). Hipótese do time, a revisar"
+  dias:
+    valor: 20
+    fonte: "Pedido da remodelagem, seção 3 ('20 dias seguidos'). Hipótese do time, a revisar"
+  chuva_max_mm:
+    valor: 10.0
+    fonte: "Pedido da remodelagem, seção 3 ('com menos de 10 mm'), lido como a soma dos 20 dias: 10 mm por dia seria quase todo dia de chuva (decisão da tarefa 0042). Hipótese do time, a revisar"
+
 historico_ndvi:
   # Histórico do talhão pelo NDVI do MODIS (PRD 7.8 e guia do histórico NDVI, "Regra do talhão").
   # Por ano: observações boas (qualidade 0 ou 1) da janela; menos de `min_observacoes` = sem_dado;

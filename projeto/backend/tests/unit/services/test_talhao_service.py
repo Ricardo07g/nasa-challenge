@@ -7,7 +7,15 @@ import pytest
 
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.soja_recente import PicoSojaRecente, SojaRecente
-from app.models.talhao import ChuvaMes, FonteDado, HistoricoAno, NdviRecord, SoloInfo
+from app.models.talhao import (
+    ChuvaMes,
+    ChuvaQueSobraDia,
+    DiaDoAno,
+    FonteDado,
+    HistoricoAno,
+    NdviRecord,
+    SoloInfo,
+)
 from app.services.errors import ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
 from app.services.soja_recente_service import SojaRecenteService
@@ -24,10 +32,12 @@ class FakeClimateRepository:
         deltas: list[Cmip6Delta] | None = None,
         seasons: bool = True,
         imerg_years: tuple[int, ...] = (),
+        rain: tuple[float, ...] = tuple([2.0] * DAYS),
     ) -> None:
         self._deltas = deltas or []
         self._seasons = seasons
         self._imerg_years = imerg_years
+        self._rain = rain
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
         return "-190_-482" if -19.25 <= lat < -18.75 and -48.4375 <= lon < -47.8125 else None
@@ -41,7 +51,7 @@ class FakeClimateRepository:
                 year=year,
                 start_date=date(year, 1, 1),
                 lat=-18.95,
-                rain_mm=tuple([2.0] * DAYS),
+                rain_mm=self._rain,
                 rain_source="gpm_imerg" if year in self._imerg_years else "nasa_power",
                 tmax_c=tuple([30.0] * DAYS),
                 tmin_c=tuple([18.0] * DAYS),
@@ -263,6 +273,50 @@ def test_should_return_no_monthly_rain_when_the_cell_has_no_seasons() -> None:
 
     assert talhao.dentro_da_area is True
     assert talhao.chuva_mensal is None
+    assert (talhao.chuva_que_sobra, talhao.fim_das_chuvas) == (None, None)
+
+
+# --- tela 3 "Quando você colhe a soja?" (tarefa 0042) -------------------------------------------
+
+
+def test_should_suggest_the_day_the_soy_dries_with_its_band() -> None:
+    # NDVI de teste: a soja seca em 18/fev em todos os anos -> dia 02-18, faixa meio.
+    sugerida = _service().inspect_talhao(lat=-18.9543, lon=-48.1993).colheita_sugerida
+
+    assert (sugerida.dia, sugerida.faixa) == ("02-18", "meio")
+
+
+def test_should_return_the_rain_left_after_harvest_of_the_cell() -> None:
+    sobra = _service().inspect_talhao(lat=-18.9543, lon=-48.1993).chuva_que_sobra
+
+    assert sobra is not None
+    # 2 mm/dia: de 31/mar a 30/jun são 92 dias, 184 mm em todos os anos.
+    assert sobra.dias[-1] == ChuvaQueSobraDia(dia="03-31", mediana_mm=184.0, seco_mm=184.0)
+    assert sobra.anos == tuple(range(2005, 2025))
+    assert (sobra.fim, sobra.percentil_seco, sobra.fonte) == ("06-30", 20, "nasa_power")
+
+
+def test_should_return_the_end_of_rains_of_the_cell() -> None:
+    # Sem chuva nenhuma: a chuva "acabou" no primeiro dia olhado, 1º/mar, em todos os anos.
+    climate = FakeClimateRepository(rain=tuple([0.0] * DAYS))
+
+    fim = _service(climate).inspect_talhao(lat=-18.9543, lon=-48.1993).fim_das_chuvas
+
+    assert fim is not None
+    assert fim.mediana == "03-01"
+    assert fim.mais_cedo == DiaDoAno(dia="03-01", ano=2005)
+    assert fim.mais_tarde == DiaDoAno(dia="03-01", ano=2024)
+
+
+def test_should_have_no_end_of_rains_when_it_never_dries() -> None:
+    # 2 mm todo dia até 31/jul: 20 dias somam 40 mm, nunca menos de 10.
+    assert _service().inspect_talhao(lat=-18.9543, lon=-48.1993).fim_das_chuvas is None
+
+
+def test_should_have_no_rain_left_nor_end_of_rains_outside_the_area() -> None:
+    talhao = _service().inspect_talhao(lat=-15.79, lon=-47.88)
+
+    assert (talhao.chuva_que_sobra, talhao.fim_das_chuvas) == (None, None)
 
 
 def test_should_tell_whether_the_satellite_saw_soybean_in_the_last_season() -> None:
