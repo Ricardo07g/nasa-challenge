@@ -70,6 +70,17 @@ describe('WhereView (tela "Onde fica a lavoura")', () => {
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('href', '/')
   })
 
+  it('diz sempre, junto do mapa, que o MVP funciona na região de Uberlândia e Uberaba e que vamos ampliar', () => {
+    setup()
+
+    const note = screen.getByText(
+      'Nesta primeira versão, o app funciona na região de Uberlândia e Uberaba (linha tracejada). Vamos ampliar para todo o Triângulo Mineiro.',
+    )
+    const map = screen.getByRole('region', { name: /Mapa para marcar a lavoura/ })
+    expect(map.parentElement).toContainElement(note)
+    expect(screen.queryByRole('region', { name: 'Ainda não chegamos aí' })).not.toBeInTheDocument()
+  })
+
   it('mostra no painel o lugar e as coordenadas do ponto escolhido', () => {
     setup()
 
@@ -159,7 +170,11 @@ describe('WhereView (tela "Onde fica a lavoura")', () => {
     setup({ outside: true, canConfirm: false })
 
     expect(screen.getByRole('heading', { name: 'Ainda não chegamos aí' })).toBeInTheDocument()
-    expect(screen.getByText('Por enquanto só temos dados da região de Uberlândia e Uberaba.')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Por enquanto só temos dados da região de Uberlândia e Uberaba. Vamos ampliar para todo o Triângulo Mineiro.',
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
     expect(screen.getByRole('button', { name: 'Confirmar local' })).toBeDisabled()
   })
@@ -175,7 +190,16 @@ describe('WhereView (tela "Onde fica a lavoura")', () => {
     setup({ t: en, outside: true, canConfirm: false })
 
     expect(screen.getByRole('combobox', { name: 'Search for a city, road or address' })).toBeInTheDocument()
-    expect(screen.getByText('For now we only have data for the Uberlândia and Uberaba region.')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'For now we only have data for the Uberlândia and Uberaba region. We will expand to the whole Triângulo Mineiro.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'This first version (MVP) works in the Uberlândia and Uberaba region (dashed line). We will expand to the whole Triângulo Mineiro.',
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Confirm location' })).toBeDisabled()
   })
 })

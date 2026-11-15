@@ -105,15 +105,19 @@ export function WhereView({
         />
       </div>
       <div className={layout.mapGrid}>
-        <MapPicker
-          label={w.mapLabel}
-          center={center}
-          placeLabel={w.near(place)}
-          bounds={bounds}
-          boundsLabel={w.areaLegend}
-          boundsAction={w.showArea}
-          onMove={onMove}
-        />
+        <div className={layout.stack}>
+          <MapPicker
+            label={w.mapLabel}
+            center={center}
+            placeLabel={w.near(place)}
+            bounds={bounds}
+            boundsLabel={w.areaLegend}
+            boundsAction={w.showArea}
+            onMove={onMove}
+          />
+          {/* Tarefa 0051 (RF-35): o limite do MVP, sempre visível logo abaixo da legenda do mapa. */}
+          <p className={layout.muted}>{w.mvpNote}</p>
+        </div>
         <div className={layout.stack}>
           <Card>
             <IconBubble tone="blue">

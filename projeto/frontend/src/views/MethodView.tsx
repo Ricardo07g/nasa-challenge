@@ -125,6 +125,7 @@ export function MethodView(props: MethodViewProps) {
       </Card>
       <section aria-label={m.sourcesTitle} className={layout.stack}>
         <h2 className={layout.sectionTitle}>{m.sourcesTitle}</h2>
+        <p className={layout.muted}>{m.sourcesArea}</p>
         {sources.status === 'loading' && <LoadingState>{t.common.loading}</LoadingState>}
         {sources.status === 'error' && (
           <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={props.onRetrySources} />

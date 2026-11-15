@@ -403,7 +403,9 @@ describe('SatelliteView (tela 4)', () => {
     setup({ status: 'outside' })
 
     const outside = screen.getByRole('region', { name: 'Ainda não chegamos aí' })
-    expect(outside).toHaveTextContent('Por enquanto, os dados estão prontos só para a região')
+    expect(outside).toHaveTextContent(
+      'Por enquanto, os dados estão prontos só para a região de Uberlândia e Uberaba. Vamos ampliar para todo o Triângulo Mineiro.',
+    )
     expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
   })
 })

@@ -40,6 +40,24 @@ describe('GuideView (página inicial)', () => {
     expect(within(climate).queryByText('Rascunho')).toBeNull()
   })
 
+  it('diz a área do MVP logo abaixo do título, sem mexer nos artigos (tarefa 0051)', () => {
+    setupIndex()
+    expect(
+      screen.getByText(
+        'Nesta primeira versão (MVP), o app funciona na região de Uberlândia e Uberaba (MG). Vamos ampliar para todo o Triângulo Mineiro.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('a área do MVP em inglês', () => {
+    setupIndex({ t: en })
+    expect(
+      screen.getByText(
+        'This first version (MVP) works in the Uberlândia and Uberaba region (Minas Gerais, Brazil). We will expand to the whole Triângulo Mineiro.',
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('a busca avisa o controller', async () => {
     const props = setupIndex()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar pelo título' }), 'v')

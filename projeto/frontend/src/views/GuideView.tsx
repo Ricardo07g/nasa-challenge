@@ -25,6 +25,8 @@ export function GuideView({ t, backTo, groups, query, onQuery, count }: GuideVie
     <div className={layout.page}>
       <BackLink to={backTo}>{t.nav.back}</BackLink>
       <PageHeading title={g.title} subtitle={g.subtitle} />
+      {/* Tarefa 0051 (RF-35): a área do MVP fica aqui, e não nos artigos (que têm limite de palavras). */}
+      <p className={layout.muted}>{g.mvpArea}</p>
       <input
         type="search"
         className={styles.search}

@@ -59,6 +59,7 @@ export function StartView({ t, telegramHref = null }: { t: Messages; telegramHre
             <h1 className={styles.title}>{s.title}</h1>
             <p className={styles.slogan}>{t.header.slogan}</p>
             <p className={styles.lead}>{s.lead}</p>
+            <p className={styles.mvp}>{s.mvpNote}</p>
             <div className={styles.actions}>
               <Button to="/onde" arrow>
                 {s.start}

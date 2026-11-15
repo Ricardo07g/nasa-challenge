@@ -85,6 +85,8 @@ export const en = {
     eyebrow: 'For soybean growers in the Triângulo Mineiro, Brazil',
     title: 'What to plant after soybeans?',
     lead: 'NASA satellites look at many years of rain on your field. See the best option.',
+    mvpNote:
+      'This first version (MVP) works in the Uberlândia and Uberaba region (Minas Gerais, Brazil). We will expand to the whole Triângulo Mineiro.',
     start: 'Start',
     meta: '2 questions · 1 minute · free, no sign-up',
     example: 'See a ready-made example',
@@ -98,7 +100,7 @@ export const en = {
     stepsEyebrow: 'From NASA to your field',
     photoAlt: 'Crop rows in the Brazilian Cerrado',
     nasaData: 'NASA data',
-    region: 'Triângulo Mineiro · MG',
+    region: 'MVP · Uberlândia and Uberaba region',
   },
   where: {
     title: 'Where is your field?',
@@ -123,6 +125,8 @@ export const en = {
     invalidCoordinates: 'These coordinates do not exist. Latitude goes from -90 to 90, and longitude from -180 to 180.',
     attribution: 'Addresses: © OpenStreetMap',
     areaLegend: 'Dashed line: area with data',
+    mvpNote:
+      'This first version (MVP) works in the Uberlândia and Uberaba region (dashed line). We will expand to the whole Triângulo Mineiro.',
     showArea: 'See the whole area',
     useLocation: 'Use my current location',
     locating: 'Finding your location…',
@@ -132,8 +136,9 @@ export const en = {
     confirm: 'Confirm location',
     outsideTitle: "We're not there yet",
     outsideText:
-      'For now, the data is ready only for the Uberlândia and Uberaba region. See how it works on the example farm.',
-    outsideNotice: 'For now we only have data for the Uberlândia and Uberaba region.',
+      'For now, the data is ready only for the Uberlândia and Uberaba region. We will expand to the whole Triângulo Mineiro. See how it works on the example farm.',
+    outsideNotice:
+      'For now we only have data for the Uberlândia and Uberaba region. We will expand to the whole Triângulo Mineiro.',
     seeExample: 'See the example farm',
   },
   when: {
@@ -960,6 +965,8 @@ export const en = {
       and: 'and',
     },
     sourcesTitle: 'Where each piece of data comes from',
+    sourcesArea:
+      'This first version (MVP) has data ready for the Uberlândia and Uberaba region (Minas Gerais, Brazil). We will expand to the whole Triângulo Mineiro.',
     sources: {
       nasa_power: {
         what: 'Heat and crop water use (ETo), day by day; rain only in the years without GPM IMERG',
@@ -988,6 +995,8 @@ export const en = {
   guide: {
     title: 'Guide',
     subtitle: 'Short answers to the most common questions from the field.',
+    mvpArea:
+      'This first version (MVP) works in the Uberlândia and Uberaba region (Minas Gerais, Brazil). We will expand to the whole Triângulo Mineiro.',
     communityLink: 'Guide: questions and short answers',
     searchLabel: 'Search by title',
     searchPlaceholder: 'Search articles',

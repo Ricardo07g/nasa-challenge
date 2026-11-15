@@ -205,7 +205,12 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   visita). O front não repete os números (só o mock, que imita a API). Na tela "Onde fica a lavoura", o
   limite aparece tracejado com legenda em texto, e o ponto fora dele desliga o "Confirmar local"; enquanto a
   área carrega, o botão espera; se ela não carregar, a tela deixa seguir (o backend ainda responde
-  `OUTSIDE_AREA` nas telas seguintes).
+  `OUTSIDE_AREA` nas telas seguintes). **Área do MVP (tarefa 0051 do backend, RF-35):** a área não muda e as telas
+  dizem que esta primeira versão funciona na região de Uberlândia e Uberaba (MG) e que vamos ampliar para todo o
+  Triângulo Mineiro: o selo e a frase da tela inicial (`start.region`, `start.mvpNote`), a frase sempre visível
+  junto do mapa de `/onde` (`where.mvpNote`), os avisos de fora da área (`where.outsideNotice`, `outsideText`), "De
+  onde vem cada dado" (`method.sourcesArea`) e a página inicial do Guia (`guide.mvpArea`). Mudou a área? Troque esses
+  textos junto, em pt e en.
 - **Tela 3 "Quando você colhe" (tarefa 0042 do backend, RF-02, RF-16 e RF-27):** o campo do dia vem no
   topo, já com o dia do satélite (`colheita_sugerida.dia`, posto no ano da época da colheita por
   `services/harvestService.ts`); "Não sei o dia exato" abre as 3 faixas. **Sugestão = seleção:** a faixa
