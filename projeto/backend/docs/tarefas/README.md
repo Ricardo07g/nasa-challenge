@@ -37,6 +37,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0026**](0026-imerg-por-recorte.md) | **Chuva diária do GPM IMERG Final por recorte (OPeNDAP ASCII, um pedido por dia, em paralelo, com cache) e contrato "IMERG" (`gpm_imerg`)** | **Concluída** | **Média** | `pipeline/fetch_imerg.py`, `app/models/climate.py` |
 | [**0027**](0027-imerg-na-conta.md) | **Chuva do IMERG na conta: carga dos anos completos no `climate_season` (`--imerg`), chave `gpm_imerg` no Por quê? e no `dados[]` do `/talhao`** | **Concluída** | **Média** | `pipeline/load_files_to_db.py`, `app/repositories/`, `app/services/` |
 | [**0028**](0028-chuva-de-cada-mes.md) | **Chuva de cada mês na região (jan a jun) em /talhao e o gráfico da tela 3 com dado real** | **Concluída** | **Média** | `app/services/monthly_rain_service.py`, `app/schemas/talhao.py`, front da tela 3 |
+| [**0034**](0034-regiao-pelo-satelite.md) | **Região pelo satélite (P3): `GET /api/regiao` com a lavoura parada num raio de 30 km, NDVI do MODIS por área na ORNL e máscara do MCD12Q1** | **Concluída** | **Média** | `pipeline/fetch_regiao_ndvi.py`, `app/services/region_service.py`, `app/controllers/regiao_controller.py` |
 | [**0035**](0035-detalhe-de-cada-ano.md) | **Detalhe de cada ano em /recomendacao (`opcoes[].anos_detalhe[]`, P1) e fase do El Niño / La Niña pelo ONI da NOAA** | **Concluída** | **Alta** | `pipeline/fetch_oni.py`, `app/services/year_detail_service.py`, `app/repositories/enso_repository.py` |
 
 ---

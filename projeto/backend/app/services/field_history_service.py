@@ -56,14 +56,13 @@ class FieldHistoryService:
         Os anos, a janela, os limites e o mínimo de observações vêm do `regras.yaml`.
         """
         regra = self._historico
-        inicio, fim = _month_day(regra.janela_inicio), _month_day(regra.janela_fim)
         by_year: dict[int, list[float]] = defaultdict(list)
         for rec in ndvi_records:
-            if inicio <= (rec.data.month, rec.data.day) <= fim:
+            if self.in_entressafra(rec.data):
                 by_year[rec.data.year].append(scaled_ndvi(rec.ndvi))
 
         anos = tuple(
-            self._classify_year(ano, by_year.get(ano, []))
+            self.classify_year(ano, by_year.get(ano, []))
             for ano in range(regra.ano_inicio, regra.ano_fim + 1)
         )
         parado = sum(1 for a in anos if a.situacao == "parado")
@@ -78,8 +77,17 @@ class FieldHistoryService:
             janela=f"{regra.janela_inicio} a {regra.janela_fim}",
         )
 
-    def _classify_year(self, ano: int, valores: list[float]) -> HistoricoAno:
-        """Poucas observações: sem_dado; > limite_plantou: plantou; < limite_parado: parado."""
+    def in_entressafra(self, day: date) -> bool:
+        """O dia cai na janela da entressafra (`janela_inicio` a `janela_fim`, inclusive)?"""
+        regra = self._historico
+        inicio, fim = _month_day(regra.janela_inicio), _month_day(regra.janela_fim)
+        return inicio <= (day.month, day.day) <= fim
+
+    def classify_year(self, ano: int, valores: Sequence[float]) -> HistoricoAno:
+        """Um ano pelas observações boas da janela, já no NDVI físico (o talhão e cada pixel da
+        região usam esta regra). Poucas observações: sem_dado; > limite_plantou: plantou;
+        < limite_parado: parado; senão incerto.
+        """
         regra = self._historico
         if len(valores) < regra.min_observacoes:
             return HistoricoAno(ano=ano, situacao="sem_dado", ndvi_max=None, n_obs=len(valores))

@@ -9,7 +9,7 @@ import {
   regionSummary,
   type CommunityService,
 } from '../services/communityService'
-import { farmService, type FarmService } from '../services/farmService'
+import { farmService, isOutsideArea, type FarmService } from '../services/farmService'
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { EXAMPLE_FARM } from '../services/locationService'
 import { historySummary } from '../services/satelliteService'
@@ -24,9 +24,10 @@ function blockStatus(state: AsyncState<unknown>): BlockStatus {
 }
 
 /**
- * Tela 8 "Na sua região": a área parada na região pelo satélite (P3) e o que os vizinhos contam. Com
- * a API real, a comunidade e a região (sem endpoint ainda) ficam "Ainda não conectado"; os vizinhos
- * simulados e os botões de demonstração só existem com os dados de exemplo.
+ * Tela 8 "Na sua região": a área parada na região pelo satélite (P3, `/api/regiao`) e o que os
+ * vizinhos contam. Com a API real, a comunidade fica "Ainda não conectado", e a região também quando
+ * o ponto está fora das regiões calculadas; os vizinhos simulados e os botões de demonstração só
+ * existem com os dados de exemplo.
  */
 export function useCommunityController(deps: Deps = defaultDeps) {
   const { lang } = useI18n()
@@ -42,7 +43,10 @@ export function useCommunityController(deps: Deps = defaultDeps) {
 
   // P3: área parada na região, pelo satélite.
   const region = useAsync(() => deps.community.region(center, lang), [center, lang, deps.community])
-  const regionStatus = blockStatus(region)
+  // Fora das regiões que o satélite já calculou (404 OUTSIDE_AREA) não é falha: o dado ainda não
+  // existe para esse ponto, então fica "Ainda não conectado", como sem o endpoint.
+  const regionStatus =
+    region.status === 'error' && isOutsideArea(region.error) ? 'not-connected' : blockStatus(region)
   // Histórico da própria lavoura, para comparar com a região (quase sempre já no cache).
   const talhao = useAsync(
     () => deps.farm.talhao({ ...center, exemplo: params ? params.exemplo : true }, lang),

@@ -137,8 +137,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 - **Preparar os dados na sua máquina** (pré-carga, CMIP6, NDVI, pacote do time e cópia do banco):
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
-  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`). Nunca coloque caminho
-  fixo (como `/workspace/...`) num repository.
+  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`). Nunca
+  coloque caminho fixo (como `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
@@ -390,8 +390,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `.env` desta pasta (caminho relativo à pasta de onde a API roda, `projeto/backend`);
   - **no compose**: já ligado. O serviço `backend` monta a pasta local `data/baixados` (fora do git)
     em `/dados_baixados`, só leitura, e aponta `CMIP6_PATH` para
-    `/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json` e `NDVI_CACHE_PATH` para
-    `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json`. Sem o arquivo, segue sem o dado.
+    `/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json`, `NDVI_CACHE_PATH` para
+    `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` e `REGIAO_PATH` para
+    `/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`. Sem o arquivo, segue sem o dado.
     Como baixar ou receber esses arquivos: `docs/como-preparar-os-dados-locais.md`.
 
 - **NDVI do MODIS e histórico do talhão** (R3.2, tarefa 0018). Com ou sem banco, a série vem do arquivo
@@ -471,6 +472,48 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     "fonte": "nasa_power"
   }
   ```
+- **Região pelo satélite** (P3, tarefa 0034): `GET /api/regiao?lat&lon`, no contrato do front
+  (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem banco).
+  - `pipeline/fetch_regiao_ndvi.py` pede à **ORNL DAAC** (`modis.ornl.gov/rst/api/v1`, pública,
+    sem credencial) o recorte **por área** do NDVI e da `pixel_reliability` de MOD13Q1 e MYD13Q1
+    (janela do `historico_ndvi`, abril a julho de 2016 a 2025) e o uso do solo **MCD12Q1**
+    (`LC_Type1`). Por área porque o tempo do pedido quase não depende da área (medido em 14/11:
+    ~25 s tanto para 9 × 9 quanto para 241 × 241 pixels); a ORNL aceita até 10 datas e ±100 km
+    por pedido. Uma região = **41 pedidos** (10 anos × 2 produtos × 2 bandas + 1 do uso do solo),
+    **~20 min** e ~30 MB de cache. O AppEEARS não foi usado: a fila estava parada.
+  - Caixa pedida: a ORNL conta o km como pixels de 250 m, mas o pixel tem 231,66 m
+    (`kmAboveBelow=30` devolve ±27,9 km). 30 km pedem ±33 km, e o círculo é recortado no script.
+  - **Máscara de lavoura**: classe **12** do IGBP (lavouras, pelo menos 60% cultivado), do
+    MCD12Q1 do mesmo ano (sem o ano, o último antes). A 14 (mosaico com vegetação natural) fica de
+    fora: o cerrado e o pasto do mosaico confundiriam parado com plantou. A classe 12 também tem
+    cana e café (verdes o ano todo): o "plantou" da região tende a sair alto (calibrar).
+  - **Regra**: cada pixel de 250 m com o centro dentro do raio e na lavoura é classificado pelo
+    `RegionClassifier`, que usa o `classify_year` e o `in_entressafra` do `FieldHistoryService`
+    (a mesma regra do talhão: qualidade 0 ou 1, janela, mínimo de 3 observações, 0,60 e 0,45).
+    Os pixels viram percentuais (`RegionClassifier.summarize`, 1 casa): parado, plantou e
+    incerto sobre os classificados (somam 100); `pct_sem_dado` sobre todos os pixels de lavoura.
+    Nenhum pixel sai do script (RNF-10).
+  - **Cache e retomada**: uma resposta por arquivo (gzip) em `cache_ornl/`; parou (502, rede),
+    rode de novo. Saída padrão `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`, a
+    partir da raiz do repositório (fora do git).
+
+    ```bash
+    uv run python -m pipeline.fetch_regiao_ndvi --dry-run   # os 41 pedidos e o tempo, sem rede
+    uv run python -m pipeline.fetch_regiao_ndvi             # fazenda de exemplo, raio de 30 km
+    uv run python -m pipeline.fetch_regiao_ndvi --centros "-18.9543,-48.1993;-17.5,-47.25" --raio-km 30
+    ```
+
+  - **API** (`RegionService`): a região mais perto cujo círculo (`raio_km` em volta do centro)
+    contém o ponto; só os anos com algum pixel classificado, em ordem. Fora de todos os círculos,
+    ou sem arquivo: 404 `OUTSIDE_AREA`. Região sem lavoura: `anos: []`. Exemplo (números
+    ilustrativos):
+
+    ```json
+    {"raio_km": 30.0, "fonte": "MODIS MOD13Q1 + MYD13Q1",
+     "mascara": "MCD12Q1 LC_Type1 classe 12 (lavouras)",
+     "anos": [{"ano": 2016, "pct_parado": 62.0, "pct_plantou": 29.0, "pct_incerto": 9.0,
+               "n_pixels": 13412, "pct_sem_dado": 1.5}]}
+    ```
 
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
@@ -680,6 +723,43 @@ em `versao_dados.parametros`. Não tem tabela no banco.
 | `ano` | `ano` | ano da safrinha (o DJF de 2016 é dez/2015 a fev/2016); 1950 ou depois |
 | `oni` | `oni` | média das estações, em °C, com 2 casas; finito e entre −5 e +5 (recusa marcas como −99,9) |
 | `fase` | `fase` | `el_nino`, `la_nina` ou `null` (neutro); ausente vale `null` |
+
+### Região pelo satélite: `RegiaoSatelite` (`app/models/regiao.py`)
+
+Uma região por centro e raio, com os percentuais da lavoura na entressafra de cada ano. O
+`pipeline/fetch_regiao_ndvi.py` grava e o `FileRegionRepository` lê (`REGIAO_PATH`). Só totais e
+percentuais: nenhum pixel nem ponto individual (RNF-10). Números ilustrativos:
+
+```json
+{
+  "versao_dados": {"fonte": "modis_mod13q1", "parametros": {"servico": "ornl_daac", "tipo": "regiao", "mascara": {"produto": "MCD12Q1.061", "camada": "LC_Type1", "classes": [12]}}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-modis-ndvi-regiao"},
+  "regioes": [
+    {
+      "lat": -18.9543, "lon": -48.1993, "raio_km": 30.0,
+      "fonte": "MODIS MOD13Q1 + MYD13Q1", "mascara": "MCD12Q1 LC_Type1 classe 12 (lavouras)",
+      "anos": [
+        {"ano": 2016, "n_pixels": 13412, "pct_parado": 62.0, "pct_plantou": 29.0, "pct_incerto": 9.0, "pct_sem_dado": 1.5},
+        {"ano": 2017, "n_pixels": 0, "pct_parado": null, "pct_plantou": null, "pct_incerto": null, "pct_sem_dado": null}
+      ]
+    }
+  ]
+}
+```
+
+| JSON | Model | Regra |
+| --- | --- | --- |
+| `lat`, `lon` | `lat`, `lon` | centro da região, WGS 84 |
+| `raio_km` | `raio_km` | maior que zero |
+| `fonte`, `mascara` | `fonte`, `mascara` | textos não vazios (produtos do NDVI e de onde vem a lavoura) |
+| `anos[].ano` | `RegiaoAno.ano` | sem ano repetido na região |
+| `anos[].n_pixels` | `n_pixels` | pixels de 250 m de lavoura dentro do raio (0 ou mais) |
+| `anos[].pct_parado`, `pct_plantou`, `pct_incerto` | idem | 0 a 100, sobre os pixels classificados, somam 100 (±0,2 do arredondamento); os três `null` sem pixel classificado |
+| `anos[].pct_sem_dado` | `pct_sem_dado` | 0 a 100, sobre `n_pixels`; `null` só com `n_pixels` 0; 100 quando nenhum foi classificado |
+
+- `versao_dados.fonte` = `modis_mod13q1` (a mesma chave do NDVI do talhão); os `parametros` dizem o
+  serviço (`ornl_daac`), a máscara (produto, camada, classes e o ano usado em cada ano), a janela,
+  os anos, os limites, o raio, a caixa pedida (`km_pedido`) e o número de pedidos.
+- Ainda não há tabela: a API lê o arquivo. O guia NDVI propõe a `regiao_entressafra` no PostGIS.
 
 ## Configuração e segredos
 

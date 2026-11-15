@@ -158,6 +158,30 @@ def test_should_use_window_years_and_minimum_from_injected_rules() -> None:
     assert history.janela == "05-01 a 06-30"
 
 
+def test_should_classify_one_year_from_its_good_values() -> None:
+    # A regra de um ano só, que a região pelo satélite (P3) aplica a cada pixel.
+    service = FieldHistoryService()
+
+    assert service.classify_year(2022, [0.22, 0.72, 0.25]) == HistoricoAno(
+        ano=2022, situacao="plantou", ndvi_max=0.72, n_obs=3
+    )
+    assert service.classify_year(2022, [0.72, 0.25]).situacao == "sem_dado"
+
+
+@pytest.mark.parametrize(
+    ("day", "inside"),
+    [
+        (date(2023, 4, 1), True),
+        (date(2023, 7, 31), True),
+        (date(2024, 5, 15), True),
+        (date(2023, 3, 31), False),
+        (date(2023, 8, 1), False),
+    ],
+)
+def test_should_tell_whether_a_day_falls_in_the_offseason_window(day: date, inside: bool) -> None:
+    assert FieldHistoryService().in_entressafra(day) is inside
+
+
 def test_should_suggest_meio_harvest_band_when_ndvi_drops_in_mid_february() -> None:
     service = FieldHistoryService()
     records = []

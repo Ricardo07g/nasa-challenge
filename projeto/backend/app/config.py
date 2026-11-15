@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     # Fase do El Niño / La Niña de cada safrinha pelo ONI da NOAA (saída do pipeline/fetch_oni.py).
     # Sem arquivo: o detalhe de cada ano (P1) sai com `enso: null`.
     oni_path: Path | None = None
+    # Região pelo satélite (P3): percentuais da lavoura parada na entressafra num raio em volta
+    # de um ponto (saída do pipeline/fetch_regiao_ndvi.py). Sem arquivo: /api/regiao responde
+    # 404 OUTSIDE_AREA.
+    regiao_path: Path | None = None
 
     # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
     # usam; a API não precisa de nenhuma (ADR-0005).
