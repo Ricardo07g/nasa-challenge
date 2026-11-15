@@ -1,6 +1,6 @@
 import type { NivelSinal, Recomendacao } from '../models/recomendacao'
 import type { Ponto, Talhao, Textura } from '../models/talhao'
-import { historySummary, rainSummary } from './satelliteService'
+import { type ClimateSummary, climateSummary, historySummary, rainSummary } from './satelliteService'
 
 /** RF-19: a missão tem 6 fases (lavoura, terra, chuva e calor, histórico, clima que vem, conta). */
 export const MISSION_PHASES = 6
@@ -25,6 +25,9 @@ export type MissionFacts = {
   /** Anos de chuva que a conta leu (null sem dado de chuva). */
   rainYears: number | null
   historyYears: number | null
+  /** Clima de 2041–2060 (NEX-GDDP-CMIP6 no talhão); null quando a API não traz. */
+  future: ClimateSummary | null
+  /** Previsão do outono (sinal); é outro dado, separado do clima do futuro. */
   signal: NivelSinal | null
 }
 
@@ -38,6 +41,7 @@ export function missionFacts(talhao: Talhao, recomendacao: Recomendacao): Missio
     soil: talhao.solo?.textura ?? recomendacao.entrada?.solo ?? 'medio',
     rainYears: rainSummary(talhao.dados ?? [], recomendacao.opcoes ?? null)?.years ?? null,
     historyYears: historySummary(talhao.historico)?.known ?? null,
+    future: climateSummary(talhao.dados ?? []),
     signal: recomendacao.sinal?.nivel ?? null,
   }
 }

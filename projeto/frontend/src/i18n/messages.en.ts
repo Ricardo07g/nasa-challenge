@@ -162,6 +162,10 @@ export const en = {
     rainWhat: 'Rain and heat',
     history: (years: number) => `${years} years of satellite history`,
     historyWhat: 'Satellite history',
+    /** Clima de 2041–2060 (NEX-GDDP-CMIP6); a previsão do outono aparece à parte. */
+    future: (start: string, end: string) => `Climate for ${start}–${end} read`,
+    futureRead: 'Future climate read',
+    futureWhat: 'Future climate',
     forecast: (signal: string) => `Autumn outlook: ${signal}`,
     forecastWhat: 'Autumn outlook',
     ready: 'Answer ready',

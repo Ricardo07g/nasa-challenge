@@ -50,8 +50,11 @@ const PHASE_ICONS: ReactNode[] = [
   <LayersIcon key="options" />,
 ]
 
-/** Resultado de uma fase: o dado real, ou o que ainda não está conectado (`what`). */
-type PhaseResult = { text: string; what: string | null }
+/**
+ * Resultado de uma fase: o dado real, ou o que ainda não está conectado (`what`). `extra` é um
+ * segundo dado da mesma fase, mostrado à parte (a previsão do outono no clima que vem).
+ */
+type PhaseResult = { text: string; what: string | null; extra?: PhaseResult }
 
 /**
  * O dado real que cada fase mostra quando termina. Sem o dado na API, "Ainda não conectado" (o mesmo
@@ -62,12 +65,19 @@ function phaseResults(t: Messages, lang: Lang, facts: MissionFacts | null): Phas
   if (!facts) return []
   const ready = (text: string): PhaseResult => ({ text, what: null })
   const missing = (what: string): PhaseResult => ({ text: `${what}: ${t.common.notConnected}`, what })
+  const period = facts.future?.period
+  const future = !facts.future
+    ? missing(m.futureWhat)
+    : ready(period ? m.future(period.start, period.end) : m.futureRead)
+  const forecast = facts.signal
+    ? ready(m.forecast(t.signal[facts.signal].toLocaleLowerCase(lang)))
+    : missing(m.forecastWhat)
   return [
     ready(m.found(formatDecimal(lang, facts.point.lat, 2), formatDecimal(lang, facts.point.lon, 2))),
     ready(t.satellite.soilTitle(t.soil[facts.soil])),
     facts.rainYears !== null ? ready(m.rain(facts.rainYears)) : missing(m.rainWhat),
     facts.historyYears !== null ? ready(m.history(facts.historyYears)) : missing(m.historyWhat),
-    facts.signal ? ready(m.forecast(t.signal[facts.signal].toLocaleLowerCase(lang))) : missing(m.forecastWhat),
+    { ...future, extra: forecast },
     ready(m.ready),
   ]
 }
@@ -159,6 +169,15 @@ export function MissionView(props: MissionViewProps) {
 
 /** O resultado de uma fase no diário: o dado em negrito, ou o aviso "Ainda não conectado". */
 function PhaseResultLine({ t, result }: { t: Messages; result: PhaseResult }) {
+  return (
+    <>
+      <PhaseResultValue t={t} result={result} />
+      {result.extra && <PhaseResultValue t={t} result={result.extra} />}
+    </>
+  )
+}
+
+function PhaseResultValue({ t, result }: { t: Messages; result: PhaseResult }) {
   if (result.what) {
     return (
       <span className={styles.logResult}>

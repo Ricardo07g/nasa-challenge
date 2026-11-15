@@ -42,8 +42,28 @@ describe('missionFacts', () => {
       soil: 'argiloso',
       rainYears: 20,
       historyYears: 10,
+      future: null,
       signal: 'seco',
     })
+  })
+
+  it('o clima que vem lê o período do NEX-GDDP-CMIP6 do talhão, separado do sinal do outono', () => {
+    const comFuturo = {
+      ...talhao,
+      dados: [
+        { fonte: 'nasa_power', periodo: '2005-2024' },
+        { fonte: 'nex_gddp_cmip6', periodo: '2041-2060', cenario: 'ssp245', modelos: 3 },
+      ],
+    } as unknown as Talhao
+
+    const fact = missionFacts(comFuturo, {} as Recomendacao)
+
+    expect(fact.future).toEqual({ period: { start: '2041', end: '2060' } })
+    expect(fact.signal).toBeNull()
+  })
+
+  it('sem o CMIP6 no talhão, a fase não inventa o clima do futuro', () => {
+    expect(missionFacts(talhao, {} as Recomendacao).future).toBeNull()
   })
 
   it('os anos de histórico contam só os anos em que o satélite teve certeza', () => {

@@ -11,6 +11,7 @@ const facts = {
   soil: 'medio' as const,
   rainYears: 20 as number | null,
   historyYears: 10 as number | null,
+  future: { period: { start: '2041', end: '2060' } } as { period: { start: string; end: string } | null } | null,
   signal: 'seco' as 'seco' | null,
 }
 
@@ -102,6 +103,42 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
     expect(phases[3]).toHaveTextContent('Histórico do satélite: Ainda não conectado')
     expect(phases[4]).toHaveTextContent('Previsão do outono: Ainda não conectado')
     expect(phases[3].querySelector('[data-status="not-connected"]')).not.toBeNull()
+  })
+
+  it('o clima que vem mostra o clima de 2041 a 2060 lido e, à parte, a previsão do outono que falta', () => {
+    setup({ phase: 6, complete: true, facts: { ...facts, signal: null } })
+
+    const phase = screen.getAllByRole('listitem')[4]
+    expect(phase).toHaveTextContent('Clima de 2041 a 2060 lido')
+    expect(phase.querySelector('strong')).toHaveTextContent('Clima de 2041 a 2060 lido')
+    expect(phase).toHaveTextContent('Previsão do outono: Ainda não conectado')
+    expect(phase.querySelectorAll('[data-status="not-connected"]')).toHaveLength(1)
+  })
+
+  it('com o clima do futuro e o sinal do outono, a fase mostra os dois', () => {
+    setup({ phase: 6, complete: true })
+
+    const phase = screen.getAllByRole('listitem')[4]
+    expect(phase).toHaveTextContent('Clima de 2041 a 2060 lido')
+    expect(phase).toHaveTextContent('Previsão do outono: sinal de ano seco')
+    expect(phase.querySelector('[data-status="not-connected"]')).toBeNull()
+  })
+
+  it('sem o CMIP6 no talhão, o clima do futuro também fica "Ainda não conectado"', () => {
+    setup({ phase: 6, complete: true, facts: { ...facts, future: null, signal: null } })
+
+    const phase = screen.getAllByRole('listitem')[4]
+    expect(phase).toHaveTextContent('Clima do futuro: Ainda não conectado')
+    expect(phase).toHaveTextContent('Previsão do outono: Ainda não conectado')
+    expect(phase.querySelectorAll('[data-status="not-connected"]')).toHaveLength(2)
+  })
+
+  it('em inglês, o clima que vem diz o período lido', () => {
+    setup({ t: en, lang: 'en', phase: 6, complete: true, facts: { ...facts, signal: null } })
+
+    const phase = screen.getAllByRole('listitem')[4]
+    expect(phase).toHaveTextContent('Climate for 2041–2060 read')
+    expect(phase).toHaveTextContent('Autumn outlook: Not connected yet')
   })
 
   it('sinal fraco: deixa esperar mais ou ver a fazenda de exemplo', async () => {
