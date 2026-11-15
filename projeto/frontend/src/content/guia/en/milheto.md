@@ -30,7 +30,7 @@ The straw covers the soil, holds moisture and makes direct planting of soybeans 
 
 ## In your field
 
-The app shows pearl millet in [All options](/opcoes) and inside the [3-year plan](/plano). See also [straw](/guia/palhada).
+The app shows pearl millet in [Compare](/opcoes) and inside the [3-year plan](/plano). See also [straw](/guia/palhada).
 
 ## Sources
 

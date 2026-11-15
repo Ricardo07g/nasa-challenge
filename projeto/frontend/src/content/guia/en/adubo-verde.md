@@ -19,7 +19,7 @@ In the app, only crotalaria leaves nitrogen: 80 kg/ha, and a 30 of 30 score in t
 
 The app uses the average value as a team hypothesis. The real number changes with the soil, the cultivar and the rain, and the agronomist should review it.
 
-See the Soil row in [All options](/opcoes). Get to know [crotalaria](/guia/crotalaria) and [straw](/guia/palhada), which it also leaves.
+See the Soil row in [Compare](/opcoes). Get to know [crotalaria](/guia/crotalaria) and [straw](/guia/palhada), which it also leaves.
 
 Green manure only works if the plant grows well. That is why sowing in time and the rain in the first 30 days count. See [the planting deadline](/guia/prazo-de-plantio-zarc).
 

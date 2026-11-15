@@ -26,7 +26,7 @@ When the bucket runs dry, water is short. How much was missing becomes the index
 
 To make use of the rain that already falls, keep the soil covered: cover helps hold moisture. See [straw](/guia/palhada).
 
-In the [3-year plan](/plano), "rain used" shows this for each year. The [Answer](/resposta) has the Water row.
+In the [3-year plan](/plano), "rain used" shows this for each year. The [Suggestion](/resposta) has the Water row.
 
 ## Sources
 

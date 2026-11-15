@@ -29,7 +29,7 @@ Não gasta com semente, mas também não cobre a terra, não deixa nitrogênio e
 
 ## Na sua lavoura
 
-O app mostra o histórico de anos parados em [O que o satélite viu](/satelite) e compara o pousio com as outras opções em [Todas as opções](/opcoes). Veja o que cobrir a terra muda em [palhada](/guia/palhada).
+O app mostra o histórico de anos parados em [O que o satélite viu](/satelite) e compara o pousio com as outras opções em [Comparar](/opcoes). Veja o que cobrir a terra muda em [palhada](/guia/palhada).
 
 ## Fontes
 

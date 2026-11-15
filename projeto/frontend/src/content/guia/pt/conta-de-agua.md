@@ -26,7 +26,7 @@ Quando o balde seca, falta água. O quanto faltou vira o índice do artigo [O qu
 
 Para aproveitar a chuva que já cai, mantenha a terra coberta: a cobertura ajuda a segurar a umidade. Veja a [palhada](/guia/palhada).
 
-No [Plano de 3 anos](/plano), a "chuva aproveitada" mostra isso para cada ano. A [Resposta](/resposta) tem a linha Água.
+No [Plano de 3 anos](/plano), a "chuva aproveitada" mostra isso para cada ano. A [Sugestão](/resposta) tem a linha Água.
 
 ## Fontes
 

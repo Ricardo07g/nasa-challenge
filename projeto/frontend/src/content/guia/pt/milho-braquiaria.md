@@ -30,7 +30,7 @@ Depois da colheita, o capim fica e forma uma palhada grossa. Ela protege a terra
 
 ## Na sua lavoura
 
-O app compara o milho com braquiária com as outras opções em [Todas as opções](/opcoes) e usa a palhada na [Resposta](/resposta). Entenda a [palhada](/guia/palhada).
+O app compara o milho com braquiária com as outras opções em [Comparar](/opcoes) e usa a palhada na [Sugestão](/resposta). Entenda a [palhada](/guia/palhada).
 
 ## Fontes
 

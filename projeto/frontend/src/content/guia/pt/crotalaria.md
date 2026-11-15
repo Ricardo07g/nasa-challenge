@@ -30,7 +30,7 @@ Ela aduba a terra e quebra o ciclo de pragas do solo. É a cobertura que mais aj
 
 ## Na sua lavoura
 
-O app mostra a crotalária em [Todas as opções](/opcoes). Com nematoide na área, o [Plano de 3 anos](/plano) procura crotalária ou milheto. Veja [adubo verde](/guia/adubo-verde) e [nematoide](/guia/nematoide).
+O app mostra a crotalária em [Comparar](/opcoes). Com nematoide na área, o [Plano de 3 anos](/plano) procura crotalária ou milheto. Veja [adubo verde](/guia/adubo-verde) e [nematoide](/guia/nematoide).
 
 ## Fontes
 

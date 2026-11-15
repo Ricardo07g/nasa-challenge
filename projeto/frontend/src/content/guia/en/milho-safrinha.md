@@ -30,7 +30,7 @@ It is the best-known grain option. But if sowing is late, flowering falls at the
 
 ## In your field
 
-The app shows second-crop corn in the [Answer](/resposta) and in [All options](/opcoes). See also [the planting deadline](/guia/prazo-de-plantio-zarc) and [frost](/guia/geada-na-safrinha).
+The app shows second-crop corn in the [Suggestion](/resposta) and in [Compare](/opcoes). See also [the planting deadline](/guia/prazo-de-plantio-zarc) and [frost](/guia/geada-na-safrinha).
 
 ## Sources
 

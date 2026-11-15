@@ -29,7 +29,7 @@ It costs no seed, but it does not cover the soil, leaves no nitrogen and does no
 
 ## In your field
 
-The app shows the history of fallow years in [What the satellite saw](/satelite) and compares fallow with the other options in [All options](/opcoes). See what covering the soil changes in [straw](/guia/palhada).
+The app shows the history of fallow years in [What the satellite saw](/satelite) and compares fallow with the other options in [Compare](/opcoes). See what covering the soil changes in [straw](/guia/palhada).
 
 ## Sources
 

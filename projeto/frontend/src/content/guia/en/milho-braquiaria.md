@@ -30,7 +30,7 @@ After harvest, the grass stays and forms thick straw. It protects the soil and h
 
 ## In your field
 
-The app compares corn with brachiaria with the other options in [All options](/opcoes) and uses the straw in the [Answer](/resposta). Learn about [straw](/guia/palhada).
+The app compares corn with brachiaria with the other options in [Compare](/opcoes) and uses the straw in the [Suggestion](/resposta). Learn about [straw](/guia/palhada).
 
 ## Sources
 

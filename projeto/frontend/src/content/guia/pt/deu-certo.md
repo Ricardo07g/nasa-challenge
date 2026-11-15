@@ -24,7 +24,7 @@ A fase crítica do grão vai de 15 dias antes a 15 dias depois da floração. Na
 
 O rótulo Bom pede 17 ou mais anos sem aperto, entre 20. O Médio vai de 12 a 16. Abaixo disso, Fraco.
 
-Veja o número na [Resposta](/resposta) e a conta aberta em [Como a conta é feita](/como-funciona). Entenda também [a conta de água](/guia/conta-de-agua).
+Veja o número na [Sugestão](/resposta) e a conta aberta em [Como a conta é feita](/como-funciona). Entenda também [a conta de água](/guia/conta-de-agua).
 
 ## Fontes
 

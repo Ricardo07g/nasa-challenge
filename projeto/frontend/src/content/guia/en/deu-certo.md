@@ -24,7 +24,7 @@ The grain's critical phase runs from 15 days before to 15 days after flowering. 
 
 The Good label needs 17 or more stress-free years out of 20. Fair runs from 12 to 16. Below that, Weak.
 
-See the number in the [Answer](/resposta) and the open math in [How the math works](/como-funciona). Also understand [the water math](/guia/conta-de-agua).
+See the number in the [Suggestion](/resposta) and the open math in [How the math works](/como-funciona). Also understand [the water math](/guia/conta-de-agua).
 
 ## Sources
 

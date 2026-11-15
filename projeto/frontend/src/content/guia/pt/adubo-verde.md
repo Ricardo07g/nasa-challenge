@@ -19,7 +19,7 @@ No app, só a crotalária deixa nitrogênio: 80 kg/ha, e nota 30 de 30 no item n
 
 O app dá o valor médio como hipótese do time. O número real muda com a terra, a cultivar e a chuva, e a agrônoma deve revisar.
 
-Veja a linha Terra em [Todas as opções](/opcoes). Conheça a [crotalária](/guia/crotalaria) e a [palhada](/guia/palhada), que ela também deixa.
+Veja a linha Terra em [Comparar](/opcoes). Conheça a [crotalária](/guia/crotalaria) e a [palhada](/guia/palhada), que ela também deixa.
 
 O adubo verde só funciona se a planta cresce bem. Por isso, o plantio em tempo e a chuva dos primeiros 30 dias contam. Veja [o prazo de plantio](/guia/prazo-de-plantio-zarc).
 

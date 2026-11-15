@@ -23,7 +23,7 @@ O app dá até 40 pontos de palhada na nota de terra. Veja quanto cada opção d
 - Milho safrinha e sorgo: 20.
 - Deixar parado: 0.
 
-Veja o efeito na linha Terra de [Todas as opções](/opcoes) e na [Resposta](/resposta). Quem quer palha, olhe o [milheto](/guia/milheto) ou o [milho com braquiária](/guia/milho-braquiaria).
+Veja o efeito na linha Terra de [Comparar](/opcoes) e na [Sugestão](/resposta). Quem quer palha, olhe o [milheto](/guia/milheto) ou o [milho com braquiária](/guia/milho-braquiaria).
 
 A palha deve ser mantida na superfície. Quanto de palha o seu solo precisa fica com o seu agrônomo.
 
