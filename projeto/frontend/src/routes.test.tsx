@@ -171,10 +171,11 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Na sua região')
   })
 
-  it('"Sou agrônomo(a)" no rodapé abre a tela 9 com as notas da lavoura', async () => {
+  it('"Como a conta é feita" no rodapé das telas internas abre a tela 9 com as notas da lavoura', async () => {
     renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
 
-    await userEvent.click(await screen.findByRole('link', { name: /Sou agrônomo\(a\)/ }))
+    const footer = await screen.findByRole('contentinfo')
+    await userEvent.click(within(footer).getByRole('link', { name: 'Como a conta é feita' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Como a conta é feita' })).toBeInTheDocument()
     expect(await screen.findByRole('table', { name: 'Notas de cada opção (0 a 100)' })).toBeInTheDocument()
@@ -203,15 +204,62 @@ describe('rotas', () => {
     expect(await screen.findByRole('region', { name: 'O que aconteceu em 2024' })).toBeInTheDocument()
   })
 
-  it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
+  it('as telas internas têm o rodapé com o aviso, "Como a conta é feita", os créditos e o projeto', async () => {
     renderAt('/onde')
 
     const footer = await screen.findByRole('contentinfo')
     expect(footer).toHaveTextContent('Ajuda a decidir. Não substitui o seu agrônomo.')
-    expect(screen.getByRole('link', { name: 'Sou agrônomo(a): como a conta é feita' })).toHaveAttribute(
-      'href',
-      '/como-funciona',
-    )
+    expect(footer).toHaveTextContent('NASA Space Apps 2026 · Field Shift')
+    expect(within(footer).getByRole('link', { name: 'Como a conta é feita' })).toHaveAttribute('href', '/como-funciona')
+    expect(within(footer).getByRole('button', { name: 'Créditos e uso de IA' })).toBeInTheDocument()
+    // A faixa grande do agrônomo só existe na Início.
+    expect(screen.queryByRole('region', { name: 'É agrônomo(a) ou técnico(a)?' })).not.toBeInTheDocument()
+  })
+
+  it('na Início, o rodapé fica sem o link do agrônomo: a faixa grande, logo acima, leva para a mesma tela', async () => {
+    renderAt('/')
+
+    const footer = await screen.findByRole('contentinfo')
+    expect(within(footer).queryByRole('link')).not.toBeInTheDocument()
+    expect(within(footer).getByRole('button', { name: 'Créditos e uso de IA' })).toBeInTheDocument()
+    const agro = screen.getByRole('region', { name: 'É agrônomo(a) ou técnico(a)?' })
+    expect(within(agro).getByRole('link', { name: 'Como a conta é feita' })).toHaveAttribute('href', '/como-funciona')
+  })
+
+  it('o cabeçalho de toda tela tem só Comunidade, Avisos e o idioma, sem o botão grande "Ouvir"', async () => {
+    renderAt('/onde')
+
+    await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })
+    const banner = screen.getByRole('banner')
+    expect(within(banner).queryByRole('button', { name: /Ouvir/ })).not.toBeInTheDocument()
+    expect(within(banner).getByRole('link', { name: 'Comunidade' })).toBeInTheDocument()
+    expect(within(banner).getByRole('link', { name: /^Avisos/ })).toBeInTheDocument()
+  })
+
+  it('"Créditos e uso de IA" abre o mesmo modal global em qualquer tela, e Esc fecha e devolve o foco', async () => {
+    renderAt('/comunidade')
+
+    const button = within(await screen.findByRole('contentinfo')).getByRole('button', { name: 'Créditos e uso de IA' })
+    await userEvent.click(button)
+    expect(screen.getByRole('dialog', { name: 'Créditos e uso de IA' })).toHaveTextContent('GPM IMERG Final')
+
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(button).toHaveFocus()
+  })
+
+  it('na Início, o selo da NASA abre "De onde vêm os dados", e "Todas as fontes e créditos" troca pelo de créditos', async () => {
+    renderAt('/')
+
+    const seal = await screen.findByRole('button', { name: 'Dados da NASA Triângulo Mineiro · MG' })
+    await userEvent.click(seal)
+    const sources = screen.getByRole('dialog', { name: 'De onde vêm os dados' })
+    await userEvent.click(within(sources).getByRole('button', { name: 'Todas as fontes e créditos' }))
+
+    expect(screen.queryByRole('dialog', { name: 'De onde vêm os dados' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Créditos e uso de IA' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+    expect(seal).toHaveFocus()
   })
 
   it('o início fica igual ao protótipo: sem aviso de dados de exemplo e com o título da aba dele', async () => {
@@ -252,7 +300,7 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'What to plant after soybeans?' })).toBeInTheDocument()
   })
 
-  it('"Ver um exemplo pronto" vai para a resposta da fazenda de exemplo', async () => {
+  it('o exemplo pronto (/exemplo) vai para a resposta da fazenda de exemplo', async () => {
     const router = renderAt('/exemplo')
 
     await vi.waitFor(() =>

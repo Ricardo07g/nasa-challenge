@@ -9,6 +9,8 @@ export type ListenSummaryProps = {
   label: string
   /** "Parar" / "Stop". */
   stopLabel: string
+  /** Espaço em volta, decidido pela tela. */
+  className?: string
 }
 
 /**
@@ -16,10 +18,15 @@ export type ListenSummaryProps = {
  * nunca um botão grande no cabeçalho. Fala só o resumo da tela (o estado vem do `useListenSummary`).
  * Enquanto fala, vira "Parar" com o quadrado e `aria-pressed`. Sem voz no navegador, não aparece.
  */
-export function ListenSummary({ supported, speaking, onToggle, label, stopLabel }: ListenSummaryProps) {
+export function ListenSummary({ supported, speaking, onToggle, label, stopLabel, className }: ListenSummaryProps) {
   if (!supported) return null
   return (
-    <button type="button" className={styles.listen} aria-pressed={speaking} onClick={onToggle}>
+    <button
+      type="button"
+      className={className ? `${styles.listen} ${className}` : styles.listen}
+      aria-pressed={speaking}
+      onClick={onToggle}
+    >
       {speaking ? <StopIcon size={17} /> : <ListenIcon size={17} />}
       <span className={styles.label}>{speaking ? stopLabel : label}</span>
     </button>

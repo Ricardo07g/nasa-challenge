@@ -1,7 +1,7 @@
 /**
  * Ligação de cada rota: controller (estado) → view (desenho). Sem lógica aqui.
  */
-import { Navigate, Outlet, ScrollRestoration, useParams, useSearchParams } from 'react-router'
+import { Navigate, Outlet, ScrollRestoration, useOutletContext, useParams, useSearchParams } from 'react-router'
 import { useAnswerController } from './controllers/useAnswerController'
 import { useAvisosController } from './controllers/useAvisosController'
 import { useCommunityController } from './controllers/useCommunityController'
@@ -15,7 +15,7 @@ import { useOptionsController } from './controllers/useOptionsController'
 import { usePlanController } from './controllers/usePlanController'
 import { useSatelliteController } from './controllers/useSatelliteController'
 import { useShellController } from './controllers/useShellController'
-import { useTelegramLink } from './controllers/useTelegramLink'
+import { useStartController } from './controllers/useStartController'
 import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
@@ -36,12 +36,18 @@ import { StartView } from './views/StartView'
 import { WhenView } from './views/WhenView'
 import { WhereView } from './views/WhereView'
 
+/** O que a moldura oferece às telas: abrir o modal global de créditos (tarefa 0052). */
+export type ShellOutletContext = { openCredits: () => void }
+
+const noop = () => {}
+
 export function ShellPage() {
-  const { header, footer, demoNotice } = useShellController()
+  const { header, footer, credits, demoNotice } = useShellController()
+  const context: ShellOutletContext = { openCredits: credits.onOpen }
   return (
-    <ShellView header={header} footer={footer} demoNotice={demoNotice}>
+    <ShellView header={header} footer={footer} credits={credits} demoNotice={demoNotice}>
       <ScrollRestoration />
-      <Outlet />
+      <Outlet context={context} />
     </ShellView>
   )
 }
@@ -49,8 +55,9 @@ export function ShellPage() {
 export function StartPage() {
   const { messages: t } = useI18n()
   useDocumentTitle(t.start.pageTitle)
-  const telegramHref = useTelegramLink()
-  return <StartView t={t} telegramHref={telegramHref} />
+  const shell = useOutletContext<ShellOutletContext | undefined>()
+  const state = useStartController(shell?.openCredits ?? noop)
+  return <StartView t={t} listen={state.listen} sources={state.sources} />
 }
 
 export function WherePage() {
@@ -319,8 +326,10 @@ export function MethodPage() {
   )
 }
 
-/** "Ver um exemplo pronto": abre a resposta da fazenda de exemplo (RF-11). */
-/** "Ver um exemplo pronto": a resposta da fazenda de exemplo com a faixa do satélite (tarefa 0049). */
+/**
+ * Exemplo pronto (`/exemplo`): a resposta da fazenda de exemplo com a faixa do satélite (tarefa 0049). Desde a
+ * tarefa 0052, a entrada é o link "Usar a lavoura de demonstração" de "Onde fica a lavoura".
+ */
 export function ExamplePage() {
   const { messages: t } = useI18n()
   const { to } = useExampleController()

@@ -1,27 +1,28 @@
+/* Cabeçalho global (protótipo da remodelagem v4): 76 px no computador, 64 px no celular */
 .header {
+  position: relative;
+  z-index: 2;
   width: 100%;
+  height: var(--header-height-v4);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
-  display: flex;
-  justify-content: center;
 }
 
 .inner {
-  width: 100%;
-  max-width: var(--page-max-width);
-  min-height: var(--header-height);
-  padding: var(--space-3) var(--page-gutter);
+  height: 100%;
+  max-width: var(--page-width-v4);
+  margin: 0 auto;
+  padding: 0 var(--page-margin-v4);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 20px;
+  gap: 16px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: clamp(8px, 1vw, 12px);
-  min-height: var(--touch-min);
+  gap: 12px;
   min-width: 0;
   color: var(--color-text);
   text-decoration: none;
@@ -32,169 +33,146 @@
 }
 
 .logo svg {
-  flex: 0 0 auto;
-  width: clamp(38px, 4vw, 49px);
-  height: clamp(38px, 4vw, 49px);
+  flex: none;
 }
 
 .brand {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   min-width: 0;
 }
 
+/* O nome nunca quebra linha. */
 .brandName {
-  font-family: var(--font-display);
-  font-size: var(--font-size-brand);
-  font-weight: var(--font-weight-bold);
-  line-height: 1.15;
   white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
 }
 
 .slogan {
+  margin-top: 3px;
   font-size: 12px;
-  line-height: 1.2;
-  color: var(--color-text-muted);
+  line-height: 1.3;
+  color: var(--color-text-soft);
 }
 
-.actions {
+.nav {
   display: flex;
   align-items: center;
-  gap: clamp(4px, 2vw, 24px);
+  gap: 22px;
 }
 
-.community {
-  min-height: var(--touch-min);
-  padding: 8px 12px;
-  display: inline-flex;
+.community,
+.alerts {
+  display: flex;
   align-items: center;
   gap: 8px;
-  border-radius: var(--radius-2xs);
   color: var(--color-primary);
+  font-size: 15px;
   font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
   text-decoration: none;
-  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.community:hover,
+.alerts:hover {
+  color: var(--color-primary);
+}
+
+.community svg,
+.alerts svg {
+  flex: none;
+}
+
+/* Comunidade: pílula verde-clara, com o nome escrito */
+.community {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--color-tint-green);
 }
 
 .community:hover,
 .community[aria-current='page'] {
-  background: var(--color-tint-green);
-  color: var(--color-primary);
+  background: var(--color-tint-green-hover);
 }
 
-.listen {
-  min-height: var(--touch-min);
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--color-secondary);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-secondary);
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
+.alerts[aria-current='page'] .alertsLabel {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
-.listen:hover {
-  background: var(--color-tint-blue);
-}
-
-.listen[aria-pressed='true'] {
-  background: var(--color-secondary);
+/* Selo laranja com o número de avisos ativos */
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--color-risk);
   color: var(--color-on-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
 }
 
+/* Idioma: "PT | EN", o atual em verde */
 .lang {
-  min-height: var(--touch-min);
-  padding: 0 var(--space-3);
   display: flex;
   align-items: center;
-  gap: 12px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--color-text);
-  font-size: var(--font-size-caption);
-  font-weight: var(--font-weight-medium);
+  gap: 0;
+  margin-left: -6px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-size: 13px;
+  line-height: 1.4;
   cursor: pointer;
 }
 
-.lang:hover {
-  background: var(--color-tint-green);
+.lang span[data-active] {
+  padding: 6px 9px;
+  color: var(--color-text-soft);
+  font-weight: var(--font-weight-medium);
 }
 
-.lang [data-active='true'] {
+.lang span[data-active='true'] {
   color: var(--color-primary);
   font-weight: var(--font-weight-bold);
+}
+
+.lang:hover span[data-active='false'] {
+  color: var(--color-primary);
 }
 
 .divider {
   color: var(--color-border);
 }
 
-/* Tela estreita: a Comunidade fica só com o ícone (o nome acessível continua no aria-label). */
-@media (max-width: 640px) {
-  .communityText {
-    display: none;
-  }
+.logo:focus-visible,
+.community:focus-visible,
+.alerts:focus-visible,
+.lang:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
-/* Celular pequeno: o link do Telegram sai do cabeçalho (as telas têm o cartão do Telegram). */
-@media (max-width: 520px) {
-  .telegram {
-    display: none;
-  }
-}
-
-/* Celular: some o slogan e o texto do Ouvir fica só no ícone (o nome acessível continua). */
-@media (max-width: 768px) {
-  .slogan {
-    display: none;
-  }
-
-  .listen {
-    padding-inline: 12px;
-  }
-
-  .listenText {
-    display: none;
-  }
-
-  .lang {
-    padding-inline: 8px;
-    gap: 8px;
-  }
-}
-
-/* Tela "Avisos" (tarefa 0046): número de avisos ativos no botão (o nome acessível diz o número). */
-.alertsCount {
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.community:focus-visible {
   border-radius: var(--radius-pill);
-  background: var(--color-risk);
-  color: var(--color-surface);
-  font-size: var(--font-size-caption);
-  font-weight: var(--font-weight-bold);
-  line-height: 1;
 }
 
-/*
- * Celular estreito (tarefa 0046): com o botão "Avisos", o cabeçalho fica mais justo (menos respiro entre os
- * botões, nome um pouco menor). Se ainda não couber numa linha, os botões descem para a linha de baixo em vez
- * de passar por cima do nome.
- */
-@media (max-width: 480px) {
-  .inner {
-    flex-wrap: wrap;
-    column-gap: 8px;
+/* Celular e tablet (até 900 px) */
+@media (max-width: 900px) {
+  .logo {
+    gap: 8px;
   }
 
   .logo svg {
@@ -203,25 +181,79 @@
   }
 
   .brandName {
-    font-size: 18px;
+    font-size: 17px;
   }
 
-  .actions {
+  .slogan {
+    display: none;
+  }
+
+  .nav {
     gap: 2px;
-    margin-left: auto;
+  }
+
+  /* A Comunidade continua com o nome escrito. */
+  .community {
+    height: 36px;
+    margin-right: 2px;
+    padding: 0 11px;
+    gap: 6px;
+    font-size: 13.5px;
+  }
+
+  /* Avisos: só o sino, com o selo no canto (o nome fica para o leitor de tela). */
+  .alerts {
+    position: relative;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: var(--radius-xs);
+  }
+
+  .alertsLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .badge {
+    position: absolute;
+    top: 1px;
+    right: -1px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 11px;
+  }
+
+  /* Idioma: só o botão do outro idioma */
+  .lang {
+    margin-left: 0;
+  }
+
+  .lang span[data-active='true'],
+  .divider {
+    display: none;
+  }
+
+  .lang span[data-active='false'] {
+    padding: 8px 6px;
+    color: var(--color-text);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/* Celular bem estreito (até 360 px): um pouco mais justo, para nada estourar */
+@media (max-width: 360px) {
+  .inner {
+    gap: 8px;
   }
 
   .community {
-    padding: 8px 6px;
-    gap: 4px;
-  }
-
-  .listen {
-    padding-inline: 8px;
-  }
-
-  .lang {
-    padding-inline: 4px;
-    gap: 4px;
+    padding: 0 9px;
   }
 }
