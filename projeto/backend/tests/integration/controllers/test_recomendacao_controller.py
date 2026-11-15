@@ -148,12 +148,49 @@ def test_should_move_crops_out_of_window_and_parse_nematoide_when_harvest_is_tar
     assert body["entrada"]["solo"] == "arenoso"
     assert body["entrada"]["nematoide"] is True
     assert body["entrada"]["gado"] is False
-    assert {o["id"] for o in body["opcoes"]} == {"sorgo", "milheto"}
+    no_prazo = [o["id"] for o in body["opcoes"] if not o["fora_do_prazo"]]
+    assert set(no_prazo) == {"sorgo", "milheto"}
     assert {o["id"] for o in body["fora_da_janela"]} == {
         "milho_safrinha",
         "milho_braquiaria",
         "crotalaria",
     }
+
+
+def test_should_send_the_crops_past_the_deadline_with_their_numbers_after_the_ones_in_time(
+    client: TestClient,
+) -> None:
+    # Tarefa 0056 (tela 5): as culturas fora do prazo do ZARC entram em `opcoes`, com a conta do
+    # motor, `fora_do_prazo: true` e `na_janela: false`, depois das no prazo. A sugestão, as
+    # alternativas e os planos continuam só com as no prazo; o `fora_da_janela` continua igual.
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "tarde"}).json()
+
+    ids = [o["id"] for o in body["opcoes"]]
+    flags = [o["fora_do_prazo"] for o in body["opcoes"]]
+    assert set(ids) == {"sorgo", "milheto", "milho_safrinha", "milho_braquiaria", "crotalaria"}
+    assert flags == [False, False, True, True, True]
+    for opcao in body["opcoes"]:
+        assert opcao["na_janela"] is not opcao["fora_do_prazo"]
+    fora = {o["id"]: o for o in body["opcoes"] if o["fora_do_prazo"]}
+    assert set(fora) == {f["id"] for f in body["fora_da_janela"]}
+    milho = fora["milho_safrinha"]
+    assert milho["data_limite"] == "2027-02-28"
+    assert milho["chuva"]["anos"] == 20 and len(milho["anos_detalhe"]) == 20
+    assert milho["agua"] is not None and milho["porque"]
+    assert body["melhor"] not in fora
+    assert not {a["opcao"] for a in body["alternativas"]} & set(fora)
+    for plano in body["plano_3_anos"].values():
+        assert not set(plano["anos"]) & set(fora)
+    for objetivo in body["objetivos"].values():
+        assert not set(objetivo["plano"]) & set(fora)
+        assert set(objetivo["ordem"][2:]) == set(fora)
+
+
+def test_should_mark_every_option_in_time_when_every_crop_fits(client: TestClient) -> None:
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"}).json()
+
+    assert [o["fora_do_prazo"] for o in body["opcoes"]] == [False] * 5
+    assert body["fora_da_janela"] == []
 
 
 def test_should_return_404_outside_area_instead_of_another_region_answer(

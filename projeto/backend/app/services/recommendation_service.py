@@ -328,6 +328,8 @@ class RecommendationService:
                 continue  # linha de base, fora do ranking (PRD 7.6)
             nome = crop.nome_en if (is_en and crop.nome_en) else crop.nome
             if not self._risk_service.is_within_window(crop, semeadura):
+                # Tarefa 0056: fora do prazo do ZARC, o aviso continua e a cultura também entra
+                # na conta, com a mesma semeadura (logo depois da colheita).
                 limite = crop.semeadura_limite_mes_dia
                 fora_da_janela.append(
                     ForaDaJanelaOpcao(
@@ -337,7 +339,6 @@ class RecommendationService:
                         data_limite=f"{REFERENCE_SOWING_YEAR}-{limite}" if limite else None,
                     )
                 )
-                continue
             avaliacoes.append(
                 self._evaluate(
                     crop,
@@ -354,7 +355,7 @@ class RecommendationService:
             )
 
         fonte_chuva = self._rain_source_name(seasons)
-        opcoes = [
+        avaliadas = [
             self._build_option(
                 a,
                 bonus=self._rules.nota_final.bonus_gado_milho_braquiaria
@@ -364,17 +365,24 @@ class RecommendationService:
                 solo=(solo_textura, cad_mm, solo_fonte),
                 fonte_chuva=fonte_chuva,
                 is_en=is_en,
+                na_janela=self._risk_service.is_within_window(a.crop, semeadura),
             )
             for a in avaliacoes
         ]
         frase_balde = self._bucket_phrase(seasons, smap_por_ano, is_en)
         if frase_balde:
             # Logo depois da frase da chuva: as duas falam da mesma conta de água.
-            opcoes = [replace(o, porque=(o.porque[0], frase_balde, *o.porque[1:])) for o in opcoes]
+            avaliadas = [
+                replace(o, porque=(o.porque[0], frase_balde, *o.porque[1:])) for o in avaliadas
+            ]
         frase_historico = self._history_phrase(lat, lon, is_en, confirmadas_por_ano)
         if frase_historico:
-            opcoes = [replace(o, porque=(*o.porque, frase_historico)) for o in opcoes]
-        opcoes.sort(key=lambda o: o.notas.final, reverse=True)
+            avaliadas = [replace(o, porque=(*o.porque, frase_historico)) for o in avaliadas]
+        avaliadas.sort(key=lambda o: o.notas.final, reverse=True)
+        # Só as no prazo seguem para a sugestão, as alternativas e os planos (decisão da tarefa
+        # 0056, a revisar: o seguro não cobre fora do prazo).
+        opcoes = [o for o in avaliadas if o.na_janela]
+        fora_do_prazo = tuple(o for o in avaliadas if not o.na_janela)
         melhor_id = opcoes[0].id if opcoes else FALLOW_ID
 
         pousio_notas = self._fallow_scores(crops, nematoide, has_future=bool(deltas))
@@ -385,7 +393,7 @@ class RecommendationService:
             nematoide=nematoide,
             lang=lang,
         )
-        objetivos = self._objectives(opcoes, pousio_notas, nematoide)
+        objetivos = self._objectives(opcoes, pousio_notas, nematoide, fora_do_prazo)
         if "equilibrio" in objetivos:
             # Tarefa 0044: a sugestão é o ano 1 da rotação. O Plano A começa pela melhor opção (o
             # Plano B, do ano seco, continua livre para começar por outra).
@@ -433,6 +441,8 @@ class RecommendationService:
             objetivos=objetivos,
             clima_futuro=self._future_service.summarize(deltas, seasons),
             geada=self._cell_climate_service.frost(seasons),
+            opcoes_fora_do_prazo=fora_do_prazo,
+            notas_pousio=pousio_notas,
         )
 
     def _autumn_signal(
@@ -464,13 +474,19 @@ class RecommendationService:
         )
 
     def _objectives(
-        self, opcoes: list[ResultadoOpcao], pousio: NotasOpcao, nematoide: bool | None
+        self,
+        opcoes: list[ResultadoOpcao],
+        pousio: NotasOpcao,
+        nematoide: bool | None,
+        fora_do_prazo: tuple[ResultadoOpcao, ...] = (),
     ) -> dict[str, ObjetivoResultado]:
         """Ordem das opções e plano para cada objetivo do produtor (seção 5.1, tarefa 0044).
 
         A ordem é a nota do eixo do objetivo, com o desempate pela nota final (a mesma regra da
-        tela 6, RF-05); sem objetivo ("equilibrio"), a nota final. O plano começa pela 1ª da ordem
-        e escolhe os anos 2 e 3 pela nota do mesmo eixo. Sem opção na janela: nenhum objetivo.
+        tela 6, RF-05); sem objetivo ("equilibrio"), a nota final. As culturas fora do prazo do
+        ZARC vêm depois das no prazo, na mesma regra (tarefa 0056). O plano começa pela 1ª da
+        ordem e escolhe os anos 2 e 3 pela nota do mesmo eixo, só com as no prazo. Sem opção na
+        janela: nenhum objetivo.
         """
         if not opcoes:
             return {}
@@ -478,9 +494,12 @@ class RecommendationService:
         objetivos: dict[str, ObjetivoResultado] = {}
         for objetivo, eixo in OBJECTIVE_AXES:
             nota = eixo or attrgetter("final")
-            ordem = tuple(
-                o.id for o in sorted(opcoes, key=lambda o: (-nota(o.notas), -o.notas.final))
-            )
+
+            def by_axis(o: ResultadoOpcao, nota: Callable[[NotasOpcao], float] = nota) -> tuple:
+                return (-nota(o.notas), -o.notas.final)
+
+            no_prazo = tuple(o.id for o in sorted(opcoes, key=by_axis))
+            ordem = no_prazo + tuple(o.id for o in sorted(fora_do_prazo, key=by_axis))
             # O plano de um objetivo usa só as culturas; o do equilíbrio é o Plano A do PRD 7.7,
             # com o pousio nas combinações.
             plano = tuple(
@@ -584,6 +603,7 @@ class RecommendationService:
         solo: tuple[str, float, str],
         fonte_chuva: str,
         is_en: bool,
+        na_janela: bool = True,
     ) -> ResultadoOpcao:
         total = len(a.anos)
         anos_bons = sum(1 for r in a.anos if not r.aperto)
@@ -619,7 +639,7 @@ class RecommendationService:
         return ResultadoOpcao(
             id=a.crop.id,
             nome=a.nome,
-            na_janela=True,
+            na_janela=na_janela,
             data_limite=f"{REFERENCE_SOWING_YEAR}-{limite}" if limite else None,
             anos_bons_chuva=anos_bons,
             total_anos=total,
