@@ -112,6 +112,14 @@ const withDate: Partial<WhenViewProps> = {
 }
 
 describe('WhenView (tela 2 "Quando você colhe a soja?", tarefa 0057)', () => {
+  it('explica, numa linha discreta junto da data, por que o calendário vai só até 30 de abril (15/11/2026)', () => {
+    setup()
+
+    const note = screen.getByText(/só até 30 de abril/)
+    expect(note).toHaveTextContent('prazo de plantio (ZARC)')
+    expect(note.tagName).toBe('P')
+  })
+
   it('no topo: o Voltar de verdade, o título, a frase e o "Ouvir resumo", sem "Pergunta 2 de 2"', () => {
     setup()
 

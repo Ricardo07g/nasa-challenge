@@ -249,6 +249,8 @@ export const en = {
     bandHint: 'Approximate time',
     bandDays: { cedo: '1–10', meio: '11–20', tarde: '21+' },
     pickDate: 'Pick a date',
+    dateLimit:
+      'The calendar only goes up to April 30: harvesting later than that, the planting deadline (ZARC) has passed for every second-crop option.',
     changeDate: 'Change date',
     pickDay: 'Pick the day',
     dontKnow: "I don't know the exact day",
@@ -458,6 +460,7 @@ export const en = {
       legendCurrent: 'current season (no reading yet)',
       chartSource: 'MODIS NDVI · NASA · 250 m',
       confirmSub: 'The satellite sees that something was planted, but not which crop. Your answer replaces it.',
+      demoNote: 'Demo field: the last seasons come already filled in with an example. Change them as you like.',
       confirmSubNoReading: 'With no satellite reading at this spot, your answer is what counts.',
       note: 'We use these answers to compare your plan with “how it is today”.',
       rotation: 'Learn more: crop rotation',

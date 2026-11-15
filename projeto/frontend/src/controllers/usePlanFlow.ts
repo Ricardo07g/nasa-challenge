@@ -8,6 +8,7 @@ import {
   comparedCrops,
   isLate,
   pickerItems,
+  ownChoice,
   planChoice,
   rankAll,
   suggestionOf,
@@ -56,6 +57,7 @@ export function usePlanFlow(deps: PlanFlowDeps) {
     if (!data || !params) return null
     const suggestion = suggestionOf(data, objective)
     const choice = planChoice(data, objective, params)
+    const own = ownChoice(data, objective, params)
     if (!suggestion || !choice) return null
     const ranked = rankAll(data, objective)
     const compared = comparedCrops(data, objective, params)
@@ -63,10 +65,12 @@ export function usePlanFlow(deps: PlanFlowDeps) {
     return {
       suggestion,
       choice,
+      /** A escolha do próprio produtor; `null` = não marcou (a tela não mostra "Sua escolha"). */
+      own,
       ranked,
       compared,
       columns: compared.map((id): CompareColumn => ({ id, option: ranked.find((option) => option.id === id) ?? null })),
-      picker: pickerItems(availableCrops(data, objective), compared, choice, suggestion.id, late),
+      picker: pickerItems(availableCrops(data, objective), compared, own, suggestion.id, late),
       late,
     }
   }, [data, params, objective])
@@ -84,7 +88,7 @@ export function usePlanFlow(deps: PlanFlowDeps) {
   )
   const fromChoice = chain.data ?? null
   const sources = (fromYear2: PlanoAvaliado | null, final: PlanoAvaliado | null): PlanSources | null =>
-    choice && suggestion ? { choice, suggestion, edits, fromChoice, fromYear2, final } : null
+    choice && suggestion ? { choice, own: choose?.own ?? null, suggestion, edits, fromChoice, fromYear2, final } : null
   const chainOnly = sources(null, null)
   const second = chainOnly ? (suggestedFor(1, chainOnly)?.crop ?? null) : null
   // O plano sugerido que a tela mostra: guarda o anterior enquanto o novo carrega (trocar um ano não pisca a tela).

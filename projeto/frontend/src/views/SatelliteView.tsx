@@ -380,6 +380,7 @@ function SeasonsSection(props: SatelliteViewProps) {
           {s.confirmTitle}
         </h3>
         <p className={styles.confirmSub}>{reading ? ss.confirmSub : ss.confirmSubNoReading}</p>
+        {seasons.demo && <p className={styles.demoNote}>{ss.demoNote}</p>}
         <SeasonAnswersForm
           t={t}
           lang={lang}

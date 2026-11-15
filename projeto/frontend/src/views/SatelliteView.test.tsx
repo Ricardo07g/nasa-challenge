@@ -28,6 +28,7 @@ const SEASONS: SeasonsModel = {
   },
   answered: 0,
   seen: { kind: 'all', count: 3 },
+  demo: false,
 }
 
 const historico = {
@@ -77,9 +78,20 @@ const NO_READING: SeasonsModel = {
   ...SEASONS,
   rows: SEASONS.rows.map((row) => ({ ...row, satellite: null })),
   seen: { kind: 'no-reading', count: 0 },
+  demo: false,
 }
 
 describe('SatelliteView (tela 4: raio-X e últimas safras)', () => {
+  it('lavoura de demonstração: avisa que as últimas safras vêm preenchidas com um exemplo (15/11/2026)', () => {
+    setup({ seasons: { ...SEASONS, demo: true } })
+    expect(screen.getByText(/já vêm preenchidas com um exemplo/)).toBeInTheDocument()
+  })
+
+  it('na lavoura do produtor, nada de aviso de exemplo', () => {
+    setup()
+    expect(screen.queryByText(/preenchidas com um exemplo/)).not.toBeInTheDocument()
+  })
+
   it('topo: Voltar, o título, o subtítulo novo e o "Ouvir resumo"', async () => {
     const props = setup()
 

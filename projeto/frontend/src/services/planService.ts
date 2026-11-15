@@ -56,6 +56,11 @@ export function finalCrops(choice: CropId, edits: PlanEdits, fromChoice: PlanoAv
 export type PlanSources = {
   /** O 1º ano: a escolha da aba 1. */
   choice: CropId
+  /**
+   * A escolha do próprio produtor (`ownChoice`); `null` = não marcou nada ou "Ainda não sei", e o 1º ano é a nossa
+   * sugestão (etiqueta "Nossa sugestão", não "Sua escolha"). Ausente vale como escolha dele.
+   */
+  own?: CropId | null
   /** A sugestão da aba Escolher (`suggestionOf`): a sugestão do 1º ano. */
   suggestion: CropId
   edits: PlanEdits
@@ -136,7 +141,9 @@ export function planCards(sources: PlanSources, firstSeason: number): PlanCard[]
     const crop = index === 0 ? choice : ano.cultura
     const suggested = suggestedFor(index, sources)
     const edited = index === 1 ? edits.year2 : index === 2 ? edits.year3 : null
-    const tag: PlanTag = index === 0 ? 'choice' : (suggested ? crop !== suggested.crop : Boolean(edited)) ? 'changed' : 'suggested'
+    const firstTag: PlanTag = sources.own === null ? 'suggested' : 'choice'
+    const tag: PlanTag =
+      index === 0 ? firstTag : (suggested ? crop !== suggested.crop : Boolean(edited)) ? 'changed' : 'suggested'
     return {
       season: firstSeason + index,
       crop,

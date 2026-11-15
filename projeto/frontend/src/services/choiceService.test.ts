@@ -9,6 +9,7 @@ import {
   defaultCompared,
   isLate,
   objectiveFlow,
+  ownChoice,
   pickerItems,
   planChoice,
   rankAll,
@@ -99,6 +100,16 @@ describe('choiceService (aba "1. Escolher", tela 5 do pacote 2)', () => {
     expect(planChoice(rec, null, { pensa: 'nao_sei' })).toBe('milheto')
     expect(planChoice(rec, null, {})).toBe('milheto')
     expect(planChoice(rec, null, { pensa: 'pousio' })).toBe('pousio')
+  })
+
+  it('a escolha do próprio produtor (15/11/2026): só a da URL ou a que ele marcou no raio-X; sem marcar ou com "Ainda não sei", nenhuma', () => {
+    const rec = lateHarvest()
+    expect(ownChoice(rec, null, { escolha: 'crotalaria', pensa: 'sorgo' })).toBe('crotalaria')
+    expect(ownChoice(rec, null, { pensa: 'sorgo' })).toBe('sorgo')
+    expect(ownChoice(rec, null, { pensa: 'milho_braquiaria' })).toBe('milho_braquiaria')
+    expect(ownChoice(rec, null, { pensa: 'pousio' })).toBe('pousio')
+    expect(ownChoice(rec, null, { pensa: 'nao_sei' })).toBeNull()
+    expect(ownChoice(rec, null, {})).toBeNull()
   })
 
   it('uma escolha que a recomendação não tem (API antiga sem as fora do prazo) cai para a sugestão', () => {

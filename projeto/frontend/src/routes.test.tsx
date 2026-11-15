@@ -191,6 +191,25 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
   })
 
+  it('tela 5 sem nada marcado no raio-X: a sugestão não vira "Sua escolha" (15/11/2026)', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    await screen.findAllByText('Nossa sugestão')
+    expect(screen.queryByText('Sua escolha')).not.toBeInTheDocument()
+    expect(screen.queryByText('sua escolha')).not.toBeInTheDocument()
+    for (const button of screen.queryAllByRole('button', { name: /escolha para o meu plano|Escolha do meu plano/ })) {
+      expect(button).toHaveAttribute('aria-pressed', 'false')
+    }
+  })
+
+  it('tela 5 com a cultura marcada no raio-X: ela aparece como "Sua escolha", ao lado da sugestão', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&pensa=crotalaria')
+
+    expect(await screen.findAllByText(/^sua escolha$/i)).not.toHaveLength(0)
+    const tag = screen.getAllByText('Sua escolha')[0]
+    expect(tag.closest('div')?.parentElement).toHaveTextContent('Crotalária')
+  })
+
   it('na tela 5, o objetivo da URL vem marcado e a aba "Plano de 3 anos" abre o plano em cadeia', async () => {
     renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&objetivo=terra')
 

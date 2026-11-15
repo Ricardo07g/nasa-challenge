@@ -123,6 +123,10 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `LAST_SEASONS` com o que o satélite viu (`seasonRows(historico)`). A tela 4 pede o `/talhao` e o `/raio-x`
   **sem** as respostas (o que o satélite viu) e aplica as respostas no front, para responder não recarregar nada.
   Tudo vai para a URL pelo `useReplaceFlow` (clicar não mexe na rolagem; teste em `pages.satellite.test.tsx`).
+  **Lavoura de demonstração** (`exemplo=1`, 15/11/2026): sem respostas na URL, as 3 últimas safras já vêm preenchidas
+  com o `DEMO_SEASON_ANSWERS` do `seasonAnswersService` (coerente com o "plantou" que o satélite viu nas 3), uma vez, pelo
+  `useReplaceFlow`, com a nota "as últimas safras já vêm preenchidas com um exemplo" (`seasons.demo`); a escolha atual
+  (`pensa`) nunca vem preenchida.
 - **Comunidade "em breve" (pacote 3, tarefa 0061, RF-44):** a interface **não mostra** a comunidade. A rota
   `/comunidade` continua (links antigos, com ou sem o caminho da lavoura) e mostra só o cartão "Em breve ·
   Comunidade da sua região" com "Abrir o Guia" (`CommunitySoonPage` → `useCommunitySoonController` →
@@ -342,7 +346,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   na tela fica **só a pergunta**; o que ajuda a decidir vai para o modal grande. O satélite não vê o dia da
   colheita: a tela **abre sem data** e com o "Próximo passo" desligado (a `colheita_sugerida` do NDVI não
   preenche mais nada; saíram o `harvestSuggestion`, o `harvestWindow` e a faixa azul). O campo
-  (`input type=date` escondido, aberto pelo botão com `showPicker()`) vai de 1/jan a 30/abr da safra atual
+  (`input type=date` escondido, aberto pelo botão com `showPicker()`; uma linha discreta embaixo dos botões diz por
+  quê: depois de abril, já passou o prazo de plantio do ZARC de todas as culturas da safrinha) vai de 1/jan a 30/abr da safra atual
   (`harvestDateWindow`, do `CURRENT_SEASON`); a época sai da data pelo `harvestFromDate` (a regra do
   `regras.yaml`, grupo `colheita`: até 10/fev e janeiro = cedo; 11 a 20 = meio; do 21 em diante, março e abril
   = tarde). "Não sei o dia exato" abre o `Modal` com as 3 épocas **sem nenhuma marcada** (sempre), e "Usar esta
@@ -424,7 +429,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   design system (`tablist`; setas, Home e End); trocar de aba é `useReplaceUrl` (sem rolar); o botão do fim da aba 1
   abre a aba 2 do topo. O "Voltar" vai para `/satelite`. **O que fica na URL** (`flowParams.ts`): `objetivo`,
   `comparar` (até 3, o pousio vale), `escolha` (o 1º ano do plano; sem ela, o `pensa` do raio-X e, com "Ainda não
-  sei", a sugestão), `ano2` e `ano3` (os anos que o produtor mudou para outra cultura que não a sugestão do ano) e
+  sei" ou nada marcado, a sugestão; **nesse caso não há "Sua escolha"** em nenhuma etiqueta, caixinha, coluna ou
+  cartão: só a escolha do próprio produtor, `ownChoice`, leva esse nome, e o 1º ano do plano diz "Nossa sugestão"), `ano2` e `ano3` (os anos que o produtor mudou para outra cultura que não a sugestão do ano) e
   `ano` (o ano aberto no "Por que essa sugestão?", que os links antigos usam). Escolher para o plano congela a comparação da tela com a cultura e solta
   `ano2`/`ano3`; trocar o objetivo solta a comparação (e os anos, sem `escolha`). Regras: `services/choiceService.ts`
   (ordem com as fora do prazo no fim, `isLate` = `fora_do_prazo` ou, na API antiga, `!na_janela`; a sugestão é sempre

@@ -282,6 +282,9 @@ export const pt = {
     /** Os dias de cada época no calendário ("FEV 11–20"). */
     bandDays: { cedo: '1–10', meio: '11–20', tarde: '21+' },
     pickDate: 'Escolher data',
+    /** Por que o calendário vai só até 30 de abril (15/11/2026): uma linha discreta junto da data. */
+    dateLimit:
+      'O calendário vai só até 30 de abril: colhendo depois disso, já passou o prazo de plantio (ZARC) de todas as culturas da safrinha.',
     changeDate: 'Trocar data',
     pickDay: 'Escolher o dia',
     dontKnow: 'Não sei o dia exato',
@@ -508,6 +511,8 @@ export const pt = {
       legendCurrent: 'safra atual (ainda sem leitura)',
       chartSource: 'MODIS NDVI · NASA · 250 m',
       confirmSub: 'O satélite vê que houve plantio, mas não qual planta. Sua resposta vale no lugar dele.',
+      /** Lavoura de demonstração (15/11/2026): as respostas vêm preenchidas com um exemplo. */
+      demoNote: 'Lavoura de demonstração: as últimas safras já vêm preenchidas com um exemplo. Troque à vontade.',
       confirmSubNoReading: 'Sem leitura do satélite neste ponto, o que vale é a sua resposta.',
       note: 'Usamos essas respostas para comparar o seu plano com “como é hoje”.',
       rotation: 'Saiba mais: rotação de culturas',
