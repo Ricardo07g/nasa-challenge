@@ -1,5 +1,5 @@
 # Imagem de DESENVOLVIMENTO (Vite com hot reload).
-# Em produção o front é publicado como site estático (ex.: Vercel) a partir de `npm run build`.
+# Em produção (Railway) o front usa o Dockerfile.prod: build estático + Caddy (ver backend/docs/deploy-railway.md).
 FROM node:24-alpine
 
 WORKDIR /app

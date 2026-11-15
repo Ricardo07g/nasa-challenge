@@ -1,0 +1,22 @@
+# Servidor do front em produção (Dockerfile.prod). PORT vem da Railway; BACKEND_URL aponta para o backend pela rede
+# privada (ex.: http://backend.railway.internal:8000). Sem segredo: os dois são só endereços.
+{
+	admin off
+	auto_https off
+}
+
+:{$PORT:8080} {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy {$BACKEND_URL}
+	}
+
+	handle {
+		root * /srv
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		try_files {path} /index.html
+		file_server
+	}
+}
