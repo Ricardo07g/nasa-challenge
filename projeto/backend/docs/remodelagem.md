@@ -28,7 +28,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | ✅ na branch (15/11 ~02:57), revisada |
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | ✅ na branch (15/11 ~04:00), revisada; extração completa do MCD64A1 rodando |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | ✅ na branch (15/11 ~04:12), revisada; irrigação opcional não feita |
-| S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | feito na branch `feat/remodelagem-s5b-plano` (15/11 ~05:30); falta o merge em `feat/remodelagem` e a revisão |
+| S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | ✅ na branch (15/11 ~05:05), revisada; Plano B sem número (nenhum limite separou bem) |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | ✅ na branch (15/11 ~04:50), revisada |
 | S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~03:10), revisada |
 | S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | a fazer |
@@ -152,6 +152,36 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D122 | 15/11 | O requisito novo é o RF-32 (reservado pelo orquestrador; a S6 usa outro). Se colidir no merge, renumerar como no D13. | Regra de números reservados para seções em paralelo. |
 
 ## Revisão por seção
+
+### S5b — Comparar e Plano de 3 anos (revisada em 15/11 ~05:15)
+
+Conferida em 1280 e 390 px, pt e en, com dado real na fazenda de exemplo (colheita meio).
+
+- ✅ Comparar:
+  - até 3 culturas por chips com imagem e sede; por padrão, as 3 melhores do objetivo; a 4ª pede para tirar uma;
+  - culturas fora da janela desligadas, com o motivo;
+  - colunas com deu certo, por que falhou (água × calor), água, clima 2041–2060 por cultura, renda, terra,
+    prazo, "Por que usar", "Por que evitar" e "Saiba mais";
+  - "Se você prefere…" abre a aba e "Usar no meu plano" leva a cultura para o ano 1.
+  - Em 390 px, as 3 colunas cabem sem rolagem lateral.
+- ✅ Plano de 3 anos:
+  - troca da cultura de cada ano numa lista (D121); as notas recalculam pelo `GET /api/plano` (~0,4 s), lado a lado
+    com o "Como é hoje" (sorgo, milheto e crotalária: segurança 88, terra 68, clima 2041–2060 88; hoje: 80, 20, 80);
+  - "Voltar ao plano sugerido";
+  - saúde da terra com fatos (terra coberta, nitrogênio, nematoide, repetição).
+- ✅ Chuva aproveitada: "Com a terra parada, 413 mm de chuva por ano caem sem virar grão nem palha. Com o plano, a
+  lavoura usa 216 mm.", ano a ano e com a fonte. No pousio, só a chuva que caiu, sem estimar evaporação.
+- ✅ "Como é hoje" com o NDVI das 3 últimas safras (0,71, 0,80 e 0,89 no MODIS) e "O que foi?" em cada ano. Sem
+  resposta, fica a referência (milho sozinho nos 3 anos), dita como referência.
+- ✅ Plano A e Plano B numa frase cada. O Plano B sai **sem número**: na série, nenhum limite de chuva nos 15 dias
+  antes de plantar (nem o SMAP) separou os anos ruins dos bons (D115). A tela diz isso.
+- ✅ Saiu o botão "Como teria sido em 2024?" (o detalhe de 2024 está no explorador da Sugestão).
+- ⚠️ **Sinal do outono × Avisos:** o Plano diz "Sinal de ano normal. O sinal marca o Plano A." com El Niño de 98%, e
+  o aviso de El Niño da S6 diz "Veja o Plano B no Plano de 3 anos antes de decidir". As duas telas precisam dar o
+  mesmo conselho (S9).
+- ⚠️ No Comparar, "Por que usar: Dá grão com pouco risco de perder" aparece ao lado de "Deu certo: Médio" (16 de
+  20). Vem dos rótulos diferentes de chuva e renda, já anotados na S1.
+- ⚠️ O sinal do outono ainda fala do Plano A sugerido, mesmo depois de o produtor trocar o ano 1 (S9).
 
 ### S6 — Avisos (revisada em 15/11 ~04:55)
 
@@ -418,6 +448,13 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
   Plano A sugerido); o Plano B da tela (crotalária) também não é o do sinal. Unificar na S9.
 - **S5b, na UFU o satélite viu plantio nas 3 últimas entressafras** (verde máximo 0,71, 0,80 e 0,89): a tela pergunta "O
   que foi?" nos 3 anos. Coerente com o "parada em 0 de 10 anos" da S4.
+
+- **S5b, saúde da terra do plano editado:** sorgo, milheto e crotalária (nenhuma repetição, 2 anos que quebram o
+  nematoide) dá 68, menos que o plano sugerido (72), que repete milho com braquiária; e o "Cuidar da terra"
+  (crotalária × 3) dá 85. A nota é a média da nota de solo de cada cultura mais o bônus de diversidade (D111):
+  a repetição não perde ponto. Vale a agrônoma calibrar.
+- **S5b, chuva aproveitada:** o plano sugerido usa 216 mm e o "Como é hoje" (milho sozinho) usa 221 mm. A frase
+  não diz que o plano usa mais, mas a comparação lado a lado pode confundir.
 
 ## O que não foi possível e por quê
 
