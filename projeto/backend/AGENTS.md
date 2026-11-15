@@ -821,6 +821,31 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - `fora_da_janela[].data_limite` (o aviso único da colheita tarde junta as culturas por data) e
     `GET /api/safra-passada?…&opcao=<id>` (o detalhe de qualquer ano do explorador, para a opção
     que a aba mostra; fora da janela, 404 `NOT_FOUND`).
+- **Abas Comparar e Plano de 3 anos** (remodelagem S5b, tarefa 0045, RF-32; contrato completo em
+  `docs/tarefas/0045-comparar-e-plano.md`). O Comparar só usa o `/recomendacao`; o Plano usa o
+  endpoint novo **`GET /api/plano?lat&lon&anos=a,b,c[&colheita][&solo]`** (`PlanEvaluationService`,
+  decisão D110 da remodelagem): avalia qualquer sequência de 3 culturas do `culturas.yaml` (o pousio
+  vale) com a conta do motor (`RecommendationService.recommend`, a mesma faixa e o mesmo solo; nada é
+  recalculado fora dele), ~0,3 s na fazenda da UFU, sem cache HTTP. Sem 3 culturas ou com cultura
+  desconhecida: 422 `VALIDATION_ERROR`; ponto sem dados: 404 `OUTSIDE_AREA`. Devolve:
+  - `anos[]`: `cultura`, `nome`, `na_janela`, `anos_bons`, `total_anos`, `futuro_anos_bons`, `sede`,
+    `cobre_terra` (palhada > 0), `deixa_nitrogenio` (`n_deixado_kg` > 0), `quebra_nematoide`
+    (`rotacao.culturas_supressoras_nematoide`, PRD 7.7) e `usa_mm` (mediana da ETr do ciclo, o novo
+    `AguaOpcao.usa_mm` do `WaterNeedService`). Fora da janela, os números do motor saem `null`;
+  - `notas`: `seguranca` e `futuro` = média das notas do motor nos anos com lavoura na janela (o pousio
+    fica de fora); `solo` (saúde da terra) = média da nota de solo dos 3 anos (pousio 0) + o bônus de
+    diversidade do PRD 7.7 (`RotationPlanService.diversity_bonus`), até 100;
+  - `terra`: `anos_cobertos`, `anos_nitrogenio`, `anos_nematoide`, `repetidas` (sem o pousio),
+    `total`, `bonus_diversidade`;
+  - `chuva` (chuva aproveitada): `inicio` (a semeadura), `fim` (`chuva_aproveitada.fim`, 07-31),
+    `chuva_mm` (mediana da chuva da semeadura ao fim da série), `usa_media_mm` (média do `usa_mm` dos 3
+    anos, pousio 0; `null` com ano fora da janela), `anos`, `fonte` (`rain_source`, juntas por `+`);
+  - `plano_ab` (`PlanBService`): o Plano A é a cultura do 1º ano; o Plano B, a cultura na janela (sem o
+    pousio) que mais deu certo nos anos em que a do A falhou (desempate pela nota final). `limite`: a
+    chuva dos `plano_b.dias_antes_semeadura` (15) dias antes da semeadura que mais acerta as falhas do
+    A; `separa` só com as 4 condições do grupo `plano_b` (3 falhas ou mais, 50% das falhas, 60% dos
+    marcados e chance ao acaso de até 10%, hipótese do time). Sem B, `motivo`: `pousio`,
+    `nunca_falhou` ou `nenhuma_melhor`. O `plano_3_anos.seco` do motor e o sinal do outono não mudam.
 - **Região pelo satélite** (P3, tarefas 0034 e 0036): `GET /api/regiao?lat&lon`, no contrato do
   front (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem
   banco).

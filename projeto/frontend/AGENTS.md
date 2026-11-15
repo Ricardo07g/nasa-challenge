@@ -244,6 +244,26 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   ficam em `SUGGESTION_ARTICLES` e `cropArticle` (um teste confere que o artigo existe em pt e en).
   **Não há mais relatório nem a tela solta da safra passada:** `/relatorio` e `/safra-passada?…&ano=X`
   levam para `/resposta` (com o `ano`, na safra passada). Não crie link para elas.
+- **Abas Comparar e Plano de 3 anos (tarefa 0045 do backend, RF-32):** o estado fica na URL, pelo
+  `flowParams.ts` (segue entre as abas): `comparar` (até 3 culturas, sem o pousio), `plano` (os 3 anos, o
+  pousio vale) e `hoje` (o "O que foi?" do "Como é hoje", `2024:pousio,2025:sorgo`), sem codificar `:` e
+  `,` (`services/cropListParams.ts`). Trocar o objetivo limpa `comparar` e `plano`. **Comparar**
+  (`services/compareService.ts`): sem escolha, as 3 primeiras da ordem do objetivo; chips com a imagem e o
+  selo de sede (`CropPicker` do design system; fora da janela, desligado com a data limite); colunas
+  numa `CompareTable` (rótulo da linha em cima das células, para 3 colunas caberem em 390 px); "Por que
+  usar" e "Por que evitar" só dos rótulos e da sede que a API manda (nenhum corte novo no front);
+  "Se você prefere…" abre a aba (saiu da Sugestão); "Usar no meu plano" é um link para `/plano` com a
+  cultura no ano 1. **Plano** (`services/planService.ts`): cada ano escolhe numa lista nativa
+  (`SelectField`) entre as culturas que cabem na janela e o pousio; o plano da URL com cultura fora da
+  janela volta ao sugerido. As notas, a saúde da terra, a chuva aproveitada e o Plano A/B vêm do
+  `GET /api/plano` (`repositories/planoRepository.ts`; cache em memória por plano; o último resultado
+  fica na tela com "Recalculando…"), pedido duas vezes: o plano e o "Como é hoje". O "Como é hoje"
+  junta o histórico do `/talhao` com as confirmações da tela 4 e o "O que foi?" (os `QuestionChips` e as
+  culturas do relato da S7, sem "outra"); sem as 3 safras conhecidas, usa o `plano_3_anos.hoje` e diz que
+  é uma referência. O número de "secar" só aparece com `plano_ab.limite.separa`. A fonte da chuva sai do
+  `chuva.fonte` (`rainSourceName`). Não há mais o botão "Como teria sido em 2024?" nem a regra antiga
+  da data na tela (o sinal do outono continua). Links do Guia: `COMPARE_ARTICLES` e `PLAN_ARTICLES` (um
+  teste confere que existem em pt e en).
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front.
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).

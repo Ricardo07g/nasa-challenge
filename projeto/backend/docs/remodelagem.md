@@ -28,7 +28,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | ✅ na branch (15/11 ~02:57), revisada |
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | ✅ na branch (15/11 ~04:00), revisada; extração completa do MCD64A1 rodando |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | ✅ na branch (15/11 ~04:12), revisada; irrigação opcional não feita |
-| S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
+| S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | feito na branch `feat/remodelagem-s5b-plano` (15/11 ~05:30); falta o merge em `feat/remodelagem` e a revisão |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | ✅ na branch (15/11 ~04:50), revisada |
 | S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~03:10), revisada |
 | S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | a fazer |
@@ -137,6 +137,19 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D102 | 15/11 | S6: o "rodapé fixo" é o último bloco da tela, que aparece sempre (com ou sem ponto e com ou sem avisos), e não uma barra presa na tela. Botões: `sms:40199`, `https://wa.me/556120344611` (sem texto pronto), `tel:193` e `tel:199`, e o artigo do Guia. | Uma barra presa cobriria os avisos no celular. Os links são os do pedido e do orquestrador. |
 | D103 | 15/11 | S6: até 480 px o cabeçalho fica mais justo (menos respiro, nome em 18 px, logo em 34 px) e, se ainda não couber, os botões descem uma linha. Em 390 px cabe numa linha; em 360 px desce. | Com o botão novo, o nome "Raiz Orbital" ficava por baixo do ícone da Comunidade em 390 px. |
 | D104 | 15/11 | S6: artigo novo do Guia "Como ler os avisos" (tema clima, sem rascunho, por ser de dados), só com fontes já conferidas em `verifiedSources.ts`; a tela liga com "Saiba mais". O RF novo é o RF-31 (a S5a usa o RF-30). | Explica os níveis, os grupos e as fontes sem número novo. |
+| D110 | 15/11 | S5b: endpoint novo `GET /api/plano?lat&lon&anos=a,b,c[&colheita][&solo]` (`PlanEvaluationService`) para avaliar qualquer plano: a conta de cada cultura é a do motor (`RecommendationService.recommend`, a mesma faixa e o mesmo solo) e o bônus é o do `RotationPlanService`. O front pede de novo a cada troca (~0,3 s), com cache em memória por plano e o último resultado na tela enquanto recalcula. | As regras do plano (PRD 7.7) ficam no backend (D68); devolver todas as 216 sequências no `/recomendacao` pesaria a resposta de todas as telas. |
+| D111 | 15/11 | Notas do plano: segurança climática e clima 2041–2060 = média das notas do motor só nos anos com lavoura na janela; saúde da terra = média da nota de solo dos 3 anos (PRD 7.4; pousio = 0) + o bônus de diversidade do PRD 7.7, até 100. **A revisar.** | O pousio tem segurança 100 (PRD 7.2) e subiria a nota do plano sem ter lavoura para proteger (o mesmo motivo do D70); na terra, o pousio conta como terra descoberta, e a diversidade da rotação é o que o pedido quer mostrar. |
+| D112 | 15/11 | Fatos da terra do plano: coberta = palhada > 0 no `culturas.yaml`; deixa nitrogênio = `n_deixado_kg` > 0; quebra o ciclo do nematoide = as supressoras do PRD 7.7 (`rotacao.culturas_supressoras_nematoide`: crotalária e milheto); repetida = a mesma cultura (sem o pousio) em mais de um ano. | Números e listas que já estão no `culturas.yaml` e no `regras.yaml`; o pousio repetido já aparece como terra descoberta. |
+| D113 | 15/11 | Chuva aproveitada: da semeadura do motor (colheita + 3 dias) até 31/jul (fim da série guardada; 30/jul nos anos bissextos), mediana dos anos. "Usa" = mediana da ETr do ciclo (`agua.usa_mm`, novo no `WaterNeedService`); a frase usa a média dos 3 anos do plano (pousio = 0). No pousio, só a chuva que cai sem cultura. Ano fora da janela: sem número e sem a média. | Texto do pedido ("Com a terra parada, X mm… Com o plano, a lavoura usa Y mm"), sem estimar a evaporação da terra; a ETr é a mesma conta da linha Água. |
+| D114 | 15/11 | Plano A = a cultura do 1º ano do plano que a tela mostra (o sugerido ou o editado). Plano B = a cultura na janela (sem o pousio) que mais deu certo nos anos em que a do Plano A falhou, com desempate pela nota final do motor; sem ela, a tela diz por quê (deixar parado, nunca falhou, nenhuma melhor). O `plano_3_anos.seco` do motor não muda e continua no sinal do outono. | O 1º ano do plano seco do motor era igual ao do Plano A nas 3 faixas da UFU ("Plano B: milho com braquiária, se secar" não diz nada); o Plano B segue o Plano A quando o produtor troca o ano 1. |
+| D115 | 15/11 | "Secar" com número = menos de L mm de chuva nos 15 dias antes da semeadura (o que o produtor confere no pluviômetro). L é o limite que mais acerta os anos de falha da cultura do Plano A (acertos − alarmes falsos; empate = menos anos marcados). **Separa bem** = 3 anos de falha ou mais, pega 50% das falhas ou mais, 60% ou mais dos anos marcados são falha, e a chance de pegar tantas falhas marcando o mesmo número de anos ao acaso (hipergeométrica) é de 10% ou menos (grupo `plano_b`, hipótese do time). Senão, o Plano B aparece sem número. | O pedido manda não inventar. As três primeiras condições foram fixadas antes de olhar os dados; a da chance foi acrescentada depois de ver que o sorgo da colheita tarde passava nelas com um limite que o acaso explica em 18,5% das vezes (está em "O que não foi possível"). |
+| D116 | 15/11 | Saíram da tela do Plano: a escolha "Plano A / Plano B" da linha do tempo, a regra antiga da data (30 dias antes da data limite, 60% da média; tarefa 0038), o botão "Como teria sido em 2024?" e o estudo ilustrativo do ganho na soja (só no modo de demonstração). O cartão do sinal do outono (previsão do ENSO, motivo, SMAP de agora) ficou. O `regra_dia_plantar` segue na API, sem uso na tela. | O pedido troca o Plano A/B por uma frase cada, com o número derivado da série; o estudo não tinha fonte conferida. |
+| D117 | 15/11 | "Como é hoje": as 3 safras de `anos_confirmaveis` com o NDVI do `/talhao` e as confirmações da tela 4; "O que foi?" com as culturas do relato de plantio da S7 (sem "outra", com "Deixei parado") e os `QuestionChips` da S7. Ano parado vale "Deixei parado" sem perguntar (dá para trocar). A resposta fica na URL (`hoje=`) e não vira relato nem confirmação. Com as 3 conhecidas, "Como é hoje" = essas culturas com a faixa de colheita de agora; senão, a referência do motor (`plano_3_anos.hoje`) com o aviso. | Reaproveita a forma de perguntar da S7 (o pedido não quer uma terceira); "outra" o motor não sabe avaliar. |
+| D118 | 15/11 | Estado na URL pelo `flowParams`: `comparar` (até 3, sem o pousio), `plano` (3 culturas, o pousio vale) e `hoje`, sem codificar `:` e `,`; seguem entre as abas. Trocar o objetivo limpa `comparar` e `plano`. O plano da URL com cultura fora da janela (ex.: depois de trocar a colheita) volta ao sugerido. | O "Voltar" e o compartilhar funcionam (pedido); sem limpar, tocar em "Mais segurança" não mudaria nada no Comparar nem no Plano. |
+| D119 | 15/11 | Comparar: "Por que usar" = chuva Bom, grão com renda Bom, terra Bom, pouca sede; "Por que evitar" = chuva Fraco, sem grão, terra Fraco, muita sede, menos anos bons em 2041–2060 que hoje. O pousio não entra no Comparar. A tabela põe o rótulo da linha em cima das células. | "Gerados das notas do motor": os rótulos já saem das notas com os cortes do `regras.yaml`, então o front não cria corte novo; com o rótulo em cima, 3 colunas cabem em 390 px sem rolar a página. |
+| D120 | 15/11 | "Usar no meu plano" põe a cultura no ano 1 e mantém os anos 2 e 3 do plano atual (o editado ou o sugerido do objetivo). | "Leva a cultura para o ano 1" (pedido); trocar os outros anos sem o produtor pedir mudaria o plano dele. |
+| D121 | 15/11 | A cultura de cada ano do Plano é escolhida numa lista nativa (`SelectField`, novo no design system); o "O que foi?" continua com botões. | Seis botões em cada um dos 3 anos seriam 18 botões no celular; o "O que foi?" usa a forma da S7. |
+| D122 | 15/11 | O requisito novo é o RF-32 (reservado pelo orquestrador; a S6 usa outro). Se colidir no merge, renumerar como no D13. | Regra de números reservados para seções em paralelo. |
 
 ## Revisão por seção
 
@@ -387,7 +400,41 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
 - **S6, terra seca:** só 3 das 225 células têm o SMAP de 10/11 no percentil 20 ou menos, todas no sudoeste da caixa
   (−19,55 / −48,95: 15,3). A UFU está no 59,3.
 
+- **S5b, Plano B sem número em todas as faixas da UFU:** na colheita meio, as 4 falhas do milho com braquiária
+  tiveram 77, 102, 129 e 164 mm nos 15 dias antes de plantar, no meio dos anos bons (31 a 181 mm): nenhum limite acerta
+  mais do que erra. A falha da safrinha vem da floração, ~2 meses depois do plantio; a chuva antes de plantar quase não
+  diz nada sobre ela.
+- **S5b, "quebra o ciclo do nematoide" em dois sentidos:** a linha Terra (frase do PRD 7.6, `solo_pragas` > 0) diz que
+  sorgo e milho com braquiária "ajudam a quebrar"; os fatos do Plano contam só crotalária e milheto (as supressoras do
+  PRD 7.7). A agrônoma decide qual vale.
+- **S5b, "usa" × linha Água:** o milho com braquiária usa 221 mm (mediana da ETr) e a linha Água diz precisa 346 − falta
+  116 = 230 mm. São medianas de coisas diferentes (a mediana da diferença não é a diferença das medianas).
+- **S5b, "Cuidar da terra" ainda ganha repetindo:** crotalária nos 3 anos tem saúde da terra 85 (sem bônus); o plano do
+  equilíbrio (milho com braquiária, milho com braquiária, crotalária) tem 71,7 com +10 de diversidade. A repetição aparece
+  como fato.
+- **S5b, "Como é hoje" na colheita tarde:** a referência do motor é deixar parado nos 3 anos (o milho não cabe na janela),
+  então as notas de hoje saem "Sem lavoura" e a terra 0, contra 85 / 53 / 85 do plano. A tela diz que é referência.
+- **S5b, sinal do outono × Plano A editado:** com sorgo no ano 1, a frase do sinal ainda fala do milho com braquiária (o
+  Plano A sugerido); o Plano B da tela (crotalária) também não é o do sinal. Unificar na S9.
+- **S5b, na UFU o satélite viu plantio nas 3 últimas entressafras** (verde máximo 0,71, 0,80 e 0,89): a tela pergunta "O
+  que foi?" nos 3 anos. Coerente com o "parada em 0 de 10 anos" da S4.
+
 ## O que não foi possível e por quê
+
+- **S5b, número para "secar":** nenhum limite de chuva dos 15 dias antes da semeadura separa bem (D115). Colheita meio,
+  milho com braquiária: 4 falhas, nenhum limite com mais acertos que alarmes falsos. Cedo: só 2 falhas (mínimo 3). Tarde:
+  o milheto nunca falhou (sem Plano B). O sorgo da tarde (1º ano do plano "Renda") tem 9 falhas e o melhor limite (100 mm)
+  marca 10 anos com 6 falhas: pega 67% das falhas, 60% dos marcados são falha, **mas o acaso faz o mesmo em 18,5% das
+  vezes** (o critério pede 10% ou menos). O Plano B aparece sem número, com a regra da terra seca no dia de plantar.
+- **S5b, SMAP como indicador:** só 9 anos na série do motor (2016 a 2024); na colheita meio, as falhas do milho com
+  braquiária tiveram 40%, 40% e 44% da água que a terra guarda, no meio dos anos bons (35% a 46%). Também não separa, e o
+  produtor não confere o SMAP no pluviômetro.
+- **S5b, irrigação** (opcional da 5.3, com o "[A] no lugar de [B] economiza N mm" do Comparar): não feita (tempo).
+- **S5b, "outra" cultura no "Como é hoje":** fora, o motor não avalia; cultura respondida que não cabe na janela da faixa
+  de agora entra sem números.
+- **S5b, limpeza:** `buildPlan`, `planSwaps`, `planSummary`, `initialScenario`, `plantingRule`, `optionsSummary`,
+  `buildAnswer`, `optionsForObjective`, `PAST_YEARS` e as chaves `plan.*` antigas ficaram sem uso no front; o
+  `regra_dia_plantar` do sinal segue na API sem uso na tela. Fica para a S9.
 
 - **S5a, irrigação (opcional da 5.3):** "Você irriga essa área?" atrás de uma opção desligada não foi feita
   (tempo); fica para a S5b ou depois. O "deu certo" não muda com ela.
