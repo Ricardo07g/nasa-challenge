@@ -13,7 +13,7 @@ from typing import Any
 import pytest
 
 from app.models.climate import SmapSoilMoisture
-from app.repositories.smap_repository import FileSmapRepository
+from app.repositories.smap_repository import FileSmapRepository, LayeredSmapRepository
 
 
 def _write(path: Path, pontos: list[dict[str, Any]], with_version: bool = True) -> Path:
@@ -94,3 +94,65 @@ def test_should_refuse_a_record_outside_the_contract(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="sm_rootzone_wetness"):
         FileSmapRepository(path).list_point_series()
+
+
+# --- série da célula (R3.3) -------------------------------------------------------------------
+
+FARM_CELL = "-190_-482"  # centro -18,95 / -48,15
+
+
+def test_should_give_the_series_of_the_point_at_the_cell_center(tmp_path: Path) -> None:
+    path = _write(
+        tmp_path / "smap.json",
+        [
+            {"lat": -19.05, "lon": -48.15, "serie": [_item("2016-02-18", 0.11, 0.21)]},
+            {"lat": -18.95, "lon": -48.15, "serie": [_item("2016-02-18", 0.61, 0.31)]},
+        ],
+    )
+
+    [record] = FileSmapRepository(path).get_cell_smap_series(FARM_CELL)
+
+    assert (record.data, record.sm_rootzone_wetness) == (date(2016, 2, 18), 0.61)
+
+
+def test_should_give_no_series_for_a_cell_the_file_does_not_cover(tmp_path: Path) -> None:
+    path = _write(
+        tmp_path / "smap.json",
+        [{"lat": -19.05, "lon": -48.15, "serie": [_item("2016-02-18", 0.11, 0.21)]}],
+    )
+
+    assert FileSmapRepository(path).get_cell_smap_series(FARM_CELL) == []
+    assert FileSmapRepository(path).get_cell_smap_series("id-mal-formado") == []
+    assert FileSmapRepository(None).get_cell_smap_series(FARM_CELL) == []
+
+
+class _Source:
+    def __init__(self, records: list[SmapSoilMoisture]) -> None:
+        self.records = records
+        self.calls: list[str] = []
+
+    def get_cell_smap_series(self, cell_id: str) -> list[SmapSoilMoisture]:
+        self.calls.append(cell_id)
+        return list(self.records)
+
+
+def _record(wetness: float) -> SmapSoilMoisture:
+    return SmapSoilMoisture(date(2016, 2, 18), -18.95, -48.15, 0.3, wetness, "teste")
+
+
+def test_should_take_the_first_source_that_has_the_series_of_the_cell() -> None:
+    table, file = _Source([_record(0.61)]), _Source([_record(0.11)])
+
+    series = LayeredSmapRepository(table, file).get_cell_smap_series(FARM_CELL)
+
+    assert [r.sm_rootzone_wetness for r in series] == [0.61]
+    assert file.calls == []
+
+
+def test_should_fall_back_to_the_next_source_when_the_first_is_empty() -> None:
+    table, file = _Source([]), _Source([_record(0.11)])
+
+    series = LayeredSmapRepository(table, file).get_cell_smap_series(FARM_CELL)
+
+    assert [r.sm_rootzone_wetness for r in series] == [0.11]
+    assert LayeredSmapRepository(_Source([]), _Source([])).get_cell_smap_series(FARM_CELL) == []
