@@ -7,6 +7,7 @@
 import type { Lang } from '../../i18n/language'
 import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo, Sede } from '../../models/recomendacao'
 import { MOCK_PILOT_AREA as AREA } from './mockLocation'
+import { CLIMA_FUTURO_EXEMPLO } from './raioXFixture'
 import type { CustoAtraso, CustoAtrasoParams } from '../../models/custoAtraso'
 import {
   COLHEITAS,
@@ -540,8 +541,8 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
         ]
       : [],
     objetivos: objectives(opcoes, PLAN_A),
-    clima_futuro: { chuva_pct: -0.7, tmax_c: 1.3, modelos: 3, concordam_chuva: 2, concordam_tmax: 3, meses: [3, 4, 5], cenario: 'ssp245' },
-    geada: { anos: late ? 1 : 0, total: 20, tmin_max_c: 3, meses: [5, 6, 7] },
+    clima_futuro: CLIMA_FUTURO_EXEMPLO,
+    geada: late ? { anos: [2011], total_anos: 20, temp_c: 3, menor_temp_c: 2.4, fonte: 'nasa_power' } : null,
     pousio: {
       texto:
         lang === 'pt'

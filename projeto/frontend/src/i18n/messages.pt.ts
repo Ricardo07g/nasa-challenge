@@ -635,12 +635,6 @@ export const pt = {
     },
     climate: {
       title: 'Clima 2041–2060',
-      rain: (pct: string) => `Chuva de março a maio: ${pct}%`,
-      heat: (deg: string) => `Máxima: ${deg} °C`,
-      agreeRain: (n: number, total: number, less: boolean) =>
-        `${n} de ${total} modelos indicam ${less ? 'menos' : 'mais'} chuva.`,
-      agreeHeat: (n: number, total: number, hotter: boolean) =>
-        `${n} de ${total} indicam ${hotter ? 'mais' : 'menos'} calor.`,
       source: 'NEX-GDDP-CMIP6 (NASA), cenário SSP2-4.5, média dos modelos, contra 1995–2014.',
     },
     how: {

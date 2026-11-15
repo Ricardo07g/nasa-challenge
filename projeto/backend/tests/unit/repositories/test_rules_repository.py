@@ -347,15 +347,14 @@ def test_should_load_the_water_and_crop_thirst_rules_of_the_suggestion() -> None
     assert agua.percentil_seco == 20
 
 
-def test_should_load_the_enso_hit_rate_and_cell_climate_rules_of_the_suggestion() -> None:
+def test_should_load_the_enso_hit_rate_rules_of_the_suggestion() -> None:
     # Tarefa 0044 (5.4): quando a diferença entre os anos de El Niño / La Niña e os outros é
-    # "clara"; e os cálculos pequenos do clima 2041-2060 e da geada (a unificar com a S4 na S9).
+    # "clara". O clima 2041-2060 e a geada da Sugestão usam os grupos do raio-X (tarefa 0049).
     regras = YamlRulesRepository(SHIPPED).get_rules()
 
     assert (regras.enso_acerto.diferenca_min_pct, regras.enso_acerto.anos_fase_min) == (25.0, 5)
-    assert regras.clima_futuro_sugestao.meses == (3, 4, 5)
-    assert regras.geada_sugestao.tmin_max_c == 3.0
-    assert regras.geada_sugestao.meses == (5, 6, 7)
+    assert not hasattr(regras, "clima_futuro_sugestao")
+    assert not hasattr(regras, "geada_sugestao")
 
 
 def test_should_load_the_plan_b_rain_limit_and_the_used_rain_rules() -> None:
@@ -382,8 +381,6 @@ def test_should_load_the_plan_b_rain_limit_and_the_used_rain_rules() -> None:
         ("fim_das_chuvas", "chuva_max_mm"),
         ("agua", "sede_muita_desde_mm"),
         ("enso_acerto", "diferenca_min_pct"),
-        ("clima_futuro_sugestao", "meses"),
-        ("geada_sugestao", "tmin_max_c"),
     ],
 )
 def test_should_refuse_a_screen_three_number_without_source(

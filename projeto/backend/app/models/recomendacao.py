@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from app.models.enso import FaseEnso
+from app.models.raio_x import AlertaGeada, ClimaFuturo
 from app.models.sinal_outono import SinalOutono
 
 
@@ -105,33 +106,6 @@ class CicloOpcao:
 
     dias: int
     floracao_dias: int
-
-
-@dataclass(frozen=True)
-class ClimaFuturoCelula:
-    """Clima de 2041-2060 na célula (tarefa 0044; a seção 4 faz o mesmo no raio-X, unificar na S9).
-
-    Média simples dos `meses` de cada modelo do CMIP6 e a média entre os modelos: chuva em % e
-    máxima em °C. `concordam_*` = modelos que vão no mesmo sentido da média.
-    """
-
-    chuva_pct: float
-    tmax_c: float
-    modelos: int
-    concordam_chuva: int
-    concordam_tmax: int
-    meses: tuple[int, ...]
-    cenario: str
-
-
-@dataclass(frozen=True)
-class GeadaCelula:
-    """Anos com alguma noite de `tmin_max_c` °C ou menos nos `meses` (NASA POWER, tarefa 0044)."""
-
-    anos: int
-    total: int
-    tmin_max_c: float
-    meses: tuple[int, ...]
 
 
 @dataclass(frozen=True)
@@ -299,7 +273,9 @@ class Recomendacao:
     # Sinal para o outono (PRD 7.10, RF-20); None sem previsão nem dado da terra
     sinal: SinalOutono | None = None
     # Aba Sugestão (tarefa 0044): ordem e plano por objetivo ("equilibrio", "seguranca", "renda",
-    # "terra"), clima de 2041-2060 e geada na célula (None sem CMIP6 / sem série)
+    # "terra"). Clima de 2041-2060 e geada na célula: os mesmos do raio-X (cartão "Clima 2041-2060"
+    # e alerta de geada, tarefa 0049), para as duas telas dizerem o mesmo número. None sem CMIP6 /
+    # sem nenhum ano com geada.
     objetivos: Mapping[str, ObjetivoResultado] = field(default_factory=dict)
-    clima_futuro: ClimaFuturoCelula | None = None
-    geada: GeadaCelula | None = None
+    clima_futuro: ClimaFuturo | None = None
+    geada: AlertaGeada | None = None

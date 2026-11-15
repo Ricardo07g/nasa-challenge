@@ -16,6 +16,7 @@ from app.models.talhao import NdviRecord, SoloInfo
 from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
+from app.services.raio_x_service import RaioXService
 from app.services.recommendation_service import (
     RecommendationService,
     build_alternatives,
@@ -1112,17 +1113,73 @@ def test_should_start_plan_a_with_the_best_option() -> None:
     assert rec.plano_normal.anos == rec.objetivos["equilibrio"].plano
 
 
-def test_should_summarize_the_2041_2060_climate_of_the_cell_and_the_frost_risk() -> None:
-    rec = _service(FakeClimateRepository(deltas=MODEL_DELTAS)).recommend(
-        lat=-18.95, lon=-48.20, colheita="meio"
-    )
+class UnevenAutumnClimateRepository(FakeClimateRepository):
+    """Março chove muito mais que abril e maio, e 2010 tem uma noite de 2 °C em junho.
+
+    Valores de teste: com eles, a média simples dos meses e a média pesada pela chuva de cada mês
+    dão sinais opostos (o erro da S5a, corrigido na S9).
+    """
+
+    def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
+        seasons = []
+        for year in self._years:
+            start = date(year, 1, 1)
+            months = [(start + timedelta(days=i)).month for i in range(DAYS)]
+            rain = tuple({3: 10.0, 4: 2.0, 5: 0.5}.get(m, 8.0) for m in months)
+            tmin = tuple(2.0 if (year == 2010 and m == 6) else 18.0 for m in months)
+            seasons.append(replace(_season(year, dry_feb_to_jun=False), rain_mm=rain, tmin_c=tmin))
+        return seasons
+
+
+UNEVEN_DELTAS = [
+    Cmip6Delta(model=model, scenario="ssp245", month=month, rain_pct=pct, tmax_c=1.0)
+    for model in ("A", "B", "C")
+    for month, pct in ((3, 10.0), (4, -20.0), (5, -20.0))
+]
+
+
+class FakeRaioXNdvi:
+    def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
+        return []
+
+
+class FakeNoRecentSmap:
+    def get_recent_soil_moisture(self, lat: float, lon: float) -> RecentSoilMoisture | None:
+        return None
+
+
+def test_should_give_the_suggestion_the_same_2041_2060_climate_and_frost_as_the_x_ray() -> None:
+    # S9 (tarefa 0049): a Sugestão dizia "-0,7%, 2 de 3 indicam menos chuva" e o raio-X "+2,2%,
+    # 2 de 3 indicam mais chuva" na mesma célula. As duas telas usam agora a mesma conta (a do
+    # raio-X, que pesa cada mês pela chuva média do mês) e o mesmo alerta de geada.
+    climate = UnevenAutumnClimateRepository(deltas=UNEVEN_DELTAS)
+    engine = _service(climate)
+    raio_x = RaioXService(
+        climate_repo=climate,
+        soil_repo=FakeSoilRepository(),
+        ndvi_repo=FakeRaioXNdvi(),
+        crop_repo=FakeCropParamsRepository(),
+        recommender=engine,
+        reference_eto=lambda season: season.eto_mm,
+        recent_soil_moisture_repo=FakeNoRecentSmap(),
+    ).raio_x(lat=-18.95, lon=-48.20, colheita="meio")
+
+    rec = engine.recommend(lat=-18.95, lon=-48.20, colheita="meio")
 
     assert rec.clima_futuro is not None
-    assert (rec.clima_futuro.chuva_pct, rec.clima_futuro.tmax_c) == (-8.0, 2.0)
-    assert (rec.clima_futuro.concordam_chuva, rec.clima_futuro.modelos) == (2, 3)
+    assert rec.clima_futuro == raio_x.cartoes.clima_futuro
+    assert rec.clima_futuro.chuva_pct > 0  # a média simples dos meses daria -10%
+    assert (rec.clima_futuro.modelos_mais_chuva, rec.clima_futuro.modelos) == (3, 3)
     assert rec.geada is not None
-    assert (rec.geada.anos, rec.geada.total) == (0, 20)  # mínima de 18 °C todo dia
-    assert _service().recommend(lat=-18.95, lon=-48.20, colheita="meio").clima_futuro is None
+    assert rec.geada == raio_x.alertas.geada
+    assert rec.geada.anos == (2010,)
+
+
+def test_should_leave_the_2041_2060_climate_and_frost_empty_without_data() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert rec.clima_futuro is None
+    assert rec.geada is None  # mínima de 18 °C todo dia: sem risco, sem alerta
 
 
 def test_should_give_the_planting_deadline_of_each_crop_out_of_the_window() -> None:

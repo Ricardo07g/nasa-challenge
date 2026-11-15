@@ -814,10 +814,14 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     é o melhor do PRD 7.7 que começa pela 1ª da ordem (`RotationPlanService.best_plan_starting_with`;
     nos objetivos, sem o pousio). **O Plano A (`plano_3_anos.normal`) é o plano do equilíbrio: começa
     pela melhor opção**; o Plano B continua livre. A reordenação é no motor; o navegador só escolhe;
-  - **na célula** (`clima_futuro`, `geada`; `CellClimateFactsService`, grupos
-    `clima_futuro_sugestao` e `geada_sugestao`): variação de chuva e máxima de março a maio em
-    2041–2060 com a concordância dos modelos, e anos com mínima de 3 °C ou menos de maio a julho.
-    Cálculo pequeno da S5a: a seção 4 faz o mesmo no raio-X; unificar na S9;
+  - **na célula** (`clima_futuro`, `geada`): **os mesmos objetos do raio-X** (tarefa 0049, S9), para
+    a Sugestão e a tela 4 dizerem o mesmo número: `clima_futuro` = o cartão "Clima 2041–2060"
+    (`FutureClimateService`: cada mês pesado pela chuva média do mês na célula, com
+    `modelos_menos_chuva`, `modelos_mais_chuva`, `modelos_mais_quente`, `cenario` e `periodo`) e
+    `geada` = o alerta de geada (`RaioXClimateService.frost`, grupo `alertas_area`: `anos`,
+    `total_anos`, `temp_c`, `menor_temp_c`, `fonte`; `null` sem nenhum ano com geada). Saíram o
+    `CellClimateFactsService` e os grupos `clima_futuro_sugestao` e `geada_sugestao` (a média
+    simples dos meses dava −0,7% na Sugestão contra +2,2% no raio-X na fazenda da UFU);
   - `fora_da_janela[].data_limite` (o aviso único da colheita tarde junta as culturas por data) e
     `GET /api/safra-passada?…&opcao=<id>` (o detalhe de qualquer ano do explorador, para a opção
     que a aba mostra; fora da janela, 404 `NOT_FOUND`).

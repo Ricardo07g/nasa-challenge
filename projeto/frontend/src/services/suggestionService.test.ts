@@ -139,9 +139,25 @@ describe('buildSuggestion (aba Sugestão)', () => {
     ])
   })
 
-  it('só mostra a geada quando algum ano teve geada', () => {
-    expect(buildSuggestion(rec({ geada: { anos: 0, total: 20, tmin_max_c: 3, meses: [5, 6, 7] } }), null)?.frost).toBeNull()
-    expect(buildSuggestion(rec({ geada: { anos: 2, total: 20, tmin_max_c: 3, meses: [5, 6, 7] } }), null)?.frost?.anos).toBe(2)
+  it('a geada é o alerta do raio-X: só vem quando algum ano teve geada (tarefa 0049)', () => {
+    const geada = { anos: [2011, 2021], total_anos: 20, temp_c: 3, menor_temp_c: 2.4, fonte: 'nasa_power' }
+    expect(buildSuggestion(rec({ geada: null }), null)?.frost).toBeNull()
+    expect(buildSuggestion(rec({ geada }), null)?.frost).toEqual(geada)
+  })
+
+  it('o clima 2041–2060 tem a mesma concordância dos modelos que o cartão do raio-X (tarefa 0049)', () => {
+    const clima = {
+      chuva_pct: 2.2,
+      tmax_c: 1.3,
+      modelos: 3,
+      modelos_menos_chuva: 1,
+      modelos_mais_chuva: 2,
+      modelos_mais_quente: 3,
+      cenario: 'ssp245',
+      periodo: '2041-2060',
+    }
+    const s = buildSuggestion(rec({ clima_futuro: clima }), null)
+    expect(s?.climate).toEqual(clima)
   })
 
   it('sem nenhuma opção na janela, não há sugestão', () => {

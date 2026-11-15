@@ -612,12 +612,6 @@ export const en = {
     },
     climate: {
       title: '2041–2060 climate',
-      rain: (pct: string) => `March to May rain: ${pct}%`,
-      heat: (deg: string) => `Maximum temperature: ${deg} °C`,
-      agreeRain: (n: number, total: number, less: boolean) =>
-        `${n} of ${total} models point to ${less ? 'less' : 'more'} rain.`,
-      agreeHeat: (n: number, total: number, hotter: boolean) =>
-        `${n} of ${total} point to ${hotter ? 'more' : 'less'} heat.`,
       source: 'NEX-GDDP-CMIP6 (NASA), SSP2-4.5 scenario, model average, against 1995–2014.',
     },
     how: {

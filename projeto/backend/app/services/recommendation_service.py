@@ -41,12 +41,13 @@ from app.repositories.ndvi_repository import NdviRepository
 from app.repositories.rules_repository import load_default_rules
 from app.repositories.smap_repository import CellSmapRepository
 from app.repositories.soil_repository import SoilRepository
-from app.services.cell_climate_facts_service import CellClimateFactsService
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.crop_alert_service import COVER_CROP_TYPE
 from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
+from app.services.future_climate_service import FutureClimateService
+from app.services.raio_x_climate_service import RaioXClimateService
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
 from app.services.suggestion_facts_service import SuggestionFactsService
@@ -254,11 +255,13 @@ class RecommendationService:
         self._year_detail_service = year_detail_service or YearDetailService(rules=self._rules)
         # Umidade do SMAP no dia de plantar de cada ano: balde inicial (PRD 7.2, R3.3)
         self._smap_repo = smap_repo
-        # Aba Sugestão (tarefa 0044): linha "Água", El Niño / La Niña e o que observar, clima de
-        # 2041-2060 e geada na célula. Só leem as regras: montados aqui, sem injeção
+        # Aba Sugestão (tarefa 0044): linha "Água", El Niño / La Niña e o que observar. Clima de
+        # 2041-2060 e geada na célula com as contas do raio-X (tarefa 0049: as duas telas dizem o
+        # mesmo número). Só leem as regras: montados aqui, sem injeção
         self._water_service = WaterNeedService(self._rules)
         self._facts_service = SuggestionFactsService(self._rules)
-        self._cell_facts_service = CellClimateFactsService(self._rules)
+        self._future_service = FutureClimateService(self._rules)
+        self._cell_climate_service = RaioXClimateService(self._rules)
 
     def recommend(
         self,
@@ -435,8 +438,8 @@ class RecommendationService:
                 else None
             ),
             objetivos=objetivos,
-            clima_futuro=self._cell_facts_service.future_outlook(deltas),
-            geada=self._cell_facts_service.frost_risk(seasons),
+            clima_futuro=self._future_service.summarize(deltas, seasons),
+            geada=self._cell_climate_service.frost(seasons),
         )
 
     def _objectives(

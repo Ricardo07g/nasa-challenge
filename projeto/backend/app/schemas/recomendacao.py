@@ -14,6 +14,7 @@ from app.models.recomendacao import (
     ResultadoOpcao,
 )
 from app.models.sinal_outono import NivelSinal, SinalOutono
+from app.schemas.raio_x import AlertaGeadaSchema, ClimaFuturoSchema, _dump
 from app.schemas.talhao import TalhaoResponse
 
 
@@ -307,27 +308,6 @@ class ObjetivoSchema(_Frozen):
     nota_plano: float
 
 
-class ClimaFuturoSchema(_Frozen):
-    """Clima de 2041-2060 na célula (tarefa 0044): chuva em % e máxima em °C, média dos modelos."""
-
-    chuva_pct: float
-    tmax_c: float
-    modelos: int
-    concordam_chuva: int
-    concordam_tmax: int
-    meses: list[int]
-    cenario: str
-
-
-class GeadaSchema(_Frozen):
-    """Anos com mínima de `tmin_max_c` °C ou menos nos `meses` (NASA POWER, tarefa 0044)."""
-
-    anos: int
-    total: int
-    tmin_max_c: float
-    meses: list[int]
-
-
 class AlternativaSchema(_Frozen):
     motivo: str
     opcao: str
@@ -436,7 +416,7 @@ class RecomendacaoResponse(_Frozen):
     # Aba Sugestão (tarefa 0044): ordem e plano por objetivo, clima de 2041-2060 e geada na célula
     objetivos: dict[str, ObjetivoSchema] = Field(default_factory=dict)
     clima_futuro: ClimaFuturoSchema | None = None
-    geada: GeadaSchema | None = None
+    geada: AlertaGeadaSchema | None = None
 
     @classmethod
     def from_model(cls, rec: Recomendacao) -> "RecomendacaoResponse":
@@ -473,29 +453,8 @@ class RecomendacaoResponse(_Frozen):
                 )
                 for chave, o in rec.objetivos.items()
             },
-            clima_futuro=(
-                ClimaFuturoSchema(
-                    chuva_pct=rec.clima_futuro.chuva_pct,
-                    tmax_c=rec.clima_futuro.tmax_c,
-                    modelos=rec.clima_futuro.modelos,
-                    concordam_chuva=rec.clima_futuro.concordam_chuva,
-                    concordam_tmax=rec.clima_futuro.concordam_tmax,
-                    meses=list(rec.clima_futuro.meses),
-                    cenario=rec.clima_futuro.cenario,
-                )
-                if rec.clima_futuro is not None
-                else None
-            ),
-            geada=(
-                GeadaSchema(
-                    anos=rec.geada.anos,
-                    total=rec.geada.total,
-                    tmin_max_c=rec.geada.tmin_max_c,
-                    meses=list(rec.geada.meses),
-                )
-                if rec.geada is not None
-                else None
-            ),
+            clima_futuro=_dump(rec.clima_futuro),  # type: ignore[arg-type]
+            geada=_dump(rec.geada),  # type: ignore[arg-type]
         )
 
 

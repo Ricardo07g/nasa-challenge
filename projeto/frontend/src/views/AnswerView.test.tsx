@@ -195,9 +195,10 @@ describe('AnswerView (aba Sugestão, tarefa 0044)', () => {
   it('a linha do clima 2041–2060 tem a chuva, a máxima, quantos modelos concordam e os anos que dariam certo', () => {
     setup()
 
-    expect(screen.getByText('Chuva de março a maio: −0,7%')).toBeInTheDocument()
-    expect(screen.getByText('Máxima: +1,3 °C')).toBeInTheDocument()
-    expect(screen.getByText('2 de 3 modelos indicam menos chuva. 3 de 3 indicam mais calor.')).toBeInTheDocument()
+    // Tarefa 0049: o mesmo número e a mesma frase do cartão "Clima 2041–2060" do raio-X.
+    expect(screen.getByText('Chuva de março a maio: -4,5%')).toBeInTheDocument()
+    expect(screen.getByText('Máxima: +1,6 °C')).toBeInTheDocument()
+    expect(screen.getByText('2 de 3 modelos indicam menos chuva; 3 de 3, mais calor.')).toBeInTheDocument()
     expect(screen.getByText('Daria certo em 12 de 20 anos (de 10 a 13, conforme o modelo)')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Saiba mais: O clima de 2041 a 2060' })).toHaveAttribute('href', '/guia/clima-2041-2060')
   })

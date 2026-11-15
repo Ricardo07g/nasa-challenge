@@ -1,10 +1,9 @@
+import type { AlertaGeada, ClimaFuturo } from '../models/raioX'
 import type {
   AnoDetalhe,
-  ClimaFuturo,
   CropId,
   Eixo,
   EnsoAcerto,
-  Geada,
   Objetivo,
   Opcao,
   Recomendacao,
@@ -158,10 +157,11 @@ export type Suggestion = {
   best: Opcao
   plan: { year: number; crop: CropId }[]
   future: FutureSummary | null
+  /** O mesmo clima 2041–2060 do cartão do raio-X (tarefa 0049). */
   climate: ClimaFuturo | null
   late: LateNotice | null
-  /** Só quando algum ano teve geada. */
-  frost: Geada | null
+  /** O alerta de geada do raio-X: só vem quando algum ano teve geada. */
+  frost: AlertaGeada | null
   alternatives: { motivo: Recomendacao['alternativas'][number]['motivo']; option: Opcao; text: string }[]
 }
 
@@ -172,7 +172,6 @@ export function buildSuggestion(recomendacao: Recomendacao, objetivo: Objetivo |
   const [best] = rankForObjective(recomendacao, objetivo)
   if (!best) return null
   const year = harvestYear(recomendacao.entrada.semeadura)
-  const geada = recomendacao.geada ?? null
   return {
     year,
     best,
@@ -180,7 +179,7 @@ export function buildSuggestion(recomendacao: Recomendacao, objetivo: Objetivo |
     future: futureSummary(best),
     climate: recomendacao.clima_futuro ?? null,
     late: lateNotice(recomendacao),
-    frost: geada && geada.anos > 0 ? geada : null,
+    frost: recomendacao.geada ?? null,
     alternatives: recomendacao.alternativas.flatMap(({ motivo, opcao }) => {
       const option = findOption(recomendacao.opcoes, opcao)
       return option && option.id !== best.id

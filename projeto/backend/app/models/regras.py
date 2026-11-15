@@ -403,21 +403,6 @@ class RegrasEnsoAcerto:
 
 
 @dataclass(frozen=True)
-class RegrasClimaFuturoSugestao:
-    """Meses da variação de chuva e máxima de 2041-2060 na célula (tarefa 0044; unificar na S9)."""
-
-    meses: tuple[int, ...]
-
-
-@dataclass(frozen=True)
-class RegrasGeadaSugestao:
-    """Anos com mínima de `tmin_max_c` °C ou menos nos `meses` (tarefa 0044; unificar na S9)."""
-
-    tmin_max_c: float
-    meses: tuple[int, ...]
-
-
-@dataclass(frozen=True)
 class RegrasPlanoB:
     """Quando o limite de chuva do Plano B "separa bem" os anos bons dos ruins (tarefa 0045).
 
@@ -471,7 +456,5 @@ class Regras:
     alertas_area: RegrasAlertasArea
     agua: RegrasAgua
     enso_acerto: RegrasEnsoAcerto
-    clima_futuro_sugestao: RegrasClimaFuturoSugestao
-    geada_sugestao: RegrasGeadaSugestao
     plano_b: RegrasPlanoB
     chuva_aproveitada: RegrasChuvaAproveitada

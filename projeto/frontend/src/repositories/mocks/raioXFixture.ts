@@ -4,7 +4,7 @@
  * parados, 4 plantados e 1 sem certeza). No modo de demonstração toda tela avisa que não é dado da NASA.
  */
 import type { Lang } from '../../i18n/language'
-import type { FaixaNdvi, RaioX, RaioXParams } from '../../models/raioX'
+import type { ClimaFuturo, FaixaNdvi, RaioX, RaioXParams } from '../../models/raioX'
 import { ApiError } from '../httpClient'
 import { MOCK_PILOT_AREA as AREA } from './mockLocation'
 
@@ -33,6 +33,18 @@ const YEARS_2005_2024 = Array.from({ length: 20 }, (_, index) => 2005 + index)
 
 function insideBox({ lat, lon }: { lat: number; lon: number }): boolean {
   return lat >= AREA.min_lat && lat <= AREA.max_lat && lon >= AREA.min_lon && lon <= AREA.max_lon
+}
+
+/** Clima 2041–2060 de exemplo: o mesmo no raio-X e na Sugestão (tarefa 0049). */
+export const CLIMA_FUTURO_EXEMPLO: ClimaFuturo = {
+  chuva_pct: -4.5,
+  tmax_c: 1.6,
+  modelos: 3,
+  modelos_menos_chuva: 2,
+  modelos_mais_chuva: 1,
+  modelos_mais_quente: 3,
+  cenario: 'ssp245',
+  periodo: '2041-2060',
 }
 
 export function buildRaioX(params: RaioXParams, lang: Lang): RaioX {
@@ -99,16 +111,7 @@ export function buildRaioX(params: RaioXParams, lang: Lang): RaioX {
     },
     cartoes: {
       chuva_20_anos: { cultura: 'milho_braquiaria', nome: 'Milho com braquiária', anos_bons: 16, total_anos: 20 },
-      clima_futuro: {
-        chuva_pct: -4.5,
-        tmax_c: 1.6,
-        modelos: 3,
-        modelos_menos_chuva: 2,
-        modelos_mais_chuva: 1,
-        modelos_mais_quente: 3,
-        cenario: 'ssp245',
-        periodo: '2041-2060',
-      },
+      clima_futuro: CLIMA_FUTURO_EXEMPLO,
     },
   }
 }

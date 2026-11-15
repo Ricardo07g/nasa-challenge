@@ -584,7 +584,7 @@ def test_should_send_objectives_future_climate_frost_and_planting_deadlines(
     assert equilibrio["plano"][0] == body["melhor"] == body["plano_3_anos"]["normal"]["anos"][0]
     assert set(equilibrio) == {"ordem", "plano", "nota_plano"}
     assert body["clima_futuro"] is None  # sem CMIP6 no conftest
-    assert body["geada"] == {"anos": 0, "total": 20, "tmin_max_c": 3.0, "meses": [5, 6, 7]}
+    assert body["geada"] is None  # nenhuma noite de 3 °C ou menos: sem risco, o alerta não vem
     assert {f["id"]: f["data_limite"] for f in body["fora_da_janela"]} == {
         "milho_safrinha": "2027-02-28",
         "milho_braquiaria": "2027-02-28",

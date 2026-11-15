@@ -40,7 +40,6 @@ import type { RaioX } from '../models/raioX'
 import { TEXTURAS, type Confirmacao, type SituacaoAno, type Textura } from '../models/talhao'
 import type { ConfirmRow } from '../services/confirmedSeasonsService'
 import {
-  futureAgreement,
   regionSide,
   soilParts,
   type AreaAlert,
@@ -49,6 +48,7 @@ import {
 } from '../services/raioXService'
 import type { ClimateSummary, HistorySummary, RainSummary, SoilSummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
+import { futureClimateText } from './futureClimateText'
 import { ShareSeasons, type ShareSeasonsProps } from './ShareSeasons'
 import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
@@ -124,12 +124,6 @@ function cropName(t: Messages, id: string): string {
   const names: Record<string, string> = t.crops.names
   const name = names[id] ?? id
   return name.charAt(0).toLowerCase() + name.slice(1)
-}
-
-/** Número com sinal ("+1,6" / "-4,5"); o hífen comum é o que o "Ouvir" lê como "menos". */
-function signed(lang: Lang, value: number): string {
-  const text = formatDecimal(lang, Math.abs(value), 1)
-  return value > 0 ? `+${text}` : value < 0 ? `-${text}` : text
 }
 
 function yearList(lang: Lang, years: readonly number[]): string {
@@ -613,7 +607,7 @@ function SmallCards({ t, lang, cards, answerTo }: SatelliteViewProps & { cards: 
   const c = t.xray.cards
   const rain = cards.chuva_20_anos
   const future = cards.clima_futuro
-  const agreement = future && futureAgreement(future)
+  const futureText = future && futureClimateText(t, lang, future)
   const see = (
     <Link to={answerTo} className={layout.iconLink}>
       {c.seeAnswer}
@@ -629,20 +623,12 @@ function SmallCards({ t, lang, cards, answerTo }: SatelliteViewProps & { cards: 
           {see}
         </Card>
       )}
-      {future && agreement && (
+      {futureText && (
         <Card as="section">
           <h2 className={styles.smallTitle}>{c.futureTitle}</h2>
-          <p className={styles.mediumNumber}>{c.futureRain(signed(lang, future.chuva_pct))}</p>
-          <p className={styles.mediumNumber}>{c.futureHeat(signed(lang, future.tmax_c))}</p>
-          <p>
-            {`${
-              agreement.rain.direction === 'less'
-                ? c.agreeLess(agreement.rain.count, agreement.models)
-                : agreement.rain.direction === 'more'
-                  ? c.agreeMore(agreement.rain.count, agreement.models)
-                  : c.agreeSplit(agreement.models)
-            }; ${c.agreeHeat(agreement.heat, agreement.models)}.`}
-          </p>
+          <p className={styles.mediumNumber}>{futureText.rain}</p>
+          <p className={styles.mediumNumber}>{futureText.heat}</p>
+          <p>{futureText.agreement}</p>
           <p className={layout.muted}>{c.futureSource}</p>
           {see}
         </Card>
