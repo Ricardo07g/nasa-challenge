@@ -32,6 +32,36 @@ export function formatCoordinates(point: { lat: number; lon: number }): string {
   return `${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`
 }
 
+function utcDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day))
+}
+
+/** Mês curto, sem o ponto do português: "mar" / "Mar". */
+function shortMonth(lang: Lang, isoDate: string): string {
+  return new Intl.DateTimeFormat(htmlLang(lang), { month: 'short', timeZone: 'UTC' })
+    .format(utcDate(isoDate))
+    .replace('.', '')
+}
+
+/** Mês do calendário do cartão "Dia da colheita" (tela 2): "MAR" / "FEB", sem depender do fuso. */
+export function formatCalendarMonth(lang: Lang, isoDate: string): string {
+  return shortMonth(lang, isoDate).toUpperCase()
+}
+
+/** Dia da semana por extenso, com a primeira letra maiúscula: "Quarta-feira" / "Wednesday". */
+export function formatWeekday(lang: Lang, isoDate: string): string {
+  const weekday = new Intl.DateTimeFormat(htmlLang(lang), { weekday: 'long', timeZone: 'UTC' }).format(utcDate(isoDate))
+  return weekday.charAt(0).toUpperCase() + weekday.slice(1)
+}
+
+/** Dia e mês curtos, para os rótulos dos gráficos: "16 mar" / "Mar 16". */
+export function formatShortDayMonth(lang: Lang, isoDate: string): string {
+  const day = Number(isoDate.slice(8, 10))
+  const month = shortMonth(lang, isoDate)
+  return lang === 'pt' ? `${day} ${month}` : `${month} ${day}`
+}
+
 /** "2026-11-14" → "14 de novembro de 2026" / "November 14, 2026", sem depender do fuso do navegador. */
 export function formatFullDate(lang: Lang, isoDate: string): string {
   const [year, month, day] = isoDate.split('-').map(Number)

@@ -47,3 +47,22 @@ describe('formatMonth', () => {
     expect(formatMonth('en', 4)).toBe('April')
   })
 })
+
+describe('datas do cartão "Dia da colheita" (tela 2, tarefa 0057)', () => {
+  it('mês curto do calendário, em maiúsculas e sem ponto', () => {
+    expect(format.formatCalendarMonth('pt', '2027-03-03')).toBe('MAR')
+    expect(format.formatCalendarMonth('pt', '2027-02-15')).toBe('FEV')
+    expect(format.formatCalendarMonth('en', '2027-02-15')).toBe('FEB')
+  })
+
+  it('dia da semana por extenso, com a primeira letra maiúscula, sem depender do fuso', () => {
+    expect(format.formatWeekday('pt', '2027-03-03')).toBe('Quarta-feira')
+    expect(format.formatWeekday('en', '2027-03-03')).toBe('Wednesday')
+  })
+
+  it('dia e mês curtos para gráficos ("16 mar" / "Mar 16")', () => {
+    expect(format.formatShortDayMonth('pt', '2021-03-16')).toBe('16 mar')
+    expect(format.formatShortDayMonth('en', '2021-03-16')).toBe('Mar 16')
+    expect(format.formatShortDayMonth('pt', '2027-02-01')).toBe('1 fev')
+  })
+})
