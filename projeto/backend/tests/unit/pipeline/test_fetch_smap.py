@@ -10,6 +10,7 @@ import json
 import re
 import urllib.error
 import urllib.parse
+from collections.abc import Callable
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
@@ -39,7 +40,9 @@ from pipeline.fetch_smap import (
     SubsetTask,
     TokenRejectedError,
     box_cell_centers,
+    build_recent_file,
     build_smap_file,
+    climatology_days,
     cmr_params,
     daily_mean,
     dap_csv_url,
@@ -48,6 +51,7 @@ from pipeline.fetch_smap import (
     parse_cmr_granules,
     parse_dap_csv,
     parse_dmr,
+    percentile_rank,
     pixel_window_for,
     sowing_days,
 )
@@ -203,11 +207,20 @@ _CE = re.compile(r"^(?P<var>/[\w/]+)\[(\d+):1:(\d+)\]\[(\d+):1:(\d+)\]$")
 class FakeEarthdata:
     """CMR e OPeNDAP falsos: 8 granulos por dia (mais o das 22:30 da véspera) e a grade de teste."""
 
-    def __init__(self, days_without_granules: tuple[date, ...] = ()) -> None:
+    def __init__(
+        self,
+        days_without_granules: tuple[date, ...] = (),
+        latest: date | None = None,
+        partial_days: dict[date, int] | None = None,
+        rootzone_by_day: Callable[[date], float] | None = None,
+    ) -> None:
         self.cmr_calls: list[dict[str, Any]] = []
         self.opendap_calls: list[str] = []
         self.requests: list[HttpRequest] = []
         self.days_without_granules = days_without_granules
+        self.latest = latest  # dia do granulo mais recente (busca com sort_key)
+        self.partial_days = partial_days or {}  # dia → quantos granulos o CMR já tem
+        self.rootzone_by_day = rootzone_by_day  # sm_rootzone de teste por dia (sem hora)
 
     @staticmethod
     def granule_name(day: date, hour: int) -> str:
@@ -229,13 +242,19 @@ class FakeEarthdata:
             ],
         }
 
+    def _hours(self, day: date) -> tuple[int, ...]:
+        return HOURS[: self.partial_days.get(day, len(HOURS))]
+
     def cmr_get(self, url: str, params: dict[str, Any], timeout: float) -> dict[str, Any]:
         self.cmr_calls.append(dict(params))
+        if "sort_key" in params:  # o granulo mais recente
+            assert self.latest is not None
+            return {"feed": {"entry": [self._entry(self.latest, self._hours(self.latest)[-1])]}}
         day = date.fromisoformat(str(params["temporal"])[:10])
         if day in self.days_without_granules:
             return {"feed": {"entry": []}}
         previous = date.fromordinal(day.toordinal() - 1)
-        entries = [self._entry(previous, 22)] + [self._entry(day, hour) for hour in HOURS]
+        entries = [self._entry(previous, 22)] + [self._entry(day, h) for h in self._hours(day)]
         return {"feed": {"entry": entries}}
 
     def _csv(self, url: str) -> str:
@@ -245,13 +264,17 @@ class FakeEarthdata:
         assert match is not None, constraint
         variable = match.group("var")
         r0, r1, c0, c1 = (int(g) for g in match.groups()[1:])
-        hour = int(re.search(r"T(\d{2})3000_", base).group(1))  # type: ignore[union-attr]
+        stamp = re.search(r"_(\d{8})T(\d{2})3000_", base)
+        assert stamp is not None, base
+        day, hour = datetime.strptime(stamp.group(1), "%Y%m%d").date(), int(stamp.group(2))
         lines = [f"Dataset: {base.rsplit('/', 1)[1]}"]
         for i, row in enumerate(range(r0, r1 + 1)):
             if variable == LAT_VARIABLE:
                 values = [grid_lat(row) for _ in range(c0, c1 + 1)]
             elif variable == LON_VARIABLE:
                 values = [grid_lon(col) for col in range(c0, c1 + 1)]
+            elif self.rootzone_by_day and variable.endswith("/sm_rootzone"):
+                values = [self.rootzone_by_day(day) for _ in range(c0, c1 + 1)]
             else:
                 values = [grid_value(variable, hour, row) for _ in range(c0, c1 + 1)]
             lines.append(f"{variable}[{i}], " + ", ".join(f"{v:g}" for v in values))
@@ -785,3 +808,161 @@ def test_main_should_refuse_years_out_of_order(tmp_path: Path) -> None:
             opendap_transport=_no_network,
             settings=_settings(None),
         )
+
+
+# --- SMAP recente e percentil na climatologia (A2.2) ------------------------------------------
+
+
+def test_should_take_the_climatology_window_of_the_same_days_from_2016_on() -> None:
+    days = climatology_days(date(2026, 11, 10), window_days=7)
+
+    assert len(days) == 150  # 10 anos × 15 dias
+    assert (days[0], days[-1]) == (date(2016, 11, 3), date(2025, 11, 17))
+    assert {day.year for day in days} == set(range(2016, 2026))
+
+
+def test_should_use_february_28_for_february_29_in_years_that_are_not_leap() -> None:
+    days = climatology_days(date(2024, 2, 29), window_days=0)
+
+    assert days == [
+        date(2016, 2, 29),
+        date(2017, 2, 28),
+        date(2018, 2, 28),
+        date(2019, 2, 28),
+        date(2020, 2, 29),
+        date(2021, 2, 28),
+        date(2022, 2, 28),
+        date(2023, 2, 28),
+    ]
+
+
+def test_should_rank_the_value_in_the_climatology_counting_ties_as_half() -> None:
+    assert percentile_rank(0.3, [0.1, 0.2, 0.3, 0.4]) == 62.5
+    assert percentile_rank(0.05, [0.1, 0.2]) == 0.0
+    assert percentile_rank(0.5, [0.1, 0.2]) == 100.0
+
+
+def test_should_use_the_last_complete_day_of_the_latest_granule(tmp_path: Path) -> None:
+    # O dia do granulo mais recente ainda tem só 5 dos 8 granulos: fica o dia anterior.
+    fake = FakeEarthdata(latest=date(2026, 11, 10), partial_days={date(2026, 11, 10): 5})
+
+    day = _client(tmp_path, fake).latest_complete_day()
+
+    assert day == date(2026, 11, 9)
+    assert fake.cmr_calls[0]["sort_key"] == "-start_date"
+    assert fake.cmr_calls[0]["page_size"] == 1
+
+
+RECENT_DAY = date(2026, 11, 10)
+
+
+def _rootzone(day: date) -> float:
+    # Teste: 0,20 em 2016 subindo 0,01 por ano até 0,29 em 2025; 0,255 no dia recente.
+    return 0.255 if day.year == 2026 else 0.20 + (day.year - 2016) / 100
+
+
+def _recent(tmp_path: Path, fake: FakeEarthdata) -> dict[str, Any]:
+    return build_recent_file(
+        box_cell_centers(FARM_BOX),
+        _client(tmp_path, fake),
+        clock=lambda: FINISHED,
+        box=FARM_BOX,
+        window_days=1,
+    )
+
+
+def test_should_write_the_recent_day_with_its_percentile_in_the_climatology(
+    tmp_path: Path,
+) -> None:
+    fake = FakeEarthdata(latest=RECENT_DAY, rootzone_by_day=_rootzone)
+
+    result = _recent(tmp_path, fake)
+
+    [point] = result["pontos"]
+    # 2016 a 2021 (0,20 a 0,25) ficam abaixo de 0,255: 18 dos 30 dias → percentil 60
+    assert point["sm_rootzone_pctl"] == 60.0
+    assert [item["data"] for item in point["serie"]] == ["2026-11-10"]
+    assert point["serie"][0]["sm_rootzone_m3_m3"] == 0.255
+    params = result["versao_dados"]["parametros"]
+    assert params["modo"] == "recente"
+    assert params["data"] == "2026-11-10"
+    assert params["climatologia"]["anos"] == [2016, 2025]
+    assert params["climatologia"]["janela_dias"] == 1
+    assert params["climatologia"]["dias"] == 30
+    assert params["climatologia"]["variavel"] == "/Geophysical_Data/sm_rootzone"
+    assert result["versao_dados"]["versao"] == "2026.11-smap-l4-recente"
+    # recente: 8 granulos × 3 variáveis; climatologia: 30 dias × 8 granulos × 1 variável
+    assert len(fake.data_calls()) == 8 * 3 + 30 * 8
+
+
+def test_should_keep_the_recent_file_readable_as_the_smap_contract(tmp_path: Path) -> None:
+    result = _recent(tmp_path, FakeEarthdata(latest=RECENT_DAY, rootzone_by_day=_rootzone))
+    path = tmp_path / "smap_recente.json"
+    path.write_text(json.dumps(result), encoding="utf-8")
+
+    [series] = FileSmapRepository(path).list_point_series()
+
+    assert [r.data for r in series.records] == [RECENT_DAY]
+
+
+def test_should_leave_the_percentile_empty_without_enough_climatology_years(
+    tmp_path: Path,
+) -> None:
+    # Só 2024 e 2025 têm a janela: menos anos que o mínimo, nada de percentil inventado.
+    missing = tuple(date(year, 11, day) for year in range(2016, 2024) for day in (9, 10, 11))
+    fake = FakeEarthdata(
+        latest=RECENT_DAY, rootzone_by_day=_rootzone, days_without_granules=missing
+    )
+
+    [point] = _recent(tmp_path, fake)["pontos"]
+
+    assert point["sm_rootzone_pctl"] is None
+
+
+def test_dry_run_recent_should_show_the_day_and_the_climatology_cost(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    fake = FakeEarthdata(latest=RECENT_DAY)
+
+    code = fetch_smap.main(
+        ["--recente", "--dry-run", "--cache", str(tmp_path / "cache")],
+        cmr_get=fake.cmr_get,
+        opendap_transport=_no_network,
+        settings=_settings(None),
+    )
+
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "2026-11-10" in out
+    assert "150 dias" in out  # climatologia: 10 anos × 15 dias (±7)
+    assert "24 recortes" in out  # o dia recente: 8 granulos × 3 variáveis
+    assert "1200 recortes" in out  # a climatologia: 150 dias × 8 granulos × 1 variável
+    assert fake.opendap_calls == []
+
+
+def test_main_recent_should_write_the_recent_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    fake = FakeEarthdata(latest=RECENT_DAY, rootzone_by_day=_rootzone)
+    output = tmp_path / "smap_recente.json"
+
+    code = fetch_smap.main(
+        [
+            "--recente",
+            "--janela-dias=1",
+            "--area=-19.0,-18.9,-48.2,-48.1",
+            "--cache",
+            str(tmp_path / "cache"),
+            "--saida",
+            str(output),
+        ],
+        cmr_get=fake.cmr_get,
+        opendap_transport=fake.transport,
+        settings=_settings(TEST_TOKEN),
+        now=lambda: FINISHED,
+    )
+
+    assert code == 0
+    [point] = json.loads(output.read_text(encoding="utf-8"))["pontos"]
+    assert point["sm_rootzone_pctl"] == 60.0
+    assert TEST_TOKEN not in capsys.readouterr().out

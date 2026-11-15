@@ -5,6 +5,8 @@ Uso (a partir de projeto/backend; o token vem do `.env` pelo `Settings`, `EARTHD
     uv run python -m pipeline.fetch_smap --dry-run      # dias, pedidos e tempo, sem rede
     uv run python -m pipeline.fetch_smap                # caixa piloto, 2016 a 2025 (~7 min)
     uv run python -m pipeline.fetch_smap --area="-19.0,-18.9,-48.2,-48.1" --anos=2024
+    uv run python -m pipeline.fetch_smap --recente --dry-run   # dia recente e custo (CMR público)
+    uv run python -m pipeline.fetch_smap --recente             # SMAP de agora + percentil (A2.2)
 
 Produto: SMAP L4 `SPL4SMGP` versão 008 (EASE-Grid 2.0 global de 9 km, de 3 em 3 horas, desde
 31/03/2015). Para cada dia de semeadura do motor (`SOWING_MONTH_DAY_BY_HARVEST`: cedo 08/02, meio
@@ -28,6 +30,13 @@ Autenticação: `Authorization: Bearer <EARTHDATA_TOKEN>` como cabeçalho comum,
 redirecionamentos. Token recusado (401/403 ou a página de login) para tudo na hora. Nenhuma
 mensagem, log ou arquivo mostra o token, e o CMR (público) não o recebe.
 
+Modo `--recente` (A2.2, sinal para o outono): o dia completo (8 granulos) mais recente do CMR, com
+o percentil da `sm_rootzone` desse dia na climatologia da mesma janela do ano (o dia ±
+`--janela-dias`, padrão 7) de 2016 até o ano anterior. A climatologia sai do mesmo cache: a primeira
+execução baixa ~1.200 recortes de uma variável (10 anos × 15 dias × 8 granulos, ~10 min); as
+seguintes, só os dias novos da janela. Grava `smap_recente.json` (contrato SMAP com o
+`sm_rootzone_pctl` em cada ponto).
+
 Cada resposta conferida fica num cache local (fora do git): se o script parar, rodar de novo
 continua de onde parou. Os recortes são pedidos em paralelo (`--paralelo`, padrão 4), com
 retentativa. A saída segue o contrato "SMAP" do `AGENTS.md` do backend. Saída e cache padrão ficam
@@ -48,7 +57,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from statistics import fmean
 from typing import Any, Final
@@ -134,8 +143,19 @@ _TOKEN_REJECTED: Final[frozenset[int]] = frozenset({401, 403})
 _BODY_SNIPPET_CHARS: Final[int] = 200
 _LOGIN_MARKERS: Final[tuple[str, ...]] = ("earthdata login", "urs.earthdata.nasa.gov")
 
+# Modo --recente (A2.2). Percentil da `sm_rootzone` do dia recente na climatologia da mesma janela
+# do ano, de 2016 (o primeiro ano inteiro do SMAP) até o ano anterior.
+CLIMATOLOGY_FIRST_YEAR: Final[int] = 2016
+DEFAULT_WINDOW_DAYS: Final[int] = 7  # o dia ± 7: 15 dias por ano
+# Menos anos que isso na janela: sem percentil (poucos anos não dizem o que é seco para o lugar).
+MIN_CLIMATOLOGY_YEARS: Final[int] = 5
+LATEST_LOOKBACK_DAYS: Final[int] = 3  # o dia mais recente pode estar incompleto no CMR
+CLIMATOLOGY_FIELD: Final[str] = "sm_rootzone_m3_m3"
+PCTL_DECIMALS: Final[int] = 1
+
 DOWNLOADS_DIR = repo_root() / "data" / "baixados" / "nasa_smap"
 DEFAULT_OUTPUT = DOWNLOADS_DIR / "smap_semeadura.json"
+DEFAULT_RECENT_OUTPUT = DOWNLOADS_DIR / "smap_recente.json"
 DEFAULT_CACHE_DIR = DOWNLOADS_DIR / "cache_opendap"
 
 
@@ -256,7 +276,33 @@ def cmr_params(day: date) -> dict[str, Any]:
     }
 
 
+def latest_cmr_params() -> dict[str, Any]:
+    """Busca do granulo mais recente da versão 008 (o primeiro, em ordem de data decrescente)."""
+    return {
+        "short_name": SHORT_NAME,
+        "version": PRODUCT_VERSION,
+        "sort_key": "-start_date",
+        "page_size": 1,
+    }
+
+
 _GRANULE_TIME = re.compile(r"_(\d{8}T\d{6})_")
+
+
+def _cmr_entries(payload: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    feed = payload.get("feed") if isinstance(payload, Mapping) else None
+    entries = feed.get("entry") if isinstance(feed, Mapping) else None
+    if not isinstance(entries, list):
+        raise ValueError(f"resposta do CMR sem a lista de granulos: {str(payload)[:120]!r}")
+    return entries
+
+
+def _granule_time(entry: Mapping[str, Any]) -> tuple[str, datetime]:
+    name = str(entry.get("producer_granule_id") or entry.get("title") or "")
+    match = _GRANULE_TIME.search(name)
+    if match is None:
+        raise ValueError(f"granulo do CMR sem a hora no nome: {name!r}")
+    return name, datetime.strptime(match.group(1), "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
 
 
 def _opendap_link(entry: Mapping[str, Any]) -> str | None:
@@ -275,17 +321,9 @@ def parse_cmr_granules(payload: Mapping[str, Any], day: date) -> list[Granule]:
 
     Recusa (ValueError) resposta sem a lista de granulos e granulo sem link do OPeNDAP.
     """
-    feed = payload.get("feed") if isinstance(payload, Mapping) else None
-    entries = feed.get("entry") if isinstance(feed, Mapping) else None
-    if not isinstance(entries, list):
-        raise ValueError(f"resposta do CMR sem a lista de granulos: {str(payload)[:120]!r}")
     granules: dict[str, Granule] = {}
-    for entry in entries:
-        name = str(entry.get("producer_granule_id") or entry.get("title") or "")
-        match = _GRANULE_TIME.search(name)
-        if match is None:
-            raise ValueError(f"granulo do CMR sem a hora no nome: {name!r}")
-        moment = datetime.strptime(match.group(1), "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
+    for entry in _cmr_entries(payload):
+        name, moment = _granule_time(entry)
         if moment.date() != day:
             continue
         url = _opendap_link(entry)
@@ -627,6 +665,32 @@ class SmapOpendapClient:
             )
         return granules
 
+    def latest_complete_day(self, lookback_days: int = LATEST_LOOKBACK_DAYS) -> date:
+        """O dia mais recente com os 8 granulos no CMR (busca pública, sem token).
+
+        O dia do granulo mais recente costuma estar pela metade: volta até `lookback_days` dias.
+        """
+        payload = get_json_with_retries(
+            self._cmr_get,
+            CMR_GRANULES_URL,
+            latest_cmr_params(),
+            timeout=CMR_TIMEOUT_SECONDS,
+            max_retries=self._max_retries,
+            backoff_base=self._backoff_seconds,
+        )
+        entries = _cmr_entries(payload)
+        if not entries:
+            raise OpendapError("o CMR não listou nenhum granulo do SMAP")
+        latest = _granule_time(entries[0])[1].date()
+        for back in range(lookback_days + 1):
+            day = latest - timedelta(days=back)
+            if len(self.granules(day)) == GRANULES_PER_DAY:
+                return day
+        first = latest - timedelta(days=lookback_days)
+        raise OpendapError(
+            f"nenhum dia com os {GRANULES_PER_DAY} granulos entre {first} e {latest} no CMR"
+        )
+
     def structure(self, granule: Granule) -> GridStructure:
         text = self._text(self._dmr_path(), dmr_url(granule), parse_dmr, f"DMR de {granule.name}")
         return parse_dmr(text)
@@ -765,6 +829,38 @@ def _daily_item(
     return item
 
 
+def _base_params(
+    granules: Sequence[Granule], pixels: PixelGrid, box: Box, points: Sequence[Point]
+) -> dict[str, Any]:
+    """Parâmetros do `versao_dados` iguais nos dois modos: produto, grade, caixa e pontos."""
+    window = pixels.window
+    return {
+        "produto": PRODUCT,
+        "colecao": ", ".join(sorted({granule.collection for granule in granules})),
+        "servico": SERVICE,
+        "versoes_do_granulo": sorted({granule.science_version for granule in granules}),
+        "variaveis": dict(DATA_VARIABLES),
+        "media_do_dia": (
+            "média dos granulos de 3 h do dia em UTC (8 por dia), sem o valor de preenchimento"
+        ),
+        "caixa": {
+            "lat_min": box.lat_min,
+            "lat_max": box.lat_max,
+            "lon_min": box.lon_min,
+            "lon_max": box.lon_max,
+        },
+        "grade": f"EASE-Grid 2.0 global de 9 km ({GRID_ROWS} × {GRID_COLUMNS})",
+        "janela_pixels": {
+            "linha_inicio": window.row_first,
+            "linha_fim": window.row_last,
+            "coluna_inicio": window.col_first,
+            "coluna_fim": window.col_last,
+        },
+        "ponto": "centro da célula de 0,1°, com o pixel de 9 km mais perto",
+        "pontos": len(points),
+    }
+
+
 def _data_run(
     days: Sequence[date],
     points: Sequence[Point],
@@ -774,18 +870,10 @@ def _data_run(
     finished_at: datetime,
 ) -> DataRun:
     granules = [granule for day in days for granule in granules_by_day[day]]
-    window = pixels.window
     return DataRun(
         source=SOURCE_KEY,
         params={
-            "produto": PRODUCT,
-            "colecao": ", ".join(sorted({granule.collection for granule in granules})),
-            "servico": SERVICE,
-            "versoes_do_granulo": sorted({granule.science_version for granule in granules}),
-            "variaveis": dict(DATA_VARIABLES),
-            "media_do_dia": (
-                "média dos granulos de 3 h do dia em UTC (8 por dia), sem o valor de preenchimento"
-            ),
+            **_base_params(granules, pixels, box, points),
             "dias_de_semeadura": {
                 band: f"{month:02d}-{day:02d}"
                 for band, (month, day) in SOWING_MONTH_DAY_BY_HARVEST.items()
@@ -796,21 +884,6 @@ def _data_run(
                 for day in days
                 if len(granules_by_day[day]) != GRANULES_PER_DAY
             },
-            "caixa": {
-                "lat_min": box.lat_min,
-                "lat_max": box.lat_max,
-                "lon_min": box.lon_min,
-                "lon_max": box.lon_max,
-            },
-            "grade": f"EASE-Grid 2.0 global de 9 km ({GRID_ROWS} × {GRID_COLUMNS})",
-            "janela_pixels": {
-                "linha_inicio": window.row_first,
-                "linha_fim": window.row_last,
-                "coluna_inicio": window.col_first,
-                "coluna_fim": window.col_last,
-            },
-            "ponto": "centro da célula de 0,1°, com o pixel de 9 km mais perto",
-            "pontos": len(points),
         },
         finished_at=finished_at,
         version=f"{finished_at:%Y.%m}-smap-l4",
@@ -872,6 +945,41 @@ def build_smap_file(
                 series[point].append(item)
 
     run = _data_run(days, points, granules_by_day, pixels, box, clock())
+    return _contract(run, [_point_json(point, pixels, series[point]) for point in points])
+
+
+# --- SMAP recente e percentil na climatologia (A2.2) ----------------------------------------------
+
+
+def climatology_days(
+    day: date, window_days: int = DEFAULT_WINDOW_DAYS, first_year: int = CLIMATOLOGY_FIRST_YEAR
+) -> list[date]:
+    """A mesma janela do ano (o dia ± `window_days`) de `first_year` até o ano anterior ao `day`.
+
+    29/02 vira 28/02 nos anos que não são bissextos. Dia antes do início do SMAP fica de fora.
+    """
+    days: list[date] = []
+    for year in range(first_year, day.year):
+        try:
+            center = day.replace(year=year)
+        except ValueError:
+            center = date(year, 2, 28)
+        days.extend(
+            center + timedelta(days=offset) for offset in range(-window_days, window_days + 1)
+        )
+    return [d for d in days if SMAP_FIRST_DAY <= d < day]
+
+
+def percentile_rank(value: float, climatology: Sequence[float]) -> float:
+    """Posição percentual (0 a 100): % da climatologia abaixo do valor, com empates valendo meio."""
+    if not climatology:
+        raise ValueError("climatologia vazia")
+    below = sum(1 for v in climatology if v < value)
+    equal = sum(1 for v in climatology if v == value)
+    return round(100.0 * (below + 0.5 * equal) / len(climatology), PCTL_DECIMALS)
+
+
+def _contract(run: DataRun, pontos: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "versao_dados": {
             "fonte": run.source,
@@ -879,8 +987,112 @@ def build_smap_file(
             "fim": run.finished_at.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "versao": run.version,
         },
-        "pontos": [_point_json(point, pixels, series[point]) for point in points],
+        "pontos": pontos,
     }
+
+
+def _point_percentile(
+    recent: dict[str, Any] | None,
+    pixel: Pixel,
+    window: PixelWindow,
+    climatology: Mapping[date, Sequence[Sequence[Sequence[float]]]],
+    fill_value: float,
+) -> float | None:
+    """Percentil da `sm_rootzone` de agora no pixel; None sem dado ou com poucos anos."""
+    if recent is None:
+        return None
+    i, j = pixel.row - window.row_first, pixel.col - window.col_first
+    by_day = {
+        day: daily_mean([grid[i][j] for grid in grids], fill_value)
+        for day, grids in climatology.items()
+    }
+    values = [value for value in by_day.values() if value is not None]
+    years = {day.year for day, value in by_day.items() if value is not None}
+    if len(years) < MIN_CLIMATOLOGY_YEARS:
+        return None
+    return percentile_rank(recent[CLIMATOLOGY_FIELD], values)
+
+
+def build_recent_file(
+    points: Sequence[Point],
+    client: SmapOpendapClient,
+    clock: Callable[[], datetime],
+    box: Box = PILOT_BOX,
+    window_days: int = DEFAULT_WINDOW_DAYS,
+    first_year: int = CLIMATOLOGY_FIRST_YEAR,
+) -> dict[str, Any]:
+    """Arquivo do SMAP recente: o dia completo mais recente e o percentil de cada ponto (A2.2).
+
+    O ponto segue o contrato SMAP (série com o dia recente) e ganha `sm_rootzone_pctl` (0 a 100,
+    ou `null` com menos de `MIN_CLIMATOLOGY_YEARS` anos na janela).
+    """
+    if not points:
+        raise ValueError("informe ao menos um ponto")
+    day = client.latest_complete_day()
+    recent_granules = client.granules(day)
+    clim_days = climatology_days(day, window_days, first_year)
+    clim_granules = {clim_day: client.granules(clim_day) for clim_day in clim_days}
+    structure = client.structure(recent_granules[0])
+    pixels = locate_pixels(points, client, recent_granules[0], structure)
+    window = pixels.window
+    clim_variable = DATA_VARIABLES[CLIMATOLOGY_FIELD]
+    client.prefetch(
+        [
+            SubsetTask(g, variable, window)
+            for g in recent_granules
+            for variable in DATA_VARIABLES.values()
+        ]
+        + [SubsetTask(g, clim_variable, window) for d in clim_days for g in clim_granules[d]]
+    )
+
+    recent_grids = {
+        field: [client.subset(g, variable, window) for g in recent_granules]
+        for field, variable in DATA_VARIABLES.items()
+    }
+    climatology = {
+        clim_day: [client.subset(g, clim_variable, window) for g in granules]
+        for clim_day, granules in clim_granules.items()
+        if granules
+    }
+    fill_value = structure.fill_value(clim_variable)
+    pontos: list[dict[str, Any]] = []
+    for point in points:
+        pixel = pixels.pixel_of[point]
+        recent = _daily_item(day, pixel, window, recent_grids, structure)
+        point_json = _point_json(point, pixels, [recent] if recent else [])
+        point_json["sm_rootzone_pctl"] = _point_percentile(
+            recent, pixel, window, climatology, fill_value
+        )
+        pontos.append(point_json)
+
+    finished_at = clock()
+    run = DataRun(
+        source=SOURCE_KEY,
+        params={
+            **_base_params(recent_granules, pixels, box, points),
+            "modo": "recente",
+            "data": day.isoformat(),
+            "climatologia": {
+                "variavel": clim_variable,
+                "anos": [first_year, day.year - 1],
+                "janela_dias": window_days,
+                "dias": len(clim_days),
+                "dias_incompletos": {
+                    d.isoformat(): len(clim_granules[d])
+                    for d in clim_days
+                    if len(clim_granules[d]) != GRANULES_PER_DAY
+                },
+                "minimo_de_anos": MIN_CLIMATOLOGY_YEARS,
+                "percentil": (
+                    "% dos dias da climatologia com a média do dia abaixo da de agora "
+                    "(empate conta meio)"
+                ),
+            },
+        },
+        finished_at=finished_at,
+        version=f"{finished_at:%Y.%m}-smap-l4-recente",
+    )
+    return _contract(run, pontos)
 
 
 # --- plano (--dry-run) e linha de comando ---------------------------------------------------------
@@ -991,6 +1203,62 @@ def describe_plan(
     )
 
 
+def describe_recent_plan(
+    points: Sequence[Point],
+    client: SmapOpendapClient,
+    workers: int,
+    box: Box,
+    window_days: int,
+) -> str:
+    """Plano do `--recente`: acha o dia no CMR (público) e conta os recortes que faltam."""
+    day = client.latest_complete_day()
+    clim_days = climatology_days(day, window_days)
+    window = _cached_window(points, client)
+    clim_variable = DATA_VARIABLES[CLIMATOLOGY_FIELD]
+
+    def pending(days: Sequence[date], variables: Sequence[str]) -> int:
+        missing = 0
+        for each in days:
+            granules = client.cached_granules(each)
+            if granules is None or window is None:
+                missing += GRANULES_PER_DAY * len(variables)
+                continue
+            missing += sum(
+                1
+                for granule in granules
+                for variable in variables
+                if not client.is_cached(SubsetTask(granule, variable, window))
+            )
+        return missing
+
+    recent_total = GRANULES_PER_DAY * len(DATA_VARIABLES)
+    recent_pending = pending([day], list(DATA_VARIABLES.values()))
+    clim_total = len(clim_days) * GRANULES_PER_DAY
+    clim_pending = pending(clim_days, [clim_variable])
+    cmr_pending = sum(1 for each in clim_days if not client.is_cmr_cached(each))
+    meta_pending = (0 if client.has_structure() else 1) + (4 if window is None else 0)
+    seconds = (
+        cmr_pending * MEASURED_SECONDS_PER_CMR_REQUEST
+        + meta_pending * MEASURED_SECONDS_PER_OPENDAP_REQUEST
+        + (recent_pending + clim_pending) * MEASURED_SECONDS_PER_OPENDAP_REQUEST / max(1, workers)
+    )
+    years = sorted({each.year for each in clim_days})
+    year_range = f"de {years[0]} a {years[-1]}" if years else "sem anos"
+    return "\n".join(
+        [
+            f"Dia completo mais recente no CMR: {day} | {len(points)} células de 0,1° (caixa "
+            f"{box.lat_min}..{box.lat_max}, {box.lon_min}..{box.lon_max})",
+            f"Recente: {recent_total} recortes ({GRANULES_PER_DAY} granulos × "
+            f"{len(DATA_VARIABLES)} variáveis; faltam {recent_pending})",
+            f"Climatologia: {len(clim_days)} dias ({year_range}, {day:%d/%m} ± {window_days} "
+            f"dias) → {clim_total} recortes de {clim_variable.rsplit('/', 1)[-1]} (faltam "
+            f"{clim_pending}) e {len(clim_days)} buscas no CMR (faltam {cmr_pending})",
+            f"Tempo estimado: ~{_duration(seconds)} com {workers} em paralelo "
+            f"(~{MEASURED_SECONDS_PER_OPENDAP_REQUEST:g} s por pedido ao OPeNDAP)",
+        ]
+    )
+
+
 def parse_years(text: str) -> tuple[int, int]:
     """`"2016-2025"` ou `"2024"` → (primeiro, último). Recusa ano fora de ordem."""
     parts = [part.strip() for part in text.split("-")]
@@ -1023,11 +1291,23 @@ def _workers_arg(text: str) -> int:
     return value
 
 
+def _window_arg(text: str) -> int:
+    value = int(text)
+    if value < 0:
+        raise argparse.ArgumentTypeError("--janela-dias precisa ser 0 ou mais")
+    return value
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m pipeline.fetch_smap", description=(__doc__ or "").splitlines()[0]
     )
-    parser.add_argument("--saida", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--saida",
+        type=Path,
+        default=None,
+        help=f"padrão: {DEFAULT_OUTPUT.name} (ou {DEFAULT_RECENT_OUTPUT.name} com --recente)",
+    )
     parser.add_argument("--cache", type=Path, default=DEFAULT_CACHE_DIR)
     parser.add_argument(
         "--area",
@@ -1050,7 +1330,20 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"pedidos ao OPeNDAP ao mesmo tempo (padrão {DEFAULT_WORKERS})",
     )
     parser.add_argument(
-        "--dry-run", action="store_true", help="só mostra dias, pedidos e tempo: sem rede"
+        "--recente",
+        action="store_true",
+        help="SMAP de agora e percentil na climatologia (A2.2), no lugar dos dias de semeadura",
+    )
+    parser.add_argument(
+        "--janela-dias",
+        type=_window_arg,
+        default=DEFAULT_WINDOW_DAYS,
+        help=f"com --recente: o dia ± N na climatologia (padrão {DEFAULT_WINDOW_DAYS})",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="só mostra dias, pedidos e tempo (com --recente, faz a busca pública no CMR)",
     )
     return parser
 
@@ -1069,12 +1362,26 @@ def main(
     parser = build_parser()
     args = parser.parse_args(argv)
     days = sowing_days(*args.anos)
-    if not days:
+    if not days and not args.recente:
         parser.error(f"nenhum dia de semeadura com SMAP nos anos pedidos (desde {SMAP_FIRST_DAY})")
     points = box_cell_centers(args.area)
+    output = args.saida or (DEFAULT_RECENT_OUTPUT if args.recente else DEFAULT_OUTPUT)
 
     if args.dry_run:
         offline = SmapOpendapClient(args.cache, opendap_get=_offline_getter, cmr_get=cmr_get)
+        if args.recente:
+            try:
+                plan = describe_recent_plan(
+                    points, offline, args.paralelo, args.area, args.janela_dias
+                )
+            except OpendapError as exc:
+                print(f"Parou: {exc}", file=sys.stderr)
+                return 1
+            print(plan)
+            print(
+                "--dry-run: só buscas públicas no CMR; nenhum recorte pedido nem arquivo gravado."
+            )
+            return 0
         print(describe_plan(days, points, offline, args.paralelo, args.area))
         print("--dry-run: nada foi pedido nem gravado.")
         return 0
@@ -1095,14 +1402,24 @@ def main(
         workers=args.paralelo,
     )
     try:
-        result = build_smap_file(days, points, client, clock=now, box=args.area)
+        if args.recente:
+            result = build_recent_file(
+                points, client, clock=now, box=args.area, window_days=args.janela_dias
+            )
+        else:
+            result = build_smap_file(days, points, client, clock=now, box=args.area)
     except OpendapError as exc:
         print(f"Parou: {exc}", file=sys.stderr)
         return 1
-    args.saida.parent.mkdir(parents=True, exist_ok=True)
-    args.saida.write_text(json.dumps(result, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(result, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    what = (
+        f"o dia {result['versao_dados']['parametros']['data']}"
+        if args.recente
+        else (f"{len(days)} dias")
+    )
     print(
-        f"{len(points)} pontos × {len(days)} dias gravados em {args.saida} "
+        f"{len(points)} pontos × {what} gravados em {output} "
         f"({client.downloads} pedidos ao OPeNDAP agora)"
     )
     return 0
