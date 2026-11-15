@@ -104,9 +104,10 @@ ORNL_MAX_DATES_PER_REQUEST: Final[int] = 10
 # 19 a 29 s; 6, 7 e 10 datas entre 55 s e o corte do proxy (502 aos ~60 s). Jan–jul tem 14
 # composições do Terra e 13 do Aqua por ano: 3 recortes de até 5 datas por ano e produto.
 ORNL_DEFAULT_DATES_PER_REQUEST: Final[int] = 5
-# Média dos pedidos que deram certo na medição (19 a 57 s); a lista de datas levou 28 s e a das
-# bandas 17 s. Só para a estimativa do --dry-run.
-ORNL_MEASURED_SECONDS_PER_REQUEST: Final[float] = 40.0
+# Só para a estimativa do --dry-run, sem a pausa. Rodada real da fazenda de exemplo (14/11/2026):
+# 65 pedidos certos em ~99 min, ou ~85 s por pedido contando os 28 que deram 502, as retentativas e
+# a divisão; os que deram certo levaram de 23 a 60 s (média 45 s).
+ORNL_MEASURED_SECONDS_PER_REQUEST: Final[float] = 85.0
 ORNL_TIMEOUT_SECONDS: Final[float] = 120.0
 ORNL_PAUSE_SECONDS: Final[float] = 5.0
 ORNL_MAX_RETRIES: Final[int] = 3
@@ -1175,8 +1176,8 @@ def ornl_plan_text(
             f"Pedidos que faltam: {pending} ({bands} de bandas, {dates_lists} de datas, "
             f"{subsets} recortes) | composições já no cache: {cached_composites} de {composites}",
             f"Tempo estimado: ~{_duration(seconds)} (~{ORNL_MEASURED_SECONDS_PER_REQUEST:g} s por "
-            f"pedido, medido de 19 a 57 s, mais {pause} s de pausa; cada 502 custa mais ~60 s e "
-            "a retentativa)",
+            f"pedido, como na rodada real com os 502 e as retentativas, mais {pause} s de pausa; "
+            "os que dão certo levam de 23 a 60 s)",
         ]
     )
 
