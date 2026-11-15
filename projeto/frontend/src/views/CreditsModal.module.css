@@ -25,6 +25,19 @@
   font-size: var(--font-size-caption);
   line-height: 1.45;
   color: var(--color-text-muted);
+  /* Nomes de arquivo compridos (fotos das plantas) quebram em vez de abrir rolagem lateral */
+  overflow-wrap: anywhere;
+}
+
+.line a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.line a:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .line:first-child {
