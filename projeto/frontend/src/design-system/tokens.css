@@ -197,6 +197,31 @@
   --touch-secondary: 60px;
   --touch-primary: 60px;
   --touch-radio-card: 88px;
+
+  /*
+   * Tela "Onde fica a lavoura" (protótipo de 15/11/2026, tarefa 0053): mapa, cartão do local nos 4 estados
+   * e o "Confirmar local" desligado. O resto (verde, azul, texto, bordas) reaproveita os tokens de cima.
+   */
+  --color-map-empty: #e9ece6; /* fundo do mapa antes dos ladrilhos */
+  --color-map-hint: rgb(21 32 28 / 82%); /* dica escura no topo do mapa */
+  --color-map-overlay: rgb(255 255 255 / 96%); /* legenda da área sobre o mapa */
+  --shadow-map-hint: 0 4px 14px rgb(0 0 0 / 15%);
+  --shadow-map-legend: 0 2px 10px rgb(0 0 0 / 10%);
+  --shadow-map-button: 0 1px 4px rgb(0 0 0 / 8%);
+  --shadow-pin: drop-shadow(0 3px 4px rgb(0 0 0 / 30%));
+  --shadow-confirm-bar: 0 -6px 18px rgb(0 0 0 / 6%);
+  --color-confirm-bar: rgb(255 255 255 / 97%); /* barra fixa do Confirmar, no celular */
+  --color-empty-icon-bg: #eef0ee; /* cartão "Sua lavoura" sem ponto */
+  --color-empty-icon: #8a918d;
+  --color-outside-bg: #fdf3ea; /* cartão "Fora da área" */
+  --color-outside-border: #f1d9c3;
+  --color-outside-icon-bg: #fbe3cf;
+  --color-outside: #b6531a;
+  --color-outside-text: #7a3a10;
+  --color-border-green-hover: #c4d6cb; /* cartão da lavoura de demonstração com o mouse em cima */
+  --color-input-focus: #cfe3d7;
+  --color-error-text: #a3361a; /* "Não entendi" do modal */
+  --color-primary-disabled: #a9c2b4; /* "Confirmar local" desligado */
 }
 
 /* Celular e tablet (até 900 px, protótipos da remodelagem v4): margem menor e cabeçalho mais baixo */
