@@ -28,7 +28,10 @@ export type CommunityViewProps = {
   onDemo: (kind: 'tell' | 'rain') => void
   /** P3: área de soja parada na região pelo satélite (null sem o dado na API). */
   region: RegionSummary | null
-  /** P3: "not-connected" sem /api/regiao no backend; "outside" se o satélite não mediu a região do ponto. */
+  /**
+   * P3: "not-connected" sem /api/regiao no backend; "outside" se o satélite não mediu a região do
+   * ponto. Fora das regiões medidas, o bloco não aparece: o produto resolve com as perguntas.
+   */
   regionStatus: RegionStatus
   onRegionRetry: () => void
   regionRadius: number | null
@@ -59,15 +62,6 @@ export function CommunityView(props: CommunityViewProps) {
       {regionStatus === 'ready' && region && <SatelliteRegion {...props} region={region} />}
       {regionStatus === 'not-connected' && (
         <NotConnectedCard icon={<SatelliteIcon />} iconTone="soil" title={c.regionTitle} label={t.common.notConnected} />
-      )}
-      {regionStatus === 'outside' && (
-        <Card as="section" aria-label={c.regionTitle}>
-          <h2 className={layout.iconTitle}>
-            <SatelliteIcon />
-            {c.regionTitle}
-          </h2>
-          <p>{c.regionOutside}</p>
-        </Card>
       )}
       {regionStatus === 'error' && (
         <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={props.onRegionRetry} />

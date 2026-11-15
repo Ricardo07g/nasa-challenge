@@ -89,8 +89,9 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `NotConnectedCard` (bloco) ou `DataSourceCard status="unavailable"`. Um endpoint que ainda não existe
   (404 sem `code`) ou um repository sem versão http (`NotConnectedError`) vira esse estado, não erro.
   Exceção: na tela 8 (região pelo satélite), o 404 `OUTSIDE_AREA` não é "Ainda não conectado" (a
-  função existe, só não mediu aquele lugar): vira o estado `outside` (`RegionStatus`), com um card que
-  explica que o satélite ainda não mediu a região da lavoura.
+  função existe, só não mediu aquele lugar): vira o estado `outside` (`RegionStatus`), e o bloco da
+  região **não aparece** (decisão de 15/11: fora das regiões medidas, o produto resolve com as
+  perguntas, sem aviso de "ainda não mediu").
   Campo novo de uma resposta que já existe (ex.: `chuva_mensal` do talhão) entra **opcional** no model
   (`campo?: X | null`): ausente (API antiga) ou `null` dá "Ainda não conectado". Enquanto o dado carrega,
   a tela não mostra nem o dado nem esse estado (nada de "Ainda não conectado" piscando).

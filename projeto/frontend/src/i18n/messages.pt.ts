@@ -372,8 +372,6 @@ export const pt = {
     regionSubtitle: (km: number) => `Até ${km} km da sua lavoura · visto pelo satélite`,
     regionSubtitleAway: (km: number, distance: number) =>
       `Raio de ${km} km em volta de um ponto a ${String(distance).replace('.', ',')} km da sua lavoura · visto pelo satélite`,
-    regionOutside:
-      'O satélite ainda não mediu a região da sua lavoura. Por enquanto, só algumas regiões perto de Uberlândia estão medidas.',
     regionBig: (year: number, pct: number) => `Em ${year}, ${pct}% da área de soja ficou parada depois da colheita.`,
     regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
       `Sua área: parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}. Na região, em média ${average}% da área fica parada.`,
