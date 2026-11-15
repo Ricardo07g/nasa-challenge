@@ -6,7 +6,7 @@
 - **Prioridade:** Média (P3 do plano de evolução, Should)
 - **Roteiro:** P3 (Fase 7); usa a regra do R3.2 ([tarefa 0018](0018-historico-ndvi-na-api.md))
 - **Módulos Afetados:** `app/models/regiao.py`, `app/repositories/regiao_repository.py`, `app/services/region_service.py`, `app/services/field_history_service.py`, `app/schemas/regiao.py`, `app/controllers/regiao_controller.py`, `app/dependencies.py`, `app/main.py`, `app/config.py`, `pipeline/fetch_regiao_ndvi.py`, `.env.example`, `projeto/docker-compose.yml`, `AGENTS.md`, `docs/como-preparar-os-dados-locais.md`
-- **Referências:** guia do histórico NDVI (`arquivos contexto/`, seção "Região pelo satélite (P3)"), plano de evolução (P3), contrato do front (`projeto/frontend/src/models/region.ts`, `repositories/regionRepository.ts`), `AGENTS.md` do backend ("Contrato dos dados das fontes" → "Região pelo satélite")
+- **Referências:** guia do histórico NDVI (seção "Região pelo satélite (P3)"), plano de evolução (P3), contrato do front (`projeto/frontend/src/models/region.ts`, `repositories/regionRepository.ts`), `AGENTS.md` do backend ("Contrato dos dados das fontes" → "Região pelo satélite")
 
 ---
 

@@ -9,8 +9,8 @@
 - **Roteiro:** A2.1 (Fase 6, ajuste A2). Depende de R0.3 (dependências dos scripts de dados)
 - **Módulos Afetados:** nenhum código. Docs: este arquivo, o roteiro (seção 3 e A2.1) e o `AGENTS.md`
   do backend ("Sinal para o outono")
-- **Referências:** [PRD](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md)
-  (7.10, RF-20, T-18), [plano de evolução](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20plano%20de%20evolu%C3%A7%C3%A3o%20do%20produto.md)
+- **Referências:** PRD
+  (7.10, RF-20, T-18), plano de evolução
   (ajuste A2), [tarefa 0015](0015-servico-sinal-outono.md) (regra e `SeasonalForecast`)
 
 ---

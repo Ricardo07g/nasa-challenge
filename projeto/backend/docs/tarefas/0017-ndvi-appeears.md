@@ -6,7 +6,7 @@
 - **Prioridade:** Alta (o token do AppEEARS vale cerca de 48 h)
 - **Roteiro:** R2.2 (Fase 2, trilha "Satélite"); depende de R0.1, R0.2 ([tarefa 0009](0009-token-earthdata-e-contrato-dados-fontes.md)) e da decisão dos anos; destrava o R3.2 (histórico do talhão)
 - **Módulos Afetados:** `projeto/backend/pipeline/fetch_ndvi.py` (novo), `projeto/backend/app/repositories/external/http_client.py`, `projeto/backend/tests/unit/pipeline/test_fetch_ndvi.py`, `projeto/backend/tests/unit/repositories/external/test_http_client.py`, `projeto/backend/AGENTS.md`
-- **Referências:** [roteiro de implementação](../roteiro-de-implementacao.md) (R2.2), [ADR-0005](../adr/0005-fontes-diretas-da-nasa-sem-earth-engine.md), guia do histórico NDVI (`arquivos contexto/`), PRD 7.8, `AGENTS.md` do backend ("Contrato dos dados das fontes" → NDVI)
+- **Referências:** [roteiro de implementação](../roteiro-de-implementacao.md) (R2.2), [ADR-0005](../adr/0005-fontes-diretas-da-nasa-sem-earth-engine.md), guia do histórico NDVI, PRD 7.8, `AGENTS.md` do backend ("Contrato dos dados das fontes" → NDVI)
 
 ---
 

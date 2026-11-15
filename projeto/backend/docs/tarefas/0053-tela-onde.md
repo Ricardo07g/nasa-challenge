@@ -118,7 +118,7 @@ Onde mudou:
 
 O que **não** mudou: nomes de arquivo e identificadores (`EXAMPLE_FARM`, `clima_fazenda_exemplo.json` e as
 variáveis `UFU`, `UFU_POWER_CELL` e `UFU_CELL_ID` dos testes do backend). Também ficaram as menções à UFU em outro
-contexto: estudos citados no PRD, no discovery e no business plan, e a sugestão de calibrar o NDVI com a área
+contexto: estudos citados nos documentos de produto de origem e a sugestão de calibrar o NDVI com a área
 experimental da UFU no guia do NDVI.
 
 ## 7. O que saiu

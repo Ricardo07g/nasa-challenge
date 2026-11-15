@@ -1,6 +1,6 @@
 /**
  * Dicionário base (português). O tipo `Messages` sai daqui; o inglês precisa ter as mesmas chaves.
- * Textos do protótipo v3 (arquivos contexto/Raiz Orbital – Protótipo das telas.html).
+ * Textos do protótipo v3.
  */
 export const pt = {
   common: {

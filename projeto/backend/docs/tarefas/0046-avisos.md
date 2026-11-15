@@ -8,7 +8,7 @@
 - **Módulos Afetados:**
   - backend: `app/config_data/regras.yaml` (grupo novo `avisos_tela`, logo depois do `avisos`), `app/models/regras.py` (`RegrasAvisosTela`), `app/repositories/rules_repository.py`, `app/models/avisos.py`, `app/repositories/recent_weather_repository.py`, `app/services/avisos_service.py`, `avisos_agora_service.py`, `avisos_mudanca_service.py`, `avisos_vizinhos_service.py`, `app/schemas/avisos.py`, `app/controllers/avisos_controller.py`, `app/dependencies.py`, `app/main.py`;
   - front: `models/avisos.ts`, `repositories/avisosRepository.ts`, `repositories/savedPointRepository.ts`, `repositories/mocks/mockAvisos.ts`, `repositories/index.ts`, `services/avisosService.ts`, `controllers/useAvisosController.ts`, `controllers/useAlertsBadge.ts`, `controllers/useShellController.ts`, `views/AvisosView.tsx`, `views/alertTexts.ts`, `design-system/components/Header.tsx` (botão "Avisos" com o número), `design-system/icons` (sino e olho), `pages.tsx`, `routes.tsx`, `i18n/messages.{pt,en}.ts` (bloco novo `alerts`), artigo do Guia "Como ler os avisos".
-- **Referências:** `arquivos contexto/prompt-raiz-orbital.md` (seção 6 e regras gerais), `projeto/backend/docs/remodelagem.md` (D90 a D104), tarefas 0019 (avisos do replay), 0033/0038 (ENSO e SMAP recente), 0042 (fim das chuvas), 0043 (raio-X) e 0047 (comunidade)
+- **Referências:** pedido de remodelagem de 15/11/2026 (seção 6 e regras gerais), `projeto/backend/docs/remodelagem.md` (D90 a D104), tarefas 0019 (avisos do replay), 0033/0038 (ENSO e SMAP recente), 0042 (fim das chuvas), 0043 (raio-X) e 0047 (comunidade)
 
 ---
 

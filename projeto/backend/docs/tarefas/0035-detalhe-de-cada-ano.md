@@ -9,8 +9,8 @@
   `app/services/year_detail_service.py`, `app/services/crop_alert_service.py`, `app/services/climate_risk_service.py`,
   `app/services/recommendation_service.py`, `app/schemas/recomendacao.py`, `app/config_data/regras.yaml`,
   `app/config.py`, `app/dependencies.py`, `projeto/docker-compose.yml`
-- **Referências:** [plano de evolução](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20plano%20de%20evolu%C3%A7%C3%A3o%20do%20produto.md) (P1, §4.1),
-  [PRD](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (7.2: janela crítica e aperto),
+- **Referências:** plano de evolução (P1, §4.1),
+  PRD (7.2: janela crítica e aperto),
   contrato do front `AnoDetalhe` em `projeto/frontend/src/models/recomendacao.ts`, tarefa 0019 (dia seco do `CropAlertService`),
   [ONI da NOAA CPC](https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php)
 

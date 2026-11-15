@@ -14,7 +14,7 @@
   `controllers/usePlanController.ts`, `repositories/mocks/fixtures.ts`, as views da resposta, das
   opções, do plano, do relatório, de "Como a conta é feita", da tela 4, da tela 3, da missão e da
   comunidade, `design-system/components/{Status,Card}.tsx`, `design-system/icons`, `i18n/`
-- **Referências:** `arquivos contexto/prompt-raiz-orbital.md` (regras gerais e seção 1),
+- **Referências:** pedido de remodelagem de 15/11/2026 (regras gerais e seção 1),
   `docs/remodelagem.md` (S1, decisões D2 e D14 a D20), `AGENTS.md` do front ("Dado que a API ainda não
   manda" e "Nenhum valor em reais")
 

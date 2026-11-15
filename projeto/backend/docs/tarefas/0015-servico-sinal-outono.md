@@ -6,7 +6,7 @@
 - **Prioridade:** Alta (tela 7: Plano A / Plano B)
 - **Roteiro:** A2.4 (Fase 6, ajuste A2; testes sem dependência, dados de A2.1 a A2.3). Empilhada sobre o R4.3 (tarefa 0016), porque o Plano B é o plano do ano seco
 - **Módulos Afetados:** `app/models/sinal_outono.py`, `app/repositories/sinal_outono_repository.py`, `app/services/sinal_outono_service.py`, `app/services/recommendation_service.py`, `app/models/recomendacao.py`, `app/schemas/recomendacao.py`, `app/dependencies.py`, `app/config_data/regras.yaml`, `app/models/regras.py`, `app/repositories/rules_repository.py`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (7.7, 7.10, RF-20, T-18), [plano de evolução](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20plano%20de%20evolu%C3%A7%C3%A3o%20do%20produto.md) (ajuste A2), contrato do front `SinalOutono` em `projeto/frontend/src/models/recomendacao.ts`
+- **Referências:** PRD (7.7, 7.10, RF-20, T-18), plano de evolução (ajuste A2), contrato do front `SinalOutono` em `projeto/frontend/src/models/recomendacao.ts`
 
 ---
 

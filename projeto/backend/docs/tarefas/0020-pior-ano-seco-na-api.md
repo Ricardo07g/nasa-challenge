@@ -6,7 +6,7 @@
 - **Prioridade:** Alta (tela 7: "Quantos hectares quer testar?", RF-21)
 - **Roteiro:** A1.2 (Fase 6, ajuste A1). Empilhada sobre a tarefa 0015 (A2.4), que está sobre a 0016 (R4.3)
 - **Módulos Afetados:** `app/services/recommendation_service.py`, `app/models/recomendacao.py`, `app/schemas/recomendacao.py`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (7.5, 7.7, 7.11, RF-21, T-17), [plano de evolução](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20plano%20de%20evolu%C3%A7%C3%A3o%20do%20produto.md) (ajuste A1), contrato do front `Opcao.dinheiro.pior_ano_seco_ha?: number` em `projeto/frontend/src/models/recomendacao.ts`
+- **Referências:** PRD (7.5, 7.7, 7.11, RF-21, T-17), plano de evolução (ajuste A1), contrato do front `Opcao.dinheiro.pior_ano_seco_ha?: number` em `projeto/frontend/src/models/recomendacao.ts`
 
 ---
 

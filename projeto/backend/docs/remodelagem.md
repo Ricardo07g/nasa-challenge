@@ -1,8 +1,8 @@
 # Remodelagem do produto (iniciada em 15/11/2026)
 
-Pedido do usuário: `arquivos contexto/prompt-raiz-orbital.md` (9 seções). Este arquivo é o roteiro, o
-estado de cada entrega, o registro das decisões e a revisão. Quem trabalhar numa seção lê o pedido
-inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
+Pedido do usuário de 15/11/2026 (9 seções). Este arquivo é o roteiro, o estado de cada entrega, o registro
+das decisões e a revisão. Quem trabalhar numa seção lê esta página (as "Regras gerais" valem para todas) e os
+`AGENTS.md`.
 
 ## Como trabalhamos
 
@@ -12,7 +12,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 - **Ordem do pedido, uma entrega por seção.** No máximo duas seções em paralelo, só quando não mexem
   nos mesmos arquivos (coluna "Junto com").
 - **TDD e camadas** como em todo o repositório. Cada seção tem a tarefa em `docs/tarefas/` (número abaixo)
-  e o requisito no PRD no mesmo PR.
+  e o requisito na própria tarefa, no mesmo PR.
 - **Só dados que já temos** (banco e `data/baixados/`). Sem dado para o ponto, o elemento não aparece.
 - **Revisão de cada seção** depois do merge: testes, telas no Chrome sem interface (pt e en, celular e
   computador) e a lista de itens do pedido marcada aqui (✅ feito, ⚠️ feito com ressalva, ❌ não feito e
@@ -403,7 +403,7 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
 
 ## Lista final do pedido
 
-Cada item do `arquivos contexto/prompt-raiz-orbital.md`, conferido depois da S9: ✅ feito, ⚠️ feito com ressalva, ❌
+Cada item do pedido de 15/11/2026, conferido depois da S9: ✅ feito, ⚠️ feito com ressalva, ❌
 não feito. A linha diz o porquê; o detalhe está na revisão da seção e nas decisões.
 
 ### Regras gerais

@@ -10,25 +10,21 @@ nunca escreva regras neles. Cada pasta com regras próprias tem o seu `AGENTS.md
 **Raiz Orbital** (hackathon da NASA): ajuda o produtor a decidir **o que plantar depois da soja**
 usando dados de satélite e clima (NASA POWER, IMERG, MODIS, SMAP, CMIP6, SoilGrids).
 
-A fonte de verdade do produto está em `arquivos contexto/`:
-- `PRD – Raiz Orbital o que plantar depois da soja.md`: requisitos, motor de pontuação, arquitetura, backlog.
-- `Raiz Orbital – Protótipo das telas.html`: protótipo das telas (v3: 2 perguntas, 1 resposta).
-- `Raiz Orbital – plano técnico do backend.md`: contratos da API, banco, pipeline de dados e motor (leia antes de mexer no backend).
-- `Raiz Orbital – prompt do Lovable.md`: prompt completo para gerar o protótipo no Lovable (telas, visual, dados de exemplo, contrato da API).
-- `Raiz Orbital discovery de produto (dores, personas e hipóteses).md`
-- `Raiz Orbital planejamento de produto, business case e business plan.md`
-- `prompt-raiz-orbital.md`: **remodelagem do produto pedida em 15/11/2026** (9 seções: sem R$, busca no
-  mapa, "Quando" novo, raio-X do satélite, abas Sugestão/Comparar/Plano, avisos, comunidade, guia). O roteiro,
-  o estado de cada seção, as decisões e a revisão ficam em `projeto/backend/docs/remodelagem.md`.
-- `Raiz Orbital – plano de evolução do produto.md`: evolução depois do MVP, **por ordem de prioridade** (ajustes A1 e A2, depois P1 a P6; WhatsApp como desejável). Cada item vira requisito no PRD no PR que o implementar.
+A referência do produto está no próprio repositório:
+- os `AGENTS.md` (este, `projeto/backend/AGENTS.md` e `projeto/frontend/AGENTS.md`): regras, contratos da API e o
+  que cada tela faz;
+- `projeto/backend/docs/`: `remodelagem.md` (a remodelagem pedida em 15/11/2026: roteiro, decisões e revisão),
+  `roteiro-de-implementacao.md`, `tarefas/` (uma tarefa por PR, com os requisitos) e `adr/` (decisões de arquitetura);
+- os números do motor em `projeto/backend/app/config_data/regras.yaml` e `culturas.yaml`, cada um com a fonte.
 
-Leia o PRD antes de implementar qualquer regra de negócio. Se o código e o PRD discordarem, pergunte.
+Os ids antigos citados no código e nos documentos (RF-xx, PRD 7.x, plano técnico §x) são referência histórica: os
+documentos de produto de origem saíram do repositório em 15/11/2026. Requisito novo fica na tarefa
+(`projeto/backend/docs/tarefas/`) do PR que o implementa. Se o código e a documentação discordarem, pergunte.
 
 ## Mapa do repositório
 
 ```
 AGENTS.md                 regras gerais (este arquivo)
-arquivos contexto/        PRD, protótipo, discovery e business plan
 projeto/
   docker-compose.yml      sobe banco (PostGIS) + backend + frontend para desenvolvimento
   .env.example            variáveis opcionais do compose (banco local)

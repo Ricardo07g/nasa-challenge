@@ -5,7 +5,7 @@
 - **Status:** Concluída
 - **Prioridade:** Alta
 - **Módulos Afetados:** `projeto/backend/app/repositories/external/`, `projeto/backend/app/jobs/`, `projeto/backend/app/services/`, `projeto/backend/app/controllers/`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (RNF-01), [ADR-0003](../adr/0003-series-temporais-nasa-e-janela-de-20-anos.md), [diagrama-de-sequencias.md](../diagrama-de-sequencias.md)
+- **Referências:** PRD (RNF-01), [ADR-0003](../adr/0003-series-temporais-nasa-e-janela-de-20-anos.md), [diagrama-de-sequencias.md](../diagrama-de-sequencias.md)
 
 ---
 

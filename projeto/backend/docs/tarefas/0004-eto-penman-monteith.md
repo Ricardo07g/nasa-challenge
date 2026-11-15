@@ -6,7 +6,7 @@
 - **Prioridade:** Alta
 - **Roteiro:** R1.3 (trilha "Qualidade do POWER"); PRD T-05
 - **Módulos Afetados:** `projeto/backend/app/services/water_balance_calculator.py`, `projeto/backend/app/services/climate_season_builder.py` (novo), `projeto/backend/app/services/satellite_ingestion_service.py`, `projeto/backend/app/repositories/external/nasa_power_client.py`, `projeto/backend/app/models/climate.py`, `projeto/backend/app/constants.py`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (6.1 e 7.2), [plano técnico do backend](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20plano%20t%C3%A9cnico%20do%20backend.md) (§5, `climate_season.eto_mm`), [roteiro](../roteiro-de-implementacao.md) (R1.3), FAO-56: Allen, R. G. et al. (1998), *Crop evapotranspiration*, FAO Irrigation and Drainage Paper 56
+- **Referências:** PRD (6.1 e 7.2), plano técnico (§5, `climate_season.eto_mm`), [roteiro](../roteiro-de-implementacao.md) (R1.3), FAO-56: Allen, R. G. et al. (1998), *Crop evapotranspiration*, FAO Irrigation and Drainage Paper 56
 
 ---
 

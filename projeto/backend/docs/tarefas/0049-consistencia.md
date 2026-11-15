@@ -6,7 +6,7 @@
 - **Prioridade:** Alta (seção 9 da remodelagem)
 - **PRD:** RF-19 e RF-20 (reescritos), RF-33 (novo), PRD 7.6 (nota sobre o nematoide)
 - **Decisões:** D130 a D142 do `docs/remodelagem.md`
-- **Referências:** `arquivos contexto/prompt-raiz-orbital.md` (regras gerais e seções 8 e 9), `docs/remodelagem.md` (revisões S1 a S8, "Números estranhos", "O que não foi possível")
+- **Referências:** pedido de remodelagem de 15/11/2026 (regras gerais e seções 8 e 9), `docs/remodelagem.md` (revisões S1 a S8, "Números estranhos", "O que não foi possível")
 
 ---
 
