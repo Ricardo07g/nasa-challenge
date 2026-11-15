@@ -137,8 +137,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 - **Preparar os dados na sua máquina** (pré-carga, CMIP6, NDVI, pacote do time e cópia do banco):
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
-  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`). Nunca
-  coloque caminho fixo (como `/workspace/...`) num repository.
+  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`,
+  `IMERG_LATE_PATH`). Nunca coloque caminho fixo (como `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
@@ -368,9 +368,42 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 
 - **Sinal para o outono** (`sinal` de `/recomendacao`, RF-20, tarefa 0015): o `SinalOutonoService` aplica a
   regra do PRD 7.10 (limiares em `regras.yaml`, grupo `sinal_outono`) a três fontes, uma por repository
-  (`app/repositories/sinal_outono_repository.py`): GEOS-S2S (A2.1), SMAP recente com percentil (A2.2) e
-  chuva dos últimos 30 dias (A2.3). Até essas tarefas chegarem, o `dependencies.py` injeta o
-  `NoAutumnSignalDataRepository` nas três e o campo sai `null`. Nunca preencha com previsão inventada.
+  (`app/repositories/sinal_outono_repository.py`), cada uma ligada no `dependencies.py`:
+  - **GEOS-S2S** (A2.1): `NoAutumnSignalDataRepository` (sem dado). O GMAO só publica a previsão em
+    NetCDF-4/HDF5, sem OPeNDAP nem texto: não dá para ler sem biblioteca nova (tarefa 0032, com o
+    que precisaria);
+  - **SMAP recente com percentil** (A2.2): `NoAutumnSignalDataRepository` até a tarefa dele chegar;
+  - **chuva dos últimos 30 dias** (A2.3, tarefa 0033): `FileRecentRainRepository`, que lê o arquivo do
+    `IMERG_LATE_PATH` (contrato "Chuva recente", abaixo) pela célula de 0,1° do ponto. Sem arquivo
+    ou sem a célula: `None`.
+
+  A terra só conta com o SMAP **e** a chuva recente juntos: só com a chuva, o `sinal` continua `null`.
+  Sem dado de nenhuma fonte, também. Nunca preencha com previsão inventada.
+- **Chuva dos últimos 30 dias pelo IMERG Late** (A2.3, tarefa 0033): `pipeline/fetch_imerg_late.py`
+  grava, por célula de 0,1° da caixa (piloto por padrão, ou `--area="lat_min,lat_max,lon_min,lon_max"`),
+  a soma dos últimos 30 dias do `GPM_3IMERGDL` v07 (Late, diário) e a média dos mesmos dias.
+  - **Granulos:** pelo CMR (público, sem token), que dá o nome de cada dia (o sufixo muda: `V07B`,
+    `V07C`) e o link do Cloud OPeNDAP. Sem `--fim`, a janela termina no dia mais recente do CMR (o
+    Late sai com ~1 dia). Dia faltando na janela: erro, nada é gravado.
+  - **Chuva:** um pedido por dia ao Cloud OPeNDAP (`opendap.earthdata.nasa.gov`, Hyrax) em ASCII,
+    `precipitation[time][lon][lat]` no retângulo de pixels da caixa, com `EARTHDATA_TOKEN` (Bearer).
+    O pixel do IMERG (0,1°, centros em x,x5) é a própria célula do `cell_id_for`. Célula com algum
+    dia sem dado (-9999,9) fica de fora. Cache por dia e retângulo em
+    `data/baixados/nasa_gpm_imerg_late/cache_opendap/`.
+  - **Média:** do NASA POWER `PRECTOTCORR` **já guardado** (`climate_season` do banco, com a fixture
+    de reserva; sem `DATABASE_URL`, só a fixture da fazenda de exemplo), somado nos mesmos dias do
+    calendário em cada ano anterior ao da janela (29/fev vira 28/fev). O POWER guardado vai de 1/jan
+    a 31/jul: janela fora disso (ou que cruza o ano) não tem média, e o script sai com erro sem
+    sobrescrever o arquivo. O sinal é para fev/mar, perto do plantio.
+  - Saída padrão `data/baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json` (fora do git). A API
+    lê pelo `IMERG_LATE_PATH`; no compose, já aponta para
+    `/dados_baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json`.
+
+  ```bash
+  uv run python -m pipeline.fetch_imerg_late --dry-run                  # plano, sem rede nem token
+  uv run python -m pipeline.fetch_imerg_late                            # caixa piloto, 30 dias
+  uv run python -m pipeline.fetch_imerg_late --fim 2027-02-28           # janela que termina num dia
+  ```
 - **Deltas do CMIP6 na API** (R3.1, tarefa 0021): o `get_cmip6_deltas` da célula lê, nesta ordem, e
   fica com a primeira fonte que tiver deltas:
   1. a tabela `cmip6_delta` da célula (só com banco; `PostgisCmip6Repository`);
@@ -542,8 +575,8 @@ Regras gerais:
 - Coordenadas WGS 84 em graus decimais. O ponto vira chave de cache com `point_key` (0,0025°,
   `app/repositories/point_cache.py`); na tabela, `key` + `geom`.
 - Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1`, `smap` e
-  `gpm_imerg` (a que o front já procura; decidida em 14/11, tarefa 0027). Fora da NASA:
-  `noaa_oni` (ONI da NOAA, só em arquivo).
+  `gpm_imerg` (a que o front já procura; decidida em 14/11, tarefa 0027), mais `imerg_late`
+  (chuva recente, A2.3). Fora da NASA: `noaa_oni` (ONI da NOAA, só em arquivo).
 - Todo arquivo traz `versao_dados`, a execução que o gerou.
 - Sem valor: campo ausente ou `null`. Nunca `-999`, zero ou número inventado, e nunca dado
   sintético com uma dessas chaves de fonte.
@@ -760,6 +793,36 @@ percentuais: nenhum pixel nem ponto individual (RNF-10). Números ilustrativos:
   serviço (`ornl_daac`), a máscara (produto, camada, classes e o ano usado em cada ano), a janela,
   os anos, os limites, o raio, a caixa pedida (`km_pedido`) e o número de pedidos.
 - Ainda não há tabela: a API lê o arquivo. O guia NDVI propõe a `regiao_entressafra` no PostGIS.
+
+### Chuva recente: `RecentRainRecord` (`app/models/recent_rain.py`)
+
+Uma linha por célula de 0,1°: a chuva dos últimos `dias` dias pelo IMERG Late (`GPM_3IMERGDL` v07) e
+a média dos mesmos dias. O `FileRecentRainRepository` lê este arquivo (`IMERG_LATE_PATH`) e o
+recusa se o `versao_dados.fonte` não for `imerg_late`. Vem do `pipeline/fetch_imerg_late.py`.
+
+```json
+{
+  "versao_dados": {"fonte": "imerg_late", "parametros": {"produto": "GPM_3IMERGDL.07", "inicio": "2027-01-30", "fim": "2027-02-28", "dias": 30, "media": {"fonte": "nasa_power", "variavel": "PRECTOTCORR"}}, "fim": "2027-03-01T12:00:00Z", "versao": "2027.03-imerg-late"},
+  "celulas": [
+    {"cell_id": "-190_-482", "lat": -18.95, "lon": -48.15, "data": "2027-02-28", "dias": 30, "chuva_30d_mm": 85.3, "media_30d_mm": 190.2, "fracao_da_media": 0.4485, "anos_media": 20}
+  ]
+}
+```
+
+| JSON | Model | Regra |
+| --- | --- | --- |
+| `cell_id` | `cell_id` | id do `cell_id_for` (o pixel do IMERG é a célula) |
+| `lat`, `lon` | `lat`, `lon` | centro da célula (x,x5), WGS 84 |
+| `data` | `data` | último dia somado |
+| `dias` | `dias` | dias somados (padrão 30), maior que zero |
+| `chuva_30d_mm` | `chuva_30d_mm` | soma do IMERG Late, mm, uma casa; nunca negativa (célula com dia sem dado não entra) |
+| `media_30d_mm` | `media_30d_mm` | média do NASA POWER guardado nos mesmos dias dos anos anteriores, mm; maior que zero |
+| `fracao_da_media` | `fracao_da_media` | `chuva_30d_mm ÷ media_30d_mm`, 4 casas; o model recusa fração que não bate com a conta |
+| `anos_media` | `anos_media` | anos do POWER que entraram na média, pelo menos 1 |
+
+- O sinal usa o `RecentRain` (`to_recent_rain()`): `chuva_mm`, `media_mm`, `dias`, `data`; a regra
+  do PRD 7.10 compara `fracao_da_media` com `chuva_fracao_seco` do `regras.yaml`.
+- Ainda não há tabela: é dado de agora, regravado perto do plantio (fev/mar).
 
 ## Configuração e segredos
 
