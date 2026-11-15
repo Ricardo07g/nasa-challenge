@@ -97,4 +97,25 @@ export const VERIFIED_SOURCES: VerifiedSource[] = [
     confirms: 'O ONI é a média de 3 meses da anomalia da temperatura do mar na região Niño 3.4; limiar de +0,5 °C (El Niño) e -0,5 °C (La Niña), por pelo menos 5 estações seguidas.',
     checkedOn: CHECKED,
   },
+  // Tarefa 0043 (raio-X da sua terra e fogo na palha), páginas abertas em 15/11/2026
+  {
+    url: 'https://www.isric.org/explore/soilgrids',
+    confirms: 'SoilGrids é o mapa mundial de solos do ISRIC, feito com aprendizado de máquina e perfis de solo do WoSIS, com 250 m de resolução e seis profundidades; mapeia argila, silte, areia, pH, carbono e outras propriedades.',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://nsidc.org/data/spl4smgp/versions/8',
+    confirms: 'SMAP L4 (SPL4SMGP) versão 8: campos da superfície de 3 em 3 horas, em grade EASE-Grid 2.0 global de 9 km, com a umidade da zona das raízes (root zone soil moisture) entre os parâmetros.',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://science.nasa.gov/earth/earth-observatory/measuring-vegetation-ndvi-evi',
+    confirms: 'NDVI = (infravermelho próximo − visível) ÷ (infravermelho próximo + visível), de −1 a +1; 0,1 ou menos é área sem vegetação (rocha, areia, neve) e perto de +1 (0,8 a 0,9) é a maior densidade de folhas verdes.',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://www.earthdata.nasa.gov/data/catalog/lpcloud-mcd64a1-061',
+    confirms: 'MCD64A1 versão 6.1: área queimada mensal, global, a 500 m, dos sensores MODIS dos satélites Terra e Aqua; a camada Burn Date dá o dia do ano da queimada, com valores especiais para não queimado, sem dado e água.',
+    checkedOn: CHECKED,
+  },
 ]
