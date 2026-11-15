@@ -211,6 +211,30 @@ describe('rotas', () => {
     expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Guia' })).toHaveAttribute('aria-current', 'page')
   })
 
+  it('/comunidade mostra só o "Em breve" com o "Abrir o Guia", sem relatos de vizinhos (pacote 3)', async () => {
+    renderAt('/comunidade')
+
+    const card = await screen.findByRole('region', { name: 'Comunidade da sua região' })
+    expect(within(card).getByText('Em breve')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Perto de você' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Conte o que aconteceu aí' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Relato de vizinho/)).not.toBeInTheDocument()
+    expect(document.title).toBe('Raiz Orbital – Comunidade da sua região')
+
+    await userEvent.click(within(card).getByRole('link', { name: 'Abrir o Guia' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
+  })
+
+  it('o link antigo da Comunidade com o caminho da lavoura continua abrindo, e o Voltar vai para a resposta', async () => {
+    renderAt('/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Comunidade da sua região' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute(
+      'href',
+      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
+    )
+  })
+
   it('em /avisos, o sino do cabeçalho fica marcado (pacote 3)', async () => {
     renderAt('/avisos')
 

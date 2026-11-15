@@ -61,6 +61,19 @@ export const en = {
     guide: 'Guide',
     langToggleLabel: 'Switch language: Portuguese or English',
   },
+  comingSoon: {
+    tag: 'Coming soon',
+    title: "Your region's community",
+    text: 'A space to follow your region together with your neighbors.',
+    listLabel: "What the community will have",
+    planted: 'What neighbors planted after soybeans and how it went',
+    rain: 'How much it rained on each field',
+    events: 'Hail, fire or flash floods near you',
+    guideText: 'Meanwhile, the Guide explains each crop, planting and climate.',
+    guideButton: 'Open the Guide',
+    summary:
+      "Your region's community is coming soon, to follow with your neighbors what each one planted and how much it rained. Meanwhile, the Guide explains each crop, planting and climate.",
+  },
   listen: {
     summary: 'Listen to summary',
     stop: 'Stop',

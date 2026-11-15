@@ -75,6 +75,25 @@ export const pt = {
     guide: 'Guia',
     langToggleLabel: 'Trocar idioma: português ou inglês',
   },
+  /**
+   * Comunidade "em breve" (pacote 3, tarefa 0061): a rota /comunidade mostra só este cartão, com o "Abrir o Guia".
+   * Os relatos dos vizinhos saíram da interface (o backend e o código continuam no repositório).
+   */
+  comingSoon: {
+    tag: 'Em breve',
+    title: 'Comunidade da sua região',
+    text: 'Um espaço para acompanhar a sua região junto com os vizinhos.',
+    /** O que vai ter: só a lista, sem link para relato nenhum. */
+    listLabel: 'O que vai ter na comunidade',
+    planted: 'O que os vizinhos plantaram depois da soja e como foi',
+    rain: 'Quanto choveu em cada lavoura',
+    events: 'Granizo, fogo ou enxurrada perto de você',
+    guideText: 'Enquanto isso, o Guia explica cada cultura, o plantio e o clima.',
+    guideButton: 'Abrir o Guia',
+    /** Resumo falado do "Ouvir resumo" (2 frases). */
+    summary:
+      'A comunidade da sua região chega em breve, para acompanhar com os vizinhos o que cada um plantou e quanto choveu. Enquanto isso, o Guia explica cada cultura, o plantio e o clima.',
+  },
   /** "Ouvir resumo" (tarefa 0052): cada tela fala só o seu resumo; o texto falado fica no bloco da tela. */
   listen: {
     summary: 'Ouvir resumo',

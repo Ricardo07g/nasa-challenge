@@ -23,6 +23,14 @@ import { ApiError, isNotConnected } from '../repositories/httpClient'
 import type { RegionRepository } from '../repositories/regionRepository'
 
 /**
+ * Comunidade "em breve" (pacote 3, tarefa 0061): com `false`, a interface não mostra a comunidade. A rota
+ * `/comunidade` mostra só o cartão "Em breve" com o "Abrir o Guia" (`CommunitySoonPage`), e a tela 4 não oferece
+ * "Compartilhar com a comunidade". O backend, este service, o repository, os models e as views da comunidade
+ * continuam prontos: para voltar, troque para `true` (e decida onde a Comunidade entra no cabeçalho).
+ */
+export const COMMUNITY_OPEN: boolean = false
+
+/**
  * Relatos da comunidade sem cadastro (seção 7 da remodelagem, tarefa 0047 do backend). Os limites
  * repetem o grupo `comunidade` do `regras.yaml` só para a tela não deixar enviar o que o backend vai
  * recusar; quem decide é o backend.

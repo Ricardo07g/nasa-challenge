@@ -5,6 +5,7 @@ import { Navigate, Outlet, ScrollRestoration, useOutletContext, useParams, useSe
 import { useAvisosController } from './controllers/useAvisosController'
 import { useChoosePlanController } from './controllers/useChoosePlanController'
 import { useCommunityController } from './controllers/useCommunityController'
+import { useCommunitySoonController } from './controllers/useCommunitySoonController'
 import { useGuideArticleController, useGuideController } from './controllers/useGuideController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useMethodController } from './controllers/useMethodController'
@@ -21,6 +22,7 @@ import { useI18n } from './i18n/useI18n'
 import { keepFlowQuery } from './services/flowParams'
 import { AvisosView } from './views/AvisosView'
 import { ChoosePlanView } from './views/ChoosePlanView'
+import { CommunitySoonView } from './views/CommunitySoonView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { FlowLoading } from './views/FlowStates'
@@ -232,6 +234,18 @@ export function PlanningPage() {
   )
 }
 
+/**
+ * Comunidade "em breve" (`/comunidade`, pacote 3, tarefa 0061): só o cartão "Em breve" com o "Abrir o Guia". A
+ * tela dos relatos (`CommunityPage`, abaixo) fica pronta para quando a comunidade voltar (`COMMUNITY_OPEN`).
+ */
+export function CommunitySoonPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.comingSoon.title)
+  const state = useCommunitySoonController()
+  return <CommunitySoonView t={t} backTo={state.backTo} guideTo={state.guideTo} listen={state.listen} />
+}
+
+/** Relatos dos vizinhos ("Na sua região", tarefa 0047): fora da interface enquanto a comunidade está "em breve". */
 export function CommunityPage() {
   const { lang, messages: t } = useI18n()
   useDocumentTitle(t.community.title)

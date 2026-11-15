@@ -3,6 +3,7 @@ import {
   AvisosPage,
   ChoosePlanPage,
   CommunityPage,
+  CommunitySoonPage,
   DesignSystemPage,
   ExamplePage,
   GuideArticlePage,
@@ -17,6 +18,7 @@ import {
   WhenPage,
   WherePage,
 } from './pages'
+import { COMMUNITY_OPEN } from './services/communityService'
 
 /** Uma URL por tela do protótipo v3; a URL guarda lat, lon e colheita (RF-18). */
 export const routes: RouteObject[] = [
@@ -38,7 +40,8 @@ export const routes: RouteObject[] = [
       // endereços antigos levam para a Sugestão com o mesmo caminho (e o ano, na safra passada).
       { path: '/relatorio', element: <LegacyAnswerRedirect /> },
       { path: '/safra-passada', element: <LegacyAnswerRedirect keepYear /> },
-      { path: '/comunidade', element: <CommunityPage /> },
+      // Pacote 3 (tarefa 0061): a comunidade está "em breve"; o endereço continua para os links antigos.
+      { path: '/comunidade', element: COMMUNITY_OPEN ? <CommunityPage /> : <CommunitySoonPage /> },
       { path: '/avisos', element: <AvisosPage /> },
       { path: '/guia', element: <GuidePage /> },
       { path: '/guia/:artigo', element: <GuideArticlePage /> },
