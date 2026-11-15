@@ -108,19 +108,29 @@ class HistoricoTalhao:
 
 @dataclass(frozen=True)
 class ColheitaSugerida:
-    """Satellite-derived suggested soybean harvest window."""
+    """Satellite-derived suggested soybean harvest window.
+
+    `dia` ("MM-DD"): o dia em que a soja costuma secar pelo NDVI (mediana dos anos, tarefa 0042);
+    a `faixa` sai dele pela regra da data exata da tela 3. None sem NDVI suficiente (`padrao`).
+    """
 
     faixa: str
     fonte: str
     anos_usados: int
+    dia: str | None = None
 
 
 @dataclass(frozen=True)
 class ChuvaMes:
-    """Chuva média de um mês na célula (mm): a média, entre os anos, do total daquele mês."""
+    """Chuva média de um mês na célula (mm): a média, entre os anos, do total daquele mês.
+
+    `eto_media_mm`: a média da evapotranspiração de referência (ETo, o que a lavoura gasta) do mês,
+    a mesma do motor (tarefa 0042); None sem ETo.
+    """
 
     mes: int
     media_mm: float
+    eto_media_mm: float | None = None
 
 
 @dataclass(frozen=True)
@@ -128,12 +138,67 @@ class ChuvaMensal:
     """Chuva de cada mês na região, de janeiro a junho (gráfico da tela 3).
 
     `anos` = os anos que entraram na média, em ordem; `fonte` = a `rain_source` das temporadas
-    (mais de uma: as chaves em ordem, separadas por `+`).
+    (mais de uma: as chaves em ordem, separadas por `+`). Com ETo (tarefa 0042): `fonte_eto`
+    (`nasa_power`: a ETo é calculada com o clima do POWER) e `mes_chuva_abaixo_eto`, o primeiro
+    mês em que a chuva média fica menor que a ETo média (None se nunca fica).
     """
 
     meses: tuple[ChuvaMes, ...]
     anos: tuple[int, ...]
     fonte: str
+    fonte_eto: str | None = None
+    mes_chuva_abaixo_eto: int | None = None
+
+
+@dataclass(frozen=True)
+class ChuvaQueSobraDia:
+    """Chuva de um dia de colheita até o fim (mm): a mediana dos anos e a de um ano seco."""
+
+    dia: str  # "MM-DD" do dia da colheita
+    mediana_mm: float
+    seco_mm: float
+
+
+@dataclass(frozen=True)
+class ChuvaQueSobra:
+    """Chuva que sobra depois da colheita (tela 3, tarefa 0042).
+
+    Para cada dia da época da colheita (`regras.yaml`, grupo `colheita`), a chuva somada do dia
+    até `fim` ("MM-DD", inclusive) em cada ano: a mediana e o ano seco (`percentil_seco`).
+    `anos` = os anos usados; `fonte` = a `rain_source` deles (mais de uma, separadas por `+`).
+    """
+
+    fim: str
+    percentil_seco: int
+    dias: tuple[ChuvaQueSobraDia, ...]
+    anos: tuple[int, ...]
+    fonte: str
+
+
+@dataclass(frozen=True)
+class DiaDoAno:
+    """Um dia do calendário ("MM-DD") e o ano em que aconteceu."""
+
+    dia: str
+    ano: int
+
+
+@dataclass(frozen=True)
+class FimDasChuvas:
+    """Fim das chuvas na célula (tela 3, tarefa 0042; regras no grupo `fim_das_chuvas`).
+
+    `mediana`: em metade dos anos, a chuva acabou até esse dia ("MM-DD"); `mais_cedo` e
+    `mais_tarde`: o primeiro e o último fim da série, com o ano.
+    """
+
+    mediana: str
+    mais_cedo: DiaDoAno
+    mais_tarde: DiaDoAno
+    anos: tuple[int, ...]
+    fonte: str
+    inicio: str
+    dias: int
+    chuva_max_mm: float
 
 
 @dataclass(frozen=True)
@@ -158,9 +223,13 @@ class Talhao:
     colheita_sugerida: ColheitaSugerida
     historico: HistoricoTalhao | None
     dados_fontes: tuple[FonteDado, ...]
-    # None fora da área ou sem temporada de 1/jan a 30/jun (o front mostra "Ainda não conectado").
+    # None fora da área ou sem temporada de 1/jan a 30/jun (o front não desenha o gráfico).
     chuva_mensal: ChuvaMensal | None = None
     # Soja vista no ponto na safra mais recente (RF-24); None sem o arquivo ou fora da grade.
     soja_recente: SojaRecente | None = None
     # Entressafras que o produtor pode confirmar (as últimas da janela, tarefa 0039).
     anos_confirmaveis: tuple[int, ...] = ()
+    # Tela 3 (tarefa 0042): chuva que sobra depois de cada dia de colheita e o fim das chuvas na
+    # célula; None fora da área, sem temporada completa ou (fim) com algum ano que não secou.
+    chuva_que_sobra: ChuvaQueSobra | None = None
+    fim_das_chuvas: FimDasChuvas | None = None

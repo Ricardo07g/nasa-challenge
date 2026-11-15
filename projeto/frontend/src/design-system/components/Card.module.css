@@ -119,18 +119,25 @@
   display: flex;
 }
 
-/* Dado que a API ainda não manda: borda tracejada e o aviso "Ainda não conectado" no lugar do ✓ */
-.dataSource[data-status='unavailable'] {
-  border-style: dashed;
-  border-color: var(--color-border-strong);
-}
-
 /* Alternativa ("Se você prefere…") */
 .alternative {
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.alternativeHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.alternativeMedia {
+  flex: 0 0 auto;
+  width: 52px;
+  display: flex;
 }
 
 .alternativeLabel {
@@ -175,10 +182,4 @@
 .sourceScale {
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
-}
-
-/* Fonte que a API ainda não manda: borda tracejada, como os outros blocos "Ainda não conectado" */
-.source[data-status='unavailable'] {
-  border-style: dashed;
-  border-color: var(--color-border-strong);
 }

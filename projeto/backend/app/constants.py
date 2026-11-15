@@ -61,8 +61,8 @@ SOIL_CAD_BY_TEXTURE: Final[dict[str, float]] = {
 NDVI_SCALE_FACTOR: Final[float] = 0.0001
 NDVI_DECIMALS: Final[int] = 4  # precisão do MOD13Q1 (fator 0,0001): tira o ruído do float
 MIN_NDVI_YEARS_FOR_SUGGESTION: Final[int] = 5
-EARLY_HARVEST_DOY_LIMIT: Final[int] = 41  # Feb 10
-MID_HARVEST_DOY_LIMIT: Final[int] = 53  # Feb 22
+# As faixas de colheita (até 10/fev cedo, até 20/fev meio) ficam no regras.yaml, grupo colheita
+# (tarefa 0042): a data exata da tela 3 e a faixa sugerida pelo NDVI usam a mesma regra.
 
 # Reference Year & Sowing Dates by Harvest Band (US-02: harvest + 3 days)
 REFERENCE_SOWING_YEAR: Final[int] = 2027
@@ -128,3 +128,7 @@ EXTERNAL_API_BACKOFF_BASE_SECONDS: Final[float] = 0.05
 GRID_CELL_HALF_SIZE_DEG: Final[float] = 0.05
 SOIL_POINT_ROUND_DECIMALS: Final[int] = 3
 INGESTION_WORKERS_COUNT: Final[int] = 2
+
+# Fuso da área piloto (Triângulo Mineiro): UTC-3 o ano todo, sem horário de verão desde 2019.
+# É o "hoje" do produtor nas datas dos relatos da comunidade (tarefa 0047).
+PILOT_UTC_OFFSET_HOURS: Final[int] = -3

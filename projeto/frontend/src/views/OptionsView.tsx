@@ -1,117 +1,259 @@
-import { ChipGroup } from '../design-system/components/Choice'
-import { OptionCompareCard, PageHeading } from '../design-system/components/Content'
-import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
-import { NotConnected, StatusPill } from '../design-system/components/Status'
-import { ClimateIcon, DropIcon, MoneyIcon, SoilIcon } from '../design-system/icons'
+import type { ReactNode } from 'react'
+import { Link } from 'react-router'
+import { AlternativeCard } from '../design-system/components/Card'
+import { CompareTable, CropPicker, type CompareTableRow } from '../design-system/components/Compare'
+import { PageHeading } from '../design-system/components/Content'
+import { StatusPill, ThirstBadge } from '../design-system/components/Status'
+import { GrainIcon, LeafIcon, ShieldIcon } from '../design-system/icons'
+import { PlantImage } from '../design-system/plants/PlantImage'
+import type { AnswerNav } from '../controllers/useAnswerNav'
+import { formatDayMonth, formatNumber } from '../i18n/format'
+import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
-import type { Eixo, Opcao } from '../models/recomendacao'
-import { futureSummary, type LateSummary } from '../services/recomendacaoRules'
-import type { RainSummary } from '../services/satelliteService'
-import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
+import type { CropId, Motivo, Opcao } from '../models/recomendacao'
 import type { ScreenStatus } from '../models/screenStatus'
-import { rainPeriodText } from './rainPeriod'
-import { RainYears, YearDetailNotConnected } from './RainYears'
+import { COMPARE_ARTICLES, failureCounts, whyAvoid, whyUse, type CompareChip } from '../services/compareService'
+import { futureSummary } from '../services/recomendacaoRules'
+import { cropArticle, type Suggestion } from '../services/suggestionService'
+import { AnswerHeader } from './AnswerHeader'
+import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import layout from './layout.module.css'
+import styles from './OptionsView.module.css'
+
+export type CompareState = {
+  chips: CompareChip[]
+  columns: Opcao[]
+  selected: CropId[]
+  best: CropId | null
+  full: boolean
+  alternatives: Suggestion['alternatives']
+}
 
 export type OptionsViewProps = {
   t: Messages
-  nav: { label: string; tabs: AnswerTab[]; backTo: string }
+  lang: Lang
+  nav: AnswerNav
   status: ScreenStatus
   onRetry: () => void
-  axis: Eixo | null
-  onAxis: (axis: Eixo | null) => void
-  summary: { options: Opcao[]; late: LateSummary } | null
-  /** Anos e período da chuva (do talhão), para a legenda dos quadrinhos. */
-  rain: RainSummary | null
+  compare: CompareState | null
+  onToggle: (crop: CropId) => void
+  onCompareWith: (crop: CropId) => void
+  planLink: (crop: CropId) => string
 }
 
-const AXES: readonly Eixo[] = ['chuva', 'dinheiro', 'terra']
-
-/** Clima de 2041–2060 da opção, no mesmo formato do cartão da resposta; sem o CMIP6, "Ainda não conectado". */
-function futureRow(t: Messages, option: Opcao) {
-  const future = futureSummary(option)
-  return {
-    label: t.answer.future,
-    icon: <ClimateIcon />,
-    iconTone: 'blue' as const,
-    value: future ? t.answer.futureYears(future.good, future.total, future.range) : undefined,
-    extra: future ? undefined : <NotConnected label={t.common.notConnected} />,
-  }
+const MOTIVE_ICON: Record<Motivo, ReactNode> = {
+  menos_risco: <ShieldIcon />,
+  mais_renda: <GrainIcon />,
+  cuidar_da_terra: <LeafIcon />,
 }
 
-/** Tela 6 "Todas as opções": reordenar, um cartão por opção e "Deixar parado" como linha de base. */
-export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary, rain }: OptionsViewProps) {
-  const o = t.options
+const DASH = '—'
+
+/** "a, b e c" / "a, b and c". */
+function joinList(items: readonly string[], and: string): string {
+  if (items.length <= 1) return items.join('')
+  return `${items.slice(0, -1).join(', ')} ${and} ${items[items.length - 1]}`
+}
+
+function Plant({ t, crop, name, size }: { t: Messages; crop: CropId; name: string; size: number }) {
+  return <PlantImage plant={crop} label={t.suggestion.plantImage(name)} size={size} />
+}
+
+/** Aba Comparar (seção 5.5 da remodelagem, tarefa 0045): até 3 culturas lado a lado. */
+export function OptionsView(props: OptionsViewProps) {
+  const { t, nav, status, onRetry, compare } = props
   return (
     <div className={layout.page}>
-      <BackLink to={nav.backTo}>{t.nav.back}</BackLink>
-      <AnswerTabs label={nav.label} tabs={nav.tabs} />
-      <PageHeading title={o.title} />
+      <AnswerHeader t={t} nav={nav} />
+      <PageHeading title={t.suggestion.compareTitle} subtitle={t.compare.lead} />
       {status === 'loading' && <FlowLoading label={t.common.loading} />}
       {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={onRetry} />}
       {status === 'outside' && <FlowOutside t={t} />}
-      {status === 'ready' && summary && (
-        <>
-          <div className={layout.stack}>
-            <p>{o.sortLabel}</p>
-            <ChipGroup
-              label={o.sortLabel}
-              options={AXES.map((value) => ({ value, label: t.axes[value] }))}
-              value={axis}
-              onChange={onAxis}
-              allowDeselect
-            />
-          </div>
-          <LateWarning t={t} late={summary.late} />
-          <div className={layout.optionGrid}>
-            {summary.options.map((option, index) => (
-              <OptionCompareCard
-                key={option.id}
-                rank={o.rank(index + 1)}
-                name={option.nome}
-                highlighted={index === 0 && option.na_janela}
-                unavailable={option.na_janela ? undefined : o.outOfWindowTitle}
-                rows={[
-                  {
-                    label: t.axes.chuva,
-                    value: option.chuva.texto,
-                    icon: <DropIcon />,
-                    iconTone: 'blue',
-                    extra: <RainYears t={t} option={option} />,
-                    pill: <StatusPill rotulo={option.chuva.rotulo}>{t.labels[option.chuva.rotulo]}</StatusPill>,
-                  },
-                  futureRow(t, option),
-                  {
-                    label: t.axes.dinheiro,
-                    value: option.dinheiro.texto,
-                    icon: <MoneyIcon />,
-                    pill: <StatusPill rotulo={option.dinheiro.rotulo}>{t.labels[option.dinheiro.rotulo]}</StatusPill>,
-                  },
-                  {
-                    label: t.axes.terra,
-                    value: option.terra.texto,
-                    icon: <SoilIcon />,
-                    pill: <StatusPill rotulo={option.terra.rotulo}>{t.labels[option.terra.rotulo]}</StatusPill>,
-                  },
-                ]}
-              />
-            ))}
-            <OptionCompareCard
-              rank={o.rank(summary.options.length + 1)}
-              name={t.crops.names.pousio}
-              rows={[
-                { label: t.axes.chuva, value: o.fallowRain, icon: <DropIcon />, iconTone: 'blue' },
-                { label: t.axes.dinheiro, value: o.fallowMoney, icon: <MoneyIcon /> },
-                { label: t.axes.terra, value: o.fallowSoil, icon: <SoilIcon /> },
-              ]}
-            />
-          </div>
-          <p className={layout.muted}>
-            {o.legend(rainPeriodText(t, rain?.years ?? summary.options[0]?.chuva.anos ?? 0, rain))}
-          </p>
-          {!summary.options.some((option) => option.anos_detalhe?.length) && <YearDetailNotConnected t={t} />}
-        </>
-      )}
+      {status === 'ready' && compare && <Ready {...props} compare={compare} />}
     </div>
   )
+}
+
+function Ready(props: OptionsViewProps & { compare: CompareState }) {
+  const { t, lang, compare, onToggle, onCompareWith } = props
+  const c = t.compare
+  const anyLate = compare.chips.some((chip) => chip.disabled)
+  return (
+    <>
+      {compare.alternatives.length > 0 && (
+        <section aria-label={c.preferTitle} className={layout.stack}>
+          <h2 className={layout.sectionTitle}>{c.preferTitle}</h2>
+          <p className={layout.muted}>{c.preferHint}</p>
+          <div className={layout.grid}>
+            {compare.alternatives.map(({ motivo, option, text }) => (
+              <AlternativeCard
+                key={motivo}
+                icon={MOTIVE_ICON[motivo]}
+                label={t.motives[motivo]}
+                title={option.nome}
+                text={text}
+                media={<Plant t={t} crop={option.id} name={option.nome} size={52} />}
+                action={
+                  <button type="button" className={styles.action} onClick={() => onCompareWith(option.id)}>
+                    {c.preferAction(option.nome)}
+                  </button>
+                }
+              />
+            ))}
+          </div>
+        </section>
+      )}
+      <section aria-label={c.pickLabel} className={layout.stack}>
+        <h2 className={layout.cardTitle}>{c.pickLabel}</h2>
+        <p className={layout.muted}>{compare.full ? c.full : c.pickHint}</p>
+        <CropPicker
+          label={c.pickLabel}
+          items={compare.chips.map((chip) => ({
+            value: chip.id,
+            label: chip.nome,
+            selected: chip.selected,
+            disabled: chip.disabled,
+            note: chip.disabled ? (chip.limit ? c.lateChip(formatDayMonth(lang, chip.limit)) : c.lateChipNoDate) : undefined,
+            media: <Plant t={t} crop={chip.id} name={chip.nome} size={40} />,
+            badge: chip.sede ? <ThirstBadge level={chip.sede}>{t.suggestion.thirst[chip.sede]}</ThirstBadge> : undefined,
+          }))}
+          onToggle={(value) => onToggle(value as CropId)}
+        />
+        {anyLate && <p className={layout.muted}>{c.lateNote}</p>}
+      </section>
+      <CompareTable
+        caption={c.tableLabel(joinList(compare.columns.map((option) => option.nome), t.rotation.and))}
+        columns={compare.columns.map((option) => ({
+          key: option.id,
+          title: option.nome,
+          media: <Plant t={t} crop={option.id} name={option.nome} size={56} />,
+          badge: option.agua ? <ThirstBadge level={option.agua.sede}>{t.suggestion.thirst[option.agua.sede]}</ThirstBadge> : undefined,
+        }))}
+        rows={rows(props)}
+      />
+      <p className={layout.muted}>
+        {c.soilGuide}{' '}
+        <Link to={COMPARE_ARTICLES.straw}>{c.articles.straw}</Link>
+        {' · '}
+        <Link to={COMPARE_ARTICLES.greenManure}>{c.articles.greenManure}</Link>
+        {' · '}
+        <Link to={COMPARE_ARTICLES.nematode}>{c.articles.nematode}</Link>
+      </p>
+      <p className={layout.muted}>{c.source}</p>
+    </>
+  )
+}
+
+/** As linhas do pedido, na ordem; a linha sem dado em nenhuma coluna não aparece (decisão D2). */
+function rows({ t, lang, compare, planLink }: OptionsViewProps & { compare: CompareState }): CompareTableRow[] {
+  const c = t.compare
+  const options = compare.columns
+  const mm = (value: number) => formatNumber(lang, value)
+  const list = (items: string[]) =>
+    items.length ? (
+      <ul>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    ) : (
+      <span className={layout.muted}>{c.nothing}</span>
+    )
+  const result: (CompareTableRow | null)[] = [
+    {
+      label: c.rows.worked,
+      cells: options.map((option) => (
+        <>
+          <p>{c.worked(option.chuva.anos_bons, option.chuva.anos)}</p>
+          <StatusPill rotulo={option.chuva.rotulo}>{t.labels[option.chuva.rotulo]}</StatusPill>
+        </>
+      )),
+    },
+    options.some((option) => failureCounts(option))
+      ? {
+          label: c.rows.failed,
+          cells: options.map((option) => {
+            const counts = failureCounts(option)
+            if (!counts) return DASH
+            if (counts.failed === 0) return c.failedNone
+            return (
+              <>
+                <p>{c.failedWater(counts.water)}</p>
+                <p>{c.failedHeat(counts.heat)}</p>
+              </>
+            )
+          }),
+        }
+      : null,
+    options.some((option) => option.agua)
+      ? {
+          label: c.rows.water,
+          cells: options.map((option) =>
+            option.agua ? (
+              <>
+                <p>{c.waterNeed(mm(option.agua.precisa_mm))}</p>
+                <p>{c.waterRain(mm(option.agua.chove_mm))}</p>
+                <p>{c.waterShort(mm(option.agua.falta_normal_mm), mm(option.agua.falta_seco_mm))}</p>
+              </>
+            ) : (
+              DASH
+            ),
+          ),
+        }
+      : null,
+    options.some((option) => option.futuro)
+      ? {
+          label: c.rows.future,
+          cells: options.map((option) => {
+            const future = futureSummary(option)
+            if (!future) return DASH
+            return (
+              <>
+                <p>{c.future(future.good, future.total)}</p>
+                {future.range && <p className={layout.muted}>{c.futureRange(future.range.min, future.range.max)}</p>}
+              </>
+            )
+          }),
+        }
+      : null,
+    {
+      label: c.rows.income,
+      cells: options.map((option) => (
+        <>
+          <p>{option.renda.texto}</p>
+          <p className={layout.muted}>{option.renda.risco}</p>
+          <StatusPill rotulo={option.renda.rotulo}>{t.labels[option.renda.rotulo]}</StatusPill>
+        </>
+      )),
+    },
+    {
+      label: c.rows.soil,
+      cells: options.map((option) => (
+        <>
+          <p>{option.terra.texto}</p>
+          <StatusPill rotulo={option.terra.rotulo}>{t.labels[option.terra.rotulo]}</StatusPill>
+        </>
+      )),
+    },
+    {
+      label: c.rows.deadline,
+      cells: options.map((option) => (option.data_limite ? c.deadline(formatDayMonth(lang, option.data_limite)) : c.deadlineNone)),
+    },
+    { label: c.rows.use, cells: options.map((option) => list(whyUse(option).map((key) => c.use[key]))) },
+    { label: c.rows.avoid, cells: options.map((option) => list(whyAvoid(option).map((key) => c.avoid[key]))) },
+    {
+      label: c.rows.more,
+      cells: options.map((option) => (
+        <div key={option.id} className={styles.more}>
+          <Link to={cropArticle(option.id)} className={layout.iconLink}>
+            {t.suggestion.learnMore(option.nome)}
+          </Link>
+          <Link to={planLink(option.id)} className={styles.use} aria-label={c.usePlanLabel(option.nome)}>
+            {c.usePlan}
+          </Link>
+        </div>
+      )),
+    },
+  ]
+  return result.filter((row): row is CompareTableRow => row !== null)
 }

@@ -4,35 +4,51 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
-import type { Recomendacao } from '../models/recomendacao'
+import type { CropId, Recomendacao } from '../models/recomendacao'
 import { buildRecomendacao } from '../repositories/mocks/fixtures'
-import { optionsSummary } from '../services/recomendacaoRules'
-import { OptionsView, type OptionsViewProps } from './OptionsView'
+import { compareChips, comparedCrops } from '../services/compareService'
+import { findOption } from '../services/recomendacaoRules'
+import { buildSuggestion } from '../services/suggestionService'
+import { OptionsView, type CompareState, type OptionsViewProps } from './OptionsView'
 
 const point = { lat: -18.9543, lon: -48.1993 }
 const nav = {
   label: 'Telas da resposta',
   backTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=meio',
   tabs: [
-    { to: '/resposta', label: 'Resposta', current: false },
+    { to: '/resposta', label: 'Sugestão', current: false },
+    { to: '/opcoes', label: 'Comparar', current: true },
     { to: '/plano', label: 'Plano de 3 anos', current: false },
-    { to: '/opcoes', label: 'Todas as opções', current: true },
   ],
+  objective: null,
+  chooseObjective: vi.fn(),
 }
 
-const summary = (rec: Recomendacao = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')) =>
-  optionsSummary(rec, null)
+function state(rec: Recomendacao, fromUrl?: CropId[]): CompareState {
+  const selected = comparedCrops(rec, null, fromUrl)
+  return {
+    chips: compareChips(rec, null, selected),
+    columns: selected.flatMap((crop) => findOption(rec.opcoes, crop) ?? []),
+    selected,
+    best: 'milho_braquiaria',
+    full: selected.length >= 3,
+    alternatives: buildSuggestion(rec, null)?.alternatives ?? [],
+  }
+}
+
+const meio = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
 
 function setup(overrides: Partial<OptionsViewProps> = {}) {
   const props: OptionsViewProps = {
     t: pt,
+    lang: 'pt',
     nav,
     status: 'ready',
     onRetry: vi.fn(),
-    axis: null,
-    onAxis: vi.fn(),
-    summary: summary(),
-    rain: { years: 20, period: { start: '2005', end: '2024' }, skipped: 0 },
+    compare: state(meio),
+    onToggle: vi.fn(),
+    onCompareWith: vi.fn(),
+    planLink: (crop) => `/plano?plano=${crop}`,
     ...overrides,
   }
   render(
@@ -43,137 +59,101 @@ function setup(overrides: Partial<OptionsViewProps> = {}) {
   return props
 }
 
-describe('OptionsView (tela 6)', () => {
-  it('um cartão por opção, o 1º em destaque, e "Deixar parado" por último', () => {
-    const props = setup()
-
-    expect(screen.getByRole('heading', { level: 1, name: 'Todas as opções' })).toBeInTheDocument()
-    const cards = screen.getAllByRole('article')
-    expect(cards).toHaveLength(props.summary!.options.length + 1)
-    expect(cards[0]).toHaveAttribute('data-highlighted', 'true')
-    expect(cards[0]).toHaveTextContent('1º')
-    expect(cards[0]).toHaveTextContent('Milho com braquiária')
-    expect(cards[0]).toHaveTextContent('Deu certo em 14 de 20 anos')
-    expect(within(cards[0]).getByText('Médio')).toBeInTheDocument()
-    const fallow = cards[cards.length - 1]
-    expect(fallow).toHaveTextContent('Deixar parado')
-    expect(fallow).toHaveTextContent('Não depende de chuva')
-    expect(fallow).toHaveTextContent('Não rende nada')
-    expect(fallow).toHaveTextContent('Fica descoberta')
-    expect(screen.getByText(/Cada quadrinho é um ano \(20 anos entre 2005 e 2024\)/)).toBeInTheDocument()
-    expect(screen.queryByText(/de 2006 a 2025/)).not.toBeInTheDocument()
-  })
-
-  it('cada opção mostra o clima de 2041–2060 no mesmo formato da resposta, logo depois da chuva', () => {
+describe('OptionsView (aba Comparar, tarefa 0045)', () => {
+  it('as culturas escolhidas lado a lado, com as linhas do pedido', () => {
     setup()
 
-    const [first, second] = screen.getAllByRole('article')
-    expect(first).toHaveTextContent('Clima 2041–2060Daria certo em 12 de 20 anos (de 10 a 13, conforme o modelo)')
-    expect(first.textContent).toMatch(/Deu certo em 14 de 20 anos.*Clima 2041–2060.*Sobra perto de R\$ 700/)
-    expect(second).toHaveTextContent('Sorgo')
-    expect(second).toHaveTextContent('Clima 2041–2060Daria certo em 15 de 20 anos (de 13 a 16, conforme o modelo)')
+    expect(screen.getByRole('heading', { level: 1, name: 'Comparar' })).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: /Lado a lado: Milho com braquiária, Sorgo e Milho sozinho/ })
+    for (const name of ['Milho com braquiária', 'Sorgo', 'Milho sozinho']) {
+      expect(within(table).getByRole('columnheader', { name: new RegExp(name) })).toBeInTheDocument()
+    }
+    for (const row of [
+      'Deu certo',
+      'Por que falhou',
+      'Água',
+      'Clima 2041–2060',
+      'Renda',
+      'Terra',
+      'Prazo para plantar',
+      'Por que usar',
+      'Por que evitar',
+    ]) {
+      expect(within(table).getByRole('columnheader', { name: row })).toBeInTheDocument()
+    }
+    expect(within(table).getAllByText('14 de 20 anos')).toHaveLength(2) // milho com braquiária e milho sozinho
+    expect(within(table).getByText('17 de 20 anos')).toBeInTheDocument()
+    expect(within(table).getAllByText('Até 28 de fevereiro').length).toBeGreaterThan(0)
+    expect(within(table).getByText('Ajuda pouco a terra.')).toBeInTheDocument()
   })
 
-  it('quando todos os modelos dão o mesmo número, a opção fica sem a faixa', () => {
-    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
-    const futuro = { anos_bons_media: 19, anos_bons_min: 19, anos_bons_max: 19, modelos: 3, cenario: 'ssp245' }
-    setup({ summary: summary({ ...rec, opcoes: rec.opcoes.map((o) => (o.id === 'sorgo' ? { ...o, futuro } : o)) }) })
+  it('a linha Água em três números curtos e a falta do ano seco', () => {
+    setup()
 
-    const sorgo = screen.getByRole('article', { name: 'Sorgo' })
-    expect(sorgo).toHaveTextContent('Clima 2041–2060Daria certo em 19 de 20 anos')
-    expect(sorgo).not.toHaveTextContent('conforme o modelo')
+    const table = screen.getByRole('table')
+    expect(within(table).getAllByText('Precisa de 346 mm').length).toBeGreaterThan(0)
+    expect(within(table).getAllByText('Falta 116 mm (ano seco: 158 mm)').length).toBeGreaterThan(0)
   })
 
-  it('sem o dado do CMIP6, a linha do futuro de cada opção fica com "Ainda não conectado" (não some)', () => {
-    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
-    setup({ summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, futuro: null })) }) })
+  it('"Saiba mais" para o artigo de cada cultura e "Usar no meu plano" leva ao Plano', () => {
+    setup()
 
-    const sorgo = screen.getByRole('article', { name: 'Sorgo' })
-    expect(sorgo).toHaveTextContent('Clima 2041–2060Ainda não conectado')
-    expect(sorgo.querySelector('[data-status="not-connected"]')).not.toBeNull()
-    expect(sorgo).not.toHaveTextContent('Daria certo')
+    expect(screen.getByRole('link', { name: 'Saiba mais: Sorgo' })).toHaveAttribute('href', '/guia/sorgo')
+    expect(screen.getByRole('link', { name: 'Usar Sorgo no ano 1 do meu plano' })).toHaveAttribute('href', '/plano?plano=sorgo')
   })
 
-  it('sem os detalhes dos anos na API, a legenda marca o que falta como "Ainda não conectado"', () => {
-    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
-    setup({ summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, anos_detalhe: undefined })) }) })
+  it('chips com a imagem e o selo de sede; tocar avisa a cultura', async () => {
+    const props = setup({ compare: state(meio, ['sorgo']) })
 
-    const note = screen.getByText('Ainda não conectado').closest('[data-status="not-connected"]')
-    expect(note).toHaveTextContent('O que aconteceu em cada ano: Ainda não conectado')
+    const group = screen.getByRole('group', { name: 'Culturas para comparar' })
+    expect(within(group).getByRole('button', { name: /Sorgo/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(group).getAllByRole('img').length).toBeGreaterThan(0)
+    await userEvent.click(within(group).getByRole('button', { name: /Crotalária/ }))
+    expect(props.onToggle).toHaveBeenCalledWith('crotalaria')
   })
 
-  it('"Colocar na frente quem é melhor em": tocar escolhe; tocar de novo volta à ordem padrão', async () => {
+  it('cultura fora da janela: chip desligado com o motivo', () => {
+    const tarde = buildRecomendacao({ ...point, colheita: 'tarde' }, 'pt')
+    setup({ compare: state(tarde) })
+
+    const late = screen.getByRole('button', { name: /Milho sozinho/ })
+    expect(late).toBeDisabled()
+    expect(late).toHaveTextContent('Passou do prazo (28 de fevereiro)')
+  })
+
+  it('"Se você prefere…" é o ponto de partida: cada cartão compara com a sugestão', async () => {
     const props = setup()
 
-    expect(screen.getByText('Colocar na frente quem é melhor em:')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Chuva' }))
-    expect(props.onAxis).toHaveBeenCalledWith('chuva')
+    const prefer = screen.getByRole('region', { name: 'Se você prefere…' })
+    await userEvent.click(within(prefer).getByRole('button', { name: 'Comparar Crotalária com a sugestão' }))
+    expect(props.onCompareWith).toHaveBeenCalledWith('crotalaria')
   })
 
-  it('o eixo escolhido fica marcado e tocar nele de novo limpa', async () => {
-    const props = setup({ axis: 'terra' })
+  it('a linha Terra liga aos artigos de palhada, adubo verde e nematoide', () => {
+    setup()
 
-    const terra = screen.getByRole('button', { name: 'Terra' })
-    expect(terra).toHaveAttribute('aria-pressed', 'true')
-    await userEvent.click(terra)
-    expect(props.onAxis).toHaveBeenCalledWith(null)
+    expect(screen.getByRole('link', { name: 'Palhada' })).toHaveAttribute('href', '/guia/palhada')
+    expect(screen.getByRole('link', { name: 'Adubo verde' })).toHaveAttribute('href', '/guia/adubo-verde')
+    expect(screen.getByRole('link', { name: 'Nematoide' })).toHaveAttribute('href', '/guia/nematoide')
   })
 
-  it('avisa o que ficou fora da janela de plantio', () => {
-    setup({ summary: summary(buildRecomendacao({ ...point, colheita: 'tarde' }, 'pt')) })
+  it('nenhum valor em reais', () => {
+    setup()
 
-    expect(screen.getByRole('region', { name: 'Fora da janela de plantio' })).toHaveTextContent(
-      'Já não dá tempo: Milho sozinho fica fora da janela de plantio.',
-    )
-  })
-
-  it('opção que não cabe na janela vira cartão laranja com o aviso', () => {
-    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
-    rec.opcoes = rec.opcoes.map((o) => (o.id === 'sorgo' ? { ...o, na_janela: false } : o))
-    setup({ summary: summary(rec) })
-
-    const sorgo = screen.getByRole('article', { name: 'Sorgo' })
-    expect(sorgo).toHaveAttribute('data-unavailable', 'true')
-    expect(sorgo).toHaveTextContent('Fora da janela de plantio')
-  })
-
-  it('enquanto carrega e quando dá erro', async () => {
-    const { unmount } = render(
-      <MemoryRouter>
-        <OptionsView t={pt} nav={nav} status="loading" onRetry={vi.fn()} axis={null} onAxis={vi.fn()} summary={null} rain={null} />
-      </MemoryRouter>,
-    )
-    expect(screen.getByRole('status')).toHaveTextContent('Carregando…')
-    unmount()
-
-    const props = setup({ status: 'error', summary: null })
-    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
-    expect(props.onRetry).toHaveBeenCalled()
-    expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
+    expect(document.body.textContent).not.toMatch(/R\$/)
   })
 
   it('em inglês', () => {
-    setup({ t: en, summary: summary(buildRecomendacao({ ...point, colheita: 'meio' }, 'en')) })
-
-    expect(screen.getByRole('heading', { level: 1, name: 'All options' })).toBeInTheDocument()
-    expect(screen.getAllByRole('article')[0]).toHaveTextContent('1.')
-    expect(screen.getAllByRole('article')[0]).toHaveTextContent(
-      '2041–2060 climateWould work in 12 of 20 years (10 to 13, depending on the model)',
-    )
-  })
-
-  it('em inglês, sem o dado do CMIP6', () => {
     const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'en')
-    setup({ t: en, summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, futuro: null })) }) })
+    setup({ t: en, lang: 'en', compare: state(rec) })
 
-    expect(screen.getAllByRole('article')[0]).toHaveTextContent('2041–2060 climateNot connected yet')
+    expect(screen.getByRole('table', { name: /Side by side/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Use Sorghum in year 1 of my plan' })).toBeInTheDocument()
   })
 
-  it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {
-    setup({ status: 'outside', summary: null })
+  it('carregando e fora da área não mostram a tabela', () => {
+    setup({ status: 'outside', compare: null })
 
-    const outside = screen.getByRole('region', { name: 'Ainda não chegamos aí' })
-    expect(outside).toHaveTextContent('Por enquanto, os dados estão prontos só para a região')
-    expect(screen.getByRole('link', { name: 'Ver a fazenda de exemplo' })).toHaveAttribute('href', '/exemplo')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 })

@@ -5,7 +5,10 @@ import { createFarmService } from './farmService'
 
 const talhao = { dentro_da_area: true } as Talhao
 const recomendacao = { melhor: 'sorgo' } as Recomendacao
-const exemplo = { talhao: { dentro_da_area: true, celula_id: 'ex' }, recomendacao: { melhor: 'milheto' } } as Exemplo
+const exemplo = {
+  talhao: { dentro_da_area: true, celula_id: 'ex' },
+  recomendacao: { melhor: 'milheto', entrada: { colheita: 'tarde' } },
+} as Exemplo
 
 function fakes() {
   return {
@@ -82,12 +85,36 @@ describe('farmService', () => {
     const service = createFarmService(deps)
 
     const t = await service.talhao({ lat: -18.92, lon: -48.28, exemplo: true }, 'pt')
-    const r = await service.recomendacao({ lat: -18.92, lon: -48.28, colheita: 'meio', exemplo: true }, 'pt')
+    const r = await service.recomendacao({ lat: -18.92, lon: -48.28, colheita: 'tarde', exemplo: true }, 'pt')
 
     expect(t).toBe(exemplo.talhao)
     expect(r).toBe(exemplo.recomendacao)
     expect(deps.talhaoRepository.get).not.toHaveBeenCalled()
     expect(deps.recomendacaoRepository.get).not.toHaveBeenCalled()
     expect(deps.exemploRepository.get).toHaveBeenCalledTimes(1)
+  })
+
+  it('na fazenda de exemplo com outra faixa na URL, a recomendação vem da API com essa faixa (tarefa 0049)', async () => {
+    // O /exemplo responde com a faixa do satélite; se a URL diz outra (o produtor trocou na tela 3),
+    // a resposta pronta falaria de outra colheita.
+    const deps = fakes()
+    const service = createFarmService(deps)
+
+    const r = await service.recomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio', exemplo: true }, 'pt')
+
+    expect(r).toBe(recomendacao)
+    expect(deps.recomendacaoRepository.get).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
+  })
+
+  it('na fazenda de exemplo com a terra trocada, a recomendação vem da API com a terra da URL', async () => {
+    const deps = fakes()
+    const service = createFarmService(deps)
+
+    await service.recomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'tarde', solo: 'arenoso', exemplo: true }, 'pt')
+
+    expect(deps.recomendacaoRepository.get).toHaveBeenCalledWith(
+      { lat: -18.9543, lon: -48.1993, colheita: 'tarde', solo: 'arenoso' },
+      'pt',
+    )
   })
 })

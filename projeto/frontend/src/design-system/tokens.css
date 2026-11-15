@@ -76,6 +76,32 @@
     rgb(251 254 252 / 70%) 100%
   );
 
+  /*
+   * Painel "Raio-X da sua terra" (tela 4, tarefa 0043): o único elemento escuro da tela. Contraste
+   * conferido sobre a superfície dos blocos: texto 11,3:1, apagado 7,3:1, número 8,0:1, selo 7,9:1.
+   */
+  --color-instrument-bg: var(--color-mission-sky);
+  --color-instrument-surface: #10375c;
+  --color-instrument-border: #285279;
+  --color-instrument-text: #f2f7fb;
+  --color-instrument-muted: #b7cadc;
+  --color-instrument-accent: #9be0bd;
+  --color-instrument-link: #a9d4ff;
+  --color-instrument-badge-bg: #1b4a73;
+  --color-instrument-badge-text: #e3eef8;
+  --color-instrument-meter-track: #2a5379;
+  --color-instrument-meter-fill: #6ab7e6;
+  /* Barra do solo (argila, silte e areia), sobre o painel escuro */
+  --color-soil-clay: #b0763a;
+  --color-soil-silt: #d6b27a;
+  --color-soil-sand: #efe0b8;
+  /* Faixa de calor do NDVI: do chão exposto (claro) ao verde forte (escuro), sempre escurecendo */
+  --color-ndvi-1: #f1e4c6;
+  --color-ndvi-2: #d9c38a;
+  --color-ndvi-3: #a8bf63;
+  --color-ndvi-4: #5e9f4e;
+  --color-ndvi-5: #1f6b47;
+
   /* Sombra suave (legendas sobre o mapa, selos flutuantes) */
   --shadow-soft: 0 8px 30px rgb(20 33 28 / 6%);
 

@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from 'react'
-import { CheckIcon, CloseIcon, MinusIcon, ShieldIcon } from '../icons'
+import { CheckIcon, CloseIcon, DropIcon, MinusIcon, ShieldIcon } from '../icons'
 import styles from './Status.module.css'
 
 export type Rotulo = 'bom' | 'medio' | 'fraco'
@@ -25,7 +25,7 @@ type MetricRowProps = {
   /** Azul para dado de satélite (chuva); verde para o resto. */
   iconTone?: 'green' | 'blue'
   label: string
-  /** Sem valor (dado que a API ainda não manda), fica só o eixo e o conteúdo (ex.: "Ainda não conectado"). */
+  /** Sem valor, fica só o eixo e o conteúdo (ex.: uma frase embaixo do eixo). */
   value?: string
   pill?: ReactNode
   children?: ReactNode
@@ -38,7 +38,9 @@ export function MetricRow({ icon, iconTone = 'green', label, value, pill, childr
         {icon}
       </span>
       <div className={styles.metricText}>
-        <span className={styles.metricLabel}>{label}</span>
+        <span className={styles.metricLabel} data-row-label>
+          {label}
+        </span>
         {value && <span className={styles.metricValue}>{value}</span>}
         {children}
       </div>
@@ -118,25 +120,20 @@ export function StripLegend({ items, markers = [], note }: StripLegendProps) {
   )
 }
 
-type NotConnectedProps = {
-  /** O texto do estado, sempre o mesmo: "Ainda não conectado" / "Not connected yet". */
-  label: string
-  /** O que ainda não está conectado (ex.: "Custo da semente"), quando o contexto não diz. */
-  what?: string
-}
+export type ThirstLevel = 'pouca' | 'media' | 'muita'
 
-/**
- * Dado que a API ainda não manda: um traço no lugar do número e o aviso, com borda tracejada (como o
- * ano sem certeza). Igual em todo lugar, para o time ver o que falta conectar. Nunca número de exemplo.
- */
-export function NotConnected({ label, what }: NotConnectedProps) {
+const THIRST_DROPS: Record<ThirstLevel, number> = { pouca: 1, media: 2, muita: 3 }
+
+/** Selo "Sede da cultura" (tarefa 0044): o texto e 1, 2 ou 3 gotas; o nível nunca depende só da cor. */
+export function ThirstBadge({ level, children }: { level: ThirstLevel; children: ReactNode }) {
   return (
-    <span className={styles.notConnected} data-status="not-connected">
-      <MinusIcon size={16} />
-      <span>
-        {what && `${what}: `}
-        <strong>{label}</strong>
+    <span className={styles.thirst} data-level={level}>
+      <span className={styles.thirstDrops}>
+        {Array.from({ length: THIRST_DROPS[level] }, (_, index) => (
+          <DropIcon key={index} size={13} />
+        ))}
       </span>
+      {children}
     </span>
   )
 }

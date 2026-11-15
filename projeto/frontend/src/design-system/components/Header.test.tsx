@@ -138,4 +138,22 @@ describe('AppHeader', () => {
     expect(link).toHaveAttribute('href', 'https://t.me/BotDoTime?start=1')
     expect(link).toHaveAttribute('target', '_blank')
   })
+
+  // Tela "Avisos" (tarefa 0046): botão ao lado da Comunidade, com o número de avisos ativos.
+  it('tem o botão Avisos ao lado da Comunidade, com o número em texto acessível', () => {
+    setup({ alerts: { label: 'Avisos', to: '/avisos', count: 2, countLabel: 'Avisos: 2 avisos ativos' } })
+
+    const link = screen.getByRole('link', { name: 'Avisos: 2 avisos ativos' })
+    expect(link).toHaveAttribute('href', '/avisos')
+    expect(link).toHaveTextContent('2')
+    const links = screen.getAllByRole('link').map((item) => item.getAttribute('href'))
+    expect(links.indexOf('/avisos')).toBe(links.indexOf('/comunidade?lat=-18.95&lon=-48.2') + 1)
+  })
+
+  it('sem aviso ativo, o botão Avisos fica sem número', () => {
+    setup({ alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null } })
+
+    const link = screen.getByRole('link', { name: 'Avisos' })
+    expect(link).not.toHaveTextContent(/\d/)
+  })
 })

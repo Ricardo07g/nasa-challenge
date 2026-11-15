@@ -108,22 +108,23 @@ def test_should_answer_crop_names_and_how_to_steps_in_the_requested_language(
         assert steps_en[crop_id] != steps
 
 
-AXIS_BY_MOTIVO = {"menos_risco": "seguranca", "mais_dinheiro": "renda", "cuidar_da_terra": "solo"}
+AXIS_BY_MOTIVO = {"menos_risco": "seguranca", "mais_renda": "renda", "cuidar_da_terra": "solo"}
 
 
 def test_should_only_offer_alternatives_better_than_the_best_on_their_axis(
     real_data_client: TestClient,
 ) -> None:
-    # Fazenda de exemplo (colheita meio): o milho safrinha tem a maior renda (100). Antes, "mais
-    # dinheiro" era o sorgo, com renda 18, e a crotalária aparecia em dois eixos.
+    # Fazenda de exemplo (colheita meio). Tarefa 0040: a renda do grão é a segurança dele, então o
+    # milho com braquiária (grão e palhada) passa o milho sozinho (antes, renda 100 pela margem).
+    # Nenhum grão tem renda maior que a dele: não há "mais renda".
     rec = real_data_client.get("/api/exemplo").json()["recomendacao"]
     notas = {o["id"]: o["notas"] for o in rec["opcoes"]}
     melhor = notas[rec["melhor"]]
     alternativas = rec["alternativas"]
 
-    assert rec["melhor"] == "milho_safrinha"
-    assert melhor["renda"] == 100.0
-    assert "mais_dinheiro" not in {a["motivo"] for a in alternativas}
+    assert rec["melhor"] == "milho_braquiaria"
+    assert melhor["renda"] == melhor["seguranca"]
+    assert "mais_renda" not in {a["motivo"] for a in alternativas}
     assert alternativas  # coberturas superam o milho em risco e em terra
     assert len({a["opcao"] for a in alternativas}) == len(alternativas)
     for alt in alternativas:
@@ -135,12 +136,13 @@ def test_should_replay_the_dry_2024_and_the_good_2023_of_the_example_farm(
     real_data_client: TestClient,
 ) -> None:
     # P4 com a chuva real do NASA POWER: em 2024 parou de chover em 19/abr, logo depois da
-    # floração do milho (18/abr), e o aviso sai no 10º dia seco; 2023 passa sem aviso.
+    # floração do milho (18/abr), e o aviso sai no 10º dia seco; 2023 passa sem aviso. A opção é a
+    # melhor do motor: milho com braquiária desde a tarefa 0040 (mesmo ciclo do milho sozinho).
     farm = {"lat": -18.9543, "lon": -48.1993}
     dry = real_data_client.get("/api/safra-passada", params={**farm, "ano": 2024}).json()
     good = real_data_client.get("/api/safra-passada", params={**farm, "ano": 2023}).json()
 
-    assert dry["opcao"] == "milho_safrinha"
+    assert dry["opcao"] == "milho_braquiaria"
     assert [(e["data"], e["tipo"]) for e in dry["eventos"]] == [
         ("2024-02-18", "semeadura"),
         ("2024-04-18", "fase_critica"),
@@ -184,6 +186,13 @@ def test_should_detail_each_year_of_the_example_farm_like_the_replay(
         assert {d["enso"] for d in opcao["anos_detalhe"]} == {None}
     milho = next(o for o in rec["opcoes"] if o["id"] == "milho_safrinha")
     detalhes = {d["ano"]: d for d in milho["anos_detalhe"]}
+    # O ISNA, o calor e a semeadura do explorador (tarefa 0044) vêm da mesma conta do motor
+    assert detalhes[2024]["isna"] < 0.55 and detalhes[2024]["falta_agua"] is True
+    assert detalhes[2024]["semeadura"] == "2024-02-18"
+    explorador = {"isna", "dias_calor", "falta_agua", "calor", "semeadura", "umidade_inicial"}
+    detalhes = {
+        ano: {k: v for k, v in d.items() if k not in explorador} for ano, d in detalhes.items()
+    }
     assert detalhes[2024] == {
         "ano": 2024,
         "bom": False,

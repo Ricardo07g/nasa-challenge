@@ -4,8 +4,8 @@
 #
 # Cada número tem `valor` e `fonte`. A API não carrega um número sem fonte.
 # "Hipótese do time" = valor a calibrar com a agrônoma e com os resultados reais.
-# Os parâmetros de cada cultura (ciclo, Kc, data limite, nota de solo, dinheiro) ficam em
-# culturas.yaml.
+# Os parâmetros de cada cultura (ciclo, Kc, data limite, nota de solo) ficam em culturas.yaml.
+# Nenhum número em reais: a renda é só fatos (grupo `renda`, tarefa 0040).
 # ==============================================================================
 
 clima:
@@ -28,19 +28,8 @@ clima:
   calor_min_dias:
     valor: 3
     fonte: "PRD 7.2 item 3: 3 dias ou mais com calor na janela crítica"
-  # Perda de produtividade pelo ISNA, usada na margem (PRD 7.5)
-  perda_isna_sem_perda:
-    valor: 0.65
-    fonte: "PRD 7.5: perda de 0% com ISNA de 0,65 ou mais (hipótese do time)"
-  perda_isna_alta_abaixo:
-    valor: 0.55
-    fonte: "PRD 7.5: perda de 60% com ISNA abaixo de 0,55 (hipótese do time)"
-  perda_fator_media:
-    valor: 0.30
-    fonte: "PRD 7.5: perda de 30% com ISNA entre 0,55 e 0,65 (hipótese do time)"
-  perda_fator_alta:
-    valor: 0.60
-    fonte: "PRD 7.5: perda de 60% com ISNA abaixo de 0,55 (hipótese do time)"
+  # A perda de produtividade pelo ISNA (0%, 30% e 60%) só servia à margem em reais e saiu com ela
+  # (tarefa 0040).
 
 nota_final:
   # Nota final = soma de (peso x nota). Sem CMIP6, o futuro sai e os outros pesos são reescalados.
@@ -74,12 +63,25 @@ rotulos:
   terra_medio:
     valor: 20.0
     fonte: "PRD 7.6: terra Médio com nota de solo de 20 a 49"
-  dinheiro_bom:
+  renda_bom:
     valor: 70.0
-    fonte: "PRD 7.6: dinheiro Bom com nota de renda 70 ou mais"
-  dinheiro_medio:
+    fonte: "PRD 7.6: renda Bom com nota de renda 70 ou mais (antes 'dinheiro'; tarefa 0040)"
+  renda_medio:
     valor: 30.0
-    fonte: "PRD 7.6: dinheiro Médio com nota de renda de 30 a 69"
+    fonte: "PRD 7.6: renda Médio com nota de renda de 30 a 69 (antes 'dinheiro'; tarefa 0040)"
+
+renda:
+  # Nota de renda sem preço nem custo (PRD 7.5, tarefa 0040; seção 1 da remodelagem: nenhum valor em
+  # reais). Quem dá grão para vender tem a renda que o clima deixa colher: nota = segurança climática
+  # da própria opção (anos sem aperto / anos simulados x 100; no cenário seco, só os anos secos).
+  # Quem não dá grão (cobertura, pousio) fica com a nota fixa abaixo. A nota final continua com os
+  # mesmos eixos e pesos (grupo nota_final).
+  tipos_com_grao:
+    valor: [grao, consorcio]
+    fonte: "PRD 5 (coluna Função: milho safrinha e sorgo são grão; milho + braquiária é grão + cobertura) e o `tipo` do culturas.yaml. Hipótese do time, a revisar"
+  nota_sem_grao:
+    valor: 0.0
+    fonte: "PRD 5 (coluna Renda: 0 para pousio, milheto e crotalária, que não dão grão). Hipótese do time, a revisar: a cobertura é investimento na terra e ganha no eixo do solo, não no da renda"
 
 solo:
   # Nota de solo (PRD 7.4): palhada + nitrogênio + quebra de pragas; os pontos por cultura ficam
@@ -103,6 +105,141 @@ ndvi:
   queda_colheita:
     valor: 0.50
     fonte: "PRD 7.9: soja secando quando o NDVI cai abaixo de 50% do pico do verão"
+
+colheita:
+  # Tela 3 "Quando você colhe a soja?" (tarefa 0042). A data exata vira uma das três faixas do motor
+  # (cedo, meio, tarde); a faixa sugerida pelo NDVI (PRD 7.9) usa a mesma regra, para a sugestão e a
+  # seleção serem sempre a mesma. Datas "MM-DD", inclusivas.
+  cedo_ate:
+    valor: "02-10"
+    fonte: "Regra que a tela 3 já usava para a data exata (harvestService.harvestFromDate) e os rótulos das faixas ('até dia 10'); janeiro também conta como cedo"
+  meio_ate:
+    valor: "02-20"
+    fonte: "Regra que a tela 3 já usava para a data exata e os rótulos das faixas ('dia 11 a 20', 'depois do dia 20'). Tarefa 0042: a faixa sugerida pelo NDVI usava até 22/fev (dia 53, app/constants.py) e passou a usar esta, para a sugestão e a seleção serem a mesma"
+  janela_inicio:
+    valor: "01-15"
+    fonte: "Época da colheita da soja na tela 3 (harvestService.harvestWindow, de 15/jan a 31/mar; a decisão acontece de dezembro a março, PRD §3). Primeiro dia da tabela da chuva que sobra"
+  janela_fim:
+    valor: "03-31"
+    fonte: "Época da colheita da soja na tela 3 (harvestService.harvestWindow). Último dia da tabela da chuva que sobra"
+
+chuva_que_sobra:
+  # "Chuva que sobra depois da colheita" (tela 3, tarefa 0042): para cada dia de colheita da época, a
+  # chuva somada do dia até `fim` em cada ano da célula (GPM IMERG; nos anos sem IMERG, NASA POWER), a
+  # mediana dos anos e o ano seco (percentil, com interpolação linear entre os anos ordenados).
+  fim:
+    valor: "06-30"
+    fonte: "Pedido da remodelagem, seção 3 ('da data escolhida até junho'): até 30 de junho, inclusive"
+  percentil_seco:
+    valor: 20
+    fonte: "Pedido da remodelagem, seção 3 ('a de um ano seco, percentil 20'): 1 em cada 5 anos teve menos chuva que isso. Hipótese do time, a revisar"
+
+fim_das_chuvas:
+  # Fim das chuvas na célula (tela 3, tarefa 0042; o raio-X da seção 4 usa o mesmo): em cada ano, o
+  # primeiro dia, a partir de `inicio`, que começa `dias` dias seguidos com menos de `chuva_max_mm` mm
+  # SOMADOS (não por dia). Ano sem nenhum dia assim dentro da série (até 31/jul): sem resultado.
+  inicio:
+    valor: "03-01"
+    fonte: "Pedido da remodelagem, seção 3 ('primeiro dia, a partir de 1º de março'). Hipótese do time, a revisar"
+  dias:
+    valor: 20
+    fonte: "Pedido da remodelagem, seção 3 ('20 dias seguidos'). Hipótese do time, a revisar"
+  chuva_max_mm:
+    valor: 10.0
+    fonte: "Pedido da remodelagem, seção 3 ('com menos de 10 mm'), lido como a soma dos 20 dias: 10 mm por dia seria quase todo dia de chuva (decisão da tarefa 0042). Hipótese do time, a revisar"
+
+raio_x:
+  # Raio-X da sua terra (tela 4 "O que o satélite viu", remodelagem S4, tarefa 0043). Datas "MM-DD",
+  # inclusivas, na série guardada da célula (chuva do GPM IMERG; temperatura e ETo do NASA POWER).
+  # O dia seco é o dos avisos (avisos.dia_seco_abaixo_mm), o calor é o do motor (clima.calor_temp_c),
+  # a janela em volta da floração é a do aperto (clima.janela_grao_meia_dias) e o fim das chuvas é o
+  # do grupo fim_das_chuvas: não se repetem aqui.
+  chuva_inicio:
+    valor: "01-01"
+    fonte: "Pedido da remodelagem, seção 4 ('total médio de janeiro a julho'): toda a temporada guardada (1/jan a 31/jul)"
+  chuva_fim:
+    valor: "07-31"
+    fonte: "Pedido da remodelagem, seção 4 ('total médio de janeiro a julho')"
+  veranico_inicio:
+    valor: "03-01"
+    fonte: "Pedido da remodelagem, seção 4 ('maior sequência de dias com menos de 1 mm entre março e maio'): o outono da safrinha"
+  veranico_fim:
+    valor: "05-31"
+    fonte: "Pedido da remodelagem, seção 4 ('entre março e maio')"
+  calor_inicio:
+    valor: "03-01"
+    fonte: "Pedido da remodelagem, seção 4 ('dia de 35 °C ou mais entre março e maio'), quando a safrinha floresce"
+  calor_fim:
+    valor: "05-31"
+    fonte: "Pedido da remodelagem, seção 4 ('entre março e maio')"
+  regiao_inicio:
+    valor: "03-01"
+    fonte: "Pedido da remodelagem, seção 4 ('posição da célula entre as 225 da caixa em chuva de março a maio')"
+  regiao_fim:
+    valor: "05-31"
+    fonte: "Pedido da remodelagem, seção 4 ('chuva de março a maio')"
+  regiao_min_celulas:
+    valor: 10
+    fonte: "Hipótese do time, a revisar: com menos de 10 células com a mesma fonte de chuva, a comparação com a região não diz nada e o bloco não aparece (a caixa piloto tem 225)"
+  solo_vizinho_max_km:
+    valor: 15.0
+    fonte: "Hipótese do time, a revisar: ponto em célula sem solo do SoilGrids usa o ponto gravado mais perto, só até 15 km (pouco mais que uma célula de 0,1° na diagonal), e o bloco diz que é da vizinha (pedido da remodelagem, seção 4)"
+  ndvi_inicio:
+    valor: "01-01"
+    fonte: "Pedido da remodelagem, seção 4 ('cada coluna é uma leitura de 16 dias de janeiro a julho'): a série guardada do NDVI vai de janeiro a julho (contrato do NDVI)"
+  ndvi_fim:
+    valor: "07-31"
+    fonte: "Pedido da remodelagem, seção 4 ('de janeiro a julho')"
+  ndvi_coluna_dias:
+    valor: 16
+    fonte: "MODIS MOD13Q1/MYD13Q1: composição de 16 dias (Terra nos dias 1, 17, 33...; Aqua 8 dias depois). Cada coluna junta as duas e fica com o maior NDVI bom"
+  futuro_mes_inicio:
+    valor: 3
+    fonte: "Pedido da remodelagem, seção 4 ('variação da chuva de março a maio em %, da máxima em °C'): primeiro mês"
+  futuro_mes_fim:
+    valor: 5
+    fonte: "Pedido da remodelagem, seção 4 ('de março a maio'): último mês"
+
+alertas_area:
+  # Alertas da sua área (tela 4, tarefa 0043): cada um só aparece se o dado indicar risco. Geada e
+  # calor pelo NASA POWER, chuva forte pelo GPM IMERG, fogo pelo MODIS MCD64A1 (área queimada, pela
+  # ORNL DAAC). NÃO há alerta de granizo: nenhuma fonte que o app usa mede granizo.
+  geada_temp_c:
+    valor: 3.0
+    fonte: "Pedido da remodelagem, seção 4 ('anos com mínima de 3 °C ou menos entre maio e julho'). A mínima é a do ar a 2 m na célula do NASA POWER (~50 km): no chão pode gear com o ar um pouco mais quente. Hipótese do time, a revisar pela agrônoma"
+  geada_inicio:
+    valor: "05-01"
+    fonte: "Pedido da remodelagem, seção 4 ('entre maio e julho')"
+  geada_fim:
+    valor: "07-31"
+    fonte: "Pedido da remodelagem, seção 4 ('entre maio e julho'): o fim da temporada guardada"
+  geada_anos_min:
+    valor: 1
+    fonte: "Hipótese do time, a revisar: um ano com geada na série já é risco e o alerta aparece; sem nenhum, não aparece"
+  chuva_forte_mm:
+    valor: 50.0
+    fonte: "Pedido da remodelagem, seção 4 ('dias com 50 mm ou mais em fevereiro e março')"
+  chuva_forte_inicio:
+    valor: "02-01"
+    fonte: "Pedido da remodelagem, seção 4 ('em fevereiro e março'): logo depois da colheita da soja, com a terra descoberta"
+  chuva_forte_fim:
+    valor: "03-31"
+    fonte: "Pedido da remodelagem, seção 4 ('em fevereiro e março')"
+  chuva_forte_media_min_dias:
+    valor: 0.1
+    fonte: "Hipótese do time, a revisar: o alerta aparece com média de 0,1 dia por ano ou mais (2 dias assim em 20 anos); com menos, a chuva forte é rara demais para ser risco da área"
+  fogo_raio_km:
+    valor: 5.0
+    fonte: "Hipótese do time, a revisar: fogo a até 5 km do ponto (pixels de 500 m do MCD64A1 com o centro dentro do raio), perto o bastante para chegar na palha"
+  fogo_anos_min:
+    valor: 1
+    fonte: "Hipótese do time, a revisar: um ano com fogo perto já é risco e o alerta aparece"
+  fogo_ano_inicio:
+    valor: 2016
+    fonte: "Pedido da remodelagem, seção 4 ('baixe para a caixa piloto, 2016–2025'): primeiro ano do MCD64A1"
+  fogo_ano_fim:
+    valor: 2025
+    fonte: "Pedido da remodelagem, seção 4 ('2016–2025'): último ano completo do MCD64A1"
 
 historico_ndvi:
   # Histórico do talhão pelo NDVI do MODIS (PRD 7.8 e guia do histórico NDVI, "Regra do talhão").
@@ -231,9 +368,9 @@ sinal_outono:
     fonte: "PRD 7.10: terra seca com a chuva dos últimos 30 dias pelo IMERG abaixo de 60% da média (e o SMAP baixo)"
   # Tarefa 0038 (decisão de 15/11/2026): o sinal agora vem da previsão do El Niño / La Niña (grupo
   # sinal_enso, abaixo). O GEOS-S2S e o IMERG Late saíram do sinal: chance_seco_min e
-  # chance_normal_max ficam sem uso. O smap_percentil_seco é a 1ª faixa do SMAP de agora e o
-  # chuva_fracao_seco é o X da regra da data (fração da média da chuva dos 30 dias antes da data
-  # limite do Plano A).
+  # chance_normal_max ficam sem uso. O smap_percentil_seco é a 1ª faixa do SMAP de agora. O
+  # chuva_fracao_seco era o X da regra da data, que saiu na S9 da remodelagem (tarefa 0049): fica
+  # sem uso, como o texto do PRD 7.10.
 
 sinal_enso:
   # Sinal para o outono pela previsão do ENSO da NOAA CPC + o histórico da opção do 1º ano do Plano A
@@ -250,9 +387,6 @@ sinal_enso:
   fracao_anos_ruins_seco:
     valor: 0.5
     fonte: "Hipótese do time, a revisar (tarefa 0038): sinal de seco (Plano B) quando a opção do 1º ano do Plano A deu errado (aperto do motor, PRD 7.2) em metade ou mais dos anos daquela fase, e a do Plano B se saiu melhor neles"
-  dias_regra_data:
-    valor: 30
-    fonte: "Decisão do usuário (15/11/2026, tarefa 0038): regra da data com a chuva dos 30 dias antes da data limite do Plano A; o limite é chuva_fracao_seco (grupo sinal_outono) vezes a média desses dias na série guardada da célula"
   smap_faixas_pct:
     valor: [20.0, 45.0, 55.0, 80.0]
     fonte: "Hipótese do time, a revisar (tarefa 0038): percentis do SMAP de agora que separam 5 faixas (mais seca, um pouco mais seca, perto do normal, um pouco mais úmida, mais úmida que o normal). O 20 é o da terra seca do PRD 7.10. Só informa: o SMAP não decide o plano"
@@ -276,6 +410,60 @@ avisos:
   janela_limite_dias:
     valor: 7
     fonte: "Plano de evolução 4.4: a semana do limite de avisos; hipótese do time: 7 dias corridos que terminam no dia do aviso (a revisar)"
+
+avisos_tela:
+  # Tela "Avisos" (/avisos, remodelagem S6, tarefa 0046). Grupo à parte do `avisos` (replay P4 e
+  # acompanhamento P6), que continua igual. Reaproveita sem repetir: o dia seco
+  # (avisos.dia_seco_abaixo_mm), o calor (clima.calor_temp_c), o raio da comunidade
+  # (comunidade.raio_km), a estação e a chance mínima da previsão do ENSO (sinal_enso) e as janelas
+  # de março a maio do veranico e do calor (raio_x). Terra seca pelo SMAP; dias sem chuva e calor
+  # pelo NASA POWER dos últimos dias; mudanças e recordes na série guardada da célula (chuva do GPM
+  # IMERG; temperatura do NASA POWER).
+  terra_seca_percentil_max:
+    valor: 20.0
+    fonte: "Pedido da remodelagem, seção 6 ('percentil do SMAP de 20 ou menos'); é também o percentil da terra seca do PRD 7.10 (sinal_outono.smap_percentil_seco)"
+  smap_antiga_dias:
+    valor: 15
+    fonte: "Pedido da remodelagem, seção 6 ('leitura com mais de 15 dias é marcada como antiga')"
+  power_dias:
+    valor: 30
+    fonte: "Pedido da remodelagem, seção 6 ('os últimos 30 dias da célula' na API do NASA POWER)"
+  dias_sem_chuva_min:
+    valor: 10
+    fonte: "Pedido da remodelagem, seção 6 ('10 ou mais dias seguidos com menos de 1 mm até a última leitura'); são os 10 dias do veranico do plano de evolução 4.4 (avisos.veranico_min_dias)"
+  calor_dias_min:
+    valor: 3
+    fonte: "Pedido da remodelagem, seção 6 ('3 ou mais dias de 35 °C nos últimos 10'); são os 3 dias do calor do motor (clima.calor_min_dias)"
+  calor_janela_dias:
+    valor: 10
+    fonte: "Pedido da remodelagem, seção 6 ('nos últimos 10' dias até a última leitura)"
+  vizinhos_dias:
+    valor: 7
+    fonte: "Pedido da remodelagem, seção 6 ('eventos relatados pela comunidade nos últimos 7 dias'): hoje e os 6 dias antes, no dia de Uberlândia, como o resumo de chuva da comunidade (decisão D52)"
+  ano_recente_inicio:
+    valor: 2020
+    fonte: "Pedido da remodelagem, seção 6 ('compare 2020–2024 com 2005–2019'): os anos a partir deste são os recentes; os de antes, a referência"
+  outono_inicio:
+    valor: "03-01"
+    fonte: "Pedido da remodelagem, seção 6 ('outono mais seco'): março a maio, a mesma época do veranico e do calor do raio-X (seção 4)"
+  outono_fim:
+    valor: "05-31"
+    fonte: "Pedido da remodelagem, seção 6 ('outono mais seco'): até 31 de maio"
+  mudou_veranico_dias_min:
+    valor: 5.0
+    fonte: "Hipótese do time, a revisar: a média do maior veranico de março a maio de cada ano só aparece como mudança com 5 dias ou mais de diferença entre 2020–2024 e 2005–2019 (metade do veranico do aviso, 10 dias)"
+  mudou_fim_chuvas_dias_min:
+    valor: 10
+    fonte: "Hipótese do time, a revisar: a mediana do fim das chuvas só aparece como mudança com 10 dias ou mais de diferença (o fim das chuvas na UFU varia de 16/mar a 22/jun nos 20 anos)"
+  mudou_calor_dias_min:
+    valor: 1.0
+    fonte: "Hipótese do time, a revisar: a média de dias com 35 °C ou mais de março a maio por ano só aparece como mudança com 1 dia por ano ou mais de diferença"
+  mudou_falta_agua_mm_min:
+    valor: 25.0
+    fonte: "Hipótese do time, a revisar: a média da falta de água no ciclo da melhor opção (ETc menos ETr do balanço do motor) só aparece como mudança com 25 mm ou mais de diferença (a CAD da terra argilosa é 60 mm)"
+  mudou_deu_certo_pct_min:
+    valor: 25.0
+    fonte: "Hipótese do time, a revisar: a parte dos anos em que a melhor opção deu certo só aparece como mudança com 25 pontos percentuais ou mais de diferença (com 5 anos recentes, cada ano vale 20 pontos: um ano só não basta)"
 
 enso:
   # Marca de El Niño / La Niña de cada safrinha no detalhe dos anos (P1, plano de evolução 4.1).
@@ -305,6 +493,8 @@ enso:
 #   historico_confirmado: os campos do historico mais {confirmadas} {vistas}
 #     (quando o produtor confirmou alguma das últimas safras, tarefa 0039: confirmadas = anos
 #     que ele respondeu; vistas = anos certos que vieram do satélite)
+#   renda_com_grao, renda_sem_grao: sem campos (linha "Renda" da opção, tarefa 0040)
+#   renda_risco: {anos_aperto} {total} (os anos com aperto do motor e os anos simulados)
 frases:
   pt:
     seguranca: "Semeando em {data}, em {anos_aperto} dos últimos {total} anos faltou água ou fez calor de {calor_c} °C {fase} ({fonte_chuva})."
@@ -319,6 +509,9 @@ frases:
     colheita_meio: "no meio de fevereiro"
     colheita_tarde: "no fim de fevereiro ou em março"
     historico_confirmado: "Seu talhão ficou em pousio em {parado} de {anos_certos} entressafras de {ano_inicio} a {ano_fim} (você confirmou {confirmadas}; o satélite viu {vistas}, pelo NDVI do MODIS)."
+    renda_com_grao: "Dá grão para vender"
+    renda_sem_grao: "Não dá grão: é investimento na terra"
+    renda_risco: "Risco de perder a lavoura: faltou água ou fez calor em {anos_aperto} de {total} anos."
   en:
     seguranca: "Sowing on {data}, in {anos_aperto} of the last {total} years the crop ran short of water or had {calor_c} °C heat {fase} ({fonte_chuva})."
     fase_grao: "around flowering"
@@ -332,6 +525,9 @@ frases:
     colheita_meio: "in mid-February"
     colheita_tarde: "in late February or March"
     historico_confirmado: "Your field was left fallow in {parado} of {anos_certos} off-seasons from {ano_inicio} to {ano_fim} (you confirmed {confirmadas}; the satellite saw {vistas}, with MODIS NDVI)."
+    renda_com_grao: "Gives grain to sell"
+    renda_sem_grao: "No grain: it is an investment in the soil"
+    renda_risco: "Risk of losing the crop: water ran short or it was too hot in {anos_aperto} of {total} years."
 
 # Textos da linha do tempo da safra (P4 e P6), sem IA generativa. RASCUNHO: agrônoma revisar.
 #   semeadura, colheita_grao, colheita_cobertura: {opcao} (nome da opção)
@@ -395,3 +591,81 @@ frases_ano:
     calor: "It had {dias} days at {temp_c} °C or more in this stage."
     el_nino: "El Niño year."
     la_nina: "La Niña year."
+
+comunidade:
+  # Relatos da comunidade sem cadastro (seção 7 da remodelagem, tarefa 0047): plantio, chuva e
+  # evento. O relato guarda só a célula de 0,1° do ponto, nunca a coordenada exata.
+  raio_km:
+    valor: 30.0
+    fonte: "Pedido do usuário (seção 7 da remodelagem, 15/11/2026): a redondeza é o raio de 30 km em volta do ponto, pelas células de 0,1° cujo centro fica no raio"
+  raio_max_km:
+    valor: 50.0
+    fonte: "Hipótese do time (tarefa 0047): maior raio que a listagem aceita, para a consulta não varrer a caixa inteira"
+  chuva_max_mm:
+    valor: 300.0
+    fonte: "Pedido do usuário (seção 7 da remodelagem): a chuva relatada vai de 0 a 300 mm por dia"
+  dias_atras_max:
+    valor: 30
+    fonte: "Pedido do usuário (seção 7 da remodelagem): datas de chuva e de evento não futuras e de no máximo 30 dias atrás"
+  max_relatos_por_dia:
+    valor: 10
+    fonte: "Hipótese do time (o pedido da seção 7 dá 10 por dia como exemplo): no máximo 10 relatos por aparelho nas últimas 24 horas, para conter abuso sem cadastro"
+
+agua:
+  # Linha "Água" e selo "Sede da cultura" (seção 5.3 da remodelagem, tarefa 0044). Tudo sai do
+  # balanço hídrico diário do motor (PRD 7.2), nos dias do ciclo de cada ano: "precisa" = mediana
+  # do consumo da cultura (ETc = ETo x Kc); "chove" = mediana da chuva (GPM IMERG; nos anos sem
+  # IMERG, NASA POWER); "falta" = ETc - ETr (o que a planta queria e a terra não tinha).
+  # Na fazenda da UFU (15/11), o consumo vai de ~230 mm (milheto) a ~360 mm (milho): os cortes
+  # abaixo deixam milho em "muita", sorgo em "média" e milheto e crotalária em "pouca".
+  sede_pouca_ate_mm:
+    valor: 280.0
+    fonte: "Hipótese do time, a revisar pela agrônoma (tarefa 0044): consumo da cultura no ciclo abaixo de 280 mm = pouca água"
+  sede_muita_desde_mm:
+    valor: 325.0
+    fonte: "Hipótese do time, a revisar pela agrônoma (tarefa 0044): consumo da cultura no ciclo de 325 mm ou mais = muita água; entre os dois cortes, média"
+  percentil_seco:
+    valor: 20
+    fonte: "Pedido da remodelagem, seção 5.3 ('percentil 20 dos 20 anos'), com o sentido do ano seco da tela 3 (chuva_que_sobra.percentil_seco): só 20% dos anos foram piores. Para a falta de água, em que mais é pior, é o percentil 80 da falta (interpolação linear entre os anos ordenados)"
+
+enso_acerto:
+  # Frase "Em anos de La Niña, deu certo em X de Y" da aba Sugestão (seção 5.4, tarefa 0044): só
+  # aparece se a diferença for clara. Compara a taxa de acerto da opção nos anos daquela fase (ONI
+  # da NOAA, grupo enso) com a dos outros anos da série. Só informa: não entra na conta.
+  diferenca_min_pct:
+    valor: 25.0
+    fonte: "Hipótese do time, a revisar (tarefa 0044): diferença clara = 25 pontos percentuais ou mais entre a taxa de acerto nos anos da fase e nos outros anos (ex.: 3 de 7 contra 12 de 13)"
+  anos_fase_min:
+    valor: 5
+    fonte: "Hipótese do time, a revisar (tarefa 0044): pelo menos 5 anos da fase na série, o mesmo mínimo do sinal do outono (sinal_enso.anos_fase_min); com menos, só a marcação por ano"
+
+plano_b:
+  # Plano A / Plano B da aba "Plano de 3 anos" (seção 5.6 da remodelagem, tarefa 0045). "Secar" vira
+  # um número que o produtor confere no pluviômetro só se a série separar bem os anos em que a
+  # cultura do 1º ano do Plano A deu certo dos anos em que ela falhou. Regra: "secou" = chuva somada
+  # nos `dias_antes_semeadura` dias antes da semeadura abaixo de um limite L. L é o que mais acerta
+  # na série (marca os k anos mais secos; acertos - alarmes falsos; empate = menos anos marcados).
+  # Separa bem = as quatro condições abaixo juntas; senão, o Plano B aparece sem número.
+  dias_antes_semeadura:
+    valor: 15
+    fonte: "Pedido da remodelagem, seção 5.6: 'o limite de chuva nos 15 dias antes da semeadura'"
+  anos_falha_min:
+    valor: 3
+    fonte: "Hipótese do time, a revisar (tarefa 0045): com menos de 3 anos de falha na série, qualquer limite acerta por sorte"
+  sensibilidade_min_pct:
+    valor: 50.0
+    fonte: "Hipótese do time, a revisar (tarefa 0045): o limite pega pelo menos metade dos anos em que a cultura falhou"
+  precisao_min_pct:
+    valor: 60.0
+    fonte: "Hipótese do time, a revisar (tarefa 0045): pelo menos 60% dos anos abaixo do limite foram de falha (mais acertos que alarmes falsos)"
+  chance_max_pct:
+    valor: 10.0
+    fonte: "Hipótese do time, a revisar (tarefa 0045): a chance de pegar tantas falhas marcando o mesmo número de anos ao acaso (hipergeométrica) fica em 10% ou menos"
+
+chuva_aproveitada:
+  # Bloco "Chuva aproveitada" do Plano (seção 5.6, tarefa 0045): a chuva da semeadura (colheita da
+  # soja + 3 dias, PRD 7.1) até o fim de julho, e quanto dela a planta usou (ETr do balanço do motor,
+  # PRD 7.2). No pousio, só a chuva que caiu sem cultura (sem estimar a evaporação da terra).
+  fim:
+    valor: "07-31"
+    fonte: "Pedido da remodelagem, seção 5.6: 'entre a colheita da soja e o fim de julho' (a série guardada vai até 31/jul; 30/jul nos anos bissextos)"

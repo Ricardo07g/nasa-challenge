@@ -1,7 +1,7 @@
 """Integration tests for GET /api/recomendacao and GET /api/exemplo (contrato do plano §3.2)."""
 
 from dataclasses import replace
-from datetime import date, timedelta
+from datetime import date
 from hashlib import sha256
 
 import httpx2
@@ -60,8 +60,8 @@ def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
     }
     assert len(body["opcoes"]) == 5
     assert body["melhor"] in {o["id"] for o in body["opcoes"]}
-    # Só os eixos em que alguma opção supera a melhor (R4.2): aqui todas têm 18 anos bons e o milho
-    # tem a maior renda, então sobra só "cuidar da terra".
+    # Só os eixos em que alguma opção supera a melhor (R4.2): aqui todas têm 18 anos bons e os grãos
+    # empatam na renda (a segurança, tarefa 0040), então sobra só "cuidar da terra".
     assert body["alternativas"] == [{"motivo": "cuidar_da_terra", "opcao": "crotalaria"}]
 
     milho = next(o for o in body["opcoes"] if o["id"] == "milho_safrinha")
@@ -73,11 +73,19 @@ def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
         "texto": "Deu certo em 18 de 20 anos",
     }
     assert milho["futuro"] is None
-    # A1.2: `pior_ano_seco_ha` (contrato do front, `dinheiro.pior_ano_seco_ha?: number`) entrou no
-    # `dinheiro`. 2007 e 2014 ficam sem chuva: o milho perde 60% (80 x 0,4 x 62 - 3500).
-    assert set(milho["dinheiro"]) == {"margem_ha", "rotulo", "texto", "pior_ano_seco_ha"}
-    assert milho["dinheiro"]["pior_ano_seco_ha"] == pytest.approx(80 * 0.4 * 62 - 3500)
-    assert "custo_semente_ha" not in milho  # espera o valor da agrônoma (A1.1)
+    # Tarefa 0040: a renda só com fatos (dá grão ou não e os anos com aperto do motor), sem reais
+    assert milho["renda"] == {
+        "da_grao": True,
+        "anos_aperto": 2,
+        "rotulo": "bom",
+        "texto": "Dá grão para vender",
+        "risco": "Risco de perder a lavoura: faltou água ou fez calor em 2 de 20 anos.",
+    }
+    crotalaria = next(o for o in body["opcoes"] if o["id"] == "crotalaria")
+    assert crotalaria["renda"]["da_grao"] is False
+    assert crotalaria["renda"]["texto"] == "Não dá grão: é investimento na terra"
+    assert "dinheiro" not in milho
+    assert "custo_semente_ha" not in milho
     assert milho["terra"] == {
         "nota": 20.0,
         "rotulo": "medio",
@@ -325,6 +333,24 @@ def test_should_return_example_farm_at_ufu_point_when_get_exemplo_called(
     assert body["talhao"]["chuva_mensal"]["anos"] == list(range(2005, 2025))
     assert body["recomendacao"]["entrada"]["colheita"] == "meio"
     assert body["recomendacao"]["opcoes"][0]["chuva"]["texto"].startswith("Worked in")
+    assert body["recomendacao"]["opcoes"][0]["renda"]["risco"].startswith("Risk of losing")
+
+
+@pytest.mark.parametrize(
+    ("path", "params"),
+    [("/api/recomendacao", {**UFU, "colheita": "meio"}), ("/api/exemplo", {})],
+)
+@pytest.mark.parametrize("lang", ["pt-BR", "en"])
+def test_should_send_no_money_value_anywhere_in_the_answer(
+    client: TestClient, path: str, params: dict, lang: str
+) -> None:
+    # Seção 1 da remodelagem (tarefa 0040): nenhum valor em reais na API
+    response = client.get(path, params=params, headers={"Accept-Language": lang})
+
+    assert response.status_code == 200
+    assert "R$" not in response.text
+    for campo in ("dinheiro", "margem_ha", "pior_ano_seco_ha", "custo_semente_ha", "mais_dinheiro"):
+        assert campo not in response.text
 
 
 class FakeEnsoForecastRepository:
@@ -350,8 +376,8 @@ def test_should_send_null_autumn_signal_until_the_signal_data_arrives(client: Te
 def test_should_send_autumn_signal_in_the_front_contract_when_the_forecast_exists(
     client: TestClient,
 ) -> None:
-    # Contrato do front: SinalOutono em projeto/frontend/src/models/recomendacao.ts; `regra_data` e
-    # `smap_agora` entram como campos opcionais (tarefa 0038).
+    # Contrato do front: SinalOutono em projeto/frontend/src/models/recomendacao.ts; `smap_agora`
+    # entra como campo opcional (tarefa 0038). A regra antiga da data saiu na S9 (tarefa 0049).
     app.dependency_overrides[get_enso_forecast_repository] = FakeEnsoForecastRepository
 
     response = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"})
@@ -359,33 +385,11 @@ def test_should_send_autumn_signal_in_the_front_contract_when_the_forecast_exist
     assert response.status_code == 200
     body = response.json()
     sinal = body["sinal"]
-    assert set(sinal) == {
-        "nivel",
-        "motivo",
-        "fonte",
-        "data",
-        "regra_dia_plantar",
-        "regra_data",
-        "smap_agora",
-    }
+    assert set(sinal) == {"nivel", "motivo", "fonte", "data", "smap_agora"}
     assert sinal["nivel"] in {"normal", "seco", "incerto"}
     assert "El Niño (70%, Fonte de teste)" in sinal["motivo"]
     assert sinal["fonte"] == ["Fonte de teste", "NASA POWER"]
     assert sinal["data"] == "2026-11-14"
-    primeira_a = next(
-        o for o in body["opcoes"] if o["id"] == body["plano_3_anos"]["normal"]["anos"][0]
-    )
-    assert sinal["regra_dia_plantar"]["data_limite"] == primeira_a["data_limite"]
-    assert sinal["regra_dia_plantar"]["texto"].startswith("Se nos 30 dias antes de")
-    # Série de teste: 8 mm por dia (240 mm em 30 dias), mas 2007 e 2014 sem chuva desde 1º/fev
-    # (só 24 mm de 29 a 31/jan): média (18 × 240 + 2 × 24) / 20 = 218,4 mm; 60% = 131 mm
-    assert sinal["regra_data"] == {
-        "data_limite": primeira_a["data_limite"],
-        "inicio": (date.fromisoformat(primeira_a["data_limite"]) - timedelta(days=30)).isoformat(),
-        "dias": 30,
-        "chuva_min_mm": 131,
-        "media_mm": 218,
-    }
     assert sinal["smap_agora"] is None
 
 
@@ -419,7 +423,7 @@ def test_should_use_rules_from_the_injected_rules_repository(client: TestClient)
     regras = replace(
         base,
         clima=replace(base.clima, calor_temp_c=29.0),
-        rotulos=replace(base.rotulos, dinheiro_bom=101.0),
+        rotulos=replace(base.rotulos, renda_medio=-1.0),
         rotacao=replace(base.rotacao, anos_secos=2),
     )
     app.dependency_overrides[get_rules_repository] = lambda: FakeRulesRepository(regras)
@@ -430,7 +434,7 @@ def test_should_use_rules_from_the_injected_rules_repository(client: TestClient)
     body = response.json()
     milho = next(o for o in body["opcoes"] if o["id"] == "milho_safrinha")
     assert milho["chuva"]["anos_bons"] == 0  # máxima de 30 °C já é calor com o limiar de 29 °C
-    assert milho["dinheiro"]["rotulo"] == "medio"  # renda 100 abaixo do "bom" de 101
+    assert milho["renda"]["rotulo"] == "medio"  # renda 0 (nenhum ano bom) acima do "médio" de -1
     assert "(2007, 2014)" in body["plano_3_anos"]["seco"]["descricao"]
 
 
@@ -452,7 +456,12 @@ def test_should_detail_each_year_of_the_rain_strip_in_every_option(client: TestC
         assert [d["ano"] for d in opcao["anos_detalhe"]] == list(range(2005, 2025))
         assert [d["bom"] for d in opcao["anos_detalhe"]] == opcao["chuva"]["faixa"]
     detalhes = {d["ano"]: d for d in _milho(body)["anos_detalhe"]}
-    # 2007 fica sem chuva de fevereiro a junho; floração no dia 60 (18/fev + 60 = 19/abr)
+    # 2007 fica sem chuva de fevereiro a junho; floração no dia 60 (18/fev + 60 = 19/abr). Os
+    # campos do explorador da tarefa 0044 têm teste próprio (abaixo).
+    explorador = {"isna", "dias_calor", "falta_agua", "calor", "semeadura", "umidade_inicial"}
+    detalhes = {
+        ano: {k: v for k, v in d.items() if k not in explorador} for ano, d in detalhes.items()
+    }
     assert detalhes[2007] == {
         "ano": 2007,
         "bom": False,
@@ -503,3 +512,59 @@ def test_should_send_the_year_detail_without_enso_when_there_is_no_oni_file(
 
     assert {d["enso"] for o in body["opcoes"] for d in o["anos_detalhe"]} == {None}
     assert all("Niño" not in d["texto"] for d in _milho(body)["anos_detalhe"])
+
+
+def test_should_send_the_suggestion_blocks_of_each_option_in_the_front_contract(
+    client: TestClient,
+) -> None:
+    # Tarefa 0044: linha "Água" (sede incluída), critério de "deu certo", ciclo, o que observar e
+    # a taxa de acerto por fase do ENSO; o ISNA e o porquê de cada ano para o explorador.
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"}).json()
+    milho = _milho(body)
+
+    assert set(milho["agua"]) == {
+        "precisa_mm",
+        "chove_mm",
+        "falta_normal_mm",
+        "falta_seco_mm",
+        "sede",
+        "cad_mm",
+        "anos",
+        "futuro",
+    }
+    assert milho["agua"]["sede"] in {"pouca", "media", "muita"}
+    assert milho["agua"]["futuro"] is None  # sem CMIP6 no conftest
+    assert milho["criterio"] == {
+        "isna_min": 0.55,
+        "calor_temp_c": 35.0,
+        "calor_min_dias": 3,
+        "fase": "floracao",
+        "janela_dias": 15,
+    }
+    assert milho["ciclo"] == {"dias": 100, "floracao_dias": 60}
+    assert milho["observar"] == {"veranico_dias": 0, "anos_calor": 0, "total": 20}
+    fases = {item["fase"]: item for item in milho["enso_acerto"]}
+    assert set(fases["el_nino"]) == {"fase", "anos", "bons", "anos_outros", "bons_outros", "clara"}
+    seca = next(d for d in milho["anos_detalhe"] if d["ano"] == 2007)
+    assert seca["isna"] < 0.55
+    assert (seca["falta_agua"], seca["calor"], seca["dias_calor"]) == (True, False, 0)
+    assert (seca["semeadura"], seca["umidade_inicial"]) == ("2007-02-18", None)
+
+
+def test_should_send_objectives_future_climate_frost_and_planting_deadlines(
+    client: TestClient,
+) -> None:
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "tarde"}).json()
+
+    assert set(body["objetivos"]) == {"equilibrio", "seguranca", "renda", "terra"}
+    equilibrio = body["objetivos"]["equilibrio"]
+    assert equilibrio["ordem"] == [o["id"] for o in body["opcoes"]]
+    assert equilibrio["plano"][0] == body["melhor"] == body["plano_3_anos"]["normal"]["anos"][0]
+    assert set(equilibrio) == {"ordem", "plano", "nota_plano"}
+    assert body["clima_futuro"] is None  # sem CMIP6 no conftest
+    assert body["geada"] is None  # nenhuma noite de 3 °C ou menos: sem risco, o alerta não vem
+    assert {f["id"]: f["data_limite"] for f in body["fora_da_janela"]} == {
+        "milho_safrinha": "2027-02-28",
+        "milho_braquiaria": "2027-02-28",
+        "crotalaria": "2027-02-28",
+    }

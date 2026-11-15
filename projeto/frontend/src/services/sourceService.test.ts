@@ -21,6 +21,7 @@ describe('sourceStatuses (tela 9, de onde vem cada dado)', () => {
       { key: 'gpm_imerg', connected: false },
       { key: 'smap', connected: false },
       { key: 'modis', connected: false },
+      { key: 'modis_mcd64a1', connected: false },
       { key: 'nex_gddp_cmip6', connected: false },
     ])
   })
@@ -32,6 +33,7 @@ describe('sourceStatuses (tela 9, de onde vem cada dado)', () => {
         { fonte: 'nasa_power', periodo: '2005-2024' },
         { fonte: 'smap', periodo: '2015-2024' },
         { fonte: 'nex_gddp_cmip6', periodo: '2041-2060' },
+        { fonte: 'modis_mcd64a1', periodo: '2016-2025' },
       ],
       historico: { anos: [], parado: 0, plantou: 0, sem_certeza: 0, total: 0, fonte: 'MODIS', janela: '04-01 a 07-31' },
     })
@@ -57,5 +59,13 @@ describe('rainResolutionKm', () => {
 
   it('sem fonte de chuva, não inventa o tamanho', () => {
     expect(rainResolutionKm(talhao({ dados: [] }))).toBeNull()
+  })
+
+  it('a área queimada do MODIS (MCD64A1) só aparece quando o talhão lista o arquivo (tarefa 0049)', () => {
+    const base = { dados: [{ fonte: 'nasa_power', periodo: '2005-2024' }], historico: null, solo: null } as unknown as Talhao
+    const comFogo = { ...base, dados: [...base.dados, { fonte: 'modis_mcd64a1', periodo: '2016-2025' }] } as Talhao
+
+    expect(sourceStatuses(comFogo).find((s) => s.key === 'modis_mcd64a1')?.connected).toBe(true)
+    expect(sourceStatuses(base).find((s) => s.key === 'modis_mcd64a1')?.connected).toBe(false)
   })
 })

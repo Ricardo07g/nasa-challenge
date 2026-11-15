@@ -54,16 +54,56 @@ export const CONFIRMACOES: readonly Confirmacao[] = ['plantou', 'parado']
 /** Safras confirmadas pelo produtor: ano → resposta (vale no lugar do satélite naquele ano). */
 export type Confirmadas = Readonly<Partial<Record<number, Confirmacao>>>
 
-/** Chuva média de um mês na célula (mm): a média, entre os anos, da chuva total do mês (1 = janeiro). */
-export type ChuvaMes = { mes: number; media_mm: number }
+/**
+ * Chuva média de um mês na célula (mm): a média, entre os anos, da chuva total do mês (1 = janeiro).
+ * `eto_media_mm` (tarefa 0042 do backend): o que a lavoura gasta no mês (ETo, a mesma do motor).
+ */
+export type ChuvaMes = { mes: number; media_mm: number; eto_media_mm?: number | null }
 
-/** Gráfico "Chuva de cada mês na região" da tela 3: janeiro a junho. */
+/** Chuva de cada mês da tela 3, de janeiro a junho, com o gasto da lavoura (ETo) desde a tarefa 0042. */
 export type ChuvaMensal = {
   meses: ChuvaMes[]
   /** Anos que entraram na média, em ordem. */
   anos: number[]
-  /** Fonte da chuva (ex.: `nasa_power`); mais de uma vem separada por `+`. */
+  /** Fonte da chuva (ex.: `gpm_imerg`); mais de uma vem separada por `+`. */
   fonte: string
+  /** Fonte da ETo (`nasa_power`); null ou ausente sem ETo. */
+  fonte_eto?: string | null
+  /** Primeiro mês (1 = janeiro) em que a chuva média fica menor que a ETo média; null se nunca fica. */
+  mes_chuva_abaixo_eto?: number | null
+}
+
+/** Chuva de um dia de colheita até o fim de junho (mm): a mediana dos anos e a de um ano seco. */
+export type ChuvaQueSobraDia = { dia: string; mediana_mm: number; seco_mm: number }
+
+/** "Chuva que sobra depois da colheita" (tela 3, tarefa 0042 do backend): um item por dia da época. */
+export type ChuvaQueSobra = {
+  /** "MM-DD", inclusive (06-30). */
+  fim: string
+  /** O "ano seco" é este percentil dos anos (20). */
+  percentil_seco: number
+  /** De 15/jan a 31/mar ("MM-DD"), sem 29/fev. */
+  dias: ChuvaQueSobraDia[]
+  anos: number[]
+  /** Fonte da chuva (ex.: `gpm_imerg`); mais de uma vem separada por `+`. */
+  fonte: string
+}
+
+/** Um dia do calendário ("MM-DD") e o ano em que aconteceu. */
+export type DiaDoAno = { dia: string; ano: number }
+
+/** Fim das chuvas na célula (tela 3, tarefa 0042 do backend), com a regra do `regras.yaml`. */
+export type FimDasChuvas = {
+  /** Em metade dos anos, a chuva acabou até esse dia ("MM-DD"). */
+  mediana: string
+  mais_cedo: DiaDoAno
+  mais_tarde: DiaDoAno
+  anos: number[]
+  fonte: string
+  /** A regra: a partir de `inicio` ("MM-DD"), `dias` dias seguidos com menos de `chuva_max_mm` mm somados. */
+  inicio: string
+  dias: number
+  chuva_max_mm: number
 }
 
 /**
@@ -83,7 +123,13 @@ export type Talhao = {
   celula_id: string | null
   dentro_da_area: boolean
   solo: { textura: Textura; cad_mm: number; fonte: 'soilgrids' | 'padrao' | 'usuario' } | null
-  colheita_sugerida: { faixa: Colheita; fonte: 'ndvi_modis' | 'padrao'; anos_usados: number } | null
+  /** `dia` ("MM-DD", tarefa 0042): o dia em que a soja costuma secar pelo NDVI; null sem NDVI. */
+  colheita_sugerida: {
+    faixa: Colheita
+    fonte: 'ndvi_modis' | 'padrao'
+    anos_usados: number
+    dia?: string | null
+  } | null
   historico: Historico | null
   dados: { fonte: string; periodo: string; cenario?: string; modelos?: number }[]
   /** null fora da área ou sem dado; ausente na API que ainda não manda o campo. */
@@ -92,4 +138,8 @@ export type Talhao = {
   soja_recente?: SojaRecente | null
   /** Entressafras que o produtor pode confirmar na tela 4 (as 3 últimas); ausente na API antiga. */
   anos_confirmaveis?: number[] | null
+  /** Tela 3 (tarefa 0042): null sem dado; ausente na API antiga. */
+  chuva_que_sobra?: ChuvaQueSobra | null
+  /** Tela 3 (tarefa 0042): null sem dado (ou algum ano sem fim das chuvas); ausente na API antiga. */
+  fim_das_chuvas?: FimDasChuvas | null
 }

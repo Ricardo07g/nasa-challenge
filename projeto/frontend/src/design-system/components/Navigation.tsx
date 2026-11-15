@@ -14,7 +14,7 @@ export function BackLink({ to, children }: { to: string; children: ReactNode }) 
 
 export type AnswerTab = { to: string; label: string; current: boolean }
 
-/** Abas das telas da resposta (Resposta · Plano de 3 anos · Todas as opções). */
+/** Abas das telas da resposta (Sugestão · Comparar · Plano de 3 anos). */
 export function AnswerTabs({ label, tabs }: { label: string; tabs: readonly AnswerTab[] }) {
   return (
     <nav aria-label={label} className={styles.tabs}>

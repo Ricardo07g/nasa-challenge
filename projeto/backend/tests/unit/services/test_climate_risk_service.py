@@ -33,9 +33,6 @@ def _make_crop(
         solo_nitrogenio=0,
         solo_pragas=0,
         n_deixado_kg=0,
-        produtividade_padrao_sc_ha=95.0,
-        preco_padrao_saca=55.0,
-        custo_padrao_ha=3200.0,
         como_fazer=("Plantar no limpo",),
     )
 
@@ -152,19 +149,6 @@ def test_should_judge_water_shortage_of_cover_crops_by_their_own_isna_threshold(
     )
 
     assert (result.falta_agua, result.calor, result.aperto) == (False, False, False)
-
-
-@pytest.mark.parametrize(
-    ("isna", "expected"),
-    [(0.80, 0.0), (0.65, 0.0), (0.64, 0.30), (0.55, 0.30), (0.54, 0.60), (0.10, 0.60)],
-)
-def test_should_use_loss_steps_from_prd_when_computing_loss_factor(
-    isna: float, expected: float
-) -> None:
-    # PRD 7.5: 0% com ISNA >= 0,65; 30% entre 0,55 e 0,65; 60% abaixo de 0,55
-    service = ClimateRiskService(WaterBalanceCalculator())
-
-    assert service.loss_factor(isna) == expected
 
 
 def test_should_compute_eto_from_temperatures_and_latitude_when_season_has_no_eto() -> None:
@@ -320,14 +304,6 @@ def test_should_use_heat_threshold_from_injected_rules() -> None:
     assert result.aperto is True
 
 
-def test_should_use_loss_steps_from_injected_rules() -> None:
-    service = ClimateRiskService(
-        WaterBalanceCalculator(), rules=_rules_with_clima(perda_fator_alta=0.90)
-    )
-
-    assert service.loss_factor(0.10) == 0.90
-
-
 # --- balde inicial pelo SMAP (PRD 7.2, R3.3) ---------------------------------------------------
 
 
@@ -384,3 +360,46 @@ def test_should_start_each_year_with_its_own_smap_and_half_without_it() -> None:
     assert isna[2015] == base[2015]  # sem SMAP no ano: 50% da CAD, como antes
     assert isna[2016] > base[2016]  # terra cheia no dia de plantar
     assert isna[2017] < base[2017]  # terra seca (piso de 20%)
+
+
+def test_should_sum_crop_need_actual_use_and_rain_over_the_cycle_of_each_year() -> None:
+    # Tarefa 0044 (linha "Água"): consumo da cultura (ETc = ETo x Kc), o que ela usou (ETr) e a
+    # chuva, somados nos dias do ciclo. Sem chuva e com o balde vazio, ETr = 0 e falta tudo.
+    wb = WaterBalanceCalculator()
+    service = ClimateRiskService(wb)
+    crop = _make_crop()
+    dry = _make_season(2005, daily_rain=0.0, eto=4.0)
+    wet = _make_season(2006, daily_rain=10.0, eto=4.0)
+
+    seco, chuvoso = service.simulate_historical(
+        crop=crop, seasons=[dry, wet], semeadura=date(2027, 2, 18), cad_mm=0.0
+    )
+
+    etc_esperado = sum(4.0 * kc for kc in wb.build_kc_curve(crop.ciclo_dias, crop.kc_pico))
+    assert seco.etc_mm == pytest.approx(etc_esperado, abs=0.1)
+    assert seco.etr_mm == 0.0
+    assert seco.chuva_mm == 0.0
+    assert chuvoso.etc_mm == pytest.approx(etc_esperado, abs=0.1)
+    assert chuvoso.etr_mm == pytest.approx(etc_esperado, abs=0.1)
+    assert chuvoso.chuva_mm == pytest.approx(10.0 * crop.ciclo_dias)
+
+
+def test_should_give_each_model_its_own_simulated_years_for_the_future() -> None:
+    # A linha "Água" de 2041-2060 precisa da falta de água de cada modelo, não só dos anos bons.
+    service = ClimateRiskService(WaterBalanceCalculator())
+    crop = _make_crop()
+    seasons = [_make_season(2005 + i, daily_rain=8.0) for i in range(3)]
+    deltas = _deltas("IGUAL", rain_pct=0.0) + _deltas("SECO", rain_pct=-100.0)
+
+    por_modelo = service.simulate_future_by_model(
+        crop=crop, seasons=seasons, deltas=deltas, semeadura=date(2027, 2, 18), cad_mm=60.0
+    )
+
+    assert set(por_modelo) == {"IGUAL", "SECO"}
+    assert [r.ano for r in por_modelo["SECO"]] == [2005, 2006, 2007]
+    assert all(r.chuva_mm == 0.0 for r in por_modelo["SECO"])
+    assert all(not r.aperto for r in por_modelo["IGUAL"])
+    futuro = service.summarize_future(por_modelo, scenario="ssp245")
+    assert futuro is not None
+    assert (futuro.anos_bons_min, futuro.anos_bons_max, futuro.modelos) == (0, 3, 2)
+    assert service.summarize_future({}, scenario="ssp245") is None

@@ -6,14 +6,16 @@
 import type { Lang } from '../../i18n/language'
 import { EXAMPLE_FARM } from '../../models/area'
 import type { TipoEvento } from '../../models/pastSeason'
-import type { CommunityRepository } from '../communityRepository'
+import type { CustoAtrasoRepository } from '../custoAtrasoRepository'
 import type { ExemploRepository } from '../exemploRepository'
 import type { PastSeasonRepository } from '../pastSeasonRepository'
+import type { RaioXRepository } from '../raioXRepository'
 import type { RecomendacaoRepository } from '../recomendacaoRepository'
 import type { RegionRepository } from '../regionRepository'
 import type { TalhaoRepository } from '../talhaoRepository'
 import { delay } from './delay'
-import { buildCommunity, buildRecomendacao, buildTalhao } from './fixtures'
+import { buildCustoAtraso, buildRecomendacao, buildTalhao } from './fixtures'
+import { buildRaioX } from './raioXFixture'
 
 /** Talhão com dados de exemplo. */
 export function createMockTalhaoRepository(delayMs = 500): TalhaoRepository {
@@ -46,12 +48,12 @@ export function createMockExemploRepository(delayMs = 0): ExemploRepository {
   }
 }
 
-/** Tela 8 simulada (PRD RF-13 a RF-15): vizinhos e pluviômetros ilustrativos. */
-export function createMockCommunityRepository(delayMs = 300): CommunityRepository {
+/** Custo do atraso (tela 3): a melhor opção de cada faixa, com números de exemplo. */
+export function createMockCustoAtrasoRepository(delayMs = 400): CustoAtrasoRepository {
   return {
-    async get(lang) {
+    async get(params, lang) {
       await delay(delayMs)
-      return buildCommunity(lang)
+      return buildCustoAtraso(params, lang)
     },
   }
 }
@@ -128,14 +130,29 @@ const EVENTS: Record<number, Event[]> = {
 
 export function createMockPastSeasonRepository(delayMs = 300): PastSeasonRepository {
   return {
-    async get(_point, year, lang) {
+    async get(_point, year, lang, options = {}) {
       await delay(delayMs)
+      // Qualquer ano da série (detalhe do explorador, tarefa 0044): os eventos de exemplo, no ano pedido.
       const events = EVENTS[year] ?? EVENTS[2024]
       return {
         ano: year,
-        opcao: 'milho_braquiaria',
-        eventos: events.map((event) => ({ data: event.data, tipo: event.tipo, texto: event.texto[lang] })),
+        opcao: options.opcao ?? 'milho_braquiaria',
+        eventos: events.map((event) => ({
+          data: `${year}${event.data.slice(4)}`,
+          tipo: event.tipo,
+          texto: event.texto[lang],
+        })),
       }
+    },
+  }
+}
+
+/** Raio-X da sua terra (tela 4, tarefa 0043): os 8 blocos, a faixa do NDVI e um alerta, de exemplo. */
+export function createMockRaioXRepository(delayMs = 400): RaioXRepository {
+  return {
+    async get(params, lang) {
+      await delay(delayMs)
+      return buildRaioX(params, lang)
     },
   }
 }

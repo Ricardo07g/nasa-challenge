@@ -141,6 +141,31 @@ describe('repositories mock (dados de exemplo no formato do contrato)', () => {
     }
   })
 
+  it('renda só com fatos, no formato da API (tarefa 0040): nenhum valor em reais', async () => {
+    for (const lang of ['pt', 'en'] as const) {
+      const rec = await createMockRecomendacaoRepository(0).get({ ...UBERLANDIA, colheita: 'meio' }, lang)
+
+      expect(JSON.stringify(rec)).not.toContain('R$')
+      for (const opcao of rec.opcoes) {
+        expect(opcao).not.toHaveProperty('dinheiro')
+        expect(opcao).not.toHaveProperty('custo_semente_ha')
+        expect(opcao.renda.anos_aperto).toBe(opcao.chuva.anos - opcao.chuva.anos_bons)
+      }
+    }
+    const rec = await createMockRecomendacaoRepository(0).get({ ...UBERLANDIA, colheita: 'meio' }, 'pt')
+    const sorgo = rec.opcoes.find((opcao) => opcao.id === 'sorgo')!
+    const crotalaria = rec.opcoes.find((opcao) => opcao.id === 'crotalaria')!
+    expect(sorgo.renda).toEqual({
+      da_grao: true,
+      anos_aperto: 3,
+      rotulo: 'bom',
+      texto: 'Dá grão para vender',
+      risco: 'Risco de perder a lavoura: faltou água ou fez calor em 3 de 20 anos.',
+    })
+    expect(crotalaria.renda.texto).toBe('Não dá grão: é investimento na terra')
+    expect(rec.alternativas.map((alternativa) => alternativa.motivo)).toContain('mais_renda')
+  })
+
   it('recomendação respeita o idioma e o solo escolhido', async () => {
     const rec = await createMockRecomendacaoRepository(0).get(
       { ...UBERLANDIA, colheita: 'cedo', solo: 'argiloso' },

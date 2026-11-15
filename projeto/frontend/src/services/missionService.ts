@@ -22,13 +22,32 @@ export function phaseWait(elapsedMs: number): number {
 export type MissionFacts = {
   point: Ponto
   soil: Textura
+  /** "SoilGrids" quando a terra veio do mapa de solos; null no padrão (sem mapa). */
+  soilSource: string | null
+  /** Anos do SMAP usados no balde do dia de plantar (tarefa 0049); null sem SMAP na célula. */
+  smap: { start: string; end: string } | null
   /** Anos de chuva que a conta leu (null sem dado de chuva). */
   rainYears: number | null
+  /** De onde veio a chuva da série: "GPM IMERG" ou "NASA POWER" (o calor é sempre do NASA POWER). */
+  rainSource: string | null
   historyYears: number | null
   /** Clima de 2041–2060 (NEX-GDDP-CMIP6 no talhão); null quando a API não traz. */
   future: ClimateSummary | null
   /** Previsão do outono (sinal); é outro dado, separado do clima do futuro. */
   signal: NivelSinal | null
+  /** Quem publicou a previsão do ENSO (a 1ª fonte do sinal, ex.: "NOAA"). */
+  signalSource: string | null
+  /** Opções que entram na conta: as que cabem na janela de plantio e deixar parado; null sem a conta. */
+  options: number | null
+  /** Anos do MODIS MCD64A1 (área queimada), só quando o arquivo cobre o ponto; null sem ele. */
+  burned: { start: string; end: string } | null
+}
+
+const SOURCE_NAMES: Record<string, string> = { gpm_imerg: 'GPM IMERG', nasa_power: 'NASA POWER' }
+
+function yearSpan(periodo: string | undefined): { start: string; end: string } | null {
+  const match = periodo?.match(/^(\d{4})-(\d{4})$/)
+  return match ? { start: match[1], end: match[2] } : null
 }
 
 /**
@@ -36,12 +55,23 @@ export type MissionFacts = {
  * histórico contam só os anos certos, como a frase da tela 4.
  */
 export function missionFacts(talhao: Talhao, recomendacao: Recomendacao): MissionFacts {
+  const dados = talhao.dados ?? []
+  const has = (fonte: string) => dados.some((dado) => dado.fonte === fonte)
+  const rainKey = has('gpm_imerg') ? 'gpm_imerg' : has('nasa_power') ? 'nasa_power' : null
+  const inWindow = recomendacao.opcoes?.filter((opcao) => opcao.na_janela).length
   return {
     point: talhao.ponto,
     soil: talhao.solo?.textura ?? recomendacao.entrada?.solo ?? 'medio',
-    rainYears: rainSummary(talhao.dados ?? [], recomendacao.opcoes ?? null)?.years ?? null,
+    soilSource: talhao.solo?.fonte === 'soilgrids' ? 'SoilGrids' : null,
+    smap: yearSpan(dados.find((dado) => dado.fonte === 'smap')?.periodo),
+    rainYears: rainSummary(dados, recomendacao.opcoes ?? null)?.years ?? null,
+    rainSource: rainKey ? SOURCE_NAMES[rainKey] : null,
     historyYears: historySummary(talhao.historico)?.known ?? null,
-    future: climateSummary(talhao.dados ?? []),
+    future: climateSummary(dados),
     signal: recomendacao.sinal?.nivel ?? null,
+    signalSource: recomendacao.sinal?.fonte?.[0] ?? null,
+    // Deixar parado também entra na conta (PRD 7.2), mas não está em `opcoes`.
+    options: inWindow === undefined ? null : inWindow + 1,
+    burned: yearSpan(dados.find((dado) => dado.fonte === 'modis_mcd64a1')?.periodo),
   }
 }

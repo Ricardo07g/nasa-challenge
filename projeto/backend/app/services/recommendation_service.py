@@ -4,7 +4,6 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
 from datetime import date
 from operator import attrgetter
-from statistics import mean
 
 from app.constants import (
     DATA_VERSION,
@@ -20,16 +19,22 @@ from app.constants import (
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
 from app.models.recomendacao import (
+    AguaOpcao,
     Alternativa,
     AnoDetalhe,
+    CicloOpcao,
+    CriterioDeuCerto,
     ForaDaJanelaOpcao,
     FuturoResultado,
     NotasOpcao,
+    ObjetivoResultado,
+    PlanoRotacao,
     Recomendacao,
     ResultadoAno,
     ResultadoOpcao,
 )
-from app.models.regras import Regras, RegrasNotaFinal, RegrasRotulos, RegrasSolo
+from app.models.regras import Regras, RegrasNotaFinal, RegrasRenda, RegrasRotulos, RegrasSolo
+from app.models.sinal_outono import SinalOutono
 from app.models.talhao import Confirmacao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.crop_params_repository import CropParamsRepository
@@ -39,10 +44,16 @@ from app.repositories.smap_repository import CellSmapRepository
 from app.repositories.soil_repository import SoilRepository
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.climate_risk_service import ClimateRiskService
+from app.services.crop_alert_service import COVER_CROP_TYPE
 from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
+from app.services.future_climate_service import FutureClimateService
+from app.services.plan_b_service import PlanBService
+from app.services.raio_x_climate_service import RaioXClimateService
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
+from app.services.suggestion_facts_service import SuggestionFactsService
+from app.services.water_need_service import WaterNeedService
 from app.services.year_detail_service import YearDetailService
 
 # Nome da chuva no "Por quê?": com algum ano do IMERG (tarefa 0027), a série mistura as duas fontes.
@@ -63,9 +74,19 @@ MONTHS_EN = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct
 # "Se você prefere…": motivo e eixo de cada alternativa, na ordem em que a tela mostra.
 ALTERNATIVE_AXES: tuple[tuple[str, Callable[[NotasOpcao], float]], ...] = (
     ("menos_risco", attrgetter("seguranca")),
-    ("mais_dinheiro", attrgetter("renda")),
+    ("mais_renda", attrgetter("renda")),
     ("cuidar_da_terra", attrgetter("solo")),
 )
+# "O que você quer mais?" (seção 5.1, tarefa 0044): o eixo de cada objetivo do produtor. Sem
+# objetivo ("equilibrio"), vale a nota final com os pesos padrão (RF-05).
+OBJECTIVE_AXES: tuple[tuple[str, Callable[[NotasOpcao], float] | None], ...] = (
+    ("equilibrio", None),
+    ("seguranca", attrgetter("seguranca")),
+    ("renda", attrgetter("renda")),
+    ("terra", attrgetter("solo")),
+)
+CRITICAL_STAGE_FLOWERING = "floracao"
+CRITICAL_STAGE_ESTABLISHMENT = "pegamento"
 
 
 def _clamp(score: float) -> float:
@@ -101,25 +122,20 @@ def soil_score(crop: CropParams, nematoide: bool | None, regras: RegrasSolo) -> 
     return round(_clamp(total), 1)
 
 
-def expected_margin(crop: CropParams, anos: list[ResultadoAno]) -> float:
-    """Margem (PRD 7.5): produtividade x (1 - perda média dos anos) x preço - custo."""
-    perda_media = mean(r.fator_perda for r in anos) if anos else 0.0
-    receita = crop.produtividade_padrao_sc_ha * (1.0 - perda_media) * crop.preco_padrao_saca
-    return round(receita - crop.custo_padrao_ha, 2)
+def gives_grain(crop: CropParams, regras: RegrasRenda) -> bool:
+    """A cultura dá grão para vender? Pelo `tipo` do culturas.yaml (grupo `renda`, tarefa 0040)."""
+    return crop.tipo in regras.tipos_com_grao
 
 
-def worst_dry_year_margin(crop: CropParams, anos_secos: list[ResultadoAno]) -> float | None:
-    """Margem do pior dos anos mais secos (A1.2, PRD 7.11): a mesma conta da margem, ano a ano."""
-    if not anos_secos:
-        return None
-    return min(expected_margin(crop, [ano]) for ano in anos_secos)
+def income_score(crop: CropParams, seguranca: float, regras: RegrasRenda) -> float:
+    """Nota de renda sem preço nem custo (PRD 7.5, tarefa 0040).
 
-
-def income_score(margem: float, maior_margem: float) -> float:
-    """Nota de renda (PRD 7.5): 100 x margem / maior margem; margem negativa vale 0."""
-    if maior_margem <= 0.0 or margem <= 0.0:
-        return 0.0
-    return round(_clamp(PERCENT_DIVISOR * margem / maior_margem), 1)
+    Quem dá grão tem a renda que o clima deixa colher: a segurança climática da própria opção.
+    Quem não dá grão (cobertura, pousio) fica com a nota fixa `nota_sem_grao`.
+    """
+    if gives_grain(crop, regras):
+        return round(_clamp(seguranca), 1)
+    return round(_clamp(regras.nota_sem_grao), 1)
 
 
 def final_score(
@@ -167,7 +183,7 @@ def _single_top(
 def build_alternatives(opcoes: list[ResultadoOpcao], melhor_id: str) -> tuple[Alternativa, ...]:
     """Uma alternativa por eixo, só se superar a `melhor` nesse eixo e sem repetir cultura (R4.2).
 
-    Os eixos seguem a ordem da tela (risco, dinheiro, terra). Cada eixo pega, entre as opções ainda
+    Os eixos seguem a ordem da tela (risco, renda, terra). Cada eixo pega, entre as opções ainda
     não usadas com nota maior que a da `melhor` naquele eixo, a de maior nota no eixo. No empate,
     a opção que é a única maior de um eixo seguinte fica para ele; depois, vale a maior nota final.
     Sem candidata, o eixo não aparece.
@@ -196,7 +212,7 @@ def build_alternatives(opcoes: list[ResultadoOpcao], melhor_id: str) -> tuple[Al
 
 @dataclass(frozen=True)
 class _Avaliacao:
-    """Contas de uma opção antes da nota de renda (que depende da maior margem entre todas)."""
+    """Contas de uma opção antes das notas (clima de hoje e do futuro, solo e anos detalhados)."""
 
     crop: CropParams
     nome: str
@@ -204,14 +220,12 @@ class _Avaliacao:
     anos_secos: list[ResultadoAno]
     futuro: FuturoResultado | None
     solo: float
-    margem: float
-    margem_seco: float
-    pior_ano_seco: float | None
     anos_detalhe: tuple[AnoDetalhe, ...]
+    agua: AguaOpcao | None
 
 
 class RecommendationService:
-    """Junta clima, solo e dinheiro numa resposta: melhor opção, alternativas e plano de 3 anos."""
+    """Junta clima, solo e renda numa resposta: melhor opção, alternativas e plano de 3 anos."""
 
     def __init__(
         self,
@@ -243,6 +257,15 @@ class RecommendationService:
         self._year_detail_service = year_detail_service or YearDetailService(rules=self._rules)
         # Umidade do SMAP no dia de plantar de cada ano: balde inicial (PRD 7.2, R3.3)
         self._smap_repo = smap_repo
+        # Aba Sugestão (tarefa 0044): linha "Água", El Niño / La Niña e o que observar. Clima de
+        # 2041-2060 e geada na célula com as contas do raio-X (tarefa 0049: as duas telas dizem o
+        # mesmo número). Só leem as regras: montados aqui, sem injeção
+        self._water_service = WaterNeedService(self._rules)
+        self._facts_service = SuggestionFactsService(self._rules)
+        self._future_service = FutureClimateService(self._rules)
+        self._cell_climate_service = RaioXClimateService(self._rules)
+        # Plano B do sinal do outono: o mesmo da tela do Plano (tarefa 0049)
+        self._plan_b_service = PlanBService(self._rules)
 
     def recommend(
         self,
@@ -305,11 +328,13 @@ class RecommendationService:
                 continue  # linha de base, fora do ranking (PRD 7.6)
             nome = crop.nome_en if (is_en and crop.nome_en) else crop.nome
             if not self._risk_service.is_within_window(crop, semeadura):
+                limite = crop.semeadura_limite_mes_dia
                 fora_da_janela.append(
                     ForaDaJanelaOpcao(
                         id=crop.id,
                         nome=nome,
                         texto=self._out_of_window_text(crop, nome, colheita, is_en),
+                        data_limite=f"{REFERENCE_SOWING_YEAR}-{limite}" if limite else None,
                     )
                 )
                 continue
@@ -328,14 +353,10 @@ class RecommendationService:
                 )
             )
 
-        maior_margem = max((a.margem for a in avaliacoes), default=0.0)
-        maior_margem_seco = max((a.margem_seco for a in avaliacoes), default=0.0)
         fonte_chuva = self._rain_source_name(seasons)
         opcoes = [
             self._build_option(
                 a,
-                maior_margem=maior_margem,
-                maior_margem_seco=maior_margem_seco,
                 bonus=self._rules.nota_final.bonus_gado_milho_braquiaria
                 if (gado is True and a.crop.id == "milho_braquiaria")
                 else 0.0,
@@ -356,13 +377,24 @@ class RecommendationService:
         opcoes.sort(key=lambda o: o.notas.final, reverse=True)
         melhor_id = opcoes[0].id if opcoes else FALLOW_ID
 
+        pousio_notas = self._fallow_scores(crops, nematoide, has_future=bool(deltas))
         plano_normal, plano_seco, plano_hoje = self._plan_service.build_3_year_plans(
             opcoes=opcoes,
             anos_secos=anos_secos,
-            pousio=self._fallow_scores(crops, nematoide, has_future=bool(deltas)),
+            pousio=pousio_notas,
             nematoide=nematoide,
             lang=lang,
         )
+        objetivos = self._objectives(opcoes, pousio_notas, nematoide)
+        if "equilibrio" in objetivos:
+            # Tarefa 0044: a sugestão é o ano 1 da rotação. O Plano A começa pela melhor opção (o
+            # Plano B, do ano seco, continua livre para começar por outra).
+            equilibrio = objetivos["equilibrio"]
+            plano_normal = PlanoRotacao(
+                anos=equilibrio.plano,
+                nota=equilibrio.nota_plano,
+                descricao=plano_normal.descricao,
+            )
 
         return Recomendacao(
             lat=lat,
@@ -395,20 +427,87 @@ class RecommendationService:
                 if is_en
                 else "Ajuda a decidir. Não substitui o agrônomo."
             ),
-            sinal=(
-                self._sinal_service.evaluate(
-                    lat=lat,
-                    lon=lon,
-                    plano_a=plano_normal,
-                    plano_b=plano_seco,
-                    opcoes=opcoes,
-                    semeadura=semeadura,
-                    seasons=seasons,
-                    lang=lang,
-                )
-                if self._sinal_service is not None
-                else None
+            sinal=self._autumn_signal(
+                lat, lon, plano_normal.anos[0], opcoes, seasons, semeadura, lang
             ),
+            objetivos=objetivos,
+            clima_futuro=self._future_service.summarize(deltas, seasons),
+            geada=self._cell_climate_service.frost(seasons),
+        )
+
+    def _autumn_signal(
+        self,
+        lat: float,
+        lon: float,
+        cultura_a: str,
+        opcoes: list[ResultadoOpcao],
+        seasons: list[ClimateSeason],
+        semeadura: date,
+        lang: str,
+    ) -> SinalOutono | None:
+        """Sinal do outono com o Plano A (o 1º ano do plano sugerido) e o Plano B da tela do Plano.
+
+        O Plano B é o do `PlanBService` (a cultura que mais deu certo quando a do Plano A falhou),
+        o mesmo do cartão "Plano A e Plano B" (tarefa 0049): o sinal e a tela falam do mesmo plano.
+        """
+        if self._sinal_service is None:
+            return None
+        ab = self._plan_b_service.plan_ab(cultura_a, opcoes, seasons, semeadura)
+        return self._sinal_service.evaluate(
+            lat=lat,
+            lon=lon,
+            cultura_a=cultura_a,
+            cultura_b=ab.cultura_b if ab else None,
+            opcoes=opcoes,
+            seasons=seasons,
+            lang=lang,
+        )
+
+    def _objectives(
+        self, opcoes: list[ResultadoOpcao], pousio: NotasOpcao, nematoide: bool | None
+    ) -> dict[str, ObjetivoResultado]:
+        """Ordem das opções e plano para cada objetivo do produtor (seção 5.1, tarefa 0044).
+
+        A ordem é a nota do eixo do objetivo, com o desempate pela nota final (a mesma regra da
+        tela 6, RF-05); sem objetivo ("equilibrio"), a nota final. O plano começa pela 1ª da ordem
+        e escolhe os anos 2 e 3 pela nota do mesmo eixo. Sem opção na janela: nenhum objetivo.
+        """
+        if not opcoes:
+            return {}
+        finals = {o.id: o.notas.final for o in opcoes} | {FALLOW_ID: pousio.final}
+        objetivos: dict[str, ObjetivoResultado] = {}
+        for objetivo, eixo in OBJECTIVE_AXES:
+            nota = eixo or attrgetter("final")
+            ordem = tuple(
+                o.id for o in sorted(opcoes, key=lambda o: (-nota(o.notas), -o.notas.final))
+            )
+            # O plano de um objetivo usa só as culturas; o do equilíbrio é o Plano A do PRD 7.7,
+            # com o pousio nas combinações.
+            plano = tuple(
+                self._plan_service.best_plan_starting_with(
+                    ordem[0],
+                    opcoes,
+                    pousio,
+                    axis=eixo,
+                    nematoide=nematoide,
+                    allow_fallow=eixo is None,
+                )
+            )
+            objetivos[objetivo] = ObjetivoResultado(
+                ordem=ordem, plano=plano, nota_plano=self._plan_service.plan_score(plano, finals)
+            )
+        return objetivos
+
+    def _criterion(self, crop: CropParams) -> CriterioDeuCerto:
+        """O critério de "deu certo" do motor para a cultura (PRD 7.2), com os números do YAML."""
+        clima = self._rules.clima
+        cobertura = crop.tipo == COVER_CROP_TYPE
+        return CriterioDeuCerto(
+            isna_min=clima.isna_cobertura if cobertura else clima.isna_grao,
+            calor_temp_c=clima.calor_temp_c,
+            calor_min_dias=clima.calor_min_dias,
+            fase=CRITICAL_STAGE_ESTABLISHMENT if cobertura else CRITICAL_STAGE_FLOWERING,
+            janela_dias=clima.janela_cobertura_dias if cobertura else clima.janela_grao_meia_dias,
         )
 
     def _fallow_scores(
@@ -417,15 +516,15 @@ class RecommendationService:
         """Notas do pousio para o plano de 3 anos: fora do ranking, mas nas combinações (PRD 7.7).
 
         Segurança 100 (PRD 7.2: não tem o que perder) e futuro 100 quando há CMIP6 (PRD 7.6); renda
-        0 (PRD 5) e a nota de solo da tabela 7.4 (0). Iguais no ano normal e no ano seco.
+        de quem não dá grão (`renda.nota_sem_grao`, tarefa 0040) e a nota de solo da tabela 7.4 (0).
+        Iguais no ano normal e no ano seco.
         """
         crop = next((c for c in crops if c.id == FALLOW_ID), None)
         solo = soil_score(crop, nematoide, self._rules.solo) if crop else SCORE_MIN
         futuro = SCORE_MAX if has_future else None
-        final = final_score(SCORE_MAX, solo, SCORE_MIN, futuro, self._rules.nota_final)
-        return NotasOpcao(
-            seguranca=SCORE_MAX, futuro=futuro, solo=solo, renda=SCORE_MIN, final=final
-        )
+        renda = round(_clamp(self._rules.renda.nota_sem_grao), 1)
+        final = final_score(SCORE_MAX, solo, renda, futuro, self._rules.nota_final)
+        return NotasOpcao(seguranca=SCORE_MAX, futuro=futuro, solo=solo, renda=renda, final=final)
 
     def _evaluate(
         self,
@@ -448,13 +547,16 @@ class RecommendationService:
             smap_wetness_by_year=smap_por_ano,
         )
         secos = [r for r in anos if r.ano in set(anos_secos)]
-        futuro = self._risk_service.simulate_future_cmip6(
+        futuro_por_modelo = self._risk_service.simulate_future_by_model(
             crop=crop,
             seasons=seasons,
             deltas=deltas,
             semeadura=semeadura,
             cad_mm=cad_mm,
             smap_wetness_by_year=smap_por_ano,
+        )
+        futuro = self._risk_service.summarize_future(
+            futuro_por_modelo, scenario=deltas[0].scenario if deltas else ""
         )
         return _Avaliacao(
             crop=crop,
@@ -463,19 +565,20 @@ class RecommendationService:
             anos_secos=secos,
             futuro=futuro,
             solo=soil_score(crop, nematoide, self._rules.solo),
-            margem=expected_margin(crop, anos),
-            margem_seco=expected_margin(crop, secos),
-            pior_ano_seco=worst_dry_year_margin(crop, secos),
             anos_detalhe=self._year_detail_service.year_details(
-                crop=crop, semeadura=semeadura, seasons=seasons, resultados=anos, lang=lang
+                crop=crop,
+                semeadura=semeadura,
+                seasons=seasons,
+                resultados=anos,
+                lang=lang,
+                smap_wetness_by_year=smap_por_ano,
             ),
+            agua=self._water_service.summarize(anos, cad_mm, futuro_por_modelo),
         )
 
     def _build_option(
         self,
         a: _Avaliacao,
-        maior_margem: float,
-        maior_margem_seco: float,
         bonus: float,
         semeadura: date,
         solo: tuple[str, float, str],
@@ -488,9 +591,12 @@ class RecommendationService:
         nota_futuro = _pct(a.futuro.anos_bons_media, total) if a.futuro else None
 
         seguranca = _pct(anos_bons, total)
-        renda = income_score(a.margem, maior_margem)
         seguranca_seco = _pct(anos_bons_secos, len(a.anos_secos))
-        renda_seco = income_score(a.margem_seco, maior_margem_seco)
+        regras_renda = self._rules.renda
+        renda = income_score(a.crop, seguranca, regras_renda)
+        renda_seco = income_score(a.crop, seguranca_seco, regras_renda)
+        da_grao = gives_grain(a.crop, regras_renda)
+        frases = self._rules.frases["en" if is_en else "pt"]
 
         pesos = self._rules.nota_final
         rotulos = self._rules.rotulos
@@ -525,9 +631,10 @@ class RecommendationService:
                 else f"Deu certo em {anos_bons} de {total} anos"
             ),
             futuro=a.futuro,
-            margem_ha=a.margem,
-            rotulo_dinheiro=_label(renda, rotulos.dinheiro_bom, rotulos.dinheiro_medio),
-            texto_dinheiro=self._money_text(a.margem, is_en),
+            da_grao=da_grao,
+            rotulo_renda=_label(renda, rotulos.renda_bom, rotulos.renda_medio),
+            texto_renda=frases.renda_com_grao if da_grao else frases.renda_sem_grao,
+            texto_risco=frases.renda_risco.format(anos_aperto=total - anos_bons, total=total),
             rotulo_terra=_label(a.solo, rotulos.terra_bom, rotulos.terra_medio),
             texto_terra=self._soil_text(a.crop, is_en),
             notas=notas,
@@ -536,8 +643,12 @@ class RecommendationService:
             como_fazer=(
                 a.crop.como_fazer_en if (is_en and a.crop.como_fazer_en) else a.crop.como_fazer
             ),
-            pior_ano_seco_ha=a.pior_ano_seco,
             anos_detalhe=a.anos_detalhe,
+            agua=a.agua,
+            criterio=self._criterion(a.crop),
+            ciclo=CicloOpcao(dias=a.crop.ciclo_dias, floracao_dias=a.crop.dias_florescer),
+            observar=self._facts_service.watch_facts(a.anos_detalhe),
+            enso_acerto=self._facts_service.enso_hit_rates(a.anos_detalhe),
         )
 
     @staticmethod
@@ -548,39 +659,30 @@ class RecommendationService:
         source = seasons[0].rain_source
         return RAIN_SOURCE_NAMES.get(source, source)
 
-    @staticmethod
-    def _money_text(margem: float, is_en: bool) -> str:
-        valor = int(round(abs(margem), -1))
-        if is_en:
-            return (
-                f"About R$ {valor:,} per hectare left over"
-                if margem >= 0
-                else f"Costs about R$ {valor:,} per hectare"
-            )
-        valor_br = f"{valor:,}".replace(",", ".")
-        verbo = "Sobra" if margem >= 0 else "Custa"
-        return f"{verbo} perto de R$ {valor_br} por hectare"
+    def _soil_text(self, crop: CropParams, is_en: bool) -> str:
+        """Frase de solo do PRD 7.6: palhada, nitrogênio e ciclo do nematoide.
 
-    @staticmethod
-    def _soil_text(crop: CropParams, is_en: bool) -> str:
-        """Frase de solo do PRD 7.6: palhada, nitrogênio e ciclo do nematoide."""
+        "Quebra o ciclo do nematoide" = as supressoras do PRD 7.7 (`rotacao.
+        culturas_supressoras_nematoide`: crotalária e milheto), a mesma regra dos fatos do Plano
+        (tarefa 0049). Os pontos de pragas da nota de solo (PRD 7.4) não mudam.
+        """
         if crop.solo_palhada >= 35:
             nivel, level = "alta", "high"
         elif crop.solo_palhada >= 20:
             nivel, level = "média", "medium"
         else:
             nivel, level = "pouca", "little"
-        quebra = crop.solo_pragas > 0
+        quebra = crop.id in self._rules.rotacao.culturas_supressoras_nematoide
         if is_en:
             nitrogen = (
                 f"{crop.n_deixado_kg} kg/ha of nitrogen" if crop.n_deixado_kg else "no nitrogen"
             )
-            ciclo = "helps break" if quebra else "does not break"
+            ciclo = "breaks" if quebra else "does not break"
             return f"Leaves {level} straw and {nitrogen}; {ciclo} the nematode cycle."
         nitrogenio = (
             f"{crop.n_deixado_kg} kg/ha de nitrogênio" if crop.n_deixado_kg else "nenhum nitrogênio"
         )
-        ciclo = "ajuda a quebrar" if quebra else "não quebra"
+        ciclo = "quebra" if quebra else "não quebra"
         return f"Deixa palhada {nivel} e {nitrogenio}; {ciclo} o ciclo do nematoide."
 
     def _why(

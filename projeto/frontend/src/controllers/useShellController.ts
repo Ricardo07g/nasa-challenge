@@ -5,9 +5,11 @@ import type { AppHeaderProps } from '../design-system/components/Header'
 import { useI18n } from '../i18n/useI18n'
 import { apiMode as currentApiMode } from '../repositories'
 import type { ApiMode } from '../repositories/repositoryMode'
+import { avisosService, type AvisosService } from '../services/avisosService'
 import { keepFlowQuery } from '../services/flowParams'
 import { speechService, type SpeechService } from '../services/speechService'
 import { telegramService, type TelegramService } from '../services/telegramService'
+import { useAlertsBadge } from './useAlertsBadge'
 import { useListen } from './useListen'
 import { useTelegramLink } from './useTelegramLink'
 
@@ -25,6 +27,7 @@ export function useShellController(
   speech: SpeechService = speechService,
   telegram: TelegramService = telegramService,
   apiMode: ApiMode = currentApiMode,
+  avisos: AvisosService = avisosService,
 ): {
   header: AppHeaderProps
   footer: AppFooterProps
@@ -35,12 +38,20 @@ export function useShellController(
   const listen = useListen(lang, getText, speech)
   const { search } = useLocation()
   const telegramHref = useTelegramLink(telegram)
+  // Tela "Avisos" (tarefa 0046): o botão do cabeçalho com o número de avisos ativos
+  const alerts = useAlertsBadge(avisos)
 
   return {
     header: {
       homeLabel: t.header.home,
       slogan: t.header.slogan,
       community: { label: t.header.community, to: `/comunidade${keepFlowQuery(search)}` },
+      alerts: {
+        label: t.alerts.headerLabel,
+        to: alerts.to,
+        count: alerts.count,
+        countLabel: alerts.count !== null ? t.alerts.headerCount(alerts.count) : null,
+      },
       telegram: telegramHref ? { href: telegramHref, label: t.telegram.open } : undefined,
       listen: {
         supported: listen.supported,

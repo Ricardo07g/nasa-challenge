@@ -153,3 +153,69 @@ export function NumberStepper(props: NumberStepperProps) {
     </div>
   )
 }
+
+type MeasureFieldProps = {
+  label: string
+  value: string
+  unit: string
+  /** Dica embaixo do campo (ex.: os limites aceitos), lida junto pelo leitor de tela. */
+  hint?: string
+  onChange: (value: string) => void
+}
+
+/** Campo de medida digitada (ex.: milímetros de chuva), com teclado de número e a unidade ao lado. */
+export function MeasureField({ label, value, unit, hint, onChange }: MeasureFieldProps) {
+  const id = useId()
+  const hintId = useId()
+  return (
+    <div className={styles.stepperField}>
+      <label htmlFor={id} className={styles.stepperLabel}>
+        {label}
+      </label>
+      <div className={styles.stepper}>
+        <input
+          id={id}
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          className={styles.stepperInput}
+          value={value}
+          aria-describedby={hint ? hintId : undefined}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <span className={styles.stepperUnit}>{unit}</span>
+      </div>
+      {hint && (
+        <p id={hintId} className={styles.dateStatus}>
+          {hint}
+        </p>
+      )}
+    </div>
+  )
+}
+
+type SelectFieldProps<T extends string> = {
+  label: string
+  value: T
+  options: readonly ChipOption<T>[]
+  onChange: (value: T) => void
+}
+
+/** Lista de escolha nativa com o rótulo visível (ex.: a cultura de cada ano do plano, tarefa 0045). */
+export function SelectField<T extends string>({ label, value, options, onChange }: SelectFieldProps<T>) {
+  const id = useId()
+  return (
+    <div className={styles.dateField}>
+      <label htmlFor={id} className={styles.dateLabel}>
+        {label}
+      </label>
+      <select id={id} className={styles.select} value={value} onChange={(event) => onChange(event.target.value as T)}>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}

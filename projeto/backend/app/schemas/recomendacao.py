@@ -1,12 +1,12 @@
 """JSON de GET /api/recomendacao e GET /api/exemplo (plano técnico §3.2 e §3.3)."""
 
 from datetime import date
-from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enso import FaseEnso
 from app.models.recomendacao import (
+    AguaOpcao,
     AnoDetalhe,
     NotasOpcao,
     PlanoRotacao,
@@ -14,6 +14,7 @@ from app.models.recomendacao import (
     ResultadoOpcao,
 )
 from app.models.sinal_outono import NivelSinal, SinalOutono
+from app.schemas.raio_x import AlertaGeadaSchema, ClimaFuturoSchema, _dump
 from app.schemas.talhao import TalhaoResponse
 
 
@@ -46,22 +47,17 @@ class FuturoSchema(_Frozen):
     cenario: str
 
 
-class DinheiroSchema(_Frozen):
-    margem_ha: float
-    rotulo: str
-    texto: str
-    # A1.2: margem do pior dos anos mais secos (a conta x hectares fica no front)
-    pior_ano_seco_ha: float | None = None
+class RendaSchema(_Frozen):
+    """Renda só com fatos (tarefa 0040, antes `dinheiro`): nenhum valor em reais."""
 
-    # Sem tipo de retorno de propósito: com ele, o OpenAPI (/docs) perde os campos do `dinheiro`.
-    @model_serializer(mode="wrap")
-    def _omit_missing_worst_dry_year(self, handler: SerializerFunctionWrapHandler):
-        # Sem valor, a chave não vai: o front (`dinheiro.pior_ano_seco_ha?: number`) testa
-        # `=== undefined`, e um null viraria R$ 0 na conta x hectares.
-        data: dict[str, Any] = handler(self)
-        if data.get("pior_ano_seco_ha") is None:
-            data.pop("pior_ano_seco_ha", None)
-        return data
+    da_grao: bool
+    # Anos com aperto do motor (falta de água ou calor na fase crítica); o total é `chuva.anos`
+    anos_aperto: int
+    rotulo: str
+    # "Dá grão para vender" ou "Não dá grão: é investimento na terra"
+    texto: str
+    # "Risco de perder a lavoura: faltou água ou fez calor em N de 20 anos."
+    risco: str
 
 
 class TerraSchema(_Frozen):
@@ -97,6 +93,13 @@ class AnoDetalheSchema(_Frozen):
     dias_sem_chuva: int
     enso: FaseEnso | None
     texto: str
+    # Explorador ano a ano (tarefa 0044): ISNA (0 a 1), calor, porquê, semeadura e SMAP inicial
+    isna: float = 1.0
+    dias_calor: int = 0
+    falta_agua: bool = False
+    calor: bool = False
+    semeadura: date | None = None
+    umidade_inicial: float | None = None
 
     @classmethod
     def from_model(cls, detalhe: AnoDetalhe) -> "AnoDetalheSchema":
@@ -107,7 +110,88 @@ class AnoDetalheSchema(_Frozen):
             dias_sem_chuva=detalhe.dias_sem_chuva,
             enso=detalhe.enso,
             texto=detalhe.texto,
+            isna=detalhe.isna,
+            dias_calor=detalhe.dias_calor,
+            falta_agua=detalhe.falta_agua,
+            calor=detalhe.calor,
+            semeadura=detalhe.semeadura,
+            umidade_inicial=detalhe.umidade_inicial,
         )
+
+
+class AguaFuturoSchema(_Frozen):
+    falta_normal_mm: int
+    falta_min_mm: int
+    falta_max_mm: int
+    mudanca_mm: int
+    modelos: int
+
+
+class AguaSchema(_Frozen):
+    """Linha "Água" e sede da cultura (tarefa 0044): medianas do balanço hídrico no ciclo, em mm."""
+
+    precisa_mm: int
+    chove_mm: int
+    falta_normal_mm: int
+    falta_seco_mm: int
+    sede: str
+    cad_mm: int
+    anos: int
+    futuro: AguaFuturoSchema | None = None
+
+    @classmethod
+    def from_model(cls, agua: AguaOpcao) -> "AguaSchema":
+        futuro = agua.futuro
+        return cls(
+            precisa_mm=agua.precisa_mm,
+            chove_mm=agua.chove_mm,
+            falta_normal_mm=agua.falta_normal_mm,
+            falta_seco_mm=agua.falta_seco_mm,
+            sede=agua.sede,
+            cad_mm=agua.cad_mm,
+            anos=agua.anos,
+            futuro=(
+                AguaFuturoSchema(
+                    falta_normal_mm=futuro.falta_normal_mm,
+                    falta_min_mm=futuro.falta_min_mm,
+                    falta_max_mm=futuro.falta_max_mm,
+                    mudanca_mm=futuro.mudanca_mm,
+                    modelos=futuro.modelos,
+                )
+                if futuro is not None
+                else None
+            ),
+        )
+
+
+class CriterioSchema(_Frozen):
+    """O critério real de "deu certo" do motor (PRD 7.2) para a cultura."""
+
+    isna_min: float
+    calor_temp_c: float
+    calor_min_dias: int
+    fase: str
+    janela_dias: int
+
+
+class CicloSchema(_Frozen):
+    dias: int
+    floracao_dias: int
+
+
+class ObservarSchema(_Frozen):
+    veranico_dias: int
+    anos_calor: int
+    total: int
+
+
+class EnsoAcertoSchema(_Frozen):
+    fase: FaseEnso
+    anos: int
+    bons: int
+    anos_outros: int
+    bons_outros: int
+    clara: bool
 
 
 class OpcaoSchema(_Frozen):
@@ -117,13 +201,19 @@ class OpcaoSchema(_Frozen):
     data_limite: str | None
     chuva: ChuvaSchema
     futuro: FuturoSchema | None
-    dinheiro: DinheiroSchema
+    renda: RendaSchema
     terra: TerraSchema
     notas: NotasSchema
     porque: list[str]
     como_fazer: list[str]
     # P1: um item por ano da faixa de chuva, na mesma ordem (opcional no contrato do front)
     anos_detalhe: list[AnoDetalheSchema] = Field(default_factory=list)
+    # Aba Sugestão (tarefa 0044); opcionais no contrato do front
+    agua: AguaSchema | None = None
+    criterio: CriterioSchema | None = None
+    ciclo: CicloSchema | None = None
+    observar: ObservarSchema | None = None
+    enso_acerto: list[EnsoAcertoSchema] = Field(default_factory=list)
 
     @classmethod
     def from_model(cls, o: ResultadoOpcao) -> "OpcaoSchema":
@@ -150,17 +240,55 @@ class OpcaoSchema(_Frozen):
                 if o.futuro is not None
                 else None
             ),
-            dinheiro=DinheiroSchema(
-                margem_ha=o.margem_ha,
-                rotulo=o.rotulo_dinheiro,
-                texto=o.texto_dinheiro,
-                pior_ano_seco_ha=o.pior_ano_seco_ha,
+            renda=RendaSchema(
+                da_grao=o.da_grao,
+                anos_aperto=o.total_anos - o.anos_bons_chuva,
+                rotulo=o.rotulo_renda,
+                texto=o.texto_renda,
+                risco=o.texto_risco,
             ),
             terra=TerraSchema(nota=o.notas.solo, rotulo=o.rotulo_terra, texto=o.texto_terra),
             notas=NotasSchema.from_model(o.notas),
             porque=list(o.porque),
             como_fazer=list(o.como_fazer),
             anos_detalhe=[AnoDetalheSchema.from_model(d) for d in o.anos_detalhe],
+            agua=AguaSchema.from_model(o.agua) if o.agua is not None else None,
+            criterio=(
+                CriterioSchema(
+                    isna_min=o.criterio.isna_min,
+                    calor_temp_c=o.criterio.calor_temp_c,
+                    calor_min_dias=o.criterio.calor_min_dias,
+                    fase=o.criterio.fase,
+                    janela_dias=o.criterio.janela_dias,
+                )
+                if o.criterio is not None
+                else None
+            ),
+            ciclo=(
+                CicloSchema(dias=o.ciclo.dias, floracao_dias=o.ciclo.floracao_dias)
+                if o.ciclo is not None
+                else None
+            ),
+            observar=(
+                ObservarSchema(
+                    veranico_dias=o.observar.veranico_dias,
+                    anos_calor=o.observar.anos_calor,
+                    total=o.observar.total,
+                )
+                if o.observar is not None
+                else None
+            ),
+            enso_acerto=[
+                EnsoAcertoSchema(
+                    fase=e.fase,
+                    anos=e.anos,
+                    bons=e.bons,
+                    anos_outros=e.anos_outros,
+                    bons_outros=e.bons_outros,
+                    clara=e.clara,
+                )
+                for e in o.enso_acerto
+            ],
         )
 
 
@@ -168,6 +296,16 @@ class ForaDaJanelaSchema(_Frozen):
     id: str
     nome: str
     texto: str
+    # Data limite do ZARC (tarefa 0044): o aviso único da colheita tarde junta as culturas por data
+    data_limite: date | None = None
+
+
+class ObjetivoSchema(_Frozen):
+    """Ordem das opções e plano sugerido para um objetivo do produtor (tarefa 0044)."""
+
+    ordem: list[str]
+    plano: list[str]
+    nota_plano: float
 
 
 class AlternativaSchema(_Frozen):
@@ -195,21 +333,6 @@ class Plano3AnosSchema(_Frozen):
     hoje: PlanoSchema
 
 
-class RegraDiaPlantarSchema(_Frozen):
-    data_limite: date
-    texto: str
-
-
-class RegraDataSchema(_Frozen):
-    """Regra da data (0038): chuva de `inicio` à véspera de `data_limite` < `chuva_min_mm`."""
-
-    data_limite: date
-    inicio: date
-    dias: int
-    chuva_min_mm: int
-    media_mm: int
-
-
 class SmapAgoraSchema(_Frozen):
     """O SMAP de agora (tarefa 0038): só informa, não decide o plano."""
 
@@ -225,34 +348,17 @@ class SinalSchema(_Frozen):
     motivo: str
     fonte: list[str]
     data: date
-    regra_dia_plantar: RegraDiaPlantarSchema
-    # Campos opcionais da tarefa 0038 (nulos sem a série de chuva ou sem o SMAP recente)
-    regra_data: RegraDataSchema | None = None
+    # Campo opcional da tarefa 0038 (nulo sem o SMAP recente)
     smap_agora: SmapAgoraSchema | None = None
 
     @classmethod
     def from_model(cls, sinal: SinalOutono) -> "SinalSchema":
-        regra, smap = sinal.regra_data, sinal.smap_agora
+        smap = sinal.smap_agora
         return cls(
             nivel=sinal.nivel,
             motivo=sinal.motivo,
             fonte=list(sinal.fonte),
             data=sinal.data,
-            regra_dia_plantar=RegraDiaPlantarSchema(
-                data_limite=sinal.regra_dia_plantar.data_limite,
-                texto=sinal.regra_dia_plantar.texto,
-            ),
-            regra_data=(
-                RegraDataSchema(
-                    data_limite=regra.data_limite,
-                    inicio=regra.inicio,
-                    dias=regra.dias,
-                    chuva_min_mm=regra.chuva_min_mm,
-                    media_mm=regra.media_mm,
-                )
-                if regra is not None
-                else None
-            ),
             smap_agora=(
                 SmapAgoraSchema(percentil=smap.percentil, data=smap.data, texto=smap.texto)
                 if smap is not None
@@ -275,6 +381,10 @@ class RecomendacaoResponse(_Frozen):
     aviso: str
     # Nulo enquanto não houver previsão nem dado da terra (nada de previsão inventada)
     sinal: SinalSchema | None = None
+    # Aba Sugestão (tarefa 0044): ordem e plano por objetivo, clima de 2041-2060 e geada na célula
+    objetivos: dict[str, ObjetivoSchema] = Field(default_factory=dict)
+    clima_futuro: ClimaFuturoSchema | None = None
+    geada: AlertaGeadaSchema | None = None
 
     @classmethod
     def from_model(cls, rec: Recomendacao) -> "RecomendacaoResponse":
@@ -293,7 +403,8 @@ class RecomendacaoResponse(_Frozen):
             ],
             opcoes=[OpcaoSchema.from_model(o) for o in rec.opcoes],
             fora_da_janela=[
-                ForaDaJanelaSchema(id=f.id, nome=f.nome, texto=f.texto) for f in rec.fora_da_janela
+                ForaDaJanelaSchema(id=f.id, nome=f.nome, texto=f.texto, data_limite=f.data_limite)
+                for f in rec.fora_da_janela
             ],
             pousio=PousioSchema(texto=rec.texto_pousio),
             plano_3_anos=Plano3AnosSchema(
@@ -304,6 +415,14 @@ class RecomendacaoResponse(_Frozen):
             versao_dados=rec.versao_dados,
             aviso=rec.aviso,
             sinal=SinalSchema.from_model(rec.sinal) if rec.sinal is not None else None,
+            objetivos={
+                chave: ObjetivoSchema(
+                    ordem=list(o.ordem), plano=list(o.plano), nota_plano=o.nota_plano
+                )
+                for chave, o in rec.objetivos.items()
+            },
+            clima_futuro=_dump(rec.clima_futuro),  # type: ignore[arg-type]
+            geada=_dump(rec.geada),  # type: ignore[arg-type]
         )
 
 

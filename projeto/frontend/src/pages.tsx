@@ -1,34 +1,35 @@
 /**
  * Ligação de cada rota: controller (estado) → view (desenho). Sem lógica aqui.
  */
-import { Navigate, Outlet, ScrollRestoration } from 'react-router'
+import { Navigate, Outlet, ScrollRestoration, useParams, useSearchParams } from 'react-router'
 import { useAnswerController } from './controllers/useAnswerController'
+import { useAvisosController } from './controllers/useAvisosController'
 import { useCommunityController } from './controllers/useCommunityController'
+import { useGuideArticleController, useGuideController } from './controllers/useGuideController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useMethodController } from './controllers/useMethodController'
 import { useMissionController } from './controllers/useMissionController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
+import { useExampleController } from './controllers/useExampleController'
 import { useOptionsController } from './controllers/useOptionsController'
-import { usePastSeasonController } from './controllers/usePastSeasonController'
 import { usePlanController } from './controllers/usePlanController'
 import { useSatelliteController } from './controllers/useSatelliteController'
-import { useReportController } from './controllers/useReportController'
 import { useShellController } from './controllers/useShellController'
 import { useTelegramLink } from './controllers/useTelegramLink'
 import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
-import { EXAMPLE_FARM } from './services/locationService'
-import { buildFlowQuery } from './services/flowParams'
+import { keepFlowQuery } from './services/flowParams'
 import { AnswerView } from './views/AnswerView'
+import { AvisosView } from './views/AvisosView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
+import { FlowLoading } from './views/FlowStates'
+import { GuideArticleView, GuideView } from './views/GuideView'
 import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
 import { OptionsView } from './views/OptionsView'
-import { PastSeasonView } from './views/PastSeasonView'
 import { PlanView } from './views/PlanView'
-import { ReportView } from './views/ReportView'
 import { SatelliteView } from './views/SatelliteView'
 import { ShellView } from './views/ShellView'
 import { StartView } from './views/StartView'
@@ -61,12 +62,20 @@ export function WherePage() {
       t={t}
       center={state.center}
       place={state.place}
+      area={state.area}
       outside={state.outside}
+      canConfirm={state.canConfirm}
       locating={state.locating}
       locationError={state.locationError}
+      query={state.query}
+      options={state.options}
+      searchStatus={state.searchStatus}
+      notice={state.notice}
       onMove={state.move}
       onUseLocation={state.useMyLocation}
       onConfirm={state.confirm}
+      onQueryChange={state.changeQuery}
+      onSelectOption={state.selectOption}
     />
   )
 }
@@ -82,16 +91,21 @@ export function WhenPage() {
       lang={lang}
       backTo={state.backTo}
       suggestion={state.suggestion}
+      suggestionApplied={state.suggestionApplied}
+      onUseSuggestion={state.applySuggestedDate}
       selected={state.selected}
-      dateOpen={state.dateOpen}
       date={state.date}
       dateBand={state.dateBand}
       window={state.window}
-      onSelect={state.select}
-      onOpenDate={state.openDate}
       onDateChange={state.changeDate}
+      bandsOpen={state.bandsOpen}
+      onToggleBands={state.toggleBands}
+      onSelect={state.select}
       onConfirm={state.confirm}
       rainChart={state.rainChart}
+      rainLeft={state.rainLeft}
+      rainEnd={state.rainEnd}
+      delayCost={state.delayCost}
       soyWarning={state.soyWarning}
       onDismissSoyWarning={state.dismissSoyWarning}
     />
@@ -139,6 +153,15 @@ export function SatellitePage() {
       history={state.history}
       confirmations={state.confirmations}
       onConfirmSeason={state.confirmSeason}
+      share={
+        state.share && {
+          state: state.share,
+          communityTo: state.communityTo,
+          onToggle: state.toggleShare,
+          onChange: state.changeShare,
+          onSend: (year) => void state.sendShare(year),
+        }
+      }
       noSoy={state.noSoy}
       adjustTo={state.adjustTo}
       rain={state.rain}
@@ -148,13 +171,18 @@ export function SatellitePage() {
       onToggleSoil={state.toggleSoil}
       onChooseSoil={state.chooseSoil}
       onConfirm={state.confirm}
+      xray={state.xray}
+      heatmap={state.heatmap}
+      alerts={state.alerts}
+      cards={state.cards}
+      answerTo={state.answerTo}
     />
   )
 }
 
 export function AnswerPage() {
   const { lang, messages: t } = useI18n()
-  useDocumentTitle(t.answer.best)
+  useDocumentTitle(t.suggestion.tabs.suggestion)
   const state = useAnswerController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
   return (
@@ -164,31 +192,47 @@ export function AnswerPage() {
       nav={state.nav}
       status={state.status}
       onRetry={state.retry}
-      answer={state.answer}
+      suggestion={state.suggestion}
+      colheita={state.colheita}
       aviso={state.aviso}
       sampleData={state.sampleData}
-      reportTo={state.reportTo}
       telegramHref={state.telegramHref}
       rain={state.rain}
+      rainEnd={state.rainEnd}
+      planTo={state.planTo}
+      year={state.year}
     />
   )
 }
 
+/**
+ * Endereços antigos (tarefa 0044): `/relatorio` saiu e `/safra-passada` virou o detalhe do ano no explorador
+ * da Sugestão. Levam para a Sugestão com o mesmo caminho (e o `ano`, na safra passada).
+ */
+export function LegacyAnswerRedirect({ keepYear = false }: { keepYear?: boolean }) {
+  const [search] = useSearchParams()
+  const query = keepFlowQuery(search.toString())
+  const year = keepYear ? search.get('ano') : null
+  const withYear = year && /^\d{4}$/.test(year) ? `${query}${query ? '&' : '?'}ano=${year}` : query
+  return <Navigate to={`/resposta${withYear}`} replace />
+}
+
 export function OptionsPage() {
-  const { messages: t } = useI18n()
-  useDocumentTitle(t.options.title)
+  const { lang, messages: t } = useI18n()
+  useDocumentTitle(t.suggestion.compareTitle)
   const state = useOptionsController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
   return (
     <OptionsView
       t={t}
+      lang={lang}
       nav={state.nav}
       status={state.status}
       onRetry={state.retry}
-      axis={state.axis}
-      onAxis={state.chooseAxis}
-      summary={state.summary}
-      rain={state.rain}
+      compare={state.compare}
+      onToggle={state.toggle}
+      onCompareWith={state.compareWith}
+      planLink={state.planLink}
     />
   )
 }
@@ -206,80 +250,43 @@ export function PlanPage() {
       status={state.status}
       onRetry={state.retry}
       signal={state.signal}
-      scenario={state.scenario}
-      onScenario={state.chooseScenario}
-      areaInput={state.areaInput}
-      onAreaChange={state.changeArea}
-      onAreaCommit={state.commitArea}
-      onAreaStep={state.stepArea}
-      totals={state.totals}
-      rule={state.rule}
       plan={state.plan}
-      communityTo={state.communityTo}
-      pastTo={state.pastTo}
-      showGainReference={state.showGainReference}
-    />
-  )
-}
-
-export function PastSeasonPage() {
-  const { lang, messages: t } = useI18n()
-  const state = usePastSeasonController()
-  useDocumentTitle(t.past.title(state.year))
-  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
-  return (
-    <PastSeasonView
-      t={t}
-      lang={lang}
-      status={state.status}
-      onRetry={state.retry}
-      backTo={state.backTo}
-      year={state.year}
-      onYear={state.chooseYear}
-      season={state.season}
-      sampleData={state.sampleData}
-      telegramHref={state.telegramHref}
-    />
-  )
-}
-
-export function ReportPage() {
-  const { lang, messages: t } = useI18n()
-  useDocumentTitle(t.report.title)
-  const state = useReportController()
-  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
-  return (
-    <ReportView
-      t={t}
-      lang={lang}
-      status={state.status}
-      onRetry={state.retry}
-      backTo={state.backTo}
-      talhao={state.talhao}
-      recomendacao={state.recomendacao}
-      example={state.example}
-      place={state.place}
+      evaluation={state.evaluation}
       today={state.today}
-      onPrint={state.print}
+      onChooseCrop={state.chooseCrop}
+      onReset={state.reset}
+      onAnswerToday={state.answerToday}
+      communityTo={state.communityTo}
     />
   )
 }
 
 export function CommunityPage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.community.title)
   const state = useCommunityController()
   return (
     <CommunityView
       t={t}
+      lang={lang}
       backTo={state.backTo}
+      center={state.center}
+      radiusKm={state.radiusKm}
       status={state.status}
       onRetry={state.retry}
-      community={state.community}
-      center={state.center}
-      points={state.points}
-      demo={state.demo}
-      onDemo={state.showDemo}
+      summary={state.summary}
+      markers={state.markers}
+      canTell={state.canTell}
+      markTo={state.markTo}
+      years={state.years}
+      form={state.form}
+      onOpenForm={state.openForm}
+      onPlanting={state.setPlanting}
+      onRain={state.setRain}
+      onEvent={state.setEvent}
+      onSend={() => void state.send()}
+      onRemove={(id) => void state.remove(id)}
+      removing={state.removing}
       region={state.region}
       regionStatus={state.regionStatus}
       onRegionRetry={state.retryRegion}
@@ -291,12 +298,13 @@ export function CommunityPage() {
 }
 
 export function MethodPage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.method.title)
   const state = useMethodController()
   return (
     <MethodView
       t={t}
+      lang={lang}
       backTo={state.backTo}
       status={state.status}
       onRetry={state.retry}
@@ -306,13 +314,17 @@ export function MethodPage() {
       sources={state.sources}
       onRetrySources={state.retrySources}
       rain={state.rain}
+      rules={state.rules}
     />
   )
 }
 
 /** "Ver um exemplo pronto": abre a resposta da fazenda de exemplo (RF-11). */
+/** "Ver um exemplo pronto": a resposta da fazenda de exemplo com a faixa do satélite (tarefa 0049). */
 export function ExamplePage() {
-  return <Navigate to={`/resposta${buildFlowQuery({ ...EXAMPLE_FARM, colheita: 'meio', exemplo: true })}`} replace />
+  const { messages: t } = useI18n()
+  const { to } = useExampleController()
+  return to ? <Navigate to={to} replace /> : <FlowLoading label={t.common.loading} />
 }
 
 export function DesignSystemPage() {
@@ -320,4 +332,49 @@ export function DesignSystemPage() {
   useDocumentTitle(t.designSystem.title)
   const state = useDesignSystemController()
   return <DesignSystemView t={t} {...state} />
+}
+
+export function GuidePage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.guide.title)
+  const state = useGuideController()
+  return (
+    <GuideView
+      t={t}
+      backTo="/comunidade"
+      groups={state.groups}
+      query={state.query}
+      onQuery={state.setQuery}
+      count={state.count}
+    />
+  )
+}
+
+export function GuideArticlePage() {
+  const { messages: t } = useI18n()
+  const { artigo = '' } = useParams()
+  const { article } = useGuideArticleController(artigo)
+  useDocumentTitle(article?.title ?? t.guide.title)
+  return <GuideArticleView t={t} article={article} />
+}
+
+/** Tela "Avisos" (seção 6 da remodelagem, tarefa 0046): os avisos do ponto salvo no aparelho. */
+export function AvisosPage() {
+  const { lang, messages: t } = useI18n()
+  useDocumentTitle(t.alerts.title)
+  const state = useAvisosController()
+  return (
+    <AvisosView
+      t={t}
+      lang={lang}
+      status={state.status}
+      onRetry={state.retry}
+      avisos={state.avisos}
+      groups={state.groups}
+      place={state.place}
+      explorerTo={state.explorerTo}
+      markTo={state.markTo}
+      backTo={state.backTo}
+    />
+  )
 }

@@ -39,6 +39,154 @@ export function RainBarChart({ label, caption, bars }: { label: string; caption:
   )
 }
 
+type RainLeftChartProps = {
+  /** Descrição acessível (o gráfico inteiro é uma imagem com a frase que ele mostra). */
+  label: string
+  caption: string
+  /** Um ponto por dia de colheita, em ordem: a chuva que sobra na mediana e num ano seco (mm). */
+  points: readonly { median: number; dry: number }[]
+  /** Maior valor do eixo (mm); `topLabel` é o texto dessa linha (ex.: "620 mm"). */
+  max: number
+  topLabel?: string
+  /** O dia escolhido (índice em `points`): linha vertical e um ponto em cada curva. */
+  selectedIndex: number
+  /** Rótulos do eixo dos dias (índice em `points`). */
+  ticks: readonly { index: number; label: string }[]
+  legend: { median: string; dry: string }
+}
+
+const LEFT_W = 320
+const LEFT_H = 170
+const LEFT_PAD = { left: 6, right: 6, top: 18, bottom: 24 }
+
+/**
+ * Chuva que sobra depois da colheita (tela 3): quanto mais tarde a colheita, menos chuva sobra. A
+ * mediana é a linha cheia e o ano seco a tracejada (não depende só da cor); a legenda escreve as duas.
+ */
+export function RainLeftChart({ label, caption, points, max, topLabel, selectedIndex, ticks, legend }: RainLeftChartProps) {
+  const plotW = LEFT_W - LEFT_PAD.left - LEFT_PAD.right
+  const plotH = LEFT_H - LEFT_PAD.top - LEFT_PAD.bottom
+  const x = (index: number) => LEFT_PAD.left + (points.length > 1 ? (index / (points.length - 1)) * plotW : plotW / 2)
+  const y = (value: number) => LEFT_PAD.top + (max > 0 ? (1 - value / max) * plotH : plotH)
+  const line = (pick: (point: { median: number; dry: number }) => number) =>
+    points.map((point, index) => `${x(index).toFixed(1)},${y(pick(point)).toFixed(1)}`).join(' ')
+  const selected = points[selectedIndex]
+  const anchor = (index: number) => (index === 0 ? 'start' : index === points.length - 1 ? 'end' : 'middle')
+  return (
+    <figure className={styles.figure}>
+      <svg role="img" aria-label={label} viewBox={`0 0 ${LEFT_W} ${LEFT_H}`} className={styles.leftSvg}>
+        <line x1={LEFT_PAD.left} x2={LEFT_W - LEFT_PAD.right} y1={y(max)} y2={y(max)} className={styles.gridLine} />
+        <line x1={LEFT_PAD.left} x2={LEFT_W - LEFT_PAD.right} y1={y(0)} y2={y(0)} className={styles.axisLine} />
+        {topLabel && (
+          <text x={LEFT_PAD.left} y={y(max) - 5} className={styles.svgText}>
+            {topLabel}
+          </text>
+        )}
+        <polyline data-line="median" points={line((point) => point.median)} className={styles.lineMedian} />
+        <polyline data-line="dry" points={line((point) => point.dry)} className={styles.lineDry} strokeDasharray="7 5" />
+        {selected && (
+          <g data-marker>
+            <line x1={x(selectedIndex)} x2={x(selectedIndex)} y1={LEFT_PAD.top} y2={y(0)} className={styles.markerLine} />
+            <circle cx={x(selectedIndex)} cy={y(selected.median)} r={5} className={styles.dotMedian} />
+            <circle cx={x(selectedIndex)} cy={y(selected.dry)} r={5} className={styles.dotDry} />
+          </g>
+        )}
+        {ticks.map((tick) => (
+          <text key={tick.index} x={x(tick.index)} y={LEFT_H - 6} textAnchor={anchor(tick.index)} className={styles.svgText}>
+            {tick.label}
+          </text>
+        ))}
+      </svg>
+      <div className={styles.lineLegend}>
+        <span className={styles.legendItem}>
+          <svg viewBox="0 0 28 8" className={styles.legendSwatch} aria-hidden="true">
+            <line x1="0" x2="28" y1="4" y2="4" className={styles.lineMedian} />
+          </svg>
+          {legend.median}
+        </span>
+        <span className={styles.legendItem}>
+          <svg viewBox="0 0 28 8" className={styles.legendSwatch} aria-hidden="true">
+            <line x1="0" x2="28" y1="4" y2="4" className={styles.lineDry} strokeDasharray="7 5" />
+          </svg>
+          {legend.dry}
+        </span>
+      </div>
+      <figcaption className={styles.caption}>{caption}</figcaption>
+    </figure>
+  )
+}
+
+type RainEtoBar = {
+  label: string
+  /** Alturas em % da maior barra do gráfico (chuva ou gasto). */
+  rainPct: number
+  etoPct: number
+  rainDisplay: string
+  etoDisplay: string
+  /** Texto do mês em destaque (ex.: "chove menos"): o destaque é escrito, não só cor. */
+  tag?: string
+}
+
+/**
+ * Chuva e o que a lavoura gasta (ETo), mês a mês (tela 3). A chuva é a barra cheia e o gasto a
+ * listrada; o mês em que a chuva fica menor que o gasto ganha contorno e o texto `tag`.
+ */
+export function RainEtoChart({
+  label,
+  caption,
+  bars,
+  legend,
+}: {
+  label: string
+  caption: string
+  bars: readonly RainEtoBar[]
+  legend: { rain: string; eto: string }
+}) {
+  return (
+    <figure className={styles.figure}>
+      <div
+        role="img"
+        aria-label={label}
+        className={styles.etoBars}
+        style={{ gridTemplateColumns: `repeat(${bars.length}, minmax(0, 1fr))` }}
+      >
+        {bars.map((bar) => (
+          <span key={bar.label} className={styles.etoColumn} data-highlight={bar.tag ? 'true' : undefined}>
+            <span className={styles.etoPair}>
+              <span className={styles.etoTrack}>
+                <span data-bar="rain" className={styles.etoRain} style={{ height: `${bar.rainPct}%` }}>
+                  <span className={styles.barValue}>{bar.rainDisplay}</span>
+                </span>
+              </span>
+              <span className={styles.etoTrack}>
+                <span data-bar="eto" className={styles.etoUse} style={{ height: `${bar.etoPct}%` }}>
+                  <span className={styles.barValue}>{bar.etoDisplay}</span>
+                </span>
+              </span>
+            </span>
+            {/* Pé de altura igual em todos os meses: o texto do destaque não encurta as barras. */}
+            <span className={styles.etoFoot}>
+              <span className={styles.barLabel}>{bar.label}</span>
+              {bar.tag && <span className={styles.etoTag}>{bar.tag}</span>}
+            </span>
+          </span>
+        ))}
+      </div>
+      <div className={styles.lineLegend}>
+        <span className={styles.legendItem}>
+          <span className={styles.swatchRain} aria-hidden="true" />
+          {legend.rain}
+        </span>
+        <span className={styles.legendItem}>
+          <span className={styles.swatchEto} aria-hidden="true" />
+          {legend.eto}
+        </span>
+      </div>
+      <figcaption className={styles.caption}>{caption}</figcaption>
+    </figure>
+  )
+}
+
 export function NeighborDots({ liked, total, label }: { liked: number; total: number; label: string }) {
   return (
     <span role="img" aria-label={label} className={styles.dots}>

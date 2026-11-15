@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.dependencies import (
+    get_area_queimada_repository,
     get_climate_repository,
     get_crop_params_repository,
     get_enso_forecast_repository,
@@ -24,6 +25,7 @@ from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.crop_option import CropParams
 from app.models.enso import OniYear
 from app.models.talhao import NdviRecord, SoloInfo
+from app.repositories.area_queimada_repository import FileAreaQueimadaRepository
 from app.repositories.climate_repository import cell_id_for
 from app.repositories.sinal_outono_repository import NoAutumnSignalDataRepository
 from app.repositories.soja_recente_repository import FileSojaRecenteRepository
@@ -31,9 +33,7 @@ from app.repositories.soja_recente_repository import FileSojaRecenteRepository
 DAYS = 212
 
 
-def _crop(
-    crop_id: str, tipo: str, limite: str | None, solo: tuple[int, int, int], **kw
-) -> CropParams:
+def _crop(crop_id: str, tipo: str, limite: str | None, solo: tuple[int, int, int]) -> CropParams:
     palhada, nitrogenio, pragas = solo
     return CropParams(
         id=crop_id,
@@ -49,41 +49,16 @@ def _crop(
         solo_pragas=pragas,
         n_deixado_kg=0,
         como_fazer=("Passo 1",),
-        **kw,
     )
 
 
 CROPS = [
     _crop("pousio", "pousio", None, (0, 0, 0)),
-    _crop(
-        "milho_safrinha",
-        "grao",
-        "02-28",
-        (20, 0, 0),
-        produtividade_padrao_sc_ha=80.0,
-        preco_padrao_saca=62.0,
-        custo_padrao_ha=3500.0,
-    ),
-    _crop(
-        "sorgo",
-        "grao",
-        "03-20",
-        (20, 0, 15),
-        produtividade_padrao_sc_ha=60.0,
-        preco_padrao_saca=49.6,
-        custo_padrao_ha=2200.0,
-    ),
-    _crop(
-        "milho_braquiaria",
-        "consorcio",
-        "02-28",
-        (40, 0, 10),
-        produtividade_padrao_sc_ha=76.0,
-        preco_padrao_saca=62.0,
-        custo_padrao_ha=3800.0,
-    ),
-    _crop("milheto", "cobertura", "03-15", (35, 0, 20), custo_padrao_ha=600.0),
-    _crop("crotalaria", "cobertura", "02-28", (25, 30, 30), custo_padrao_ha=800.0),
+    _crop("milho_safrinha", "grao", "02-28", (20, 0, 0)),
+    _crop("sorgo", "grao", "03-20", (20, 0, 15)),
+    _crop("milho_braquiaria", "consorcio", "02-28", (40, 0, 10)),
+    _crop("milheto", "cobertura", "03-15", (35, 0, 20)),
+    _crop("crotalaria", "cobertura", "02-28", (25, 30, 30)),
 ]
 
 
@@ -208,6 +183,10 @@ def client() -> Iterator[TestClient]:
     app.dependency_overrides[get_recent_soil_moisture_repository] = NoAutumnSignalDataRepository
     # Sem a soja recente do SOJA_RECENTE_PATH da máquina: soja_recente: null.
     app.dependency_overrides[get_soja_recente_repository] = lambda: FileSojaRecenteRepository(None)
+    # Sem a área queimada do AREA_QUEIMADA_PATH da máquina: o alerta de fogo não aparece (0043).
+    app.dependency_overrides[get_area_queimada_repository] = lambda: FileAreaQueimadaRepository(
+        None
+    )
     # Sem busca sob demanda: ponto sem dados fica fora da área (nada de rede real nos testes).
     app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)

@@ -210,3 +210,17 @@ class Cmip6Delta:
         require_finite("tmax_c", self.tmax_c)
         if self.tmin_c is not None:
             require_finite("tmin_c", self.tmin_c)
+
+
+@dataclass(frozen=True)
+class CellRainTotal:
+    """Chuva somada de uma célula num ano, numa janela de dias (raio-X, tarefa 0043).
+
+    `dias` = quantos dias da janela a temporada guardada tinha (menos que a janela: ano faltando).
+    """
+
+    cell_id: str
+    year: int
+    total_mm: float
+    dias: int
+    rain_source: str

@@ -63,7 +63,6 @@ def _result(
         aperto=falta_agua or calor,
         isna=0.4 if falta_agua else 0.9,
         dias_calor=dias_calor,
-        fator_perda=0.6 if falta_agua else 0.0,
         falta_agua=falta_agua,
         calor=calor,
     )
@@ -110,7 +109,34 @@ def test_should_describe_a_year_with_a_dry_spell_in_the_critical_stage() -> None
             "água por volta de 19 de abril e ficou 12 dias sem chuva. Faltou água nessa fase. "
             "Ano de El Niño."
         ),
+        isna=0.4,
+        dias_calor=0,
+        falta_agua=True,
+        calor=False,
+        semeadura=date(2019, 2, 18),
+        umidade_inicial=None,
     )
+
+
+def test_should_bring_the_motor_numbers_for_the_year_by_year_explorer() -> None:
+    # Tarefa 0044: a barra do ano é o ISNA do motor; o detalhe mostra os dias de calor, o porquê,
+    # o dia de plantar e a umidade do SMAP no dia de plantar (só nos anos que têm SMAP).
+    resultados = [_result(2019, calor=True, dias_calor=4), _result(2020)]
+    service = YearDetailService(enso_repo=ONI)
+
+    com_smap, sem_smap = service.year_details(
+        crop=_crop(),
+        semeadura=SOWING,
+        seasons=[_season(2019), _season(2020)],
+        resultados=resultados,
+        smap_wetness_by_year={2019: 0.62},
+    )
+
+    assert (com_smap.isna, com_smap.dias_calor, com_smap.calor) == (0.9, 4, True)
+    assert com_smap.falta_agua is False
+    assert com_smap.semeadura == date(2019, 2, 18)
+    assert com_smap.umidade_inicial == 0.62
+    assert sem_smap.umidade_inicial is None
 
 
 def test_should_describe_a_good_year_without_a_dry_day_in_the_critical_stage() -> None:

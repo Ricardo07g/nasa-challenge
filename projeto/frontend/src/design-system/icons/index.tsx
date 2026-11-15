@@ -7,7 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  Banknote,
+  Bell,
   CalendarDays,
   Check,
   ChevronDown,
@@ -15,10 +15,13 @@ import {
   CircleHelp,
   CloudOff,
   CloudRain,
+  CloudRainWind,
   CloudSun,
   DropletOff,
   Droplets,
+  Eye,
   FileText,
+  Flame,
   History,
   Layers,
   Leaf,
@@ -28,8 +31,10 @@ import {
   Minus,
   Plus,
   Satellite,
+  Search,
   Send,
   ShieldCheck,
+  Snowflake,
   Sprout,
   Thermometer,
   TriangleAlert,
@@ -156,8 +161,9 @@ export function SproutIcon({ size = 24 }: IconProps) {
   return <Sprout size={size} {...decorative} />
 }
 
-export function MoneyIcon({ size = 24 }: IconProps) {
-  return <Banknote size={size} {...decorative} />
+/** Renda: dá grão para vender (tarefa 0040: nenhum valor em reais, por isso nada de nota de dinheiro). */
+export function GrainIcon({ size = 24 }: IconProps) {
+  return <Wheat size={size} {...decorative} />
 }
 
 export function LeafIcon({ size = 24 }: IconProps) {
@@ -217,4 +223,31 @@ export function HeatIcon({ size = 16 }: IconProps) {
 
 export function SendIcon({ size = 18 }: IconProps) {
   return <Send size={size} {...decorative} />
+}
+
+// Busca de endereço (tela "Onde fica a lavoura")
+export function SearchIcon({ size = 20 }: IconProps) {
+  return <Search size={size} {...decorative} />
+}
+
+// Alertas da sua área (raio-X, tela 4, tarefa 0043)
+export function FrostIcon({ size = 20 }: IconProps) {
+  return <Snowflake size={size} {...decorative} />
+}
+
+export function HeavyRainIcon({ size = 20 }: IconProps) {
+  return <CloudRainWind size={size} {...decorative} />
+}
+
+export function FireIcon({ size = 20 }: IconProps) {
+  return <Flame size={size} {...decorative} />
+}
+
+// Tela "Avisos" (tarefa 0046): o botão do cabeçalho e o nível "Fique de olho"
+export function AlertsIcon({ size = 18 }: IconProps) {
+  return <Bell size={size} {...decorative} />
+}
+
+export function WatchIcon({ size = 16 }: IconProps) {
+  return <Eye size={size} {...decorative} />
 }

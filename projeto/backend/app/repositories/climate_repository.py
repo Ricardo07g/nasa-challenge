@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 import psycopg
 
 from app.constants import DEFAULT_SRID, GRID_CELL_SCALE_FACTOR
-from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
+from app.models.climate import CellRainTotal, ClimateSeason, Cmip6Delta, SmapSoilMoisture
 
 if TYPE_CHECKING:
     # Só o tipo: o cmip6_repository importa daqui as funções da célula (sem import circular).
@@ -382,3 +382,63 @@ class PostgisClimateRepository:
         if self._fallback and hasattr(self._fallback, "get_latest_smap"):
             return self._fallback.get_latest_smap(lat, lon)
         return None
+
+    def rain_totals_in_window(
+        self, inicio: str, fim: str, box: tuple[float, float, float, float]
+    ) -> list[CellRainTotal]:
+        """Chuva somada de `inicio` a `fim` ("MM-DD", inclusivos) em cada célula e ano gravados
+        cujo centro fica na caixa (`lat_min`, `lat_max`, `lon_min`, `lon_max`). Só o banco.
+
+        O recorte do vetor vai do dia `inicio` ao dia `fim` de cada ano (o PostgreSQL corta o
+        que passa do fim da temporada); `dias` diz quantos dias o recorte teve.
+        """
+        (m1, d1), (m2, d2) = (tuple(int(p) for p in text.split("-")) for text in (inicio, fim))
+        lat_min, lat_max, lon_min, lon_max = box
+        with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT cs.cell_id, cs.year, cs.rain_source,
+                       COALESCE((SELECT SUM(v) FROM unnest(cs.rain_mm[w.lo:w.hi]) AS v), 0),
+                       COALESCE(cardinality(cs.rain_mm[w.lo:w.hi]), 0)
+                FROM climate_season cs
+                JOIN grid_cell g ON g.id = cs.cell_id
+                CROSS JOIN LATERAL (
+                    SELECT (make_date(cs.year, %(m1)s, %(d1)s) - cs.start_date) + 1 AS lo,
+                           (make_date(cs.year, %(m2)s, %(d2)s) - cs.start_date) + 1 AS hi
+                ) AS w
+                WHERE ST_Intersects(
+                    g.center,
+                    ST_MakeEnvelope(%(lon_min)s, %(lat_min)s, %(lon_max)s, %(lat_max)s, %(srid)s)
+                )
+                ORDER BY cs.cell_id, cs.year;
+                """,
+                {
+                    "m1": m1,
+                    "d1": d1,
+                    "m2": m2,
+                    "d2": d2,
+                    "lat_min": lat_min,
+                    "lat_max": lat_max,
+                    "lon_min": lon_min,
+                    "lon_max": lon_max,
+                    "srid": DEFAULT_SRID,
+                },
+            )
+            return [
+                CellRainTotal(
+                    cell_id=str(r[0]),
+                    year=int(r[1]),
+                    rain_source=str(r[2]),
+                    total_mm=float(r[3]),
+                    dias=int(r[4]),
+                )
+                for r in cur.fetchall()
+            ]
+
+
+class RegionRainRepository(Protocol):
+    """Chuva somada numa janela de dias por célula e ano numa caixa (raio-X, tarefa 0043)."""
+
+    def rain_totals_in_window(
+        self, inicio: str, fim: str, box: tuple[float, float, float, float]
+    ) -> list[CellRainTotal]: ...

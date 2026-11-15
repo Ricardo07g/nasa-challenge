@@ -40,21 +40,26 @@
   background: var(--color-surface);
 }
 
-/* Legenda "Perto de …" no canto, ao lado do zoom do mapa */
+/* Endereço aproximado logo abaixo da ponta do alfinete */
 .place {
   position: absolute;
-  top: 18px;
-  left: 64px;
-  max-width: calc(100% - 85px);
+  top: calc(50% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
   z-index: 500;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 14px;
   border-radius: var(--radius-tag);
   background: var(--color-surface);
+  color: var(--color-text);
   box-shadow: var(--shadow-soft);
   font-size: var(--font-size-small);
+  line-height: var(--line-height-tight);
+  pointer-events: none;
 }
 
 .place svg {
@@ -62,9 +67,51 @@
   color: var(--color-primary);
 }
 
+/* Limite da área com dados: linha tracejada azul (a legenda diz o que é) */
+.area {
+  stroke: var(--color-secondary);
+}
+
+/* Legenda do limite, no canto de baixo (o crédito do OpenStreetMap fica no outro canto) */
+.legend {
+  position: absolute;
+  left: 10px;
+  bottom: 28px;
+  max-width: calc(100% - 20px);
+  z-index: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-tag);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-soft);
+  font-size: var(--font-size-tiny);
+  flex-wrap: wrap;
+}
+
+.legendAction {
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-tag);
+  background: var(--color-surface);
+  color: var(--color-secondary-strong);
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.legendLine {
+  flex: 0 0 auto;
+  width: 26px;
+  border-top: 3px dashed var(--color-secondary);
+}
+
 @media (max-width: 768px) {
   .place {
     font-size: var(--font-size-tiny);
-    padding: 9px 12px;
+    padding: 7px 12px;
   }
 }

@@ -21,6 +21,7 @@ TABLES = (
     "soil_point",
     "ndvi_point",
     "data_run",
+    "community_report",
 )
 SEASON_DAYS = 212
 BACKEND_DIR = Path(__file__).resolve().parents[3]

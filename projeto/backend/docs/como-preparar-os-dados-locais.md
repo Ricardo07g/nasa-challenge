@@ -17,15 +17,17 @@ alguns cartões (clima futuro, histórico do talhão).
 | Histórico do talhão (NDVI) | MODIS (MOD13Q1 + MYD13Q1) pelo AppEEARS ou pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` (o mesmo nome para as duas fontes) e, depois da carga, banco (`ndvi_point`) | "Sua área ficou parada em X de Y anos" e a colheita sugerida | script `fetch_ndvi` + carga no banco |
 | Chuva diária em 0,1° (refinamento da chuva do POWER) | GPM IMERG Final (`GPM_3IMERGDF` v07) pelo OPeNDAP do GES DISC | arquivo `data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` e, depois da carga, a chuva dos anos completos no banco (`climate_season`, `rain_source = gpm_imerg`) | "Chuva mais detalhada" conectada (10 km) e "(GPM IMERG + NASA POWER)" no "Por quê?" | script `fetch_imerg` + carga no banco (`--imerg`) |
 | El Niño / La Niña de cada safrinha | ONI da NOAA (não é da NASA) | arquivo `data/baixados/noaa_oni/oni.json` (só arquivo, sem tabela) | a marca de El Niño / La Niña nos quadrinhos de chuva e na frase de cada ano | script `fetch_oni` |
-| Região pelo satélite (soja do ano parada depois da colheita, num raio de 30 km) | MODIS (MOD13Q1, MYD13Q1 e o uso do solo MCD12Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` (sem tabela ainda) | "Na sua região": a área de soja parada depois da colheita, ano a ano | script `fetch_regiao_ndvi` |
+| Região pelo satélite (soja do ano parada depois da colheita, num raio de 30 km) | MODIS (MOD13Q1, MYD13Q1 e o uso do solo MCD12Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` (sem tabela ainda) | "Na sua região": a área de soja parada depois da colheita, ano a ano (**escondido na tela** enquanto a calibração não der números críveis, tarefa 0036) | script `fetch_regiao_ndvi` |
 | Soja na safra mais recente (2025/26), pixel a pixel na caixa piloto | MODIS (MOD13Q1 e MYD13Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_soja_recente/soja_recente_2026.json` (só arquivo, sem tabela) | o aviso "Não vimos soja neste ponto na última safra" na pergunta 2, quando o ponto não parece lavoura | script `fetch_soja_recente` |
-| Chuva dos últimos 30 dias × média | GPM IMERG Late (`GPM_3IMERGDL`) + NASA POWER já no banco | arquivo `data/baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json` | "Sinal para o outono" (junto com o SMAP recente; só a chuva não acende o sinal) | script `fetch_imerg_late`, perto do plantio (fev/mar) |
-| Previsão do El Niño / La Niña (chance de cada fase, 9 estações) | NOAA CPC, "Official NOAA CPC ENSO Probabilities" (não é da NASA) | arquivo `data/baixados/noaa_enso_previsao/enso_previsao.json` (só arquivo, sem tabela) | "Sinal para o outono" na tela 7: Plano A ou Plano B, com o motivo e a regra da data (sem o arquivo: "Ainda não conectado") | script `fetch_enso_previsao`, todo mês depois da 2ª quinta-feira |
-| Umidade da terra no dia de plantar (2016–2025) | SMAP L4 (`SPL4SMGP` 008) pelo OPeNDAP da Earthdata | arquivo `data/baixados/nasa_smap/smap_semeadura.json` e, depois da carga, banco (`smap_point`) | ainda nada: o balde inicial pelo SMAP é o R3.3 (até lá, 50% da CAD) | script `fetch_smap` + carga no banco |
+| Chuva dos últimos 30 dias × média | GPM IMERG Late (`GPM_3IMERGDL`) + NASA POWER já no banco | arquivo `data/baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json` | **fora do produto desde 14/11/2026** (decisão do time: o sinal do outono usa o El Niño e a regra da data); o script ficou | script `fetch_imerg_late` (opcional) |
+| Previsão do El Niño / La Niña (chance de cada fase, 9 estações) | NOAA CPC, "Official NOAA CPC ENSO Probabilities" (não é da NASA) | arquivo `data/baixados/noaa_enso_previsao/enso_previsao.json` (só arquivo, sem tabela) | "Sinal para o outono" no Plano de 3 anos e o aviso de El Niño / La Niña em "Avisos" (sem o arquivo, os dois não aparecem) | script `fetch_enso_previsao`, todo mês depois da 2ª quinta-feira |
+| Umidade da terra no dia de plantar (2016–2025) | SMAP L4 (`SPL4SMGP` 008) pelo OPeNDAP da Earthdata | arquivo `data/baixados/nasa_smap/smap_semeadura.json` e, depois da carga, banco (`smap_point`) | o balde inicial do motor de 2016 em diante e a "umidade da terra no dia de plantar" no detalhe de cada ano (explorador da Sugestão) | script `fetch_smap` + carga no banco |
+| Umidade da terra agora (percentil da mesma época, 2016–2025) | SMAP L4 (`SPL4SMGP` 008) pelo OPeNDAP da Earthdata | arquivo `data/baixados/nasa_smap/smap_recente.json` (só arquivo, sem tabela) | bloco "Umidade da terra agora" do raio-X e o aviso "A terra está mais seca que em X% dos anos" em "Avisos" | script `fetch_smap --recente` |
+| Área queimada mês a mês (2016–2025), pixel de 500 m na caixa piloto | MODIS MCD64A1 (coleção 061, banda `Burn_Date`) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json` (só arquivo, sem tabela) | alerta "Houve fogo a até 5 km do seu ponto em N de 10 anos (MODIS, NASA)" no raio-X e a fonte na missão | script `fetch_area_queimada` |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
 aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH`, `IMERG_LATE_PATH`, `SMAP_PATH`,
-`SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH` e `ENSO_PREVISAO_PATH` para os arquivos acima. Arquivo
+`SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`, `ENSO_PREVISAO_PATH` e `AREA_QUEIMADA_PATH` para os arquivos acima. Arquivo
 ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`; o
 `/api/talhao`, `soja_recente: null`; o `/api/recomendacao`, `sinal: null`).
 
@@ -79,6 +81,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Previsão do El Niño / La Niña (sinal para o outono) | `uv run python -m pipeline.fetch_enso_previsao` | segundos (2 pedidos de ~28 KB e ~13 KB à NOAA CPC) | nenhuma |
 | Região pelo satélite (fazenda de exemplo, raio de 30 km) | `uv run python -m pipeline.fetch_regiao_ndvi` | ~40 min do zero (81 pedidos à ORNL de ~25 a 40 s); ~20 min com o cache de abril a julho da primeira versão (faltam os 40 de jan–mar; o `--dry-run` mostra quantos faltam). Num 502 ele espera e tenta de novo; se parar, rode de novo que continua do cache | nenhuma |
 | Soja na safra mais recente (caixa piloto inteira, safra 2025/26) | `uv run python -m pipeline.fetch_soja_recente --dry-run` e depois `uv run python -m pipeline.fetch_soja_recente` | ~30 min (48 pedidos à ORNL: 12 ladrilhos de 241 × 241 pixels × 4; de ~25 a 50 s cada, e num 502 ele espera e tenta de novo); se parar, rode de novo que continua do cache | nenhuma |
+| Área queimada (MCD64A1) da caixa piloto, 2016–2025 | `uv run python -m pipeline.fetch_area_queimada --dry-run` e depois `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.fetch_area_queimada` | ~2 h (240 pedidos à ORNL: 12 ladrilhos × 20; de ~40 s a 4 min cada). Em 15/11/2026 a ORNL deu 502/503 muitas vezes e o script parou em 28/240: rode de novo (ou num laço) que continua do cache; com `--tentativas 8` aguenta mais | nenhuma |
 | Chuva dos últimos 30 dias (sinal para o outono) | `uv run python -m pipeline.fetch_imerg_late` | ~2 min (1 a 2 pedidos ao CMR + 30 ao OPeNDAP, um por dia; estimativa, ainda não medido com token); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` (com o *NASA GESDISC DATA ARCHIVE* autorizado) |
 
 - A pré-carga é idempotente: rodar de novo só completa o que faltou (por exemplo, solos em que o
@@ -198,10 +201,12 @@ levar o `cmip6_delta`, o `ndvi_point` e o `smap_point`. Da pasta `projeto`:
 docker compose exec -T db pg_dump -U raiz -d raiz_orbital --data-only \
   -t grid_cell -t climate_season -t soil_point -t cmip6_delta -t ndvi_point -t smap_point -t data_run \
   > ../data/baixados/banco_local/dados_$(date +%Y%m%d).sql
-cd .. && zip -r dados_baixados.zip data/baixados -x "*.DS_Store"
+cd .. && zip -r data/dados_baixados.zip data/baixados -x "*.DS_Store" -x "*.part"
 ```
 
-O zip fica na raiz do repositório (também fora do git). Ele não leva `.env` nem token.
+O zip fica em `data/dados_baixados.zip`, dentro da pasta `data/`, que o git ignora (a raiz do repositório
+**não** é ignorada: um zip ali aparece no `git status`). Ele não leva `.env` nem token. Quem recebe
+descompacta na raiz do repositório (`unzip dados_baixados.zip` a partir dela), e os arquivos caem em `data/baixados/`.
 
 ## Como conferir
 

@@ -1,20 +1,20 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { ChipGroup, DateField, NumberStepper, RadioCard } from './Choice'
+import { ChipGroup, DateField, MeasureField, NumberStepper, RadioCard, SelectField } from './Choice'
 
 const options = [
   { value: 'chuva', label: 'Chuva' },
-  { value: 'dinheiro', label: 'Dinheiro' },
+  { value: 'renda', label: 'Renda' },
   { value: 'terra', label: 'Terra' },
 ] as const
 
 describe('ChipGroup', () => {
   it('marca a opção escolhida com aria-pressed', () => {
-    render(<ChipGroup label="Ordenar" options={options} value="dinheiro" onChange={vi.fn()} />)
+    render(<ChipGroup label="Ordenar" options={options} value="renda" onChange={vi.fn()} />)
 
     expect(screen.getByRole('group', { name: 'Ordenar' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Dinheiro' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Renda' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Chuva' })).toHaveAttribute('aria-pressed', 'false')
   })
 
@@ -131,5 +131,42 @@ describe('NumberStepper', () => {
     expect(onStep).toHaveBeenNthCalledWith(1, -10)
     expect(onStep).toHaveBeenNthCalledWith(2, 10)
     expect(screen.getByText('ha')).toBeInTheDocument()
+  })
+})
+
+describe('MeasureField (relatos da comunidade: milímetros de chuva)', () => {
+  it('campo de texto com teclado de número, unidade e dica ligada ao campo', async () => {
+    const onChange = vi.fn()
+    render(<MeasureField label="Quantos milímetros?" value="1" unit="mm" hint="De 0 a 300 mm." onChange={onChange} />)
+
+    const input = screen.getByLabelText('Quantos milímetros?')
+    expect(input).toHaveAttribute('inputmode', 'decimal')
+    expect(input).toHaveValue('1')
+    expect(input).toHaveAccessibleDescription('De 0 a 300 mm.')
+    await userEvent.type(input, '2')
+    expect(onChange).toHaveBeenLastCalledWith('12')
+    expect(screen.getByText('mm')).toBeInTheDocument()
+  })
+})
+
+describe('SelectField (cultura de cada ano do plano, tarefa 0045)', () => {
+  it('lista as opções com o rótulo visível e avisa a escolha', async () => {
+    const onChange = vi.fn()
+    render(
+      <SelectField
+        label="O que plantar em 2028"
+        value="sorgo"
+        options={[
+          { value: 'sorgo', label: 'Sorgo' },
+          { value: 'pousio', label: 'Deixar parado' },
+        ]}
+        onChange={onChange}
+      />,
+    )
+
+    const select = screen.getByRole('combobox', { name: 'O que plantar em 2028' })
+    expect(select).toHaveValue('sorgo')
+    await userEvent.selectOptions(select, 'pousio')
+    expect(onChange).toHaveBeenCalledWith('pousio')
   })
 })

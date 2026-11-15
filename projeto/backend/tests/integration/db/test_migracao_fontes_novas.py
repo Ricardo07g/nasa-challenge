@@ -145,7 +145,8 @@ def test_should_tie_cmip6_deltas_to_the_grid_cell(db_url: str) -> None:
 def test_should_go_down_to_the_initial_schema_and_up_again(back_to_head: str) -> None:
     url = back_to_head
 
-    _alembic_ok(url, "downgrade", "-1")
+    # Desce até a migração inicial (a R1.6 deixou de ser a última na tarefa 0047).
+    _alembic_ok(url, "downgrade", INITIAL_REVISION)
 
     assert _table_exists(url, "smap_moisture")
     assert not _table_exists(url, "smap_point")

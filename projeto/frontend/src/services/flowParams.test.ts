@@ -72,4 +72,70 @@ describe('keepFlowQuery', () => {
     expect(keepFlowQuery('')).toBe('')
     expect(keepFlowQuery('?colheita=meio')).toBe('')
   })
+
+  it('repassa o objetivo do produtor entre as abas (tarefa 0044)', () => {
+    expect(keepFlowQuery('?lat=-18.9543&lon=-48.1993&colheita=meio&objetivo=terra&ano=2016')).toBe(
+      '?lat=-18.9543&lon=-48.1993&colheita=meio&objetivo=terra',
+    )
+  })
+})
+
+describe('objetivo do produtor na URL (tarefa 0044)', () => {
+  it('lê só os objetivos conhecidos; sem objetivo vale o equilíbrio do motor', () => {
+    const read = (query: string) => readFlowParams(new URLSearchParams(query))?.objetivo
+    expect(read('lat=1&lon=2&objetivo=seguranca')).toBe('seguranca')
+    expect(read('lat=1&lon=2&objetivo=renda')).toBe('renda')
+    expect(read('lat=1&lon=2&objetivo=dinheiro')).toBeUndefined()
+    expect(read('lat=1&lon=2')).toBeUndefined()
+  })
+
+  it('o objetivo vai antes das safras confirmadas', () => {
+    expect(buildFlowQuery({ lat: 1, lon: 2, colheita: 'meio', objetivo: 'renda', confirmadas: '2025:parado' })).toBe(
+      '?lat=1&lon=2&colheita=meio&objetivo=renda&confirmadas=2025:parado',
+    )
+  })
+})
+
+describe('culturas comparadas, plano editado e "como é hoje" na URL (tarefa 0045)', () => {
+  const read = (query: string) => readFlowParams(new URLSearchParams(`lat=1&lon=2&${query}`))
+
+  it('lê até 3 culturas para comparar, sem repetir, sem o pousio e só ids conhecidos', () => {
+    expect(read('comparar=sorgo,milheto')?.comparar).toEqual(['sorgo', 'milheto'])
+    expect(read('comparar=sorgo,sorgo,trigo,pousio,crotalaria')?.comparar).toEqual(['sorgo', 'crotalaria'])
+    expect(read('comparar=sorgo,milheto,crotalaria,milho_safrinha')?.comparar).toEqual(['sorgo', 'milheto', 'crotalaria'])
+    expect(read('comparar=')?.comparar).toBeUndefined()
+  })
+
+  it('lê o plano editado só com 3 culturas conhecidas (o pousio vale)', () => {
+    expect(read('plano=sorgo,pousio,crotalaria')?.plano).toEqual(['sorgo', 'pousio', 'crotalaria'])
+    expect(read('plano=sorgo,crotalaria')?.plano).toBeUndefined()
+    expect(read('plano=sorgo,trigo,crotalaria')?.plano).toBeUndefined()
+  })
+
+  it('lê o que o produtor contou das últimas safras, em ordem de ano', () => {
+    expect(read('hoje=2026:sorgo,2024:pousio,2025:trigo,x')?.hoje).toBe('2024:pousio,2026:sorgo')
+    expect(read('hoje=')?.hoje).toBeUndefined()
+  })
+
+  it('monta a URL com os três no fim e sem codificar ":" e ",", para o link ficar legível', () => {
+    expect(
+      buildFlowQuery({
+        lat: 1,
+        lon: 2,
+        colheita: 'meio',
+        comparar: ['sorgo', 'milheto'],
+        plano: ['sorgo', 'pousio', 'crotalaria'],
+        hoje: '2024:pousio',
+        confirmadas: '2025:parado',
+      }),
+    ).toBe(
+      '?lat=1&lon=2&colheita=meio&confirmadas=2025:parado&comparar=sorgo,milheto&plano=sorgo,pousio,crotalaria&hoje=2024:pousio',
+    )
+  })
+
+  it('repassa os três entre as abas', () => {
+    expect(keepFlowQuery('?lat=1&lon=2&colheita=meio&plano=sorgo,sorgo,sorgo&ano=2016')).toBe(
+      '?lat=1&lon=2&colheita=meio&plano=sorgo,sorgo,sorgo',
+    )
+  })
 })

@@ -4,6 +4,7 @@ Temporadas de teste com valores redondos (não são do NASA POWER): a chave de f
 `teste`, exceto onde o teste confere justamente a fonte.
 """
 
+from dataclasses import replace
 from datetime import date
 
 from app.models.climate import ClimateSeason
@@ -123,3 +124,55 @@ def test_should_return_none_without_seasons() -> None:
 
 def test_should_return_none_when_no_season_covers_january_to_june() -> None:
     assert MonthlyRainService().summarize([_season(2023, 1.0, days=1)]) is None
+
+
+# --- chuva x evapotranspiração de cada mês (tela 3, tarefa 0042) -------------------------------
+
+
+def _with_eto(season: ClimateSeason, eto: float) -> ClimateSeason:
+    return replace(season, eto_mm=tuple([eto] * len(season.rain_mm)))
+
+
+def test_should_average_the_reference_evapotranspiration_of_each_month() -> None:
+    # ETo de 3 e 5 mm/dia: janeiro = (93 + 155) / 2 = 124 mm.
+    seasons = [_with_eto(_season(2021, 2.0), 3.0), _with_eto(_season(2022, 2.0), 5.0)]
+
+    chuva = MonthlyRainService().summarize(seasons)
+
+    assert chuva is not None
+    assert chuva.meses[0] == ChuvaMes(mes=1, media_mm=62.0, eto_media_mm=124.0)
+    assert chuva.fonte_eto == "nasa_power"
+
+
+def test_should_point_the_first_month_when_the_rain_is_below_the_demand() -> None:
+    # Chuva de 6 mm/dia em jan e fev, 2 mm/dia depois; ETo de 4 mm/dia: março é o 1º mês abaixo.
+    rain = [6.0 if day < 59 else 2.0 for day in range(DAYS)]
+    chuva = MonthlyRainService().summarize([_with_eto(_season(2023, rain), 4.0)])
+
+    assert chuva is not None
+    assert chuva.mes_chuva_abaixo_eto == 3
+
+
+def test_should_not_point_a_month_when_the_rain_always_covers_the_demand() -> None:
+    chuva = MonthlyRainService().summarize([_with_eto(_season(2023, 5.0), 4.0)])
+
+    assert chuva is not None
+    assert chuva.mes_chuva_abaixo_eto is None
+
+
+def test_should_use_the_injected_evapotranspiration_when_the_season_has_none() -> None:
+    # Sem ETo na temporada (fixture antiga): a mesma ETo do motor (Hargreaves), injetada.
+    service = MonthlyRainService(reference_eto=lambda season: [1.0] * len(season.rain_mm))
+
+    chuva = service.summarize([_season(2023, 2.0)])
+
+    assert chuva is not None
+    assert chuva.meses[0].eto_media_mm == 31.0
+
+
+def test_should_leave_the_evapotranspiration_out_without_data() -> None:
+    chuva = MonthlyRainService().summarize([_season(2023, 2.0)])
+
+    assert chuva is not None
+    assert chuva.meses[0].eto_media_mm is None
+    assert (chuva.fonte_eto, chuva.mes_chuva_abaixo_eto) == (None, None)

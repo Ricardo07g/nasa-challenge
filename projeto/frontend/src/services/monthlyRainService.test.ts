@@ -92,7 +92,52 @@ describe('rainChart (gráfico "Chuva de cada mês na região", tela 3)', () => {
     expect(chart?.bars.map((bar) => bar.heightPct)).toEqual([0, 0])
   })
 
-  it('sem o dado da API, não há gráfico ("Ainda não conectado")', () => {
+  it('com o gasto da lavoura (ETo), duas barras por mês na mesma escala e o mês em que a chuva fica abaixo', () => {
+    const chart = rainChart(
+      talhao({
+        ...CHUVA,
+        meses: [
+          { mes: 1, media_mm: 200, eto_media_mm: 120 },
+          { mes: 4, media_mm: 50, eto_media_mm: 100.4 },
+        ],
+        fonte_eto: 'nasa_power',
+        mes_chuva_abaixo_eto: 4,
+      }),
+    )
+
+    expect(chart?.bars).toEqual([
+      { month: 'jan', mm: 200, heightPct: 100, etoMm: 120, etoHeightPct: 60 },
+      { month: 'apr', mm: 50, heightPct: 25, etoMm: 100, etoHeightPct: 50 },
+    ])
+    expect(chart?.eto).toEqual({ source: 'nasa_power', deficitMonth: 'apr' })
+  })
+
+  it('a escala vale para a maior barra, de chuva ou de ETo', () => {
+    const chart = rainChart(
+      talhao({ ...CHUVA, meses: [{ mes: 6, media_mm: 10, eto_media_mm: 80 }], fonte_eto: 'nasa_power', mes_chuva_abaixo_eto: 6 }),
+    )
+
+    expect(chart?.bars).toEqual([{ month: 'jun', mm: 10, heightPct: 13, etoMm: 80, etoHeightPct: 100 }])
+  })
+
+  it('com a chuva sempre acima do gasto, nenhum mês em destaque', () => {
+    const chart = rainChart(
+      talhao({ ...CHUVA, meses: [{ mes: 1, media_mm: 200, eto_media_mm: 120 }], fonte_eto: 'nasa_power', mes_chuva_abaixo_eto: null }),
+    )
+
+    expect(chart?.eto).toEqual({ source: 'nasa_power', deficitMonth: null })
+  })
+
+  it('sem a ETo de algum mês (API antiga), fica só a chuva', () => {
+    const chart = rainChart(
+      talhao({ ...CHUVA, meses: [{ mes: 1, media_mm: 200, eto_media_mm: 120 }, { mes: 2, media_mm: 100 }], fonte_eto: 'nasa_power' }),
+    )
+
+    expect(chart?.eto).toBeUndefined()
+    expect(chart?.bars[0]).toEqual({ month: 'jan', mm: 200, heightPct: 100 })
+  })
+
+  it('sem o dado da API, não há gráfico (decisão D2)', () => {
     expect(rainChart(undefined)).toBeNull()
     expect(rainChart(talhao())).toBeNull() // API que ainda não manda o campo
     expect(rainChart(talhao(null))).toBeNull()

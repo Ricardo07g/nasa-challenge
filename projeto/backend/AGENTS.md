@@ -71,7 +71,8 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
 - **Rotas:** todas sob `/api` (o `include_router` usa `prefix="/api"`).
 - **Erros:** sempre `application/problem+json` com `type`, `title`, `status`, `detail` e `code` (o front
   lê o `code`). O `main.py` traduz os erros de domínio (404 `NOT_FOUND` / `OUTSIDE_AREA`, 422
-  `VALIDATION_ERROR`) e o parâmetro inválido da requisição (422 `INVALID_REQUEST`, com a lista
+  `VALIDATION_ERROR`, 429 `TOO_MANY_REPORTS` e 503 `COMMUNITY_UNAVAILABLE` dos relatos da comunidade)
+  e o parâmetro inválido da requisição (422 `INVALID_REQUEST`, com a lista
   `invalid_params`: `name`, `in`, `reason`). Rota nova não precisa de nada para ganhar esse formato.
 - **Cache HTTP (que revalida):** só `/recomendacao` usa cache, e só na resposta 200:
   `Cache-Control: public, no-cache` (pode guardar, mas pergunta à API toda vez), `ETag` forte (SHA-256
@@ -96,7 +97,7 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
   Para aplicar com uv (fora do Docker): `uv run alembic upgrade head`
   Para ver SQL gerado sem rodar: `uv run alembic upgrade head --sql`
   Para criar nova migração: `uv run alembic revision -m "descricao"`
-- Tabelas (migração inicial `cb6b775d83e3` + R1.6 `6e961f333ddc`):
+- Tabelas (migração inicial `cb6b775d83e3` + R1.6 `6e961f333ddc` + comunidade `3f7c2a9d4e81`):
   - `grid_cell`, `climate_season` e `soil_point`: gravadas pela busca sob demanda (ver "Dados da API");
     o `climate_season.rain_source` é `nasa_power` ou, nos anos trocados pela carga do IMERG,
     `gpm_imerg`;
@@ -107,6 +108,10 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
     mas ainda não lê as outras (R3.2 e R3.5 do roteiro). O `cmip6_delta` exige a célula em `grid_cell`. O `cmip6_delta`, o `ndvi_point` e o
     `smap_point` são preenchidos pela carga dos arquivos (`pipeline/load_files_to_db.py`, ver
     "Dados da API").
+  - `community_report` (tarefa 0047): os relatos da comunidade sem cadastro, gravados pela API
+    (`PostgisCommunityReportRepository`). Colunas `id` (uuid), `report_type`, `subtype`, `details`
+    (jsonb), `cell_id`, `fact_date`, `sent_at` e `device_hash`; regras em "Relatos da comunidade"
+    (abaixo).
 - Banco criado antes do R1.6: rode `uv run alembic upgrade head` (ou
   `docker compose run --rm migration`). A migração recria `cmip6_delta` e `ndvi_point`, troca
   `smap_moisture` por `smap_point` (o que houver nelas é apagado) e marca as cargas antigas de
@@ -139,9 +144,21 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
   `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`,
-  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`, `ENSO_PREVISAO_PATH`). Nunca
+  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`, `ENSO_PREVISAO_PATH`,
+  `AREA_QUEIMADA_PATH`). Nunca
   coloque caminho fixo (como `/workspace/...`) num repository.
-- `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
+- `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4). Sem preço, custo
+  nem produtividade (tarefa 0040): o `tipo` diz se a cultura dá grão para vender.
+- **Renda sem reais** (tarefa 0040, seção 1 da remodelagem): nenhum valor em reais na API. A nota de
+  renda é a segurança climática da própria opção para quem dá grão (`tipo` em `renda.tipos_com_grao`
+  do `regras.yaml`: `grao` e `consorcio`) e `renda.nota_sem_grao` (0) para cobertura e pousio; a nota
+  final continua com os mesmos eixos e pesos. Cada opção de `/recomendacao` e `/exemplo` traz o bloco
+  `renda` (no lugar do antigo `dinheiro`): `da_grao`, `anos_aperto` (anos com aperto do motor),
+  `rotulo` (limiares `rotulos.renda_bom` / `renda_medio`), `texto` ("Dá grão para vender" ou "Não dá
+  grão: é investimento na terra") e `risco` ("Risco de perder a lavoura: faltou água ou fez calor em N
+  de 20 anos."), com as frases `frases.<língua>.renda_*`. O motivo da alternativa é `mais_renda`. Não
+  há mais margem, custo, pior ano seco em reais nem perda de produtividade pelo ISNA: não traga de
+  volta (um teste de rota recusa `R$` no JSON).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
   negócio nova com número vai para lá, não para `app/constants.py`. Os services recebem as regras
@@ -150,7 +167,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `frases_safra` do `regras.yaml`) ficam só no `CropAlertService`, que recebe a série diária, a
   cultura e a semeadura e devolve a linha do tempo. O replay `GET /api/safra-passada` (P4) usa esse
   service e o acompanhamento diário (P6) vai usar o mesmo: não repita a regra em outro lugar. A
-  opção do replay é a `melhor` do `RecommendationService`. Ano sem dado num ponto que tem dados =
+  opção do replay é a `melhor` do `RecommendationService` ou a `opcao` pedida (tarefa 0044: o
+  replay é o detalhe de cada ano do explorador da aba Sugestão). Ano sem dado num ponto que tem dados =
   404 `NOT_FOUND`; ponto sem dados continua 404 `OUTSIDE_AREA`. O detalhe de cada ano (P1, abaixo)
   conta os dias secos pelo `CropAlertService.longest_dry_spell`, com o mesmo dia seco.
 - **Detalhe de cada ano** (`opcoes[].anos_detalhe[]` de `/recomendacao` e `/exemplo`, P1, tarefa
@@ -175,6 +193,10 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `ResultadoAno.falta_agua` e `ResultadoAno.calor` do `ClimateRiskService`); a marca do ENSO.
   - O campo é opcional no schema (padrão `[]`); com o service ligado, sempre vem. São ~27 KB a mais
     sem compressão (5 opções × 20 anos).
+- **Área piloto** (`GET /api/area-piloto`, tarefa 0041): devolve `min_lat`, `max_lat`, `min_lon` e
+  `max_lon` dos `PILOT_*` do `app/constants.py` (`PilotAreaService`). É a **fonte única** dos limites:
+  o front desenha a caixa e bloqueia o ponto fora dela lendo esta rota, sem repetir os números. Mudou a
+  caixa? Mude só as constantes.
 - **ONI da NOAA** (P1, tarefa 0035): `pipeline/fetch_oni.py` baixa a tabela pública do ONI
   (`https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt`, um pedido de ~23 KB, **sem
   credencial**) e grava o arquivo do contrato ONI (abaixo) em `data/baixados/noaa_oni/oni.json`, a
@@ -447,33 +469,36 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **previsão do ENSO** (`FileEnsoForecastRepository`, `ENSO_PREVISAO_PATH`): a chance oficial de
     El Niño, neutro e La Niña da NOAA CPC na estação do outono da safrinha (`sinal_enso.estacao_previsao`
     do `regras.yaml`: FMA, fevereiro a abril). **Sem o arquivo, sem a estação nele ou com ela já
-    passada, o `sinal` sai `null`** ("Ainda não conectado" na tela 7);
+    passada, o `sinal` sai `null`** (o cartão do sinal não aparece no Plano);
   - **ONI de cada ano** (`FileEnsoRepository`, `ONI_PATH`, tarefa 0035) com o `bom` de cada ano do
     `anos_detalhe` da opção do 1º ano do Plano A: em quantos anos daquela fase ela deu certo;
+  - **o Plano A e o Plano B são os da tela do Plano** (tarefa 0049, S9): o service recebe as culturas
+    (`cultura_a`, `cultura_b`), não os planos. No `/recomendacao`, `cultura_a` = o 1º ano do Plano A
+    sugerido (a melhor opção) e `cultura_b` = o Plano B do `PlanBService` para ela (a cultura que
+    mais deu certo quando a do A falhou), o mesmo do cartão "Plano A e Plano B"; no `/api/plano`, o
+    1º ano do plano que a tela mostra (o sugerido ou o editado) e o Plano B dele. O
+    `plano_3_anos.seco` do motor não entra mais no sinal;
   - **SMAP recente** (`FileRecentSoilMoistureRepository`, `SMAP_RECENTE_PATH`, tarefa 0031): **só
     informa** (`smap_agora`). Sozinho não liga o sinal e nunca muda o nível.
 
   Regra (números no grupo `sinal_enso`, hipótese do time, **a revisar**):
   - `incerto`: nenhuma fase com 50% ou mais (`fase_chance_min_pct`), duas empatadas no topo, menos
     de 5 anos daquela fase na série (`anos_fase_min`; ano sem ONI não conta como neutro), ou o Plano B
-    não se saiu melhor que o A nesses anos;
+    não se saiu melhor que o A nesses anos, ou não há Plano B ("Nenhuma outra cultura se saiu melhor
+    nesses anos.");
   - `seco` (marca o Plano B): a opção do 1º ano do Plano A deu errado em metade ou mais dos anos da
-    fase (`fracao_anos_ruins_seco`) e o 1º ano do Plano B se saiu melhor (ou é a mesma cultura, ou
-    pousio);
+    fase (`fracao_anos_ruins_seco`) e a do Plano B se saiu melhor nesses anos;
   - `normal` (marca o Plano A): no resto.
-  - **Regra da data** (`regra_dia_plantar.texto` e `regra_data`): "Se nos 30 dias antes de <data
-    limite> chover menos que X mm (60% da média de M mm), vá de plano B". M é a média da chuva da
-    data limite − 30 dias até a véspera na série guardada da célula (a mesma `climate_season` do
-    motor: POWER ou IMERG), X = `sinal_outono.chuva_fracao_seco` × M, em mm inteiros; a data limite
-    é a da cultura do 1º ano do Plano A (ou do B, se o A começa em pousio). Sem a série, volta a
-    frase antiga do dia de plantar ("se a terra estiver seca").
+  - **Sem a regra da data** (tarefa 0049, S9 da remodelagem): o `regra_dia_plantar` e o `regra_data`
+    (chuva dos 30 dias antes da data limite) saíram da API, porque nenhuma tela usava mais (a tela do
+    Plano trocou a regra pelo Plano A / Plano B com o número derivado da série, tarefa 0045). O
+    `sinal_outono.chuva_fracao_seco` ficou sem uso no `regras.yaml`, como o `chance_seco_min`.
   - `motivo`: "Previsão para fevereiro a abril de 2027: El Niño (98%, NOAA). Nos 7 anos de El Niño
     desde 2005, milho sozinho deu certo em 5." O nome da fonte vem do arquivo (`fonte`). Nunca chama
     El Niño de "ano seco" (PRD 7.10).
   - Contrato do front (`SinalOutono` em `src/models/recomendacao.ts`): `nivel`, `motivo`, `fonte` (a
-    previsão primeiro, depois a chuva da regra e o `SMAP`), `data` (dia da emissão da previsão),
-    `regra_dia_plantar`, e os opcionais `regra_data` (`data_limite`, `inicio`, `dias`,
-    `chuva_min_mm`, `media_mm`) e `smap_agora` (`percentil`, `data`, `texto`).
+    previsão primeiro, depois a fonte da chuva da série e o `SMAP`), `data` (dia da emissão da
+    previsão) e o opcional `smap_agora` (`percentil`, `data`, `texto`).
   - **Fora do sinal** (continuam no repositório, sem uso): o GEOS-S2S (`SeasonalForecastRepository`,
     `NoAutumnSignalDataRepository`; só NetCDF-4/HDF5, tarefa 0032) e a chuva recente do IMERG Late
     (`FileRecentRainRepository`, `IMERG_LATE_PATH`; só de fev a jul, tarefa 0033).
@@ -527,7 +552,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`, `SMAP_PATH` para
     `/dados_baixados/nasa_smap/smap_semeadura.json`, `SMAP_RECENTE_PATH` para
     `/dados_baixados/nasa_smap/smap_recente.json` e `SOJA_RECENTE_PATH` para
-    `/dados_baixados/nasa_modis_soja_recente/soja_recente_2026.json`. Sem o arquivo, segue sem o
+    `/dados_baixados/nasa_modis_soja_recente/soja_recente_2026.json` e `AREA_QUEIMADA_PATH` para
+    `/dados_baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json`. Sem o arquivo, segue sem o
     dado.
     Como baixar ou receber esses arquivos: `docs/como-preparar-os-dados-locais.md`.
 
@@ -646,18 +672,196 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   tarefa 0028): o `MonthlyRainService` soma a chuva de cada mês, de janeiro a junho, em cada
   temporada da célula (as que o `get_seasons` já devolve) e tira a média entre os anos, com uma
   casa decimal. Só entra o ano cuja série cobre de 1/jan a 30/jun. `fonte` = a `rain_source` das
-  temporadas (`nasa_power` hoje; com mais de uma, as chaves em ordem separadas por `+`, ex.:
-  `gpm_imerg+nasa_power`). Fora da área ou sem nenhum ano completo: `null` (o front mostra "Ainda
-  não conectado"). Na fazenda de exemplo (NASA POWER):
+  temporadas (`gpm_imerg` na caixa piloto depois da carga; com mais de uma, as chaves em ordem
+  separadas por `+`, ex.: `gpm_imerg+nasa_power`). Fora da área ou sem nenhum ano completo: `null`
+  (o bloco não aparece). Desde a tarefa 0042, cada mês traz também `eto_media_mm` (a média da ETo
+  do motor, `ClimateRiskService.reference_eto`, injetada no `dependencies.py`: a gravada ou
+  Hargreaves-Samani), e o bloco traz `fonte_eto` (`nasa_power`) e `mes_chuva_abaixo_eto` (o
+  primeiro mês em que a chuva média fica menor que a ETo média; `null` se nunca fica). Sem ETo
+  para algum ano, os três ficam `null`. Na fazenda de exemplo (banco local, IMERG):
 
   ```json
   "chuva_mensal": {
-    "meses": [{"mes": 1, "media_mm": 212.7}, {"mes": 2, "media_mm": 161.0}, {"mes": 3, "media_mm": 156.8},
-              {"mes": 4, "media_mm": 74.7}, {"mes": 5, "media_mm": 31.3}, {"mes": 6, "media_mm": 12.6}],
+    "meses": [{"mes": 1, "media_mm": 289.1, "eto_media_mm": 134.0}, "...",
+              {"mes": 4, "media_mm": 89.5, "eto_media_mm": 108.8}, "...",
+              {"mes": 6, "media_mm": 14.4, "eto_media_mm": 91.9}],
     "anos": [2005, 2006, "...", 2024],
-    "fonte": "nasa_power"
+    "fonte": "gpm_imerg", "fonte_eto": "nasa_power", "mes_chuva_abaixo_eto": 4
   }
   ```
+- **Tela 3 "Quando você colhe a soja?"** (remodelagem S3, tarefa 0042, RF-02, RF-16 e RF-27). As
+  regras ficam nos services, com os números no `regras.yaml`; o front só procura o dia na tabela.
+  - **Dia sugerido e faixa** (`colheita_sugerida.dia`, "MM-DD"): em cada ano, a primeira imagem de
+    fevereiro ou março abaixo de `ndvi.queda_colheita` (50%) do pico de janeiro a março; o dia é a
+    mediana dos anos, contada num ano comum (`app/services/calendar_days.py`: 29/fev = 28/fev) e
+    arredondada para baixo. A `faixa` sai do dia pela regra da data exata da tela 3
+    (`FieldHistoryService.harvest_band`, grupo `colheita`: até `cedo_ate` 02-10, e janeiro, cedo;
+    até `meio_ate` 02-20, meio; depois, tarde). O limite antigo de 22/fev
+    (`MID_HARVEST_DOY_LIMIT`) saiu: com ele, o satélite dizia "meio" para um dia que a tela chamava
+    de "tarde". Sem NDVI suficiente: `dia: null`, `faixa: meio`, `fonte: padrao`.
+  - **Chuva que sobra** (`chuva_que_sobra` do `/talhao`, `RemainingRainService`): para cada dia de
+    `colheita.janela_inicio` a `janela_fim` (15/jan a 31/mar, 76 dias de um ano comum), a chuva
+    somada do dia até `chuva_que_sobra.fim` (30/jun, inclusive) em cada ano que cobre a época
+    inteira; `mediana_mm` (mediana dos anos) e `seco_mm` (percentil `percentil_seco`, 20, com
+    interpolação linear entre os anos ordenados), 1 casa. `fonte` e `anos` como no `chuva_mensal`.
+    Sem ano completo: `null`.
+  - **Fim das chuvas** (`fim_das_chuvas` do `/talhao`, `RainEndService`): em cada ano, o primeiro
+    dia, a partir de `fim_das_chuvas.inicio` (1º/mar), que começa `dias` (20) dias seguidos com
+    menos de `chuva_max_mm` (10) mm **somados** (não por dia: decisão D35). `mediana` (arredondada
+    para baixo, num ano comum: em metade dos anos a chuva acabou até esse dia), `mais_cedo` e
+    `mais_tarde` (`{dia, ano}`), `anos`, `fonte` e a própria regra (`inicio`, `dias`,
+    `chuva_max_mm`). Se algum ano não tem esse dia dentro da série (até 31/jul), `null`: sem ele, a
+    mediana e o mais tarde sairiam errados. O raio-X da seção 4 (tarefa 0043) usa este mesmo service.
+  - **Custo do atraso** (`GET /api/custo-atraso?lat&lon[&solo][&confirmadas]`,
+    `HarvestDelayService`): uma recomendação do motor (`RecommendationService.recommend`) por faixa,
+    com o mesmo solo e as mesmas safras confirmadas; devolve `faixas[]` (`colheita`, `semeadura`,
+    `melhor`, `nome`, `anos_bons`, `total_anos`; os da opção `null` quando nenhuma cabe na janela)
+    e `mesma_cultura`. Nada é recalculado fora do motor (um teste de rota confere que os números
+    são os do `/recomendacao` de cada faixa). Erros como no `/recomendacao` (404 `OUTSIDE_AREA`,
+    422). Sem cache HTTP: são 3 recomendações (~1 s na fazenda da UFU). Endpoint à parte, e não
+    campo do `/talhao`, para o `/talhao` (pedido já na tela 2) continuar rápido.
+- **Raio-X da sua terra** (`GET /api/raio-x?lat&lon[&colheita][&solo][&confirmadas]`, tela 4,
+  remodelagem S4, tarefa 0043, RF-29). Endpoint à parte (decisão D55 da remodelagem): ele roda o motor
+  uma vez (`RecommendationService.recommend`, com a mesma colheita, solo e safras confirmadas) para
+  a melhor opção, ~0,5 s na fazenda da UFU; o `/talhao` continua leve. O `RaioXService` só busca e
+  monta; cada conta mora num service com teste próprio e os números ficam no `regras.yaml` (grupos
+  `raio_x` e `alertas_area`, hipótese do time a revisar). Reaproveita sem repetir: o fim das chuvas
+  (`RainEndService`), o dia seco dos avisos (`avisos.dia_seco_abaixo_mm`), o calor do motor
+  (`clima.calor_temp_c`), a janela da floração (`clima.janela_grao_meia_dias`), a ETo do motor
+  (`ClimateRiskService.reference_eto`), a soja do ano e a colheita sugerida (`FieldHistoryService`).
+  Cada bloco é `null` sem dado (o front não desenha). Só números: as frases são do front.
+  - `solo` (SoilGrids): `textura`, `argila_pct`, `areia_pct`, `cad_mm`, `vizinho_km`. Sem solo na
+    célula, o ponto gravado mais perto de qualquer célula (`PostgisSoilRepository.get_nearest_soil`,
+    só com banco), até `raio_x.solo_vizinho_max_km` (15 km). O motor **não** usa esse solo (o
+    `get_soil` continua só na célula). Sem nenhum: `null`.
+  - `agua`: `cad_mm` (a da terra escolhida pelo produtor, se houver, como no motor; senão a do bloco
+    1), `dias` = ⌊CAD ÷ (ETo média na floração ± 15 dias em todos os anos × `kc_pico`)⌋ da melhor
+    opção (`RaioXClimateService.flowering_water`), `cultura`, `nome`, `floracao` ("MM-DD"),
+    `eto_mm_dia`, `kc`, `consumo_mm_dia`, `fonte_eto`. Pousio: `dias` e a cultura `null`.
+  - `umidade`: `percentil` e `data` do SMAP recente (`SMAP_RECENTE_PATH`).
+  - `verde` (`NdviStripService.green`): `ultimo_ndvi`/`ultimo_data` (a última leitura da série do
+    ponto) e `pico_ndvi`/`pico_data`/`safra` (o maior NDVI da janela do pico da soja,
+    `regiao_ndvi.pico_inicio` a `pico_fim`, no último ano da série); sem série, o pico do mapa da soja
+    recente (RF-24). `soja_vista` (tarefa 0049): o satélite viu a soja naquele verão, pela regra da
+    faixa do histórico (`FieldHistoryService.soy_harvest_date`: pico e colheita; sem série, o `vista`
+    do mapa da soja recente); `false` = o pico é só o maior verde de jan–mar e a tela não diz "pico da
+    soja"; `null` sem leitura do verão.
+  - `chuva`: `media_mm` de `raio_x.chuva_inicio` a `chuva_fim` (a temporada guardada), `anos`,
+    `fonte` e `fim_das_chuvas` (o mesmo objeto do `/talhao`).
+  - `veranico`: `dias`, `ano` (empate: o mais recente), `inicio` ("MM-DD"), `total_anos`, `fonte`.
+  - `calor`: `anos_com_calor`, `total_anos`, `temp_c`, `anos`, `fonte` (`nasa_power`).
+  - `regiao` (`RegionRankService`): a chuva média de `raio_x.regiao_inicio` a `regiao_fim` da
+    célula contra as células da caixa piloto, só da mesma fonte de chuva e com a janela inteira
+    (`PostgisClimateRepository.rain_totals_in_window`, recorte do vetor no SQL, só com banco):
+    `chuva_mm`, `mediana_regiao_mm`, `celulas`, `pct_mais_seca` (% das outras com mais chuva),
+    `pct_mais_chuvosa`, `fonte`. Menos de `regiao_min_celulas` (10): `null`.
+  - `historico_ndvi` (`NdviStripService.strip`): `colunas` ("MM-DD" de cada leitura de 16 dias, a
+    partir do dia 1, até `raio_x.ndvi_fim`: 14), `anos` (os do `historico_ndvi`, 2017–2026, com os
+    `valores` de cada coluna: o maior NDVI bom de Terra e Aqua no intervalo, `null` sem leitura),
+    `fonte`, `colheita_dia` (a da RF-16). O que aconteceu em cada ano continua no `historico` do
+    `/talhao`; o front junta os dois.
+  - `alertas` (cada um só vem com risco): `geada` (`RaioXClimateService.frost`: anos com mínima de
+    `alertas_area.geada_temp_c` ou menos de `geada_inicio` a `geada_fim`), `chuva_forte` (`heavy_rain`:
+    `media_dias_ano` com `chuva_forte_mm` ou mais na janela, a partir de `chuva_forte_media_min_dias`)
+    e `fogo` (`BurnedAreaService`: anos com pixel queimado do MCD64A1 a até `fogo_raio_km`, nos anos
+    da regra que o arquivo cobre; sem o arquivo do `AREA_QUEIMADA_PATH`, `null`). **Sem granizo**:
+    nenhuma fonte mede.
+  - `cartoes`: `chuva_20_anos` (a melhor opção do motor: `cultura`, `nome`, `anos_bons`,
+    `total_anos`) e `clima_futuro` (`FutureClimateService`: os deltas de `futuro_mes_inicio` a
+    `futuro_mes_fim`; a chuva de cada modelo pesada pela chuva média de cada mês na célula, a máxima
+    pela média simples; `chuva_pct` e `tmax_c` = média dos modelos; `modelos`,
+    `modelos_menos_chuva`, `modelos_mais_chuva`, `modelos_mais_quente`, `cenario`, `periodo`).
+  - `leitura_recente`: o dia mais recente entre o SMAP de agora e a última leitura do NDVI;
+    `altitude_m`: sempre `null` (o `grid_cell` não tem a coluna e o pedido manda não buscar fora).
+  - Erros como no `/recomendacao` (404 `OUTSIDE_AREA`, 422). Sem cache HTTP.
+- **Área queimada do MODIS** (alerta de fogo do raio-X, tarefa 0043): `pipeline/fetch_area_queimada.py`
+  pede à **ORNL DAAC** (pública, sem credencial; reaproveita o `OrnlClient`, o `SubsetCache` e o
+  `parse_subset` da região e a grade sinusoidal da soja recente, que aceitam o pixel de 500 m) a
+  banda `Burn_Date` do **MCD64A1** (coleção 061, mensal, 500 m) de todos os meses dos anos do
+  `alertas_area` (2016 a 2025), por área, em ladrilhos. A ORNL conta 0,5 km por pixel nos produtos de
+  500 m: ±30 km = 121 × 121 pixels. Padrão: **12 ladrilhos × 20 pedidos = 240, ~2,3 h** (~35 s por
+  pedido, medido em 15/11/2026 com a ORNL lenta; ±30 km com 6 e 10 datas voltou 502 naquela hora:
+  diminua `--km` ou `--datas-por-pedido`). Pixel com `Burn_Date` > 0 num mês queimou naquele ano (0 =
+  não queimou, −1 = sem dado, −2 = água). Grava o contrato "Área queimada" (abaixo) em
+  `data/baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json` e, com `DATABASE_URL`, uma linha em
+  `data_run` (`modis_mcd64a1`). Cache em gzip em `cache_ornl/`, retomada como na região.
+
+  ```bash
+  uv run python -m pipeline.fetch_area_queimada --dry-run   # ladrilhos, pedidos e tempo, sem rede
+  uv run python -m pipeline.fetch_area_queimada             # caixa piloto, 2016 a 2025
+  uv run python -m pipeline.fetch_area_queimada --area="-19.0,-18.9,-48.25,-48.15" --anos 2016
+  ```
+
+  Para ligar o arquivo: **com uv**,
+  `AREA_QUEIMADA_PATH=../../data/baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json` no `.env`
+  desta pasta; **no compose**, já ligado. Lido uma vez por processo: reinicie o backend.
+  Com o arquivo cobrindo o ponto, o `/talhao` lista `{"fonte": "modis_mcd64a1", "periodo":
+  "2016-2025"}` em `dados` (tarefa 0049): a missão e "De onde vem cada dado" citam o MCD64A1 só aí.
+- **Aba Sugestão** (remodelagem S5a, tarefa 0044, RF-30): campos novos do `/recomendacao` e do
+  `/exemplo`, todos opcionais no front (contrato em `docs/tarefas/0044-sugestao.md`). Regras nos
+  services, números no `regras.yaml`:
+  - **Linha "Água" e sede** (`opcoes[].agua`, `WaterNeedService`, grupo `agua`): o
+    `simulate_historical` guarda em cada `ResultadoAno` as somas do ciclo (`etc_mm`, `etr_mm`,
+    `chuva_mm`); `precisa_mm` = mediana do ETc (ETo × Kc), `chove_mm` = mediana da chuva,
+    `falta_normal_mm` = mediana de ETc − ETr, `falta_seco_mm` = percentil 100 − `percentil_seco`
+    (80) da falta, `sede` pelos cortes `sede_pouca_ate_mm` / `sede_muita_desde_mm` (hipótese do
+    time). O `futuro` usa os anos de cada modelo do CMIP6 (`simulate_future_by_model`; a nota de
+    futuro sai do mesmo conjunto, `summarize_future`). Não há número para palhada, enxurrada nem a
+    água da próxima safra: não temos dado;
+  - **critério e ciclo** (`criterio`, `ciclo`): os números de "deu certo" do grupo `clima` (ISNA,
+    35 °C, `calor_min_dias` = 3, janela) e o ciclo e a floração do `culturas.yaml`, para a tela não
+    repetir número;
+  - **explorador ano a ano** (`anos_detalhe[]`): mais `isna`, `dias_calor`, `falta_agua`, `calor`,
+    `semeadura` e `umidade_inicial` (o SMAP do balde daquele ano; `null` antes de 2016);
+  - **o que observar e El Niño / La Niña** (`observar`, `enso_acerto`; `SuggestionFactsService`,
+    grupo `enso_acerto`): veranico típico (mediana, para baixo) e anos de calor da fase crítica; a
+    taxa de acerto nos anos de cada fase contra os outros, com `clara` (5 anos ou mais da fase e
+    25 pontos de diferença). Só informa;
+  - **objetivos do produtor** (`objetivos`: `equilibrio`, `seguranca`, `renda`, `terra`; cada um
+    com `ordem`, `plano` e `nota_plano`): a ordem é a nota do eixo com desempate pela final; o plano
+    é o melhor do PRD 7.7 que começa pela 1ª da ordem (`RotationPlanService.best_plan_starting_with`;
+    nos objetivos, sem o pousio). **O Plano A (`plano_3_anos.normal`) é o plano do equilíbrio: começa
+    pela melhor opção**; o Plano B continua livre. A reordenação é no motor; o navegador só escolhe;
+  - **na célula** (`clima_futuro`, `geada`): **os mesmos objetos do raio-X** (tarefa 0049, S9), para
+    a Sugestão e a tela 4 dizerem o mesmo número: `clima_futuro` = o cartão "Clima 2041–2060"
+    (`FutureClimateService`: cada mês pesado pela chuva média do mês na célula, com
+    `modelos_menos_chuva`, `modelos_mais_chuva`, `modelos_mais_quente`, `cenario` e `periodo`) e
+    `geada` = o alerta de geada (`RaioXClimateService.frost`, grupo `alertas_area`: `anos`,
+    `total_anos`, `temp_c`, `menor_temp_c`, `fonte`; `null` sem nenhum ano com geada). Saíram o
+    `CellClimateFactsService` e os grupos `clima_futuro_sugestao` e `geada_sugestao` (a média
+    simples dos meses dava −0,7% na Sugestão contra +2,2% no raio-X na fazenda da UFU);
+  - `fora_da_janela[].data_limite` (o aviso único da colheita tarde junta as culturas por data) e
+    `GET /api/safra-passada?…&opcao=<id>` (o detalhe de qualquer ano do explorador, para a opção
+    que a aba mostra; fora da janela, 404 `NOT_FOUND`).
+- **Abas Comparar e Plano de 3 anos** (remodelagem S5b, tarefa 0045, RF-32; contrato completo em
+  `docs/tarefas/0045-comparar-e-plano.md`). O Comparar só usa o `/recomendacao`; o Plano usa o
+  endpoint novo **`GET /api/plano?lat&lon&anos=a,b,c[&colheita][&solo]`** (`PlanEvaluationService`,
+  decisão D110 da remodelagem): avalia qualquer sequência de 3 culturas do `culturas.yaml` (o pousio
+  vale) com a conta do motor (`RecommendationService.recommend`, a mesma faixa e o mesmo solo; nada é
+  recalculado fora dele), ~0,3 s na fazenda da UFU, sem cache HTTP. Sem 3 culturas ou com cultura
+  desconhecida: 422 `VALIDATION_ERROR`; ponto sem dados: 404 `OUTSIDE_AREA`. Devolve:
+  - `anos[]`: `cultura`, `nome`, `na_janela`, `anos_bons`, `total_anos`, `futuro_anos_bons`, `sede`,
+    `cobre_terra` (palhada > 0), `deixa_nitrogenio` (`n_deixado_kg` > 0), `quebra_nematoide`
+    (`rotacao.culturas_supressoras_nematoide`, PRD 7.7) e `usa_mm` (mediana da ETr do ciclo, o novo
+    `AguaOpcao.usa_mm` do `WaterNeedService`). Fora da janela, os números do motor saem `null`;
+  - `notas`: `seguranca` e `futuro` = média das notas do motor nos anos com lavoura na janela (o pousio
+    fica de fora); `solo` (saúde da terra) = média da nota de solo dos 3 anos (pousio 0) + o bônus de
+    diversidade do PRD 7.7 (`RotationPlanService.diversity_bonus`), até 100;
+  - `terra`: `anos_cobertos`, `anos_nitrogenio`, `anos_nematoide`, `repetidas` (sem o pousio),
+    `total`, `bonus_diversidade`;
+  - `chuva` (chuva aproveitada): `inicio` (a semeadura), `fim` (`chuva_aproveitada.fim`, 07-31),
+    `chuva_mm` (mediana da chuva da semeadura ao fim da série), `usa_media_mm` (média do `usa_mm` dos 3
+    anos, pousio 0; `null` com ano fora da janela), `anos`, `fonte` (`rain_source`, juntas por `+`);
+  - `plano_ab` (`PlanBService`): o Plano A é a cultura do 1º ano; o Plano B, a cultura na janela (sem o
+    pousio) que mais deu certo nos anos em que a do A falhou (desempate pela nota final). `limite`: a
+    chuva dos `plano_b.dias_antes_semeadura` (15) dias antes da semeadura que mais acerta as falhas do
+    A; `separa` só com as 4 condições do grupo `plano_b` (3 falhas ou mais, 50% das falhas, 60% dos
+    marcados e chance ao acaso de até 10%, hipótese do time). Sem B, `motivo`: `pousio`,
+    `nunca_falhou` ou `nenhuma_melhor`. O `plano_3_anos.seco` do motor não muda;
+  - `sinal` (tarefa 0049): o sinal do outono no formato do `/recomendacao`, com o Plano A e o Plano B
+    desta tela (`SinalOutonoService`, injetado no `PlanEvaluationService`). Com o plano sugerido, é o
+    mesmo `sinal` do `/recomendacao`; com o plano editado, fala do Plano A editado. `null` sem a
+    previsão do ENSO, com o 1º ano no pousio ou fora da janela.
 - **Região pelo satélite** (P3, tarefas 0034 e 0036): `GET /api/regiao?lat&lon`, no contrato do
   front (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem
   banco).
@@ -765,6 +969,87 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `SOJA_RECENTE_PATH=../../data/baixados/nasa_modis_soja_recente/soja_recente_2026.json` no
     `.env` desta pasta; **no compose**, já ligado. Lido uma vez por processo: reinicie o backend.
 
+- **Relatos da comunidade** (tarefa 0047, seção 7 da remodelagem; tela "Na sua região"): sem
+  cadastro, sem texto livre e sem dado pessoal. Rotas (o aparelho vai no cabeçalho `X-Aparelho`,
+  identificador aleatório de 8 a 64 letras, números e hífen):
+  - `POST /api/comunidade/relatos` (201): `{"tipo", "subtipo", "valores", "lat", "lon", "data_fato"}`;
+    campo a mais é recusado (422 `INVALID_REQUEST`). Devolve o relato como os vizinhos veem
+    (`id`, `tipo`, `subtipo`, `valores`, `celula`, `lat`/`lon` do **centro da célula**, `data_fato`,
+    `meu: true`);
+  - `GET /api/comunidade/relatos?lat&lon[&raio_km]` (200): `{"raio_km", "anos_safra", "relatos"}`;
+    com `X-Aparelho`, os relatos dele vêm com `meu: true`;
+  - `DELETE /api/comunidade/relatos/{id}` (204): só o aparelho que enviou; senão, 404 `NOT_FOUND`.
+
+  Tipos de agora (`app/models/community_report.py`): `plantio` (`subtipo` = id do `culturas.yaml`,
+  com `pousio` como "deixei parado", ou `outra`; `valores` = `ano`, `resultado` em `bem`,
+  `mais_ou_menos`, `perdi`, e `motivo` em `seca`, `calor`, `geada`, `granizo`, `praga`, `outro` só
+  com `perdi`; o `pousio` não tem resultado; sem `data_fato`), `chuva` (`valores.mm` de 0 a
+  `chuva_max_mm`, sem subtipo) e `evento` (`subtipo` em `fogo`, `granizo`, `geada`, `vendaval`,
+  `enxurrada_erosao`, `praga_doenca`; `valores` vazio). A coluna `report_type` é texto aberto para
+  os tipos futuros (oferta, troca, empréstimo), que o service ainda recusa. Regras no
+  `CommunityReportService`, números no grupo `comunidade` do `regras.yaml`:
+  - chuva e evento: data não futura e de no máximo `dias_atras_max` (30) dias, no dia de Uberlândia
+    (`PILOT_UTC_OFFSET_HOURS`, UTC-3); plantio: o ano em `FieldHistoryService.confirmable_years()`
+    (as últimas safras da tela 4); ponto dentro da área piloto;
+  - no máximo `max_relatos_por_dia` (10, hipótese do time) relatos por aparelho nas últimas 24 horas
+    (429 `TOO_MANY_REPORTS`); um novo plantio do mesmo aparelho e ano substitui o anterior;
+  - redondeza: as células cujo centro fica a até `raio_km` (30; no máximo `raio_max_km`, 50) do
+    ponto, pela haversine (`cells_within_radius`), com a chuva e os eventos dos últimos 30 dias e o
+    plantio das últimas safras, do mais novo ao mais velho;
+  - sem banco (`DATABASE_URL` vazia), as três rotas respondem 503 `COMMUNITY_UNAVAILABLE` (o front
+    não mostra a comunidade).
+
+  **Privacidade (RNF-10):** o service troca o ponto pela célula de 0,1° (`cell_id_for`) e só ela é
+  gravada (o `CHECK` da tabela recusa coordenada); o identificador do aparelho vira HMAC-SHA-256
+  com o `COMMUNITY_DEVICE_SALT` (o `CHECK` exige 64 dígitos hexadecimais) e nunca volta na
+  resposta; a listagem não traz o hash, a hora do envio nem o ponto exato. Não grave nem registre
+  em log o ponto ou o identificador do aparelho. Detalhes: `docs/tarefas/0047-comunidade.md`.
+- **Regras da tela "Como a conta é feita"** (`GET /api/metodo`, tarefa 0049): `MethodService` escolhe no
+  `regras.yaml` os números que a tela explica (`deu_certo` com o ISNA em %, `pesos` em %, `renda`, `agua` com a
+  sede, `rotacao` com o bônus e as supressoras do nematoide, `plano_b`, `alertas` de geada, chuva forte e fogo,
+  `avisos` e `sinal`). Só números (as frases são do front), sem banco e sem cache HTTP. Os schemas têm o prefixo
+  `Metodo` para não colidir no OpenAPI com os do `/recomendacao`.
+- **Avisos do ponto marcado** (`GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas]`, tela "Avisos",
+  remodelagem S6, tarefa 0046, RF-31). Roda o motor uma vez (`RecommendationService.recommend`, com a mesma
+  colheita, solo e safras confirmadas do `/recomendacao`) e junta quatro grupos. O `AvisosService` só busca e
+  monta; as regras ficam em `AvisosAgoraService`, `AvisosMudancaService` e `AvisosVizinhosService`, com os números
+  no grupo `avisos_tela` do `regras.yaml` (à parte do `avisos` do replay P4/P6, que não muda). Reaproveita sem
+  repetir: o dia seco (`avisos.dia_seco_abaixo_mm`), o calor (`clima.calor_temp_c`), as janelas de março a maio do
+  raio-X (`raio_x.veranico_*`, `calor_*`), o fim das chuvas (`RainEndService`), a estação e a chance mínima da
+  previsão do ENSO (`sinal_enso`), o raio da comunidade (`comunidade.raio_km`) e a regra de avisos do replay
+  (`CropAlertService`). Só números: as frases são do front.
+  - **Resposta:** `ponto`, `celula_id`, `hoje` (dia de Uberlândia, UTC−3), `contador` (avisos de `agora` e de
+    `perto`: é o número do botão do cabeçalho), `agora`, `mudou`, `periodo` (`recente_inicio`, `recente_fim`,
+    `antes_inicio`, `antes_fim`), `recordes`, `perto`, `raio_km`, `vizinhos_dias` e `safrinha` (`em_andamento`,
+    `cultura`, `nome`, `semeadura`, `colheita`, `explorar_ano`). Cada grupo é `{avisos, ultima_leitura}`: `null` =
+    sem dado (o front não desenha); `avisos: []` = "Nada fora do normal" com a `ultima_leitura`.
+  - **Cada aviso:** `tipo`, `nivel` (`atencao` ou `fique_de_olho`), `fontes` (`smap`, `nasa_power`, `gpm_imerg`,
+    `noaa`, `comunidade`), `data` (da leitura), `antiga` (SMAP com mais de `smap_antiga_dias`) e `valores`:
+    `terra_seca` (`percentil`, `mais_seca_que_pct` = 100 − percentil), `dias_sem_chuva` (`dias`, `desde`,
+    `no_minimo`), `calor` (`dias`, `janela_dias`, `temp_c`), `enso` (`fase`, `chance_pct`, `estacao`, `ano`,
+    `cultura`, `nome`, `anos_fase`, `bons_fase`, `anos_outros`, `bons_outros`, `ano_inicio`, `ano_fim`; o histórico
+    é `null` sem o ONI), `safrinha_veranico` e `safrinha_calor` (`dias`, `cultura`, `nome`; o calor com `temp_c`),
+    `mudou_veranico`, `mudou_calor` (com `temp_c`) e `mudou_falta_agua` (com `cultura` e `nome`) (`antes`,
+    `recente`), `mudou_fim_chuvas` (`antes`, `recente` em "MM-DD", `diferenca_dias`), `mudou_deu_certo`
+    (`antes_bons`, `antes_total`, `recente_bons`, `recente_total`, `cultura`, `nome`), `recorde_veranico` (`dias`,
+    `ano`, `inicio`), `recorde_outono_seco` (`chuva_mm`, `ano`, `media_mm`), `recorde_fim_chuvas` (`dia`, `ano`),
+    `recorde_calor` (`dias`, `ano`, `temp_c`) e `vizinho_evento` (`evento`, `relatos`).
+  - **NASA POWER recente** (`PowerRecentWeatherRepository`, `get_recent_weather_repository`): os
+    `avisos_tela.power_dias` (30) dias até ontem no centro da célula de 0,1°, pela mesma API diária da pré-carga
+    (sem chave). Cache na memória do processo por 24 h, por célula e janela; falha ou mais de 8 s = `None` (os
+    avisos dele não aparecem) e 15 min de espera antes de tentar de novo. A última leitura é o último dia com
+    chuva e máxima (o POWER sai com ~2 a 3 dias de atraso). A chuva recente nunca é comparada com "o normal": a
+    série guardada só tem janeiro a julho.
+  - **El Niño / La Niña** (`enso`): os `valores` levam também o `sinal` (`normal`, `seco`, `incerto` ou `null`), o
+    veredito do sinal do outono do `/recomendacao` (o mesmo do Plano de 3 anos com o plano sugerido), para o "o
+    que fazer" do front dar o mesmo conselho que a tela do Plano (tarefa 0049).
+  - **Safrinha:** semeadura = o dia do motor para a faixa no ano de hoje; colheita = semeadura + ciclo da melhor
+    opção; `em_andamento` com hoje entre as duas (o "hoje" é injetado no service). Fora dela, `explorar_ano` é o
+    último ano da série (o front liga `/resposta?…&ano=<ano>`).
+  - **Falta de água** do grupo `mudou`: ETc − ETr no ciclo da melhor opção, com o balde do motor (SMAP do dia de
+    plantar ou 50% da CAD; `cycle_deficits` em `avisos_mudanca_service.py`).
+  - Sem banco, `perto` é `null` (a comunidade responde 503 por dentro). Erros como no `/recomendacao` (404
+    `OUTSIDE_AREA`, 422). Sem cache HTTP.
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
   ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre
@@ -793,7 +1078,7 @@ Regras gerais:
   `app/repositories/point_cache.py`); na tabela, `key` + `geom`.
 - Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1`, `smap` e
   `gpm_imerg` (a que o front já procura; decidida em 14/11, tarefa 0027), mais `imerg_late`
-  (chuva recente, A2.3). Fora da NASA: `noaa_oni` (ONI da NOAA) e `noaa_cpc_enso` (previsão do
+  (chuva recente, A2.3) e `modis_mcd64a1` (área queimada, tarefa 0043). Fora da NASA: `noaa_oni` (ONI da NOAA) e `noaa_cpc_enso` (previsão do
   ENSO da NOAA CPC, tarefa 0038), só em arquivo.
 - Todo arquivo traz `versao_dados`, a execução que o gerou.
 - Sem valor: campo ausente ou `null`. Nunca `-999`, zero ou número inventado, e nunca dado
@@ -1065,6 +1350,35 @@ totais e percentuais: nenhum pixel nem ponto individual (RNF-10). Números ilust
   arquivo: o `RegionService` calcula para cada ponto pedido (ver "Dados da API").
 - Ainda não há tabela: a API lê o arquivo. O guia NDVI propõe a `regiao_entressafra` no PostGIS.
 
+### Área queimada: `MapaAreaQueimada` (`app/models/area_queimada.py`)
+
+Os pixels de 500 m do MODIS MCD64A1 que queimaram em algum ano (tarefa 0043), numa grade da
+projeção sinusoidal do MODIS (a mesma `GradeSinusoidal` da soja recente, com o pixel de 463,31 m =
+2πR ÷ 86.400). O `pipeline/fetch_area_queimada.py` grava e o `FileAreaQueimadaRepository` lê
+(`AREA_QUEIMADA_PATH`); recusa arquivo com `versao_dados.fonte` diferente de `modis_mcd64a1`.
+Números ilustrativos:
+
+```json
+{
+  "versao_dados": {"fonte": "modis_mcd64a1", "parametros": {"servico": "ornl_daac", "produto": "MCD64A1", "colecao": "061", "banda": "Burn_Date", "anos": [2016, 2025], "ladrilhos": 12, "pedidos": 240}, "fim": "2026-11-15T13:00:00Z", "versao": "2026.11-modis-mcd64a1"},
+  "fonte": "MODIS MCD64A1",
+  "anos": [2016, 2025],
+  "grade": {"projecao": "sinusoidal_modis", "raio_m": 6371007.181, "x_oeste_m": -5085053.4, "y_norte_m": -2022839.2, "pixel_m": 463.3127165693847, "linhas": 361, "colunas": 440},
+  "queimadas": [[12, 40, [2017, 2021]], [13, 40, [2021]]]
+}
+```
+
+| JSON | Model | Regra |
+| --- | --- | --- |
+| `fonte` | `fonte` | texto não vazio (vai no alerta) |
+| `anos` | `ano_inicio`, `ano_fim` | o período baixado, em ordem |
+| `grade` | `GradeSinusoidal` | como na soja recente (linha 0 no norte, coluna 0 a oeste) |
+| `queimadas[]` | `(linha, coluna, anos)` | só os pixels que queimaram; dentro da grade; anos não vazios e dentro de `anos` |
+
+- O repository devolve os pixels queimados no quadrado de ±`km` em volta do ponto, com o centro de
+  cada um (`QueimadasPerto`); o raio exato e a contagem dos anos ficam no `BurnedAreaService`.
+- Não há tabela: a API lê o arquivo. A comunidade (seção 7) pode mostrar os mesmos pixels no mapa.
+
 ### Chuva recente: `RecentRainRecord` (`app/models/recent_rain.py`)
 
 Uma linha por célula de 0,1°: a chuva dos últimos `dias` dias pelo IMERG Late (`GPM_3IMERGDL` v07) e
@@ -1153,6 +1467,10 @@ ilustrativos (e só 2 × 4 dos 721 × 880):
   - `APPEEARS_TOKEN`: token próprio do AppEEARS, de `POST /api/login` (vale cerca de 48 h). Sem ele, o
     script faz o login com `EARTHDATA_USERNAME` e `EARTHDATA_PASSWORD`.
   - `EE_PROJECT` é legado (Earth Engine fora do MVP) e sai quando a ADR-0005 for aceita.
+- `COMMUNITY_DEVICE_SALT` (a API usa, tarefa 0047): sal do hash do identificador do aparelho nos
+  relatos da comunidade. Segredo, só no ambiente (gere um valor longo e aleatório). Vazio: um sal
+  aleatório por processo (os relatos continuam anônimos, mas o limite por dia e o "apagar o meu"
+  recomeçam quando a API reinicia). Trocar o sal tem o mesmo efeito.
 
 ## Dependências
 

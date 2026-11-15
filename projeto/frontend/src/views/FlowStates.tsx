@@ -2,7 +2,6 @@ import { Button } from '../design-system/components/Button'
 import { Card } from '../design-system/components/Card'
 import { ErrorState, LoadingState, SkeletonCard } from '../design-system/components/Feedback'
 import type { Messages } from '../i18n/messages.pt'
-import type { LateSummary } from '../services/recomendacaoRules'
 import layout from './layout.module.css'
 
 /** Carregando: aviso + cartões pulsando no lugar do conteúdo (nunca tela branca). */
@@ -49,19 +48,6 @@ export function FlowOutside({ t }: { t: Messages }) {
           {t.where.seeExample}
         </Button>
       </div>
-    </Card>
-  )
-}
-
-/** Aviso laranja do que ficou fora da janela de plantio (colheita tardia). */
-export function LateWarning({ t, late }: { t: Messages; late: LateSummary }) {
-  if (late.names.length === 0) return null
-  return (
-    <Card tone="orange" as="section" aria-label={t.options.outOfWindowTitle}>
-      <strong>{t.answer.lateWarning(late.names.join(', '), late.names.length)}</strong>
-      {late.texts.map((text) => (
-        <p key={text}>{text}</p>
-      ))}
     </Card>
   )
 }

@@ -75,17 +75,22 @@ def test_should_read_soil_points_from_prd_table(tmp_path: Path) -> None:
     assert crotalaria.n_deixado_kg == 80
 
 
-def test_should_default_money_fields_to_zero_when_crop_has_no_grain(tmp_path: Path) -> None:
-    # Coberturas e pousio não têm produtividade nem preço (era o KeyError que dava HTTP 500).
-    repo = _repo(tmp_path)
-    crotalaria = repo.get_by_id("crotalaria")
-    pousio = repo.get_by_id("pousio")
+def test_should_ignore_old_money_keys_and_keep_no_price_or_cost(tmp_path: Path) -> None:
+    # Tarefa 0040: a renda não usa preço, custo nem produtividade. Um YAML antigo com essas chaves
+    # ainda carrega (são ignoradas), e o parâmetro da cultura não as guarda.
+    sorgo = _repo(tmp_path).get_by_id("sorgo")
 
-    assert crotalaria is not None and pousio is not None
-    assert crotalaria.produtividade_padrao_sc_ha == 0.0
-    assert crotalaria.preco_padrao_saca == 0.0
-    assert crotalaria.custo_padrao_ha == 800.0
-    assert pousio.custo_padrao_ha == 0.0
+    assert sorgo is not None
+    for campo in ("produtividade_padrao_sc_ha", "preco_padrao_saca", "custo_padrao_ha"):
+        assert not hasattr(sorgo, campo)
+
+
+def test_should_ship_culturas_yaml_without_price_cost_or_yield() -> None:
+    raw = yaml.safe_load(SHIPPED_CULTURAS.read_text(encoding="utf-8"))
+
+    for crop_id, data in raw["culturas"].items():
+        for campo in ("produtividade_padrao_sc_ha", "preco_padrao_saca", "custo_padrao_ha"):
+            assert campo not in data, f"{crop_id}.{campo}"
 
 
 def test_should_return_crop_params_when_queried_by_canonical_or_alias_id(tmp_path: Path) -> None:

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class RegrasClima:
-    """Aperto de água e calor por ano (PRD 7.2) e perda de produtividade pelo ISNA (PRD 7.5)."""
+    """Aperto de água e calor por ano (PRD 7.2)."""
 
     isna_grao: float
     isna_cobertura: float
@@ -16,10 +16,6 @@ class RegrasClima:
     janela_cobertura_dias: int
     calor_temp_c: float
     calor_min_dias: int
-    perda_isna_sem_perda: float
-    perda_isna_alta_abaixo: float
-    perda_fator_media: float
-    perda_fator_alta: float
 
 
 @dataclass(frozen=True)
@@ -41,8 +37,21 @@ class RegrasRotulos:
     chuva_medio_pct: float
     terra_bom: float
     terra_medio: float
-    dinheiro_bom: float
-    dinheiro_medio: float
+    renda_bom: float
+    renda_medio: float
+
+
+@dataclass(frozen=True)
+class RegrasRenda:
+    """Nota de renda sem preço nem custo (PRD 7.5, tarefa 0040).
+
+    A cultura cujo `tipo` (culturas.yaml) está em `tipos_com_grao` dá grão para vender: a nota de
+    renda é a segurança climática dela (anos bons / total x 100). As outras (cobertura, pousio) não
+    dão grão e ficam com `nota_sem_grao`.
+    """
+
+    tipos_com_grao: frozenset[str]
+    nota_sem_grao: float
 
 
 @dataclass(frozen=True)
@@ -60,6 +69,93 @@ class RegrasNdvi:
     """Queda da soja para a colheita sugerida (PRD 7.9). O histórico fica em RegrasHistoricoNdvi."""
 
     queda_colheita: float
+
+
+@dataclass(frozen=True)
+class RegrasColheita:
+    """Faixas de colheita da tela 3 e a época da colheita da soja (tarefa 0042).
+
+    Datas "MM-DD", inclusivas: até `cedo_ate` (e janeiro) é cedo; até `meio_ate`, meio; depois,
+    tarde. A data exata do produtor e a faixa sugerida pelo NDVI usam a mesma regra. A época vai de
+    `janela_inicio` a `janela_fim` (a do campo de data da tela 3).
+    """
+
+    cedo_ate: str
+    meio_ate: str
+    janela_inicio: str
+    janela_fim: str
+
+
+@dataclass(frozen=True)
+class RegrasChuvaQueSobra:
+    """Chuva que sobra depois da colheita (tela 3, tarefa 0042).
+
+    Do dia da colheita até `fim` ("MM-DD", inclusive): a mediana dos anos e o ano seco
+    (`percentil_seco`, de 0 a 100).
+    """
+
+    fim: str
+    percentil_seco: int
+
+
+@dataclass(frozen=True)
+class RegrasFimDasChuvas:
+    """Fim das chuvas na célula (tela 3, tarefa 0042).
+
+    Primeiro dia, a partir de `inicio` ("MM-DD"), que começa `dias` dias seguidos com menos de
+    `chuva_max_mm` mm somados.
+    """
+
+    inicio: str
+    dias: int
+    chuva_max_mm: float
+
+
+@dataclass(frozen=True)
+class RegrasRaioX:
+    """Raio-X da sua terra (tela 4, remodelagem S4, tarefa 0043). Datas "MM-DD", inclusivas.
+
+    O dia seco é o dos avisos (`avisos.dia_seco_abaixo_mm`), o calor é o do motor
+    (`clima.calor_temp_c`) e a janela em volta da floração é a do aperto
+    (`clima.janela_grao_meia_dias`): não se repetem aqui.
+    """
+
+    chuva_inicio: str
+    chuva_fim: str
+    veranico_inicio: str
+    veranico_fim: str
+    calor_inicio: str
+    calor_fim: str
+    regiao_inicio: str
+    regiao_fim: str
+    regiao_min_celulas: int
+    solo_vizinho_max_km: float
+    ndvi_inicio: str
+    ndvi_fim: str
+    ndvi_coluna_dias: int
+    futuro_mes_inicio: int
+    futuro_mes_fim: int
+
+
+@dataclass(frozen=True)
+class RegrasAlertasArea:
+    """Alertas da sua área (tela 4, tarefa 0043): cada um só aparece se o dado indicar risco.
+
+    Sem granizo: nenhuma fonte que o app usa mede granizo.
+    """
+
+    geada_temp_c: float
+    geada_inicio: str
+    geada_fim: str
+    geada_anos_min: int
+    chuva_forte_mm: float
+    chuva_forte_inicio: str
+    chuva_forte_fim: str
+    chuva_forte_media_min_dias: float
+    fogo_raio_km: float
+    fogo_anos_min: int
+    fogo_ano_inicio: int
+    fogo_ano_fim: int
 
 
 @dataclass(frozen=True)
@@ -136,7 +232,7 @@ class RegrasSinalOutono:
     chance_seco_min: float  # chance (0 a 1) de chuva abaixo do normal que já é sinal de seco
     chance_normal_max: float  # abaixo disso (e com a terra sem falta de água) é sinal de normal
     smap_percentil_seco: float  # terra seca: percentil do SMAP abaixo disso...
-    chuva_fracao_seco: float  # ...e chuva recente abaixo desta fração da média
+    chuva_fracao_seco: float  # ...e chuva recente abaixo desta fração da média (sem uso)
 
 
 @dataclass(frozen=True)
@@ -147,7 +243,6 @@ class RegrasSinalEnso:
     fase_chance_min_pct: int  # chance mínima (%) da fase mais provável para haver sinal
     anos_fase_min: int  # mínimo de anos daquela fase na série para contar o histórico
     fracao_anos_ruins_seco: float  # anos ruins do Plano A na fase a partir dos quais é seco
-    dias_regra_data: int  # dias antes da data limite somados na regra da data
     smap_faixas_pct: tuple[float, ...]  # percentis do SMAP que separam as faixas da frase
 
 
@@ -163,6 +258,34 @@ class RegrasAvisos:
     calor_dias_seguidos: int
     max_avisos: int
     janela_limite_dias: int
+
+
+@dataclass(frozen=True)
+class RegrasAvisosTela:
+    """Tela "Avisos" (/avisos, remodelagem S6, tarefa 0046). À parte do `RegrasAvisos` (P4 e P6).
+
+    Agora: terra seca com o percentil do SMAP até `terra_seca_percentil_max` (leitura antiga com
+    mais de `smap_antiga_dias`); nos últimos `power_dias` do NASA POWER, `dias_sem_chuva_min` dias
+    seguidos sem chuva até a última leitura ou `calor_dias_min` dias de calor nos últimos
+    `calor_janela_dias`. Perto: relatos dos últimos `vizinhos_dias`. O que mudou: os anos desde
+    `ano_recente_inicio` contra os de antes, só com a diferença mínima de cada `mudou_*`.
+    """
+
+    terra_seca_percentil_max: float
+    smap_antiga_dias: int
+    power_dias: int
+    dias_sem_chuva_min: int
+    calor_dias_min: int
+    calor_janela_dias: int
+    vizinhos_dias: int
+    ano_recente_inicio: int
+    outono_inicio: str
+    outono_fim: str
+    mudou_veranico_dias_min: float
+    mudou_fim_chuvas_dias_min: int
+    mudou_calor_dias_min: float
+    mudou_falta_agua_mm_min: float
+    mudou_deu_certo_pct_min: float
 
 
 @dataclass(frozen=True)
@@ -229,6 +352,77 @@ class FrasesPorque:
     colheita_tarde: str
     # Histórico com safras confirmadas pelo produtor (tarefa 0039): {confirmadas} {vistas}
     historico_confirmado: str
+    # Renda só com fatos (tarefa 0040): dá grão ou não, e o risco de perder a lavoura
+    # ({anos_aperto} {total})
+    renda_com_grao: str
+    renda_sem_grao: str
+    renda_risco: str
+
+
+@dataclass(frozen=True)
+class RegrasComunidade:
+    """Relatos da comunidade sem cadastro (seção 7 da remodelagem, tarefa 0047).
+
+    `raio_km` é o raio padrão da redondeza e `raio_max_km` o maior que a listagem aceita; a chuva
+    vai de 0 a `chuva_max_mm` por dia; datas de chuva e evento de no máximo `dias_atras_max` dias
+    atrás; no máximo `max_relatos_por_dia` relatos por aparelho nas últimas 24 horas.
+    """
+
+    raio_km: float
+    raio_max_km: float
+    chuva_max_mm: float
+    dias_atras_max: int
+    max_relatos_por_dia: int
+
+
+@dataclass(frozen=True)
+class RegrasAgua:
+    """Linha "Água" e selo "Sede da cultura" da aba Sugestão (seção 5.3, tarefa 0044).
+
+    Consumo da cultura no ciclo (mediana do ETc dos anos) abaixo de `sede_pouca_ate_mm` = pouca
+    água; de `sede_muita_desde_mm` para cima = muita; entre os dois, média. O ano seco da falta de
+    água é aquele em que só `percentil_seco`% dos anos tiveram falta maior.
+    """
+
+    sede_pouca_ate_mm: float
+    sede_muita_desde_mm: float
+    percentil_seco: int
+
+
+@dataclass(frozen=True)
+class RegrasEnsoAcerto:
+    """Quando a taxa de acerto nos anos de El Niño / La Niña difere "claramente" dos outros anos.
+
+    Clara = pelo menos `anos_fase_min` anos da fase e diferença de `diferenca_min_pct` pontos
+    percentuais ou mais entre a fase e os outros anos (tarefa 0044).
+    """
+
+    diferenca_min_pct: float
+    anos_fase_min: int
+
+
+@dataclass(frozen=True)
+class RegrasPlanoB:
+    """Quando o limite de chuva do Plano B "separa bem" os anos bons dos ruins (tarefa 0045).
+
+    "Secou" = chuva dos `dias_antes_semeadura` dias antes da semeadura abaixo do limite. O número só
+    aparece com `anos_falha_min` anos de falha ou mais, pegando `sensibilidade_min_pct`% das falhas,
+    com `precisao_min_pct`% dos anos marcados sendo de falha e chance ao acaso de até
+    `chance_max_pct`%.
+    """
+
+    dias_antes_semeadura: int
+    anos_falha_min: int
+    sensibilidade_min_pct: float
+    precisao_min_pct: float
+    chance_max_pct: float
+
+
+@dataclass(frozen=True)
+class RegrasChuvaAproveitada:
+    """Fim ("MM-DD") da janela da chuva aproveitada, que começa na semeadura (tarefa 0045)."""
+
+    fim: str
 
 
 @dataclass(frozen=True)
@@ -238,6 +432,7 @@ class Regras:
     clima: RegrasClima
     nota_final: RegrasNotaFinal
     rotulos: RegrasRotulos
+    renda: RegrasRenda
     solo: RegrasSolo
     ndvi: RegrasNdvi
     historico_ndvi: RegrasHistoricoNdvi
@@ -246,8 +441,19 @@ class Regras:
     sinal_outono: RegrasSinalOutono
     frases: dict[str, FrasesPorque]  # "pt" e "en"
     avisos: RegrasAvisos
+    avisos_tela: RegrasAvisosTela
     frases_safra: dict[str, FrasesSafra]  # "pt" e "en"
     enso: RegrasEnso
     frases_ano: dict[str, FrasesAno]  # "pt" e "en"
     soja_recente: RegrasSojaRecente
     sinal_enso: RegrasSinalEnso
+    colheita: RegrasColheita
+    chuva_que_sobra: RegrasChuvaQueSobra
+    fim_das_chuvas: RegrasFimDasChuvas
+    comunidade: RegrasComunidade
+    raio_x: RegrasRaioX
+    alertas_area: RegrasAlertasArea
+    agua: RegrasAgua
+    enso_acerto: RegrasEnsoAcerto
+    plano_b: RegrasPlanoB
+    chuva_aproveitada: RegrasChuvaAproveitada

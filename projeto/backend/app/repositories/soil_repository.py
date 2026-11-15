@@ -15,6 +15,7 @@ from app.constants import (
     DEFAULT_SRID,
     SAND_THRESHOLD_PCT,
 )
+from app.models.raio_x import SoloVizinho
 from app.models.talhao import SoloInfo
 from app.repositories.climate_repository import cell_bounds, cell_id_for
 from app.repositories.point_cache import load_points, point_key
@@ -171,6 +172,36 @@ class PostgisSoilRepository:
         if row is None or from_file.fonte != DEFAULT_SOIL.fonte:
             return from_file
         return _soilgrids_soil(row)
+
+    def get_nearest_soil(self, lat: float, lon: float) -> SoloVizinho | None:
+        """O ponto gravado mais perto, de qualquer célula, e a distância até ele (raio-X, 0043).
+
+        Não entra no `get_soil` (o motor nunca usa solo de célula vizinha): só o raio-X mostra,
+        dizendo que é da vizinha. Tabela vazia: None.
+        """
+        with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT argila_percentual, areia_percentual, textura_solo,
+                       cad_capacidade_agua_mm,
+                       ST_Distance(geom::geography,
+                                   ST_SetSRID(ST_MakePoint(%(lon)s, %(lat)s), %(srid)s)::geography)
+                FROM soil_point
+                ORDER BY geom <-> ST_SetSRID(ST_MakePoint(%(lon)s, %(lat)s), %(srid)s)
+                LIMIT 1;
+                """,
+                {"lat": lat, "lon": lon, "srid": DEFAULT_SRID},
+            )
+            row = cur.fetchone()
+        if row is None:
+            return None
+        return SoloVizinho(soil=_soilgrids_soil(row), distancia_km=float(row[4]) / 1000.0)
+
+
+class NearestSoilRepository(Protocol):
+    """O solo gravado mais perto do ponto, de qualquer célula (raio-X, tarefa 0043)."""
+
+    def get_nearest_soil(self, lat: float, lon: float) -> SoloVizinho | None: ...
 
 
 def _soilgrids_soil(row: tuple[Any, ...]) -> SoloInfo:

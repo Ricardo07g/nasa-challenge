@@ -1,7 +1,9 @@
 """Plano de 3 anos de entressafra (PRD 7.7): ano normal, ano seco e a sequência de hoje."""
 
+from collections.abc import Callable
 from datetime import timedelta
 from itertools import groupby, product
+from operator import attrgetter
 
 from app.constants import ROTATION_HORIZON_YEARS, SCORE_MAX, SCORE_MIN
 from app.models.climate import ClimateSeason
@@ -79,6 +81,44 @@ class RotationPlanService:
             if longest_fallow_run(seq) <= self._rotacao.max_pousios
             and not (filter_nematode and not suppressors & set(seq))
         ]
+
+    def best_plan_starting_with(
+        self,
+        first: str,
+        opcoes: list[ResultadoOpcao],
+        pousio: NotasOpcao,
+        axis: Callable[[NotasOpcao], float] | None = None,
+        nematoide: bool | None = None,
+        allow_fallow: bool = True,
+    ) -> Sequence:
+        """Melhor plano de 3 anos cujo 1º ano é `first` (tarefa 0044: a sugestão é o ano 1).
+
+        Mesmas sequências e restrições do PRD 7.7 (`candidate_sequences`, com o pousio). A nota de
+        cada sequência é a média da nota de cada ano mais o bônus de diversidade, sem o teto de 100
+        (o teto empataria planos diferentes): a nota do eixo do objetivo (`axis`: segurança, renda
+        ou solo) ou, sem objetivo, a nota final. No empate, vale a mesma conta com a nota final;
+        depois, a primeira sequência na ordem das opções.
+
+        `allow_fallow=False` tira o pousio das combinações (plano de um objetivo do produtor: com
+        segurança 100, o pousio ganharia o "mais segurança" sem ter lavoura para proteger).
+        """
+        crop_ids = [o.id for o in opcoes if o.id != FALLOW_ID]
+        if allow_fallow:
+            crop_ids.append(FALLOW_ID)
+        finals = {o.id: o.notas.final for o in opcoes} | {FALLOW_ID: pousio.final}
+        nota = axis or attrgetter("final")
+        scores = {o.id: nota(o.notas) for o in opcoes} | {FALLOW_ID: nota(pousio)}
+        sequences = [s for s in self.candidate_sequences(crop_ids, nematoide) if s[0] == first]
+        if not sequences:
+            return (first,) * ROTATION_HORIZON_YEARS
+        return max(
+            sequences,
+            key=lambda seq: (self._raw_score(seq, scores), self._raw_score(seq, finals)),
+        )
+
+    def _raw_score(self, seq: Sequence, scores: dict[str, float]) -> float:
+        """Média das notas dos 3 anos + bônus de diversidade, sem o teto (só para comparar)."""
+        return sum(scores[crop] for crop in seq) / len(seq) + self.diversity_bonus(seq)
 
     def build_3_year_plans(
         self,

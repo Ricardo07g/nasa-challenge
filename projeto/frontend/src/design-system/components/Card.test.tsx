@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { AlternativeCard, Card, DataSourceCard, IconBubble, InfoBanner, NotConnectedCard, SourceCard } from './Card'
+import * as CardModule from './Card'
+import { AlternativeCard, Card, DataSourceCard, IconBubble, InfoBanner, SourceCard } from './Card'
 
 describe('Card', () => {
   it('aplica o tom e o destaque', () => {
@@ -60,47 +61,13 @@ describe('DataSourceCard', () => {
     expect(screen.getByText('extra')).toBeInTheDocument()
   })
 
-  it('sem o dado: no lugar do ✓ vem o aviso "Ainda não conectado", e o cartão fica tracejado', () => {
-    render(
-      <DataSourceCard
-        icon={<svg />}
-        title="Clima dos próximos anos"
-        subtitle="Como a chuva e o calor devem mudar."
-        readyLabel="Pronto"
-        status="unavailable"
-        unavailableLabel="Ainda não conectado"
-      />,
-    )
+  it('o cartão sempre tem o dado: não há mais o estado "Ainda não conectado" (decisão D2)', () => {
+    render(<DataSourceCard icon={<svg />} title="Clima dos próximos anos" subtitle="Como a chuva e o calor devem mudar." readyLabel="Pronto" />)
 
-    expect(screen.queryByRole('img', { name: 'Pronto' })).not.toBeInTheDocument()
-    expect(screen.queryByText('Como a chuva e o calor devem mudar.')).not.toBeInTheDocument()
     const card = screen.getByRole('heading', { name: 'Clima dos próximos anos' }).closest('[data-status]')
-    expect(card).toHaveAttribute('data-status', 'unavailable')
-    expect(card).toHaveTextContent('Ainda não conectado')
-    expect(screen.getByText('Ainda não conectado').closest('[data-status="not-connected"]')).not.toBeNull()
-  })
-})
-
-describe('NotConnectedCard (bloco que depende de dado que a API ainda não manda)', () => {
-  it('mostra o título do bloco e o aviso "Ainda não conectado", sem número de exemplo', () => {
-    render(<NotConnectedCard title="Choveu aqui" label="Ainda não conectado" />)
-
-    const block = screen.getByRole('region', { name: 'Choveu aqui' })
-    expect(block).toHaveAttribute('data-status', 'unavailable')
-    expect(screen.getByRole('heading', { level: 2, name: 'Choveu aqui' })).toBeInTheDocument()
-    expect(block).toHaveTextContent('Ainda não conectado')
-  })
-
-  it('pode ter ícone, título de nível 3 e uma explicação', () => {
-    render(
-      <NotConnectedCard title="Histórico da área" label="Ainda não conectado" icon={<svg data-testid="icone" />} level={3}>
-        <p>Explicação</p>
-      </NotConnectedCard>,
-    )
-
-    expect(screen.getByTestId('icone')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 3, name: 'Histórico da área' })).toBeInTheDocument()
-    expect(screen.getByText('Explicação')).toBeInTheDocument()
+    expect(card).toHaveAttribute('data-status', 'ready')
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
+    expect('NotConnectedCard' in CardModule).toBe(false)
   })
 })
 
@@ -118,6 +85,18 @@ describe('AlternativeCard', () => {
 
     expect(screen.getByTestId('icone')).toBeInTheDocument()
   })
+
+  it('pode ter uma ação no pé do cartão (aba Comparar, tarefa 0045)', () => {
+    render(<AlternativeCard label="Mais renda" title="Sorgo" text="x" action={<button type="button">Comparar</button>} />)
+
+    expect(screen.getByRole('button', { name: 'Comparar' })).toBeInTheDocument()
+  })
+
+  it('leva a imagem da planta no canto (tarefa 0044)', () => {
+    render(<AlternativeCard label="Mais renda" title="Sorgo" text="x" media={<span>imagem do sorgo</span>} />)
+
+    expect(screen.getByText('imagem do sorgo')).toBeInTheDocument()
+  })
 })
 
 describe('SourceCard', () => {
@@ -127,14 +106,6 @@ describe('SourceCard', () => {
     expect(screen.getByRole('heading', { name: 'Chuva' })).toBeInTheDocument()
     expect(screen.getByText('GPM IMERG (NASA)')).toBeInTheDocument()
     expect(screen.getByText('quadrados de 10 km, por dia')).toBeInTheDocument()
-  })
-
-  it('fonte que a API ainda não manda: borda tracejada e "Ainda não conectado"', () => {
-    render(<SourceCard what="Umidade da terra" source="SMAP L4 (NASA)" scale="9 km" notConnected="Ainda não conectado" />)
-
-    const card = screen.getByRole('heading', { name: 'Umidade da terra' }).closest('[data-status]')
-    expect(card).toHaveAttribute('data-status', 'unavailable')
-    expect(card).toHaveTextContent('Ainda não conectado')
   })
 
   it('fonte conectada não leva o aviso', () => {

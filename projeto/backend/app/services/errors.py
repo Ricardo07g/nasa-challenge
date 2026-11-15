@@ -28,3 +28,17 @@ class OutsideAreaError(NotFoundError):
 
     def __init__(self, message: str) -> None:
         DomainError.__init__(self, message, code="OUTSIDE_AREA")
+
+
+class TooManyReportsError(DomainError):
+    """O aparelho passou do limite de relatos da comunidade (vira HTTP 429, TOO_MANY_REPORTS)."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message, code="TOO_MANY_REPORTS")
+
+
+class CommunityUnavailableError(DomainError):
+    """A comunidade não está ligada (sem banco): vira HTTP 503 com code COMMUNITY_UNAVAILABLE."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message, code="COMMUNITY_UNAVAILABLE")

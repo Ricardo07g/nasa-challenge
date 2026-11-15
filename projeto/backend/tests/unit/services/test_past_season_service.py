@@ -45,9 +45,6 @@ def _crop(crop_id: str, tipo: str, limite: str | None, nome_en: str = "") -> Cro
         solo_nitrogenio=0,
         solo_pragas=0,
         n_deixado_kg=0,
-        produtividade_padrao_sc_ha=0.0 if pousio else 80.0,
-        preco_padrao_saca=0.0 if pousio else 62.0,
-        custo_padrao_ha=0.0 if pousio else 3500.0,
     )
 
 
@@ -223,6 +220,26 @@ def test_should_fetch_a_new_cell_on_demand_before_the_replay() -> None:
 def test_should_raise_validation_error_for_an_unknown_harvest_band() -> None:
     with pytest.raises(ValidationDomainError):
         _service().replay(lat=LAT, lon=LON, ano=2024, colheita="depois")
+
+
+def test_should_replay_the_option_asked_when_it_fits_the_window() -> None:
+    # Tarefa 0044: o replay vira o detalhe de qualquer ano do explorador, para a opção que a aba
+    # Sugestão mostra (com um objetivo, pode não ser a melhor do motor).
+    season = _service(crops=[POUSIO, MILHO, SORGO]).replay(
+        lat=LAT, lon=LON, ano=2024, opcao="sorgo"
+    )
+
+    assert season.opcao == "sorgo"
+    assert season.eventos[0].texto == "Semeadura: Sorgo."
+
+
+def test_should_raise_not_found_for_an_option_out_of_the_window_or_unknown() -> None:
+    service = _service(crops=[POUSIO, MILHO, SORGO])
+
+    with pytest.raises(NotFoundError):
+        service.replay(lat=LAT, lon=LON, ano=2024, colheita="tarde", opcao="milho_safrinha")
+    with pytest.raises(NotFoundError):
+        service.replay(lat=LAT, lon=LON, ano=2024, opcao="soja")
 
 
 def test_should_raise_not_found_when_no_option_fits_the_sowing_window() -> None:

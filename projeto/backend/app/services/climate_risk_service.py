@@ -17,6 +17,9 @@ from app.models.regras import Regras
 from app.repositories.rules_repository import load_default_rules
 from app.services.water_balance_calculator import WaterBalanceCalculator
 
+# Somas do ciclo em mm (ETc, ETr e chuva): 1 casa basta para a linha "Água" (tarefa 0044)
+CYCLE_SUM_DECIMALS = 1
+
 
 class ClimateRiskService:
     """Avalia a janela de plantio, o aperto de água e calor por ano e o clima futuro (CMIP6)."""
@@ -31,14 +34,6 @@ class ClimateRiskService:
             return True
         month_str, day_str = crop.semeadura_limite_mes_dia.split("-")
         return (semeadura.month, semeadura.day) <= (int(month_str), int(day_str))
-
-    def loss_factor(self, isna: float) -> float:
-        """Perda de produtividade pelo ISNA (PRD 7.5): 0% (>= 0,65), 30% (0,55 a 0,65), 60%."""
-        if isna >= self._clima.perda_isna_sem_perda:
-            return 0.0
-        if isna >= self._clima.perda_isna_alta_abaixo:
-            return self._clima.perda_fator_media
-        return self._clima.perda_fator_alta
 
     @staticmethod
     def initial_bucket_fraction(smap_wetness: float | None) -> float:
@@ -139,9 +134,11 @@ class ClimateRiskService:
                     aperto=falta_agua or calor,
                     isna=isna_val,
                     dias_calor=dias_calor,
-                    fator_perda=self.loss_factor(isna_val),
                     falta_agua=falta_agua,
                     calor=calor,
+                    etc_mm=round(sum(etc_l), CYCLE_SUM_DECIMALS),
+                    etr_mm=round(sum(etr_l), CYCLE_SUM_DECIMALS),
+                    chuva_mm=round(sum(season.rain_mm[start:end]), CYCLE_SUM_DECIMALS),
                 )
             )
 
@@ -210,28 +207,59 @@ class ClimateRiskService:
         Returns:
             Média, mínimo e máximo entre os modelos, ou None quando não há deltas do CMIP6.
         """
-        by_model: dict[str, list[Cmip6Delta]] = defaultdict(list)
-        for delta in deltas:
-            by_model[delta.model].append(delta)
-        if not by_model:
-            return None
+        by_model = self.simulate_future_by_model(
+            crop=crop,
+            seasons=seasons,
+            deltas=deltas,
+            semeadura=semeadura,
+            cad_mm=cad_mm,
+            smap_wetness_by_year=smap_wetness_by_year,
+        )
+        return self.summarize_future(by_model, scenario=deltas[0].scenario if deltas else "")
 
-        anos_bons_por_modelo: list[int] = []
-        for model_deltas in by_model.values():
-            projected = [self.project_season(s, model_deltas) for s in seasons]
-            resultados = self.simulate_historical(
+    def simulate_future_by_model(
+        self,
+        crop: CropParams,
+        seasons: list[ClimateSeason],
+        deltas: list[Cmip6Delta],
+        semeadura: date,
+        cad_mm: float,
+        smap_wetness_by_year: Mapping[int, float] | None = None,
+    ) -> dict[str, list[ResultadoAno]]:
+        """Os anos simulados no clima de 2041-2060, um conjunto por modelo do CMIP6 (PRD 7.3).
+
+        É a mesma conta do `simulate_historical`, com a série de cada ano projetada pelos deltas
+        do modelo (`project_season`) e o mesmo balde inicial. A linha "Água" (tarefa 0044) usa a
+        falta de água de cada modelo; a nota de futuro, os anos sem aperto. Sem deltas: `{}`.
+        """
+        deltas_by_model: dict[str, list[Cmip6Delta]] = defaultdict(list)
+        for delta in deltas:
+            deltas_by_model[delta.model].append(delta)
+        return {
+            model: self.simulate_historical(
                 crop=crop,
-                seasons=projected,
+                seasons=[self.project_season(s, model_deltas) for s in seasons],
                 semeadura=semeadura,
                 cad_mm=cad_mm,
                 smap_wetness_by_year=smap_wetness_by_year,
             )
-            anos_bons_por_modelo.append(sum(1 for r in resultados if not r.aperto))
+            for model, model_deltas in deltas_by_model.items()
+        }
 
+    @staticmethod
+    def summarize_future(
+        by_model: Mapping[str, list[ResultadoAno]], scenario: str
+    ) -> FuturoResultado | None:
+        """Anos sem aperto por modelo: média (arredondada), mínimo e máximo. Sem modelo: None."""
+        if not by_model:
+            return None
+        anos_bons_por_modelo = [
+            sum(1 for r in resultados if not r.aperto) for resultados in by_model.values()
+        ]
         return FuturoResultado(
             anos_bons_media=round(mean(anos_bons_por_modelo)),
             anos_bons_min=min(anos_bons_por_modelo),
             anos_bons_max=max(anos_bons_por_modelo),
             modelos=len(by_model),
-            cenario=deltas[0].scenario,
+            cenario=scenario,
         )

@@ -4,7 +4,6 @@ import {
   Card,
   DataSourceCard,
   InfoBanner,
-  NotConnectedCard,
   SourceCard,
 } from '../design-system/components/Card'
 import { NeighborDots, RainBarChart, RainReadingRow, RegionMap } from '../design-system/components/Charts'
@@ -22,7 +21,6 @@ import { DemoBanner, ErrorState, LoadingState, ProgressBar, SkeletonCard } from 
 import { AnswerTabs, BackLink, QuestionStepper } from '../design-system/components/Navigation'
 import {
   MetricRow,
-  NotConnected,
   StatusPill,
   StripLegend,
   YearStrip,
@@ -36,7 +34,7 @@ import {
   DropIcon,
   HistoryIcon,
   LeafIcon,
-  MoneyIcon,
+  GrainIcon,
   PinIcon,
   RainIcon,
   SatelliteIcon,
@@ -88,7 +86,7 @@ const ICONS = [
   ClimateIcon,
   HistoryIcon,
   SproutIcon,
-  MoneyIcon,
+  GrainIcon,
   LeafIcon,
   ShieldIcon,
   CheckIcon,
@@ -194,9 +192,9 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
         <AnswerTabs
           label={t.answerTabs.label}
           tabs={[
-            { to: '/design-system#resposta', label: t.answerTabs.answer, current: true },
-            { to: '/design-system#plano', label: t.answerTabs.plan, current: false },
-            { to: '/design-system#opcoes', label: t.answerTabs.options, current: false },
+            { to: '/design-system#resposta', label: t.suggestion.tabs.suggestion, current: true },
+            { to: '/design-system#opcoes', label: t.suggestion.tabs.compare, current: false },
+            { to: '/design-system#plano', label: t.suggestion.tabs.plan, current: false },
           ]}
         />
         <div className={layout.grid}>
@@ -217,11 +215,11 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
           <Card>
             <ChipGroup
               label={t.options.sortLabel}
-              value="dinheiro"
+              value="renda"
               onChange={noop}
               options={[
                 { value: 'chuva', label: t.axes.chuva },
-                { value: 'dinheiro', label: t.axes.dinheiro },
+                { value: 'renda', label: t.axes.renda },
                 { value: 'terra', label: t.axes.terra },
               ]}
             />
@@ -237,7 +235,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             />
             <RadioCard title={t.harvest.meio.title} sub={t.harvest.meio.sub} selected onSelect={noop} />
             <RadioCard title={t.harvest.tarde.title} sub={t.harvest.tarde.sub} selected={false} onSelect={noop} />
-            <RadioCard title={t.when.dateOption} sub={t.when.dateOptionHint} selected={false} expanded onSelect={noop} />
+            <RadioCard title={t.harvest.cedo.title} sub={t.harvest.cedo.sub} selected={false} onSelect={noop} />
             <DateField
               label={t.when.dateLabel}
               value="2027-02-18"
@@ -258,9 +256,9 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
               <YearStrip label={t.answer.rainStripLabel(14, 20)} cells={rainCells} />
             </MetricRow>
             <MetricRow
-              icon={<MoneyIcon />}
-              label={t.axes.dinheiro}
-              value="R$ 700"
+              icon={<GrainIcon />}
+              label={t.axes.renda}
+              value="Dá grão para vender"
               pill={<StatusPill rotulo="bom">{t.labels.bom}</StatusPill>}
             />
             <MetricRow
@@ -307,21 +305,7 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             subtitle={t.satellite.soilFromMap}
             readyLabel={t.common.ready}
           />
-          <DataSourceCard
-            icon={<ClimateIcon />}
-            iconTone="blue"
-            title={t.satellite.climateTitle}
-            subtitle={t.satellite.climateSubtitleGeneric}
-            readyLabel={t.common.ready}
-            status="unavailable"
-            unavailableLabel={t.common.notConnected}
-          />
           <DemoBanner>{t.common.demoMode}</DemoBanner>
-          <NotConnectedCard icon={<RainIcon />} iconTone="blue" title={t.community.rainTitle} label={t.common.notConnected} />
-          <Card>
-            <NotConnected label={t.common.notConnected} />
-            <NotConnected label={t.common.notConnected} what={t.plan.seedCost} />
-          </Card>
           <AlternativeCard
             icon={<ShieldIcon />}
             label={t.motives.menos_risco}
@@ -372,12 +356,6 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
             what={t.method.sources.nasa_power.what}
             source={t.method.sources.nasa_power.source}
             scale={t.method.sources.nasa_power.scale}
-          />
-          <SourceCard
-            what={t.method.sources.smap.what}
-            source={t.method.sources.smap.source}
-            scale={t.method.sources.smap.scale}
-            notConnected={t.common.notConnected}
           />
           <Card>
             <LoadingState>{t.common.loading}</LoadingState>

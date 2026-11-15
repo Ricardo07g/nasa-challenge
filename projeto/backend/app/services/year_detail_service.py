@@ -6,7 +6,7 @@ mesma dos avisos), a fase do ENSO pelo ONI da NOAA (só informa: não entra na c
 ano, montada com os modelos do `regras.yaml` (grupo `frases_ano`), sem IA generativa.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import date, timedelta
 from typing import Final
 
@@ -80,6 +80,7 @@ class YearDetailService:
         seasons: Sequence[ClimateSeason],
         resultados: Sequence[ResultadoAno],
         lang: str = "pt-BR",
+        smap_wetness_by_year: Mapping[int, float] | None = None,
     ) -> tuple[AnoDetalhe, ...]:
         """Um item por ano simulado, na ordem dos `resultados` (a mesma da faixa de chuva).
 
@@ -89,7 +90,10 @@ class YearDetailService:
             seasons: Séries de cada ano (as mesmas que o motor simulou).
             resultados: Resultado de cada ano no motor (`ClimateRiskService.simulate_historical`).
             lang: Língua da frase (`Accept-Language`); "en..." = inglês, o resto = português.
+            smap_wetness_by_year: Umidade do SMAP no dia de plantar de cada ano (a mesma do balde
+                inicial do motor); vira a `umidade_inicial` do ano. Ano fora dele: None.
         """
+        umidade = smap_wetness_by_year or {}
         is_en = lang.lower().startswith(ENGLISH_PREFIX)
         texts = self._rules.frases_ano[ENGLISH_PREFIX if is_en else "pt"]
         stage = critical_stage(crop, self._rules.clima)
@@ -115,6 +119,12 @@ class YearDetailService:
                     texto=self._text(
                         crop, resultado, sowing, fase_critica, dias, enso, texts, is_en
                     ),
+                    isna=resultado.isna,
+                    dias_calor=resultado.dias_calor,
+                    falta_agua=resultado.falta_agua,
+                    calor=resultado.calor,
+                    semeadura=sowing,
+                    umidade_inicial=umidade.get(resultado.ano),
                 )
             )
         return tuple(detalhes)

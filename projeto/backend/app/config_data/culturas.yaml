@@ -16,8 +16,8 @@
 #
 # nota_solo: pontos da tabela 7.4 do PRD (palhada até 40, nitrogênio até 30,
 #   quebra de pragas/nematoide até 30). A nota de solo é a soma (0 a 100).
-# Coberturas e pousio não dão grão: sem produtividade_padrao_sc_ha e preco_padrao_saca
-#   (valem 0); custo_padrao_ha é o custo de implantação/semente.
+# Sem preço, custo nem produtividade: a renda não usa reais (tarefa 0040, seção 1 da
+#   remodelagem). O `tipo` diz se a cultura dá grão para vender (grupo `renda` do regras.yaml).
 # ==============================================================================
 
 culturas:
@@ -52,9 +52,6 @@ culturas:
     kc_pico: 1.20
     nota_solo: {palhada: 20, nitrogenio: 0, pragas: 0}
     n_deixado_kg: 0
-    produtividade_padrao_sc_ha: 80.0
-    preco_padrao_saca: 62.0 # R$ / saca Uberlândia nov/2026
-    custo_padrao_ha: 3500.0
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie o milho logo depois de colher a soja."
       - "Colha o milho no inverno."
@@ -75,9 +72,6 @@ culturas:
     kc_pico: 1.05
     nota_solo: {palhada: 20, nitrogenio: 0, pragas: 15}
     n_deixado_kg: 0
-    produtividade_padrao_sc_ha: 60.0
-    preco_padrao_saca: 49.6 # ~80% do milho
-    custo_padrao_ha: 2200.0
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie o sorgo logo depois de colher a soja."
       - "Colha o grão em junho ou julho."
@@ -98,9 +92,6 @@ culturas:
     kc_pico: 1.20
     nota_solo: {palhada: 40, nitrogenio: 0, pragas: 10}
     n_deixado_kg: 0
-    produtividade_padrao_sc_ha: 76.0 # Leve desconto pelo consórcio (-5%)
-    preco_padrao_saca: 62.0
-    custo_padrao_ha: 3800.0
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie o capim junto com o milho."
       - "Colha o milho. O capim fica cobrindo a terra."
@@ -121,7 +112,6 @@ culturas:
     kc_pico: 1.00
     nota_solo: {palhada: 35, nitrogenio: 0, pragas: 20}
     n_deixado_kg: 0
-    custo_padrao_ha: 600.0  # Custo de implantação/semente
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie o milheto logo depois da soja."
       - "Deixe crescer e formar palha."
@@ -142,7 +132,6 @@ culturas:
     kc_pico: 1.00
     nota_solo: {palhada: 25, nitrogenio: 30, pragas: 30}
     n_deixado_kg: 80        # Fixação biológica de Nitrogênio (60 a 100 kg/ha)
-    custo_padrao_ha: 800.0
     como_fazer:  # rascunho: agrônoma revisar
       - "Semeie a crotalária a lanço ou em linha."
       - "Deixe crescer até florescer."

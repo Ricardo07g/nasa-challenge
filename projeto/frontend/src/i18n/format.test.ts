@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import * as format from './format'
 import {
-  formatApproxMoney,
   formatCoordinates,
-  formatCurrency,
   formatDayMonth,
   formatDecimal,
   formatFullDate,
@@ -10,13 +9,10 @@ import {
   formatNumber,
 } from './format'
 
-const normalize = (text: string) => text.replace(/\s/g, ' ')
-
 describe('format', () => {
-  it('formata reais sem centavos nos dois idiomas', () => {
-    expect(normalize(formatCurrency('pt', 700))).toBe('R$ 700')
-    expect(normalize(formatCurrency('pt', 1250))).toBe('R$ 1.250')
-    expect(normalize(formatCurrency('en', 1250))).toBe('R$1,250')
+  it('não formata reais: nenhum valor em reais no produto (tarefa 0040)', () => {
+    expect('formatCurrency' in format).toBe(false)
+    expect('formatApproxMoney' in format).toBe(false)
   })
 
   it('mostra as coordenadas do ponto com 4 casas, latitude primeiro', () => {
@@ -26,14 +22,6 @@ describe('format', () => {
   it('número com casas decimais no jeito de cada idioma', () => {
     expect(formatDecimal('pt', -18.9543, 2)).toBe('-18,95')
     expect(formatDecimal('en', -48.1993, 2)).toBe('-48.20')
-  })
-
-  it('valor aproximado: centenas até 10 mil, depois milhares por extenso (PRD §7.11)', () => {
-    expect(normalize(formatApproxMoney('pt', 3440))).toBe('3.400')
-    expect(normalize(formatApproxMoney('pt', -1480))).toBe('1.500')
-    expect(normalize(formatApproxMoney('pt', 25600))).toBe('26 mil')
-    expect(normalize(formatApproxMoney('en', 25600))).toBe('26 thousand')
-    expect(normalize(formatApproxMoney('en', 3440))).toBe('3,400')
   })
 
   it('data por extenso, com o ano, sem depender do fuso', () => {

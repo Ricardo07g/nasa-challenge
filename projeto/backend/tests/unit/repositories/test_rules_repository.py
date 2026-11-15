@@ -23,15 +23,32 @@ def _write(tmp_path: Path, raw: dict[str, Any]) -> Path:
 
 
 def test_should_load_shipped_regras_yaml_with_prd_thresholds() -> None:
-    # PRD 7.2 e 7.5: ISNA 0,55 (grão) / 0,50 (cobertura), ±15 dias, 30 dias, 35 °C x 3 dias
+    # PRD 7.2: ISNA 0,55 (grão) / 0,50 (cobertura), ±15 dias, 30 dias, 35 °C x 3 dias
     regras = YamlRulesRepository(SHIPPED).get_rules()
     clima = regras.clima
 
     assert (clima.isna_grao, clima.isna_cobertura) == (0.55, 0.50)
     assert (clima.janela_grao_meia_dias, clima.janela_cobertura_dias) == (15, 30)
     assert (clima.calor_temp_c, clima.calor_min_dias) == (35.0, 3)
-    assert (clima.perda_isna_sem_perda, clima.perda_isna_alta_abaixo) == (0.65, 0.55)
-    assert (clima.perda_fator_media, clima.perda_fator_alta) == (0.30, 0.60)
+    # Tarefa 0040: a perda de produtividade pelo ISNA só servia à margem em reais, que saiu.
+    assert not hasattr(clima, "perda_fator_alta")
+
+
+def test_should_load_the_income_rule_without_price_or_cost() -> None:
+    # Tarefa 0040 (seção 1 da remodelagem): renda sem preço nem custo. Grão (grão e consórcio)
+    # vale a segurança climática; cobertura e pousio não dão grão e ficam com a nota fixa.
+    renda = YamlRulesRepository(SHIPPED).get_rules().renda
+
+    assert renda.tipos_com_grao == frozenset({"grao", "consorcio"})
+    assert renda.nota_sem_grao == 0.0
+
+
+def test_should_refuse_an_income_rule_without_source(tmp_path: Path) -> None:
+    raw = _shipped_raw()
+    del raw["renda"]["nota_sem_grao"]["fonte"]
+
+    with pytest.raises(ValueError, match="renda.nota_sem_grao"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
 
 
 def test_should_load_shipped_weights_labels_and_soil_points() -> None:
@@ -51,7 +68,7 @@ def test_should_load_shipped_weights_labels_and_soil_points() -> None:
     assert nota.bonus_gado_milho_braquiaria == 15.0
     assert (rotulos.chuva_bom_pct, rotulos.chuva_medio_pct) == (85.0, 60.0)
     assert (rotulos.terra_bom, rotulos.terra_medio) == (50.0, 20.0)
-    assert (rotulos.dinheiro_bom, rotulos.dinheiro_medio) == (70.0, 30.0)
+    assert (rotulos.renda_bom, rotulos.renda_medio) == (70.0, 30.0)
     assert (solo.palhada_max, solo.nitrogenio_max, solo.pragas_max) == (40.0, 30.0, 30.0)
     assert solo.peso_pragas_nematoide == 1.5
 
@@ -141,6 +158,12 @@ def test_should_load_phrase_templates_in_portuguese_and_english() -> None:
     # Com safras confirmadas pelo produtor (tarefa 0039), a frase diz quantas ele confirmou
     assert "{confirmadas}" in regras.frases["pt"].historico_confirmado
     assert "{confirmadas}" in regras.frases["en"].historico_confirmado
+    # Renda só com fatos (tarefa 0040): dá grão ou não e o risco de perder a lavoura
+    assert regras.frases["pt"].renda_com_grao == "Dá grão para vender"
+    assert regras.frases["pt"].renda_sem_grao == "Não dá grão: é investimento na terra"
+    assert regras.frases["en"].renda_com_grao == "Gives grain to sell"
+    assert "{anos_aperto} de {total} anos" in regras.frases["pt"].renda_risco
+    assert "{anos_aperto} of {total} years" in regras.frases["en"].renda_risco
 
 
 def test_should_load_shipped_alert_rules_for_the_season_replay() -> None:
@@ -219,7 +242,6 @@ def test_should_load_the_enso_forecast_signal_rules() -> None:
     assert sinal.fase_chance_min_pct == 50
     assert sinal.anos_fase_min == 5
     assert sinal.fracao_anos_ruins_seco == 0.5
-    assert sinal.dias_regra_data == 30
     assert sinal.smap_faixas_pct == (20.0, 45.0, 55.0, 80.0)
 
 
@@ -287,3 +309,177 @@ def test_should_refuse_a_field_history_rule_without_source(tmp_path: Path) -> No
 
 def test_should_load_default_rules_from_file_shipped_with_the_app() -> None:
     assert load_default_rules() == YamlRulesRepository(SHIPPED).get_rules()
+
+
+# --- tela 3 "Quando você colhe a soja?" (tarefa 0042) -------------------------------------------
+
+
+def test_should_load_the_harvest_band_rule_of_screen_three() -> None:
+    # A regra que a tela 3 já usava (até 10/fev cedo, 11 a 20/fev meio, depois tarde) e a época
+    # da colheita da soja (15/jan a 31/mar), as mesmas do front (harvestService).
+    colheita = YamlRulesRepository(SHIPPED).get_rules().colheita
+
+    assert (colheita.cedo_ate, colheita.meio_ate) == ("02-10", "02-20")
+    assert (colheita.janela_inicio, colheita.janela_fim) == ("01-15", "03-31")
+
+
+def test_should_load_the_rain_left_after_harvest_rule() -> None:
+    # Pedido da remodelagem, seção 3: da data escolhida até 30/jun, mediana e percentil 20.
+    regra = YamlRulesRepository(SHIPPED).get_rules().chuva_que_sobra
+
+    assert (regra.fim, regra.percentil_seco) == ("06-30", 20)
+
+
+def test_should_load_the_end_of_rains_rule() -> None:
+    # Pedido da remodelagem, seção 3: a partir de 1º/mar, 20 dias seguidos com menos de 10 mm.
+    regra = YamlRulesRepository(SHIPPED).get_rules().fim_das_chuvas
+
+    assert (regra.inicio, regra.dias, regra.chuva_max_mm) == ("03-01", 20, 10.0)
+
+
+def test_should_load_the_water_and_crop_thirst_rules_of_the_suggestion() -> None:
+    # Tarefa 0044 (5.3): sede da cultura pelo consumo no ciclo (hipótese do time) e o ano seco
+    # da falta de água com o mesmo sentido da tela 3 (só 20% dos anos piores).
+    agua = YamlRulesRepository(SHIPPED).get_rules().agua
+
+    assert (agua.sede_pouca_ate_mm, agua.sede_muita_desde_mm) == (280.0, 325.0)
+    assert agua.percentil_seco == 20
+
+
+def test_should_load_the_enso_hit_rate_rules_of_the_suggestion() -> None:
+    # Tarefa 0044 (5.4): quando a diferença entre os anos de El Niño / La Niña e os outros é
+    # "clara". O clima 2041-2060 e a geada da Sugestão usam os grupos do raio-X (tarefa 0049).
+    regras = YamlRulesRepository(SHIPPED).get_rules()
+
+    assert (regras.enso_acerto.diferenca_min_pct, regras.enso_acerto.anos_fase_min) == (25.0, 5)
+    assert not hasattr(regras, "clima_futuro_sugestao")
+    assert not hasattr(regras, "geada_sugestao")
+
+
+def test_should_load_the_plan_b_rain_limit_and_the_used_rain_rules() -> None:
+    # Tarefa 0045 (5.6): o limite do Plano B é a chuva dos 15 dias antes da semeadura, e só vira
+    # número se separar bem os anos bons dos ruins (hipótese do time); a chuva aproveitada vai da
+    # semeadura ao fim de julho.
+    regras = YamlRulesRepository(SHIPPED).get_rules()
+
+    plano_b = regras.plano_b
+    assert plano_b.dias_antes_semeadura == 15
+    assert plano_b.anos_falha_min == 3
+    assert (plano_b.sensibilidade_min_pct, plano_b.precisao_min_pct) == (50.0, 60.0)
+    assert plano_b.chance_max_pct == 10.0
+    assert regras.chuva_aproveitada.fim == "07-31"
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ("plano_b", "precisao_min_pct"),
+        ("chuva_aproveitada", "fim"),
+        ("colheita", "meio_ate"),
+        ("chuva_que_sobra", "percentil_seco"),
+        ("fim_das_chuvas", "chuva_max_mm"),
+        ("agua", "sede_muita_desde_mm"),
+        ("enso_acerto", "diferenca_min_pct"),
+    ],
+)
+def test_should_refuse_a_screen_three_number_without_source(
+    tmp_path: Path, path: tuple[str, str]
+) -> None:
+    raw = _shipped_raw()
+    del raw[path[0]][path[1]]["fonte"]
+
+    with pytest.raises(ValueError, match=".".join(path)):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
+def test_should_load_the_x_ray_rule() -> None:
+    # Remodelagem S4 (tarefa 0043), seção 4 do pedido: chuva de janeiro a julho, veranico, calor e
+    # a região em março a maio, solo da célula vizinha até 15 km e colunas de 16 dias do NDVI.
+    regra = YamlRulesRepository(SHIPPED).get_rules().raio_x
+
+    assert (regra.chuva_inicio, regra.chuva_fim) == ("01-01", "07-31")
+    assert (regra.veranico_inicio, regra.veranico_fim) == ("03-01", "05-31")
+    assert (regra.calor_inicio, regra.calor_fim) == ("03-01", "05-31")
+    assert (regra.regiao_inicio, regra.regiao_fim, regra.regiao_min_celulas) == (
+        "03-01",
+        "05-31",
+        10,
+    )
+    assert regra.solo_vizinho_max_km == 15.0
+    assert (regra.ndvi_inicio, regra.ndvi_fim, regra.ndvi_coluna_dias) == ("01-01", "07-31", 16)
+    assert (regra.futuro_mes_inicio, regra.futuro_mes_fim) == (3, 5)
+
+
+def test_should_load_the_area_alerts_rule() -> None:
+    # Seção 4 do pedido: geada (mínima de 3 °C ou menos de maio a julho), chuva forte (50 mm ou mais
+    # em fevereiro e março) e fogo (MODIS MCD64A1 a até 5 km). Sem granizo: não existe dado.
+    regra = YamlRulesRepository(SHIPPED).get_rules().alertas_area
+
+    assert (regra.geada_temp_c, regra.geada_inicio, regra.geada_fim) == (3.0, "05-01", "07-31")
+    assert regra.geada_anos_min == 1
+    assert (regra.chuva_forte_mm, regra.chuva_forte_inicio, regra.chuva_forte_fim) == (
+        50.0,
+        "02-01",
+        "03-31",
+    )
+    assert regra.chuva_forte_media_min_dias == 0.1
+    assert (regra.fogo_raio_km, regra.fogo_anos_min) == (5.0, 1)
+    assert (regra.fogo_ano_inicio, regra.fogo_ano_fim) == (2016, 2025)
+    assert not hasattr(regra, "granizo_mm")
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ("raio_x", "veranico_inicio"),
+        ("raio_x", "solo_vizinho_max_km"),
+        ("alertas_area", "geada_temp_c"),
+        ("alertas_area", "fogo_raio_km"),
+    ],
+)
+def test_should_refuse_an_x_ray_number_without_source(
+    tmp_path: Path, path: tuple[str, str]
+) -> None:
+    raw = _shipped_raw()
+    del raw[path[0]][path[1]]["fonte"]
+
+    with pytest.raises(ValueError, match=".".join(path)):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
+def test_should_load_the_alerts_screen_rule() -> None:
+    # Remodelagem S6 (tarefa 0046), seção 6 do pedido: terra seca com o percentil do SMAP de 20 ou
+    # menos (leitura antiga com mais de 15 dias), 30 dias do NASA POWER, 10 dias seguidos sem chuva,
+    # 3 dias de calor nos últimos 10, relatos dos últimos 7 dias e 2020–2024 contra 2005–2019.
+    regra = YamlRulesRepository(SHIPPED).get_rules().avisos_tela
+
+    assert (regra.terra_seca_percentil_max, regra.smap_antiga_dias) == (20.0, 15)
+    assert (regra.power_dias, regra.dias_sem_chuva_min) == (30, 10)
+    assert (regra.calor_dias_min, regra.calor_janela_dias) == (3, 10)
+    assert regra.vizinhos_dias == 7
+    assert regra.ano_recente_inicio == 2020
+    assert (regra.outono_inicio, regra.outono_fim) == ("03-01", "05-31")
+    assert regra.mudou_veranico_dias_min > 0
+    assert regra.mudou_fim_chuvas_dias_min > 0
+    assert regra.mudou_calor_dias_min > 0
+    assert regra.mudou_falta_agua_mm_min > 0
+    assert regra.mudou_deu_certo_pct_min > 0
+
+
+def test_should_keep_the_crop_alerts_group_as_it_was() -> None:
+    # O grupo `avisos` (replay P4 e acompanhamento P6) continua igual: a tela /avisos tem o dela.
+    regra = YamlRulesRepository(SHIPPED).get_rules().avisos
+
+    assert (regra.dia_seco_abaixo_mm, regra.veranico_min_dias) == (1.0, 10)
+    assert not hasattr(regra, "terra_seca_percentil_max")
+
+
+@pytest.mark.parametrize(
+    "field", ["terra_seca_percentil_max", "dias_sem_chuva_min", "mudou_falta_agua_mm_min"]
+)
+def test_should_refuse_an_alerts_screen_number_without_source(tmp_path: Path, field: str) -> None:
+    raw = _shipped_raw()
+    del raw["avisos_tela"][field]["fonte"]
+
+    with pytest.raises(ValueError, match=f"avisos_tela.{field}"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()

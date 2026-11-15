@@ -50,10 +50,6 @@ class YamlCropParamsRepository:
                     solo_nitrogenio=int(nota_solo["nitrogenio"]),
                     solo_pragas=int(nota_solo["pragas"]),
                     n_deixado_kg=int(data["n_deixado_kg"]),
-                    # Coberturas e pousio não têm grão: sem produtividade e preço no YAML.
-                    produtividade_padrao_sc_ha=float(data.get("produtividade_padrao_sc_ha", 0.0)),
-                    preco_padrao_saca=float(data.get("preco_padrao_saca", 0.0)),
-                    custo_padrao_ha=float(data.get("custo_padrao_ha", 0.0)),
                     como_fazer=tuple(str(item) for item in data.get("como_fazer", [])),
                     como_fazer_en=tuple(str(item) for item in data.get("como_fazer_en", [])),
                 )

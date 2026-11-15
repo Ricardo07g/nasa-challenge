@@ -1,0 +1,5 @@
+/* Busca de endereço em cima do mapa: largura de leitura no computador, a tela toda no celular */
+.search {
+  width: 100%;
+  max-width: 640px;
+}

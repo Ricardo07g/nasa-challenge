@@ -1,23 +1,54 @@
-import { useLocation } from 'react-router'
+import { useCallback } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import type { AnswerTab } from '../design-system/components/Navigation'
 import { useI18n } from '../i18n/useI18n'
-import { keepFlowQuery } from '../services/flowParams'
+import type { Objetivo } from '../models/recomendacao'
+import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
 
-export type AnswerNav = { label: string; tabs: AnswerTab[]; backTo: string }
+export type AnswerNav = {
+  label: string
+  tabs: AnswerTab[]
+  backTo: string
+  /** "O que você quer mais?" (tarefa 0044): null = equilíbrio (pesos padrão do motor). */
+  objective: Objetivo | null
+  chooseObjective: (value: Objetivo | null) => void
+}
 
-/** Abas das telas da resposta: mantêm o ponto na URL (RF-18) e marcam a tela atual. */
+/**
+ * Abas das telas da resposta (tarefa 0044: Sugestão, Comparar e Plano de 3 anos, nessa ordem): mantêm o
+ * ponto e o objetivo do produtor na URL (RF-18) e marcam a tela atual. As URLs continuam as mesmas
+ * (`/resposta`, `/opcoes`, `/plano`), para os links já compartilhados não quebrarem.
+ */
 export function useAnswerNav(): AnswerNav {
   const { messages: t } = useI18n()
   const { pathname, search } = useLocation()
+  const navigate = useNavigate()
   const query = keepFlowQuery(search)
+  const params = readFlowParams(new URLSearchParams(search))
+  const objective = params?.objetivo ?? null
   const tabs = [
-    { path: '/resposta', label: t.answerTabs.answer },
-    { path: '/plano', label: t.answerTabs.plan },
-    { path: '/opcoes', label: t.answerTabs.options },
+    { path: '/resposta', label: t.suggestion.tabs.suggestion },
+    { path: '/opcoes', label: t.suggestion.tabs.compare },
+    { path: '/plano', label: t.suggestion.tabs.plan },
   ]
+
+  const chooseObjective = useCallback(
+    (value: Objetivo | null) => {
+      const current = readFlowParams(new URLSearchParams(search))
+      if (!current) return
+      // Só os parâmetros do caminho (o ano aberto no explorador fecha ao trocar o objetivo). Tarefa 0045: as
+      // culturas comparadas e o plano editado saem, para o objetivo novo valer no Comparar e no Plano.
+      const next = { ...current, objetivo: value ?? undefined, comparar: undefined, plano: undefined }
+      navigate(`${pathname}${buildFlowQuery(next)}`, { replace: true })
+    },
+    [navigate, pathname, search],
+  )
+
   return {
     label: t.answerTabs.label,
     tabs: tabs.map((tab) => ({ to: `${tab.path}${query}`, label: tab.label, current: pathname === tab.path })),
     backTo: `/quando${query}`,
+    objective,
+    chooseObjective,
   }
 }

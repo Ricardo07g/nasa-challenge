@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -34,7 +34,7 @@ describe('rotas', () => {
     const nav = await screen.findByRole('navigation', { name: 'Telas da resposta' })
     expect(nav).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Plano de 3 anos' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Resposta' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Sugestão' })).toHaveAttribute(
       'href',
       '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
     )
@@ -55,7 +55,8 @@ describe('rotas', () => {
     renderAt('/quando?lat=-18.9543&lon=-48.1993')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: /Meio de fevereiro/ })).toHaveAttribute('aria-pressed', 'true')
+    // Tarefa 0042: o dia do satélite (dados de exemplo: 15/fev) já vem no campo, com a faixa dele.
+    expect(await screen.findByText('Dia 15 de fevereiro: conta como meio de fevereiro.')).toBeInTheDocument()
     expect(document.title).toBe('Raiz Orbital – Quando você colhe a soja?')
   })
 
@@ -63,6 +64,20 @@ describe('rotas', () => {
     renderAt('/quando')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })).toBeInTheDocument()
+  })
+
+  it('na pergunta 1, busca o lugar, escolhe e "Confirmar local" leva à pergunta 2 (tarefa 0041)', async () => {
+    const router = renderAt('/onde')
+
+    await userEvent.type(await screen.findByRole('combobox', { name: 'Buscar cidade, estrada ou endereço' }), 'uberaba')
+    await userEvent.click(await screen.findByRole('option', { name: /Uberaba/ }))
+    const confirm = screen.getByRole('button', { name: 'Confirmar local' })
+    await vi.waitFor(() => expect(confirm).toBeEnabled())
+    await userEvent.click(confirm)
+
+    await vi.waitFor(() =>
+      expect(`${router.state.location.pathname}${router.state.location.search}`).toBe('/quando?lat=-19.748&lon=-47.932'),
+    )
   })
 
   it('"Próximo passo" na pergunta 2 abre a missão do satélite (RF-19)', async () => {
@@ -102,8 +117,8 @@ describe('rotas', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Ver o que plantar' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Milho com braquiária' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Resposta' })).toHaveAttribute('aria-current', 'page')
-    expect(document.title).toBe('Raiz Orbital – A melhor opção')
+    expect(screen.getByRole('link', { name: 'Sugestão' })).toHaveAttribute('aria-current', 'page')
+    expect(document.title).toBe('Raiz Orbital – Sugestão')
   })
 
   it('a resposta sem a colheita volta para a pergunta 2', async () => {
@@ -112,15 +127,17 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
   })
 
-  it('a aba "Todas as opções" abre a tela 6 mantendo o caminho', async () => {
-    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+  it('a aba "Comparar" abre a tela 6 mantendo o caminho e o objetivo', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&objetivo=terra')
 
-    await userEvent.click(await screen.findByRole('link', { name: 'Todas as opções' }))
+    await userEvent.click(await screen.findByRole('link', { name: 'Comparar' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Todas as opções' })).toBeInTheDocument()
-    expect(await screen.findByRole('article', { name: 'Milho com braquiária' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Todas as opções' })).toHaveAttribute('aria-current', 'page')
-    expect(document.title).toBe('Raiz Orbital – Todas as opções')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Comparar' })).toBeInTheDocument()
+    // Tarefa 0045: as 3 melhores do objetivo lado a lado, numa tabela.
+    expect(await screen.findByRole('table', { name: /Lado a lado: Crotalária/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Comparar' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: 'Cuidar da terra' })).toHaveAttribute('aria-pressed', 'true')
+    expect(document.title).toBe('Raiz Orbital – Comparar')
   })
 
   it('a aba "Plano de 3 anos" abre a linha do tempo do plano', async () => {
@@ -128,7 +145,10 @@ describe('rotas', () => {
 
     await userEvent.click(await screen.findByRole('link', { name: 'Plano de 3 anos' }))
 
-    expect(await screen.findByRole('list', { name: 'Plano ano a ano' })).toHaveTextContent('2027Milho com braquiária')
+    // Tarefa 0045: o plano editável, ano a ano, com as notas ao lado do "Como é hoje" (GET /api/plano de exemplo).
+    expect(await screen.findByRole('list', { name: 'Seu plano ano a ano' })).toHaveTextContent('2027Milho com braquiária')
+    expect(await screen.findByRole('table', { name: 'Notas do seu plano ao lado de como é hoje' })).toBeInTheDocument()
+    expect(screen.queryByText(/Como teria sido em/)).not.toBeInTheDocument()
     expect(document.title).toBe('Raiz Orbital – Plano de 3 anos')
   })
 
@@ -138,7 +158,10 @@ describe('rotas', () => {
     await userEvent.click(await screen.findByRole('link', { name: 'Comunidade' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
-    expect(await screen.findByText('Até 30 km de Uberlândia · 18 produtores participando')).toBeInTheDocument()
+    // Modo de demonstração: os relatos de exemplo, cada um com o selo "Exemplo" (tarefa 0047).
+    const nearby = await screen.findByRole('region', { name: 'Perto de você' })
+    expect(within(nearby).getAllByText('Exemplo').length).toBeGreaterThan(0)
+    expect(screen.getByRole('region', { name: 'Conte o que aconteceu aí' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
       'href',
       '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
@@ -156,19 +179,26 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Como a conta é feita')
   })
 
-  it('o relatório abre pela URL com a folha para imprimir', async () => {
-    renderAt('/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio')
+  it('o relatório saiu (tarefa 0044): o endereço antigo leva à Sugestão com o mesmo caminho', async () => {
+    const router = renderAt('/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio')
 
-    expect(await screen.findByRole('article', { name: 'Relatório da lavoura · Raiz Orbital' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Salvar em PDF' })).toBeInTheDocument()
-    expect(document.title).toBe('Raiz Orbital – Relatório da lavoura · Raiz Orbital')
+    await vi.waitFor(() =>
+      expect(`${router.state.location.pathname}${router.state.location.search}`).toBe(
+        '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
+      ),
+    )
+    expect(screen.queryByText(/Relatório/)).not.toBeInTheDocument()
   })
 
-  it('o replay da safra passada abre pela URL', async () => {
-    renderAt('/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024')
+  it('a safra passada virou o detalhe do ano no explorador: o endereço antigo abre a Sugestão com o ano', async () => {
+    const router = renderAt('/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Como teria sido a safrinha de 2024' })).toBeInTheDocument()
-    expect(await screen.findByRole('list', { name: 'Como teria sido a safrinha de 2024' })).toBeInTheDocument()
+    await vi.waitFor(() =>
+      expect(`${router.state.location.pathname}${router.state.location.search}`).toBe(
+        '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
+      ),
+    )
+    expect(await screen.findByRole('region', { name: 'O que aconteceu em 2024' })).toBeInTheDocument()
   })
 
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {
@@ -230,9 +260,57 @@ describe('rotas', () => {
     )
   })
 
+  it('/guia mostra os temas e /guia/:artigo abre um artigo real, em pt e en', async () => {
+    renderAt('/guia')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Culturas' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia/veranico')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Veranico' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia/veranico', 'en')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Dry spell' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia/nao-existe')
+    expect(await screen.findByText('Não achamos esse artigo.')).toBeInTheDocument()
+  })
+
   it('endereço desconhecido volta ao início', async () => {
     renderAt('/nao-existe')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'O que plantar depois da soja?' })).toBeInTheDocument()
+  })
+
+  // Tela "Avisos" (seção 6 da remodelagem, tarefa 0046)
+  it('/avisos sem ponto pede para marcar a lavoura, com os alertas oficiais e o botão no cabeçalho', async () => {
+    window.localStorage.clear()
+    renderAt('/avisos')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Avisos' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Marcar minha lavoura' })).toHaveAttribute('href', '/onde')
+    expect(screen.getByRole('region', { name: 'Alertas oficiais' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Avisos' })).toHaveAttribute('href', '/avisos')
+    expect(document.title).toBe('Raiz Orbital – Avisos')
+  })
+
+  it('/guia/como-ler-os-avisos abre o artigo dos avisos, em pt e en', async () => {
+    renderAt('/guia/como-ler-os-avisos')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Como ler os avisos' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia/como-ler-os-avisos', 'en')
+    expect(await screen.findByRole('heading', { level: 1, name: 'How to read the alerts' })).toBeInTheDocument()
+  })
+
+  it('/avisos com o ponto da lavoura mostra os grupos e o número no botão do cabeçalho', async () => {
+    window.localStorage.clear()
+    renderAt('/avisos?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    expect(await screen.findByRole('region', { name: 'Agora' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Perto de você' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Avisos: 2 avisos ativos' })).toBeInTheDocument()
   })
 })

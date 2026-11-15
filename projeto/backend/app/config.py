@@ -57,8 +57,12 @@ class Settings(BaseSettings):
     # o /talhao responde soja_recente: null e o front não avisa.
     soja_recente_path: Path | None = None
     # Previsão do El Niño / La Niña da NOAA CPC (saída do pipeline/fetch_enso_previsao.py,
-    # tarefa 0038). Sem arquivo: o sinal para o outono sai nulo ("Ainda não conectado").
+    # tarefa 0038). Sem arquivo: o sinal para o outono sai nulo (o cartão do sinal não aparece).
     enso_previsao_path: Path | None = None
+    # Área queimada do MODIS MCD64A1 (500 m) na caixa piloto, 2016 a 2025 (saída do
+    # pipeline/fetch_area_queimada.py, tarefa 0043). Sem arquivo: o alerta de fogo do raio-X não
+    # aparece.
+    area_queimada_path: Path | None = None
 
     # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
     # usam; a API não precisa de nenhuma (ADR-0005).
@@ -72,6 +76,12 @@ class Settings(BaseSettings):
     earthdata_password: str | None = None
     # Legado: projeto do Google Earth Engine (fora do MVP). Sai quando a ADR-0005 for aceita.
     ee_project: str | None = None
+
+    # Sal do hash do identificador do aparelho nos relatos da comunidade (tarefa 0047): o banco
+    # guarda só o HMAC-SHA-256 do identificador com este sal. Segredo: só no ambiente, nunca no
+    # código. Vazio: sal aleatório por processo (os relatos continuam anônimos, mas o limite por dia
+    # e o "apagar o meu" recomeçam quando a API reinicia).
+    community_device_salt: str | None = None
 
     @field_validator("cors_origins", mode="before")
     @classmethod

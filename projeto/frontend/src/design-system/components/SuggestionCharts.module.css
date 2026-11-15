@@ -1,0 +1,162 @@
+/* Explorador ano a ano e barra da água (aba Sugestão, tarefa 0044) */
+
+.explorer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.plot {
+  position: relative;
+}
+
+/* Linha de corte do motor: tracejada, com o texto escrito à direita */
+.cut {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px dashed var(--color-text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cutLabel {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  padding: 0 4px;
+  border-radius: var(--radius-cell);
+  background: var(--color-surface);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.bars {
+  display: grid;
+  gap: 3px;
+  height: 170px;
+}
+
+.yearButton {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-cell);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.yearButton:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+.yearButton[aria-pressed='true'] {
+  background: var(--color-tint-blue);
+  box-shadow: 0 0 0 2px var(--color-secondary);
+}
+
+.mark {
+  height: 14px;
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  line-height: 14px;
+  text-align: center;
+  color: var(--color-title-on-blue-tint);
+}
+
+.track {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: 1px solid var(--color-border-strong);
+}
+
+.bar {
+  display: block;
+  width: 100%;
+  max-width: 22px;
+  border-radius: 3px 3px 0 0;
+}
+
+.bar[data-state='good'] {
+  background: var(--color-primary);
+}
+
+/* Ano com aperto: listras e contorno laranja (o desenho muda, não só a cor) */
+.bar[data-state='bad'] {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-risk) 0 3px,
+    var(--color-risk-soft) 3px 6px
+  );
+  border: 1.5px solid var(--color-risk);
+  border-bottom: 0;
+}
+
+.tick {
+  height: 16px;
+  font-size: var(--font-size-micro);
+  line-height: 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Barra da água: três linhas com o texto e a barra embaixo, na mesma escala */
+.water {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.waterRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.waterText {
+  font-size: var(--font-size-small);
+}
+
+.waterTrack {
+  display: block;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-divider);
+  overflow: hidden;
+}
+
+.waterBar {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+}
+
+.waterBar[data-kind='need'] {
+  background: var(--color-primary);
+}
+
+.waterBar[data-kind='rain'] {
+  background: var(--color-secondary);
+}
+
+.waterBar[data-kind='short'] {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-risk) 0 4px,
+    var(--color-risk-soft) 4px 8px
+  );
+}
