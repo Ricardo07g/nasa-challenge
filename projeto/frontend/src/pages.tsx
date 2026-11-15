@@ -337,10 +337,10 @@ export function ExamplePage() {
 }
 
 export function DesignSystemPage() {
-  const { messages: t } = useI18n()
+  const { messages: t, lang } = useI18n()
   useDocumentTitle(t.designSystem.title)
   const state = useDesignSystemController()
-  return <DesignSystemView t={t} {...state} />
+  return <DesignSystemView t={t} lang={lang} {...state} />
 }
 
 export function GuidePage() {

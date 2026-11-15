@@ -1069,6 +1069,8 @@ export const en = {
     backendStatus: (status: string) => `Backend: ${status}`,
     cropOptions: 'Off-season options (real API)',
     sampleText: 'NASA satellites look at many years of rain on your field.',
+    plantPhotos: 'Plant photos',
+    photoFallback: 'If the photo does not load',
   },
   // "Alerts" screen (section 6 of the redesign, backend task 0046, RF-31)
   alerts: {

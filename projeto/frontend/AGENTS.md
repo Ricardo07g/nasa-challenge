@@ -329,6 +329,16 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   imagem usados (o modal de créditos), e mapa com OpenStreetMap mostra "© OpenStreetMap" sobre o próprio mapa; (3)
   toda imagem ou vídeo gerado por IA leva a marca d'água visível "Imagem gerada por IA" (a foto da Início, do
   Lovable, leva), e o uso de IA em código e textos fica declarado nos créditos.
+- **Fotos das plantas (tarefa 0055):** fotos reais do Wikimedia Commons, **baixadas** para `public/fotos/` (nunca
+  link direto), só CC BY, CC BY-SA ou domínio público, sem logo nem marca, com até 800 px de largura e 250 KB. Os dados
+  de cada cultura (arquivo, autor, licença, link do Commons, `alt` e a legenda opcional, em pt e en) ficam só em
+  `content/plantPhotos.ts`; a tela mostra com `<PlantPhoto {...plantPhotoProps(cultura, lang)} height={…} />`
+  (`design-system/components/PlantPhoto.tsx`: crédito "Foto: autor · licença" em cima da imagem, autor ligando ao
+  Commons em nova aba com " (abre em nova aba)" escondido, legenda e, se a foto não carregar, o bloco verde com o
+  nome). O modal de créditos lista cada foto (grupo `photos` do `credits.ts`, montado do `plantPhotos.ts`); os links
+  `[texto](https://…)` das linhas dos créditos abrem em nova aba. Foto nova ou trocada: confira a licença na página
+  do Commons, atualize o `plantPhotos.ts` e a tabela da tarefa 0055 (o `plantPhotos.test.ts` confere arquivo, tipo,
+  tamanho e licença). O `PlantImage` (SVG) continua onde já está.
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front. Desde a tarefa 0052, o link não fica no
   cabeçalho nem na tela inicial: só na Sugestão e em "Como a conta é feita".

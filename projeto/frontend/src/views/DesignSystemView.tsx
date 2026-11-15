@@ -19,6 +19,7 @@ import {
 } from '../design-system/components/Content'
 import { DemoBanner, ErrorState, LoadingState, ProgressBar, SkeletonCard } from '../design-system/components/Feedback'
 import { AnswerTabs, BackLink, QuestionStepper } from '../design-system/components/Navigation'
+import { PlantPhoto } from '../design-system/components/PlantPhoto'
 import {
   MetricRow,
   StatusPill,
@@ -43,6 +44,8 @@ import {
   SpeakerIcon,
   SproutIcon,
 } from '../design-system/icons'
+import { PLANT_PHOTO_CROPS, plantPhotoProps } from '../content/plantPhotos'
+import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { ApiStatus } from '../models/apiStatus'
 import type { CropOption } from '../models/cropOption'
@@ -102,6 +105,7 @@ const rainCells: CellState[] = Array.from({ length: 20 }, (_, index) =>
 
 type DesignSystemViewProps = {
   t: Messages
+  lang: Lang
   apiMode: string
   backend: ApiStatus
   cropOptions: CropOption[]
@@ -109,7 +113,7 @@ type DesignSystemViewProps = {
 }
 
 /** Vitrine do design system (só no ambiente local): tokens, componentes e ambiente. */
-export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptionsError }: DesignSystemViewProps) {
+export function DesignSystemView({ t, lang, apiMode, backend, cropOptions, cropOptionsError }: DesignSystemViewProps) {
   const d = t.designSystem
   return (
     <div className={layout.page}>
@@ -182,6 +186,24 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
               <Icon />
             </li>
           ))}
+        </ul>
+      </section>
+
+      <section className={styles.section} aria-labelledby="ds-photos">
+        <h2 id="ds-photos" className={layout.sectionTitle}>
+          {d.plantPhotos}
+        </h2>
+        <ul className={styles.photos}>
+          {PLANT_PHOTO_CROPS.map((crop) => (
+            <li key={crop} className={styles.photo}>
+              <PlantPhoto {...plantPhotoProps(crop, lang)} />
+              <code>{crop}</code>
+            </li>
+          ))}
+          <li className={styles.photo}>
+            <PlantPhoto {...plantPhotoProps('milheto', lang)} src="/fotos/nao-existe.jpg" />
+            <span>{d.photoFallback}</span>
+          </li>
         </ul>
       </section>
 

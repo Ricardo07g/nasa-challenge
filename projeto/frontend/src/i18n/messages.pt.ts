@@ -1125,6 +1125,8 @@ export const pt = {
     backendStatus: (status: string) => `Backend: ${status}`,
     cropOptions: 'Opções de entressafra (API real)',
     sampleText: 'O satélite da NASA olha a chuva de muitos anos na sua lavoura.',
+    plantPhotos: 'Fotos das plantas',
+    photoFallback: 'Se a foto não carregar',
   },
   // Tela "Avisos" (seção 6 da remodelagem, tarefa 0046 do backend, RF-31)
   alerts: {
