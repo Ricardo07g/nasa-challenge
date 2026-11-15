@@ -82,12 +82,13 @@ def test_should_mark_sem_dado_without_ndvi_max_when_fewer_than_three_good_observ
     )
 
 
-def test_should_list_every_year_from_2016_to_2025_and_ignore_the_others() -> None:
-    records = _offseason(2015, 0.75) + _offseason(2020, 0.30) + _offseason(2026, 0.75)
+def test_should_list_every_year_from_2017_to_2026_and_ignore_the_others() -> None:
+    # Decisão de 15/11/2026: 10 anos, de 2017 a 2026 (a entressafra de 2026 já aconteceu).
+    records = _offseason(2016, 0.75) + _offseason(2020, 0.30) + _offseason(2027, 0.75)
 
     history = FieldHistoryService().classify_entressafra(records)
 
-    assert [a.ano for a in history.anos] == list(range(2016, 2026))
+    assert [a.ano for a in history.anos] == list(range(2017, 2027))
     assert history.total == 10
 
 
@@ -96,7 +97,7 @@ def test_should_summarize_parado_plantou_and_sem_certeza() -> None:
     peaks = [0.30, 0.72, 0.31, 0.74, 0.29, 0.70, 0.33, 0.71, 0.28, 0.52]
     records = [
         r
-        for year, peak in zip(range(2016, 2026), peaks, strict=True)
+        for year, peak in zip(range(2017, 2027), peaks, strict=True)
         for r in _offseason(year, peak)
     ]
 
@@ -106,11 +107,11 @@ def test_should_summarize_parado_plantou_and_sem_certeza() -> None:
 
 
 def test_should_count_incerto_and_sem_dado_as_sem_certeza() -> None:
-    records = _offseason(2016, 0.30) + _offseason(2017, 0.72) + _offseason(2018, 0.50)
+    records = _offseason(2017, 0.30) + _offseason(2018, 0.72) + _offseason(2019, 0.50)
 
     history = FieldHistoryService().classify_entressafra(records)
 
-    # 2018 incerto + 7 anos sem dado
+    # 2019 incerto + 7 anos sem dado
     assert (history.parado, history.plantou, history.sem_certeza, history.total) == (1, 1, 8, 10)
 
 

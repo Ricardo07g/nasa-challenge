@@ -212,16 +212,16 @@ class FakeOrnl:
         return [r for r in self.requests if r.url.endswith("/subset")]
 
 
-# Datas de teste: 4 composições do Terra na janela de 2016, uma fora dos meses (agosto), uma fora
-# dos anos (2015), e uma do Aqua. Valores brutos com o fator 0,0001.
+# Datas de teste: 4 composições do Terra na janela de 2017, uma fora dos meses (agosto), uma fora
+# dos anos (2016), e uma do Aqua. Valores brutos com o fator 0,0001.
 TEST_VALUES: dict[tuple[str, str], tuple[int, int]] = {
-    ("MOD13Q1", "A2015097"): (5000, 0),  # 2015: fora dos anos
-    ("MOD13Q1", "A2016001"): (6000, 0),
-    ("MOD13Q1", "A2016017"): (5500, 3),  # nuvem: descartado
-    ("MOD13Q1", "A2016097"): (-3000, 0),  # sem dado, mesmo com qualidade boa: descartado
-    ("MOD13Q1", "A2016113"): (4000, 1),
-    ("MOD13Q1", "A2016225"): (7000, 0),  # agosto: fora dos meses
-    ("MYD13Q1", "A2016105"): (4500, 0),
+    ("MOD13Q1", "A2016097"): (5000, 0),  # 2016: fora dos anos
+    ("MOD13Q1", "A2017001"): (6000, 0),
+    ("MOD13Q1", "A2017017"): (5500, 3),  # nuvem: descartado
+    ("MOD13Q1", "A2017097"): (-3000, 0),  # sem dado, mesmo com qualidade boa: descartado
+    ("MOD13Q1", "A2017113"): (4000, 1),
+    ("MOD13Q1", "A2017225"): (7000, 0),  # agosto: fora dos meses
+    ("MYD13Q1", "A2017105"): (4500, 0),
 }
 
 
@@ -265,14 +265,14 @@ def _run_ornl(tmp_path: Path, transport: Any, *extra: str, clock: FakeClock | No
 # --- calendário e blocos ------------------------------------------------------------------
 
 
-def test_should_list_the_16_day_composites_from_january_to_july_of_2016_to_2025() -> None:
+def test_should_list_the_16_day_composites_from_january_to_july_of_2017_to_2026() -> None:
     terra = modis_calendar("MOD13Q1")
     aqua = modis_calendar("MYD13Q1")
 
     # Terra começa no dia 1 e Aqua no dia 9, de 16 em 16 dias; julho tem a última de cada ano.
-    assert (terra[0], terra[13], terra[-1]) == ("A2016001", "A2016209", "A2025209")
+    assert (terra[0], terra[13], terra[-1]) == ("A2017001", "A2017209", "A2026209")
     assert len(terra) == 140
-    assert (aqua[0], aqua[12], aqua[-1]) == ("A2016009", "A2016201", "A2025201")
+    assert (aqua[0], aqua[12], aqua[-1]) == ("A2017009", "A2017201", "A2026201")
     assert len(aqua) == 130
 
 
@@ -287,12 +287,12 @@ def test_should_split_the_dates_in_blocks_that_never_cross_a_year() -> None:
 
 
 def test_should_plan_only_the_missing_dates_in_runs_of_consecutive_dates() -> None:
-    dates = modis_calendar("MOD13Q1")[:7]  # A2016001 ... A2016097
+    dates = modis_calendar("MOD13Q1")[:7]  # A2017001 ... A2017097
 
-    blocks = plan_blocks(dates, 5, skip={"A2016033"})
+    blocks = plan_blocks(dates, 5, skip={"A2017033"})
 
     # O recorte vai do início ao fim: nunca pula por cima de uma data já guardada.
-    assert blocks == [("A2016001", "A2016017"), ("A2016049", "A2016065", "A2016081", "A2016097")]
+    assert blocks == [("A2017001", "A2017017"), ("A2017049", "A2017065", "A2017081", "A2017097")]
 
 
 def test_should_refuse_more_than_10_dates_per_request() -> None:
@@ -325,15 +325,15 @@ def test_should_refuse_bands_metadata_without_scale_or_quality(payload: Any) -> 
 def test_should_keep_only_the_season_dates_from_the_dates_list() -> None:
     payload = {
         "dates": [
-            {"modis_date": "A2015353", "calendar_date": "2015-12-19"},
-            {"modis_date": "A2016001", "calendar_date": "2016-01-01"},
-            {"modis_date": "A2016209", "calendar_date": "2016-07-27"},
-            {"modis_date": "A2016225", "calendar_date": "2016-08-12"},
-            {"modis_date": "A2026001", "calendar_date": "2026-01-01"},
+            {"modis_date": "A2016353", "calendar_date": "2016-12-19"},
+            {"modis_date": "A2017001", "calendar_date": "2017-01-01"},
+            {"modis_date": "A2017209", "calendar_date": "2017-07-27"},
+            {"modis_date": "A2017225", "calendar_date": "2017-08-12"},
+            {"modis_date": "A2027001", "calendar_date": "2027-01-01"},
         ]
     }
 
-    assert parse_ornl_dates(payload) == ["A2016001", "A2016209"]
+    assert parse_ornl_dates(payload) == ["A2017001", "A2017209"]
     with pytest.raises(OrnlError):
         parse_ornl_dates({"erro": "x"})
 
@@ -459,7 +459,7 @@ def test_should_cache_only_checked_responses_and_reuse_them(tmp_path: Path) -> N
     fake = FakeOrnl(TEST_VALUES)
     cache = tmp_path / "cache"
     fetcher = CachedOrnlFetcher(_ornl_client(fake), cache, pause_seconds=0)
-    block = OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2016001", "A2016017"))
+    block = OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2017001", "A2017017"))
 
     first = fetcher.subset(block)
     second = CachedOrnlFetcher(_ornl_client(fake), cache, pause_seconds=0).subset(block)
@@ -473,28 +473,28 @@ def test_should_read_the_cached_values_by_date_from_every_saved_block(tmp_path: 
     fake = FakeOrnl(TEST_VALUES)
     cache = tmp_path / "cache"
     fetcher = CachedOrnlFetcher(_ornl_client(fake), cache, pause_seconds=0)
-    fetcher.subset(OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2016001",)))
-    fetcher.subset(OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2016097", "A2016113")))
+    fetcher.subset(OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2017001",)))
+    fetcher.subset(OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2017097", "A2017113")))
 
     values = fetcher.cached_values(DEFAULT_POINT, "MOD13Q1")
 
     assert values == {
-        ("A2016001", ORNL_NDVI_BAND): 6000,
-        ("A2016001", ORNL_QUALITY_BAND): 0,
-        ("A2016097", ORNL_NDVI_BAND): -3000,
-        ("A2016097", ORNL_QUALITY_BAND): 0,
-        ("A2016113", ORNL_NDVI_BAND): 4000,
-        ("A2016113", ORNL_QUALITY_BAND): 1,
+        ("A2017001", ORNL_NDVI_BAND): 6000,
+        ("A2017001", ORNL_QUALITY_BAND): 0,
+        ("A2017097", ORNL_NDVI_BAND): -3000,
+        ("A2017097", ORNL_QUALITY_BAND): 0,
+        ("A2017113", ORNL_NDVI_BAND): 4000,
+        ("A2017113", ORNL_QUALITY_BAND): 1,
     }
     assert fetcher.cached_values(DEFAULT_POINT, "MYD13Q1") == {}
 
 
 def test_should_not_cache_a_response_that_fails_the_check(tmp_path: Path) -> None:
     # A ORNL "perdeu" uma data do bloco: a resposta não entra no cache.
-    fake = FakeOrnl({("MOD13Q1", "A2016001"): (6000, 0)})
+    fake = FakeOrnl({("MOD13Q1", "A2017001"): (6000, 0)})
     cache = tmp_path / "cache"
     fetcher = CachedOrnlFetcher(_ornl_client(fake), cache, pause_seconds=0)
-    block = OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2016001", "A2016017"))
+    block = OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2017001", "A2017017"))
 
     with pytest.raises(OrnlUnavailableError):
         fetcher.subset(block)
@@ -533,9 +533,9 @@ def test_should_write_the_contract_file_from_the_ornl_without_credentials(tmp_pa
     [point] = payload["pontos"]
     assert (point["lat"], point["lon"]) == (-18.9543, -48.1993)
     assert point["serie"] == [
-        {"data": "2016-01-01", "ndvi": 0.6, "qualidade": 0, "produto": "MOD13Q1"},
-        {"data": "2016-04-14", "ndvi": 0.45, "qualidade": 0, "produto": "MYD13Q1"},
-        {"data": "2016-04-22", "ndvi": 0.4, "qualidade": 1, "produto": "MOD13Q1"},
+        {"data": "2017-01-01", "ndvi": 0.6, "qualidade": 0, "produto": "MOD13Q1"},
+        {"data": "2017-04-15", "ndvi": 0.45, "qualidade": 0, "produto": "MYD13Q1"},
+        {"data": "2017-04-23", "ndvi": 0.4, "qualidade": 1, "produto": "MOD13Q1"},
     ]
     for item in point["serie"]:
         NdviRecord(
@@ -544,9 +544,9 @@ def test_should_write_the_contract_file_from_the_ornl_without_credentials(tmp_pa
             qualidade=item["qualidade"],
             produto=item["produto"],
         )
-    # Só as datas da janela são pedidas: 2015 e agosto nem entram nos recortes.
+    # Só as datas da janela são pedidas: 2016 e agosto nem entram nos recortes.
     asked = {(r.url.split("/")[-2], r.params["startDate"]) for r in fake.subset_requests()}
-    assert asked == {("MOD13Q1", "A2016001"), ("MYD13Q1", "A2016105")}
+    assert asked == {("MOD13Q1", "A2017001"), ("MYD13Q1", "A2017105")}
     assert not list(output.parent.glob("*.part"))
 
 
@@ -556,7 +556,7 @@ def test_should_keep_the_ornl_cache_next_to_the_output_by_default(tmp_path: Path
     cache = tmp_path / "saida" / "cache_ornl"
     assert (cache / "MOD13Q1_bandas.json").is_file()
     assert (cache / "lat-18.9543_lon-48.1993" / "MYD13Q1" / "datas.json").is_file()
-    assert (cache / "lat-18.9543_lon-48.1993" / "MOD13Q1" / "A2016001_A2016113.json").is_file()
+    assert (cache / "lat-18.9543_lon-48.1993" / "MOD13Q1" / "A2017001_A2017113.json").is_file()
 
 
 def test_should_resume_from_the_cache_without_asking_the_ornl_again(tmp_path: Path) -> None:
@@ -571,7 +571,7 @@ def test_should_resume_from_the_cache_without_asking_the_ornl_again(tmp_path: Pa
 def test_should_return_code_2_and_keep_what_was_fetched_when_a_block_fails(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    fake = FakeOrnl(TEST_VALUES, failing={("MYD13Q1", "A2016105")})
+    fake = FakeOrnl(TEST_VALUES, failing={("MYD13Q1", "A2017105")})
 
     code = run(
         ["--fonte", "ornl", "--saida", str(tmp_path / "ndvi.json"), "--pausa", "0"],
@@ -674,7 +674,7 @@ def test_should_write_to_the_team_folder_by_default() -> None:
 
 
 def test_should_fetch_each_point_into_its_own_cache_folder(tmp_path: Path) -> None:
-    fake = FakeOrnl({("MOD13Q1", "A2016001"): (6000, 0), ("MYD13Q1", "A2016009"): (6100, 1)})
+    fake = FakeOrnl({("MOD13Q1", "A2017001"): (6000, 0), ("MYD13Q1", "A2017009"): (6100, 1)})
 
     code = _run_ornl(tmp_path, fake, "--pontos", "-18.9543,-48.1993;-17.5,-47.25")
 

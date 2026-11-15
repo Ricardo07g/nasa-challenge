@@ -26,8 +26,8 @@ AppEEARS. Autenticação, nesta ordem: `APPEEARS_TOKEN` (Bearer do próprio AppE
 faltar ou for recusado (401/403), `POST /api/login` com `EARTHDATA_USERNAME` e
 `EARTHDATA_PASSWORD`. O `EARTHDATA_TOKEN` não serve (o AppEEARS devolve 403). Nenhuma mensagem
 mostra token ou senha. Fluxo: tarefa `point` (todos os pontos numa tarefa) → consulta do status até
-`done` → lista do bundle → download dos `*-results.csv` → filtro (qualidade 0 ou 1, jan–jul de 2016
-a 2025, sem o valor de preenchimento) → JSON do contrato.
+`done` → lista do bundle → download dos `*-results.csv` → filtro (qualidade 0 ou 1, jan–jul dos anos
+do `historico_ndvi` do regras.yaml, sem o valor de preenchimento) → JSON do contrato.
 
 ORNL. Sem credencial. Fluxo: metadados das bandas de cada produto (fator de escala e valor de
 preenchimento do NDVI) → lista de datas de cada ponto e produto → recortes de um pixel com até
@@ -60,6 +60,7 @@ from app.repositories.external.http_client import (
     HttpTransport,
     default_http_request,
 )
+from app.repositories.rules_repository import load_default_rules
 
 APPEEARS_API_URL: Final[str] = "https://appeears.earthdatacloud.nasa.gov/api"
 SOURCE_KEY: Final[str] = "modis_mod13q1"
@@ -69,10 +70,11 @@ PRODUCTS: Final[tuple[str, ...]] = ("MOD13Q1", "MYD13Q1")
 # Nomes conferidos em GET /api/product/MOD13Q1.061 e /MYD13Q1.061.
 NDVI_LAYER: Final[str] = "_250m_16_days_NDVI"
 QUALITY_LAYER: Final[str] = "_250m_16_days_pixel_reliability"
-# Decisão do time: 2016 a 2025, janeiro a julho (abr–jul é o histórico do talhão; jan–mar serve
-# para a colheita sugerida da soja). O AppEEARS aceita a janela recorrente em MM-DD.
-FIRST_YEAR: Final[int] = 2016
-LAST_YEAR: Final[int] = 2025
+# Anos do histórico do talhão (grupo historico_ndvi do regras.yaml: 2017 a 2026, decisão de
+# 15/11/2026), de janeiro a julho (jan–mar: o pico e a colheita da soja e a colheita sugerida;
+# depois, a entressafra). O AppEEARS aceita a janela recorrente em MM-DD.
+FIRST_YEAR: Final[int] = load_default_rules().historico_ndvi.ano_inicio
+LAST_YEAR: Final[int] = load_default_rules().historico_ndvi.ano_fim
 SEASON_START_MMDD: Final[str] = "01-01"
 SEASON_END_MMDD: Final[str] = "07-31"
 SEASON_MONTHS: Final[frozenset[int]] = frozenset(range(1, 8))
@@ -630,7 +632,7 @@ def _modis_day(modis_date: str) -> date:
 
 
 def modis_calendar(product: str) -> list[str]:
-    """Composições de 16 dias do produto em jan–jul de 2016 a 2025, no formato da ORNL.
+    """Composições de 16 dias do produto em jan–jul dos anos do histórico, no formato da ORNL.
 
     Só para o plano do `--dry-run`: a extração usa a lista de datas que a própria ORNL devolve
     (conferida em 14/11/2026: as 140 do MOD13Q1 são as mesmas deste calendário).
@@ -731,7 +733,7 @@ def parse_ornl_bands(payload: Any) -> NdviBand:
 
 
 def parse_ornl_dates(payload: Any) -> list[str]:
-    """Confere a lista de datas e devolve só as composições de jan–jul de 2016 a 2025."""
+    """Confere a lista de datas e devolve só as composições de jan–jul dos anos do histórico."""
     dates = payload.get("dates") if isinstance(payload, dict) else None
     if not isinstance(dates, list):
         raise OrnlError("A lista de datas da ORNL veio sem 'dates'.")

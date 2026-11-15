@@ -35,7 +35,7 @@ def test_should_return_field_inspection_in_the_contract_shape(client: TestClient
 
 
 def test_should_return_the_full_ndvi_history_contract(client: TestClient) -> None:
-    # Formato completo do guia NDVI (decisão do time no R3.2), anos de 2016 a 2025
+    # Formato completo do guia NDVI (decisão do time no R3.2), anos de 2017 a 2026
     historico = client.get("/api/talhao", params=UFU).json()["historico"]
 
     assert {k: v for k, v in historico.items() if k != "anos"} == {
@@ -50,11 +50,11 @@ def test_should_return_the_full_ndvi_history_contract(client: TestClient) -> Non
     assert all(set(a) == {"ano", "situacao", "ndvi_max", "n_obs"} for a in historico["anos"])
     assert all(a["situacao"] in SITUACOES for a in historico["anos"])
     assert historico["anos"][:5] == [
-        {"ano": 2016, "situacao": "parado", "ndvi_max": 0.3, "n_obs": 3},
         {"ano": 2017, "situacao": "plantou", "ndvi_max": 0.71, "n_obs": 3},
         {"ano": 2018, "situacao": "sem_dado", "ndvi_max": None, "n_obs": 1},
         {"ano": 2019, "situacao": "plantou", "ndvi_max": 0.71, "n_obs": 3},
         {"ano": 2020, "situacao": "incerto", "ndvi_max": 0.52, "n_obs": 3},
+        {"ano": 2021, "situacao": "plantou", "ndvi_max": 0.71, "n_obs": 3},
     ]
 
 
@@ -106,7 +106,7 @@ def test_should_classify_history_with_rules_from_the_injected_repository(
     response = client.get("/api/talhao", params=UFU)
 
     assert response.status_code == 200
-    assert response.json()["historico"]["anos"][1]["situacao"] == "incerto"  # 0,71 < 0,80
+    assert response.json()["historico"]["anos"][0]["situacao"] == "incerto"  # 0,71 < 0,80
 
 
 # Arquivo no formato do contrato do NDVI (AGENTS.md do backend) com valores de teste: o
@@ -124,7 +124,7 @@ def _ndvi_file(tmp_path: Path) -> Path:
     Os anos pares têm uma imagem com nuvem (qualidade 3) e NDVI alto, que não pode contar.
     """
     serie: list[dict[str, Any]] = []
-    for year in range(2016, 2026):
+    for year in range(2017, 2027):
         peak = 0.74 if year % 2 else 0.31
         serie += [
             _obs(f"{year}-01-17", 0.84),
@@ -158,8 +158,8 @@ def test_should_read_history_and_harvest_band_from_the_ndvi_file(
     assert historico["total"] == 10
     assert historico["fonte"] == "MODIS MOD13Q1 + MYD13Q1"
     assert historico["anos"][:2] == [
-        {"ano": 2016, "situacao": "parado", "ndvi_max": 0.31, "n_obs": 3},
         {"ano": 2017, "situacao": "plantou", "ndvi_max": 0.74, "n_obs": 3},
+        {"ano": 2018, "situacao": "parado", "ndvi_max": 0.31, "n_obs": 3},
     ]
     # Mesma série, de janeiro a março: a soja seca no dia 41 (10/fev) -> colheita "cedo"
     assert body["colheita_sugerida"] == {"faixa": "cedo", "fonte": "ndvi_modis", "anos_usados": 10}

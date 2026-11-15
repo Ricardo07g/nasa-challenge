@@ -124,11 +124,11 @@ historico_ndvi:
     valor: 3
     fonte: "Guia do histórico NDVI (Regra do talhão): com menos de 3 observações boas na janela, o ano fica sem_dado (hipótese do time, a calibrar)"
   ano_inicio:
-    valor: 2016
-    fonte: "Decisão do time (roteiro §5, R3.2): entressafras de 2016 a 2025, como o plano técnico, o guia NDVI e o Lovable (o PRD RF-08 dizia 2015)"
+    valor: 2017
+    fonte: "Decisão de 15/11/2026: entressafras de 2017 a 2026, mantendo 10 anos (antes, 2016 a 2025, pelo roteiro §5, R3.2)"
   ano_fim:
-    valor: 2025
-    fonte: "Decisão do time (roteiro §5, R3.2): entressafras de 2016 a 2025, 10 anos"
+    valor: 2026
+    fonte: "Decisão de 15/11/2026: a entressafra de 2026 (abril a julho) já aconteceu e entra no histórico; 10 anos, de 2017 a 2026"
 
 regiao_ndvi:
   # Região pelo satélite (P3, RF-23, tarefa 0036): dentro da máscara de lavoura (MCD12Q1 classe 12)

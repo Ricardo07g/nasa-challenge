@@ -162,17 +162,17 @@ class FakeNdviRepository:
         ]
 
 
-# 2016 a 2025: 3 parado, 5 plantou, 2020 incerto e 2018 sem dado -> 3 de 8 anos certos parados
+# 2017 a 2026: 3 parado, 5 plantou, 2021 incerto e 2019 sem dado -> 3 de 8 anos certos parados
 PEAKS = {
-    2016: 0.30,
-    2017: 0.71,
-    2019: 0.71,
-    2020: 0.52,
-    2021: 0.71,
-    2022: 0.30,
-    2023: 0.71,
-    2024: 0.30,
-    2025: 0.71,
+    2017: 0.30,
+    2018: 0.71,
+    2020: 0.71,
+    2021: 0.52,
+    2022: 0.71,
+    2023: 0.30,
+    2024: 0.71,
+    2025: 0.30,
+    2026: 0.71,
 }
 
 
@@ -713,7 +713,7 @@ def test_should_explain_the_field_history_in_every_option_when_ndvi_exists() -> 
 
     assert {o.porque[-1] for o in rec.opcoes} == {
         "Seu talhão ficou em pousio em 3 de 8 entressafras vistas pelo satélite "
-        "de 2016 a 2025 (NDVI do MODIS)."
+        "de 2017 a 2026 (NDVI do MODIS)."
     }
 
 
@@ -724,7 +724,7 @@ def test_should_explain_the_field_history_in_english() -> None:
 
     assert _opcao(rec, "milho_safrinha").porque[-1] == (
         "Your field was left fallow in 3 of 8 off-seasons seen by the satellite "
-        "from 2016 to 2025 (MODIS NDVI)."
+        "from 2017 to 2026 (MODIS NDVI)."
     )
 
 
@@ -746,14 +746,14 @@ def test_should_write_history_with_phrase_template_from_injected_rules() -> None
     base = load_default_rules()
     modelo = "{parado}/{anos_certos} ({sem_certeza} sem certeza de {total}; {ano_inicio}-{ano_fim})"
     frases = {**base.frases, "pt": replace(base.frases["pt"], historico=modelo)}
-    historico_ndvi = replace(base.historico_ndvi, ano_inicio=2017)
+    historico_ndvi = replace(base.historico_ndvi, ano_inicio=2018)
 
     rec = _service(
         rules=replace(base, frases=frases, historico_ndvi=historico_ndvi),
         ndvi=FakeNdviRepository(PEAKS),
     ).recommend(lat=-18.95, lon=-48.20, colheita="meio")
 
-    assert _opcao(rec, "sorgo").porque[-1] == "2/7 (2 sem certeza de 9; 2017-2025)"
+    assert _opcao(rec, "sorgo").porque[-1] == "2/7 (2 sem certeza de 9; 2018-2026)"
 
 
 def _option(

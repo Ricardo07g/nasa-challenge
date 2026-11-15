@@ -142,10 +142,10 @@ def test_should_return_soil_history_and_climate_sources_when_point_has_data() ->
     assert talhao.solo.textura_solo == "argiloso"
     assert talhao.colheita_sugerida.faixa == "meio"
     assert talhao.historico is not None
-    # 2016 a 2025: 2019 a 2024 com 3 observações boas por entressafra, os outros sem dado
+    # 2017 a 2026: 2019 a 2024 com 3 observações boas por entressafra, os outros sem dado
     assert (talhao.historico.plantou, talhao.historico.sem_certeza) == (6, 4)
     assert talhao.historico.total == 10
-    assert talhao.historico.anos[3] == HistoricoAno(
+    assert talhao.historico.anos[2] == HistoricoAno(
         ano=2019, situacao="plantou", ndvi_max=0.7, n_obs=3
     )
     # Só as fontes que existem: sem CMIP6 no arquivo, ele não aparece como "ok".
