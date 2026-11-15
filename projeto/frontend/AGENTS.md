@@ -104,8 +104,11 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `exemplo` e `confirmadas` (as safras que o produtor confirmou na tela 4, `2024:plantou,2025:parado`,
   em ordem de ano e sem codificar `:` e `,`, para o link continuar legível). Toda tela que pede a
   recomendação passa o `confirmadas` da URL para o `farm.recomendacao` (o cache do `farmService` separa
-  por ele). Na fazenda de exemplo, com safra confirmada, a recomendação vem do `/recomendacao` do ponto
-  do exemplo, não do `/exemplo`.
+  por ele). Na fazenda de exemplo, com safra confirmada, com a terra trocada (`solo`) ou com uma faixa
+  na URL diferente da do `/exemplo` (a do satélite), a recomendação vem do `/recomendacao` do ponto do
+  exemplo, não do `/exemplo` (tarefa 0049: a resposta e a URL dizem a mesma faixa). "Ver um exemplo
+  pronto" (`/exemplo`, `useExampleController`) abre a resposta com a faixa do satélite do exemplo
+  (`colheita_sugerida.faixa`; sem ela ou com falha, `meio`), não mais com `colheita=meio` fixo.
 - **Safras confirmadas (tarefa 0039 do backend, RF-25):** a regra fica em
   `services/confirmedSeasonsService.ts` (ler e escrever o parâmetro, pôr a resposta do produtor no
   lugar do satélite com `fonte_ano: 'produtor'`, as linhas do bloco e o aviso "Não parece uma lavoura
