@@ -20,6 +20,7 @@ from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
 from app.models.recomendacao import (
     Alternativa,
+    AnoDetalhe,
     ForaDaJanelaOpcao,
     FuturoResultado,
     NotasOpcao,
@@ -39,6 +40,7 @@ from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
+from app.services.year_detail_service import YearDetailService
 
 # Nome da chuva no "Por quê?": com algum ano do IMERG (tarefa 0027), a série mistura as duas fontes.
 RAIN_SOURCE_NAMES = {"nasa_power": "NASA POWER", IMERG_RAIN_SOURCE: "GPM IMERG + NASA POWER"}
@@ -202,6 +204,7 @@ class _Avaliacao:
     margem: float
     margem_seco: float
     pior_ano_seco: float | None
+    anos_detalhe: tuple[AnoDetalhe, ...]
 
 
 class RecommendationService:
@@ -219,6 +222,7 @@ class RecommendationService:
         sinal_service: SinalOutonoService | None = None,
         ndvi_repo: NdviRepository | None = None,
         history_service: FieldHistoryService | None = None,
+        year_detail_service: YearDetailService | None = None,
     ) -> None:
         self._crop_repo = crop_repo
         self._climate_repo = climate_repo
@@ -231,6 +235,8 @@ class RecommendationService:
         # Histórico do talhão pelo NDVI, só para a frase do "Por quê?" (PRD 7.6)
         self._ndvi_repo = ndvi_repo
         self._history_service = history_service or FieldHistoryService(self._rules)
+        # Detalhe de cada ano da faixa de chuva (P1); sem o ONI injetado, `enso` sai nulo
+        self._year_detail_service = year_detail_service or YearDetailService(rules=self._rules)
 
     def recommend(
         self,
@@ -288,7 +294,7 @@ class RecommendationService:
                 continue
             avaliacoes.append(
                 self._evaluate(
-                    crop, nome, seasons, deltas, semeadura, cad_mm, anos_secos, nematoide
+                    crop, nome, seasons, deltas, semeadura, cad_mm, anos_secos, nematoide, lang
                 )
             )
 
@@ -396,6 +402,7 @@ class RecommendationService:
         cad_mm: float,
         anos_secos: list[int],
         nematoide: bool | None,
+        lang: str,
     ) -> _Avaliacao:
         anos = self._risk_service.simulate_historical(
             crop=crop, seasons=seasons, semeadura=semeadura, cad_mm=cad_mm
@@ -414,6 +421,9 @@ class RecommendationService:
             margem=expected_margin(crop, anos),
             margem_seco=expected_margin(crop, secos),
             pior_ano_seco=worst_dry_year_margin(crop, secos),
+            anos_detalhe=self._year_detail_service.year_details(
+                crop=crop, semeadura=semeadura, seasons=seasons, resultados=anos, lang=lang
+            ),
         )
 
     def _build_option(
@@ -482,6 +492,7 @@ class RecommendationService:
                 a.crop.como_fazer_en if (is_en and a.crop.como_fazer_en) else a.crop.como_fazer
             ),
             pior_ano_seco_ha=a.pior_ano_seco,
+            anos_detalhe=a.anos_detalhe,
         )
 
     @staticmethod

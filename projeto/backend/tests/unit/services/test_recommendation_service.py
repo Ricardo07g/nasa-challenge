@@ -7,6 +7,7 @@ import pytest
 
 from app.models.climate import ClimateSeason, Cmip6Delta
 from app.models.crop_option import CropParams
+from app.models.enso import OniYear
 from app.models.recomendacao import Alternativa, NotasOpcao, Recomendacao, ResultadoOpcao
 from app.models.regras import Regras
 from app.models.sinal_outono import RecentRain, RecentSoilMoisture, SeasonalForecast
@@ -22,6 +23,7 @@ from app.services.recommendation_service import (
 from app.services.rotation_plan_service import RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
 from app.services.water_balance_calculator import WaterBalanceCalculator
+from app.services.year_detail_service import YearDetailService
 
 DAYS = 212
 CELL_ID = "-190_-482"
@@ -179,6 +181,7 @@ def _service(
     ingestion: FakeIngestionService | None = None,
     sinal: SinalOutonoService | None = None,
     ndvi: FakeNdviRepository | None = None,
+    year_detail: YearDetailService | None = None,
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=FakeCropParamsRepository(),
@@ -190,6 +193,7 @@ def _service(
         ingestion_service=ingestion,
         sinal_service=sinal,
         ndvi_repo=ndvi,
+        year_detail_service=year_detail,
     )
 
 
@@ -372,6 +376,42 @@ def test_should_cite_same_number_as_the_math_when_explaining_stress_years() -> N
 
     assert milho.faixa_anos == tuple(year not in dry_years for year in range(2005, 2025))
     assert any("6 dos últimos 20 anos" in frase for frase in milho.porque)
+
+
+def test_should_detail_each_year_of_the_rain_strip_with_the_same_result() -> None:
+    # P1: a faixa sai de anos_detalhe[].bom; um item por ano simulado, na mesma ordem
+    years = tuple(y for y in range(2005, 2025) if y != 2010)
+    climate = FakeClimateRepository(dry_years=(2007, 2014), years=years)
+    rec = _service(climate).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    for opcao in rec.opcoes:
+        assert [d.ano for d in opcao.anos_detalhe] == list(years)
+        assert tuple(d.bom for d in opcao.anos_detalhe) == opcao.faixa_anos
+    milho = _opcao(rec, "milho_safrinha")
+    seca = next(d for d in milho.anos_detalhe if d.ano == 2007)
+    # Floração no dia 60 (18/fev + 60 = 19/abr); de fevereiro a junho sem chuva: os 30 dias da fase
+    assert (seca.bom, seca.fase_critica, seca.dias_sem_chuva) == (False, date(2007, 4, 19), 30)
+    assert seca.texto.endswith("ficou 30 dias sem chuva. Faltou água nessa fase.")
+    # Sem o arquivo do ONI, nenhum ano tem marca
+    assert {d.enso for d in milho.anos_detalhe} == {None}
+
+
+class FakeEnsoRepository:
+    def get_oni_years(self) -> list[OniYear]:
+        return [OniYear(2007, 0.23, None), OniYear(2016, 2.13, "el_nino")]
+
+
+def test_should_mark_enso_and_write_the_year_detail_in_the_requested_language() -> None:
+    service = _service(year_detail=YearDetailService(enso_repo=FakeEnsoRepository()))
+
+    rec = service.recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="en")
+    detalhe = next(d for d in _opcao(rec, "sorgo").anos_detalhe if d.ano == 2016)
+
+    assert detalhe.enso == "el_nino"
+    assert detalhe.texto == (
+        "In 2016, sowing on February 18, the crop reached the stage that needs water most around "
+        "April 18 and did not go a single day without rain. It worked. El Niño year."
+    )
 
 
 def test_should_leave_future_empty_and_reweight_final_score_when_no_cmip6_data() -> None:
