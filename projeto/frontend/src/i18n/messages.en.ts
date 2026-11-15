@@ -992,7 +992,7 @@ export const en = {
       noRainTodo: 'Talk to your agronomist before planting or fertilizing.',
       heat: (days: number, window: number, temp: number) =>
         `${days} days at ${temp} °C or more in the last ${window} days.`,
-      heatTodo: 'Strong heat at flowering makes flowers drop. Talk to your agronomist.',
+      heatTodo: 'If the crop is flowering, strong heat makes flowers drop. Talk to your agronomist.',
       ensoForecast: (phase: string, months: string, year: number, chance: number) =>
         `NOAA forecast for ${months} ${year}: ${phase}, with a ${chance}% chance.`,
       ensoHistory: (

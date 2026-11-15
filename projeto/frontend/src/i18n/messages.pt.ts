@@ -1028,7 +1028,7 @@ export const pt = {
       noRainTodo: 'Converse com o agrônomo antes de plantar ou adubar.',
       heat: (days: number, window: number, temp: number) =>
         `${days} dias com ${temp} °C ou mais nos últimos ${window} dias.`,
-      heatTodo: 'Calor forte na floração derruba as flores. Converse com o agrônomo.',
+      heatTodo: 'Se a lavoura estiver na floração, calor forte derruba as flores. Converse com o agrônomo.',
       ensoForecast: (phase: string, months: string, year: number, chance: number) =>
         `Previsão da NOAA para ${months} de ${year}: ${phase}, com ${chance}% de chance.`,
       ensoHistory: (

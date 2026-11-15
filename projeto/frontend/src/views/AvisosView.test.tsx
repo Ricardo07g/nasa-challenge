@@ -188,6 +188,15 @@ describe('AvisosView (tela "Avisos")', () => {
     ).toHaveAttribute('href', '/guia/alertas-defesa-civil')
   })
 
+  it('o "Saiba mais" leva ao artigo do Guia sobre como ler os avisos', () => {
+    renderView(props(buildAvisos(POINT, 'pt')))
+
+    expect(screen.getByRole('link', { name: 'Saiba mais: como ler os avisos' })).toHaveAttribute(
+      'href',
+      '/guia/como-ler-os-avisos',
+    )
+  })
+
   it('em inglês, para os juízes', () => {
     renderView(props(buildAvisos(POINT, 'en'), { t: en, lang: 'en' }))
 

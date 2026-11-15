@@ -292,6 +292,15 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Avisos')
   })
 
+  it('/guia/como-ler-os-avisos abre o artigo dos avisos, em pt e en', async () => {
+    renderAt('/guia/como-ler-os-avisos')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Como ler os avisos' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia/como-ler-os-avisos', 'en')
+    expect(await screen.findByRole('heading', { level: 1, name: 'How to read the alerts' })).toBeInTheDocument()
+  })
+
   it('/avisos com o ponto da lavoura mostra os grupos e o número no botão do cabeçalho', async () => {
     window.localStorage.clear()
     renderAt('/avisos?lat=-18.9543&lon=-48.1993&colheita=meio')

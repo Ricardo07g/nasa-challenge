@@ -30,6 +30,8 @@ export type AvisosViewProps = {
 
 /** Artigo do Guia sobre os alertas oficiais (seção 8 do pedido: "Avisos → Rodapé"). */
 const OFFICIAL_GUIDE = '/guia/alertas-defesa-civil'
+/** Artigo do Guia "Como ler os avisos" (tarefa 0046). */
+const READ_GUIDE = '/guia/como-ler-os-avisos'
 const SMS_HREF = 'sms:40199'
 const WHATSAPP_HREF = 'https://wa.me/556120344611'
 
@@ -46,6 +48,9 @@ export function AvisosView(props: AvisosViewProps) {
       <BackLink to={props.backTo}>{t.nav.back}</BackLink>
       <PageHeading title={a.title} subtitle={a.subtitle} />
       {place && status !== 'no-point' && <p className={styles.place}>{a.place(place)}</p>}
+      <p>
+        <Link to={READ_GUIDE}>{a.guideLink}</Link>
+      </p>
       {status === 'no-point' && (
         <Card as="section" aria-label={a.markField}>
           <div className={layout.stack}>
