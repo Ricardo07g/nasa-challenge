@@ -17,10 +17,11 @@ alguns cartões (clima futuro, histórico do talhão).
 | Histórico do talhão (NDVI) | MODIS (MOD13Q1 + MYD13Q1) pelo AppEEARS ou pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` (o mesmo nome para as duas fontes) e, depois da carga, banco (`ndvi_point`) | "Sua área ficou parada em X de Y anos" e a colheita sugerida | script `fetch_ndvi` + carga no banco |
 | Chuva diária em 0,1° (refinamento da chuva do POWER) | GPM IMERG Final (`GPM_3IMERGDF` v07) pelo OPeNDAP do GES DISC | arquivo `data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` e, depois da carga, a chuva dos anos completos no banco (`climate_season`, `rain_source = gpm_imerg`) | "Chuva mais detalhada" conectada (10 km) e "(GPM IMERG + NASA POWER)" no "Por quê?" | script `fetch_imerg` + carga no banco (`--imerg`) |
 | El Niño / La Niña de cada safrinha | ONI da NOAA (não é da NASA) | arquivo `data/baixados/noaa_oni/oni.json` (só arquivo, sem tabela) | a marca de El Niño / La Niña nos quadrinhos de chuva e na frase de cada ano | script `fetch_oni` |
+| Região pelo satélite (lavoura parada na entressafra, num raio de 30 km) | MODIS (MOD13Q1, MYD13Q1 e o uso do solo MCD12Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` (sem tabela ainda) | "Na sua região": a área de lavoura parada, ano a ano | script `fetch_regiao_ndvi` |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
-aponta `CMIP6_PATH`, `NDVI_CACHE_PATH` e `ONI_PATH` para os arquivos acima. Arquivo ausente = a API
-segue sem aquele dado, sem erro.
+aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH` e `REGIAO_PATH` para os arquivos acima. Arquivo
+ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`).
 
 ## Caminho rápido: receber o pacote de alguém do time (~5 min)
 
@@ -67,6 +68,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Chuva do IMERG da caixa piloto (2005–2024) | `uv run python -m pipeline.fetch_imerg` (antes: `--dry-run`; para conferir: `--anos 2024`) | até ~2,2 h (4.240 recortes, um por dia, 6 em paralelo); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env`, com o aplicativo *NASA GESDISC DATA ARCHIVE* autorizado e a EULA do GES DISC aceita |
 | Carregar os arquivos no banco (`cmip6_delta`, `ndvi_point` e a chuva do IMERG no `climate_season`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json --imerg ../../data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` | segundos | nenhuma |
 | El Niño / La Niña de cada safrinha (ONI) | `uv run python -m pipeline.fetch_oni` | segundos (1 pedido de ~23 KB à NOAA) | nenhuma |
+| Região pelo satélite (fazenda de exemplo, raio de 30 km) | `uv run python -m pipeline.fetch_regiao_ndvi` | ~20 min (41 pedidos à ORNL de ~25 a 40 s; num 502 ele espera e tenta de novo); se parar, rode de novo que continua do cache | nenhuma |
 
 - A pré-carga é idempotente: rodar de novo só completa o que faltou (por exemplo, solos em que o
   SoilGrids não respondeu). Solo sem dado no mapa (área urbana) nunca é gravado.
@@ -121,6 +123,12 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   de 2005 a 2024 (as da série do motor; `--ano-inicio` e `--ano-fim` mudam isso) e imprime quais
   anos ficaram de El Niño, de La Niña e neutros. A regra do ano está no `regras.yaml` (grupo `enso`).
   Não precisa carregar no banco: a API lê o arquivo.
+- **Região pelo satélite** (tarefa 0034): grava em `data/baixados/nasa_modis_ndvi_regiao/` o JSON
+  e o cache `cache_ornl/` (uma resposta por pedido, em gzip; ~30 MB), a partir da raiz do
+  repositório. Antes, veja os 41 pedidos sem baixar nada: `uv run python -m pipeline.fetch_regiao_ndvi
+  --dry-run`. Outras regiões: `--centros "lat,lon;lat,lon"` (41 pedidos por centro) e `--raio-km`.
+  A ORNL é pública, mas lenta e às vezes devolve 502: o script tenta de novo até 5 vezes por
+  pedido (`--tentativas`) e, se desistir, o que já baixou fica no cache.
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).
@@ -146,6 +154,9 @@ O zip fica na raiz do repositório (também fora do git). Ele não leva `.env` n
 # arquivo do CMIP6, nex_gddp_cmip6
 curl -s "localhost:8000/api/talhao?lat=-18.9543&lon=-48.1993" | python3 -m json.tool
 
+# região pelo satélite (com o arquivo do fetch_regiao_ndvi): raio_km, fonte e os anos
+curl -s "localhost:8000/api/regiao?lat=-18.9543&lon=-48.1993" | python3 -m json.tool
+
 # o que está no banco
 cd projeto && docker compose exec -T db psql -U raiz -d raiz_orbital -c \
   "select 'células', count(*) from grid_cell union all select 'temporadas', count(*) from climate_season union all select 'solos', count(*) from soil_point union all select 'deltas cmip6', count(*) from cmip6_delta union all select 'ndvi', count(*) from ndvi_point"
@@ -160,6 +171,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | Clima dos próximos anos | ✓ pronto (só onde há deltas: a caixa piloto inteira com `--area`; só a região da fazenda de exemplo com `--pontos`) | "Ainda não disponível para esta área" |
 | Histórico do talhão | faixa de 2016 a 2025 | não aparece (ou "Ainda não conectado") |
 | Anos de chuva (tocar num ano) | ponto de El Niño / La Niña em cima dos anos e "Ano de El Niño." na frase | a frase de cada ano aparece igual, sem a marca |
+| Na sua região (http://localhost:5173/comunidade) | "Em 2025, X% da área de lavoura ficou parada" e as barras de 2016 a 2025 | o bloco da região fica com erro (a API responde 404 `OUTSIDE_AREA`) |
 
 ## Problemas comuns
 
@@ -172,6 +184,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | NDVI pela ORNL termina com código 2 | o serviço deu 502 ou ficou sem responder em algum recorte | rode o mesmo comando de novo (continua do cache); se a ORNL estiver fora do ar, tente mais tarde |
 | IMERG: 403 "EULA Acceptance Failure" | falta aceitar a EULA do GES DISC | perfil da Earthdata → *Applications → Authorized Apps* → *NASA GESDISC DATA ARCHIVE* |
 | IMERG: "O GES DISC recusou o acesso (HTTP 401 / página HTML)" | o `EARTHDATA_TOKEN` venceu (dura 60 dias) ou falta autorizar o aplicativo | gere outro token em urs.earthdata.nasa.gov e confira *Authorized Apps* |
+| Região: "A ORNL não respondeu ... depois de 5 tentativas" | a ORNL está lenta ou fora (502) | rode o mesmo comando de novo mais tarde: continua do cache |
 | Restaurar a cópia do banco dá "duplicate key" | o banco já tinha dados | esvazie as tabelas (passo 3 do caminho rápido) |
 
 ## Regras para agentes de código (Claude, Gemini)
