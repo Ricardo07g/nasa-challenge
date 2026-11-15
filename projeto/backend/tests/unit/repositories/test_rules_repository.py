@@ -358,9 +358,25 @@ def test_should_load_the_enso_hit_rate_and_cell_climate_rules_of_the_suggestion(
     assert regras.geada_sugestao.meses == (5, 6, 7)
 
 
+def test_should_load_the_plan_b_rain_limit_and_the_used_rain_rules() -> None:
+    # Tarefa 0045 (5.6): o limite do Plano B é a chuva dos 15 dias antes da semeadura, e só vira
+    # número se separar bem os anos bons dos ruins (hipótese do time); a chuva aproveitada vai da
+    # semeadura ao fim de julho.
+    regras = YamlRulesRepository(SHIPPED).get_rules()
+
+    plano_b = regras.plano_b
+    assert plano_b.dias_antes_semeadura == 15
+    assert plano_b.anos_falha_min == 3
+    assert (plano_b.sensibilidade_min_pct, plano_b.precisao_min_pct) == (50.0, 60.0)
+    assert plano_b.chance_max_pct == 10.0
+    assert regras.chuva_aproveitada.fim == "07-31"
+
+
 @pytest.mark.parametrize(
     "path",
     [
+        ("plano_b", "precisao_min_pct"),
+        ("chuva_aproveitada", "fim"),
         ("colheita", "meio_ate"),
         ("chuva_que_sobra", "percentil_seco"),
         ("fim_das_chuvas", "chuva_max_mm"),

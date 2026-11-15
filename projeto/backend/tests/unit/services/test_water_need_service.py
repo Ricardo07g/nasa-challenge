@@ -39,6 +39,21 @@ def test_should_take_the_median_of_need_rain_and_shortage_over_the_years() -> No
     assert (agua.cad_mm, agua.anos) == (60, 3)
 
 
+def test_should_take_the_median_of_the_water_the_crop_really_used() -> None:
+    # Tarefa 0045 (5.6, "Chuva aproveitada"): o que a planta usou no ciclo é a ETr do balanço
+    # (mediana dos anos), não o consumo que ela queria (ETc).
+    anos = [
+        _ano(2005, etc=300.0, etr=250.0, chuva=420.0),
+        _ano(2006, etc=320.0, etr=220.0, chuva=380.0),
+        _ano(2007, etc=340.0, etr=330.0, chuva=500.0),
+    ]
+
+    agua = WaterNeedService().summarize(anos, cad_mm=60.0)
+
+    assert agua is not None
+    assert agua.usa_mm == 250
+
+
 def test_should_give_the_dry_year_shortage_as_the_one_only_a_fifth_of_years_exceed() -> None:
     # 20 anos com falta de 0 a 190 mm: percentil 80 com interpolação linear = 152 mm. É o "ano
     # seco" da tela 3 (só 20% dos anos piores), virado para a falta (mais falta = pior).

@@ -17,6 +17,8 @@ import {
 import { createMockGeocodingRepository, createMockPilotAreaRepository } from './mocks/mockLocation'
 import { createHttpPastSeasonRepository } from './pastSeasonRepository'
 import { createHttpPilotAreaRepository } from './pilotAreaRepository'
+import { createMockPlanoRepository } from './mocks/mockPlano'
+import { createHttpPlanoRepository } from './planoRepository'
 import { createHttpRaioXRepository } from './raioXRepository'
 import { createHttpRecomendacaoRepository } from './recomendacaoRepository'
 import { createHttpRegionRepository } from './regionRepository'
@@ -48,3 +50,5 @@ export const raioXRepository = useHttp ? createHttpRaioXRepository() : createMoc
 export const avisosRepository = useHttp ? createHttpAvisosRepository() : createMockAvisosRepository()
 /** Ponto dos avisos no localStorage: o mesmo nos dois modos. */
 export { savedPointRepository } from './savedPointRepository'
+/** Aba "Plano de 3 anos" (tarefa 0045): um plano qualquer avaliado pelo motor (`GET /api/plano`). */
+export const planoRepository = useHttp ? createHttpPlanoRepository() : createMockPlanoRepository()

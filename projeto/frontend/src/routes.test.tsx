@@ -133,7 +133,8 @@ describe('rotas', () => {
     await userEvent.click(await screen.findByRole('link', { name: 'Comparar' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Comparar' })).toBeInTheDocument()
-    expect(await screen.findByRole('article', { name: 'Milho com braquiária' })).toBeInTheDocument()
+    // Tarefa 0045: as 3 melhores do objetivo lado a lado, numa tabela.
+    expect(await screen.findByRole('table', { name: /Lado a lado: Crotalária/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Comparar' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('button', { name: 'Cuidar da terra' })).toHaveAttribute('aria-pressed', 'true')
     expect(document.title).toBe('Raiz Orbital – Comparar')
@@ -144,7 +145,10 @@ describe('rotas', () => {
 
     await userEvent.click(await screen.findByRole('link', { name: 'Plano de 3 anos' }))
 
-    expect(await screen.findByRole('list', { name: 'Plano ano a ano' })).toHaveTextContent('2027Milho com braquiária')
+    // Tarefa 0045: o plano editável, ano a ano, com as notas ao lado do "Como é hoje" (GET /api/plano de exemplo).
+    expect(await screen.findByRole('list', { name: 'Seu plano ano a ano' })).toHaveTextContent('2027Milho com braquiária')
+    expect(await screen.findByRole('table', { name: 'Notas do seu plano ao lado de como é hoje' })).toBeInTheDocument()
+    expect(screen.queryByText(/Como teria sido em/)).not.toBeInTheDocument()
     expect(document.title).toBe('Raiz Orbital – Plano de 3 anos')
   })
 

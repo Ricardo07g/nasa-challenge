@@ -193,3 +193,29 @@ export function MeasureField({ label, value, unit, hint, onChange }: MeasureFiel
     </div>
   )
 }
+
+type SelectFieldProps<T extends string> = {
+  label: string
+  value: T
+  options: readonly ChipOption<T>[]
+  onChange: (value: T) => void
+}
+
+/** Lista de escolha nativa com o rótulo visível (ex.: a cultura de cada ano do plano, tarefa 0045). */
+export function SelectField<T extends string>({ label, value, options, onChange }: SelectFieldProps<T>) {
+  const id = useId()
+  return (
+    <div className={styles.dateField}>
+      <label htmlFor={id} className={styles.dateLabel}>
+        {label}
+      </label>
+      <select id={id} className={styles.select} value={value} onChange={(event) => onChange(event.target.value as T)}>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}

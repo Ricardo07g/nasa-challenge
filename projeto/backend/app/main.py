@@ -17,6 +17,7 @@ from app.controllers import (
     custo_atraso_controller,
     health_controller,
     pilot_area_controller,
+    plano_controller,
     raio_x_controller,
     recomendacao_controller,
     regiao_controller,
@@ -145,3 +146,6 @@ app.include_router(raio_x_controller.router, prefix="/api")
 
 # Tela "Avisos" (remodelagem S6, tarefa 0046)
 app.include_router(avisos_controller.router, prefix="/api")
+
+# Aba Plano de 3 anos (remodelagem S5b, tarefa 0045)
+app.include_router(plano_controller.router, prefix="/api")

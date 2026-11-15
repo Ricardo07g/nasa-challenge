@@ -86,6 +86,12 @@ describe('AlternativeCard', () => {
     expect(screen.getByTestId('icone')).toBeInTheDocument()
   })
 
+  it('pode ter uma ação no pé do cartão (aba Comparar, tarefa 0045)', () => {
+    render(<AlternativeCard label="Mais renda" title="Sorgo" text="x" action={<button type="button">Comparar</button>} />)
+
+    expect(screen.getByRole('button', { name: 'Comparar' })).toBeInTheDocument()
+  })
+
   it('leva a imagem da planta no canto (tarefa 0044)', () => {
     render(<AlternativeCard label="Mais renda" title="Sorgo" text="x" media={<span>imagem do sorgo</span>} />)
 

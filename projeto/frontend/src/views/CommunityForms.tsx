@@ -10,7 +10,7 @@ import styles from './CommunityView.module.css'
  * Botões de escolha com a pergunta em texto visível em cima (lida também pelo "Ouvir"); o grupo leva o
  * mesmo nome para o leitor de tela.
  */
-function QuestionChips<T extends string>(props: ComponentProps<typeof ChipGroup<T>>) {
+export function QuestionChips<T extends string>(props: ComponentProps<typeof ChipGroup<T>>) {
   return (
     <div className={styles.field}>
       <p className={styles.question} aria-hidden="true">

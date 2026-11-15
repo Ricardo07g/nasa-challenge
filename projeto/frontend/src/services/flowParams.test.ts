@@ -95,3 +95,47 @@ describe('objetivo do produtor na URL (tarefa 0044)', () => {
     )
   })
 })
+
+describe('culturas comparadas, plano editado e "como é hoje" na URL (tarefa 0045)', () => {
+  const read = (query: string) => readFlowParams(new URLSearchParams(`lat=1&lon=2&${query}`))
+
+  it('lê até 3 culturas para comparar, sem repetir, sem o pousio e só ids conhecidos', () => {
+    expect(read('comparar=sorgo,milheto')?.comparar).toEqual(['sorgo', 'milheto'])
+    expect(read('comparar=sorgo,sorgo,trigo,pousio,crotalaria')?.comparar).toEqual(['sorgo', 'crotalaria'])
+    expect(read('comparar=sorgo,milheto,crotalaria,milho_safrinha')?.comparar).toEqual(['sorgo', 'milheto', 'crotalaria'])
+    expect(read('comparar=')?.comparar).toBeUndefined()
+  })
+
+  it('lê o plano editado só com 3 culturas conhecidas (o pousio vale)', () => {
+    expect(read('plano=sorgo,pousio,crotalaria')?.plano).toEqual(['sorgo', 'pousio', 'crotalaria'])
+    expect(read('plano=sorgo,crotalaria')?.plano).toBeUndefined()
+    expect(read('plano=sorgo,trigo,crotalaria')?.plano).toBeUndefined()
+  })
+
+  it('lê o que o produtor contou das últimas safras, em ordem de ano', () => {
+    expect(read('hoje=2026:sorgo,2024:pousio,2025:trigo,x')?.hoje).toBe('2024:pousio,2026:sorgo')
+    expect(read('hoje=')?.hoje).toBeUndefined()
+  })
+
+  it('monta a URL com os três no fim e sem codificar ":" e ",", para o link ficar legível', () => {
+    expect(
+      buildFlowQuery({
+        lat: 1,
+        lon: 2,
+        colheita: 'meio',
+        comparar: ['sorgo', 'milheto'],
+        plano: ['sorgo', 'pousio', 'crotalaria'],
+        hoje: '2024:pousio',
+        confirmadas: '2025:parado',
+      }),
+    ).toBe(
+      '?lat=1&lon=2&colheita=meio&confirmadas=2025:parado&comparar=sorgo,milheto&plano=sorgo,pousio,crotalaria&hoje=2024:pousio',
+    )
+  })
+
+  it('repassa os três entre as abas', () => {
+    expect(keepFlowQuery('?lat=1&lon=2&colheita=meio&plano=sorgo,sorgo,sorgo&ano=2016')).toBe(
+      '?lat=1&lon=2&colheita=meio&plano=sorgo,sorgo,sorgo',
+    )
+  })
+})

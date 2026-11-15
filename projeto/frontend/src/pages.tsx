@@ -217,18 +217,21 @@ export function LegacyAnswerRedirect({ keepYear = false }: { keepYear?: boolean 
 }
 
 export function OptionsPage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.suggestion.compareTitle)
   const state = useOptionsController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
   return (
     <OptionsView
       t={t}
+      lang={lang}
       nav={state.nav}
       status={state.status}
       onRetry={state.retry}
-      summary={state.summary}
-      rain={state.rain}
+      compare={state.compare}
+      onToggle={state.toggle}
+      onCompareWith={state.compareWith}
+      planLink={state.planLink}
     />
   )
 }
@@ -246,14 +249,13 @@ export function PlanPage() {
       status={state.status}
       onRetry={state.retry}
       signal={state.signal}
-      scenario={state.scenario}
-      onScenario={state.chooseScenario}
-      rule={state.rule}
       plan={state.plan}
-      thirst={state.thirst}
+      evaluation={state.evaluation}
+      today={state.today}
+      onChooseCrop={state.chooseCrop}
+      onReset={state.reset}
+      onAnswerToday={state.answerToday}
       communityTo={state.communityTo}
-      pastTo={state.pastTo}
-      showGainReference={state.showGainReference}
     />
   )
 }

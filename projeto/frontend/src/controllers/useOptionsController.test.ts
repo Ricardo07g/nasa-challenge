@@ -10,8 +10,9 @@ import { useOptionsController } from './useOptionsController'
 
 const flow = 'lat=-18.9543&lon=-48.1993&colheita=meio'
 const point = { lat: -18.9543, lon: -48.1993 }
+const sample = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
 const talhao = {
-  ponto: { lat: -18.9543, lon: -48.1993 },
+  ponto: point,
   celula_id: '-190_-482',
   dentro_da_area: true,
   solo: { textura: 'argiloso', cad_mm: 60, fonte: 'soilgrids' },
@@ -20,61 +21,67 @@ const talhao = {
   dados: [{ fonte: 'nasa_power', periodo: '2005-2024' }],
 } as Talhao
 
-function deps(load: () => Promise<Recomendacao> = () => Promise.resolve(buildRecomendacao({ ...point, colheita: 'meio' }, 'pt'))) {
+function deps(load: () => Promise<Recomendacao> = () => Promise.resolve(sample)) {
   const farm: FarmService = { talhao: vi.fn(() => Promise.resolve(talhao)), recomendacao: vi.fn(load) }
   return { farm }
 }
 
-describe('useOptionsController (aba Comparar)', () => {
-  it('lista as opções na ordem do equilíbrio (nota final), com a melhor na frente', async () => {
-    const d = deps()
-    const { result } = renderHook(() => useOptionsController(d), { wrapper: providers(`/opcoes?${flow}`) })
+async function ready(url = `/opcoes?${flow}`, d = deps()) {
+  const hook = renderHook(() => useOptionsController(d), { wrapper: providers(url) })
+  await waitFor(() => expect(hook.result.current.status).toBe('ready'))
+  return hook
+}
 
-    await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(result.current.nav.objective).toBeNull()
-    expect(result.current.summary?.options[0].id).toBe('milho_braquiaria')
+describe('useOptionsController (aba Comparar, tarefa 0045)', () => {
+  it('por padrão compara as 3 melhores para o objetivo, em colunas', async () => {
+    const { result } = await ready()
+
+    const top3 = sample.objetivos!.equilibrio!.ordem.slice(0, 3)
+    expect(result.current.compare?.columns.map((option) => option.id)).toEqual(top3)
+    expect(result.current.compare?.chips.filter((chip) => chip.selected).map((chip) => chip.id)).toEqual(top3)
+    expect(result.current.compare?.full).toBe(true)
   })
 
-  it('o objetivo do produtor reordena (tarefa 0044); tocar de novo volta ao equilíbrio', async () => {
-    const d = deps()
-    const { result } = renderHook(() => useOptionsController(d), { wrapper: providers(`/opcoes?${flow}`) })
-    await waitFor(() => expect(result.current.status).toBe('ready'))
+  it('a escolha fica na URL: tocar num chip tira ou põe a cultura', async () => {
+    const { result } = await ready(`/opcoes?${flow}&comparar=sorgo`)
 
-    // Renda pela nota de renda do motor, sem reais (tarefa 0040)
-    act(() => result.current.nav.chooseObjective('renda'))
-    const incomes = result.current.summary!.options.map((o) => o.notas.renda)
-    expect(incomes).toEqual([...incomes].sort((a, b) => b - a))
-    expect(result.current.summary?.options[0].id).toBe('sorgo')
-
-    act(() => result.current.nav.chooseObjective(null))
-    expect(result.current.nav.objective).toBeNull()
-    expect(result.current.summary?.options[0].id).toBe('milho_braquiaria')
+    expect(result.current.compare?.columns.map((option) => option.id)).toEqual(['sorgo'])
+    act(() => result.current.toggle('milheto'))
+    await waitFor(() => expect(result.current.compare?.columns.map((option) => option.id)).toEqual(['sorgo', 'milheto']))
+    act(() => result.current.toggle('sorgo'))
+    await waitFor(() => expect(result.current.compare?.columns.map((option) => option.id)).toEqual(['milheto']))
   })
 
-  it('com colheita tardia, traz o aviso do que ficou fora da janela', async () => {
-    const d = deps(() => Promise.resolve(buildRecomendacao({ ...point, colheita: 'tarde' }, 'pt')))
-    const { result } = renderHook(() => useOptionsController(d), {
-      wrapper: providers('/opcoes?lat=-18.9543&lon=-48.1993&colheita=tarde'),
-    })
+  it('"Se você prefere…" é o ponto de partida: compara a alternativa com a sugestão', async () => {
+    const { result } = await ready()
 
-    await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(result.current.summary?.late.names).toEqual(['Milho sozinho'])
+    expect(result.current.compare?.alternatives.map((alt) => alt.option.id)).toEqual(['milheto', 'sorgo', 'crotalaria'])
+    act(() => result.current.compareWith('crotalaria'))
+    await waitFor(() =>
+      expect(result.current.compare?.columns.map((option) => option.id)).toEqual(['milho_braquiaria', 'crotalaria']),
+    )
   })
 
-  it('as abas marcam "Comparar"', () => {
-    const d = deps()
-    const { result } = renderHook(() => useOptionsController(d), { wrapper: providers(`/opcoes?${flow}`) })
+  it('"Usar no meu plano" leva a cultura para o ano 1 do plano, mantendo o caminho', async () => {
+    const { result } = await ready(`/opcoes?${flow}&objetivo=terra`)
 
-    expect(result.current.nav.tabs[1]).toMatchObject({ label: 'Comparar', current: true })
+    const [, second, third] = sample.objetivos!.terra!.plano
+    expect(result.current.planLink('sorgo')).toBe(`/plano?${flow}&objetivo=terra&plano=sorgo,${second},${third}`)
   })
 
-  it('sem colheita volta para a pergunta 2', () => {
-    const d = deps()
-    const { result } = renderHook(() => useOptionsController(d), {
-      wrapper: providers('/opcoes?lat=-18.9543&lon=-48.1993'),
-    })
+  it('as culturas fora da janela aparecem desligadas, com a data limite', async () => {
+    const late = buildRecomendacao({ ...point, colheita: 'tarde' }, 'pt')
+    const { result } = await ready(`/opcoes?lat=-18.9543&lon=-48.1993&colheita=tarde`, deps(() => Promise.resolve(late)))
 
-    expect(result.current.redirectTo).toBe('/quando?lat=-18.9543&lon=-48.1993')
+    expect(result.current.compare?.chips.at(-1)).toMatchObject({ id: 'milho_safrinha', disabled: true, limit: '2027-02-28' })
+  })
+
+  it('o objetivo troca a comparação padrão e limpa a escolha anterior (tarefa 0044)', async () => {
+    const { result } = await ready(`/opcoes?${flow}&comparar=sorgo`)
+
+    act(() => result.current.nav.chooseObjective('terra'))
+    await waitFor(() => expect(result.current.nav.objective).toBe('terra'))
+    expect(result.current.compare?.columns.map((option) => option.id)).toEqual(sample.objetivos!.terra!.ordem.slice(0, 3))
   })
 
   it('ponto sem dados no servidor vira o estado "fora da área"', async () => {
@@ -82,13 +89,5 @@ describe('useOptionsController (aba Comparar)', () => {
     const { result } = renderHook(() => useOptionsController(d), { wrapper: providers(`/opcoes?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('outside'))
-  })
-
-  it('o período da chuva vem do talhão (dados[]), para a legenda dos quadrinhos', async () => {
-    const d = deps()
-    const { result } = renderHook(() => useOptionsController(d), { wrapper: providers(`/opcoes?${flow}`) })
-
-    await waitFor(() => expect(result.current.rain?.period).toEqual({ start: '2005', end: '2024' }))
-    expect(result.current.rain?.years).toBe(20)
   })
 })

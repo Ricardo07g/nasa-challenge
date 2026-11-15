@@ -17,6 +17,7 @@ from app.models.regras import (
     RegrasAlertasArea,
     RegrasAvisos,
     RegrasAvisosTela,
+    RegrasChuvaAproveitada,
     RegrasChuvaQueSobra,
     RegrasClima,
     RegrasClimaFuturoSugestao,
@@ -29,6 +30,7 @@ from app.models.regras import (
     RegrasHistoricoNdvi,
     RegrasNdvi,
     RegrasNotaFinal,
+    RegrasPlanoB,
     RegrasRaioX,
     RegrasRegiaoNdvi,
     RegrasRenda,
@@ -121,6 +123,8 @@ class YamlRulesRepository:
             enso_acerto=_group(raw, "enso_acerto", RegrasEnsoAcerto),
             clima_futuro_sugestao=_group(raw, "clima_futuro_sugestao", RegrasClimaFuturoSugestao),
             geada_sugestao=_group(raw, "geada_sugestao", RegrasGeadaSugestao),
+            plano_b=_group(raw, "plano_b", RegrasPlanoB),
+            chuva_aproveitada=_group(raw, "chuva_aproveitada", RegrasChuvaAproveitada),
         )
         return self._cache
 

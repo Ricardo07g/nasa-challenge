@@ -660,3 +660,34 @@ geada_sugestao:
   meses:
     valor: [5, 6, 7]
     fonte: "Pedido da remodelagem, seção 4 (alerta de geada: de maio a julho)"
+
+plano_b:
+  # Plano A / Plano B da aba "Plano de 3 anos" (seção 5.6 da remodelagem, tarefa 0045). "Secar" vira
+  # um número que o produtor confere no pluviômetro só se a série separar bem os anos em que a
+  # cultura do 1º ano do Plano A deu certo dos anos em que ela falhou. Regra: "secou" = chuva somada
+  # nos `dias_antes_semeadura` dias antes da semeadura abaixo de um limite L. L é o que mais acerta
+  # na série (marca os k anos mais secos; acertos - alarmes falsos; empate = menos anos marcados).
+  # Separa bem = as quatro condições abaixo juntas; senão, o Plano B aparece sem número.
+  dias_antes_semeadura:
+    valor: 15
+    fonte: "Pedido da remodelagem, seção 5.6: 'o limite de chuva nos 15 dias antes da semeadura'"
+  anos_falha_min:
+    valor: 3
+    fonte: "Hipótese do time, a revisar (tarefa 0045): com menos de 3 anos de falha na série, qualquer limite acerta por sorte"
+  sensibilidade_min_pct:
+    valor: 50.0
+    fonte: "Hipótese do time, a revisar (tarefa 0045): o limite pega pelo menos metade dos anos em que a cultura falhou"
+  precisao_min_pct:
+    valor: 60.0
+    fonte: "Hipótese do time, a revisar (tarefa 0045): pelo menos 60% dos anos abaixo do limite foram de falha (mais acertos que alarmes falsos)"
+  chance_max_pct:
+    valor: 10.0
+    fonte: "Hipótese do time, a revisar (tarefa 0045): a chance de pegar tantas falhas marcando o mesmo número de anos ao acaso (hipergeométrica) fica em 10% ou menos"
+
+chuva_aproveitada:
+  # Bloco "Chuva aproveitada" do Plano (seção 5.6, tarefa 0045): a chuva da semeadura (colheita da
+  # soja + 3 dias, PRD 7.1) até o fim de julho, e quanto dela a planta usou (ETr do balanço do motor,
+  # PRD 7.2). No pousio, só a chuva que caiu sem cultura (sem estimar a evaporação da terra).
+  fim:
+    valor: "07-31"
+    fonte: "Pedido da remodelagem, seção 5.6: 'entre a colheita da soja e o fim de julho' (a série guardada vai até 31/jul; 30/jul nos anos bissextos)"

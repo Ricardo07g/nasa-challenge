@@ -90,6 +90,7 @@ from app.services.harvest_delay_service import HarvestDelayService
 from app.services.monthly_rain_service import MonthlyRainService
 from app.services.past_season_service import PastSeasonService
 from app.services.pilot_area_service import PilotAreaService
+from app.services.plan_evaluation_service import PlanEvaluationService
 from app.services.rain_end_service import RainEndService
 from app.services.raio_x_service import RaioXService
 from app.services.recommendation_service import RecommendationService
@@ -530,5 +531,22 @@ def get_avisos_service(
         enso_repo=enso_repo,
         community_service=community_service,
         smap_repo=smap_repo,
+        rules=rules,
+    )
+
+
+def get_plan_evaluation_service(
+    recommender: Annotated[RecommendationService, Depends(get_recommendation_service)],
+    climate_repo: Annotated[ClimateRepository, Depends(get_climate_repository)],
+    crop_repo: Annotated[CropParamsRepository, Depends(get_crop_params_repository)],
+    plan_service: Annotated[RotationPlanService, Depends(get_rotation_plan_service)],
+    rules: Annotated[Regras, Depends(get_rules)],
+) -> PlanEvaluationService:
+    """Plano de 3 anos qualquer (aba "Plano", tarefa 0045): a conta do motor de cada ano."""
+    return PlanEvaluationService(
+        recommender=recommender,
+        climate_repo=climate_repo,
+        crop_repo=crop_repo,
+        plan_service=plan_service,
         rules=rules,
     )

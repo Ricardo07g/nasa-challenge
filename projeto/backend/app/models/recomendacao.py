@@ -167,6 +167,9 @@ class AguaOpcao:
     cad_mm: int
     anos: int
     futuro: AguaFuturo | None = None
+    # Tarefa 0045 ("Chuva aproveitada" do Plano): mediana do que a planta usou no ciclo (ETr do
+    # balanço), em mm. Zero só quando a conta não tem o dado (modelo antigo).
+    usa_mm: int = 0
 
 
 @dataclass(frozen=True)
