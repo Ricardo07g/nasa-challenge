@@ -123,6 +123,18 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `LAST_SEASONS` com o que o satélite viu (`seasonRows(historico)`). A tela 4 pede o `/talhao` e o `/raio-x`
   **sem** as respostas (o que o satélite viu) e aplica as respostas no front, para responder não recarregar nada.
   Tudo vai para a URL pelo `useReplaceFlow` (clicar não mexe na rolagem; teste em `pages.satellite.test.tsx`).
+- **Comunidade "em breve" (pacote 3, tarefa 0061, RF-44):** a interface **não mostra** a comunidade. A rota
+  `/comunidade` continua (links antigos, com ou sem o caminho da lavoura) e mostra só o cartão "Em breve ·
+  Comunidade da sua região" com "Abrir o Guia" (`CommunitySoonPage` → `useCommunitySoonController` →
+  `CommunitySoonView`, textos no bloco `comingSoon`), com o "← Voltar" e o "Ouvir resumo". A tela 4 não oferece
+  "Compartilhar com a comunidade" e a vitrine `/design-system` não mostra os vizinhos. Nenhuma tela leva a relatos de
+  vizinhos: não crie link, botão nem texto que chame para eles. **O código continua no repositório**, com os testes,
+  para voltar fácil: o backend inteiro e, no front, repository, service, models, `CommunityForms`, `ShareSeasons`,
+  `CommunityView`, `useCommunityController`, `CommunityPage` e os componentes dos vizinhos do design system. Quem
+  desliga é uma constante só, `COMMUNITY_OPEN` (`services/communityService.ts`, `false`): o `routes.tsx` escolhe a
+  tela de `/comunidade` por ela e o `useSatelliteController` só oferece compartilhar com ela ligada (`communityOpen`
+  nas dependências, para os testes). Não apague esse código. O que vem abaixo descreve a comunidade como funciona
+  quando ligada.
 - **Comunidade ("Na sua região", tarefa 0047 do backend, RF-27):** relatos sem cadastro, sem texto livre e
   sem dado pessoal. O contrato está em `models/community.ts` (`RelatoComunidade`, `RelatosVizinhos`,
   `NovoRelato` e as listas fechadas `CULTURAS_RELATO`, `RESULTADOS`, `MOTIVOS`, `EVENTOS`, iguais às do
@@ -358,11 +370,14 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   para `/resposta` (com o `ano`, que abre o "Por que essa sugestão?" naquele ano). Não crie link para elas.
 - **Cabeçalho e rodapé globais (remodelagem, tarefa 0052, RF-36):** valem para todas as telas (`ShellView`, estado no
   `useShellController`). **Cabeçalho** (`design-system/components/Header.tsx`): logo, "Raiz Orbital" (nunca quebra
-  linha) e o slogan (some no celular) à esquerda; à direita, **só três itens**: Comunidade (pílula verde-clara, com o
-  nome escrito também no celular), Avisos (sino, nome e o selo laranja com o `contador` de `/api/avisos`; sem aviso,
-  sem selo; no celular, só o sino com o selo) e o idioma ("PT | EN"; no celular, só o outro idioma). Não ponha outro
-  item nem botão grande no cabeçalho. Abaixo de 380 px (pacote 2): logo de 30 px, nome de 15,5 px e "Comunidade" de
-  12,5 px. **Rodapé** (`Footer.tsx`, uma linha só): escudo com "Ajuda a decidir. Não
+  linha) e o slogan (some no celular) à esquerda; à direita, **só três itens**: **Guia** (desde o pacote 3, tarefa
+  0061, no lugar da Comunidade: pílula verde-clara com o livro, `BookIcon`, e o nome escrito também no celular; leva a
+  `/guia`), Avisos (sino, nome e o selo laranja com o `contador` de `/api/avisos`; sem aviso, sem selo; no celular, só
+  o sino com o selo) e o idioma ("PT | EN"; no celular, só o outro idioma). A página atual fica marcada com
+  `aria-current="page"` (o `NavLink`): em `/guia` e nos artigos, a pílula fica verde cheia; em `/avisos`, o sino ganha
+  o fundo verde-claro (no computador, o respiro em volta do sino é compensado por margem negativa, para nada mudar de
+  lugar). Não ponha outro item nem botão grande no cabeçalho, nem a Comunidade (está "em breve"). Abaixo de 380 px
+  (pacote 2): logo de 30 px, nome de 15,5 px e a pílula do Guia de 12,5 px; cabe em 360 px sem rolar para o lado. **Rodapé** (`Footer.tsx`, uma linha só): escudo com "Ajuda a decidir. Não
   substitui o seu agrônomo." à esquerda; à direita, "Créditos e uso de IA" (abre o modal global) e "NASA Space Apps
   2026 · Field Shift". Tem **duas variantes**, escolhidas pela rota no `useShellController`: na Início (`/`), só isso
   (a faixa grande do agrônomo, logo acima, existe só lá); nas telas internas, também "Como a conta é feita ↗"
