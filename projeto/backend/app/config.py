@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     # pipeline/fetch_cmip6_deltas.py). Sem arquivo: a nota de futuro fica de fora (`futuro: null`),
     # a não ser que o banco tenha os deltas da célula (tabela `cmip6_delta`).
     cmip6_path: Path | None = None
+    # Fase do El Niño / La Niña de cada safrinha pelo ONI da NOAA (saída do pipeline/fetch_oni.py).
+    # Sem arquivo: o detalhe de cada ano (P1) sai com `enso: null`.
+    oni_path: Path | None = None
 
     # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
     # usam; a API não precisa de nenhuma (ADR-0005).
