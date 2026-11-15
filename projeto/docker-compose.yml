@@ -60,6 +60,7 @@ services:
       # backend/docs/como-preparar-os-dados-locais.md). Sem o arquivo, a API segue sem esse dado.
       CMIP6_PATH: ${CMIP6_PATH:-/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json}
       NDVI_CACHE_PATH: ${NDVI_CACHE_PATH:-/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json}
+      NDVI_AREA_PATH: ${NDVI_AREA_PATH:-/dados_baixados/nasa_modis_ndvi_area/ndvi_modis_area.json}
       ONI_PATH: ${ONI_PATH:-/dados_baixados/noaa_oni/oni.json}
       REGIAO_PATH: ${REGIAO_PATH:-/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json}
       IMERG_LATE_PATH: ${IMERG_LATE_PATH:-/dados_baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json}
