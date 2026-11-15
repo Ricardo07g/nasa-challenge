@@ -3,6 +3,7 @@ import type { Historico } from '../models/talhao'
 import { buildRecomendacao, buildTalhao } from '../repositories/mocks/fixtures'
 import { guideService } from './guideService'
 import {
+  planSignal,
   PLAN_ARTICLES,
   createPlanService,
   rainSourceName,
@@ -143,5 +144,21 @@ describe('planService: nome da fonte da chuva na frase', () => {
     expect(rainSourceName('gpm_imerg')).toBe('GPM IMERG')
     expect(rainSourceName('gpm_imerg+nasa_power')).toBe('GPM IMERG + NASA POWER')
     expect(rainSourceName('nasa_power')).toBe('NASA POWER')
+  })
+})
+
+describe('planSignal: o sinal do outono fala do Plano A da tela (tarefa 0049)', () => {
+  const rec = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
+  const fromPlan = { ...rec.sinal!, motivo: 'Sinal do plano editado (teste).' }
+
+  it('com a avaliação do plano, vale o sinal dela (o do Plano A e do Plano B que a tela mostra)', () => {
+    expect(planSignal({ sinal: fromPlan }, rec, true)).toBe(fromPlan)
+    expect(planSignal({ sinal: null }, rec, false)).toBeNull()
+  })
+
+  it('sem o campo (API antiga) ou enquanto carrega: o sinal da recomendação só no plano sugerido', () => {
+    expect(planSignal({}, rec, false)).toBe(rec.sinal)
+    expect(planSignal(null, rec, false)).toBe(rec.sinal)
+    expect(planSignal(null, rec, true)).toBeNull()
   })
 })

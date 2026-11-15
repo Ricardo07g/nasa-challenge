@@ -1,14 +1,14 @@
 import type { Talhao } from '../models/talhao'
 
 /** As fontes de dado do produto (PRD): cada uma aparece na tela 9 como conectada ou não. */
-export type SourceKey = 'nasa_power' | 'gpm_imerg' | 'smap' | 'modis' | 'nex_gddp_cmip6' | 'soilgrids'
+export type SourceKey = 'nasa_power' | 'gpm_imerg' | 'smap' | 'modis' | 'modis_mcd64a1' | 'nex_gddp_cmip6' | 'soilgrids'
 
 export type SourceStatus = { key: SourceKey; connected: boolean }
 
-const ORDER: readonly SourceKey[] = ['nasa_power', 'gpm_imerg', 'smap', 'modis', 'nex_gddp_cmip6', 'soilgrids']
+const ORDER: readonly SourceKey[] = ['nasa_power', 'gpm_imerg', 'smap', 'modis', 'modis_mcd64a1', 'nex_gddp_cmip6', 'soilgrids']
 
 /** Fontes que chegam em `dados[]` do talhão com o mesmo nome. */
-const FROM_DADOS: ReadonlySet<SourceKey> = new Set(['nasa_power', 'gpm_imerg', 'smap', 'nex_gddp_cmip6'])
+const FROM_DADOS: ReadonlySet<SourceKey> = new Set(['nasa_power', 'gpm_imerg', 'smap', 'modis_mcd64a1', 'nex_gddp_cmip6'])
 
 function isConnected(key: SourceKey, talhao: Talhao): boolean {
   if (FROM_DADOS.has(key)) return talhao.dados.some((dado) => dado.fonte === key)

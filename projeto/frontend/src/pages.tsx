@@ -10,6 +10,7 @@ import { useDesignSystemController } from './controllers/useDesignSystemControll
 import { useMethodController } from './controllers/useMethodController'
 import { useMissionController } from './controllers/useMissionController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
+import { useExampleController } from './controllers/useExampleController'
 import { useOptionsController } from './controllers/useOptionsController'
 import { usePlanController } from './controllers/usePlanController'
 import { useSatelliteController } from './controllers/useSatelliteController'
@@ -18,12 +19,12 @@ import { useTelegramLink } from './controllers/useTelegramLink'
 import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
-import { EXAMPLE_FARM } from './services/locationService'
-import { buildFlowQuery, keepFlowQuery } from './services/flowParams'
+import { keepFlowQuery } from './services/flowParams'
 import { AnswerView } from './views/AnswerView'
 import { AvisosView } from './views/AvisosView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
+import { FlowLoading } from './views/FlowStates'
 import { GuideArticleView, GuideView } from './views/GuideView'
 import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
@@ -297,12 +298,13 @@ export function CommunityPage() {
 }
 
 export function MethodPage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.method.title)
   const state = useMethodController()
   return (
     <MethodView
       t={t}
+      lang={lang}
       backTo={state.backTo}
       status={state.status}
       onRetry={state.retry}
@@ -312,13 +314,17 @@ export function MethodPage() {
       sources={state.sources}
       onRetrySources={state.retrySources}
       rain={state.rain}
+      rules={state.rules}
     />
   )
 }
 
 /** "Ver um exemplo pronto": abre a resposta da fazenda de exemplo (RF-11). */
+/** "Ver um exemplo pronto": a resposta da fazenda de exemplo com a faixa do satélite (tarefa 0049). */
 export function ExamplePage() {
-  return <Navigate to={`/resposta${buildFlowQuery({ ...EXAMPLE_FARM, colheita: 'meio', exemplo: true })}`} replace />
+  const { messages: t } = useI18n()
+  const { to } = useExampleController()
+  return to ? <Navigate to={to} replace /> : <FlowLoading label={t.common.loading} />
 }
 
 export function DesignSystemPage() {

@@ -10,6 +10,7 @@ import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowP
 import {
   currentPlan,
   planChoices,
+  planSignal,
   planService as defaultPlanService,
   todayPlan,
   todayRows,
@@ -120,7 +121,7 @@ export function usePlanController(deps: Deps = defaultDeps) {
     nav,
     status,
     retry: recomendacao.retry,
-    signal: data?.sinal ?? null,
+    signal: planSignal(planEvaluation.data ?? null, data ?? null, plan?.edited ?? false),
     plan,
     evaluation: asEvaluation(planEvaluation),
     today: today ? ({ ...today, evaluation: asEvaluation(todayEvaluation) } satisfies TodayState) : null,

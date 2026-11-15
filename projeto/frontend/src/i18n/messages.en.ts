@@ -33,9 +33,6 @@ export const en = {
   },
   answerTabs: {
     label: 'Answer screens',
-    answer: 'Answer',
-    plan: '3-year plan',
-    options: 'All options',
   },
   stepper: {
     label: (current: number, total: number) => `Question ${current} of ${total}`,
@@ -227,15 +224,25 @@ export const en = {
       'Rain and heat, year by year',
       'What grew in your field',
       'The climate ahead',
-      'Calculating the 6 options',
+      'Calculating',
     ],
+    phaseOptions: (count: number) => `Calculating the ${count} options`,
     found: (lat: string, lon: string) => `Field found: ${lat} / ${lon}`,
-    rain: (years: number) => `${years} years of rain and heat read, day by day`,
-    history: (years: number) => `${years} years of satellite history`,
+    rain: (years: number, source: string | null) =>
+      source === 'GPM IMERG'
+        ? `Rain from GPM IMERG and heat from NASA POWER: ${years} years read, day by day`
+        : source
+          ? `Rain and heat from ${source}: ${years} years read, day by day`
+          : `${years} years of rain and heat read, day by day`,
+    history: (years: number) => `${years} years of satellite history (MODIS NDVI)`,
+    soilFrom: (soil: string, source: string) => `${soil} (${source})`,
+    burned: (start: string, end: string) => `Burned area: MODIS MCD64A1, ${start} to ${end}`,
+    smap: (start: string, end: string) => `Soil moisture on sowing day: SMAP, ${start} to ${end}`,
     /** Clima de 2041–2060 (NEX-GDDP-CMIP6); a previsão do outono aparece à parte. */
-    future: (start: string, end: string) => `Climate for ${start}–${end} read`,
-    futureRead: 'Future climate read',
-    forecast: (signal: string) => `Autumn outlook: ${signal}`,
+    future: (start: string, end: string) => `Climate for ${start}–${end} read (NEX-GDDP-CMIP6)`,
+    futureRead: 'Future climate read (NEX-GDDP-CMIP6)',
+    forecast: (signal: string, source: string | null) =>
+      source ? `Autumn outlook (${source}): ${signal}` : `Autumn outlook: ${signal}`,
     ready: 'Answer ready',
     collected: (count: number) => `Data collected ${count}/6`,
     complete: 'Mission complete!',
@@ -316,6 +323,7 @@ export const en = {
       heat: '35 °C heat at flowering',
       frost: 'Frost in the second crop',
       fire: 'Fire in the straw',
+      erosion: 'How to prevent erosion',
     },
     badges: {
       soil: 'SoilGrids · ISRIC · 250 m',
@@ -358,6 +366,8 @@ export const en = {
       last: (value: string, date: string) => `Latest reading: ${value}, on ${date}.`,
       peak: (value: string, season: string) => `Soybean peak ${season}: ${value}.`,
       peakOn: (value: string, season: string, date: string) => `Soybean peak ${season}: ${value}, on ${date}.`,
+      peakNoSoy: (value: string, season: string, date: string | null) =>
+        `Highest green from January to mid-March (${season}): ${value}${date ? `, on ${date}` : ''}. The satellite did not see soybeans here.`,
       scale: 'NDVI goes from 0 (bare soil) to 1 (deep green).',
     },
     rain: {
@@ -450,8 +460,6 @@ export const en = {
       `${good} good years and ${total - good} years short of water`,
     why: 'Why?',
     close: 'Close',
-    lateWarning: (crops: string, count: number) =>
-      `Too late to plant: ${crops} ${count === 1 ? 'is' : 'are'} outside the planting window.`,
     rainEnough: 'Enough rain',
     rainShort: 'Not enough rain',
     rainYears: (years: number, start: string, end: string) => `${years} years between ${start} and ${end}`,
@@ -464,21 +472,13 @@ export const en = {
     ensoNina: 'La Niña (NOAA)',
     howTitle: 'How to do it',
     howNote: 'Seed rate and herbicide: agree on them with your agronomist.',
-    seePlan: 'See the 3-year plan',
-    seeAll: 'See all options',
     prefer: 'If you prefer…',
   },
   options: {
-    title: 'All options',
     sortLabel: 'Put first the best at:',
     rank: (position: number) => `${position}.`,
-    fallowRain: 'Does not depend on rain',
-    fallowIncome: 'No grain',
-    fallowSoil: 'Soil stays bare',
     legend: (period: string) =>
       `Each square is one year (${period}). Filled: there was enough rain. Empty: rain was short when the crop needed it most.`,
-    outOfWindowTitle: 'Outside the planting window',
-    seePlan: 'See the 3-year plan',
   },
   plan: {
     title: '3-year plan',
@@ -491,33 +491,7 @@ export const en = {
     planChoice: 'Which plan to follow',
     planA: 'Plan A',
     planB: 'Plan B, if it dries',
-    keepPlanB: 'Keep plan B ready.',
-    swapTagline: (from: string) => `Instead of ${from}: handles drought better.`,
-    plantingRule: (date: string, planA: string, planB: string) =>
-      `On sowing day (by ${date}), if the soil is dry, use plan B: ${planB} instead of ${planA}.`,
-    rootWater: 'The satellite measures water around the roots. You do not need to guess.',
-    rainRuleNote: 'Measure the rain with your rain gauge. The average comes from the satellite rain series at your point.',
-    withPlan: 'With the plan',
-    today: 'How it is today',
-    coveredAll: (total: number) => `Soil covered in all ${total} years`,
-    coveredSome: (covered: number, total: number) => `Soil covered in ${covered} of ${total} years`,
-    grainYears: (grain: number, total: number) => `Grain in ${grain} of ${total} years`,
-    gainTitle: 'The gain shows up in the next soybean crop',
-    gainText:
-      'In a study in the Cerrado, soybeans after grain with brachiaria yielded 11% more than after idle land.',
-    gainNote: 'Illustrative reference; study to be confirmed.',
     regionLink: 'See what happens in your region',
-  },
-  past: {
-    button: (year: number) => `How would ${year} have gone?`,
-    title: (year: number) => `How the ${year} second crop would have gone`,
-    text: (year: number) =>
-      `We replayed the rain and heat of ${year} (NASA data) with the best option. These are the warnings you would have received.`,
-    choose: 'Choose the year',
-    seco: (year: number) => `${year} · dry year`,
-    bom: (year: number) => `${year} · good year`,
-    noWarnings: 'No warnings this season.',
-    note: 'Example values. In the app, the year and dates come from real data.',
   },
   suggestion: {
     tabs: { suggestion: 'Suggestion', compare: 'Compare', plan: '3-year plan' },
@@ -607,17 +581,11 @@ export const en = {
       futureLess: (mm: string) => `${mm} mm less than today.`,
       futureSame: 'The same as today.',
       note: (years: number) =>
-        `Model calculation over the crop cycle: GPM IMERG rain and crop water use from NASA POWER weather. Median of ${years} years; dry year = only 1 in 5 years had a bigger shortage.`,
+        `Model calculation over the crop cycle: GPM IMERG rain and crop water use from NASA POWER weather. Normal year = in half of the years the shortage was this or less (median of ${years} years); dry year = only 1 in 5 years had a bigger shortage.`,
       guide: 'The moisture held by straw, runoff and the water left for the next crop are in the Guide, without numbers: we do not have that data.',
     },
     climate: {
       title: '2041–2060 climate',
-      rain: (pct: string) => `March to May rain: ${pct}%`,
-      heat: (deg: string) => `Maximum temperature: ${deg} °C`,
-      agreeRain: (n: number, total: number, less: boolean) =>
-        `${n} of ${total} models point to ${less ? 'less' : 'more'} rain.`,
-      agreeHeat: (n: number, total: number, hotter: boolean) =>
-        `${n} of ${total} point to ${hotter ? 'more' : 'less'} heat.`,
       source: 'NEX-GDDP-CMIP6 (NASA), SSP2-4.5 scenario, model average, against 1995–2014.',
     },
     how: {
@@ -811,34 +779,6 @@ export const en = {
     method:
       'Send your field location and say when you harvest soybeans. The bot replies in text and audio, with a link to this page. You can opt into low-rainfall and heat warnings. In Portuguese and English.',
   },
-  report: {
-    button: 'Report for bank or insurance',
-    savePdf: 'Save as PDF',
-    title: 'Field report · Raiz Orbital',
-    place: 'Place and date',
-    coords: (coords: string) => `Coordinates: ${coords}`,
-    today: (date: string) => `Today: ${date}`,
-    dataVersion: (version: string) => `Data version: ${version}`,
-    best: 'Recommended option and planned sowing',
-    sowing: (date: string) => `Sowing on ${date} · inside the planting window`,
-    sowingOut: (date: string) => `Sowing on ${date} · outside the planting window`,
-    table: 'All options',
-    headers: {
-      crop: 'Option',
-      years: 'Years it worked',
-      future: '2041–2060 climate',
-      income: 'Income',
-      soil: 'Soil',
-    },
-    yearsOf: (good: number, total: number) => `${good} of ${total}`,
-    futureOf: (good: number, total: number, range: { min: number; max: number } | null) =>
-      `${good} of ${total}${range ? ` (${range.min} to ${range.max})` : ''}`,
-    history: 'Field history',
-    idle: (idle: number, known: number, uncertain: number) =>
-      `Left idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,
-    sources: 'Sources',
-    footer: 'Helps you decide. Not a technical report; it does not replace the official ZARC or the responsible agronomist.',
-  },
   community: {
     title: 'In your region',
     regionSubtitle: (km: number) => `Within ${km} km of your field · seen by satellite`,
@@ -853,30 +793,21 @@ export const en = {
     regionNote: (pct: number) =>
       `Estimated from the MODIS satellite (NASA), 250 m pixels. For ${pct}% of the area the satellite could not tell. We only show the regional total, never a single farm.`,
     bridge: 'The satellite shows how much regional land stays idle. Neighbors tell you whether planting was worthwhile.',
-    communityTitle: 'What neighbors say',
-    illustrative: 'Illustrative values',
     subtitle: (km: number, place: string, count: number) =>
       `Within ${km} km of ${place} · ${count} growers taking part`,
-    neighborsTitle: (year: number) => `What neighbors planted after soybeans in ${year}`,
     liked: (liked: number, total: number) => `${liked} of ${total} liked it`,
     dotsLabel: (liked: number, total: number) => `${liked} of ${total} neighbors liked it`,
-    dotsCaption: 'Each dot is a neighbor. Filled = liked the result.',
     tellMine: 'Tell how mine went',
     mapLabel: 'Region map with rain gauges and what each neighbor planted',
     legendGauge: 'Rain gauge',
     legendPlanted: 'Planted',
     legendIdle: 'Idle',
     rainTitle: 'It rained here',
-    yesterday: 'yesterday',
     reading: (gauge: number, satellite: number) => `${gauge} mm · satellite ${satellite} mm`,
     rainNote:
       "Your rain gauges correct the satellite's rain in the region and improve everyone's risk score.",
-    registerRain: "Record today's rain",
     privacy:
       'The map shows the region, never the exact location of farms. Names only appear with permission. Illustrative values.',
-    simulated: 'Simulated screen: recording is not connected yet.',
-    demoOnly: 'This is a demonstration. No data will be sent or saved.',
-    // Community reports without sign-up (remodeling section 7, task 0047)
     reportsSubtitle: (km: number) => `What neighbors report, within ${km} km of your field`,
     tellTitle: 'Tell what happened there',
     tellHint: 'No sign-up, no name and no typing text: just taps.',
@@ -922,6 +853,8 @@ export const en = {
     mmHint: 'From 0 to 300 mm, as your rain gauge showed.',
     dateLabel: 'Which day?',
     dateHint: 'Today or up to 30 days ago.',
+    eventArticles: { fogo: 'Fire in the straw', enxurrada_erosao: 'How to prevent erosion' },
+    learnMore: (title: string) => `Learn more: ${title}`,
     eventLabel: 'What happened?',
     events: {
       fogo: 'Fire',
@@ -984,12 +917,11 @@ export const en = {
     noAiTitle: 'No artificial intelligence, open math',
     noAiText:
       'Each score is a rule that fits in one sentence. Water-shortage and heat limits come from Embrapa and ZARC, the agricultural zoning used for crop insurance and rural credit.',
-    validationTitle: 'Did it match what happened?',
-    validationText:
-      'Coming soon: calculated stress years compared with second-crop corn losses in Uberlândia (IBGE).',
     incomeTitle: 'Income without money values',
     incomeText:
-      'Income does not use prices or costs. Options that give grain to sell get the same income score as their safety score: in how many years it worked, from 0 to 100. Options with no grain (cover crops and fallow land) get a fixed income score, zero for now: they are an investment in the soil, and that counts in the soil score.',
+      'Income does not use prices or costs. Options that give grain to sell get the same income score as their safety score: in how many years it worked, from 0 to 100. Options with no grain (cover crops and fallow land) get a fixed income score: they are an investment in the soil, and that counts in the soil score.',
+    incomeTextScore: (score: string) =>
+      `Income does not use prices or costs. Options that give grain to sell get the same income score as their safety score: in how many years it worked, from 0 to 100. Options with no grain (cover crops and fallow land) get an income score of ${score}: they are an investment in the soil, and that counts in the soil score.`,
     incomeShown:
       'In the answer, income shows only facts: whether it gives grain to sell and in how many years water ran short or it was too hot.',
     blindTitle: "What the satellite can't see",
@@ -997,12 +929,47 @@ export const en = {
     blindRainGeneric: 'Rain comes in squares several kilometers wide, not from your field: your rain gauge is worth more.',
     blindRest:
       'The 2041–2060 climate is a range across models, not a forecast. Limits will still be tuned with local agronomists.',
+    rules: {
+      title: 'The rules of the calculation',
+      intro: 'Every number below comes from the engine rules file (regras.yaml). Those marked as a team hypothesis will still be reviewed by the agronomist.',
+      worked: (grain: string, days: string, cover: string, coverDays: string, temp: string, heatDays: string) =>
+        `It worked: the plant had at least ${grain}% of the water it needed in the stage that needs it most (flowering, ${days} days before and after; for cover crops, ${cover}% in the first ${coverDays} days) and it did not reach ${temp} °C on ${heatDays} days or more in that stage.`,
+      weights: (safety: string, future: string, soil: string, income: string) =>
+        `Final score: safety ${safety}%, 2041–2060 climate ${future}%, soil ${soil}% and income ${income}%.`,
+      income: (score: string) =>
+        `Income: options that give grain to sell get their safety score as income; options with no grain get ${score}. No price, cost or money value goes into the calculation.`,
+      water: (pct: string) =>
+        `Water: the engine adds up, day by day, what the plant uses (NASA POWER ETo × Kc) and the rain (GPM IMERG), with what the soil holds. A normal year is the middle one; a dry year is one where only ${pct}% of the years had a bigger shortage.`,
+      thirst: (low: string, high: string) =>
+        `Crop thirst: little water below ${low} mm in the cycle; a lot from ${high} mm up (team hypothesis).`,
+      rotation: (two: string, three: string, crops: string) =>
+        `Rotation score: the average of the 3 years, with +${two} points for 2 different roles and +${three} for 3 (grain, grass cover, legume). Crops that break the nematode cycle: ${crops}.`,
+      planB: (days: string, fails: string, catches: string, precision: string, chance: string) =>
+        `Plan B: the crop that worked most often in the years when the plan A crop failed. "Dry" becomes a rain gauge number (rain in the ${days} days before planting) only with ${fails} failed years or more, catching ${catches}% of the failures, with ${precision}% of the flagged years being failures and a chance of luck of up to ${chance}%. Otherwise, plan B shows without a number.`,
+      frost: (temp: string, from: string, to: string) =>
+        `Frost (soil X-ray): any year with a low of ${temp} °C or less from ${from} to ${to} (NASA POWER).`,
+      heavyRain: (mm: string, from: string, to: string) =>
+        `Heavy rain (soil X-ray): days with ${mm} mm or more from ${from} to ${to} (GPM IMERG), when bare soil loses earth.`,
+      fire: (km: string) =>
+        `Fire (soil X-ray): fire within ${km} km of the point (MODIS MCD64A1, burned area). It only shows when the burned area file was downloaded.`,
+      alerts: (pct: string, dry: string, hot: string, temp: string, window: string, days: string, km: string) =>
+        `Alerts: dry soil with SMAP at percentile ${pct} or lower; ${dry} days in a row without rain or ${hot} days at ${temp} °C in the last ${window} (NASA POWER); neighbor reports from the last ${days} days, within ${km} km, always as unconfirmed.`,
+      signal: (chance: string, years: string, bad: string) =>
+        `Autumn signal: NOAA forecast of El Niño or La Niña at ${chance}% or more, with at least ${years} years of that phase in the series. If the plan A crop had trouble in ${bad}% or more of those years and the plan B crop did better, the signal marks plan B.`,
+      xray: 'Soil X-ray: each block shows the source and the size of the measured square (e.g. SMAP 9 km, NASA POWER about 50 km). It applies to the area around the point, not to the exact field.',
+      and: 'and',
+    },
     sourcesTitle: 'Where each piece of data comes from',
     sources: {
-      nasa_power: { what: 'Rain and heat, day by day', source: 'NASA POWER', scale: 'about 50 km, daily' },
+      nasa_power: {
+        what: 'Heat and crop water use (ETo), day by day; rain only in the years without GPM IMERG',
+        source: 'NASA POWER',
+        scale: 'about 50 km, daily',
+      },
       gpm_imerg: { what: 'More detailed rain', source: 'GPM IMERG (NASA)', scale: '10 km squares, daily' },
       smap: { what: 'Soil moisture', source: 'SMAP L4 (NASA)', scale: '9 km, every 3 hours' },
       modis: { what: 'Field history', source: 'MODIS (NASA)', scale: '250 m, every 16 days' },
+      modis_mcd64a1: { what: 'Fire near the point (burned area)', source: 'MODIS MCD64A1 (NASA)', scale: '500 m, monthly' },
       nex_gddp_cmip6: { what: '2041–2060 climate', source: 'NEX-GDDP-CMIP6 (NASA)', scale: 'about 28 km, daily' },
       soilgrids: { what: 'Soil type', source: 'SoilGrids (ISRIC)', scale: '250 m' },
     },
@@ -1141,7 +1108,11 @@ export const en = {
         goodOthers: number,
       ) =>
         `In the ${years} ${phase} years since ${start}, ${crop} worked in ${good} here; in the other ${others} years, in ${goodOthers}. These are few years.`,
-      ensoTodo: 'Look at plan B in the 3-year plan before deciding what to plant.',
+      ensoTodo: {
+        normal: 'The autumn signal marks plan A. Check the plan in the 3-year plan.',
+        seco: 'The autumn signal marks plan B. Look at plan B in the 3-year plan before deciding what to plant.',
+        incerto: 'No clear signal for autumn. Look at plan A and plan B in the 3-year plan before deciding what to plant.',
+      },
       safrinhaDry: (crop: string, days: number, date: string) =>
         `${crop}: ${days} days without rain close to the stage that needs water most (up to ${date}).`,
       safrinhaHeat: (crop: string, days: number, temp: number, date: string) =>
@@ -1161,7 +1132,7 @@ export const en = {
       changedHeat: (recent: string, before: string, temp: number, recentPeriod: string, beforePeriod: string) =>
         `Days at ${temp} °C or more from March to May: ${recent} a year in ${recentPeriod}; ${before} in ${beforePeriod}.`,
       changedShortage: (crop: string, recent: string, before: string, recentPeriod: string, beforePeriod: string) =>
-        `Water shortage of ${crop} in the cycle: ${recent} mm a year in ${recentPeriod}; ${before} mm in ${beforePeriod}.`,
+        `Water shortage of ${crop} in the cycle, averaged over the years: ${recent} mm a year in ${recentPeriod}; ${before} mm in ${beforePeriod}. Very dry years pull the average up.`,
       changedWorked: (
         crop: string,
         recentGood: number,

@@ -70,8 +70,24 @@ describe('AvisosView (tela "Avisos")', () => {
     expect(item).toHaveTextContent(
       'Previsão da NOAA para fevereiro a abril de 2027: El Niño, com 98% de chance. Nos 7 anos de El Niño desde 2005, milho com braquiária deu certo em 5 aqui; nos outros 13 anos, em 11. São poucos anos.',
     )
-    expect(item).toHaveTextContent('O que fazer: Veja o Plano B no Plano de 3 anos antes de decidir o que plantar.')
+    // Tarefa 0049: o "o que fazer" segue o sinal do outono (aqui, ano normal), o mesmo do Plano de 3 anos.
+    expect(item).toHaveTextContent('O que fazer: O sinal do outono marca o Plano A. Confira o plano no Plano de 3 anos.')
     expect(item).toHaveTextContent('Fonte: NOAA, GPM IMERG (NASA) · leitura de 12 de novembro de 2026')
+  })
+
+  it('o "o que fazer" do El Niño segue o veredito do sinal do outono (tarefa 0049)', () => {
+    const avisos = buildAvisos(POINT, 'pt')
+    const [enso] = avisos.agora!.avisos
+    const withSignal = (sinal: string | null) => ({
+      ...avisos,
+      agora: { ...avisos.agora!, avisos: [{ ...enso, valores: { ...enso.valores, sinal } }] },
+    })
+
+    const { unmount } = renderView(props(withSignal('seco')))
+    expect(group('Agora')).toHaveTextContent('O que fazer: O sinal do outono marca o Plano B. Veja o Plano B no Plano de 3 anos antes de decidir o que plantar.')
+    unmount()
+    renderView(props(withSignal(null)))
+    expect(group('Agora')).toHaveTextContent('O que fazer: Sem sinal claro para o outono. Veja o Plano A e o Plano B no Plano de 3 anos antes de decidir o que plantar.')
   })
 
   it('terra seca pelo SMAP, com a leitura antiga marcada', () => {
@@ -142,6 +158,20 @@ describe('AvisosView (tela "Avisos")', () => {
     )
     expect(mudou).toHaveTextContent('O que fazer: Leve isso em conta ao escolher o que plantar.')
     expect(mudou).toHaveTextContent('Fonte: GPM IMERG (NASA) · dados até 30 de julho de 2024')
+  })
+
+  it('a falta de água diz que é a média dos anos, para não parecer o "ano normal" da Sugestão (tarefa 0049)', () => {
+    const avisos = buildAvisos(POINT, 'pt')
+    const shortage = aviso(
+      'mudou_falta_agua',
+      { cultura: 'milho_braquiaria', nome: 'Milho com braquiária', antes: 101.6, recente: 177.4 },
+      { nivel: 'fique_de_olho' },
+    )
+    renderView(props({ ...avisos, mudou: { avisos: [shortage], ultima_leitura: '2024-07-30' } }))
+
+    expect(group('O que mudou na sua área')).toHaveTextContent(
+      'Falta de água de milho com braquiária no ciclo, na média dos anos: 177,4 mm por ano em 2020–2024; 101,6 mm em 2005–2019. Os anos muito secos puxam a média para cima.',
+    )
   })
 
   it('fora do comum: os recordes com o ano', () => {

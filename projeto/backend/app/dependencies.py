@@ -87,6 +87,7 @@ from app.services.crop_alert_service import CropAlertService
 from app.services.crop_option_service import CropOptionService
 from app.services.field_history_service import FieldHistoryService
 from app.services.harvest_delay_service import HarvestDelayService
+from app.services.method_service import MethodService
 from app.services.monthly_rain_service import MonthlyRainService
 from app.services.past_season_service import PastSeasonService
 from app.services.pilot_area_service import PilotAreaService
@@ -140,6 +141,11 @@ def get_rules_repository() -> RulesRepository:
 
 def get_rules(repository: Annotated[RulesRepository, Depends(get_rules_repository)]) -> Regras:
     return repository.get_rules()
+
+
+def get_method_service(rules: Annotated[Regras, Depends(get_rules)]) -> MethodService:
+    """Tela "Como a conta é feita" (tarefa 0049): os números das regras do regras.yaml."""
+    return MethodService(rules)
 
 
 @lru_cache
@@ -277,6 +283,13 @@ def get_recent_rain_repository() -> RecentRainRepository:
     return FileRecentRainRepository(get_settings().imerg_late_path)
 
 
+# Área queimada do MCD64A1 (alerta de fogo do raio-X, tarefa 0043; fonte do talhão, tarefa 0049):
+# vem do arquivo do AREA_QUEIMADA_PATH; sem ele, nada de fogo.
+@lru_cache
+def get_area_queimada_repository() -> AreaQueimadaRepository:
+    return FileAreaQueimadaRepository(get_settings().area_queimada_path)
+
+
 def get_talhao_service(
     climate_repo: Annotated[ClimateRepository, Depends(get_climate_repository)],
     soil_repo: Annotated[SoilRepository, Depends(get_soil_repository)],
@@ -289,6 +302,7 @@ def get_talhao_service(
     soja_recente_service: Annotated[SojaRecenteService, Depends(get_soja_recente_service)],
     risk_service: Annotated[ClimateRiskService, Depends(get_climate_risk_service)],
     rules: Annotated[Regras, Depends(get_rules)],
+    burned_area_repo: Annotated[AreaQueimadaRepository, Depends(get_area_queimada_repository)],
 ) -> TalhaoService:
     return TalhaoService(
         climate_repo=climate_repo,
@@ -302,6 +316,7 @@ def get_talhao_service(
         soja_recente_service=soja_recente_service,
         remaining_rain_service=RemainingRainService(rules),
         rain_end_service=RainEndService(rules),
+        burned_area_repo=burned_area_repo,
     )
 
 
@@ -435,10 +450,8 @@ def get_community_report_service(
 
 
 # Raio-X da sua terra (tela 4, remodelagem S4, tarefa 0043). A chuva da região e o solo da célula
-# vizinha só existem com banco; a área queimada vem do arquivo do AREA_QUEIMADA_PATH.
-@lru_cache
-def get_area_queimada_repository() -> AreaQueimadaRepository:
-    return FileAreaQueimadaRepository(get_settings().area_queimada_path)
+# vizinha só existem com banco; a área queimada (get_area_queimada_repository, acima do talhão)
+# vem do arquivo do AREA_QUEIMADA_PATH.
 
 
 def get_burned_area_service(
@@ -541,12 +554,17 @@ def get_plan_evaluation_service(
     crop_repo: Annotated[CropParamsRepository, Depends(get_crop_params_repository)],
     plan_service: Annotated[RotationPlanService, Depends(get_rotation_plan_service)],
     rules: Annotated[Regras, Depends(get_rules)],
+    sinal_service: Annotated[SinalOutonoService, Depends(get_sinal_outono_service)],
 ) -> PlanEvaluationService:
-    """Plano de 3 anos qualquer (aba "Plano", tarefa 0045): a conta do motor de cada ano."""
+    """Plano de 3 anos qualquer (aba "Plano", tarefa 0045): a conta do motor de cada ano.
+
+    O sinal do outono vai junto, com o Plano A e o Plano B da tela (tarefa 0049).
+    """
     return PlanEvaluationService(
         recommender=recommender,
         climate_repo=climate_repo,
         crop_repo=crop_repo,
         plan_service=plan_service,
         rules=rules,
+        sinal_service=sinal_service,
     )

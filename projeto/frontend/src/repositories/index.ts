@@ -15,6 +15,8 @@ import {
   createMockTalhaoRepository,
 } from './mocks/mockRepositories'
 import { createMockGeocodingRepository, createMockPilotAreaRepository } from './mocks/mockLocation'
+import { createMockMetodoRepository } from './mocks/mockMetodo'
+import { createHttpMetodoRepository } from './metodoRepository'
 import { createHttpPastSeasonRepository } from './pastSeasonRepository'
 import { createHttpPilotAreaRepository } from './pilotAreaRepository'
 import { createMockPlanoRepository } from './mocks/mockPlano'
@@ -52,3 +54,5 @@ export const avisosRepository = useHttp ? createHttpAvisosRepository() : createM
 export { savedPointRepository } from './savedPointRepository'
 /** Aba "Plano de 3 anos" (tarefa 0045): um plano qualquer avaliado pelo motor (`GET /api/plano`). */
 export const planoRepository = useHttp ? createHttpPlanoRepository() : createMockPlanoRepository()
+/** Tela "Como a conta é feita" (tarefa 0049): os números das regras do `regras.yaml` (`GET /api/metodo`). */
+export const metodoRepository = useHttp ? createHttpMetodoRepository() : createMockMetodoRepository()

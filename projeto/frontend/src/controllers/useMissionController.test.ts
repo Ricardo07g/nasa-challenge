@@ -73,10 +73,16 @@ describe('useMissionController (tela de cálculo, RF-19)', () => {
     expect(result.current.facts).toEqual({
       point: { lat: -18.9543, lon: -48.1993 },
       soil: 'medio',
+      soilSource: 'SoilGrids',
+      smap: null,
       rainYears: 20,
+      rainSource: 'NASA POWER',
       historyYears: 1,
       future: null,
       signal: 'incerto',
+      signalSource: null,
+      options: null,
+      burned: null,
     })
     expect(result.current.place).toBe('Uberlândia (MG)')
   })

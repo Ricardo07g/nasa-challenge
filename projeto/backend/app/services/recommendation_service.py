@@ -34,6 +34,7 @@ from app.models.recomendacao import (
     ResultadoOpcao,
 )
 from app.models.regras import Regras, RegrasNotaFinal, RegrasRenda, RegrasRotulos, RegrasSolo
+from app.models.sinal_outono import SinalOutono
 from app.models.talhao import Confirmacao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.crop_params_repository import CropParamsRepository
@@ -41,12 +42,14 @@ from app.repositories.ndvi_repository import NdviRepository
 from app.repositories.rules_repository import load_default_rules
 from app.repositories.smap_repository import CellSmapRepository
 from app.repositories.soil_repository import SoilRepository
-from app.services.cell_climate_facts_service import CellClimateFactsService
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.crop_alert_service import COVER_CROP_TYPE
 from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
+from app.services.future_climate_service import FutureClimateService
+from app.services.plan_b_service import PlanBService
+from app.services.raio_x_climate_service import RaioXClimateService
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
 from app.services.suggestion_facts_service import SuggestionFactsService
@@ -254,11 +257,15 @@ class RecommendationService:
         self._year_detail_service = year_detail_service or YearDetailService(rules=self._rules)
         # Umidade do SMAP no dia de plantar de cada ano: balde inicial (PRD 7.2, R3.3)
         self._smap_repo = smap_repo
-        # Aba Sugestão (tarefa 0044): linha "Água", El Niño / La Niña e o que observar, clima de
-        # 2041-2060 e geada na célula. Só leem as regras: montados aqui, sem injeção
+        # Aba Sugestão (tarefa 0044): linha "Água", El Niño / La Niña e o que observar. Clima de
+        # 2041-2060 e geada na célula com as contas do raio-X (tarefa 0049: as duas telas dizem o
+        # mesmo número). Só leem as regras: montados aqui, sem injeção
         self._water_service = WaterNeedService(self._rules)
         self._facts_service = SuggestionFactsService(self._rules)
-        self._cell_facts_service = CellClimateFactsService(self._rules)
+        self._future_service = FutureClimateService(self._rules)
+        self._cell_climate_service = RaioXClimateService(self._rules)
+        # Plano B do sinal do outono: o mesmo da tela do Plano (tarefa 0049)
+        self._plan_b_service = PlanBService(self._rules)
 
     def recommend(
         self,
@@ -420,23 +427,40 @@ class RecommendationService:
                 if is_en
                 else "Ajuda a decidir. Não substitui o agrônomo."
             ),
-            sinal=(
-                self._sinal_service.evaluate(
-                    lat=lat,
-                    lon=lon,
-                    plano_a=plano_normal,
-                    plano_b=plano_seco,
-                    opcoes=opcoes,
-                    semeadura=semeadura,
-                    seasons=seasons,
-                    lang=lang,
-                )
-                if self._sinal_service is not None
-                else None
+            sinal=self._autumn_signal(
+                lat, lon, plano_normal.anos[0], opcoes, seasons, semeadura, lang
             ),
             objetivos=objetivos,
-            clima_futuro=self._cell_facts_service.future_outlook(deltas),
-            geada=self._cell_facts_service.frost_risk(seasons),
+            clima_futuro=self._future_service.summarize(deltas, seasons),
+            geada=self._cell_climate_service.frost(seasons),
+        )
+
+    def _autumn_signal(
+        self,
+        lat: float,
+        lon: float,
+        cultura_a: str,
+        opcoes: list[ResultadoOpcao],
+        seasons: list[ClimateSeason],
+        semeadura: date,
+        lang: str,
+    ) -> SinalOutono | None:
+        """Sinal do outono com o Plano A (o 1º ano do plano sugerido) e o Plano B da tela do Plano.
+
+        O Plano B é o do `PlanBService` (a cultura que mais deu certo quando a do Plano A falhou),
+        o mesmo do cartão "Plano A e Plano B" (tarefa 0049): o sinal e a tela falam do mesmo plano.
+        """
+        if self._sinal_service is None:
+            return None
+        ab = self._plan_b_service.plan_ab(cultura_a, opcoes, seasons, semeadura)
+        return self._sinal_service.evaluate(
+            lat=lat,
+            lon=lon,
+            cultura_a=cultura_a,
+            cultura_b=ab.cultura_b if ab else None,
+            opcoes=opcoes,
+            seasons=seasons,
+            lang=lang,
         )
 
     def _objectives(
@@ -635,26 +659,30 @@ class RecommendationService:
         source = seasons[0].rain_source
         return RAIN_SOURCE_NAMES.get(source, source)
 
-    @staticmethod
-    def _soil_text(crop: CropParams, is_en: bool) -> str:
-        """Frase de solo do PRD 7.6: palhada, nitrogênio e ciclo do nematoide."""
+    def _soil_text(self, crop: CropParams, is_en: bool) -> str:
+        """Frase de solo do PRD 7.6: palhada, nitrogênio e ciclo do nematoide.
+
+        "Quebra o ciclo do nematoide" = as supressoras do PRD 7.7 (`rotacao.
+        culturas_supressoras_nematoide`: crotalária e milheto), a mesma regra dos fatos do Plano
+        (tarefa 0049). Os pontos de pragas da nota de solo (PRD 7.4) não mudam.
+        """
         if crop.solo_palhada >= 35:
             nivel, level = "alta", "high"
         elif crop.solo_palhada >= 20:
             nivel, level = "média", "medium"
         else:
             nivel, level = "pouca", "little"
-        quebra = crop.solo_pragas > 0
+        quebra = crop.id in self._rules.rotacao.culturas_supressoras_nematoide
         if is_en:
             nitrogen = (
                 f"{crop.n_deixado_kg} kg/ha of nitrogen" if crop.n_deixado_kg else "no nitrogen"
             )
-            ciclo = "helps break" if quebra else "does not break"
+            ciclo = "breaks" if quebra else "does not break"
             return f"Leaves {level} straw and {nitrogen}; {ciclo} the nematode cycle."
         nitrogenio = (
             f"{crop.n_deixado_kg} kg/ha de nitrogênio" if crop.n_deixado_kg else "nenhum nitrogênio"
         )
-        ciclo = "ajuda a quebrar" if quebra else "não quebra"
+        ciclo = "quebra" if quebra else "não quebra"
         return f"Deixa palhada {nivel} e {nitrogenio}; {ciclo} o ciclo do nematoide."
 
     def _why(

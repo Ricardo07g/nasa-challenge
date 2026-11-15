@@ -16,6 +16,8 @@ from app.models.talhao import NdviRecord, SoloInfo
 from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
+from app.services.plan_b_service import PlanBService
+from app.services.raio_x_service import RaioXService
 from app.services.recommendation_service import (
     RecommendationService,
     build_alternatives,
@@ -624,13 +626,52 @@ def test_should_add_autumn_signal_with_plan_a_and_plan_b_of_the_recommendation()
     assert rec.sinal is not None
     assert rec.sinal.nivel == "normal"  # nenhum ano com aperto na série de teste
     assert rec.sinal.fonte == ("Fonte de teste", "NASA POWER")
-    primeira_a = _opcao(rec, rec.plano_normal.anos[0])
-    assert rec.sinal.regra_dia_plantar.data_limite == date.fromisoformat(
-        primeira_a.data_limite or ""
+
+
+class SpySinalService(SinalOutonoService):
+    """Guarda o que o motor pede ao sinal (sem previsão: devolve None)."""
+
+    def __init__(self) -> None:
+        data = FakeForecastOnly()
+        super().__init__(data, data, data, today=lambda: date(2026, 11, 15))
+        self.calls: list[dict[str, object]] = []
+
+    def evaluate(self, **kwargs: object) -> None:  # type: ignore[override]
+        self.calls.append(kwargs)
+        return None
+
+
+def test_should_give_the_signal_the_plan_a_and_the_plan_b_shown_on_the_plan_screen() -> None:
+    # S9 (tarefa 0049): o Plano B do sinal é o da tela do Plano (PlanBService: a cultura que mais
+    # deu certo quando a do Plano A falhou), para o sinal e a tela falarem do mesmo Plano B.
+    climate = FakeClimateRepository(dry_years=(2007, 2014))
+    spy = SpySinalService()
+
+    rec = _service(climate, sinal=spy).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    ab = PlanBService().plan_ab(
+        rec.plano_normal.anos[0], list(rec.opcoes), climate.get_seasons(CELL_ID), rec.semeadura
     )
-    # 8 mm por dia na série de teste: 240 mm em 30 dias; 60% = 144 mm
-    assert rec.sinal.regra_data is not None
-    assert (rec.sinal.regra_data.media_mm, rec.sinal.regra_data.chuva_min_mm) == (240, 144)
+    assert ab is not None
+    (call,) = spy.calls
+    assert call["cultura_a"] == rec.plano_normal.anos[0] == rec.melhor
+    assert call["cultura_b"] == ab.cultura_b
+
+
+def test_should_say_only_the_suppressor_crops_of_prd_7_7_break_the_nematode_cycle() -> None:
+    # S9 (tarefa 0049): a linha Terra dizia "ajuda a quebrar o ciclo" para sorgo e milho com
+    # braquiária (pontos de pragas > 0), e os fatos do Plano contam só crotalária e milheto
+    # (PRD 7.7).
+    # Uma regra só: as supressoras do regras.yaml (rotacao.culturas_supressoras_nematoide).
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    en = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="en")
+
+    for crop_id in ("crotalaria", "milheto"):
+        assert _opcao(rec, crop_id).texto_terra.endswith("; quebra o ciclo do nematoide.")
+        assert _opcao(en, crop_id).texto_terra.endswith("; breaks the nematode cycle.")
+    for crop_id in ("sorgo", "milho_braquiaria", "milho_safrinha"):
+        assert _opcao(rec, crop_id).texto_terra.endswith("; não quebra o ciclo do nematoide.")
+        assert _opcao(en, crop_id).texto_terra.endswith("; does not break the nematode cycle.")
 
 
 def test_should_write_texts_in_english_when_language_is_en() -> None:
@@ -1112,17 +1153,73 @@ def test_should_start_plan_a_with_the_best_option() -> None:
     assert rec.plano_normal.anos == rec.objetivos["equilibrio"].plano
 
 
-def test_should_summarize_the_2041_2060_climate_of_the_cell_and_the_frost_risk() -> None:
-    rec = _service(FakeClimateRepository(deltas=MODEL_DELTAS)).recommend(
-        lat=-18.95, lon=-48.20, colheita="meio"
-    )
+class UnevenAutumnClimateRepository(FakeClimateRepository):
+    """Março chove muito mais que abril e maio, e 2010 tem uma noite de 2 °C em junho.
+
+    Valores de teste: com eles, a média simples dos meses e a média pesada pela chuva de cada mês
+    dão sinais opostos (o erro da S5a, corrigido na S9).
+    """
+
+    def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
+        seasons = []
+        for year in self._years:
+            start = date(year, 1, 1)
+            months = [(start + timedelta(days=i)).month for i in range(DAYS)]
+            rain = tuple({3: 10.0, 4: 2.0, 5: 0.5}.get(m, 8.0) for m in months)
+            tmin = tuple(2.0 if (year == 2010 and m == 6) else 18.0 for m in months)
+            seasons.append(replace(_season(year, dry_feb_to_jun=False), rain_mm=rain, tmin_c=tmin))
+        return seasons
+
+
+UNEVEN_DELTAS = [
+    Cmip6Delta(model=model, scenario="ssp245", month=month, rain_pct=pct, tmax_c=1.0)
+    for model in ("A", "B", "C")
+    for month, pct in ((3, 10.0), (4, -20.0), (5, -20.0))
+]
+
+
+class FakeRaioXNdvi:
+    def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
+        return []
+
+
+class FakeNoRecentSmap:
+    def get_recent_soil_moisture(self, lat: float, lon: float) -> RecentSoilMoisture | None:
+        return None
+
+
+def test_should_give_the_suggestion_the_same_2041_2060_climate_and_frost_as_the_x_ray() -> None:
+    # S9 (tarefa 0049): a Sugestão dizia "-0,7%, 2 de 3 indicam menos chuva" e o raio-X "+2,2%,
+    # 2 de 3 indicam mais chuva" na mesma célula. As duas telas usam agora a mesma conta (a do
+    # raio-X, que pesa cada mês pela chuva média do mês) e o mesmo alerta de geada.
+    climate = UnevenAutumnClimateRepository(deltas=UNEVEN_DELTAS)
+    engine = _service(climate)
+    raio_x = RaioXService(
+        climate_repo=climate,
+        soil_repo=FakeSoilRepository(),
+        ndvi_repo=FakeRaioXNdvi(),
+        crop_repo=FakeCropParamsRepository(),
+        recommender=engine,
+        reference_eto=lambda season: season.eto_mm,
+        recent_soil_moisture_repo=FakeNoRecentSmap(),
+    ).raio_x(lat=-18.95, lon=-48.20, colheita="meio")
+
+    rec = engine.recommend(lat=-18.95, lon=-48.20, colheita="meio")
 
     assert rec.clima_futuro is not None
-    assert (rec.clima_futuro.chuva_pct, rec.clima_futuro.tmax_c) == (-8.0, 2.0)
-    assert (rec.clima_futuro.concordam_chuva, rec.clima_futuro.modelos) == (2, 3)
+    assert rec.clima_futuro == raio_x.cartoes.clima_futuro
+    assert rec.clima_futuro.chuva_pct > 0  # a média simples dos meses daria -10%
+    assert (rec.clima_futuro.modelos_mais_chuva, rec.clima_futuro.modelos) == (3, 3)
     assert rec.geada is not None
-    assert (rec.geada.anos, rec.geada.total) == (0, 20)  # mínima de 18 °C todo dia
-    assert _service().recommend(lat=-18.95, lon=-48.20, colheita="meio").clima_futuro is None
+    assert rec.geada == raio_x.alertas.geada
+    assert rec.geada.anos == (2010,)
+
+
+def test_should_leave_the_2041_2060_climate_and_frost_empty_without_data() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert rec.clima_futuro is None
+    assert rec.geada is None  # mínima de 18 °C todo dia: sem risco, sem alerta
 
 
 def test_should_give_the_planting_deadline_of_each_crop_out_of_the_window() -> None:

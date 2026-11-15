@@ -7,7 +7,9 @@ faixa de colheita e o mesmo solo); aqui só se junta os 3 anos:
 - saúde da terra: média da nota de solo dos 3 anos (PRD 7.4; pousio = 0) + o bônus de diversidade
   da rotação (PRD 7.7), até 100, com os fatos (terra coberta, nitrogênio, nematoide, repetição);
 - chuva aproveitada: a chuva da semeadura ao fim de julho e o que a planta usou (ETr do balanço);
-- Plano A / Plano B do 1º ano (`PlanBService`).
+- Plano A / Plano B do 1º ano (`PlanBService`);
+- sinal do outono com esse Plano A e esse Plano B (tarefa 0049): com o plano editado, o sinal fala
+  do Plano A que a tela mostra.
 """
 
 from collections.abc import Iterable, Sequence
@@ -18,9 +20,17 @@ from typing import Final, Protocol
 from app.constants import ROTATION_HORIZON_YEARS, SCORE_MAX, SCORE_MIN
 from app.models.climate import ClimateSeason
 from app.models.crop_option import CropParams
-from app.models.plano import AnoPlano, ChuvaAproveitada, NotasPlano, PlanoAvaliado, TerraPlano
+from app.models.plano import (
+    AnoPlano,
+    ChuvaAproveitada,
+    NotasPlano,
+    PlanoAB,
+    PlanoAvaliado,
+    TerraPlano,
+)
 from app.models.recomendacao import ForaDaJanelaOpcao, ResultadoOpcao
 from app.models.regras import Regras
+from app.models.sinal_outono import SinalOutono
 from app.repositories.crop_params_repository import CropParamsRepository
 from app.repositories.rules_repository import load_default_rules
 from app.services.errors import ValidationDomainError
@@ -54,6 +64,21 @@ class PlanRecommender(Protocol):
     ) -> PlanRecommendation: ...
 
 
+class AutumnSignal(Protocol):
+    """O sinal do outono (`SinalOutonoService.evaluate`)."""
+
+    def evaluate(
+        self,
+        lat: float,
+        lon: float,
+        cultura_a: str,
+        cultura_b: str | None,
+        opcoes: Sequence[ResultadoOpcao],
+        seasons: Sequence[ClimateSeason] = (),
+        lang: str = "pt-BR",
+    ) -> SinalOutono | None: ...
+
+
 class SeasonsRepository(Protocol):
     """A série de clima guardada da célula (a mesma do motor)."""
 
@@ -75,8 +100,10 @@ class PlanEvaluationService:
         crop_repo: CropParamsRepository,
         plan_service: RotationPlanService,
         rules: Regras | None = None,
+        sinal_service: AutumnSignal | None = None,
     ) -> None:
         self._recommender = recommender
+        self._sinal_service = sinal_service
         self._climate_repo = climate_repo
         self._crop_repo = crop_repo
         self._plan_service = plan_service
@@ -108,6 +135,9 @@ class PlanEvaluationService:
         years = tuple(self._year(crop, by_id.get(crop.id), out_names, en) for crop in crops)
         seasons = self._climate_repo.get_seasons(rec.celula_id)
         first = years[0]
+        plano_ab = self._plan_b.plan_ab(
+            first.cultura, list(rec.opcoes), seasons, rec.semeadura, nome_a=first.nome
+        )
         return PlanoAvaliado(
             colheita=rec.colheita,
             semeadura=rec.semeadura,
@@ -115,9 +145,31 @@ class PlanEvaluationService:
             notas=self._scores(crops, [by_id.get(c.id) for c in crops]),
             terra=self._soil_facts(crops, years),
             chuva=self._used_rain(seasons, rec.semeadura, years),
-            plano_ab=self._plan_b.plan_ab(
-                first.cultura, list(rec.opcoes), seasons, rec.semeadura, nome_a=first.nome
-            ),
+            plano_ab=plano_ab,
+            sinal=self._signal(lat, lon, first, plano_ab, rec.opcoes, seasons, lang),
+        )
+
+    def _signal(
+        self,
+        lat: float,
+        lon: float,
+        first: AnoPlano,
+        plano_ab: PlanoAB | None,
+        opcoes: Sequence[ResultadoOpcao],
+        seasons: Sequence[ClimateSeason],
+        lang: str,
+    ) -> SinalOutono | None:
+        """O sinal do outono do Plano A da tela; sem sinal no pousio ou fora da janela."""
+        if self._sinal_service is None or plano_ab is None or first.cultura == FALLOW_ID:
+            return None
+        return self._sinal_service.evaluate(
+            lat=lat,
+            lon=lon,
+            cultura_a=first.cultura,
+            cultura_b=plano_ab.cultura_b,
+            opcoes=list(opcoes),
+            seasons=seasons,
+            lang=lang,
         )
 
     def _check(self, anos: Sequence[str]) -> list[CropParams]:

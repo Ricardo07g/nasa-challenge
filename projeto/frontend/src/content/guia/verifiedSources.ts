@@ -118,4 +118,20 @@ export const VERIFIED_SOURCES: VerifiedSource[] = [
     confirms: 'MCD64A1 versão 6.1: área queimada mensal, global, a 500 m, dos sensores MODIS dos satélites Terra e Aqua; a camada Burn Date dá o dia do ano da queimada, com valores especiais para não queimado, sem dado e água.',
     checkedOn: CHECKED,
   },
+  // Tarefa 0049 (S9): fontes dos artigos "Como evitar erosão", "Plantio direto" e "Sementes", abertas e conferidas.
+  {
+    url: 'https://www.embrapa.br/en/busca-de-noticias/-/noticia/46926155/terracos-para-controlar-a-erosao-em-santa-catarina',
+    confirms: 'Embrapa (01/10/2019): achava-se que o plantio direto bastava contra a erosão, mas ela voltou com pouca palha, sem rotação e com a terra compactada (menos infiltração, mais enxurrada); a cobertura protege da chuva, mas menos da água que escorre, por isso os terraços (construídos em nível) devem ir junto com o plantio direto; numa chuva de mais de 100 mm em menos de 10 horas, os terraços seguraram a água.',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://www.embrapa.br/en/busca-de-noticias/-/noticia/2098787/dia-de-campo-aborda-manejo-e-conservacao-do-solo-e-plantio-direto',
+    confirms: 'Embrapa (29/09/2014): o plantio direto é a semeadura sem aração ou gradagem do solo; a palhada protege o solo do impacto das gotas de chuva e, com a matéria orgânica, deixa o solo mais resistente à erosão; as curvas de nível, transversais ao terreno, controlam o escoamento, e plantar "ladeira abaixo" forma valas.',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://planalto.gov.br/ccivil_03/leis/2003/l10.711.htm',
+    confirms: 'Lei 10.711/2003 (Sistema Nacional de Sementes e Mudas): inscrição no Renasem para quem produz e comercializa sementes (art. 8º); identificação obrigatória na embalagem, carimbo, rótulo ou etiqueta (art. 21); definição do processo de certificação e das sementes certificadas de 1ª e 2ª geração (art. 2º); documentos que acompanham a semente no transporte e na venda (art. 31).',
+    checkedOn: CHECKED,
+  },
 ]

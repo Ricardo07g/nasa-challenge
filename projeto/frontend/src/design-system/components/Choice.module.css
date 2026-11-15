@@ -50,8 +50,13 @@
     gap: 7px;
   }
 
+  /* Tarefa 0049: no celular, cada botão cresce pelo tamanho do texto e o texto não quebra dentro do botão
+     ("Cuidar da terra" e "Deixei parado" iam para 2 ou 3 linhas em 390 px); se não couber, o botão desce
+     para a linha de baixo (o grupo já quebra linha). */
   .chip {
-    flex: 1 1 0;
+    flex: 1 1 auto;
+    padding: 0 var(--space-3);
+    white-space: nowrap;
   }
 }
 

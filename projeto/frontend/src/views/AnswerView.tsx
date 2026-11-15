@@ -6,7 +6,7 @@ import { WaterBar, YearBarsChart } from '../design-system/components/SuggestionC
 import { ClimateIcon, CloseIcon, DropIcon, GrainIcon, SoilIcon, SproutIcon, WarningIcon } from '../design-system/icons'
 import { PlantImage } from '../design-system/plants/PlantImage'
 import type { AnswerNav } from '../controllers/useAnswerNav'
-import { formatDayMonth, formatDecimal, formatNumber } from '../i18n/format'
+import { formatDayMonth, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { SafraPassada } from '../models/pastSeason'
@@ -26,6 +26,7 @@ import {
 } from '../services/suggestionService'
 import { AnswerHeader } from './AnswerHeader'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
+import { futureClimateText } from './futureClimateText'
 import { rainPeriodText } from './rainPeriod'
 import { RainYears } from './RainYears'
 import { SeasonTimeline } from './SeasonTimeline'
@@ -61,12 +62,6 @@ export type AnswerViewProps = {
 }
 
 const PERCENT = 100
-
-/** Número com sinal e uma casa ("+1,3", "−0,7"), com o sinal de menos tipográfico. */
-function signed(lang: Lang, value: number): string {
-  const text = formatDecimal(lang, Math.abs(value), 1)
-  return value < 0 ? `−${text}` : `+${text}`
-}
 
 /** "a, b e c" / "a, b and c". */
 function joinList(items: readonly string[], and: string): string {
@@ -180,7 +175,7 @@ function LateCard({ t, lang, late, colheita, frost }: { t: Messages; lang: Lang;
       <LearnMore t={t} to={SUGGESTION_ARTICLES.zarc} title={t.suggestion.articles.zarc} />
       {frost && (
         <>
-          <p>{l.frost(frost.anos, frost.total, formatNumber(lang, frost.tmin_max_c))}</p>
+          <p>{l.frost(frost.anos.length, frost.total_anos, formatNumber(lang, frost.temp_c))}</p>
           <LearnMore t={t} to={SUGGESTION_ARTICLES.frost} title={t.suggestion.articles.frost} />
         </>
       )}
@@ -192,6 +187,7 @@ function Rows(props: AnswerViewProps & { suggestion: Suggestion }) {
   const { t, lang, suggestion } = props
   const s = t.suggestion
   const { best, future, climate } = suggestion
+  const climateText = climate && futureClimateText(t, lang, climate)
   return (
     <Card>
       <div>
@@ -212,19 +208,13 @@ function Rows(props: AnswerViewProps & { suggestion: Suggestion }) {
         {(climate || future) && (
           <MetricRow icon={<ClimateIcon />} iconTone="blue" label={s.climate.title}>
             <div className={styles.rowBody}>
-              {climate && (
+              {climateText && (
                 <>
                   <p className={styles.facts}>
-                    <span>{s.climate.rain(signed(lang, climate.chuva_pct))}</span>
-                    <span>{s.climate.heat(signed(lang, climate.tmax_c))}</span>
+                    <span>{climateText.rain}</span>
+                    <span>{climateText.heat}</span>
                   </p>
-                  <p>
-                    {`${s.climate.agreeRain(climate.concordam_chuva, climate.modelos, climate.chuva_pct < 0)} ${s.climate.agreeHeat(
-                      climate.concordam_tmax,
-                      climate.modelos,
-                      climate.tmax_c >= 0,
-                    )}`}
-                  </p>
+                  <p>{climateText.agreement}</p>
                 </>
               )}
               {future && <p>{t.answer.futureYears(future.good, future.total, future.range)}</p>}

@@ -482,6 +482,14 @@ describe('raio-X da sua terra (tarefa 0043)', () => {
     expect(within(panel).getByText('NASA POWER · ~50 km')).toBeInTheDocument()
   })
 
+  it('sem soja no ponto, o pico vira "maior verde de jan–mar" (tarefa 0049)', () => {
+    const city = { ...raio, verde: { ...raio.verde!, pico_ndvi: 0.33, soja_vista: false } }
+    setup({ ...full, xray: { ...xray, raio: city, blocks: xRayBlocks(city) } })
+
+    expect(screen.getByText(/Maior verde de janeiro a meados de março \(2025\/26\): 0,33, em 17 de janeiro de 2026\. O satélite não viu soja aqui\./)).toBeInTheDocument()
+    expect(screen.queryByText(/Pico da soja/)).not.toBeInTheDocument()
+  })
+
   it('as frases dos blocos, com a fonte certa e os números do backend', () => {
     setup(full)
 
@@ -577,6 +585,8 @@ describe('raio-X da sua terra (tarefa 0043)', () => {
     expect(screen.getByText('Houve fogo a até 5 km do seu ponto em 3 de 10 anos (MODIS, NASA).')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Saiba mais: Geada na safrinha' })).toHaveAttribute('href', '/guia/geada-na-safrinha')
     expect(screen.getByRole('link', { name: 'Saiba mais: Fogo na palha' })).toHaveAttribute('href', '/guia/fogo-na-palha')
+    // Tarefa 0049: o artigo da erosão existe, e a chuva forte liga para ele.
+    expect(screen.getByRole('link', { name: 'Saiba mais: Como evitar erosão' })).toHaveAttribute('href', '/guia/como-evitar-erosao')
     expect(screen.queryByText(/granizo/i)).not.toBeInTheDocument()
   })
 

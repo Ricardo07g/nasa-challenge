@@ -7,6 +7,7 @@
 import type { Lang } from '../../i18n/language'
 import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo, Sede } from '../../models/recomendacao'
 import { MOCK_PILOT_AREA as AREA } from './mockLocation'
+import { CLIMA_FUTURO_EXEMPLO } from './raioXFixture'
 import type { CustoAtraso, CustoAtrasoParams } from '../../models/custoAtraso'
 import {
   COLHEITAS,
@@ -540,8 +541,8 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
         ]
       : [],
     objetivos: objectives(opcoes, PLAN_A),
-    clima_futuro: { chuva_pct: -0.7, tmax_c: 1.3, modelos: 3, concordam_chuva: 2, concordam_tmax: 3, meses: [3, 4, 5], cenario: 'ssp245' },
-    geada: { anos: late ? 1 : 0, total: 20, tmin_max_c: 3, meses: [5, 6, 7] },
+    clima_futuro: CLIMA_FUTURO_EXEMPLO,
+    geada: late ? { anos: [2011], total_anos: 20, temp_c: 3, menor_temp_c: 2.4, fonte: 'nasa_power' } : null,
     pousio: {
       texto:
         lang === 'pt'
@@ -573,14 +574,6 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
           : 'Forecast for February to April 2027 (NOAA): no phase stands out (La Niña 30%, neutral 40%, El Niño 30%).',
       fonte: ['NOAA', 'NASA POWER', 'SMAP'],
       data: '2026-11-12',
-      regra_dia_plantar: {
-        data_limite: '2027-02-28',
-        texto:
-          lang === 'pt'
-            ? 'Se nos 30 dias antes de 28/fev chover menos que 130 mm (60% da média de 216 mm), vá de plano B: sorgo no lugar de milho com braquiária.'
-            : 'If less than 130 mm of rain falls in the 30 days before Feb 28 (60% of the 216 mm average), go with plan B: sorghum instead of corn with brachiaria.',
-      },
-      regra_data: { data_limite: '2027-02-28', inicio: '2027-01-29', dias: 30, chuva_min_mm: 130, media_mm: 216 },
       smap_agora: {
         percentil: 59,
         data: '2026-11-10',

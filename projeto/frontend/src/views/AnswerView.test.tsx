@@ -188,6 +188,8 @@ describe('AnswerView (aba Sugestão, tarefa 0044)', () => {
     expect(screen.getByText('Falta 116 mm em ano normal e 158 mm em ano seco')).toBeInTheDocument()
     expect(screen.getByText('Em 2041–2060, a falta em ano normal seria de 128 mm (de 118 a 141 mm, conforme o modelo). 12 mm a mais que hoje.')).toBeInTheDocument()
     expect(screen.getByText(/a terra só guarda 60 mm/)).toBeInTheDocument()
+    // Tarefa 0049: o "ano normal" é o do meio (mediana), não a média dos Avisos.
+    expect(screen.getByText(/Ano normal = em metade dos anos faltou isso ou menos \(mediana de 20 anos\)/)).toBeInTheDocument()
     expect(screen.getByText(/A umidade que a palhada segura, a enxurrada e a água que fica para a próxima safra estão no Guia, sem número/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Saiba mais: A conta de água da lavoura' })).toHaveAttribute('href', '/guia/conta-de-agua')
   })
@@ -195,9 +197,10 @@ describe('AnswerView (aba Sugestão, tarefa 0044)', () => {
   it('a linha do clima 2041–2060 tem a chuva, a máxima, quantos modelos concordam e os anos que dariam certo', () => {
     setup()
 
-    expect(screen.getByText('Chuva de março a maio: −0,7%')).toBeInTheDocument()
-    expect(screen.getByText('Máxima: +1,3 °C')).toBeInTheDocument()
-    expect(screen.getByText('2 de 3 modelos indicam menos chuva. 3 de 3 indicam mais calor.')).toBeInTheDocument()
+    // Tarefa 0049: o mesmo número e a mesma frase do cartão "Clima 2041–2060" do raio-X.
+    expect(screen.getByText('Chuva de março a maio: -4,5%')).toBeInTheDocument()
+    expect(screen.getByText('Máxima: +1,6 °C')).toBeInTheDocument()
+    expect(screen.getByText('2 de 3 modelos indicam menos chuva; 3 de 3, mais calor.')).toBeInTheDocument()
     expect(screen.getByText('Daria certo em 12 de 20 anos (de 10 a 13, conforme o modelo)')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Saiba mais: O clima de 2041 a 2060' })).toHaveAttribute('href', '/guia/clima-2041-2060')
   })

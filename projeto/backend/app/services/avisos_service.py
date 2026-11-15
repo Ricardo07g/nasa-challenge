@@ -145,7 +145,14 @@ class AvisosService:
         weather_alerts, power_last = self._agora.recent_weather(days)
         forecast = self._forecast_repo.get_enso_forecast()
         rain_sources = tuple(sorted({s.rain_source for s in seasons}))
-        enso = self._agora.enso(forecast, self._enso_repo.get_oni_years(), best, rain_sources)
+        sinal = getattr(rec, "sinal", None)
+        enso = self._agora.enso(
+            forecast,
+            self._enso_repo.get_oni_years(),
+            best,
+            rain_sources,
+            sinal=sinal.nivel if sinal is not None else None,
+        )
         nome = best.nome if best else None
         explorar = max((s.year for s in seasons), default=None)
         safrinha = self._agora.safrinha(crop, nome, rec.semeadura, explorar)

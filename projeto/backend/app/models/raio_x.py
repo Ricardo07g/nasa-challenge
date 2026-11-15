@@ -57,7 +57,12 @@ class UmidadeAgora:
 
 @dataclass(frozen=True)
 class VerdeLavoura:
-    """Bloco 4: a última leitura do NDVI e o pico da soja na safra mais recente."""
+    """Bloco 4: a última leitura do NDVI e o pico da soja na safra mais recente.
+
+    `soja_vista`: o satélite viu a soja na safra do pico (a regra da faixa do histórico: pico e
+    colheita)? False = o pico é só o maior verde de jan–mar (cidade, pasto); None = sem leitura do
+    verão para dizer (tarefa 0049).
+    """
 
     ultimo_ndvi: float | None
     ultimo_data: date | None
@@ -65,6 +70,7 @@ class VerdeLavoura:
     pico_data: date | None
     safra: str | None
     fonte: str
+    soja_vista: bool | None = None
 
 
 @dataclass(frozen=True)

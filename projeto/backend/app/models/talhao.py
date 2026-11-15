@@ -223,7 +223,7 @@ class Talhao:
     colheita_sugerida: ColheitaSugerida
     historico: HistoricoTalhao | None
     dados_fontes: tuple[FonteDado, ...]
-    # None fora da área ou sem temporada de 1/jan a 30/jun (o front mostra "Ainda não conectado").
+    # None fora da área ou sem temporada de 1/jan a 30/jun (o front não desenha o gráfico).
     chuva_mensal: ChuvaMensal | None = None
     # Soja vista no ponto na safra mais recente (RF-24); None sem o arquivo ou fora da grade.
     soja_recente: SojaRecente | None = None

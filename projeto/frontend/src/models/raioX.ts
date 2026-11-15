@@ -30,6 +30,8 @@ export type VerdeLavoura = {
   pico_data: string | null
   safra: string | null
   fonte: string
+  /** O satélite viu a soja no verão do pico? false = o pico é só o maior verde de jan–mar (tarefa 0049). */
+  soja_vista?: boolean | null
 }
 
 /** Bloco 5: total médio de janeiro a julho e o fim das chuvas (regra da tela 3). */

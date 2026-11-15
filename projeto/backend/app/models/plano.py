@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from datetime import date
 
+from app.models.sinal_outono import SinalOutono
+
 
 @dataclass(frozen=True)
 class AnoPlano:
@@ -114,7 +116,7 @@ class PlanoAB:
 
 @dataclass(frozen=True)
 class PlanoAvaliado:
-    """Resposta de `GET /api/plano`: os 3 anos, as notas, a terra, a chuva e o Plano A/B."""
+    """Resposta de `GET /api/plano`: os 3 anos, as notas, a terra, a chuva, o Plano A/B, o sinal."""
 
     colheita: str
     semeadura: date
@@ -123,3 +125,6 @@ class PlanoAvaliado:
     terra: TerraPlano
     chuva: ChuvaAproveitada | None
     plano_ab: PlanoAB | None
+    # Sinal do outono com o Plano A e o Plano B desta tela (tarefa 0049); None sem a previsão do
+    # ENSO, no pousio ou com o 1º ano fora da janela
+    sinal: SinalOutono | None = None

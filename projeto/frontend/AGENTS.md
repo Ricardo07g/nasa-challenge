@@ -104,8 +104,11 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `exemplo` e `confirmadas` (as safras que o produtor confirmou na tela 4, `2024:plantou,2025:parado`,
   em ordem de ano e sem codificar `:` e `,`, para o link continuar legível). Toda tela que pede a
   recomendação passa o `confirmadas` da URL para o `farm.recomendacao` (o cache do `farmService` separa
-  por ele). Na fazenda de exemplo, com safra confirmada, a recomendação vem do `/recomendacao` do ponto
-  do exemplo, não do `/exemplo`.
+  por ele). Na fazenda de exemplo, com safra confirmada, com a terra trocada (`solo`) ou com uma faixa
+  na URL diferente da do `/exemplo` (a do satélite), a recomendação vem do `/recomendacao` do ponto do
+  exemplo, não do `/exemplo` (tarefa 0049: a resposta e a URL dizem a mesma faixa). "Ver um exemplo
+  pronto" (`/exemplo`, `useExampleController`) abre a resposta com a faixa do satélite do exemplo
+  (`colheita_sugerida.faixa`; sem ela ou com falha, `meio`), não mais com `colheita=meio` fixo.
 - **Safras confirmadas (tarefa 0039 do backend, RF-25):** a regra fica em
   `services/confirmedSeasonsService.ts` (ler e escrever o parâmetro, pôr a resposta do produtor no
   lugar do satélite com `fonte_ano: 'produtor'`, as linhas do bloco e o aviso "Não parece uma lavoura
@@ -154,7 +157,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   sem ponto, sem aviso ou com falha, sem número. **Tela:** grupos na ordem Agora, O que mudou na sua área, Fora do
   comum e Perto de você (grupo `null` não aparece; grupo vazio = "Nada fora do normal." com a última leitura); cada
   aviso com o nível escrito e um ícone (triângulo em "Atenção", olho em "Fique de olho"; a cor só reforça), o que o
-  dado mostra, "O que fazer:", a fonte e a data; os relatos com "Relato de vizinho, não confirmado". Fora da
+  dado mostra, "O que fazer:", a fonte e a data (no El Niño / La Niña, o "o que fazer" segue o `valores.sinal`, o
+  veredito do sinal do outono, para dar o mesmo conselho do Plano de 3 anos); os relatos com "Relato de vizinho, não confirmado". Fora da
   safrinha, o link "Ver como teriam sido os avisos em <ano>" vai para `/resposta?<parâmetros do fluxo>&ano=<ano>`
   (nunca para `/safra-passada`). O rodapé fixo "Alertas oficiais" aparece sempre (com ou sem ponto), com os botões
   `sms:40199`, `https://wa.me/556120344611`, `tel:193` e `tel:199` e o link `/guia/alertas-defesa-civil`. Até 480 px,
@@ -192,6 +196,11 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   exemplo, sem rede; teste de repository usa `vi.stubGlobal('fetch', ...)`. Coordenadas e link do Google
   Maps colados são lidos por `services/locationInputService.ts` (puro; formatos na tarefa 0041). Serviço
   externo novo segue o mesmo molde; se precisar de chave ou de uso em escala, a chamada vai para o backend.
+- **"Como a conta é feita" (tela 9, tarefa 0049 do backend):** as regras novas (deu certo, pesos da nota, renda sem
+  preço, água, sede da cultura, nota da rotação, Plano B, geada, chuva forte, fogo, avisos, sinal do outono e raio-X)
+  aparecem no bloco "As regras da conta", com os números de `GET /api/metodo` (`repositories/metodoRepository.ts`,
+  lidos do `regras.yaml`; o mock em `repositories/mocks/mockMetodo.ts`). A tela nunca repete número de regra: sem a
+  rota (API antiga) ou com falha, o bloco não aparece e o texto da renda fica sem o número.
 - **Área piloto:** os limites vêm só de `GET /api/area-piloto` (`services/pilotAreaService.ts`, um pedido por
   visita). O front não repete os números (só o mock, que imita a API). Na tela "Onde fica a lavoura", o
   limite aparece tracejado com legenda em texto, e o ponto fora dele desliga o "Confirmar local"; enquanto a
@@ -260,7 +269,9 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   fica na tela com "Recalculando…"), pedido duas vezes: o plano e o "Como é hoje". O "Como é hoje"
   junta o histórico do `/talhao` com as confirmações da tela 4 e o "O que foi?" (os `QuestionChips` e as
   culturas do relato da S7, sem "outra"); sem as 3 safras conhecidas, usa o `plano_3_anos.hoje` e diz que
-  é uma referência. O número de "secar" só aparece com `plano_ab.limite.separa`. A fonte da chuva sai do
+  é uma referência. O número de "secar" só aparece com `plano_ab.limite.separa`. O cartão do sinal do
+  outono usa o `sinal` do `/api/plano` (o Plano A e o Plano B da tela; `planSignal` no `planService`); sem o
+  campo (API antiga) ou enquanto carrega, o do `/recomendacao`, só no plano sugerido (tarefa 0049). A fonte da chuva sai do
   `chuva.fonte` (`rainSourceName`). Não há mais o botão "Como teria sido em 2024?" nem a regra antiga
   da data na tela (o sinal do outono continua). Links do Guia: `COMPARE_ARTICLES` e `PLAN_ARTICLES` (um
   teste confere que existem em pt e en).

@@ -31,7 +31,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | ✅ na branch (15/11 ~05:05), revisada; Plano B sem número (nenhum limite separou bem) |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | ✅ na branch (15/11 ~04:50), revisada |
 | S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~03:10), revisada |
-| S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | a fazer |
+| S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | ✅ na branch `feat/remodelagem-s9-consistencia` (15/11 ~06:40), revisada; falta só o merge em `feat/remodelagem` |
 
 Ordem de merge: S1 → S8 → S2 → S3 → S4 → S5a → S5b → S6 → S7 → S9. Se a janela de uso acabar, a
 retomada automática continua da primeira seção não terminada (arquivo de retomada do orquestrador).
@@ -150,8 +150,53 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D120 | 15/11 | "Usar no meu plano" põe a cultura no ano 1 e mantém os anos 2 e 3 do plano atual (o editado ou o sugerido do objetivo). | "Leva a cultura para o ano 1" (pedido); trocar os outros anos sem o produtor pedir mudaria o plano dele. |
 | D121 | 15/11 | A cultura de cada ano do Plano é escolhida numa lista nativa (`SelectField`, novo no design system); o "O que foi?" continua com botões. | Seis botões em cada um dos 3 anos seriam 18 botões no celular; o "O que foi?" usa a forma da S7. |
 | D122 | 15/11 | O requisito novo é o RF-32 (reservado pelo orquestrador; a S6 usa outro). Se colidir no merge, renumerar como no D13. | Regra de números reservados para seções em paralelo. |
+| D130 | 15/11 | S9: o `/recomendacao` manda em `clima_futuro` e `geada` **os mesmos objetos do raio-X** (`FutureClimateService` e `RaioXClimateService.frost`); saem o `CellClimateFactsService` e os grupos `clima_futuro_sugestao` e `geada_sugestao`. No front, as duas telas escrevem com o mesmo helper (`futureClimateText`), com o hífen como sinal de menos (o que o "Ouvir" lê, decisão da S4). | A média simples dos meses dava −0,7% e "2 de 3, menos chuva" na Sugestão contra +2,2% e "2 de 3, mais chuva" no raio-X na mesma célula; a conta da S4 pesa cada mês pela chuva (a certa para o total de março a maio). Uma conta só não diverge de novo. |
+| D131 | 15/11 | S9: o sinal do outono recebe as **culturas** do Plano A e do Plano B (`cultura_a`, `cultura_b`), e o Plano B é o do `PlanBService` (a cultura que mais deu certo quando a do A falhou, o mesmo do cartão "Plano A e Plano B"), não mais o 1º ano do plano seco do motor. Sem Plano B, o ano ruim fica `incerto` ("Nenhuma outra cultura se saiu melhor nesses anos."). **A revisar.** | O sinal falava de um Plano B que a tela não mostrava (D114). Com a mesma regra, o sinal e o cartão contam a mesma história; sem Plano B, marcar "Plano B" seria apontar para nada. |
+| D132 | 15/11 | S9: o `/api/plano` devolve o `sinal` do plano que a tela mostra (o sugerido ou o editado; nenhum no pousio ou fora da janela). O front usa o sinal da avaliação; sem o campo (API antiga) ou enquanto carrega, o do `/recomendacao`, **só no plano sugerido** (`planSignal`). | "Se o plano foi editado, o sinal fala do Plano A que a tela mostra" (pedido da tarefa). Com o plano sugerido, o sinal do `/api/plano` é igual ao do `/recomendacao` (teste de rota). |
+| D133 | 15/11 | S9: o aviso de El Niño / La Niña leva `valores.sinal` (o veredito do sinal do `/recomendacao`) e o "O que fazer" tem uma frase por veredito: normal = "O sinal do outono marca o Plano A…", seco = "…marca o Plano B…", incerto ou sem sinal = "Veja o Plano A e o Plano B…". | Os Avisos não sabem do plano editado (o ponto salvo guarda colheita, solo e safras, não o `plano=`); o aviso nomeia a cultura (a melhor opção), e é ela o Plano A sugerido (D71). |
+| D134 | 15/11 | S9: saem da API o `regra_dia_plantar` e o `regra_data` (e o `dias_regra_data`); o `sinal_outono.chuva_fracao_seco` fica no YAML marcado sem uso, como o `chance_seco_min`. No front, saem as funções e chaves sem uso (lista da tarefa) e também as chaves da comunidade simulada que nada usava (uma dizia "not connected yet"). | Nada na tela usava a regra antiga desde a S5b (D116). O D53 guardava as chaves da comunidade simulada para o `/design-system`, mas as removidas não eram usadas nem lá. |
+| D135 | 15/11 | S9: a falta de água não muda de conta: os Avisos dizem "na média dos anos" (e que os anos muito secos puxam a média), e a nota da linha Água diz "Ano normal = em metade dos anos faltou isso ou menos (mediana)". | As duas contas estão certas (média × mediana); o que parecia contradição era a palavra. |
+| D136 | 15/11 | S9: "quebra o ciclo do nematoide" = as supressoras do PRD 7.7 (`rotacao.culturas_supressoras_nematoide`: crotalária e milheto), na linha Terra e no Plano; os outros "não quebra". Os pontos de pragas da nota de solo (PRD 7.4) não mudam. **A revisar pela agrônoma.** | Uma regra só nas duas telas (pedido). O PRD 5 diz que sorgo e braquiária reduzem o reniforme: se a agrônoma quiser, a lista do YAML muda as duas telas juntas. |
+| D137 | 15/11 | S9: `verde.soja_vista` no raio-X, pela regra da faixa do histórico (`soy_harvest_date`: pico e colheita; sem série, o `vista` do mapa da soja recente). Sem soja, o rótulo é "Maior verde de janeiro a meados de março" (a janela do pico é 1/jan a 15/mar), com "O satélite não viu soja aqui". | O pedido diz "maior verde de jan–mar"; a janela real termina em 15/mar, e a frase diz isso. A mesma regra da faixa evita a tela dizer "sem soja" na faixa e "pico da soja" no bloco. |
+| D138 | 15/11 | S9: "Ver um exemplo pronto" (`/exemplo`) pede o talhão do exemplo e abre a resposta com a `colheita_sugerida.faixa` (sem ela ou com falha, `meio`). O `farmService` só usa a resposta pronta do `/exemplo` quando a faixa da URL é a dela e a terra não foi trocada; senão, `/recomendacao` do ponto do exemplo. | Com `colheita=meio` fixo, a URL dizia meio e a resposta era da faixa tarde (a do satélite). O segundo ajuste também corrige quem volta à tela 3 no exemplo e troca a faixa. |
+| D139 | 15/11 | S9: a missão cita a fonte de cada fase só com o dado no talhão e no sinal (SoilGrids só com o mapa de solos; SMAP do balde; chuva do GPM IMERG ou do NASA POWER, calor sempre do POWER; MODIS NDVI; NEX-GDDP-CMIP6; previsão da NOAA) e conta as opções da conta (as que cabem na janela + deixar parado: 6 no meio, 3 na tarde da UFU). O MCD64A1 entra nas `dados` do `/talhao` quando o arquivo cobre o ponto (pedido de ±0,5 km ao repository). | "Só as fontes realmente usadas e o número certo de opções" (pedido 9). O talhão é a lista de fontes que as telas já liam (D2); com o arquivo pronto às 05:56, o MCD64A1 aparece na missão e em "De onde vem cada dado". |
+| D140 | 15/11 | S9: endpoint novo `GET /api/metodo` (`MethodService`, RF-33) com os números das regras que "Como a conta é feita" explica; a tela escreve uma frase por regra e nunca repete número. Schemas com o prefixo `Metodo`. Sai o cartão "Bateu com o que aconteceu? Em breve…" (IBGE). | "Com os números lidos do regras.yaml ou da API, nunca fixos na tela" (pedido da tarefa). O cartão "em breve" era promessa de algo não ligado (regra geral: só o que está ligado). |
+| D141 | 15/11 | S9: no celular, cada botão do `ChipGroup` cresce pelo tamanho do texto (`flex: 1 1 auto`, `white-space: nowrap`, respiro `--space-3`) e desce para a linha de baixo quando não cabe. Vale para todos os grupos de botões. | Em 390 px, "Cuidar da terra" e "Deixei parado" quebravam em 2 ou 3 linhas dentro do botão; agora "Mais segurança" e "Renda" ficam na 1ª linha e "Cuidar da terra" na 2ª, inteiro. |
+| D142 | 15/11 | S9: os 3 artigos que faltavam (erosão, plantio direto, sementes) saem como rascunho, com fontes abertas e conferidas em 15/11 (Embrapa 2019: terraços e plantio direto; Embrapa 2014: dia de campo do plantio direto; Lei 10.711/2003). No de sementes, germinação e vigor sem número nem norma: a IN MAPA 17/2017 é um PDF que não deu para abrir. | Regra do Guia: só fonte aberta; melhor dizer "pergunte ao vendedor" do que citar o que não foi lido. |
+| D143 | 15/11 | S9: as regras gerais viram teste: no front, `consistency.test.ts` (sem R$, sem "Ainda não conectado" nos textos, sem link para `/relatorio` e `/safra-passada`, sem texto das telas removidas, NASA POWER não é a fonte da chuva da série); no backend, `test_regras_gerais.py` (sem R$ e sem "Ainda não conectado" no código e nas regras). | O pedido mandou conferir no código inteiro; o teste impede a volta. |
+| D144 | 15/11 | S9: o RF novo é o RF-33 ("Como a conta é feita" com as regras novas); RF-19 e RF-20 foram reescritos e o PRD 7.6 ganhou a nota do nematoide. | Pedido da tarefa (RF-33 reservado). |
 
 ## Revisão por seção
+
+### S9 — Consistência e revisão final (revisada em 15/11 ~06:40)
+
+Conferida com dado real (API 8005 no banco `raiz_orbital_remodelagem`, só leitura, com o MCD64A1) na fazenda de exemplo
+(cedo, meio e tarde), no ponto da cidade (−18,9149 / −48,2568) e no ponto da terra seca (−19,55 / −48,95), em 1280 e
+390 px, pt e en (prints `scratchpad/shots/s9-*.png`).
+
+- ✅ **Clima 2041–2060 igual nas duas telas:** Sugestão e raio-X "+2,2%, 2 de 3 modelos indicam mais chuva; 3 de 3, mais
+  calor" na fazenda (antes −0,7% e "menos chuva" na Sugestão); +2,1% no ponto da terra seca nas duas. A geada é o mesmo
+  alerta (nenhum ano nos 3 pontos).
+- ✅ **Sinal × aviso de El Niño:** o aviso diz "O sinal do outono marca o Plano A" quando o Plano diz "Sinal de ano
+  normal" (fazenda, El Niño 98%, milho com braquiária 5 de 7). Com o plano editado (sorgo no ano 1), o sinal fala do
+  sorgo ("deu certo em 4"). Com o plano sugerido, o sinal do `/api/plano` é igual ao do `/recomendacao` nos 5 casos.
+- ✅ **Falta de água:** "na média dos anos" nos Avisos (101,6 → 177,4 mm) e "ano normal = em metade dos anos" na linha
+  Água (116 mm).
+- ✅ **Nematoide:** crotalária e milheto "quebra o ciclo"; sorgo, milho e milho com braquiária "não quebra", nas duas telas.
+- ✅ **Verde sem soja:** na cidade, "Maior verde de janeiro a meados de março (2025/26): 0,33, em 18 de fevereiro de
+  2026. O satélite não viu soja aqui." Na fazenda continua "Pico da soja 2025/26: 0,90".
+- ✅ **Exemplo pronto:** `/exemplo` abre `/resposta?…&colheita=tarde&exemplo=1` (a faixa do satélite, 25/02).
+- ✅ **Missão:** fontes com o nome (SoilGrids, SMAP de 2016 a 2025, GPM IMERG e NASA POWER, MODIS NDVI, MCD64A1 de 2016 a
+  2025, NEX-GDDP-CMIP6, NOAA) e "Fazendo a conta das 3 opções" na colheita tarde.
+- ✅ **Como a conta é feita:** 13 regras com os números do `/api/metodo` (55%, 15 dias, 50% em 30 dias, 35 °C em 3 dias,
+  pesos 30/15/25/30, 280 e 325 mm, +5/+10, Plano B 15 dias/3 falhas/50%/60%/10%, geada 3 °C de 1/mai a 31/jul, chuva
+  forte 50 mm em fev–mar, fogo 5 km, avisos e sinal); MCD64A1 em "De onde vem cada dado".
+- ✅ **Fogo (MCD64A1):** com o arquivo, a fazenda tem fogo a até 5 km em 5 de 10 anos (2016, 2018, 2019, 2020, 2024); a
+  cidade e o ponto da terra seca, nenhum ano.
+- ✅ Nenhum link para as telas removidas; nenhum R$; nenhum "Ainda não conectado" (testes nos dois lados).
+- ✅ Em 390 px, os botões do objetivo não quebram o texto.
+- ✅ Guia com os 3 artigos que faltavam (27 artigos em pt e en) e os "Saiba mais" de chuva forte, erosão e fogo.
+- ⚠️ O mapa da comunidade ainda não mostra a área queimada (o arquivo ficou pronto durante a S9; ver a lista final).
 
 ### S5b — Comparar e Plano de 3 anos (revisada em 15/11 ~05:15)
 
@@ -332,7 +377,181 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
 - ⚠️ Faltaram 7 artigos: plantio direto, sementes e erosão (sem fonte aberta conferida); "quando a chuva acaba" e "raio-X" (descrevem telas das seções 3 e 4, que ainda não existem); "plantar logo depois da colheita" (sem fonte e depende do custo do atraso da S3); fogo na palha (só guias estaduais, não conferidos). Os links das telas para esses artigos entram quando as seções 3, 4 e 6 forem feitas.
 - ⚠️ A S8 entrou antes da S1 (a S1 ainda estava rodando). Não há conflito: arquivos diferentes.
 
+## Lista final do pedido
+
+Cada item do `arquivos contexto/prompt-raiz-orbital.md`, conferido depois da S9: ✅ feito, ⚠️ feito com ressalva, ❌
+não feito. A linha diz o porquê; o detalhe está na revisão da seção e nas decisões.
+
+### Regras gerais
+
+- ✅ Nenhum dado inventado: todo número vem do banco, de `data/baixados/` ou do motor, com a fonte; sem dado, o elemento some (D2).
+- ✅ Nenhum selo "Ainda não conectado" (D18; teste do front e do backend na S9, D143).
+- ✅ Nenhum valor em reais (S1; teste do front e do backend na S9).
+- ⚠️ Texto novo em pt e en e compatível com o "Ouvir": as chaves são iguais nos dois (teste de paridade); o sinal de menos é o hífen, que o "Ouvir" lê (D130); a leitura em voz alta não foi ouvida tela a tela.
+- ⚠️ Responsivo, celular primeiro: conferido em 390 e 1280 px; contraste de 4,5:1 medido no painel do raio-X (tokens `--color-instrument-*`), não em todas as telas; nenhuma informação só por cor (legendas e texto).
+- ✅ Nenhuma recomendação agronômica nova: manejo e artigos de plantio são rascunho "a revisar pela agrônoma".
+- ✅ Limites novos no `regras.yaml` com fonte ou "hipótese do time" (o `YamlRulesRepository` recusa número sem fonte).
+- ✅ Fonte certa em cada frase: chuva do GPM IMERG, calor e ETo do NASA POWER, umidade do SMAP, NDVI do MODIS (conferido na S9; cartão do NASA POWER corrigido, D143).
+- ✅ Testes atualizados e criados para as regras novas (backend 1.771, front 1.045 na S9).
+- ✅ Lista do que foi feito, do que não foi possível e dos números estranhos: esta seção e as duas abaixo.
+
+### 1. Valores em reais
+
+- ✅ Nenhum R$ no front nem nas respostas da API (cartões, plano, "Por quê?").
+- ✅ A dimensão é "Renda", com "Dá grão para vender" / "Não dá grão: é investimento na terra" e "Risco de perder a lavoura: … em N de 20 anos.".
+- ✅ Nota de renda sem preço nem custo (D14, D15), no grupo `renda` do `regras.yaml` e em "Como a conta é feita" com o número do YAML (D140).
+
+### 2. Onde fica a lavoura
+
+- ✅ Busca "Buscar cidade, estrada ou endereço" com autocompletar pelo Photon, com espera entre teclas e uma busca por vez (D3).
+- ⚠️ Coordenadas e link do Google Maps colados: funcionam; link curto (`maps.app.goo.gl`) e graus/minutos/segundos em texto não (D26).
+- ✅ "Usar onde estou agora" e o arrastar do mapa.
+- ✅ "Confirmar local" com pin e o endereço aproximado (o texto e o ponto vão para o Photon: RNF-07).
+- ✅ Limite da área piloto no mapa e bloqueio com "Por enquanto só temos dados da região de Uberlândia e Uberaba." (D21).
+
+### 3. Quando você colhe a soja
+
+- ✅ Campo de data no topo com o dia do satélite; "Não sei o dia exato" abre as 3 faixas; saiu "Colocar a data exata".
+- ✅ Sugestão = seleção (D31 a D33).
+- ⚠️ "Chuva que sobra depois da colheita" (mediana e ano seco, IMERG) com a frase: "em média" é a mediana, explicado na legenda (D37).
+- ✅ Chuva (IMERG) × ETo (POWER) por mês, com o mês em que a chuva fica menor (D39, D40).
+- ⚠️ Custo do atraso pelo motor: feito, mas a melhor cultura muda entre as faixas e a colheita tarde parece melhor (milheto 20 de 20; números estranhos).
+- ⚠️ Fim das chuvas com a regra do pedido: feito; a regra é sensível (16/mar a 22/jun na UFU), a calibrar pela agrônoma.
+
+### 4. O que o satélite viu (raio-X)
+
+- ✅ Painel escuro, números grandes em fonte tabular, grade de blocos e selo de fonte e resolução em cada um.
+- ⚠️ Cabeçalho com lugar, coordenadas, miniatura e leitura mais recente; a altitude não aparece (o `grid_cell` não tem a coluna e o pedido manda não buscar fora, D65).
+- ✅ Animação na chegada, respeitando "reduzir movimento".
+- ✅ Bloco 1, solo (SoilGrids, barra dividida, "Não é? Trocar"), com a vizinha mais perto até 15 km dita no bloco (D58).
+- ✅ Bloco 2, água que a terra guarda e "aguenta cerca de N dias" (D57, a revisar).
+- ✅ Bloco 3, umidade do SMAP em medidor (a leitura é de novembro, não da época do plantio).
+- ✅ Bloco 4, verde da lavoura: último NDVI e pico da soja; sem soja no ponto, "maior verde" (S9, D137).
+- ✅ Bloco 5, chuva de um ano típico e o fim das chuvas.
+- ⚠️ Bloco 6, maior veranico de março a maio: feito; o trecho mais longo costuma ser o começo da seca, não um veranico na chuva.
+- ✅ Bloco 7, anos com 35 °C de março a maio (POWER).
+- ⚠️ Bloco 8, a área e a região: "mais seca que X%" vira "mais chuvosa que Y%" quando a maioria chove menos (D59).
+- ✅ Rodapé "Cada dado vale para a área em volta do ponto…".
+- ⚠️ Histórico em faixa de calor do NDVI com "soja / colheita / entressafra" e o título: com os anos 2017–2026 (D5), não 2016–2025.
+- ✅ Alerta de geada (só com risco; nenhum ano nos 3 pontos de teste).
+- ✅ Alerta de chuva forte, com a frase da terra descoberta e o "Saiba mais: Como evitar erosão" (S9).
+- ✅ Alerta de fogo pelo MCD64A1 da ORNL (o produto existe; sem o índice substituto, D63): arquivo pronto em 15/11 05:56 (22.415 pixels, 2016–2025); na fazenda, fogo a até 5 km em 5 de 10 anos.
+- ✅ Sem alerta de granizo.
+- ✅ Cartões menores "20 anos de chuva" e "Clima 2041–2060" com "ver na sugestão"; o clima agora é o mesmo da Sugestão (S9, D130).
+- ✅ Botão "Ver o que plantar".
+
+### 5. Abas da resposta
+
+- ✅ Ordem e nomes "Sugestão", "Comparar", "Plano de 3 anos", contando a mesma história (URLs antigas mantidas, D67).
+- ✅ 5.1 "O que você quer mais?" ("Mais segurança", "Renda", "Cuidar da terra") reordena as três abas e fica entre elas; no celular, os botões não quebram o texto (S9, D141).
+- ✅ 5.2 Imagem da planta em todo cartão, chip e artigo de cultura (SVG próprio, D4).
+- ✅ 5.3 Selo "Sede da cultura" (cortes no `regras.yaml`, hipótese do time, D73).
+- ⚠️ 5.3 Linha "Água" (precisa, costuma chover, falta em ano normal e seco): o "ano seco" da falta é o percentil 80 (D72), e a nota diz que o ano normal é a mediana (S9, D135).
+- ✅ 5.3 Versão 2041–2060 da falta de água, com a faixa entre os modelos.
+- ✅ 5.3 Nenhum número para palhada, enxurrada ou água da próxima safra: só no Guia.
+- ❌ 5.3 Irrigação opcional ("Você irriga essa área?", "Água a repor", m³/ha): não feita, por tempo; o "deu certo" não muda com ela.
+- ✅ 5.4 "Ano 1 do seu plano" com os 3 anos em miniatura e "Explorar o plano".
+- ⚠️ 5.4 "Deu certo" explicado com o critério real do motor (55% da água e menos de 3 dias de 35 °C), não com o "nenhum dia de 35 °C" do texto do pedido (D74).
+- ✅ 5.4 Explorador ano a ano (barras 2005–2024, linha de corte, El Niño e La Niña escritos) e o detalhe do ano (a antiga `/safra-passada`).
+- ✅ 5.4 Frase de El Niño / La Niña só com diferença clara (D76).
+- ✅ 5.4 Linhas na ordem Deu certo, Água, Clima 2041–2060, Renda e Terra (o clima e o nematoide coerentes com as outras telas desde a S9).
+- ✅ 5.4 "Como fazer" em 4 partes, com "Passo a passo completo".
+- ✅ 5.4 Aviso único da colheita tarde com a lista, a linha do ZARC com o link e a geada quando houve.
+- ✅ 5.4 Botão e tela "Relatório para banco ou seguro" removidos.
+- ✅ 5.5 Até 3 culturas por chips com imagem e sede; por padrão as 3 melhores do objetivo; fora da janela, desligadas com o motivo.
+- ⚠️ 5.5 Colunas com as mesmas linhas: feitas; "Por que usar" e "Por que evitar" saem dos rótulos do motor e podem dizer "pouco risco" ao lado de "Deu certo: Médio" (rótulos diferentes de chuva e renda).
+- ✅ 5.5 "Se você prefere…" é o ponto de partida do Comparar; "Usar no meu plano" leva a cultura ao ano 1.
+- ❌ 5.5 "[A] no lugar de [B] economiza N mm por safra": depende da irrigação opcional, não feita.
+- ✅ 5.6 Montar a rotação com as notas na hora, ao lado do "Como é hoje", e "Voltar ao plano sugerido".
+- ✅ 5.6 Saúde da terra com fatos (coberta, nitrogênio, nematoide com a regra única desde a S9, repetição).
+- ✅ 5.6 "Chuva aproveitada" com a frase do pedido, sem estimar a evaporação no pousio.
+- ✅ 5.6 "Como é hoje" com o NDVI das 3 últimas safras e "O que foi?"; sem resposta, a referência dita como referência.
+- ⚠️ 5.6 Plano A e Plano B numa frase cada; "secar" sem número, porque nenhum limite separou bem os anos (D115), e a tela diz isso.
+- ✅ 5.6 "Comece por um pedaço" e "Como teria sido em 2024?" removidos.
+
+### 6. Avisos
+
+- ✅ Botão "Avisos" ao lado de "Comunidade" com o contador.
+- ✅ Ponto salvo no aparelho, sem cadastro; sem ponto, pede para marcar; sem push.
+- ✅ Cada aviso com o nível em texto, o que o dado mostra, o que fazer, a fonte e a data; grupo vazio com "Nada fora do normal" e a data.
+- ✅ Agora: terra seca pelo SMAP (leitura antiga marcada).
+- ✅ Agora: dias sem chuva e calor pelo NASA POWER recente, no backend, com cache de 24 h; sem o POWER, o aviso some.
+- ✅ Agora: nenhuma comparação da chuva recente com "o normal".
+- ✅ Agora: El Niño / La Niña com a previsão e os anos parecidos; o "o que fazer" segue o sinal do Plano (S9, D133).
+- ⚠️ Agora: regra do replay durante a safrinha: só testada com o "hoje" injetado (em novembro não há safrinha); fora dela, o link "Ver como teriam sido os avisos em 2024" funciona.
+- ✅ O que mudou (2020–2024 × 2005–2019) com os dois números e "são poucos anos"; a falta de água diz "na média dos anos" (S9).
+- ✅ Fora do comum: recordes com o ano.
+- ✅ Perto de você: eventos dos vizinhos dos últimos 7 dias a até 30 km, "relato de vizinho, não confirmado".
+- ⚠️ Rodapé "Alertas oficiais" com todo o texto, os botões de SMS, WhatsApp, 193 e 199 e o artigo: é o último bloco da tela, não uma barra presa (D102).
+
+### 7. Comunidade
+
+- ✅ Três relatos sem cadastro e sem texto livre, em até 3 toques; fogo mostra o 193 e agora o "Saiba mais: Fogo na palha"; enxurrada ou erosão liga para "Como evitar erosão" (S9).
+- ✅ Só a célula de 0,1°; "Seus vizinhos veem a região, não o seu ponto." antes do primeiro envio.
+- ✅ Sem login: identificador aleatório no aparelho, limite de 10 em 24 h, apagar os próprios relatos.
+- ✅ Validação (chuva de 0 a 300 mm; datas até 30 dias atrás, nunca futuras).
+- ✅ Todo relato como "relato de vizinho, não confirmado".
+- ⚠️ Tabela `community_report` com o tipo aberto: feita; a migração não foi aplicada no banco do Docker do usuário (rodar `docker compose run --rm migration` depois do merge).
+- ✅ Endpoints enviar, listar por ponto e raio, apagar.
+- ✅ Mapa de 30 km com os relatos por célula, ícone e texto por tipo.
+- ⚠️ Resumo "Perto de você": plantio e eventos feitos; a chuva dos vizinhos não tem o satélite ao lado (não há chuva recente do satélite ligada: o IMERG Late saiu do sinal e o banco só tem jan–jul).
+- ❌ Área queimada do MODIS no mapa da comunidade: o arquivo ficou pronto durante a S9 e o raio-X já usa; o mapa da comunidade ainda não lê (fica para uma próxima tarefa, com um endpoint dos pixels por perto).
+- ✅ Região pelo satélite (NDVI) continua escondida até a calibração.
+- ✅ Sem relatos falsos; exemplos só no modo `mock`, com o selo "Exemplo".
+- ✅ "Compartilhar com a comunidade" depois de confirmar as safras (na tela 4, onde a confirmação acontece).
+- ✅ Entrada para o Guia no fim da tela.
+
+### 8. Guia
+
+- ✅ `/guia` com os 5 temas e busca por título; `/guia/<artigo>` com a estrutura fixa, 150 a 300 palavras.
+- ✅ Fontes só de páginas abertas e conferidas (`verifiedSources.ts`, com teste).
+- ✅ "Rascunho: a revisar pela agrônoma." nos artigos de cultura, plantio e manejo; artigos de cultura com a imagem da planta; texto puro para o "Ouvir".
+- ✅ Tema A (6 culturas), Tema C (erosão, palhada, adubo verde, nematoide, rotação), Tema D (deu certo, conta de água, veranico, calor de 35 °C, quando a chuva acaba, El Niño e La Niña, clima 2041–2060, raio-X) e Tema E (alertas, fogo na palha, geada), mais "Como ler os avisos".
+- ⚠️ Tema B: plantio direto, ZARC e plantar logo depois da colheita feitos; "Sementes" feito sem número de germinação e vigor (a norma é um PDF que não deu para abrir, D142).
+- ✅ Links "Saiba mais" da tabela da seção 8, todos ligados desde a S9 (chuva forte, erosão e fogo da comunidade eram os que faltavam).
+
+### 9. Consistência
+
+- ✅ A tela de missão lista só as fontes usadas de fato e o número certo de opções (D139).
+- ✅ "Como a conta é feita" reflete as regras novas (deu certo, renda sem preço, água, sede da cultura, nota da rotação, Plano B, fogo, geada, avisos, sinal e raio-X), com os números do `/api/metodo` (D140).
+- ✅ Nenhum link para as telas removidas (relatório e safra passada solta); os redirecionamentos das URLs antigas ficam (teste, D143).
+
 ## Números estranhos encontrados
+
+### Resumo organizado (depois da S9)
+
+Os mesmos itens do histórico abaixo, agrupados, com o estado de cada um. O histórico fica como foi anotado em cada seção.
+
+**Resolvidos na S9**
+
+- Clima 2041–2060 com sinais opostos na Sugestão (−0,7%) e no raio-X (+2,2%): as duas telas mostram +2,2% (D130).
+- Sinal do outono × aviso de El Niño e sinal falando do Plano A sugerido com o plano editado: o mesmo conselho e o Plano A da tela (D131 a D133).
+- Falta de água "média" × "mediana": palavras alinhadas (D135).
+- "Quebra o nematoide" em dois sentidos: uma regra só (D136).
+- "Pico da soja 0,33" no ponto da cidade: "maior verde" quando não há soja (D137).
+- "Ver um exemplo pronto" com a faixa errada na URL: a faixa do satélite (D138).
+
+**Continuam (decisão da agrônoma ou do produto)**
+
+- Critérios diferentes de "deu certo" para grão e cobertura: milheto e crotalária ficam em 1º no "Mais segurança" e no custo do atraso (colher tarde parece melhor), e o explorador fica "achatado" nas coberturas.
+- Rótulos diferentes de chuva (85/60) e renda (70/30) na mesma opção ("Médio" × "Bom", "pouco risco" no Comparar).
+- "Deu certo" do pedido ("nenhum dia de 35 °C") × motor (3 dias ou mais).
+- Planos que repetem a mesma cultura (crotalária × 3, milho com braquiária × 3) e a saúde da terra que não pune a repetição.
+- Fim das chuvas sensível a um veranico em março ou a chuva fora de época (16/mar a 22/jun na UFU); maior veranico de março a maio que mede o começo da seca.
+- "Parado em 0 de 10 anos" na UFU e soja recente pegando pasto e cerrado verdes (96% da caixa).
+- Clima 2041–2060 muda pouco a falta de água e a nota de futuro sai igual à de segurança na UFU.
+- Plano B sem número em todas as faixas da UFU; queda do "deu certo" para 3 de 5 em 2020–2024.
+- SMAP "de agora" em novembro; POWER recente com 2 a 3 dias de atraso; calor de 35 °C em novembro fora da safrinha.
+- Bloco 8: 1,6% de chuva a mais vira "mais chuvosa que 62% da região" (a caixa é pouco variada).
+
+**Novos na S9**
+
+- **Fogo perto da fazenda da UFU:** com o MCD64A1, fogo a até 5 km em 5 de 10 anos (2016, 2018, 2019, 2020 e 2024). É muito para uma área experimental; o raio de 5 km pega pasto, cerrado e beira de estrada em volta. Vale a agrônoma olhar o raio (`alertas_area.fogo_raio_km`).
+- **Sinal do outono "normal" nos 3 pontos de teste:** com El Niño de 98%, a melhor opção deu certo em 5 a 7 dos 7 anos de El Niño; nenhum ponto chega ao `seco`. Com o Plano B da tela (D131), o `seco` pede a cultura do Plano B melhor nesses anos.
+- **Colheita tarde e ponto da terra seca sem Plano B:** o milheto (tarde) e a crotalária (terra seca) nunca falharam na série; o sinal fica `normal` e o cartão diz que não há Plano B.
+
+### Histórico (como anotado em cada seção)
+
 
 - **Renda e chuva com rótulos diferentes na mesma opção:** milho com braquiária na UFU (16 de 20) sai "Médio" na chuva e "Bom" na renda, porque os cortes são 85/60 na chuva e 70/30 na renda. A segurança pesa duas vezes para quem dá grão (segurança 30% + renda 30%).
 - **Plano A da UFU (colheita cedo e meio):** milho com braquiária em 2027 e 2028; e a regra da data diz "siga o plano B; o 1º ano continua com milho com braquiária", porque o 1º ano do Plano B é a mesma cultura. A frase fica estranha; a S5b refaz o Plano A/B.
@@ -457,6 +676,34 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
   não diz que o plano usa mais, mas a comparação lado a lado pode confundir.
 
 ## O que não foi possível e por quê
+
+### Resumo organizado (depois da S9)
+
+**Não feito**
+
+- **Irrigação opcional** (5.3) e o "[A] no lugar de [B] economiza N mm" do Comparar (5.5): tempo; o "deu certo" não muda com ela.
+- **Área queimada no mapa da comunidade** (7): o arquivo do MCD64A1 ficou pronto às 05:56 de 15/11, durante a S9; o raio-X, a missão e "Como a conta é feita" já usam, o mapa da comunidade ainda não (precisa de um endpoint com os pixels perto do ponto).
+- **Chuva do satélite ao lado da chuva relatada** (7): não há chuva recente do satélite ligada (o IMERG Late saiu do sinal; o banco só tem jan–jul).
+- **Número para "secar" no Plano B** (5.6): nenhum limite de chuva nem o SMAP separou bem os anos (D115).
+- **Altitude no raio-X** (4): o `grid_cell` não tem a coluna e o pedido manda não buscar fora.
+
+**Feito com limite**
+
+- Link curto do Google Maps e graus/minutos/segundos em texto (2); o dia exato não volta da tela 4 (3, D33).
+- Safrinha em andamento nos Avisos só testada com o "hoje" injetado (6); cache do POWER só na memória do processo.
+- "Sementes" sem número de germinação e vigor (8, D142).
+- Migração da comunidade não aplicada no banco do Docker do usuário: rodar `docker compose run --rm migration` depois do merge; configurar o `COMMUNITY_DEVICE_SALT` em produção.
+- Conferência em 390 px: o Chrome sem interface desta máquina deixou de cortar em ~500 px (na S9 os prints de 390 px saíram certos).
+
+**Resolvido na S9 (estava aqui antes)**
+
+- Limpeza do front e o `regra_dia_plantar` (S5b): feita (D134).
+- "Ver um exemplo pronto" com `colheita=meio` fixo (S3): corrigido (D138).
+- Artigos que faltavam (plantio direto, sementes, erosão) e os "Saiba mais" de chuva forte e dos relatos de fogo e erosão (S4, S7, S8): feitos (D142).
+- Extração completa do MCD64A1 (S4): pronta; o alerta de fogo aparece com o arquivo.
+
+### Histórico (como anotado em cada seção)
+
 
 - **S5b, número para "secar":** nenhum limite de chuva dos 15 dias antes da semeadura separa bem (D115). Colheita meio,
   milho com braquiária: 4 falhas, nenhum limite com mais acertos que alarmes falsos. Cedo: só 2 falhas (mínimo 3). Tarde:

@@ -16,6 +16,7 @@ from app.models.recomendacao import (
     NotasOpcao,
     ResultadoOpcao,
 )
+from app.models.sinal_outono import SinalOutono
 from app.repositories.crop_params_repository import YamlCropParamsRepository
 from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.plan_evaluation_service import PlanEvaluationService
@@ -149,8 +150,21 @@ class FakeClimate:
         return self.seasons
 
 
+class SpySinal:
+    """O sinal do outono falso: guarda o pedido e devolve um sinal de teste."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    def evaluate(self, **kwargs: Any) -> SinalOutono:
+        self.calls.append(kwargs)
+        return SinalOutono(nivel="normal", motivo="Sinal de teste.", fonte=("teste",), data=SOWING)
+
+
 def _service(
-    rec: SimpleNamespace | None = None, seasons: list[ClimateSeason] | None = None
+    rec: SimpleNamespace | None = None,
+    seasons: list[ClimateSeason] | None = None,
+    sinal: SpySinal | None = None,
 ) -> tuple[PlanEvaluationService, FakeRecommender, FakeClimate]:
     recommender = FakeRecommender(rec or _recommendation())
     climate = FakeClimate(seasons if seasons is not None else [_season(y, 2.0) for y in YEARS])
@@ -159,6 +173,7 @@ def _service(
         climate_repo=climate,
         crop_repo=CROPS,
         plan_service=RotationPlanService(),
+        sinal_service=sinal,
     )
     return service, recommender, climate
 
@@ -301,6 +316,32 @@ def test_should_give_plan_a_and_plan_b_for_the_first_year() -> None:
     assert ab is not None
     assert (ab.cultura_a, ab.falhas_a, ab.total) == ("milho_braquiaria", 3, 10)
     assert ab.cultura_b == "crotalaria"  # deu certo em 2006, 2009 e 2012; o sorgo, em 1
+
+
+def test_should_give_the_autumn_signal_of_the_plan_a_and_plan_b_on_screen() -> None:
+    # S9 (tarefa 0049): com o plano editado (sorgo no ano 1), o sinal fala do sorgo e do Plano B
+    # dele, os mesmos do cartão "Plano A e Plano B".
+    spy = SpySinal()
+    service, _, climate = _service(sinal=spy)
+
+    plano = service.evaluate(-18.95, -48.2, ["sorgo", "crotalaria", "milho_braquiaria"], lang="en")
+
+    assert plano.sinal is not None and plano.sinal.motivo == "Sinal de teste."
+    assert plano.plano_ab is not None
+    (call,) = spy.calls
+    assert (call["cultura_a"], call["cultura_b"]) == ("sorgo", plano.plano_ab.cultura_b)
+    assert call["seasons"] == climate.seasons
+    assert (call["lat"], call["lon"], call["lang"]) == (-18.95, -48.2, "en")
+
+
+def test_should_have_no_signal_when_the_plan_starts_with_fallow_or_without_the_service() -> None:
+    spy = SpySinal()
+    service, _, _ = _service(sinal=spy)
+
+    assert service.evaluate(-18.95, -48.2, ["pousio", "sorgo", "crotalaria"]).sinal is None
+    assert spy.calls == []
+    no_service, _, _ = _service()
+    assert no_service.evaluate(-18.95, -48.2, ["sorgo", "sorgo", "sorgo"]).sinal is None
 
 
 def test_should_pass_the_harvest_the_soil_and_the_language_to_the_engine() -> None:

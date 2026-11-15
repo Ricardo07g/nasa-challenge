@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     # o /talhao responde soja_recente: null e o front não avisa.
     soja_recente_path: Path | None = None
     # Previsão do El Niño / La Niña da NOAA CPC (saída do pipeline/fetch_enso_previsao.py,
-    # tarefa 0038). Sem arquivo: o sinal para o outono sai nulo ("Ainda não conectado").
+    # tarefa 0038). Sem arquivo: o sinal para o outono sai nulo (o cartão do sinal não aparece).
     enso_previsao_path: Path | None = None
     # Área queimada do MODIS MCD64A1 (500 m) na caixa piloto, 2016 a 2025 (saída do
     # pipeline/fetch_area_queimada.py, tarefa 0043). Sem arquivo: o alerta de fogo do raio-X não

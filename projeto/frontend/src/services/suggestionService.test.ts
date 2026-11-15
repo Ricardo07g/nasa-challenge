@@ -7,7 +7,6 @@ import {
   clearEnsoNotes,
   cropArticle,
   lateNotice,
-  optionsForObjective,
   rankForObjective,
   selectedYear,
   suggestedPlan,
@@ -99,16 +98,6 @@ describe('rankForObjective (seção 5.1: a ordem vem pronta do motor)', () => {
   })
 })
 
-describe('optionsForObjective (aba Comparar)', () => {
-  it('as que cabem na janela na ordem do objetivo; as fora da janela vão para o fim', () => {
-    const late = opcao('milho_safrinha', 10, 60, 20, 50, { na_janela: false })
-    const summary = optionsForObjective(rec({ opcoes: [...OPTIONS, late], fora_da_janela: [{ id: 'milho_safrinha', nome: 'Milho sozinho', texto: 'x' }] }), 'terra')
-
-    expect(summary.options.map((o) => o.id)).toEqual(['crotalaria', 'milho_braquiaria', 'sorgo', 'milho_safrinha'])
-    expect(summary.late.names).toEqual(['Milho sozinho'])
-  })
-})
-
 describe('thirstByCrop (selo de sede no Plano)', () => {
   it('a sede de cada cultura que tem a linha Água; sem ela, a cultura fica de fora', () => {
     const agua = (sede: 'pouca' | 'muita') => ({ precisa_mm: 1, chove_mm: 1, falta_normal_mm: 0, falta_seco_mm: 0, sede, cad_mm: 60, anos: 20, futuro: null })
@@ -139,9 +128,25 @@ describe('buildSuggestion (aba Sugestão)', () => {
     ])
   })
 
-  it('só mostra a geada quando algum ano teve geada', () => {
-    expect(buildSuggestion(rec({ geada: { anos: 0, total: 20, tmin_max_c: 3, meses: [5, 6, 7] } }), null)?.frost).toBeNull()
-    expect(buildSuggestion(rec({ geada: { anos: 2, total: 20, tmin_max_c: 3, meses: [5, 6, 7] } }), null)?.frost?.anos).toBe(2)
+  it('a geada é o alerta do raio-X: só vem quando algum ano teve geada (tarefa 0049)', () => {
+    const geada = { anos: [2011, 2021], total_anos: 20, temp_c: 3, menor_temp_c: 2.4, fonte: 'nasa_power' }
+    expect(buildSuggestion(rec({ geada: null }), null)?.frost).toBeNull()
+    expect(buildSuggestion(rec({ geada }), null)?.frost).toEqual(geada)
+  })
+
+  it('o clima 2041–2060 tem a mesma concordância dos modelos que o cartão do raio-X (tarefa 0049)', () => {
+    const clima = {
+      chuva_pct: 2.2,
+      tmax_c: 1.3,
+      modelos: 3,
+      modelos_menos_chuva: 1,
+      modelos_mais_chuva: 2,
+      modelos_mais_quente: 3,
+      cenario: 'ssp245',
+      periodo: '2041-2060',
+    }
+    const s = buildSuggestion(rec({ clima_futuro: clima }), null)
+    expect(s?.climate).toEqual(clima)
   })
 
   it('sem nenhuma opção na janela, não há sugestão', () => {

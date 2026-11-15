@@ -1,3 +1,4 @@
+import type { AlertaGeada, ClimaFuturo } from './raioX'
 import type { Colheita, Talhao, Textura } from './talhao'
 
 /** Tipos do contrato `GET /api/recomendacao` (plano técnico do backend, §3.2). */
@@ -85,20 +86,6 @@ export const OBJETIVOS: readonly Objetivo[] = ['seguranca', 'renda', 'terra']
 /** Ordem das opções e plano sugerido para um objetivo, prontos no motor. */
 export type ObjetivoResultado = { ordem: CropId[]; plano: CropId[]; nota_plano: number }
 
-/** Clima de 2041–2060 na célula: chuva em % e máxima em °C (média dos modelos) e quantos concordam. */
-export type ClimaFuturo = {
-  chuva_pct: number
-  tmax_c: number
-  modelos: number
-  concordam_chuva: number
-  concordam_tmax: number
-  meses: number[]
-  cenario: string
-}
-
-/** Anos com mínima de `tmin_max_c` °C ou menos nos `meses` (NASA POWER). */
-export type Geada = { anos: number; total: number; tmin_max_c: number; meses: number[] }
-
 export type Opcao = {
   id: CropId
   nome: string
@@ -141,16 +128,6 @@ export type Plano = { anos: CropId[]; nota: number; descricao: string }
 
 export type NivelSinal = 'normal' | 'seco' | 'incerto'
 
-/** Regra da data (tarefa 0038): chuva de `inicio` à véspera de `data_limite` abaixo de `chuva_min_mm` → Plano B. */
-export type RegraData = {
-  data_limite: string
-  inicio: string
-  dias: number
-  chuva_min_mm: number
-  /** Média desses dias na série de chuva guardada da célula. */
-  media_mm: number
-}
-
 /** A umidade da terra agora pelo SMAP (tarefa 0038): só informa, não decide o plano. */
 export type SmapAgora = { percentil: number; data: string; texto: string }
 
@@ -165,9 +142,6 @@ export type SinalOutono = {
   fonte: string[]
   /** Dia em que a previsão do ENSO foi publicada (ISO). */
   data: string
-  /** Com a série de chuva, o texto é a regra da data. */
-  regra_dia_plantar: { data_limite: string; texto: string }
-  regra_data?: RegraData | null
   smap_agora?: SmapAgora | null
 }
 
@@ -193,10 +167,13 @@ export type Recomendacao = {
   sinal?: SinalOutono | null
   /** Tarefa 0044: ordem e plano por objetivo do produtor (o navegador só escolhe). */
   objetivos?: Partial<Record<ObjetivoChave, ObjetivoResultado>>
-  /** Clima de 2041–2060 na célula; null sem o CMIP6. */
+  /**
+   * Clima de 2041–2060 na célula: o mesmo do cartão do raio-X (tarefa 0049), para as duas telas dizerem o
+   * mesmo número; null sem o CMIP6.
+   */
   clima_futuro?: ClimaFuturo | null
-  /** Risco de geada na célula; null sem série. */
-  geada?: Geada | null
+  /** Alerta de geada da célula, o mesmo do raio-X: null sem nenhum ano com geada. */
+  geada?: AlertaGeada | null
 }
 
 export type RecomendacaoParams = {
@@ -213,9 +190,6 @@ export type Exemplo = {
   talhao: Talhao
   recomendacao: Recomendacao
 }
-
-/** Tipo de cada cultura (PRD §5): quais dão grão e quais deixam a terra coberta. */
-export const GRAIN_CROPS: ReadonlySet<CropId> = new Set(['milho_braquiaria', 'milho_safrinha', 'sorgo'])
 export const COVER_CROPS: ReadonlySet<CropId> = new Set([
   'milho_braquiaria',
   'milho_safrinha',

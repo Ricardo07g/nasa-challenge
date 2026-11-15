@@ -50,6 +50,7 @@ class VerdeSchema(_Frozen):
     pico_data: date | None
     safra: str | None
     fonte: str
+    soja_vista: bool | None  # o satélite viu a soja no verão do pico (tarefa 0049)
 
 
 class ChuvaTipicaSchema(_Frozen):

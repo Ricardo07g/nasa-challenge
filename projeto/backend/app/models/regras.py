@@ -232,7 +232,7 @@ class RegrasSinalOutono:
     chance_seco_min: float  # chance (0 a 1) de chuva abaixo do normal que já é sinal de seco
     chance_normal_max: float  # abaixo disso (e com a terra sem falta de água) é sinal de normal
     smap_percentil_seco: float  # terra seca: percentil do SMAP abaixo disso...
-    chuva_fracao_seco: float  # ...e chuva recente abaixo desta fração da média
+    chuva_fracao_seco: float  # ...e chuva recente abaixo desta fração da média (sem uso)
 
 
 @dataclass(frozen=True)
@@ -243,7 +243,6 @@ class RegrasSinalEnso:
     fase_chance_min_pct: int  # chance mínima (%) da fase mais provável para haver sinal
     anos_fase_min: int  # mínimo de anos daquela fase na série para contar o histórico
     fracao_anos_ruins_seco: float  # anos ruins do Plano A na fase a partir dos quais é seco
-    dias_regra_data: int  # dias antes da data limite somados na regra da data
     smap_faixas_pct: tuple[float, ...]  # percentis do SMAP que separam as faixas da frase
 
 
@@ -403,21 +402,6 @@ class RegrasEnsoAcerto:
 
 
 @dataclass(frozen=True)
-class RegrasClimaFuturoSugestao:
-    """Meses da variação de chuva e máxima de 2041-2060 na célula (tarefa 0044; unificar na S9)."""
-
-    meses: tuple[int, ...]
-
-
-@dataclass(frozen=True)
-class RegrasGeadaSugestao:
-    """Anos com mínima de `tmin_max_c` °C ou menos nos `meses` (tarefa 0044; unificar na S9)."""
-
-    tmin_max_c: float
-    meses: tuple[int, ...]
-
-
-@dataclass(frozen=True)
 class RegrasPlanoB:
     """Quando o limite de chuva do Plano B "separa bem" os anos bons dos ruins (tarefa 0045).
 
@@ -471,7 +455,5 @@ class Regras:
     alertas_area: RegrasAlertasArea
     agua: RegrasAgua
     enso_acerto: RegrasEnsoAcerto
-    clima_futuro_sugestao: RegrasClimaFuturoSugestao
-    geada_sugestao: RegrasGeadaSugestao
     plano_b: RegrasPlanoB
     chuva_aproveitada: RegrasChuvaAproveitada

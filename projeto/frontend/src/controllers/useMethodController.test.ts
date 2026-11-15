@@ -6,6 +6,10 @@ import { buildRecomendacao } from '../repositories/mocks/fixtures'
 import type { FarmService } from '../services/farmService'
 import type { TelegramService } from '../services/telegramService'
 import { providers } from '../test/providers'
+import type { MetodoRegras } from '../models/metodo'
+import { ApiError } from '../repositories/httpClient'
+import type { MetodoRepository } from '../repositories/metodoRepository'
+import { createMockMetodoRepository } from '../repositories/mocks/mockMetodo'
 import { useMethodController } from './useMethodController'
 
 const telegram: TelegramService = { enabled: true, linkFor: () => 'https://t.me/BotDoTime?start=x' }
@@ -23,9 +27,11 @@ const talhao = {
 function deps(
   load: () => Promise<Recomendacao> = () => Promise.resolve(sample),
   loadTalhao: () => Promise<Talhao> = () => Promise.resolve(talhao),
+  loadRules: () => Promise<MetodoRegras> = () => createMockMetodoRepository().get(),
 ) {
   const farm: FarmService = { talhao: vi.fn(loadTalhao), recomendacao: vi.fn(load) }
-  return { farm }
+  const method: MetodoRepository = { get: vi.fn(loadRules) }
+  return { farm, method }
 }
 
 describe('useMethodController (tela 9)', () => {
@@ -127,5 +133,22 @@ describe('useMethodController (tela 9)', () => {
     await waitFor(() => expect(result.current.sources.status).toBe('error'))
     act(() => result.current.retrySources())
     await waitFor(() => expect(result.current.sources.status).toBe('ready'))
+  })
+
+  it('as regras da conta vêm do /api/metodo (tarefa 0049)', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useMethodController(d), { wrapper: providers('/como-funciona') })
+
+    await waitFor(() => expect(result.current.rules).not.toBeNull())
+    expect(result.current.rules?.deu_certo.isna_grao_pct).toBe(55)
+  })
+
+  it('sem a rota (API antiga) ou com falha, as regras ficam de fora', async () => {
+    const d = deps(undefined, undefined, () => Promise.reject(new ApiError('/api/metodo', 404, null)))
+    const { result } = renderHook(() => useMethodController(d), { wrapper: providers('/como-funciona') })
+
+    await waitFor(() => expect(d.method.get).toHaveBeenCalled())
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    expect(result.current.rules).toBeNull()
   })
 })

@@ -469,33 +469,36 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **previsão do ENSO** (`FileEnsoForecastRepository`, `ENSO_PREVISAO_PATH`): a chance oficial de
     El Niño, neutro e La Niña da NOAA CPC na estação do outono da safrinha (`sinal_enso.estacao_previsao`
     do `regras.yaml`: FMA, fevereiro a abril). **Sem o arquivo, sem a estação nele ou com ela já
-    passada, o `sinal` sai `null`** ("Ainda não conectado" na tela 7);
+    passada, o `sinal` sai `null`** (o cartão do sinal não aparece no Plano);
   - **ONI de cada ano** (`FileEnsoRepository`, `ONI_PATH`, tarefa 0035) com o `bom` de cada ano do
     `anos_detalhe` da opção do 1º ano do Plano A: em quantos anos daquela fase ela deu certo;
+  - **o Plano A e o Plano B são os da tela do Plano** (tarefa 0049, S9): o service recebe as culturas
+    (`cultura_a`, `cultura_b`), não os planos. No `/recomendacao`, `cultura_a` = o 1º ano do Plano A
+    sugerido (a melhor opção) e `cultura_b` = o Plano B do `PlanBService` para ela (a cultura que
+    mais deu certo quando a do A falhou), o mesmo do cartão "Plano A e Plano B"; no `/api/plano`, o
+    1º ano do plano que a tela mostra (o sugerido ou o editado) e o Plano B dele. O
+    `plano_3_anos.seco` do motor não entra mais no sinal;
   - **SMAP recente** (`FileRecentSoilMoistureRepository`, `SMAP_RECENTE_PATH`, tarefa 0031): **só
     informa** (`smap_agora`). Sozinho não liga o sinal e nunca muda o nível.
 
   Regra (números no grupo `sinal_enso`, hipótese do time, **a revisar**):
   - `incerto`: nenhuma fase com 50% ou mais (`fase_chance_min_pct`), duas empatadas no topo, menos
     de 5 anos daquela fase na série (`anos_fase_min`; ano sem ONI não conta como neutro), ou o Plano B
-    não se saiu melhor que o A nesses anos;
+    não se saiu melhor que o A nesses anos, ou não há Plano B ("Nenhuma outra cultura se saiu melhor
+    nesses anos.");
   - `seco` (marca o Plano B): a opção do 1º ano do Plano A deu errado em metade ou mais dos anos da
-    fase (`fracao_anos_ruins_seco`) e o 1º ano do Plano B se saiu melhor (ou é a mesma cultura, ou
-    pousio);
+    fase (`fracao_anos_ruins_seco`) e a do Plano B se saiu melhor nesses anos;
   - `normal` (marca o Plano A): no resto.
-  - **Regra da data** (`regra_dia_plantar.texto` e `regra_data`): "Se nos 30 dias antes de <data
-    limite> chover menos que X mm (60% da média de M mm), vá de plano B". M é a média da chuva da
-    data limite − 30 dias até a véspera na série guardada da célula (a mesma `climate_season` do
-    motor: POWER ou IMERG), X = `sinal_outono.chuva_fracao_seco` × M, em mm inteiros; a data limite
-    é a da cultura do 1º ano do Plano A (ou do B, se o A começa em pousio). Sem a série, volta a
-    frase antiga do dia de plantar ("se a terra estiver seca").
+  - **Sem a regra da data** (tarefa 0049, S9 da remodelagem): o `regra_dia_plantar` e o `regra_data`
+    (chuva dos 30 dias antes da data limite) saíram da API, porque nenhuma tela usava mais (a tela do
+    Plano trocou a regra pelo Plano A / Plano B com o número derivado da série, tarefa 0045). O
+    `sinal_outono.chuva_fracao_seco` ficou sem uso no `regras.yaml`, como o `chance_seco_min`.
   - `motivo`: "Previsão para fevereiro a abril de 2027: El Niño (98%, NOAA). Nos 7 anos de El Niño
     desde 2005, milho sozinho deu certo em 5." O nome da fonte vem do arquivo (`fonte`). Nunca chama
     El Niño de "ano seco" (PRD 7.10).
   - Contrato do front (`SinalOutono` em `src/models/recomendacao.ts`): `nivel`, `motivo`, `fonte` (a
-    previsão primeiro, depois a chuva da regra e o `SMAP`), `data` (dia da emissão da previsão),
-    `regra_dia_plantar`, e os opcionais `regra_data` (`data_limite`, `inicio`, `dias`,
-    `chuva_min_mm`, `media_mm`) e `smap_agora` (`percentil`, `data`, `texto`).
+    previsão primeiro, depois a fonte da chuva da série e o `SMAP`), `data` (dia da emissão da
+    previsão) e o opcional `smap_agora` (`percentil`, `data`, `texto`).
   - **Fora do sinal** (continuam no repositório, sem uso): o GEOS-S2S (`SeasonalForecastRepository`,
     `NoAutumnSignalDataRepository`; só NetCDF-4/HDF5, tarefa 0032) e a chuva recente do IMERG Late
     (`FileRecentRainRepository`, `IMERG_LATE_PATH`; só de fev a jul, tarefa 0033).
@@ -739,7 +742,10 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - `verde` (`NdviStripService.green`): `ultimo_ndvi`/`ultimo_data` (a última leitura da série do
     ponto) e `pico_ndvi`/`pico_data`/`safra` (o maior NDVI da janela do pico da soja,
     `regiao_ndvi.pico_inicio` a `pico_fim`, no último ano da série); sem série, o pico do mapa da soja
-    recente (RF-24).
+    recente (RF-24). `soja_vista` (tarefa 0049): o satélite viu a soja naquele verão, pela regra da
+    faixa do histórico (`FieldHistoryService.soy_harvest_date`: pico e colheita; sem série, o `vista`
+    do mapa da soja recente); `false` = o pico é só o maior verde de jan–mar e a tela não diz "pico da
+    soja"; `null` sem leitura do verão.
   - `chuva`: `media_mm` de `raio_x.chuva_inicio` a `chuva_fim` (a temporada guardada), `anos`,
     `fonte` e `fim_das_chuvas` (o mesmo objeto do `/talhao`).
   - `veranico`: `dias`, `ano` (empate: o mais recente), `inicio` ("MM-DD"), `total_anos`, `fonte`.
@@ -789,6 +795,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   Para ligar o arquivo: **com uv**,
   `AREA_QUEIMADA_PATH=../../data/baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json` no `.env`
   desta pasta; **no compose**, já ligado. Lido uma vez por processo: reinicie o backend.
+  Com o arquivo cobrindo o ponto, o `/talhao` lista `{"fonte": "modis_mcd64a1", "periodo":
+  "2016-2025"}` em `dados` (tarefa 0049): a missão e "De onde vem cada dado" citam o MCD64A1 só aí.
 - **Aba Sugestão** (remodelagem S5a, tarefa 0044, RF-30): campos novos do `/recomendacao` e do
   `/exemplo`, todos opcionais no front (contrato em `docs/tarefas/0044-sugestao.md`). Regras nos
   services, números no `regras.yaml`:
@@ -814,10 +822,14 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     é o melhor do PRD 7.7 que começa pela 1ª da ordem (`RotationPlanService.best_plan_starting_with`;
     nos objetivos, sem o pousio). **O Plano A (`plano_3_anos.normal`) é o plano do equilíbrio: começa
     pela melhor opção**; o Plano B continua livre. A reordenação é no motor; o navegador só escolhe;
-  - **na célula** (`clima_futuro`, `geada`; `CellClimateFactsService`, grupos
-    `clima_futuro_sugestao` e `geada_sugestao`): variação de chuva e máxima de março a maio em
-    2041–2060 com a concordância dos modelos, e anos com mínima de 3 °C ou menos de maio a julho.
-    Cálculo pequeno da S5a: a seção 4 faz o mesmo no raio-X; unificar na S9;
+  - **na célula** (`clima_futuro`, `geada`): **os mesmos objetos do raio-X** (tarefa 0049, S9), para
+    a Sugestão e a tela 4 dizerem o mesmo número: `clima_futuro` = o cartão "Clima 2041–2060"
+    (`FutureClimateService`: cada mês pesado pela chuva média do mês na célula, com
+    `modelos_menos_chuva`, `modelos_mais_chuva`, `modelos_mais_quente`, `cenario` e `periodo`) e
+    `geada` = o alerta de geada (`RaioXClimateService.frost`, grupo `alertas_area`: `anos`,
+    `total_anos`, `temp_c`, `menor_temp_c`, `fonte`; `null` sem nenhum ano com geada). Saíram o
+    `CellClimateFactsService` e os grupos `clima_futuro_sugestao` e `geada_sugestao` (a média
+    simples dos meses dava −0,7% na Sugestão contra +2,2% no raio-X na fazenda da UFU);
   - `fora_da_janela[].data_limite` (o aviso único da colheita tarde junta as culturas por data) e
     `GET /api/safra-passada?…&opcao=<id>` (o detalhe de qualquer ano do explorador, para a opção
     que a aba mostra; fora da janela, 404 `NOT_FOUND`).
@@ -845,7 +857,11 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     chuva dos `plano_b.dias_antes_semeadura` (15) dias antes da semeadura que mais acerta as falhas do
     A; `separa` só com as 4 condições do grupo `plano_b` (3 falhas ou mais, 50% das falhas, 60% dos
     marcados e chance ao acaso de até 10%, hipótese do time). Sem B, `motivo`: `pousio`,
-    `nunca_falhou` ou `nenhuma_melhor`. O `plano_3_anos.seco` do motor e o sinal do outono não mudam.
+    `nunca_falhou` ou `nenhuma_melhor`. O `plano_3_anos.seco` do motor não muda;
+  - `sinal` (tarefa 0049): o sinal do outono no formato do `/recomendacao`, com o Plano A e o Plano B
+    desta tela (`SinalOutonoService`, injetado no `PlanEvaluationService`). Com o plano sugerido, é o
+    mesmo `sinal` do `/recomendacao`; com o plano editado, fala do Plano A editado. `null` sem a
+    previsão do ENSO, com o 1º ano no pousio ou fora da janela.
 - **Região pelo satélite** (P3, tarefas 0034 e 0036): `GET /api/regiao?lat&lon`, no contrato do
   front (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem
   banco).
@@ -988,6 +1004,11 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   com o `COMMUNITY_DEVICE_SALT` (o `CHECK` exige 64 dígitos hexadecimais) e nunca volta na
   resposta; a listagem não traz o hash, a hora do envio nem o ponto exato. Não grave nem registre
   em log o ponto ou o identificador do aparelho. Detalhes: `docs/tarefas/0047-comunidade.md`.
+- **Regras da tela "Como a conta é feita"** (`GET /api/metodo`, tarefa 0049): `MethodService` escolhe no
+  `regras.yaml` os números que a tela explica (`deu_certo` com o ISNA em %, `pesos` em %, `renda`, `agua` com a
+  sede, `rotacao` com o bônus e as supressoras do nematoide, `plano_b`, `alertas` de geada, chuva forte e fogo,
+  `avisos` e `sinal`). Só números (as frases são do front), sem banco e sem cache HTTP. Os schemas têm o prefixo
+  `Metodo` para não colidir no OpenAPI com os do `/recomendacao`.
 - **Avisos do ponto marcado** (`GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas]`, tela "Avisos",
   remodelagem S6, tarefa 0046, RF-31). Roda o motor uma vez (`RecommendationService.recommend`, com a mesma
   colheita, solo e safras confirmadas do `/recomendacao`) e junta quatro grupos. O `AvisosService` só busca e
@@ -1019,6 +1040,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     avisos dele não aparecem) e 15 min de espera antes de tentar de novo. A última leitura é o último dia com
     chuva e máxima (o POWER sai com ~2 a 3 dias de atraso). A chuva recente nunca é comparada com "o normal": a
     série guardada só tem janeiro a julho.
+  - **El Niño / La Niña** (`enso`): os `valores` levam também o `sinal` (`normal`, `seco`, `incerto` ou `null`), o
+    veredito do sinal do outono do `/recomendacao` (o mesmo do Plano de 3 anos com o plano sugerido), para o "o
+    que fazer" do front dar o mesmo conselho que a tela do Plano (tarefa 0049).
   - **Safrinha:** semeadura = o dia do motor para a faixa no ano de hoje; colheita = semeadura + ciclo da melhor
     opção; `em_andamento` com hoje entre as duas (o "hoje" é injetado no service). Fora dela, `explorar_ano` é o
     último ano da série (o front liga `/resposta?…&ano=<ano>`).

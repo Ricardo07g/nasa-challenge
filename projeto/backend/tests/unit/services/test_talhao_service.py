@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 
+from app.models.area_queimada import QueimadasPerto
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.soja_recente import PicoSojaRecente, SojaRecente
 from app.models.talhao import (
@@ -129,12 +130,22 @@ class FakeSojaRecenteRepository:
         return PicoSojaRecente(safra="2025/26", fonte="teste", ndvi_pico=self._ndvi_pico)
 
 
+class FakeBurnedArea:
+    """Arquivo da área queimada de teste: cobre só a caixa em volta da fazenda (anos de teste)."""
+
+    def get_burned_near(self, lat: float, lon: float, km: float) -> QueimadasPerto | None:
+        if not (-19.0 <= lat <= -18.9 and -48.25 <= lon <= -48.15):
+            return None
+        return QueimadasPerto(ano_inicio=2016, ano_fim=2025, fonte="MODIS MCD64A1", pixels=())
+
+
 def _service(
     climate: FakeClimateRepository | None = None,
     ndvi: FakeNdviRepository | None = None,
     ingestion_service: Any = None,
     smap: FakeSmapRepository | None = None,
     soja: SojaRecenteService | None = None,
+    burned: FakeBurnedArea | None = None,
 ) -> TalhaoService:
     return TalhaoService(
         climate_repo=climate or FakeClimateRepository(),
@@ -144,6 +155,7 @@ def _service(
         ingestion_service=ingestion_service,
         smap_repo=smap,
         soja_recente_service=soja,
+        burned_area_repo=burned,
     )
 
 
@@ -244,6 +256,15 @@ def test_should_not_list_smap_when_the_cell_has_no_smap() -> None:
     talhao = _service(smap=FakeSmapRepository()).inspect_talhao(lat=-18.9543, lon=-48.1993)
 
     assert all(d.fonte != "smap" for d in talhao.dados_fontes)
+
+
+def test_should_list_the_burned_area_only_when_the_file_covers_the_point() -> None:
+    # S9 (tarefa 0049): a missão cita o MCD64A1 só se o arquivo existir e cobrir o ponto.
+    talhao = _service(burned=FakeBurnedArea()).inspect_talhao(lat=-18.9543, lon=-48.1993)
+    no_file = _service().inspect_talhao(lat=-18.9543, lon=-48.1993)
+
+    assert FonteDado(fonte="modis_mcd64a1", periodo="2016-2025") in talhao.dados_fontes
+    assert all(d.fonte != "modis_mcd64a1" for d in no_file.dados_fontes)
 
 
 def test_should_return_outside_area_without_sources_when_point_has_no_data() -> None:

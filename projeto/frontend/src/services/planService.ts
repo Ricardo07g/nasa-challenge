@@ -1,6 +1,6 @@
 import type { Lang } from '../i18n/language'
 import type { PlanoAvaliado, PlanoParams } from '../models/plano'
-import type { CropId, Objetivo, Recomendacao } from '../models/recomendacao'
+import type { CropId, Objetivo, Recomendacao, SinalOutono } from '../models/recomendacao'
 import type { Confirmadas, Historico, SituacaoAno } from '../models/talhao'
 import { planoRepository as defaultRepository } from '../repositories'
 import type { PlanoRepository } from '../repositories/planoRepository'
@@ -40,6 +40,20 @@ export function currentPlan(
   const valid = fromUrl?.length === PLAN_YEARS && fromUrl.every((crop) => choices.includes(crop))
   const years = valid ? [...fromUrl] : [...suggested]
   return { years, suggested: [...suggested], edited: years.some((crop, index) => crop !== suggested[index]) }
+}
+
+/**
+ * Sinal do outono da tela (tarefa 0049): o da avaliação do plano (o Plano A e o Plano B que a tela mostra).
+ * Sem o campo (API antiga) ou enquanto a avaliação carrega, o da recomendação, mas só no plano sugerido:
+ * com o plano editado, o sinal da recomendação falaria de outro Plano A.
+ */
+export function planSignal(
+  evaluation: Pick<PlanoAvaliado, 'sinal'> | null,
+  recomendacao: Recomendacao | null,
+  edited: boolean,
+): SinalOutono | null {
+  if (evaluation && evaluation.sinal !== undefined) return evaluation.sinal
+  return edited ? null : (recomendacao?.sinal ?? null)
 }
 
 /** Troca a cultura de um ano (0, 1 ou 2). */

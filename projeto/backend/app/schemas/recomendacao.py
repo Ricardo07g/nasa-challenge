@@ -14,6 +14,7 @@ from app.models.recomendacao import (
     ResultadoOpcao,
 )
 from app.models.sinal_outono import NivelSinal, SinalOutono
+from app.schemas.raio_x import AlertaGeadaSchema, ClimaFuturoSchema, _dump
 from app.schemas.talhao import TalhaoResponse
 
 
@@ -307,27 +308,6 @@ class ObjetivoSchema(_Frozen):
     nota_plano: float
 
 
-class ClimaFuturoSchema(_Frozen):
-    """Clima de 2041-2060 na célula (tarefa 0044): chuva em % e máxima em °C, média dos modelos."""
-
-    chuva_pct: float
-    tmax_c: float
-    modelos: int
-    concordam_chuva: int
-    concordam_tmax: int
-    meses: list[int]
-    cenario: str
-
-
-class GeadaSchema(_Frozen):
-    """Anos com mínima de `tmin_max_c` °C ou menos nos `meses` (NASA POWER, tarefa 0044)."""
-
-    anos: int
-    total: int
-    tmin_max_c: float
-    meses: list[int]
-
-
 class AlternativaSchema(_Frozen):
     motivo: str
     opcao: str
@@ -353,21 +333,6 @@ class Plano3AnosSchema(_Frozen):
     hoje: PlanoSchema
 
 
-class RegraDiaPlantarSchema(_Frozen):
-    data_limite: date
-    texto: str
-
-
-class RegraDataSchema(_Frozen):
-    """Regra da data (0038): chuva de `inicio` à véspera de `data_limite` < `chuva_min_mm`."""
-
-    data_limite: date
-    inicio: date
-    dias: int
-    chuva_min_mm: int
-    media_mm: int
-
-
 class SmapAgoraSchema(_Frozen):
     """O SMAP de agora (tarefa 0038): só informa, não decide o plano."""
 
@@ -383,34 +348,17 @@ class SinalSchema(_Frozen):
     motivo: str
     fonte: list[str]
     data: date
-    regra_dia_plantar: RegraDiaPlantarSchema
-    # Campos opcionais da tarefa 0038 (nulos sem a série de chuva ou sem o SMAP recente)
-    regra_data: RegraDataSchema | None = None
+    # Campo opcional da tarefa 0038 (nulo sem o SMAP recente)
     smap_agora: SmapAgoraSchema | None = None
 
     @classmethod
     def from_model(cls, sinal: SinalOutono) -> "SinalSchema":
-        regra, smap = sinal.regra_data, sinal.smap_agora
+        smap = sinal.smap_agora
         return cls(
             nivel=sinal.nivel,
             motivo=sinal.motivo,
             fonte=list(sinal.fonte),
             data=sinal.data,
-            regra_dia_plantar=RegraDiaPlantarSchema(
-                data_limite=sinal.regra_dia_plantar.data_limite,
-                texto=sinal.regra_dia_plantar.texto,
-            ),
-            regra_data=(
-                RegraDataSchema(
-                    data_limite=regra.data_limite,
-                    inicio=regra.inicio,
-                    dias=regra.dias,
-                    chuva_min_mm=regra.chuva_min_mm,
-                    media_mm=regra.media_mm,
-                )
-                if regra is not None
-                else None
-            ),
             smap_agora=(
                 SmapAgoraSchema(percentil=smap.percentil, data=smap.data, texto=smap.texto)
                 if smap is not None
@@ -436,7 +384,7 @@ class RecomendacaoResponse(_Frozen):
     # Aba Sugestão (tarefa 0044): ordem e plano por objetivo, clima de 2041-2060 e geada na célula
     objetivos: dict[str, ObjetivoSchema] = Field(default_factory=dict)
     clima_futuro: ClimaFuturoSchema | None = None
-    geada: GeadaSchema | None = None
+    geada: AlertaGeadaSchema | None = None
 
     @classmethod
     def from_model(cls, rec: Recomendacao) -> "RecomendacaoResponse":
@@ -473,29 +421,8 @@ class RecomendacaoResponse(_Frozen):
                 )
                 for chave, o in rec.objetivos.items()
             },
-            clima_futuro=(
-                ClimaFuturoSchema(
-                    chuva_pct=rec.clima_futuro.chuva_pct,
-                    tmax_c=rec.clima_futuro.tmax_c,
-                    modelos=rec.clima_futuro.modelos,
-                    concordam_chuva=rec.clima_futuro.concordam_chuva,
-                    concordam_tmax=rec.clima_futuro.concordam_tmax,
-                    meses=list(rec.clima_futuro.meses),
-                    cenario=rec.clima_futuro.cenario,
-                )
-                if rec.clima_futuro is not None
-                else None
-            ),
-            geada=(
-                GeadaSchema(
-                    anos=rec.geada.anos,
-                    total=rec.geada.total,
-                    tmin_max_c=rec.geada.tmin_max_c,
-                    meses=list(rec.geada.meses),
-                )
-                if rec.geada is not None
-                else None
-            ),
+            clima_futuro=_dump(rec.clima_futuro),  # type: ignore[arg-type]
+            geada=_dump(rec.geada),  # type: ignore[arg-type]
         )
 
 

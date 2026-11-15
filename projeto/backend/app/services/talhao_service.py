@@ -6,10 +6,11 @@ colheita, a ETo de cada mês e o fim das chuvas são a tela 3 nova (tarefa 0042)
 """
 
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, Final
 
 from app.constants import IMERG_RAIN_SOURCE
 from app.models.talhao import FonteDado, Talhao
+from app.repositories.area_queimada_repository import AreaQueimadaRepository
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.ndvi_repository import NdviRepository
 from app.repositories.smap_repository import SMAP_SOURCE, CellSmapRepository
@@ -23,6 +24,11 @@ from app.services.soja_recente_service import SojaRecenteService
 
 CMIP6_PERIOD = "2041-2060"
 CLIMATE_PERIOD = "2005-2024"  # janela das temporadas de chuva (ADR-0003), POWER ou IMERG
+
+
+# Tarefa 0049: o arquivo da área queimada cobre o ponto? Basta um quadrado pequeno em volta dele.
+BURNED_AREA_SOURCE: Final[str] = "modis_mcd64a1"
+BURNED_AREA_CHECK_KM: Final[float] = 0.5
 
 
 class TalhaoService:
@@ -40,6 +46,7 @@ class TalhaoService:
         soja_recente_service: SojaRecenteService | None = None,
         remaining_rain_service: RemainingRainService | None = None,
         rain_end_service: RainEndService | None = None,
+        burned_area_repo: AreaQueimadaRepository | None = None,
     ) -> None:
         self._climate_repo = climate_repo
         self._soil_repo = soil_repo
@@ -51,6 +58,8 @@ class TalhaoService:
         self._soja_recente_service = soja_recente_service
         self._remaining_rain_service = remaining_rain_service or RemainingRainService()
         self._rain_end_service = rain_end_service or RainEndService()
+        # Área queimada do MODIS (MCD64A1): só entra nas fontes quando o arquivo cobre o ponto
+        self._burned_area_repo = burned_area_repo
 
     def inspect_talhao(
         self, lat: float, lon: float, confirmadas: Iterable[tuple[int, str]] = ()
@@ -107,6 +116,17 @@ class TalhaoService:
                         periodo=CMIP6_PERIOD,
                         cenario=scenario,
                         modelos=model_count,
+                    )
+                )
+            burned = (
+                self._burned_area_repo.get_burned_near(lat, lon, BURNED_AREA_CHECK_KM)
+                if self._burned_area_repo
+                else None
+            )
+            if burned is not None:
+                dados_fontes.append(
+                    FonteDado(
+                        fonte=BURNED_AREA_SOURCE, periodo=f"{burned.ano_inicio}-{burned.ano_fim}"
                     )
                 )
             smap = self._smap_repo.get_cell_smap_series(cell_id) if self._smap_repo else []

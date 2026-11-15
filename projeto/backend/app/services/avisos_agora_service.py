@@ -140,8 +140,13 @@ class AvisosAgoraService:
         oni_years: Sequence[OniYear],
         best: ResultadoOpcao | None,
         rain_sources: Sequence[str],
+        sinal: str | None = None,
     ) -> Aviso | None:
-        """A previsão do outono e o que aconteceu com a melhor opção em anos parecidos."""
+        """A previsão do outono e o que aconteceu com a melhor opção em anos parecidos.
+
+        `sinal`: o veredito do sinal do outono do motor (`normal`, `seco` ou `incerto`), o mesmo da
+        tela do Plano; vai nos `valores` para o "o que fazer" dar o mesmo conselho (tarefa 0049).
+        """
         regra = self._rules.sinal_enso
         season = forecast.season(regra.estacao_previsao) if forecast else None
         if forecast is None or season is None or season.last_day() < self._today():
@@ -173,6 +178,7 @@ class AvisosAgoraService:
                 "bons_outros": sum(1 for d in others if d.bom) if history else None,
                 "ano_inicio": min(d.ano for d in known) if history else None,
                 "ano_fim": max(d.ano for d in known) if history else None,
+                "sinal": sinal,
             },
         )
 
