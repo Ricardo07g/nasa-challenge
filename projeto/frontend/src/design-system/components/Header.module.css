@@ -247,13 +247,45 @@
   }
 }
 
-/* Celular bem estreito (até 360 px): um pouco mais justo, para nada estourar */
-@media (max-width: 360px) {
+/*
+ * Celular estreito (até 380 px): tudo um pouco mais justo, para o nome "Raiz Orbital" aparecer inteiro e a
+ * Comunidade continuar com o nome escrito, sem nada estourar na horizontal a partir de 360 px.
+ */
+@media (max-width: 380px) {
   .inner {
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .logo {
+    gap: 6px;
+  }
+
+  .logo svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .brandName {
+    font-size: 16px;
   }
 
   .community {
-    padding: 0 9px;
+    margin-right: 0;
+    padding: 0 8px;
+    gap: 5px;
+    font-size: 13px;
+  }
+
+  .community svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .alerts {
+    width: 34px;
+  }
+
+  .lang span[data-active='false'] {
+    padding: 8px 4px;
   }
 }

@@ -146,7 +146,8 @@
   position: absolute;
   z-index: 3;
   top: 28px;
-  right: var(--page-margin-v4);
+  /* Alinhado à coluna do conteúdo (em 1280 px, igual à margem do protótipo). */
+  right: max(var(--page-margin-v4), calc((100% - var(--page-width-v4)) / 2 + var(--page-margin-v4)));
   display: flex;
   align-items: center;
   gap: 12px;
@@ -193,7 +194,7 @@
   position: absolute;
   z-index: 3;
   top: 92px;
-  right: var(--page-margin-v4);
+  right: max(var(--page-margin-v4), calc((100% - var(--page-width-v4)) / 2 + var(--page-margin-v4)));
   display: flex;
   align-items: center;
   gap: 6px;
