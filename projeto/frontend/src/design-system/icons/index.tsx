@@ -8,11 +8,13 @@ import {
   ArrowRight,
   ArrowUpRight,
   Bell,
+  Calculator,
   CalendarDays,
   Check,
   ChevronDown,
   CircleCheck,
   CircleHelp,
+  Clock,
   CloudOff,
   CloudRain,
   CloudRainWind,
@@ -23,6 +25,7 @@ import {
   FileText,
   Flame,
   History,
+  House,
   Layers,
   Leaf,
   LocateFixed,
@@ -35,12 +38,14 @@ import {
   Send,
   ShieldCheck,
   Snowflake,
+  Sparkle,
   Sprout,
   Thermometer,
   TriangleAlert,
   Square,
   Star,
   Users,
+  Volume1,
   Volume2,
   Wheat,
   X,
@@ -79,8 +84,14 @@ export function SpeakerIcon({ size = 20 }: IconProps) {
   return <Volume2 size={size} {...decorative} />
 }
 
+/** "Parar" do "Ouvir resumo": quadrado cheio. */
 export function StopIcon({ size = 20 }: IconProps) {
-  return <Square size={size} {...decorative} />
+  return <Square size={size} fill="currentColor" {...decorative} />
+}
+
+/** "Ouvir resumo" (tarefa 0052): alto-falante com uma onda, discreto. */
+export function ListenIcon({ size = 17 }: IconProps) {
+  return <Volume1 size={size} {...decorative} />
 }
 
 export function ArrowRightIcon({ size = 20 }: IconProps) {
@@ -250,4 +261,25 @@ export function AlertsIcon({ size = 18 }: IconProps) {
 
 export function WatchIcon({ size = 16 }: IconProps) {
   return <Eye size={size} {...decorative} />
+}
+
+// Tela Início, cabeçalho, rodapé e modais (tarefa 0052)
+/** Faixa do agrônomo: "Como a conta é feita". */
+export function CalculatorIcon({ size = 20 }: IconProps) {
+  return <Calculator size={size} {...decorative} />
+}
+
+/** Lavoura de demonstração (tela "Onde fica a lavoura"). */
+export function HouseIcon({ size = 20 }: IconProps) {
+  return <House size={size} {...decorative} />
+}
+
+/** Marca d'água "Imagem gerada por IA" (regra do NASA Space Apps). */
+export function SparkleIcon({ size = 12 }: IconProps) {
+  return <Sparkle size={size} fill="currentColor" {...decorative} />
+}
+
+/** Clima do futuro (2041 a 2060) no modal "De onde vêm os dados". */
+export function ClockIcon({ size = 20 }: IconProps) {
+  return <Clock size={size} {...decorative} />
 }
