@@ -173,6 +173,8 @@ def _dmr(
     cols: int = GRID_COLUMNS,
     rootzone_unit: str = "m3 m-3",
     skip: str = "",
+    lat_unit: str = "degrees_north",
+    lon_unit: str = "degrees_east",
 ) -> str:
     """DMR (DAP4) montado para o teste no formato do Hyrax, com os nomes e tamanhos conferidos."""
 
@@ -191,8 +193,8 @@ def _dmr(
         '<Dataset xmlns="http://xml.opendap.org/ns/DAP/4.0#" dapVersion="4.0" '
         'name="SMAP_L4_SM_gph_TESTE.h5">'
         f'<Dimension name="y" size="{rows}"/><Dimension name="x" size="{cols}"/>'
-        + variable("cell_lat", "degrees_north")
-        + variable("cell_lon", "degrees_east")
+        + variable("cell_lat", lat_unit)
+        + variable("cell_lon", lon_unit)
         + '<Group name="Geophysical_Data">'
         + variable("sm_rootzone", rootzone_unit)
         + variable("sm_rootzone_wetness", "dimensionless")
@@ -269,6 +271,11 @@ class FakeEarthdata:
         day, hour = datetime.strptime(stamp.group(1), "%Y%m%d").date(), int(stamp.group(2))
         lines = [f"Dataset: {base.rsplit('/', 1)[1]}"]
         for i, row in enumerate(range(r0, r1 + 1)):
+            if c0 == c1:
+                # Como o OPeNDAP real (14/11/2026): recorte de uma coluna só vem sem os valores
+                # ("/cell_lat[0], "); com duas colunas ou mais, vem completo.
+                lines.append(f"{variable}[{i}], ")
+                continue
             if variable == LAT_VARIABLE:
                 values = [grid_lat(row) for _ in range(c0, c1 + 1)]
             elif variable == LON_VARIABLE:
@@ -423,6 +430,14 @@ def test_should_read_grid_size_units_and_fill_value_from_the_dmr() -> None:
     assert (structure.rows, structure.cols) == (GRID_ROWS, GRID_COLUMNS)
     assert structure.units["/Geophysical_Data/sm_rootzone"] == "m3 m-3"
     assert structure.fill_values["/Geophysical_Data/sm_rootzone_wetness"] == -9999.0
+
+
+def test_should_accept_degrees_as_the_unit_of_cell_lat_and_cell_lon() -> None:
+    # Como no DMR real do SPL4SMGP 008 (conferido em 14/11/2026): "degrees" nos dois.
+    structure = parse_dmr(_dmr(lat_unit="degrees", lon_unit="degrees"))
+
+    assert structure.units["/cell_lat"] == "degrees"
+    assert structure.units["/cell_lon"] == "degrees"
 
 
 @pytest.mark.parametrize(

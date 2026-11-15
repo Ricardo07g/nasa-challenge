@@ -112,10 +112,11 @@ DATA_VARIABLES: Final[dict[str, str]] = {
 }
 REQUIRED_FIELDS: Final[tuple[str, ...]] = ("sm_rootzone_wetness", "sm_rootzone_m3_m3")
 _VOLUMETRIC: Final[frozenset[str]] = frozenset({"m3 m-3", "m3/m3", "m^3 m^-3", "m^3/m^3"})
-# Unidades aceitas no DMR. Outra unidade para tudo com a unidade encontrada na mensagem.
+# Unidades aceitas no DMR. Outra unidade para tudo com a unidade encontrada na mensagem. O DMR real
+# do SPL4SMGP 008 diz só "degrees" no cell_lat e no cell_lon (conferido em 14/11/2026).
 EXPECTED_UNITS: Final[dict[str, frozenset[str]]] = {
-    LAT_VARIABLE: frozenset({"degrees_north"}),
-    LON_VARIABLE: frozenset({"degrees_east"}),
+    LAT_VARIABLE: frozenset({"degrees_north", "degrees"}),
+    LON_VARIABLE: frozenset({"degrees_east", "degrees"}),
     DATA_VARIABLES["sm_rootzone_wetness"]: frozenset({"dimensionless", "1", "-", ""}),
     DATA_VARIABLES["sm_rootzone_m3_m3"]: _VOLUMETRIC,
     DATA_VARIABLES["sm_surface_m3_m3"]: _VOLUMETRIC,
@@ -794,11 +795,21 @@ class PixelGrid:
         return self.lat_grid[i][j], self.lon_grid[i][j]
 
 
+def lat_column_window(rows: int) -> PixelWindow:
+    """Janela da coluna do `cell_lat` (todas as linhas): **duas** colunas, não uma.
+
+    O OPeNDAP da Earthdata devolve sem os valores o recorte de uma coluna só (`/cell_lat[0], `,
+    conferido em 14/11/2026); com duas, vem completo. A latitude é a mesma nas duas colunas da grade
+    EASE-Grid 2.0, e quem lê usa a primeira.
+    """
+    return PixelWindow(0, rows - 1, 0, 1)
+
+
 def locate_pixels(
     points: Sequence[Point], client: SmapOpendapClient, granule: Granule, structure: GridStructure
 ) -> PixelGrid:
     """Acha o retângulo pelo `cell_lat` e `cell_lon` e o pixel de 9 km mais perto de cada ponto."""
-    lat_column = client.subset(granule, LAT_VARIABLE, PixelWindow(0, structure.rows - 1, 0, 0))
+    lat_column = client.subset(granule, LAT_VARIABLE, lat_column_window(structure.rows))
     lon_row = client.subset(granule, LON_VARIABLE, PixelWindow(0, 0, 0, structure.cols - 1))
     window = pixel_window_for(points, [row[0] for row in lat_column], lon_row[0])
     lat_grid = client.subset(granule, LAT_VARIABLE, window)
@@ -1113,9 +1124,7 @@ class PlanCounts:
 def _cached_window(points: Sequence[Point], client: SmapOpendapClient) -> PixelWindow | None:
     """O retângulo, se as coordenadas da grade já estiverem no cache (sem rede)."""
     dummy = Granule("", datetime(2015, 3, 31, tzinfo=UTC), "", "")
-    lat_column = client.cached_subset(
-        SubsetTask(dummy, LAT_VARIABLE, PixelWindow(0, GRID_ROWS - 1, 0, 0))
-    )
+    lat_column = client.cached_subset(SubsetTask(dummy, LAT_VARIABLE, lat_column_window(GRID_ROWS)))
     lon_row = client.cached_subset(
         SubsetTask(dummy, LON_VARIABLE, PixelWindow(0, 0, 0, GRID_COLUMNS - 1))
     )
