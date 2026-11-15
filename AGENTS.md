@@ -17,6 +17,9 @@ A fonte de verdade do produto está em `arquivos contexto/`:
 - `Raiz Orbital – prompt do Lovable.md`: prompt completo para gerar o protótipo no Lovable (telas, visual, dados de exemplo, contrato da API).
 - `Raiz Orbital discovery de produto (dores, personas e hipóteses).md`
 - `Raiz Orbital planejamento de produto, business case e business plan.md`
+- `prompt-raiz-orbital.md`: **remodelagem do produto pedida em 15/11/2026** (9 seções: sem R$, busca no
+  mapa, "Quando" novo, raio-X do satélite, abas Sugestão/Comparar/Plano, avisos, comunidade, guia). O roteiro,
+  o estado de cada seção, as decisões e a revisão ficam em `projeto/backend/docs/remodelagem.md`.
 - `Raiz Orbital – plano de evolução do produto.md`: evolução depois do MVP, **por ordem de prioridade** (ajustes A1 e A2, depois P1 a P6; WhatsApp como desejável). Cada item vira requisito no PRD no PR que o implementar.
 
 Leia o PRD antes de implementar qualquer regra de negócio. Se o código e o PRD discordarem, pergunte.
