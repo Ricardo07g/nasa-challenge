@@ -170,6 +170,10 @@ export const pt = {
     rainWhat: 'Chuva e calor',
     history: (years: number) => `${years} anos de histórico do satélite`,
     historyWhat: 'Histórico do satélite',
+    /** Clima de 2041–2060 (NEX-GDDP-CMIP6); a previsão do outono aparece à parte. */
+    future: (start: string, end: string) => `Clima de ${start} a ${end} lido`,
+    futureRead: 'Clima do futuro lido',
+    futureWhat: 'Clima do futuro',
     forecast: (signal: string) => `Previsão do outono: ${signal}`,
     forecastWhat: 'Previsão do outono',
     ready: 'Resposta pronta',
