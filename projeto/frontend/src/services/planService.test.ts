@@ -127,6 +127,13 @@ describe('planService: o plano em cadeia da aba "2. Plano de 3 anos" (tela 5, ta
     expect(planCards(sources({}), 2027)).toBeNull()
   })
 
+  it('sem escolha do produtor (não marcou nada ou "Ainda não sei"), o 1º ano é a nossa sugestão, não "Sua escolha" (15/11/2026)', () => {
+    const fromChoice = buildSugestao({ ...point, fixos: ['sorgo'] }, 'pt')
+    const cards = planCards(sources({ own: null, fromChoice }), 2027)
+    expect(cards?.[0]).toMatchObject({ crop: 'sorgo', tag: 'suggested' })
+    expect(planCards(sources({ own: 'sorgo', fromChoice }), 2027)?.[0].tag).toBe('choice')
+  })
+
   it('trocar o 1º ano solta o 2º e o 3º; trocar o 2º solta o 3º; trocar o 3º só grava ele', () => {
     const params = { lat: 1, lon: 2, escolha: 'sorgo' as const, ano2: 'pousio' as const, ano3: 'milheto' as const }
     expect(yearFlow(params, 0, 'milheto')).toMatchObject({ escolha: 'milheto', ano2: undefined, ano3: undefined })

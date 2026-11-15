@@ -53,9 +53,21 @@ export function planChoice(
   objetivo: Objetivo | null,
   params: Pick<FlowParams, 'escolha' | 'pensa'>,
 ): CropId | null {
+  return ownChoice(recomendacao, objetivo, params) ?? suggestionOf(recomendacao, objetivo)?.id ?? null
+}
+
+/**
+ * A escolha do próprio produtor (15/11/2026): a da URL (`escolha`) ou a que ele marcou no raio-X (`pensa`). Sem marcar
+ * nada ou com "Ainda não sei", **nenhuma**: o plano começa pela sugestão, mas a tela não chama isso de "Sua escolha".
+ */
+export function ownChoice(
+  recomendacao: Recomendacao,
+  objetivo: Objetivo | null,
+  params: Pick<FlowParams, 'escolha' | 'pensa'>,
+): CropId | null {
   const available = availableCrops(recomendacao, objetivo)
   const valid = (crop: CropId | null | undefined) => (crop && available.includes(crop) ? crop : null)
-  return valid(params.escolha) ?? valid(currentChoiceCrop(params.pensa)) ?? suggestionOf(recomendacao, objetivo)?.id ?? null
+  return valid(params.escolha) ?? valid(currentChoiceCrop(params.pensa))
 }
 
 /** A comparação de partida: a escolha e a sugestão; se forem a mesma cultura, entra a próxima do ranking. */

@@ -55,7 +55,7 @@ export function ChooseTab({ t, lang, state, choose }: ChooseTabProps) {
             highlighted: column.id === choose.choice,
             header: <ColumnHead t={t} lang={lang} column={column} choose={choose} />,
             cells: COMPARE_ROWS.map((row) => <Cell key={row} t={t} lang={lang} state={state} column={column} row={row} />),
-            footer: <ChooseButton t={t} state={state} crop={column.id} chosen={column.id === choose.choice} />,
+            footer: <ChooseButton t={t} state={state} crop={column.id} chosen={column.id === choose.own} />,
           }))}
         />
         <div className={styles.next}>
@@ -185,7 +185,7 @@ function ColumnHead({ t, lang, column, choose }: { t: Messages; lang: Lang; colu
     <div className={styles.columnHead}>
       <PlantPhoto {...plantPhotoProps(column.id, lang)} height={120} className={styles.columnPhoto} />
       <div className={styles.tags}>
-        {column.id === choose.choice && <Tag kind="choice">{c.tags.choice}</Tag>}
+        {column.id === choose.own && <Tag kind="choice">{c.tags.choice}</Tag>}
         {column.id === choose.suggestion.id && <Tag kind="suggestion">{c.tags.suggestion}</Tag>}
         {late && <Tag kind="late">{c.tags.late}</Tag>}
       </div>

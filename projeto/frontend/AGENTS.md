@@ -424,7 +424,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   design system (`tablist`; setas, Home e End); trocar de aba é `useReplaceUrl` (sem rolar); o botão do fim da aba 1
   abre a aba 2 do topo. O "Voltar" vai para `/satelite`. **O que fica na URL** (`flowParams.ts`): `objetivo`,
   `comparar` (até 3, o pousio vale), `escolha` (o 1º ano do plano; sem ela, o `pensa` do raio-X e, com "Ainda não
-  sei", a sugestão), `ano2` e `ano3` (os anos que o produtor mudou para outra cultura que não a sugestão do ano) e
+  sei" ou nada marcado, a sugestão; **nesse caso não há "Sua escolha"** em nenhuma etiqueta, caixinha, coluna ou
+  cartão: só a escolha do próprio produtor, `ownChoice`, leva esse nome, e o 1º ano do plano diz "Nossa sugestão"), `ano2` e `ano3` (os anos que o produtor mudou para outra cultura que não a sugestão do ano) e
   `ano` (o ano aberto no "Por que essa sugestão?", que os links antigos usam). Escolher para o plano congela a comparação da tela com a cultura e solta
   `ano2`/`ano3`; trocar o objetivo solta a comparação (e os anos, sem `escolha`). Regras: `services/choiceService.ts`
   (ordem com as fora do prazo no fim, `isLate` = `fora_do_prazo` ou, na API antiga, `!na_janela`; a sugestão é sempre
