@@ -211,7 +211,11 @@ sequenceDiagram
     PlanSvc-->>RecSvc: plano_normal, plano_seco, plano_hoje
 
     RecSvc-->>Ctrl: Recomendacao completa
-    Ctrl-->>UI: HTTP 200 OK (RecomendacaoResponse + Cache-Control + GZip)
+    alt If-None-Match igual ao ETag do corpo (tarefa 0025)
+        Ctrl-->>UI: HTTP 304 Not Modified (sem corpo; o navegador usa o que guardou)
+    else Primeira vez ou dado mudou
+        Ctrl-->>UI: HTTP 200 OK (RecomendacaoResponse + Cache-Control: public, no-cache + ETag + GZip)
+    end
     UI-->>Produtor: Renderiza Tela 5 (A Resposta), Tela 6 (Todas as opções) e Tela 7 (Plano de 3 anos)
 ```
 
