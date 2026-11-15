@@ -1,6 +1,8 @@
 import { Link } from 'react-router'
+import type { ListenSummaryState } from '../controllers/useListenSummary'
+import { BackButton } from '../design-system/components/BackButton'
+import { ListenSummary } from '../design-system/components/ListenSummary'
 import { PageHeading } from '../design-system/components/Content'
-import { BackLink } from '../design-system/components/Navigation'
 import { PlantImage } from '../design-system/plants/PlantImage'
 import type { Messages } from '../i18n/messages.pt'
 import type { GuideArticle } from '../models/guide'
@@ -16,15 +18,24 @@ export type GuideViewProps = {
   query: string
   onQuery: (query: string) => void
   count: number
+  /** "Ouvir resumo" (regra geral 9 do pacote 2). */
+  listen: ListenSummaryState
 }
 
 /** Página inicial do Guia: busca por título e os artigos nos 5 temas. */
-export function GuideView({ t, backTo, groups, query, onQuery, count }: GuideViewProps) {
+export function GuideView({ t, backTo, groups, query, onQuery, count, listen }: GuideViewProps) {
   const g = t.guide
   return (
     <div className={layout.page}>
-      <BackLink to={backTo}>{t.nav.back}</BackLink>
+      <BackButton to={backTo}>{t.nav.back}</BackButton>
       <PageHeading title={g.title} subtitle={g.subtitle} />
+      <ListenSummary
+        supported={listen.supported}
+        speaking={listen.speaking}
+        onToggle={listen.toggle}
+        label={t.listen.summary}
+        stopLabel={t.listen.stop}
+      />
       {/* Tarefa 0051 (RF-35): a área do MVP fica aqui, e não nos artigos (que têm limite de palavras). */}
       <p className={layout.muted}>{g.mvpArea}</p>
       <input
@@ -115,16 +126,23 @@ function Blocks({ blocks }: { blocks: Block[] }) {
 }
 
 /** Um artigo: texto puro no DOM (o "Ouvir" lê o que está no main). */
-export function GuideArticleView({ t, article }: { t: Messages; article: GuideArticle | null }) {
+export function GuideArticleView({ t, article, listen }: { t: Messages; article: GuideArticle | null; listen: ListenSummaryState }) {
   const g = t.guide
   return (
     <div className={layout.page}>
-      <BackLink to="/guia">{g.back}</BackLink>
+      <BackButton to="/guia">{g.back}</BackButton>
       {article ? (
         <article className={styles.article}>
           {article.draft && <p className={styles.draftNote}>{g.draft}</p>}
           {article.plant && <PlantImage plant={article.plant} label={g.plantAlt(g.plants[article.plant])} />}
           <h1 className={layout.sectionTitle}>{article.title}</h1>
+          <ListenSummary
+            supported={listen.supported}
+            speaking={listen.speaking}
+            onToggle={listen.toggle}
+            label={t.listen.summary}
+            stopLabel={t.listen.stop}
+          />
           <div className={styles.prose}>
             <Blocks blocks={article.blocks} />
           </div>

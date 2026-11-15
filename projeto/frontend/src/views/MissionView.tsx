@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
+import type { ListenSummaryState } from '../controllers/useListenSummary'
+import { BackButton } from '../design-system/components/BackButton'
+import { ListenSummary } from '../design-system/components/ListenSummary'
 import { Button } from '../design-system/components/Button'
 import { ProgressBar } from '../design-system/components/Feedback'
-import { BackLink } from '../design-system/components/Navigation'
 import {
   CheckIcon,
   ClimateIcon,
@@ -38,6 +40,8 @@ export type MissionViewProps = {
   onSpin: () => void
   onWait: () => void
   onRetry: () => void
+  /** "Ouvir resumo" (regra geral 9 do pacote 2). */
+  listen: ListenSummaryState
 }
 
 const PHASE_ICONS: ReactNode[] = [
@@ -90,14 +94,14 @@ function phaseLabel(t: Messages, index: number, facts: MissionFacts | null): str
 
 /** Tela de cálculo "Missão: sua lavoura" (RF-19): cena do satélite à esquerda, diário da missão à direita. */
 export function MissionView(props: MissionViewProps) {
-  const { t, lang, status, phase, complete, facts, place, weak, reducedMotion, backTo, continueTo } = props
+  const { t, lang, status, phase, complete, facts, place, weak, reducedMotion, backTo, continueTo, listen } = props
   const m = t.mission
   const results = phaseResults(t, lang, facts)
 
   if (status === 'outside') {
     return (
       <div className={styles.page}>
-        <BackLink to={backTo}>{t.nav.back}</BackLink>
+        <BackButton to={backTo}>{t.nav.back}</BackButton>
         <h1 className={styles.title}>{m.title}</h1>
         <FlowOutside t={t} />
       </div>
@@ -106,7 +110,7 @@ export function MissionView(props: MissionViewProps) {
 
   return (
     <div className={styles.page}>
-      <BackLink to={backTo}>{t.nav.back}</BackLink>
+      <BackButton to={backTo}>{t.nav.back}</BackButton>
       <div className={styles.layout} data-reduced={reducedMotion}>
         {!reducedMotion && <MissionScene {...props} results={results} />}
         <section className={styles.panel} aria-label={m.title}>
@@ -116,6 +120,13 @@ export function MissionView(props: MissionViewProps) {
           </p>
           <h1 className={styles.title}>{m.title}</h1>
           {place && <p className={styles.place}>{t.where.near(place)}</p>}
+          <ListenSummary
+            supported={listen.supported}
+            speaking={listen.speaking}
+            onToggle={listen.toggle}
+            label={t.listen.summary}
+            stopLabel={t.listen.stop}
+          />
           <ProgressBar label={m.title} value={phase} max={6} />
           <strong className={styles.count}>{m.collected(phase)}</strong>
           <ol className={styles.log}>

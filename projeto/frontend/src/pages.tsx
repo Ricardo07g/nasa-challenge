@@ -141,6 +141,7 @@ export function MissionPage() {
       onSpin={state.spin}
       onWait={state.waitMore}
       onRetry={state.retry}
+      listen={state.listen}
     />
   )
 }
@@ -300,6 +301,7 @@ export function CommunityPage() {
       regionRadius={state.regionRadius}
       regionDistance={state.regionDistance}
       history={state.history}
+      listen={state.listen}
     />
   )
 }
@@ -322,6 +324,7 @@ export function MethodPage() {
       onRetrySources={state.retrySources}
       rain={state.rain}
       rules={state.rules}
+      listen={state.listen}
     />
   )
 }
@@ -355,6 +358,7 @@ export function GuidePage() {
       query={state.query}
       onQuery={state.setQuery}
       count={state.count}
+      listen={state.listen}
     />
   )
 }
@@ -362,9 +366,9 @@ export function GuidePage() {
 export function GuideArticlePage() {
   const { messages: t } = useI18n()
   const { artigo = '' } = useParams()
-  const { article } = useGuideArticleController(artigo)
+  const { article, listen } = useGuideArticleController(artigo)
   useDocumentTitle(article?.title ?? t.guide.title)
-  return <GuideArticleView t={t} article={article} />
+  return <GuideArticleView t={t} article={article} listen={listen} />
 }
 
 /** Tela "Avisos" (seção 6 da remodelagem, tarefa 0046): os avisos do ponto salvo no aparelho. */
@@ -384,6 +388,7 @@ export function AvisosPage() {
       explorerTo={state.explorerTo}
       markTo={state.markTo}
       backTo={state.backTo}
+      listen={state.listen}
     />
   )
 }

@@ -327,6 +327,11 @@ export const pt = {
     soyContinue: 'Seguir mesmo assim',
   },
   mission: {
+    /** "Ouvir resumo" (regra geral 9 do pacote 2): o lugar e os anos de chuva lidos. */
+    summary: (place: string | null, rainYears: number | null) =>
+      `O satélite está lendo a sua lavoura${place ? `, perto de ${place}` : ''}. ${
+        rainYears ? `Juntamos ${rainYears} anos de chuva, o solo e o verde da lavoura, em 6 partes.` : 'Juntamos a chuva, o solo e o verde da lavoura, em 6 partes.'
+      } Quando terminar, você vê o raio-X da sua terra.`,
     title: 'Missão: sua lavoura',
     intro: 'Estamos olhando sua lavoura do espaço',
     phases: [
@@ -910,14 +915,24 @@ export const pt = {
       'Mande a localização da lavoura e diga quando colhe a soja. O bot responde em texto e em áudio, com o link desta página. Quem quiser recebe avisos de falta de chuva e calor. Em português e em inglês.',
   },
   community: {
+    /** "Ouvir resumo" (regra geral 9 do pacote 2): 3 frases montadas com os números da tela. */
+    summaryIntro: (km: number) => `Aqui você vê o que os vizinhos contam, até ${km} km da sua lavoura, e conta o que aconteceu aí.`,
+    summaryPlanting: (count: number, season: string) =>
+      `${count} ${count === 1 ? 'vizinho contou o que fez' : 'vizinhos contaram o que fizeram'} depois da soja ${season}.`,
+    summaryRain: (count: number, mm: string) =>
+      `Nos últimos 7 dias, ${count === 1 ? '1 relato de chuva' : `${count} relatos de chuva`}, com ${mm} mm em média.`,
+    summaryRegion: (season: string, pct: string) =>
+      `Pelo satélite, na safra ${season}, ${pct}% da área de soja da região ficou parada depois da colheita.`,
+    summaryEmpty: 'Ainda não há relatos perto de você.',
+    summaryNote: 'Todo relato é de vizinho e não é confirmado.',
     title: 'Na sua região',
     regionSubtitle: (km: number) => `Até ${km} km da sua lavoura · visto pelo satélite`,
     regionSubtitleAway: (km: number, distance: number) =>
       `Raio de ${km} km em volta de um ponto a ${String(distance).replace('.', ',')} km da sua lavoura · visto pelo satélite`,
     /** Porcentagem com vírgula ('0,8%'), no jeito do português. */
     regionPct: (pct: number) => `${String(pct).replace('.', ',')}%`,
-    regionBig: (year: number, pct: number) =>
-      `Em ${year}, ${String(pct).replace('.', ',')}% da área de soja ficou parada depois da colheita.`,
+    regionBig: (season: string, pct: number) =>
+      `Na safra ${season}, ${String(pct).replace('.', ',')}% da área de soja ficou parada depois da colheita.`,
     regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
       `Sua área: parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}. Na região, em média ${String(average).replace('.', ',')}% da área fica parada.`,
     regionAverage: (average: number) =>
@@ -1012,8 +1027,8 @@ export const pt = {
     unconfirmed: 'Relato de vizinho, não confirmado',
     example: 'Exemplo',
     empty: 'Ainda não há relatos perto de você. Seja o primeiro a contar.',
-    plantingLine: (count: number, year: number, list: string) =>
-      `${count} ${count === 1 ? 'vizinho contou o que fez' : 'vizinhos contaram o que fizeram'} depois da soja em ${year}: ${list}.`,
+    plantingLine: (count: number, season: string, list: string) =>
+      `${count} ${count === 1 ? 'vizinho contou o que fez' : 'vizinhos contaram o que fizeram'} depois da soja ${season}: ${list}.`,
     wentWell: (count: number, total: number) =>
       count === 1 ? `1 de ${total} disse que foi bem.` : `${count} de ${total} disseram que foi bem.`,
     rainLine: (average: number, count: number) =>
@@ -1022,7 +1037,7 @@ export const pt = {
     eventLine: (event: string, date: string) => `${event}, em ${date}`,
     mineTitle: 'Seus relatos',
     mineHint: 'Só este aparelho pode apagar.',
-    myPlanting: (crop: string, year: number) => `${crop}, safra ${year}`,
+    myPlanting: (crop: string, season: string) => `${crop}, safra ${season}`,
     myRain: (mm: number, date: string) => `${String(mm).replace('.', ',')} mm de chuva, em ${date}`,
     remove: 'Apagar',
     removeLabel: (what: string) => `Apagar o relato: ${what}`,
@@ -1044,6 +1059,14 @@ export const pt = {
     shareSeeCommunity: 'Ver o que os vizinhos contam',
   },
   method: {
+    /** "Ouvir resumo" (regra geral 9 do pacote 2): os anos de chuva e os pesos da nota (do regras.yaml). */
+    summaryRain: (years: number | null) =>
+      years
+        ? `A conta usa ${years} anos de chuva e calor do satélite, o solo e o verde da lavoura, em 3 passos.`
+        : 'A conta usa a chuva e o calor do satélite, o solo e o verde da lavoura, em 3 passos.',
+    summaryWeights: (safety: string, future: string, soil: string, income: string) =>
+      `A nota de cada cultura vai de 0 a 100: segurança vale ${safety}%, clima futuro ${future}%, terra ${soil}% e renda ${income}%.`,
+    summaryEnd: 'Nenhum número vem de inteligência artificial: são regras fixas, com dados de satélite.',
     title: 'Como a conta é feita',
     subtitle: 'Em três passos, e o que o satélite não enxerga.',
     /** O período vem do talhão (dados[]) e dos anos usados de fato. */
@@ -1132,6 +1155,9 @@ export const pt = {
     disclaimer: 'Apoio à decisão: confirme com o seu agrônomo antes de comprar a semente.',
   },
   guide: {
+    /** "Ouvir resumo" (regra geral 9 do pacote 2) da página inicial; o do artigo é o título e o "Em uma frase". */
+    summary: (count: number) =>
+      `O Guia tem ${count} artigos curtos sobre culturas, plantio, terra, clima e segurança. Busque pelo título ou toque num artigo para ler. Os de cultura e de plantio ainda são rascunho, a revisar pela agrônoma.`,
     title: 'Guia',
     subtitle: 'Respostas curtas para as dúvidas mais comuns da lavoura.',
     /** Tarefa 0051 (RF-35): a área do MVP, na página inicial do Guia (os artigos não mudam). */
@@ -1180,6 +1206,15 @@ export const pt = {
   },
   // Tela "Avisos" (seção 6 da remodelagem, tarefa 0046 do backend, RF-31)
   alerts: {
+    /** "Ouvir resumo" (regra geral 9 do pacote 2): o lugar e quantos avisos ativos. */
+    summaryNoPoint:
+      'Aqui aparecem os avisos de terra seca, calor e chuva da sua lavoura. Marque onde ela fica para ver os avisos, sem cadastro. Em emergência, ligue 193 para os bombeiros ou 199 para a Defesa Civil.',
+    summary: (place: string, count: number | null) =>
+      `${
+        count === null
+          ? `Estes são os avisos da sua lavoura perto de ${place}.`
+          : `Sua lavoura perto de ${place} tem ${count === 0 ? 'nenhum aviso ativo' : count === 1 ? '1 aviso ativo' : `${count} avisos ativos`} agora.`
+      } Cada aviso diz o que o dado mostra e o que fazer. Em emergência, ligue 193 para os bombeiros ou 199 para a Defesa Civil.`,
     title: 'Avisos',
     subtitle: 'Para a lavoura marcada neste aparelho. Os avisos aparecem quando você abre o app.',
     headerLabel: 'Avisos',

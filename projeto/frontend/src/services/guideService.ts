@@ -8,7 +8,7 @@ import {
 } from '../models/guide'
 import { guideRepository, type GuideRepository } from '../repositories/guideRepository'
 import type { Lang } from '../i18n/language'
-import { parseMarkdown } from './markdownService'
+import { parseMarkdown, plainText } from './markdownService'
 
 /** Nomes do tema no cabeçalho do arquivo (em português) → tema do código. */
 const THEME_BY_HEADER: Record<string, GuideTheme> = {
@@ -86,3 +86,14 @@ export function createGuideService(repository: GuideRepository = guideRepository
 
 export type GuideService = ReturnType<typeof createGuideService>
 export const guideService = createGuideService()
+
+/**
+ * O "Ouvir resumo" de um artigo (regra geral 9 do pacote 2): o título e o primeiro parágrafo depois do primeiro
+ * título de seção (o "Em uma frase" / "In one sentence"). Sem esse parágrafo, só o título.
+ */
+export function articleSummary(article: GuideArticle): string {
+  const first = article.blocks.findIndex((block) => block.type === 'heading')
+  const sentence = article.blocks.slice(first + 1).find((block) => block.type === 'paragraph')
+  const text = sentence ? plainText([sentence]).trim() : ''
+  return text ? `${article.title}. ${text}` : article.title
+}

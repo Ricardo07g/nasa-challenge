@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
@@ -26,9 +27,12 @@ function props(avisos: Avisos | null, changes: Partial<AvisosViewProps> = {}): A
     explorerTo: avisos ? '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024' : null,
     markTo: '/onde',
     backTo: '/',
+    listen: { supported: true, speaking: false, toggle: vi.fn() },
     ...changes,
   }
 }
+
+const avisosProps = props
 
 function renderView(p: AvisosViewProps) {
   return render(
@@ -43,6 +47,15 @@ function group(name: string) {
 }
 
 describe('AvisosView (tela "Avisos")', () => {
+  it('pacote 2: o "← Voltar" de verdade e o "Ouvir resumo" perto do título', async () => {
+    const props = avisosProps(null)
+    renderView(props)
+
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('data-back-button')
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvir resumo' }))
+    expect(props.listen.toggle).toHaveBeenCalled()
+  })
+
   it('sem ponto, pede para marcar a lavoura e mostra os alertas oficiais', () => {
     renderView(props(null))
 
@@ -214,17 +227,18 @@ describe('AvisosView (tela "Avisos")', () => {
     expect(within(official).getByRole('link', { name: 'Ligar 193 (Bombeiros)' })).toHaveAttribute('href', 'tel:193')
     expect(within(official).getByRole('link', { name: 'Ligar 199 (Defesa Civil)' })).toHaveAttribute('href', 'tel:199')
     expect(
-      within(official).getByRole('link', { name: 'Como receber os alertas oficiais da Defesa Civil' }),
+      within(official).getByRole('link', { name: 'Como receber os alertas oficiais da Defesa Civil (abre em nova aba)' }),
     ).toHaveAttribute('href', '/guia/alertas-defesa-civil')
+    // Regra geral 3 do pacote 2: o artigo do Guia abre em nova aba.
+    expect(within(official).getByRole('link', { name: /Defesa Civil \(abre em nova aba\)/ })).toHaveAttribute('target', '_blank')
   })
 
   it('o "Saiba mais" leva ao artigo do Guia sobre como ler os avisos', () => {
     renderView(props(buildAvisos(POINT, 'pt')))
 
-    expect(screen.getByRole('link', { name: 'Saiba mais: como ler os avisos' })).toHaveAttribute(
-      'href',
-      '/guia/como-ler-os-avisos',
-    )
+    const link = screen.getByRole('link', { name: 'Saiba mais: como ler os avisos (abre em nova aba)' })
+    expect(link).toHaveAttribute('href', '/guia/como-ler-os-avisos')
+    expect(link).toHaveAttribute('target', '_blank')
   })
 
   it('em inglês, para os juízes', () => {

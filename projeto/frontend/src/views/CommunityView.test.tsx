@@ -81,6 +81,7 @@ function setup(overrides: Partial<CommunityViewProps> = {}, form: Partial<Commun
     regionRadius: null,
     regionDistance: null,
     history: null,
+    listen: { supported: true, speaking: false, toggle: vi.fn() },
     ...overrides,
   }
   render(
@@ -92,12 +93,20 @@ function setup(overrides: Partial<CommunityViewProps> = {}, form: Partial<Commun
 }
 
 describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
+  it('pacote 2: o "Ouvir resumo" perto do título', async () => {
+    const props = setup()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvir resumo' }))
+    expect(props.listen.toggle).toHaveBeenCalled()
+  })
+
   it('título, subtítulo dos relatos, o Voltar e o link para o Guia no fim', () => {
     setup()
 
     expect(screen.getByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
     expect(screen.getByText('O que os vizinhos contam, até 30 km da sua lavoura')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('href', '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('data-back-button')
     expect(screen.getByRole('link', { name: 'Guia: dúvidas e respostas curtas' })).toHaveAttribute('href', '/guia')
   })
 
@@ -129,7 +138,7 @@ describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
     expect(within(crops).getAllByRole('button')).toHaveLength(7)
     await userEvent.click(within(crops).getByRole('button', { name: 'Deixei parado' }))
     expect(props.onPlanting).toHaveBeenCalledWith({ crop: 'pousio' })
-    expect(within(screen.getByRole('group', { name: 'Em que safra?' })).getByRole('button', { name: '2026' })).toHaveAttribute(
+    expect(within(screen.getByRole('group', { name: 'Em que safra?' })).getByRole('button', { name: '2025/26' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
@@ -187,8 +196,10 @@ describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
   it('relato de enxurrada ou erosão liga para o artigo "Como evitar erosão" (tarefa 0049)', () => {
     setup({}, { open: 'evento', event: { event: 'enxurrada_erosao', date: TODAY } })
 
-    expect(screen.getByRole('link', { name: 'Saiba mais: Como evitar erosão' })).toHaveAttribute('href', '/guia/como-evitar-erosao')
-    expect(screen.queryByRole('link', { name: 'Saiba mais: Fogo na palha' })).not.toBeInTheDocument()
+    const link = screen.getByRole('link', { name: 'Saiba mais: Como evitar erosão (abre em nova aba)' })
+    expect(link).toHaveAttribute('href', '/guia/como-evitar-erosao')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(screen.queryByRole('link', { name: /Saiba mais: Fogo na palha/ })).not.toBeInTheDocument()
   })
 
   it('"Aconteceu aqui": a lista fechada e, com fogo, o 193 dos Bombeiros', async () => {
@@ -205,7 +216,7 @@ describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
     ])
     expect(screen.getByRole('alert')).toHaveTextContent('Em caso de fogo, ligue 193 (Bombeiros).')
     expect(screen.getByRole('link', { name: 'Ligar 193' })).toHaveAttribute('href', 'tel:193')
-    expect(screen.getByRole('link', { name: 'Saiba mais: Fogo na palha' })).toHaveAttribute('href', '/guia/fogo-na-palha')
+    expect(screen.getByRole('link', { name: 'Saiba mais: Fogo na palha (abre em nova aba)' })).toHaveAttribute('href', '/guia/fogo-na-palha')
     await userEvent.click(within(events).getByRole('button', { name: 'Geada' }))
     expect(props.onEvent).toHaveBeenCalledWith({ event: 'geada' })
   })
@@ -225,7 +236,7 @@ describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
 
     const near = screen.getByRole('region', { name: 'Perto de você' })
     expect(near).toHaveTextContent(
-      '3 vizinhos contaram o que fizeram depois da soja em 2026: 2 milheto, 1 deixou parado.',
+      '3 vizinhos contaram o que fizeram depois da soja 2025/26: 2 milheto, 1 deixou parado.',
     )
     expect(near).toHaveTextContent('1 de 3 disse que foi bem.')
     expect(near).toHaveTextContent('Nos últimos 7 dias, os pluviômetros marcaram em média 15,5 mm (2 relatos).')
@@ -270,7 +281,7 @@ describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
     const mine = screen.getByRole('region', { name: 'Seus relatos' })
     expect(within(mine).getAllByRole('listitem').map((item) => item.firstChild?.textContent)).toEqual([
       'Fogo, em 14 de novembro',
-      'Deixei parado, safra 2026',
+      'Deixei parado, safra 2025/26',
     ])
     await userEvent.click(within(mine).getByRole('button', { name: 'Apagar o relato: Fogo, em 14 de novembro' }))
     expect(props.onRemove).toHaveBeenCalledWith('e2')
@@ -301,7 +312,7 @@ describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
     setup({ region, regionStatus: 'ready', regionRadius: 30, history: { idle: 5, known: 9, uncertain: 1 } })
 
     expect(screen.getByText('Até 30 km da sua lavoura · visto pelo satélite')).toBeInTheDocument()
-    expect(screen.getByText('Em 2025, 62% da área de soja ficou parada depois da colheita.')).toBeInTheDocument()
+    expect(screen.getByText('Na safra 2024/25, 62% da área de soja ficou parada depois da colheita.')).toBeInTheDocument()
   })
 
   it('sem o arquivo da região: o bloco do satélite não aparece', () => {

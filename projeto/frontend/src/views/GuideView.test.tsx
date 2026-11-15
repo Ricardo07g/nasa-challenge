@@ -20,7 +20,16 @@ const groups: GuideViewProps['groups'] = [
 ]
 
 function setupIndex(overrides: Partial<GuideViewProps> = {}) {
-  const props: GuideViewProps = { t: pt, groups, query: '', onQuery: vi.fn(), count: 2, backTo: '/comunidade', ...overrides }
+  const props: GuideViewProps = {
+    t: pt,
+    groups,
+    query: '',
+    onQuery: vi.fn(),
+    count: 2,
+    backTo: '/comunidade',
+    listen: { supported: true, speaking: false, toggle: vi.fn() },
+    ...overrides,
+  }
   render(
     <MemoryRouter>
       <GuideView {...props} />
@@ -30,6 +39,14 @@ function setupIndex(overrides: Partial<GuideViewProps> = {}) {
 }
 
 describe('GuideView (página inicial)', () => {
+  it('pacote 2: o "← Voltar" de verdade e o "Ouvir resumo" perto do título', async () => {
+    const props = setupIndex()
+
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('data-back-button')
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvir resumo' }))
+    expect(props.listen.toggle).toHaveBeenCalled()
+  })
+
   it('mostra os temas e os artigos com link, e marca o rascunho com texto', () => {
     setupIndex()
     expect(screen.getByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
@@ -76,13 +93,23 @@ const body = parseMarkdown(
 const article: GuideArticle = { slug: 'sorgo', title: 'Sorgo', theme: 'cultures', draft: true, plant: 'sorgo', blocks: body }
 
 describe('GuideArticleView', () => {
+  const listen = { supported: true, speaking: false, toggle: vi.fn() }
+
   function setup(a: GuideArticle | null, t = pt) {
     render(
       <MemoryRouter>
-        <GuideArticleView t={t} article={a} />
+        <GuideArticleView t={t} article={a} listen={listen} />
       </MemoryRouter>,
     )
   }
+
+  it('pacote 2: o "← Voltar ao Guia" de verdade e o "Ouvir resumo" do artigo', async () => {
+    setup(article)
+
+    expect(screen.getByRole('link', { name: 'Voltar ao Guia' })).toHaveAttribute('data-back-button')
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvir resumo' }))
+    expect(listen.toggle).toHaveBeenCalled()
+  })
 
   it('título, aviso de rascunho no topo, desenho da planta e texto', () => {
     setup(article)

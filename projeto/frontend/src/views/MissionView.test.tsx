@@ -38,6 +38,7 @@ function setup(overrides: Partial<MissionViewProps> = {}) {
     onSpin: vi.fn(),
     onWait: vi.fn(),
     onRetry: vi.fn(),
+    listen: { supported: true, speaking: false, toggle: vi.fn() },
     ...overrides,
   }
   render(
@@ -49,6 +50,14 @@ function setup(overrides: Partial<MissionViewProps> = {}) {
 }
 
 describe('MissionView (tela de cálculo, RF-19)', () => {
+  it('pacote 2: o "← Voltar" de verdade e o "Ouvir resumo" perto do título', async () => {
+    const props = setup()
+
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('data-back-button')
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvir resumo' }))
+    expect(props.listen.toggle).toHaveBeenCalled()
+  })
+
   it('mostra a missão, o progresso e as fases já feitas com o dado real', () => {
     setup()
 

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { GuideFile } from '../models/guide'
-import { createGuideService, parseFrontMatter, searchGuides } from './guideService'
+import { parseMarkdown } from './markdownService'
+import { articleSummary, createGuideService, parseFrontMatter, searchGuides } from './guideService'
 
 const header = (o: Record<string, string>) =>
   `---\n${Object.entries(o)
@@ -72,5 +73,18 @@ describe('searchGuides', () => {
 
   it('busca vazia devolve tudo', () => {
     expect(searchGuides(list, '  ')).toHaveLength(3)
+  })
+})
+
+describe('articleSummary ("Ouvir resumo" do artigo, pacote 2)', () => {
+  const base = { slug: 'sorgo', title: 'Sorgo', theme: 'cultures' as const, draft: true, plant: null }
+
+  it('o título e a frase do "Em uma frase" (o 1º parágrafo depois do 1º título), sem o negrito', () => {
+    const blocks = parseMarkdown('## Em uma frase\n\nO **sorgo** aguenta mais a seca.\n\n## Por que importa\n\nOutro parágrafo.')
+    expect(articleSummary({ ...base, blocks })).toBe('Sorgo. O sorgo aguenta mais a seca.')
+  })
+
+  it('sem parágrafo, só o título', () => {
+    expect(articleSummary({ ...base, blocks: [] })).toBe('Sorgo')
   })
 })

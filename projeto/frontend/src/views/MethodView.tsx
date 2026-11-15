@@ -1,8 +1,10 @@
+import type { ListenSummaryState } from '../controllers/useListenSummary'
+import { BackButton } from '../design-system/components/BackButton'
+import { ListenSummary } from '../design-system/components/ListenSummary'
 import { Button } from '../design-system/components/Button'
 import { Card, SourceCard } from '../design-system/components/Card'
 import { NumberedSteps, PageHeading, ScoreTable } from '../design-system/components/Content'
 import { ErrorState, LoadingState } from '../design-system/components/Feedback'
-import { BackLink } from '../design-system/components/Navigation'
 import { ArrowUpRightIcon, GrainIcon, SatelliteIcon, SendIcon, SproutIcon } from '../design-system/icons'
 import { formatDayMonth, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
@@ -32,6 +34,8 @@ export type MethodViewProps = {
   rain: RainSummary | null
   /** Tarefa 0049: os números das regras (`GET /api/metodo`); null sem a rota ou com falha (o bloco some). */
   rules: MetodoRegras | null
+  /** "Ouvir resumo" (regra geral 9 do pacote 2). */
+  listen: ListenSummaryState
 }
 
 /** "05-01" → "1º de maio" / "May 1". */
@@ -84,14 +88,21 @@ function Rules({ t, lang, rules }: { t: Messages; lang: Lang; rules: MetodoRegra
 
 /** Tela 9 "Como a conta é feita" (para agrônomos e jurados): método, fontes e notas de 0 a 100. */
 export function MethodView(props: MethodViewProps) {
-  const { t, lang, backTo, status, onRetry, rows, example, telegramHref, sources, rain, rules } = props
+  const { t, lang, backTo, status, onRetry, rows, example, telegramHref, sources, rain, rules, listen } = props
   const m = t.method
   const h = m.scoresHeaders
   const years = rain ? rainPeriodText(t, rain.years, rain) : null
   return (
     <div className={layout.page}>
-      <BackLink to={backTo}>{t.nav.back}</BackLink>
+      <BackButton to={backTo}>{t.nav.back}</BackButton>
       <PageHeading title={m.title} subtitle={m.subtitle} />
+      <ListenSummary
+        supported={listen.supported}
+        speaking={listen.speaking}
+        onToggle={listen.toggle}
+        label={t.listen.summary}
+        stopLabel={t.listen.stop}
+      />
       <div className={layout.pageGrid}>
         <NumberedSteps size="lg" steps={[years ? m.step1(years) : m.step1Generic, m.step2, m.step3]} />
         <div className={layout.stack}>
