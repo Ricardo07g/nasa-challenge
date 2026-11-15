@@ -24,7 +24,7 @@ Quem mede a fase é a NOAA, dos Estados Unidos, e não a NASA. A medida é o ONI
 
 Para uma fase valer, ela precisa durar pelo menos 5 estações seguidas.
 
-O app põe uma marca no ano de cada safrinha, na [Sugestão](/resposta), e mostra a previsão da NOAA como um sinal para o outono no [Plano de 3 anos](/plano).
+O app põe uma marca no ano de cada safrinha, na aba [Escolher](/resposta), e mostra a previsão da NOAA como um sinal para o outono no [Plano de 3 anos](/plano).
 
 ## Fontes
 

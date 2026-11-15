@@ -24,7 +24,7 @@ The phase is measured by NOAA, in the United States, not by NASA. The measure is
 
 For a phase to count, it must last at least 5 seasons in a row.
 
-The app puts a mark on each second-crop year, in the [Suggestion](/resposta), and shows NOAA's forecast as an autumn signal in the [3-year plan](/plano).
+The app puts a mark on each second-crop year, in the [Choose](/resposta) tab, and shows NOAA's forecast as an autumn signal in the [3-year plan](/plano).
 
 ## Sources
 

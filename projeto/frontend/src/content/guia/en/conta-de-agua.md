@@ -28,7 +28,7 @@ When the bucket runs dry, water is short. See [What "it worked" means](/guia/deu
 
 In no-till, straw helps conserve soil moisture. See [straw](/guia/palhada).
 
-In the [3-year plan](/plano), "rain used" shows this for each year. The [Suggestion](/resposta) has the Water row.
+In the [3-year plan](/plano), "rain used" shows this for each year. The [Choose](/resposta) tab has the Water row.
 
 ## Sources
 

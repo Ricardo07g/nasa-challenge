@@ -24,7 +24,7 @@ The rain comes from the GPM IMERG satellite and the heat from NASA POWER. For ea
 
 If either happened, the year does not count as "worked".
 
-See the number in the [Suggestion](/resposta) and the open math in [How the math works](/como-funciona). Also understand [the water math](/guia/conta-de-agua).
+See the number in the [Choose](/resposta) tab and the open math in [How the math works](/como-funciona). Also understand [the water math](/guia/conta-de-agua).
 
 ## Sources
 

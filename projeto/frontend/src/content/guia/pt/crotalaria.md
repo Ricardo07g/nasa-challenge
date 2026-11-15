@@ -32,7 +32,7 @@ A crotalária é muito usada em rotação por ter grande potencial de fixar nitr
 
 ## Na sua lavoura
 
-O app mostra a crotalária em [Comparar](/opcoes) e no [Plano de 3 anos](/plano). Veja [adubo verde](/guia/adubo-verde) e [nematoide](/guia/nematoide).
+O app mostra a crotalária na aba [Escolher](/resposta) e no [Plano de 3 anos](/plano). Veja [adubo verde](/guia/adubo-verde) e [nematoide](/guia/nematoide).
 
 ## Fontes
 

@@ -21,7 +21,7 @@ In the corn zoning for Minas Gerais and the Center-West, researchers ran the cro
 
 Each municipality has its own dates. Check the Ministry of Agriculture's order for your crop and your municipality.
 
-On the [When you harvest](/quando) screen, you say when you harvest the soybeans: early February, mid-February or late February and March. If a crop is past its deadline, the [Suggestion](/resposta) warns you.
+On the [When you harvest](/quando) screen, you say when you harvest the soybeans: early February, mid-February or late February and March. If a crop is past its deadline, the [Choose](/resposta) tab warns you.
 
 ## Sources
 

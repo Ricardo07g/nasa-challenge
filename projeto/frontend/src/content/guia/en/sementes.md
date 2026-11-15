@@ -32,7 +32,7 @@ Before you pay:
 
 The amount of seed per hectare, the variety and the treatment are up to your agronomist. The app does not recommend a variety or a rate.
 
-Choose the crop first: see the [Suggestion](/resposta), compare in [Compare](/opcoes) and check the deadline in [The planting deadline and the ZARC](/guia/prazo-de-plantio-zarc). With the seed ready, you plant right away: read [Planting right after harvest](/guia/plantar-logo-depois-da-colheita).
+Choose the crop first: see the suggestion and compare in the [Choose](/resposta) tab, and check the deadline in [The planting deadline and the ZARC](/guia/prazo-de-plantio-zarc). With the seed ready, you plant right away: read [Planting right after harvest](/guia/plantar-logo-depois-da-colheita).
 
 ## Sources
 

@@ -31,7 +31,7 @@ Num estudo em Goiás, no Cerrado, o milheto foi a planta de cobertura que mais f
 
 ## Na sua lavoura
 
-Veja o milheto em [Comparar](/opcoes) e dentro do [Plano de 3 anos](/plano). Leia também sobre [a palhada](/guia/palhada).
+Veja o milheto na aba [Escolher](/resposta) e dentro do [Plano de 3 anos](/plano). Leia também sobre [a palhada](/guia/palhada).
 
 ## Fontes
 

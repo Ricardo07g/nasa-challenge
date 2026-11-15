@@ -21,7 +21,7 @@ Das opções do app, a crotalária é a leguminosa. Num estudo publicado na Revi
 
 O quanto de nitrogênio fica na terra muda com o solo, a cultivar e a chuva. Esse valor fica com o seu agrônomo.
 
-Veja a linha Terra em [Comparar](/opcoes). Conheça a [crotalária](/guia/crotalaria) e a [palhada](/guia/palhada). Confira também [o prazo de plantio](/guia/prazo-de-plantio-zarc) da cultura.
+Veja a linha Terra na aba [Escolher](/resposta). Conheça a [crotalária](/guia/crotalaria) e a [palhada](/guia/palhada). Confira também [o prazo de plantio](/guia/prazo-de-plantio-zarc) da cultura.
 
 ## Fontes
 

@@ -31,7 +31,7 @@ In corn, water limits yield mainly at germination, **flowering** and **grain fil
 
 ## In your field
 
-See corn alone in the [Suggestion](/resposta) and in [Compare](/opcoes). Also read about [the planting deadline](/guia/prazo-de-plantio-zarc) and [frost](/guia/geada-na-safrinha).
+See corn alone in the [Choose](/resposta) tab. Also read about [the planting deadline](/guia/prazo-de-plantio-zarc) and [frost](/guia/geada-na-safrinha).
 
 ## Sources
 

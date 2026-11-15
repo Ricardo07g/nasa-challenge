@@ -19,7 +19,7 @@ A palha sobre a terra é o fator mais importante para amortecer o impacto das go
 
 Num estudo em Goiás, o milheto fez mais palha no começo da entressafra, e as braquiárias acumularam palha e nutrientes até o fim dela. Deixar a terra parada não forma palha nova.
 
-Veja o que cada opção deixa na linha Terra de [Comparar](/opcoes) e na [Sugestão](/resposta). Quem quer palha, olhe o [milheto](/guia/milheto) ou o [milho com braquiária](/guia/milho-braquiaria).
+Veja o que cada opção deixa na linha Terra da aba [Escolher](/resposta). Quem quer palha, olhe o [milheto](/guia/milheto) ou o [milho com braquiária](/guia/milho-braquiaria).
 
 Quanto de palha o seu solo precisa fica com o seu agrônomo.
 

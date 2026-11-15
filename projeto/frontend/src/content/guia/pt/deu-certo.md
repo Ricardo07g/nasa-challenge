@@ -24,7 +24,7 @@ A chuva vem do satélite GPM IMERG e o calor, do NASA POWER. Para cada ano, o ap
 
 Se algum dos dois aconteceu, o ano não conta como "deu certo".
 
-Veja o número na [Sugestão](/resposta) e a conta aberta em [Como a conta é feita](/como-funciona). Entenda também [a conta de água](/guia/conta-de-agua).
+Veja o número na aba [Escolher](/resposta) e a conta aberta em [Como a conta é feita](/como-funciona). Entenda também [a conta de água](/guia/conta-de-agua).
 
 ## Fontes
 

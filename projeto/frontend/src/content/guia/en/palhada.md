@@ -19,7 +19,7 @@ Straw on the soil is the most important factor in absorbing the impact of raindr
 
 In a study in Goiás, pearl millet made more straw at the start of the off-season, and brachiaria grasses built up straw and nutrients until its end. Leaving the soil fallow forms no new straw.
 
-See what each option leaves in the Soil row of [Compare](/opcoes) and in the [Suggestion](/resposta). If you want straw, look at [pearl millet](/guia/milheto) or [corn with brachiaria](/guia/milho-braquiaria).
+See what each option leaves in the Soil row of the [Choose](/resposta) tab. If you want straw, look at [pearl millet](/guia/milheto) or [corn with brachiaria](/guia/milho-braquiaria).
 
 How much straw your soil needs is up to your agronomist.
 

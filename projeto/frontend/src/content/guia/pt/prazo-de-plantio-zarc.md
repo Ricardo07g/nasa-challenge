@@ -21,7 +21,7 @@ No zoneamento do milho para Minas Gerais e o Centro-Oeste, os pesquisadores fize
 
 Cada município tem as suas datas. Confira a portaria do Ministério da Agricultura para a sua cultura e o seu município.
 
-Na tela [Quando você colhe](/quando), você diz quando colhe a soja: começo de fevereiro, meio ou fim de fevereiro e março. Se uma cultura passou do prazo, a [Sugestão](/resposta) avisa.
+Na tela [Quando você colhe](/quando), você diz quando colhe a soja: começo de fevereiro, meio ou fim de fevereiro e março. Se uma cultura passou do prazo, a aba [Escolher](/resposta) avisa.
 
 ## Fontes
 

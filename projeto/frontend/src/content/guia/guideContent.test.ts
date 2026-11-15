@@ -106,6 +106,24 @@ describe('conteúdo do Guia', () => {
     }
   })
 
+  it('os links para a tela 5 levam às abas de hoje ("Escolher" e "Plano de 3 anos"), com o nome delas', () => {
+    // Desde o pacote 2, a tela 5 tem 2 abas: `/resposta` abre "Escolher" e `/plano`, "Plano de 3 anos".
+    // As antigas "Sugestão" e "Comparar" (`/opcoes`) viraram a aba "Escolher".
+    const tabs: Record<'pt' | 'en', Record<string, string>> = {
+      pt: { '/resposta': 'Escolher', '/plano': 'Plano de 3 anos' },
+      en: { '/resposta': 'Choose', '/plano': '3-year plan' },
+    }
+    for (const lang of ['pt', 'en'] as const) {
+      for (const [slug, raw] of bySlug(lang)) {
+        for (const l of links(parseMarkdown(parseFrontMatter(raw)!.body)).filter((x) => !x.external)) {
+          expect(l.href, `${lang}/${slug}: link para a tela antiga ${l.href}`).not.toBe('/opcoes')
+          if (l.href in tabs[lang]) expect(l.text, `${lang}/${slug}: ${l.href}`).toBe(tabs[lang][l.href])
+        }
+        expect(raw.match(/\[(Sugestão|Comparar|Suggestion|Compare)\]/)?.[0] ?? null, `${lang}/${slug}`).toBeNull()
+      }
+    }
+  })
+
   it('todo link externo é https e está na lista de fontes conferidas', () => {
     const allowed = new Set(VERIFIED_SOURCES.map((s) => s.url))
     for (const [slug, raw] of [...bySlug('pt'), ...bySlug('en')]) {

@@ -26,12 +26,12 @@ Sem planta, não se forma palha nova. Estudos de erosão mostram que a palha sob
 ## Passo a passo
 
 1. **Colha a soja** e deixe a área sem plantar.
-2. **Compare** com as outras opções em [Comparar](/opcoes).
+2. **Compare** com as outras opções na aba [Escolher](/resposta).
 3. **Converse com o seu agrônomo** sobre o manejo da área parada.
 
 ## Na sua lavoura
 
-O app mostra o histórico de anos parados em [O que o satélite viu](/satelite) e compara o pousio com as outras opções em [Comparar](/opcoes). Veja o que muda quando a terra fica coberta em [palhada](/guia/palhada).
+O app mostra o histórico de anos parados em [O que o satélite viu](/satelite) e compara o pousio com as outras opções na aba [Escolher](/resposta). Veja o que muda quando a terra fica coberta em [palhada](/guia/palhada).
 
 ## Fontes
 

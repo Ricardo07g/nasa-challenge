@@ -32,7 +32,7 @@ Crotalaria is widely used in rotation because of its great potential to fix nitr
 
 ## In your field
 
-The app shows crotalaria in [Compare](/opcoes) and in the [3-year plan](/plano). See [green manure](/guia/adubo-verde) and [nematodes](/guia/nematoide).
+The app shows crotalaria in the [Choose](/resposta) tab and in the [3-year plan](/plano). See [green manure](/guia/adubo-verde) and [nematodes](/guia/nematoide).
 
 ## Sources
 

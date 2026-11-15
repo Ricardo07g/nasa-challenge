@@ -21,7 +21,7 @@ O que ajuda:
 
 - **Semear dentro do prazo.** Semear tarde aumenta a chance de perda. Veja [o prazo de plantio e o ZARC](/guia/prazo-de-plantio-zarc).
 
-No app, a [Sugestão](/resposta) avisa quando uma cultura passou do prazo. A tela [O que o satélite viu](/satelite) mostra os alertas da sua área.
+No app, a aba [Escolher](/resposta) avisa quando uma cultura passou do prazo. A tela [O que o satélite viu](/satelite) mostra os alertas da sua área.
 
 Que cultivar escolher para o seu frio fica com o seu agrônomo.
 
