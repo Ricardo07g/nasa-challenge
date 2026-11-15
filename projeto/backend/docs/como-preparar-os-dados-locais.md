@@ -22,8 +22,9 @@ alguns cartões (clima futuro, histórico do talhão).
 | Umidade da terra no dia de plantar (2016–2025) | SMAP L4 (`SPL4SMGP` 008) pelo OPeNDAP da Earthdata | arquivo `data/baixados/nasa_smap/smap_semeadura.json` e, depois da carga, banco (`smap_point`) | ainda nada: o balde inicial pelo SMAP é o R3.3 (até lá, 50% da CAD) | script `fetch_smap` + carga no banco |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
-aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH`, `IMERG_LATE_PATH` e `SMAP_PATH`
-para os arquivos acima. Arquivo ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`).
+aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH`, `IMERG_LATE_PATH`, `SMAP_PATH`
+e `SMAP_RECENTE_PATH` para os arquivos acima. Arquivo ausente = a API segue sem aquele dado, sem
+erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`).
 
 ## Caminho rápido: receber o pacote de alguém do time (~5 min)
 
@@ -68,6 +69,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Histórico do talhão (NDVI) pelo AppEEARS | `uv run python -m pipeline.fetch_ndvi --pontos="-18.9543,-48.1993"` | depende da fila do AppEEARS (minutos a horas) | `APPEEARS_TOKEN` ou `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` no `projeto/backend/.env` |
 | Histórico do talhão (NDVI) pela ORNL | `uv run python -m pipeline.fetch_ndvi --fonte ornl --pontos="-18.9543,-48.1993"` | ~1,6 h por ponto (64 pedidos, sem fila; vários dão 502 e são repetidos); se parar, rode de novo que continua do cache | nenhuma |
 | Chuva do IMERG da caixa piloto (2005–2024) | `uv run python -m pipeline.fetch_imerg` (antes: `--dry-run`; para conferir: `--anos 2024`) | até ~2,2 h (4.240 recortes, um por dia, 6 em paralelo); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env`, com o aplicativo *NASA GESDISC DATA ARCHIVE* autorizado e a EULA do GES DISC aceita |
+| Umidade da terra agora e percentil (SMAP recente, sinal do outono) | `uv run python -m pipeline.fetch_smap --recente --dry-run` e depois `uv run python -m pipeline.fetch_smap --recente` | ~12 min na 1ª vez (1.200 recortes da climatologia + 24 do dia); depois, segundos a 1 min por dia que passou | `EARTHDATA_TOKEN` no `projeto/backend/.env` |
 | Umidade da terra nos dias de semeadura (SMAP) | `uv run python -m pipeline.fetch_smap --dry-run` e depois `uv run python -m pipeline.fetch_smap` | ~6 min (720 recortes de ~2 s, 4 em paralelo, mais 30 buscas no CMR); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` |
 | Carregar os arquivos no banco (`cmip6_delta`, `ndvi_point`, `smap_point` e a chuva do IMERG no `climate_season`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json --imerg ../../data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json --smap ../../data/baixados/nasa_smap/smap_semeadura.json` | segundos | nenhuma |
 | El Niño / La Niña de cada safrinha (ONI) | `uv run python -m pipeline.fetch_oni` | segundos (1 pedido de ~23 KB à NOAA) | nenhuma |
@@ -146,6 +148,10 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   da caixa recebe a média do dia do pixel mais perto. O `--dry-run` não usa a rede nem o token.
   Token vencido (ele vale 60 dias): o script para na primeira resposta 401/403 e não grava nada no
   cache. Um ano ou uma caixa só: `--anos=2024`, `--area="lat_min,lat_max,lon_min,lon_max"`.
+- O SMAP recente (`--recente`, tarefa 0031) grava `data/baixados/nasa_smap/smap_recente.json`, no
+  mesmo cache. É dado **de agora**: rode de novo perto da data de plantio (fev/mar). A API lê pelo
+  `SMAP_RECENTE_PATH`, mas o sinal para o outono só usa o SMAP junto com a chuva recente (IMERG,
+  A2.3), que ainda não existe: até lá a tela segue sem o sinal.
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).
