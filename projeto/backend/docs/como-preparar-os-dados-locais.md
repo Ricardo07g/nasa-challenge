@@ -15,6 +15,7 @@ alguns cartões (clima futuro, histórico do talhão).
 | Solo (argila e areia → CAD) | SoilGrids (ISRIC) | banco (`soil_point`) | "Terra argilosa / média / arenosa · Do mapa de solos" | pré-carga, ou no 1º clique |
 | Clima futuro (2041–2060 × 1995–2014) | NEX-GDDP-CMIP6 | arquivo `data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json` e, depois da carga, banco (`cmip6_delta`) | "Clima dos próximos anos" e a nota de futuro | script `fetch_cmip6_deltas` + carga no banco |
 | Histórico do talhão (NDVI) | MODIS (MOD13Q1 + MYD13Q1) pelo AppEEARS ou pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` (o mesmo nome para as duas fontes) e, depois da carga, banco (`ndvi_point`) | "Sua área ficou parada em X de Y anos" e a colheita sugerida | script `fetch_ndvi` + carga no banco |
+| Histórico do talhão (NDVI) em qualquer ponto da caixa piloto, pixel a pixel (2017–2026) | MODIS (MOD13Q1 + MYD13Q1) pela ORNL DAAC, em ladrilhos | índice `data/baixados/nasa_modis_ndvi_area/ndvi_modis_area.json` e os ladrilhos em `ladrilhos/` ao lado (só arquivo, sem tabela) | o mesmo histórico do talhão (faixa de 10 anos, verde da lavoura, colheita sugerida, "Como é hoje") fora dos pontos do arquivo por ponto | script `fetch_ndvi_area` |
 | Chuva diária em 0,1° (refinamento da chuva do POWER) | GPM IMERG Final (`GPM_3IMERGDF` v07) pelo OPeNDAP do GES DISC | arquivo `data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` e, depois da carga, a chuva dos anos completos no banco (`climate_season`, `rain_source = gpm_imerg`) | "Chuva mais detalhada" conectada (10 km) e "(GPM IMERG + NASA POWER)" no "Por quê?" | script `fetch_imerg` + carga no banco (`--imerg`) |
 | El Niño / La Niña de cada safrinha | ONI da NOAA (não é da NASA) | arquivo `data/baixados/noaa_oni/oni.json` (só arquivo, sem tabela) | a marca de El Niño / La Niña nos quadrinhos de chuva e na frase de cada ano | script `fetch_oni` |
 | Região pelo satélite (soja do ano parada depois da colheita, num raio de 30 km) | MODIS (MOD13Q1, MYD13Q1 e o uso do solo MCD12Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` (sem tabela ainda) | "Na sua região": a área de soja parada depois da colheita, ano a ano (**escondido na tela** enquanto a calibração não der números críveis, tarefa 0036) | script `fetch_regiao_ndvi` |
@@ -26,7 +27,7 @@ alguns cartões (clima futuro, histórico do talhão).
 | Área queimada mês a mês (2016–2025), pixel de 500 m na caixa piloto | MODIS MCD64A1 (coleção 061, banda `Burn_Date`) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json` (só arquivo, sem tabela) | alerta "Houve fogo a até 5 km do seu ponto em N de 10 anos (MODIS, NASA)" no raio-X e a fonte na missão | script `fetch_area_queimada` |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
-aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH`, `IMERG_LATE_PATH`, `SMAP_PATH`,
+aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `NDVI_AREA_PATH`, `ONI_PATH`, `REGIAO_PATH`, `IMERG_LATE_PATH`, `SMAP_PATH`,
 `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`, `ENSO_PREVISAO_PATH` e `AREA_QUEIMADA_PATH` para os arquivos acima. Arquivo
 ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`; o
 `/api/talhao`, `soja_recente: null`; o `/api/recomendacao`, `sinal: null`).
@@ -73,6 +74,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Clima futuro só da fazenda de exemplo | `uv run python -m pipeline.fetch_cmip6_deltas --pontos="-18.9543,-48.1993"` | ~40 min (360 pedidos ao NCSS, um ponto por pedido) | nenhuma |
 | Histórico do talhão (NDVI) pelo AppEEARS | `uv run python -m pipeline.fetch_ndvi --pontos="-18.9543,-48.1993"` | depende da fila do AppEEARS (minutos a horas) | `APPEEARS_TOKEN` ou `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` no `projeto/backend/.env` |
 | Histórico do talhão (NDVI) pela ORNL | `uv run python -m pipeline.fetch_ndvi --fonte ornl --pontos="-18.9543,-48.1993"` | ~1,6 h por ponto (64 pedidos, sem fila; vários dão 502 e são repetidos); se parar, rode de novo que continua do cache | nenhuma |
+| Histórico do talhão (NDVI) por área, a caixa piloto inteira | `uv run python -m pipeline.fetch_ndvi_area --dry-run` e depois `uv run python -m pipeline.fetch_ndvi_area --paralelo 2` | tempo a medir: o `--dry-run` estima ~5,3 h (960 pedidos à ORNL: 12 ladrilhos × 80, ~40 s cada, 2 em paralelo, sem contar os 502); com os 502 da rodada por ponto, pode chegar a ~11 h. Cada ladrilho pronto já vale na API; se parar, rode de novo que continua do cache | nenhuma |
 | Chuva do IMERG da caixa piloto (2005–2024) | `uv run python -m pipeline.fetch_imerg` (antes: `--dry-run`; para conferir: `--anos 2024`) | até ~2,2 h (4.240 recortes, um por dia, 6 em paralelo); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env`, com o aplicativo *NASA GESDISC DATA ARCHIVE* autorizado e a EULA do GES DISC aceita |
 | Umidade da terra agora e percentil (SMAP recente, sinal do outono) | `uv run python -m pipeline.fetch_smap --recente --dry-run` e depois `uv run python -m pipeline.fetch_smap --recente` | ~12 min na 1ª vez (1.200 recortes da climatologia + 24 do dia); depois, segundos a 1 min por dia que passou | `EARTHDATA_TOKEN` no `projeto/backend/.env` |
 | Umidade da terra nos dias de semeadura (SMAP) | `uv run python -m pipeline.fetch_smap --dry-run` e depois `uv run python -m pipeline.fetch_smap` | ~6 min (720 recortes de ~2 s, 4 em paralelo, mais 30 buscas no CMR); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` |
@@ -129,6 +131,20 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   - **Anos**: os do `historico_ndvi` do `regras.yaml` (2017 a 2026 desde a tarefa 0039). Quem tem o
     cache de 2016 a 2025 baixa só 2026 (6 pedidos por ponto). O arquivo de saída tem só os pontos
     pedidos: passe todos os pontos que já estavam nele.
+- **NDVI por área** (tarefa 0050): grava em `data/baixados/nasa_modis_ndvi_area/` o índice
+  `ndvi_modis_area.json`, os ladrilhos compactados em `ladrilhos/` (~23 MB cada, ~280 MB a caixa
+  piloto) e o cache bruto `cache_ornl/` (até ~32 MB por ladrilho), a partir da raiz do repositório.
+  São os mesmos produtos, janela, bandas e filtro do `fetch_ndvi --fonte ornl`, para cada pixel de
+  250 m da caixa (`--area="lat_min,lat_max,lon_min,lon_max"` troca a área; o padrão são os `PILOT_*`).
+  Os ladrilhos (±30 km, 241 × 241 pixels) vão do centro da caixa para fora; cada um é compactado e
+  entra no índice assim que os 80 pedidos dele terminam: se parar no meio, os pontos dos ladrilhos
+  prontos já funcionam (reinicie o backend). Rode o mesmo comando de novo que ele continua (o cache
+  é lido por data: dá para mudar `--datas-por-pedido` entre uma execução e outra). Opções:
+  `--paralelo` (padrão 2, máximo 4), `--tentativas` (padrão 5), `--datas-por-pedido` (padrão 10:
+  vão 7 + 7 e 7 + 6 datas por pedido; com muitos 502, use 5), `--apagar-cache` (apaga o cache bruto
+  de cada ladrilho depois de compactar) e `--dry-run` (ladrilhos prontos e a baixar, pedidos que
+  faltam, tempo e espaço, sem rede). A API lê o índice pelo `NDVI_AREA_PATH` **depois** do arquivo
+  por ponto: o ponto que está no `NDVI_CACHE_PATH` continua vindo de lá.
 - O IMERG grava em `data/baixados/nasa_gpm_imerg/` (o JSON e o cache `cache_opendap/`) a partir
   da raiz do repositório. O `--dry-run` mostra pedidos, o que já está no cache e o tempo, sem rede.
   O primeiro recorte vai sozinho: se o GES DISC recusar (token vencido, aplicativo não autorizado
@@ -215,6 +231,11 @@ descompacta na raiz do repositório (`unzip dados_baixados.zip` a partir dela), 
 # arquivo do CMIP6, nex_gddp_cmip6
 curl -s "localhost:8000/api/talhao?lat=-18.9543&lon=-48.1993" | python3 -m json.tool
 
+# NDVI por área (com o índice do fetch_ndvi_area): um ponto da caixa fora dos 4 pontos do
+# arquivo por ponto deve trazer o historico (True)
+curl -s "localhost:8000/api/talhao?lat=-19.40&lon=-48.60" | python3 -c \
+  "import json, sys; print(json.load(sys.stdin)['historico'] is not None)"
+
 # região pelo satélite (com o arquivo do fetch_regiao_ndvi): raio_km, centro, distancia_km e os anos
 curl -s "localhost:8000/api/regiao?lat=-18.9543&lon=-48.1993" | python3 -m json.tool
 
@@ -255,7 +276,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | SMAP: "a Earthdata recusou o token" (401/403) ou "página de login" | o `EARTHDATA_TOKEN` venceu (dura 60 dias) | gere outro em urs.earthdata.nasa.gov → *Generate Token* e troque no `.env` |
 | IMERG: 403 "EULA Acceptance Failure" | falta aceitar a EULA do GES DISC | perfil da Earthdata → *Applications → Authorized Apps* → *NASA GESDISC DATA ARCHIVE* |
 | IMERG: "O GES DISC recusou o acesso (HTTP 401 / página HTML)" | o `EARTHDATA_TOKEN` venceu (dura 60 dias) ou falta autorizar o aplicativo | gere outro token em urs.earthdata.nasa.gov e confira *Authorized Apps* |
-| Região ou soja recente: "A ORNL não respondeu ... depois de 5 tentativas" | a ORNL está lenta ou fora (502) | rode o mesmo comando de novo mais tarde: continua do cache |
+| Região, soja recente ou NDVI por área: "A ORNL não respondeu ... depois de 5 tentativas" | a ORNL está lenta ou fora (502) | rode o mesmo comando de novo mais tarde: continua do cache |
 | Restaurar a cópia do banco dá "duplicate key" | o banco já tinha dados | esvazie as tabelas (passo 3 do caminho rápido) |
 
 ## Regras para agentes de código (Claude, Gemini)

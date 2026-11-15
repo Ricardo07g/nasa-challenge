@@ -143,9 +143,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 - **Preparar os dados na sua máquina** (pré-carga, CMIP6, NDVI, pacote do time e cópia do banco):
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
-  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`,
-  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`, `ENSO_PREVISAO_PATH`,
-  `AREA_QUEIMADA_PATH`). Nunca
+  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `NDVI_AREA_PATH`, `CMIP6_PATH`, `ONI_PATH`,
+  `REGIAO_PATH`, `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`,
+  `ENSO_PREVISAO_PATH`, `AREA_QUEIMADA_PATH`). Nunca
   coloque caminho fixo (como `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4). Sem preço, custo
   nem produtividade (tarefa 0040): o `tipo` diz se a cultura dá grão para vender.
@@ -548,7 +548,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **no compose**: já ligado. O serviço `backend` monta a pasta local `data/baixados` (fora do git)
     em `/dados_baixados`, só leitura, e aponta `CMIP6_PATH` para
     `/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json`, `NDVI_CACHE_PATH` para
-    `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json`, `REGIAO_PATH` para
+    `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json`, `NDVI_AREA_PATH` para
+    `/dados_baixados/nasa_modis_ndvi_area/ndvi_modis_area.json`, `REGIAO_PATH` para
     `/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`, `SMAP_PATH` para
     `/dados_baixados/nasa_smap/smap_semeadura.json`, `SMAP_RECENTE_PATH` para
     `/dados_baixados/nasa_smap/smap_recente.json` e `SOJA_RECENTE_PATH` para
@@ -577,8 +578,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     no `.env` desta pasta; **no compose**, já ligado em `/dados_baixados/nasa_smap/smap_semeadura.json`.
     Reinicie o backend depois de trocar o arquivo (ele é lido uma vez por processo).
 - **NDVI do MODIS e histórico do talhão** (R3.2, tarefa 0018). Com ou sem banco, a série vem do arquivo
-  do `NDVI_CACHE_PATH` (a tabela `ndvi_point` existe desde o R1.6 e a carga da tarefa 0022 a preenche,
-  mas a API ainda não lê dela). O arquivo vem do
+  do `NDVI_CACHE_PATH` e, sem ponto perto do talhão, da grade do `NDVI_AREA_PATH` ("NDVI por área",
+  abaixo, tarefa 0050). A tabela `ndvi_point` existe desde o R1.6 e a carga da tarefa 0022 a
+  preenche, mas a API ainda não lê dela. O arquivo vem do
   script do R2.2 (`pipeline/fetch_ndvi.py`); sem ele, a API responde `historico: null` e colheita `meio` / `padrao`.
   - `CachedNdviRepository`: lê o formato do contrato (seção NDVI abaixo) e ainda aceita o cache antigo
     (`data`, `ndvi` bruto). Usa o ponto do arquivo **mais perto** do talhão, a até 250 m
@@ -668,6 +670,36 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   # os 4 pontos de teste (fazenda, Uberlândia urbana, cana/pasto e norte), 2017 a 2026
   uv run python -m pipeline.fetch_ndvi --fonte ornl "--pontos=-18.9543,-48.1993;-18.9149,-48.2568;-19.55,-48.75;-18.6,-48.9"
   ```
+- **NDVI por área** (RF-34, tarefa 0050): `pipeline/fetch_ndvi_area.py` baixa da ORNL (sem
+  credencial) a série de **cada pixel de 250 m** da área (padrão: os `PILOT_*`; `--area="..."`), com
+  a mesma janela, os mesmos produtos, bandas, escala e filtro do `fetch_ndvi --fonte ornl` (um teste
+  de paridade confere os mesmos `NdviRecord` pelos dois caminhos). Grava o contrato "NDVI por área"
+  (abaixo) em `data/baixados/nasa_modis_ndvi_area/` a partir da raiz do repositório (fora do git).
+  - **Ladrilhos:** os da soja recente (`plan_tiles`: ±30 km = 241 × 241 pixels, lado a lado a partir
+    do canto noroeste da área), do centro da área para fora. Cada ladrilho = 80 pedidos (10 anos × 2
+    produtos × 2 bandas × 2 pedidos equilibrados: 7 + 7 datas do Terra e 7 + 6 do Aqua por ano, com
+    `--datas-por-pedido` 10, o limite da ORNL). Caixa piloto: **12 ladrilhos, 960 pedidos, ~5,3 h**
+    com `--paralelo 2` pelo `--dry-run` (~40 s por pedido, sem os 502).
+  - **Retomada:** resposta conferida (banda, grade global, centro do ladrilho, datas) antes do cache
+    (`cache_ornl/<ladrilho>/`, gzip), lido por data. O ladrilho é compactado e o índice regravado
+    assim que os pedidos dele terminam (cada ladrilho pronto já vale na API). Falha: o ladrilho fica
+    para a próxima execução; 3 seguidos sem resposta param tudo; saída 2 = rode de novo.
+    `--apagar-cache` apaga o cache bruto de cada ladrilho compactado.
+  - **Na API:** `get_ndvi_repository` monta, com `NDVI_AREA_PATH`, um `LayeredNdviRepository`: o
+    arquivo por ponto (`CachedNdviRepository`, pontos a até 250 m) e depois o `GridNdviRepository`
+    (o ladrilho de centro mais perto que contém o pixel; fora de todos, série vazia). Sem a variável
+    ou sem o índice, tudo como antes. Os services continuam chamando só `get_ndvi_history`. O
+    `get_data_run` vem do `versao_dados` do índice. Lido uma vez por processo: reinicie o backend
+    depois de baixar mais ladrilhos.
+
+  ```bash
+  uv run python -m pipeline.fetch_ndvi_area --dry-run            # ladrilhos, pedidos, tempo e espaço
+  uv run python -m pipeline.fetch_ndvi_area --paralelo 2         # caixa piloto, 2017 a 2026
+  uv run python -m pipeline.fetch_ndvi_area --area="-19.0,-18.9,-48.25,-48.15" --anos 2026
+  ```
+
+  Para ligar: **com uv**, `NDVI_AREA_PATH=../../data/baixados/nasa_modis_ndvi_area/ndvi_modis_area.json`
+  no `.env` desta pasta; **no compose**, já ligado.
 - **Chuva de cada mês** (`chuva_mensal` de `/talhao` e do talhão do `/exemplo`, gráfico da tela 3,
   tarefa 0028): o `MonthlyRainService` soma a chuva de cada mês, de janeiro a junho, em cada
   temporada da célula (as que o `get_seasons` já devolve) e tira a média entre os anos, com uma
@@ -1165,6 +1197,38 @@ Uma observação de 16 dias por ponto, já sem neve e sem nuvem. O arquivo é o 
   Arquivo novo traz os quatro campos, e o `CachedNdviRepository` lê os quatro desde o R3.2.
 - A série vai de **janeiro a julho** de cada ano: abril a julho para o histórico (PRD 7.8) e janeiro a
   março para a colheita sugerida (PRD 7.9).
+
+### NDVI por área (tarefa 0050): índice + ladrilhos (`app/repositories/ndvi_grid_repository.py`)
+
+O que o `pipeline/fetch_ndvi_area.py` grava e o `GridNdviRepository` lê (`NDVI_AREA_PATH`). Só
+biblioteca padrão (`array`, `struct`, `zlib`), sem numpy. O resultado de um ponto é o mesmo
+`NdviRecord` do contrato do NDVI (acima): só observação boa, NDVI físico com 4 casas.
+
+```json
+{
+  "versao_dados": {"fonte": "modis_mod13q1", "parametros": {"tipo": "ndvi_area", "anos": [2017, 2026], "ladrilhos_prontos": 12, "completo": true}, "fim": "2026-11-16T03:00:00Z", "versao": "2026.11-modis-ndvi-area"},
+  "formato": {"nome": "raiz-orbital-ndvi-area", "versao": 1, "linhas_por_bloco": 8, "sem_observacao": -32768},
+  "fonte": "MODIS MOD13Q1 + MYD13Q1",
+  "fator_escala": 0.0001,
+  "grade": {"projecao": "sinusoidal_modis", "raio_m": 6371007.181, "pixel_m": 231.656358264, "x_oeste_m": -20015109.355797417, "y_norte_m": 10007554.677898709},
+  "datas": [["2017-01-01", "MOD13Q1"], ["2017-01-09", "MYD13Q1"]],
+  "area": {"lat_min": -19.9, "lat_max": -18.4, "lon_min": -49.0, "lon_max": -47.5},
+  "ladrilhos": [{"arquivo": "ladrilhos/r52392_c64443.bin", "linha": 52272, "coluna": 64323, "linhas": 241, "colunas": 241, "centro": {"lat": -19.15104, "lon": -48.42256}, "bytes": 23300000}]
+}
+```
+
+- `grade`: a grade **global** do MODIS (origem em (−πR, πR/2)); `linha`/`coluna` de cada ladrilho
+  são o pixel global do canto noroeste, tirados do cabeçalho do recorte da ORNL.
+- `datas`: a ordem das datas dentro de cada ladrilho (Terra e Aqua nunca no mesmo dia).
+- **Ladrilho** (binário, little endian): cabeçalho `<8sHHIIIIIII` (`RZNDVIGR`, versão 1, linhas por
+  bloco, linha e coluna globais, linhas, colunas, número de datas, CRC32 de `data:produto;...` e
+  número de blocos), a tabela de onde começa cada bloco (`uint64`, um a mais no fim) e os blocos. Um
+  bloco = até 8 linhas de pixels, zlib; descomprimido, data a data na ordem de `datas`, os pixels das
+  linhas do bloco: primeiro todos os bytes altos do NDVI bruto (int16), depois os baixos, depois a
+  qualidade (uint8). Sem observação boa: NDVI −32768 e qualidade 255.
+- Ladrilho com outras datas (CRC diferente) ou noutra posição que a do índice: `ValueError`.
+- Tamanho medido (NDVI real da região): ~1,48 byte por pixel e data = ~23 MB por ladrilho de 241 ×
+  241 × 270; ler um ponto descomprime um bloco (~1,5 MB), 1 a 2 ms. Detalhes: tarefa 0050.
 
 ### SMAP: `SmapSoilMoisture` (`app/models/climate.py`)
 
