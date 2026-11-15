@@ -1,11 +1,11 @@
 /* Miniatura do mapa no cabeçalho do raio-X (tela 4): pequena, parada e com borda clara. */
 .wrapper {
   width: 132px;
-  height: 108px;
+  height: 100px;
   flex: 0 0 auto;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-2xs);
   overflow: hidden;
-  border: 1px solid var(--color-instrument-border);
+  border: 1px solid var(--color-xray-map-border);
   background: var(--color-map-bg);
 }
 
@@ -16,8 +16,28 @@
   font-size: var(--font-size-micro);
 }
 
+/* O crédito numa linha só, em letra pequena, para não cobrir o mapinha */
+.map :global(.leaflet-control-attribution) {
+  padding: 0 3px;
+  font-size: 9px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
 /* O CSS vale mais que os atributos que o Leaflet põe no SVG. */
 .pin {
   fill: var(--color-risk);
   stroke: var(--color-surface);
+}
+
+/* Celular (até 900 px): menor, para o nome do lugar caber ao lado */
+@media (max-width: 900px) {
+  .wrapper {
+    width: 112px;
+    height: 84px;
+  }
+
+  .map :global(.leaflet-control-attribution) {
+    font-size: 8px;
+  }
 }

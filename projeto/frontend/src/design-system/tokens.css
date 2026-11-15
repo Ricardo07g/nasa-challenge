@@ -76,21 +76,6 @@
     rgb(251 254 252 / 70%) 100%
   );
 
-  /*
-   * Painel "Raio-X da sua terra" (tela 4, tarefa 0043): o único elemento escuro da tela. Contraste
-   * conferido sobre a superfície dos blocos: texto 11,3:1, apagado 7,3:1, número 8,0:1, selo 7,9:1.
-   */
-  --color-instrument-bg: var(--color-mission-sky);
-  --color-instrument-surface: #10375c;
-  --color-instrument-border: #285279;
-  --color-instrument-text: #f2f7fb;
-  --color-instrument-muted: #b7cadc;
-  --color-instrument-accent: #9be0bd;
-  --color-instrument-link: #a9d4ff;
-  --color-instrument-badge-bg: #1b4a73;
-  --color-instrument-badge-text: #e3eef8;
-  --color-instrument-meter-track: #2a5379;
-  --color-instrument-meter-fill: #6ab7e6;
   /* Barra do solo (argila, silte e areia), sobre o painel escuro */
   --color-soil-clay: #b0763a;
   --color-soil-silt: #d6b27a;
@@ -269,6 +254,39 @@
   --color-notice-text: #6b4a10;
   --shadow-demo: 0 4px 14px rgb(31 107 71 / 12%); /* botão da lavoura de demonstração em destaque */
   --modal-large-gap: 24px; /* borda em volta do modal grande (8 px no celular) */
+
+  /*
+   * Tela 4 "Raio-X da sua terra" (pacote 2, tarefa 0058): o painel escuro com os blocos enxutos e o gráfico
+   * "Suas últimas safras". Contraste sobre o fundo do painel: texto 11:1, rótulo 8:1, número 10:1, nota 6,8:1.
+   */
+  --xray-panel-bg: linear-gradient(160deg, #0e2c46 0%, #0b2338 100%);
+  --shadow-xray: 0 10px 30px rgb(11 35 56 / 18%);
+  --color-xray-text: #d7e3ee;
+  --color-xray-label: #a9bfd2;
+  --color-xray-chevron: #6f8ba3;
+  --color-xray-eyebrow: #8fd3b4;
+  --color-xray-value: #9be3c3;
+  --color-xray-unit: #cfe0ec;
+  --color-xray-note: #93abc0;
+  --color-xray-block-bg: rgb(255 255 255 / 5%);
+  --color-xray-block-hover: rgb(255 255 255 / 9%);
+  --color-xray-block-border: rgb(255 255 255 / 10%);
+  --color-xray-block-border-hover: rgb(143 211 180 / 45%);
+  --color-xray-badge-bg: rgb(255 255 255 / 8%);
+  --color-xray-badge-text: #b9cddd;
+  --color-xray-live-bg: rgb(143 211 180 / 12%);
+  --color-xray-live-text: #bfe8d5;
+  --color-xray-live-dot: #5fd39c;
+  --color-xray-live-ring: rgb(95 211 156 / 25%);
+  --xray-moisture-gradient: linear-gradient(90deg, #c9a46a, #5aa9e6);
+  --color-xray-map-border: rgb(255 255 255 / 18%); /* borda do mapinha */
+  --color-chart-bg: #fbfcfb; /* caixa do gráfico das safras */
+  --color-chart-stripe: #e6e9e6; /* safra sem leitura do satélite (listrada) */
+  --color-chart-stripe-light: #f4f5f4;
+  --color-chart-current-dash: #b9c9d8; /* safra atual, ainda sem leitura (tracejada) */
+  --color-season-confirmable: #eef5f0; /* as 3 safras que o produtor confirma */
+  --color-season-current: #eef3f8; /* a safra atual (2026/27) no gráfico */
+  --color-sat-status-bg: #f1f2f1; /* "Sem leitura do satélite neste ponto" */
 }
 
 /* Celular e tablet (até 900 px, protótipos da remodelagem v4): margem menor e cabeçalho mais baixo */

@@ -8,4 +8,13 @@ describe('MiniMap (miniatura do mapa com o pin, raio-X)', () => {
 
     expect(screen.getByRole('img', { name: 'Mapa com o ponto marcado perto de Uberlândia' })).toBeInTheDocument()
   })
+
+  it('"© OpenStreetMap" sobre o mapa, e o crédito do Leaflet sem bandeira (regra do NASA Space Apps)', () => {
+    const { container } = render(<MiniMap label="Mapa" point={{ lat: -18.9543, lon: -48.1993 }} />)
+
+    const attribution = container.querySelector('.leaflet-control-attribution')
+    expect(attribution).toHaveTextContent('© OpenStreetMap')
+    expect(attribution).toHaveTextContent('Leaflet')
+    expect(attribution?.querySelector('svg')).toBeNull()
+  })
 })

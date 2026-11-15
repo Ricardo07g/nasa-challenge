@@ -1,0 +1,293 @@
+/*
+ * Gráfico "Suas últimas safras" (tela 4, protótipo do pacote 2): safra (78 px) · leituras · depois da soja
+ * (200 px). No celular, a coluna da direita sai da vista (as respostas estão logo embaixo, nas perguntas).
+ */
+.chart {
+  min-width: 0;
+  margin: 0;
+  padding: 16px 16px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-chart-bg);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.title svg {
+  flex: none;
+  color: var(--color-primary);
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr) 200px;
+  gap: 10px;
+  align-items: center;
+}
+
+.headSeason,
+.headAfter {
+  font-size: 11.5px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-soft);
+}
+
+.headSeason {
+  align-self: end;
+  padding-bottom: 6px;
+}
+
+.marks {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 3px;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+
+.mark {
+  padding: 3px 0;
+  border-radius: var(--radius-year);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mark[data-mark='soy'] {
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+}
+
+.mark[data-mark='harvest'] {
+  background: var(--color-tint-orange);
+  color: var(--color-fallow);
+}
+
+.mark[data-mark='after'] {
+  background: var(--color-season-current);
+  color: var(--color-info);
+}
+
+.months {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  margin: 4px 0 6px;
+  font-size: 11.5px;
+  color: var(--color-text-soft);
+}
+
+.months span {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows .line {
+  padding: 4px 0;
+  border-radius: var(--radius-2xs);
+}
+
+.rows .line[data-tone='confirmable'] {
+  margin: 0 -8px;
+  padding: 4px 8px;
+  background: var(--color-season-confirmable);
+}
+
+.rows .line[data-tone='current'] {
+  margin: 0 -8px;
+  padding: 4px 8px;
+  background: var(--color-season-current);
+}
+
+.season {
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.season small {
+  display: block;
+  margin-top: 1px;
+  font-size: 10.5px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-soft);
+  white-space: nowrap;
+}
+
+.line[data-tone='current'] .season small {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-info);
+}
+
+.track {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 3px;
+  height: 22px;
+}
+
+.track i {
+  border-radius: var(--radius-cell);
+}
+
+.track[data-empty='stripes'] i,
+.legend i[data-empty='stripes'] {
+  background: repeating-linear-gradient(45deg, var(--color-chart-stripe) 0 4px, var(--color-chart-stripe-light) 4px 8px);
+}
+
+.track[data-empty='current'] i,
+.legend i[data-empty='current'] {
+  border: 1px dashed var(--color-chart-current-dash);
+  background: var(--color-surface);
+}
+
+.track i[data-level='0'] {
+  background: repeating-linear-gradient(45deg, var(--color-chart-stripe) 0 3px, var(--color-chart-stripe-light) 3px 6px);
+}
+
+.track i[data-level='1'],
+.legend i[data-level='1'] {
+  background: var(--color-ndvi-1);
+}
+
+.track i[data-level='2'],
+.legend i[data-level='2'] {
+  background: var(--color-ndvi-2);
+}
+
+.track i[data-level='3'],
+.legend i[data-level='3'] {
+  background: var(--color-ndvi-3);
+}
+
+.track i[data-level='4'],
+.legend i[data-level='4'] {
+  background: var(--color-ndvi-4);
+}
+
+.track i[data-level='5'],
+.legend i[data-level='5'] {
+  background: var(--color-ndvi-5);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--color-text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--color-border);
+  list-style: none;
+  font-size: 12px;
+  color: var(--color-text-soft);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+}
+
+.legend i {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 10px;
+  margin-right: 5px;
+  border-radius: 2px;
+}
+
+.legend .source {
+  margin-left: auto;
+}
+
+/* Celular e tablet (até 900 px): a coluna da direita sai da vista; continua para o leitor de tela */
+@media (max-width: 900px) {
+  .chart {
+    padding: 12px 10px 10px;
+  }
+
+  .line {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .headAfter,
+  .status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .headSeason {
+    font-size: 10.5px;
+  }
+
+  .marks {
+    font-size: 10.5px;
+  }
+
+  .months {
+    font-size: 10.5px;
+  }
+
+  .rows .line[data-tone='confirmable'],
+  .rows .line[data-tone='current'] {
+    margin: 0 -6px;
+    padding: 4px 6px;
+  }
+
+  .season {
+    font-size: 12px;
+  }
+
+  /* "Jan–Jul 2017" cabe nos 64 px da coluna, sem invadir a barra */
+  .season small {
+    font-size: 9.5px;
+    letter-spacing: -0.01em;
+  }
+
+  .track {
+    height: 20px;
+  }
+
+  .legend .source {
+    margin-left: 0;
+  }
+}

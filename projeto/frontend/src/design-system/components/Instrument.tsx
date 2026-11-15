@@ -1,31 +1,64 @@
 import { useEffect, useId, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react'
+import { ChevronRightIcon } from '../icons'
 import styles from './Instrument.module.css'
 
 /**
- * Painel de instrumento do raio-X (tela 4, tarefa 0043): o único elemento escuro da tela, com uma
- * grade de blocos. Os blocos entram em sequência (CSS); com "reduzir movimento" tudo aparece parado.
+ * Painel de instrumento do raio-X (tela 4, tarefas 0043 e 0058): o único elemento escuro da tela. No topo, o
+ * mapinha, o olho "Raio-X da sua terra", o lugar (o título da seção), as coordenadas e o selo da leitura; embaixo,
+ * a grade de blocos (4 por linha no computador, 2 no celular) e a nota. Os blocos entram em sequência (CSS); com
+ * "reduzir movimento" tudo aparece parado.
  */
 export function InstrumentPanel({
+  eyebrow,
   title,
-  header,
+  media,
+  meta,
+  aside,
+  note,
   children,
-  footer,
 }: {
+  eyebrow: string
+  /** O lugar ("Lavoura de demonstração, perto de Uberlândia (MG)"): o nome da seção. */
   title: string
-  header?: ReactNode
+  /** O mapinha. */
+  media?: ReactNode
+  /** As coordenadas. */
+  meta?: ReactNode
+  /** O selo "Leitura mais recente". */
+  aside?: ReactNode
+  note?: ReactNode
+  /** Os blocos (`InstrumentBlock`). */
   children: ReactNode
-  footer?: ReactNode
 }) {
   const titleId = useId()
   return (
     <section className={styles.panel} aria-labelledby={titleId}>
-      <h2 id={titleId} className={styles.panelTitle}>
-        {title}
-      </h2>
-      {header && <div className={styles.header}>{header}</div>}
-      <div className={styles.grid}>{children}</div>
-      {footer && <p className={styles.footer}>{footer}</p>}
+      <div className={styles.top}>
+        <div className={styles.identity}>
+          {media && <div className={styles.media}>{media}</div>}
+          <div className={styles.identityText}>
+            <span className={styles.eyebrow}>{eyebrow}</span>
+            <h2 id={titleId} className={styles.title}>
+              {title}
+            </h2>
+            {meta && <p className={styles.meta}>{meta}</p>}
+          </div>
+        </div>
+        {aside}
+      </div>
+      <ul className={styles.grid}>{children}</ul>
+      {note && <p className={styles.note}>{note}</p>}
     </section>
+  )
+}
+
+/** Selo "Leitura mais recente: …", com o pontinho verde de "ao vivo". */
+export function LiveBadge({ children }: { children: ReactNode }) {
+  return (
+    <span className={styles.live}>
+      <span className={styles.liveDot} aria-hidden="true" />
+      <span>{children}</span>
+    </span>
   )
 }
 
@@ -33,32 +66,41 @@ type InstrumentBlockProps = {
   /** Posição na grade: atrasa a entrada do bloco (sequência). */
   index: number
   label: string
-  value?: ReactNode
-  unit?: string
-  sentence?: ReactNode
+  /** O número (pode ser um `CountUp`). */
+  value: ReactNode
+  unit: string
+  /** Uma linha de texto: o detalhe fica no modal. */
+  line: string
+  /** Fonte e resolução (ex.: "SMAP · NASA · 9 km"). */
   badge: string
-  /** Desenho do dado (barra, medidor), entre o número e a frase. */
-  children?: ReactNode
-  /** Links e botões do bloco ("Não é? Trocar", "Saiba mais"), depois da frase. */
-  actions?: ReactNode
+  /** "Ver detalhes": escondido, completa o nome do botão para o leitor de tela. */
+  detailsLabel: string
+  onOpen: () => void
+  /** Desenho do dado (barra do solo, umidade), entre o número e a linha. */
+  bar?: ReactNode
 }
 
-/** Um bloco: rótulo, número grande (fonte tabular), unidade, frase curta e o selo da fonte. */
-export function InstrumentBlock({ index, label, value, unit, sentence, badge, children, actions }: InstrumentBlockProps) {
+/**
+ * Um bloco enxuto (pacote 2): só o nome, o número grande, uma linha e o selo da fonte. O bloco inteiro é um
+ * botão que abre o modal com o texto completo, a fonte e o "Saiba mais".
+ */
+export function InstrumentBlock({ index, label, value, unit, line, badge, detailsLabel, onOpen, bar }: InstrumentBlockProps) {
   return (
-    <article className={styles.block} style={{ '--i': index } as CSSProperties}>
-      <h3 className={styles.blockLabel}>{label}</h3>
-      {value !== undefined && (
-        <p className={styles.reading}>
-          <span className={styles.value}>{value}</span>
-          {unit && <span className={styles.unit}>{unit}</span>}
-        </p>
-      )}
-      {children}
-      {sentence && <p className={styles.sentence}>{sentence}</p>}
-      {actions && <div className={styles.actions}>{actions}</div>}
-      <SourceBadge>{badge}</SourceBadge>
-    </article>
+    <li className={styles.item} style={{ '--i': index } as CSSProperties}>
+      <button type="button" className={styles.block} aria-haspopup="dialog" onClick={onOpen}>
+        {/* Os espaços entre as partes separam as palavras no nome do botão (o flex não os desenha). */}
+        <span className={styles.blockLabel}>
+          <span>{label}</span>
+          <ChevronRightIcon size={15} />
+        </span>{' '}
+        <span className={styles.reading}>
+          <span className={styles.value}>{value}</span> <span className={styles.unit}>{unit}</span>
+        </span>{' '}
+        {bar}
+        <span className={styles.line}>{line}</span> <span className={styles.spacer} />
+        <SourceBadge>{badge}</SourceBadge> <span className="visually-hidden">{detailsLabel}</span>
+      </button>
+    </li>
   )
 }
 
@@ -67,50 +109,24 @@ export function SourceBadge({ children }: { children: ReactNode }) {
   return <span className={styles.badge}>{children}</span>
 }
 
-export type SplitPart = { key: 'clay' | 'silt' | 'sand'; label: string; pct: number }
-
-/** Barra dividida (solo): cada parte com a % escrita embaixo, nada só por cor. */
-export function SplitBar({ label, parts }: { label: string; parts: readonly SplitPart[] }) {
+/** Barra do solo no bloco (argila, silte e areia): só desenha, os números estão no bloco e no modal. */
+export function SoilBar({ clay, silt, sand }: { clay: number; silt: number; sand: number }) {
   return (
-    <div className={styles.split}>
-      <div className={styles.splitBar} role="img" aria-label={label}>
-        {parts.map((part) => (
-          <span key={part.key} className={styles.splitPart} data-part={part.key} style={{ flexGrow: part.pct }} />
-        ))}
-      </div>
-      <ul className={styles.splitLegend}>
-        {parts.map((part) => (
-          <li key={part.key}>
-            <span className={styles.splitDot} data-part={part.key} aria-hidden="true" />
-            {`${part.label} ${part.pct}%`}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <span className={styles.soilBar} aria-hidden="true">
+      <span data-part="clay" style={{ flexGrow: clay }} />
+      <span data-part="silt" style={{ flexGrow: silt }} />
+      <span data-part="sand" style={{ flexGrow: sand }} />
+    </span>
   )
 }
 
-/** Medidor de 0 a 100 (percentil), com a marca do valor e os extremos escritos. */
-export function Meter({ label, value, lowLabel, highLabel }: { label: string; value: number; lowLabel: string; highLabel: string }) {
-  const clamped = Math.max(0, Math.min(100, value))
+/** Barra da umidade no bloco (de mais seca a mais úmida), com a marca no percentil: só desenha. */
+export function MoistureBar({ pct }: { pct: number }) {
+  const clamped = Math.max(0, Math.min(100, pct))
   return (
-    <div className={styles.meter}>
-      <div
-        className={styles.meterTrack}
-        role="meter"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(clamped)}
-      >
-        <span className={styles.meterFill} style={{ width: `${clamped}%` }} />
-        <span className={styles.meterMark} style={{ left: `${clamped}%` }} />
-      </div>
-      <p className={styles.meterEnds}>
-        <span>{lowLabel}</span>
-        <span>{highLabel}</span>
-      </p>
-    </div>
+    <span className={styles.moistureBar} aria-hidden="true">
+      <span className={styles.moistureMark} data-mark="" style={{ left: `${clamped}%` }} />
+    </span>
   )
 }
 
@@ -148,75 +164,4 @@ export function CountUp({ value, format }: { value: number; format: (value: numb
   }, [value])
 
   return <span ref={ref}>{format(value)}</span>
-}
-
-export type HeatLevel = 0 | 1 | 2 | 3 | 4 | 5
-
-type NdviHeatmapProps = {
-  /** Resumo para o leitor de tela (a figura é uma imagem). */
-  label: string
-  months: readonly { label: string; from: number; span: number }[]
-  /** Faixas marcadas no topo ("soja", "colheita", "entressafra"), em colunas `[from, to)`. */
-  marks: readonly { label: string; from: number; to: number }[]
-  rows: readonly { year: number; tag: string; cells: readonly { level: HeatLevel; title: string }[] }[]
-  legend: readonly { level: HeatLevel; label: string }[]
-  noDataLabel: string
-}
-
-/**
- * Faixa de calor: um ano por linha, uma leitura por coluna, a cor é o nível do NDVI. O que aconteceu
- * em cada ano vem escrito no fim da linha, e a legenda dá os números de cada cor.
- */
-export function NdviHeatmap({ label, months, marks, rows, legend, noDataLabel }: NdviHeatmapProps) {
-  const columns = rows[0]?.cells.length ?? 0
-  const grid = { '--cols': columns } as CSSProperties
-  return (
-    <div className={styles.heat}>
-      <figure className={styles.heatFigure} role="img" aria-label={label}>
-        <div className={styles.heatGrid} style={grid}>
-          <span className={styles.heatCorner} />
-          {marks.map((mark) => (
-            <span
-              key={mark.label}
-              className={styles.heatMark}
-              data-mark={mark.label}
-              style={{ gridColumn: `${mark.from + 2} / ${mark.to + 2}`, gridRow: 1 }}
-            >
-              {mark.label}
-            </span>
-          ))}
-          {months.map((month) => (
-            <span
-              key={`${month.label}-${month.from}`}
-              className={styles.heatMonth}
-              style={{ gridColumn: `${month.from + 2} / span ${month.span}`, gridRow: 2 }}
-            >
-              {month.label}
-            </span>
-          ))}
-          {rows.map((row, rowIndex) => (
-            <div key={row.year} className={styles.heatRow} style={{ gridRow: rowIndex + 3 }}>
-              <span className={styles.heatYear}>{row.year}</span>
-              {row.cells.map((cell, index) => (
-                <span key={index} className={styles.heatCell} data-level={cell.level} title={cell.title} />
-              ))}
-              <span className={styles.heatTag}>{row.tag}</span>
-            </div>
-          ))}
-        </div>
-      </figure>
-      <ul className={styles.heatLegend}>
-        {legend.map((item) => (
-          <li key={item.level}>
-            <span className={styles.heatSwatch} data-level={item.level} aria-hidden="true" />
-            {item.label}
-          </li>
-        ))}
-        <li>
-          <span className={styles.heatSwatch} data-level={0} aria-hidden="true" />
-          {noDataLabel}
-        </li>
-      </ul>
-    </div>
-  )
 }
