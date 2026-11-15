@@ -25,29 +25,29 @@ function deps(load: () => Promise<Recomendacao> = () => Promise.resolve(buildRec
   return { farm }
 }
 
-describe('useOptionsController (tela 6)', () => {
-  it('lista as opções na ordem padrão (nota final), com a melhor na frente', async () => {
+describe('useOptionsController (aba Comparar)', () => {
+  it('lista as opções na ordem do equilíbrio (nota final), com a melhor na frente', async () => {
     const d = deps()
     const { result } = renderHook(() => useOptionsController(d), { wrapper: providers(`/opcoes?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(result.current.axis).toBeNull()
+    expect(result.current.nav.objective).toBeNull()
     expect(result.current.summary?.options[0].id).toBe('milho_braquiaria')
   })
 
-  it('escolher um eixo reordena; tocar de novo volta à ordem padrão', async () => {
+  it('o objetivo do produtor reordena (tarefa 0044); tocar de novo volta ao equilíbrio', async () => {
     const d = deps()
     const { result } = renderHook(() => useOptionsController(d), { wrapper: providers(`/opcoes?${flow}`) })
     await waitFor(() => expect(result.current.status).toBe('ready'))
 
     // Renda pela nota de renda do motor, sem reais (tarefa 0040)
-    act(() => result.current.chooseAxis('renda'))
+    act(() => result.current.nav.chooseObjective('renda'))
     const incomes = result.current.summary!.options.map((o) => o.notas.renda)
     expect(incomes).toEqual([...incomes].sort((a, b) => b - a))
     expect(result.current.summary?.options[0].id).toBe('sorgo')
 
-    act(() => result.current.chooseAxis(null))
-    expect(result.current.axis).toBeNull()
+    act(() => result.current.nav.chooseObjective(null))
+    expect(result.current.nav.objective).toBeNull()
     expect(result.current.summary?.options[0].id).toBe('milho_braquiaria')
   })
 
@@ -61,11 +61,11 @@ describe('useOptionsController (tela 6)', () => {
     expect(result.current.summary?.late.names).toEqual(['Milho sozinho'])
   })
 
-  it('as abas marcam "Todas as opções"', () => {
+  it('as abas marcam "Comparar"', () => {
     const d = deps()
     const { result } = renderHook(() => useOptionsController(d), { wrapper: providers(`/opcoes?${flow}`) })
 
-    expect(result.current.nav.tabs[2]).toMatchObject({ label: 'Todas as opções', current: true })
+    expect(result.current.nav.tabs[1]).toMatchObject({ label: 'Comparar', current: true })
   })
 
   it('sem colheita volta para a pergunta 2', () => {

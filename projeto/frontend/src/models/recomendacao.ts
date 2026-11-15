@@ -19,7 +19,85 @@ export type AnoDetalhe = {
   dias_sem_chuva: number
   enso: 'el_nino' | 'la_nina' | null
   texto: string
+  /**
+   * Explorador ano a ano da aba Sugestão (tarefa 0044 do backend): a água na fase crítica em fração do
+   * que a planta precisa (o ISNA do motor, 0 a 1), os dias de 35 °C nessa fase, o porquê do aperto, o dia
+   * de plantar (ISO) e a umidade da terra no dia de plantar pelo SMAP (0 a 1; só de 2016 em diante).
+   * Opcionais: sem eles (API antiga), o explorador não aparece.
+   */
+  isna?: number
+  dias_calor?: number
+  falta_agua?: boolean
+  calor?: boolean
+  semeadura?: string | null
+  umidade_inicial?: number | null
 }
+
+/** Sede da cultura pelo consumo no ciclo (cortes do `regras.yaml`, grupo `agua`). */
+export type Sede = 'pouca' | 'media' | 'muita'
+
+/**
+ * Linha "Água" da opção para a data de plantio escolhida (tarefa 0044 do backend): medianas do balanço
+ * hídrico do motor nos dias do ciclo, em mm. `falta_seco_mm` é o ano seco (só 20% dos anos piores).
+ */
+export type AguaOpcao = {
+  precisa_mm: number
+  chove_mm: number
+  falta_normal_mm: number
+  falta_seco_mm: number
+  sede: Sede
+  /** Água que a terra guarda na conta (mm). */
+  cad_mm: number
+  anos: number
+  /** Falta de água em ano normal em 2041–2060: média dos modelos, faixa e a mudança contra hoje. */
+  futuro: { falta_normal_mm: number; falta_min_mm: number; falta_max_mm: number; mudanca_mm: number; modelos: number } | null
+}
+
+/** O critério real de "deu certo" do motor (PRD 7.2), para a tela explicar sem número fixo. */
+export type CriterioDeuCerto = {
+  /** ISNA mínimo (0 a 1) na fase crítica. */
+  isna_min: number
+  calor_temp_c: number
+  /** Com esse número de dias de calor ou mais na fase, o ano apertou. */
+  calor_min_dias: number
+  /** `floracao`: `janela_dias` antes e depois da floração; `pegamento`: os primeiros `janela_dias`. */
+  fase: 'floracao' | 'pegamento'
+  janela_dias: number
+}
+
+/** Taxa de acerto nos anos de uma fase do ENSO e nos outros; `clara` = a diferença passa do critério. */
+export type EnsoAcerto = {
+  fase: 'el_nino' | 'la_nina'
+  anos: number
+  bons: number
+  anos_outros: number
+  bons_outros: number
+  clara: boolean
+}
+
+export type Objetivo = 'seguranca' | 'renda' | 'terra'
+
+/** "O que você quer mais?" (tarefa 0044): sem objetivo, `equilibrio` (pesos padrão do motor). */
+export type ObjetivoChave = Objetivo | 'equilibrio'
+
+export const OBJETIVOS: readonly Objetivo[] = ['seguranca', 'renda', 'terra']
+
+/** Ordem das opções e plano sugerido para um objetivo, prontos no motor. */
+export type ObjetivoResultado = { ordem: CropId[]; plano: CropId[]; nota_plano: number }
+
+/** Clima de 2041–2060 na célula: chuva em % e máxima em °C (média dos modelos) e quantos concordam. */
+export type ClimaFuturo = {
+  chuva_pct: number
+  tmax_c: number
+  modelos: number
+  concordam_chuva: number
+  concordam_tmax: number
+  meses: number[]
+  cenario: string
+}
+
+/** Anos com mínima de `tmin_max_c` °C ou menos nos `meses` (NASA POWER). */
+export type Geada = { anos: number; total: number; tmin_max_c: number; meses: number[] }
 
 export type Opcao = {
   id: CropId
@@ -49,6 +127,14 @@ export type Opcao = {
   como_fazer: string[]
   /** P1: um item por ano da faixa de chuva, para tocar e ver o que aconteceu. */
   anos_detalhe?: AnoDetalhe[]
+  /** Aba Sugestão (tarefa 0044 do backend); opcionais: sem o campo, o elemento não aparece. */
+  agua?: AguaOpcao | null
+  criterio?: CriterioDeuCerto | null
+  /** Ciclo e dias até a floração (`culturas.yaml`). */
+  ciclo?: { dias: number; floracao_dias: number } | null
+  /** Veranico típico da fase crítica (mediana, dias) e anos com calor nela. */
+  observar?: { veranico_dias: number; anos_calor: number; total: number } | null
+  enso_acerto?: EnsoAcerto[]
 }
 
 export type Plano = { anos: CropId[]; nota: number; descricao: string }
@@ -97,13 +183,20 @@ export type Recomendacao = {
   melhor: CropId
   alternativas: { motivo: Motivo; opcao: CropId }[]
   opcoes: Opcao[]
-  fora_da_janela: { id: CropId; nome: string; texto: string }[]
+  /** `data_limite` (ISO, tarefa 0044): o aviso único da colheita tarde junta as culturas por data. */
+  fora_da_janela: { id: CropId; nome: string; texto: string; data_limite?: string | null }[]
   pousio: { texto: string }
   plano_3_anos: { normal: Plano; seco: Plano; hoje: Plano }
   versao_dados: string
   aviso: string
   /** RF-20: null (ou ausente) sem a previsão do ENSO na API: o bloco do sinal não aparece. */
   sinal?: SinalOutono | null
+  /** Tarefa 0044: ordem e plano por objetivo do produtor (o navegador só escolhe). */
+  objetivos?: Partial<Record<ObjetivoChave, ObjetivoResultado>>
+  /** Clima de 2041–2060 na célula; null sem o CMIP6. */
+  clima_futuro?: ClimaFuturo | null
+  /** Risco de geada na célula; null sem série. */
+  geada?: Geada | null
 }
 
 export type RecomendacaoParams = {

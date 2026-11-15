@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react'
-import type { Eixo } from '../models/recomendacao'
+import { useMemo } from 'react'
 import { farmService, type FarmService } from '../services/farmService'
-import { optionsSummary } from '../services/recomendacaoRules'
+import { optionsForObjective } from '../services/suggestionService'
 import { useAnswerNav } from './useAnswerNav'
 import { useFlowRain } from './useFlowRain'
 import { useFlowRecomendacao } from './useFlowRecomendacao'
@@ -10,18 +9,20 @@ type Deps = { farm: FarmService }
 
 const defaultDeps: Deps = { farm: farmService }
 
-/** Tela 6 "Todas as opções": reordenar por Chuva, Renda ou Terra é no navegador (RF-05). */
+/**
+ * Aba Comparar (antes "Todas as opções"): a ordem segue o objetivo do produtor ("O que você quer mais?",
+ * tarefa 0044), que vem pronta do motor e fica na URL. A S5b refaz o conteúdo da aba.
+ */
 export function useOptionsController(deps: Deps = defaultDeps) {
   const { redirectTo, recomendacao, status } = useFlowRecomendacao(deps.farm)
   const nav = useAnswerNav()
-  const [axis, chooseAxis] = useState<Eixo | null>(null)
 
   const summary = useMemo(
-    () => (recomendacao.data ? optionsSummary(recomendacao.data, axis) : null),
-    [recomendacao.data, axis],
+    () => (recomendacao.data ? optionsForObjective(recomendacao.data, nav.objective) : null),
+    [recomendacao.data, nav.objective],
   )
 
   const rain = useFlowRain(deps.farm, recomendacao.data?.opcoes ?? null)
 
-  return { redirectTo, nav, status, retry: recomendacao.retry, axis, chooseAxis, summary, rain }
+  return { redirectTo, nav, status, retry: recomendacao.retry, summary, rain }
 }

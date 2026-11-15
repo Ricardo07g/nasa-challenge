@@ -4,6 +4,20 @@ import { describe, expect, it } from 'vitest'
 import * as Status from './Status'
 import { MetricRow, StatusPill, StripLegend, TappableYearStrip, ToneBadge, YearStrip } from './Status'
 
+describe('ThirstBadge (selo "Sede da cultura", tarefa 0044)', () => {
+  it.each([
+    ['pouca', 1],
+    ['media', 2],
+    ['muita', 3],
+  ] as const)('sede %s: o texto e %i gota(s), para não depender só da cor', (level, drops) => {
+    render(<Status.ThirstBadge level={level}>Sede</Status.ThirstBadge>)
+
+    const badge = screen.getByText('Sede')
+    expect(badge).toHaveAttribute('data-level', level)
+    expect(badge.querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(drops)
+  })
+})
+
 describe('StatusPill', () => {
   it('mostra o rótulo com o tom certo', () => {
     render(<StatusPill rotulo="medio">Médio</StatusPill>)

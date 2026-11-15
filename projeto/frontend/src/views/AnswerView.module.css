@@ -1,0 +1,160 @@
+/* Aba Sugestão (tarefa 0044) */
+
+/* Link sobre o destaque verde: texto claro e sublinhado (contraste com o fundo verde) */
+.heroLink {
+  align-self: flex-start;
+  color: var(--color-on-primary);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.heroLink:focus-visible {
+  outline: 3px solid var(--color-on-primary);
+  outline-offset: 2px;
+}
+
+.rowBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  min-width: 0;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-weight: var(--font-weight-semibold);
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendSwatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-cell);
+}
+
+.legendSwatch[data-state='good'] {
+  background: var(--color-primary);
+}
+
+.legendSwatch[data-state='bad'] {
+  background: repeating-linear-gradient(135deg, var(--color-risk) 0 3px, var(--color-risk-soft) 3px 6px);
+  border: 1.5px solid var(--color-risk);
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xs);
+  background: var(--color-tint-blue);
+  color: var(--color-text-on-blue-tint);
+}
+
+/* Detalhe do ano tocado (a antiga tela /safra-passada) */
+.yearPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 2px solid var(--color-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.yearPanelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.close:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+.facts2 {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fact dt {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
+.fact dd {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.timelineTitle {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* "Como fazer" em quatro partes */
+.howPart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.howTitle {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-on-green-tint);
+}
+
+.watchList {
+  margin: 0;
+  padding-left: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

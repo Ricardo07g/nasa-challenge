@@ -519,6 +519,152 @@ export const en = {
     noWarnings: 'No warnings this season.',
     note: 'Example values. In the app, the year and dates come from real data.',
   },
+  suggestion: {
+    tabs: { suggestion: 'Suggestion', compare: 'Compare', plan: '3-year plan' },
+    compareTitle: 'Compare',
+    objective: {
+      label: 'What do you want most?',
+      seguranca: 'More safety',
+      renda: 'Income',
+      terra: 'Care for the soil',
+      hintNone: 'With no choice, the app balances all three. Tap again to clear your choice.',
+      hint: {
+        seguranca: 'First, the crop that worked in more years.',
+        renda: 'First, the crop that gives grain with less risk.',
+        terra: 'First, the crop that does the most for the soil.',
+      },
+    },
+    lead: (year: number) => `After the ${year} soybeans, in your field:`,
+    year1: 'Year 1 of your plan',
+    plantImage: (crop: string) => `Drawing of the plant: ${crop}`,
+    planTitle: 'Your 3-year plan',
+    planYear: (year: number, crop: string) => `${year}: ${crop}`,
+    explorePlan: 'Explore the plan',
+    thirst: {
+      label: 'Crop thirst',
+      pouca: 'Thirst: little water',
+      media: 'Thirst: medium water',
+      muita: 'Thirst: lots of water',
+    },
+    worked: {
+      title: 'It worked',
+      criterionGrain: (isna: number, temp: string, days: number, half: number) =>
+        `It worked = the plant had at least ${isna}% of the water it needs in the stage that needs water most (${half} days before and after flowering) and it did not reach ${temp} °C on ${days} days or more in that stage.`,
+      criterionCover: (isna: number, temp: string, days: number, window: number) =>
+        `It worked = in the first ${window} days, when the plants establish, they had at least ${isna}% of the water they need and it did not reach ${temp} °C on ${days} days or more.`,
+      chartLabel: (good: number, total: number) =>
+        `Water in the stage that needs it most, year by year. It worked in ${good} of ${total} years.`,
+      cutLabel: (pct: number) => `Threshold: ${pct}%`,
+      good: 'It worked',
+      water: 'Water ran short',
+      heat: 'Too hot',
+      both: 'Water ran short and too hot',
+      yearButton: (year: number, pct: number, state: string, enso: string) =>
+        `${year}: ${pct}% of the water the plant needs. ${state}.${enso ? ` ${enso}.` : ''}`,
+      ensoNino: 'El Niño year',
+      ensoNina: 'La Niña year',
+      markNino: 'N',
+      markNina: 'L',
+      legendEnso: 'N: El Niño · L: La Niña (NOAA)',
+      axisNote: (period: string) =>
+        `Bar height: the water the plant had in the stage that needs it most, as a % of what it needs (model calculation). ${period}.`,
+      tapHint: 'Tap a year to see what happened.',
+      ensoNote: (phase: string, good: number, total: number, goodOthers: number, totalOthers: number) =>
+        `In ${phase} years, it worked in ${good} of ${total}; in the other years, in ${goodOthers} of ${totalOthers}.`,
+      ensoPhase: { el_nino: 'El Niño', la_nina: 'La Niña' },
+      ensoFew: 'These are few years: it shows what happened, it is not a forecast.',
+    },
+    year: {
+      title: (year: number) => `What happened in ${year}`,
+      close: 'Close',
+      sowing: 'Sowing',
+      flowering: 'Flowering, the stage that needs water most',
+      establishment: 'Start of the days when the plants establish',
+      dry: 'Longest run without rain in that stage',
+      days: (n: number) => (n === 1 ? '1 day' : `${n} days`),
+      heat: (temp: string) => `Days at ${temp} °C or more in that stage`,
+      enso: 'El Niño or La Niña',
+      ensoNone: 'Neither (neutral year)',
+      soil: 'Soil moisture on sowing day (SMAP)',
+      soilValue: (pct: number) => `${pct}% of the water the soil holds`,
+      why: 'The reason',
+      timeline: 'The season day by day',
+      timelineError: 'Could not load the season day by day.',
+    },
+    water: {
+      title: 'Water',
+      need: (mm: string) => `Needs ${mm} mm`,
+      rain: (mm: string) => `It usually rains ${mm} mm`,
+      short: (normal: string, dry: string) => `Short by ${normal} mm in a normal year and ${dry} mm in a dry year`,
+      noShort: (dry: string) => `No shortage in a normal year; in a dry year, short by ${dry} mm`,
+      barLabel: (need: string, rain: string, normal: string) =>
+        `Water bar: needs ${need} mm, it usually rains ${rain} mm, short by ${normal} mm in a normal year.`,
+      why: (cad: string) =>
+        `Even when it rains more than the plant needs, water can run short: the rain comes early and the soil only holds ${cad} mm.`,
+      future: (normal: string, min: string, max: string) =>
+        `In 2041–2060, the shortage in a normal year would be ${normal} mm (${min} to ${max} mm, depending on the model).`,
+      futureMore: (mm: string) => `${mm} mm more than today.`,
+      futureLess: (mm: string) => `${mm} mm less than today.`,
+      futureSame: 'The same as today.',
+      note: (years: number) =>
+        `Model calculation over the crop cycle: GPM IMERG rain and crop water use from NASA POWER weather. Median of ${years} years; dry year = only 1 in 5 years had a bigger shortage.`,
+      guide: 'The moisture held by straw, runoff and the water left for the next crop are in the Guide, without numbers: we do not have that data.',
+    },
+    climate: {
+      title: '2041–2060 climate',
+      rain: (pct: string) => `March to May rain: ${pct}%`,
+      heat: (deg: string) => `Maximum temperature: ${deg} °C`,
+      agreeRain: (n: number, total: number, less: boolean) =>
+        `${n} of ${total} models point to ${less ? 'less' : 'more'} rain.`,
+      agreeHeat: (n: number, total: number, hotter: boolean) =>
+        `${n} of ${total} point to ${hotter ? 'more' : 'less'} heat.`,
+      source: 'NEX-GDDP-CMIP6 (NASA), SSP2-4.5 scenario, model average, against 1995–2014.',
+    },
+    how: {
+      title: 'How to do it',
+      when: 'When to plant',
+      whenText: (date: string) => `Right after the soybean harvest, until ${date} (ZARC deadline in the calculation).`,
+      whenSoon: 'Right after the soybean harvest.',
+      duration: 'How long it takes',
+      durationText: (cycle: number, flowering: number) =>
+        `About ${cycle} days from sowing to the end of the cycle; it flowers around day ${flowering}.`,
+      watch: 'What to watch',
+      watchDry: (days: number) =>
+        `Dry spell: in half of the years, the plant went ${days} days or more without rain in the stage that needs water most.`,
+      watchDryNone: 'Dry spell: in half of the years or more, there was no day without rain in the stage that needs water most.',
+      watchHeat: (years: number, total: number, temp: string, days: number) =>
+        `Heat: in ${years} of ${total} years it reached ${temp} °C on ${days} days or more in that stage.`,
+      watchHeatNone: (total: number, temp: string, days: number) =>
+        `Heat: in none of the ${total} years did it reach ${temp} °C on ${days} days or more in that stage.`,
+      watchRainEnd: (date: string) => `End of the rains: in half of the years, the rain ended by ${date}.`,
+      manage: 'Management',
+      draft: 'Draft: to be reviewed by the agronomist.',
+      fullGuide: 'Full step by step',
+    },
+    late: {
+      title: 'Late harvest',
+      when: { cedo: 'by February 10', meio: 'between February 11 and 20', tarde: 'after February 20' },
+      group: (crops: string, date: string) => `${crops} (ZARC, ${date})`,
+      text: (when: string, list: string, count: number) =>
+        `Harvesting ${when}, the safe sowing deadline has already passed for ${list}. That is why ${count === 1 ? 'it does not show up' : 'they do not show up'}.`,
+      textOneDate: (when: string, date: string, list: string, count: number) =>
+        `Harvesting ${when}, the safe sowing deadline (ZARC, ${date}) has already passed for ${list}. That is why ${count === 1 ? 'it does not show up' : 'they do not show up'}.`,
+      zarc: 'ZARC is the Agricultural Climate Risk Zoning of the Brazilian Ministry of Agriculture: for each municipality, it says until when to plant with the lowest climate risk.',
+      frost: (years: number, total: number, temp: string) =>
+        `Frost: in ${years} of ${total} years the minimum reached ${temp} °C or less between May and July (NASA POWER).`,
+      and: 'and',
+    },
+    learnMore: (title: string) => `Learn more: ${title}`,
+    articles: {
+      worked: 'What "it worked" means',
+      water: 'The water math of your field',
+      enso: 'El Niño and La Niña',
+      future: 'The 2041 to 2060 climate',
+      zarc: 'The planting deadline and ZARC',
+      frost: 'Frost in the second crop',
+      rotation: 'Crop rotation',
+    },
+  },
   telegram: {
     title: 'Receive on Telegram',
     text: 'The answer in audio on your phone, and a warning if your field needs rain.',

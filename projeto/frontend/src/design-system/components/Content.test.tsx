@@ -5,6 +5,7 @@ import {
   Disclaimer,
   Disclosure,
   EventTimeline,
+  MiniPlan,
   NumberedSteps,
   OptionCompareCard,
   PageHeading,
@@ -12,6 +13,52 @@ import {
   ScoreTable,
   YearTimeline,
 } from './Content'
+
+describe('imagem da planta e selos nos cartões (tarefa 0044)', () => {
+  it('o destaque da sugestão leva a imagem da planta no canto e o selo de sede', () => {
+    render(
+      <RecommendationHero label="Ano 1 do seu plano" title="Sorgo" media={<span>imagem do sorgo</span>} badge={<span>Sede: água média</span>} />,
+    )
+
+    expect(screen.getByText('imagem do sorgo')).toBeInTheDocument()
+    expect(screen.getByText('Sede: água média')).toBeInTheDocument()
+  })
+
+  it('o cartão de comparar leva a imagem e o selo', () => {
+    render(
+      <OptionCompareCard rank="1º" name="Milheto" rows={[]} media={<span>imagem do milheto</span>} badge={<span>Sede: pouca água</span>} />,
+    )
+
+    expect(screen.getByText('imagem do milheto')).toBeInTheDocument()
+    expect(screen.getByText('Sede: pouca água')).toBeInTheDocument()
+  })
+
+  it('a linha do tempo do plano leva a imagem de cada ano', () => {
+    render(<YearTimeline label="Plano" items={[{ year: 2027, title: 'Sorgo', text: 'x', media: <span>imagem 2027</span> }]} />)
+
+    expect(screen.getByText('imagem 2027')).toBeInTheDocument()
+  })
+})
+
+describe('MiniPlan (os 3 anos do plano em miniatura)', () => {
+  it('lista cada ano com a cultura e a imagem', () => {
+    render(
+      <MiniPlan
+        label="Seu plano de 3 anos"
+        items={[
+          { year: 2027, title: 'Milho com braquiária', media: <span>img1</span> },
+          { year: 2028, title: 'Crotalária', media: <span>img2</span> },
+        ]}
+      />,
+    )
+
+    const list = screen.getByRole('list', { name: 'Seu plano de 3 anos' })
+    expect(list.querySelectorAll('li')).toHaveLength(2)
+    expect(screen.getByText('2028')).toBeInTheDocument()
+    expect(screen.getByText('Crotalária')).toBeInTheDocument()
+    expect(screen.getByText('img2')).toBeInTheDocument()
+  })
+})
 
 describe('PageHeading', () => {
   it('mostra o título principal e o subtítulo', () => {

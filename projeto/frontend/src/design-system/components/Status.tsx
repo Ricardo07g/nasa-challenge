@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from 'react'
-import { CheckIcon, CloseIcon, MinusIcon, ShieldIcon } from '../icons'
+import { CheckIcon, CloseIcon, DropIcon, MinusIcon, ShieldIcon } from '../icons'
 import styles from './Status.module.css'
 
 export type Rotulo = 'bom' | 'medio' | 'fraco'
@@ -38,7 +38,9 @@ export function MetricRow({ icon, iconTone = 'green', label, value, pill, childr
         {icon}
       </span>
       <div className={styles.metricText}>
-        <span className={styles.metricLabel}>{label}</span>
+        <span className={styles.metricLabel} data-row-label>
+          {label}
+        </span>
         {value && <span className={styles.metricValue}>{value}</span>}
         {children}
       </div>
@@ -115,6 +117,24 @@ export function StripLegend({ items, markers = [], note }: StripLegendProps) {
       ))}
       {note && <li>{note}</li>}
     </ul>
+  )
+}
+
+export type ThirstLevel = 'pouca' | 'media' | 'muita'
+
+const THIRST_DROPS: Record<ThirstLevel, number> = { pouca: 1, media: 2, muita: 3 }
+
+/** Selo "Sede da cultura" (tarefa 0044): o texto e 1, 2 ou 3 gotas; o nível nunca depende só da cor. */
+export function ThirstBadge({ level, children }: { level: ThirstLevel; children: ReactNode }) {
+  return (
+    <span className={styles.thirst} data-level={level}>
+      <span className={styles.thirstDrops}>
+        {Array.from({ length: THIRST_DROPS[level] }, (_, index) => (
+          <DropIcon key={index} size={13} />
+        ))}
+      </span>
+      {children}
+    </span>
   )
 }
 

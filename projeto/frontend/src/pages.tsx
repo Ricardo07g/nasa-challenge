@@ -1,7 +1,7 @@
 /**
  * Ligação de cada rota: controller (estado) → view (desenho). Sem lógica aqui.
  */
-import { Navigate, Outlet, ScrollRestoration, useParams } from 'react-router'
+import { Navigate, Outlet, ScrollRestoration, useParams, useSearchParams } from 'react-router'
 import { useAnswerController } from './controllers/useAnswerController'
 import { useCommunityController } from './controllers/useCommunityController'
 import { useGuideArticleController, useGuideController } from './controllers/useGuideController'
@@ -10,17 +10,15 @@ import { useMethodController } from './controllers/useMethodController'
 import { useMissionController } from './controllers/useMissionController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useOptionsController } from './controllers/useOptionsController'
-import { usePastSeasonController } from './controllers/usePastSeasonController'
 import { usePlanController } from './controllers/usePlanController'
 import { useSatelliteController } from './controllers/useSatelliteController'
-import { useReportController } from './controllers/useReportController'
 import { useShellController } from './controllers/useShellController'
 import { useTelegramLink } from './controllers/useTelegramLink'
 import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
 import { EXAMPLE_FARM } from './services/locationService'
-import { buildFlowQuery } from './services/flowParams'
+import { buildFlowQuery, keepFlowQuery } from './services/flowParams'
 import { AnswerView } from './views/AnswerView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
@@ -28,9 +26,7 @@ import { GuideArticleView, GuideView } from './views/GuideView'
 import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
 import { OptionsView } from './views/OptionsView'
-import { PastSeasonView } from './views/PastSeasonView'
 import { PlanView } from './views/PlanView'
-import { ReportView } from './views/ReportView'
 import { SatelliteView } from './views/SatelliteView'
 import { ShellView } from './views/ShellView'
 import { StartView } from './views/StartView'
@@ -183,7 +179,7 @@ export function SatellitePage() {
 
 export function AnswerPage() {
   const { lang, messages: t } = useI18n()
-  useDocumentTitle(t.answer.best)
+  useDocumentTitle(t.suggestion.tabs.suggestion)
   const state = useAnswerController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
   return (
@@ -193,19 +189,34 @@ export function AnswerPage() {
       nav={state.nav}
       status={state.status}
       onRetry={state.retry}
-      answer={state.answer}
+      suggestion={state.suggestion}
+      colheita={state.colheita}
       aviso={state.aviso}
       sampleData={state.sampleData}
-      reportTo={state.reportTo}
       telegramHref={state.telegramHref}
       rain={state.rain}
+      rainEnd={state.rainEnd}
+      planTo={state.planTo}
+      year={state.year}
     />
   )
 }
 
+/**
+ * Endereços antigos (tarefa 0044): `/relatorio` saiu e `/safra-passada` virou o detalhe do ano no explorador
+ * da Sugestão. Levam para a Sugestão com o mesmo caminho (e o `ano`, na safra passada).
+ */
+export function LegacyAnswerRedirect({ keepYear = false }: { keepYear?: boolean }) {
+  const [search] = useSearchParams()
+  const query = keepFlowQuery(search.toString())
+  const year = keepYear ? search.get('ano') : null
+  const withYear = year && /^\d{4}$/.test(year) ? `${query}${query ? '&' : '?'}ano=${year}` : query
+  return <Navigate to={`/resposta${withYear}`} replace />
+}
+
 export function OptionsPage() {
   const { messages: t } = useI18n()
-  useDocumentTitle(t.options.title)
+  useDocumentTitle(t.suggestion.compareTitle)
   const state = useOptionsController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
   return (
@@ -214,8 +225,6 @@ export function OptionsPage() {
       nav={state.nav}
       status={state.status}
       onRetry={state.retry}
-      axis={state.axis}
-      onAxis={state.chooseAxis}
       summary={state.summary}
       rain={state.rain}
     />
@@ -239,52 +248,10 @@ export function PlanPage() {
       onScenario={state.chooseScenario}
       rule={state.rule}
       plan={state.plan}
+      thirst={state.thirst}
       communityTo={state.communityTo}
       pastTo={state.pastTo}
       showGainReference={state.showGainReference}
-    />
-  )
-}
-
-export function PastSeasonPage() {
-  const { lang, messages: t } = useI18n()
-  const state = usePastSeasonController()
-  useDocumentTitle(t.past.title(state.year))
-  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
-  return (
-    <PastSeasonView
-      t={t}
-      lang={lang}
-      status={state.status}
-      onRetry={state.retry}
-      backTo={state.backTo}
-      year={state.year}
-      onYear={state.chooseYear}
-      season={state.season}
-      sampleData={state.sampleData}
-      telegramHref={state.telegramHref}
-    />
-  )
-}
-
-export function ReportPage() {
-  const { lang, messages: t } = useI18n()
-  useDocumentTitle(t.report.title)
-  const state = useReportController()
-  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
-  return (
-    <ReportView
-      t={t}
-      lang={lang}
-      status={state.status}
-      onRetry={state.retry}
-      backTo={state.backTo}
-      talhao={state.talhao}
-      recomendacao={state.recomendacao}
-      example={state.example}
-      place={state.place}
-      today={state.today}
-      onPrint={state.print}
     />
   )
 }

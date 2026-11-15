@@ -27,10 +27,12 @@ const nav = {
   label: 'Telas da resposta',
   backTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=meio',
   tabs: [
-    { to: '/resposta', label: 'Resposta', current: false },
+    { to: '/resposta', label: 'Sugestão', current: false },
+    { to: '/opcoes', label: 'Comparar', current: false },
     { to: '/plano', label: 'Plano de 3 anos', current: true },
-    { to: '/opcoes', label: 'Todas as opções', current: false },
   ],
+  objective: null,
+  chooseObjective: vi.fn(),
 }
 
 function setupProps(overrides: Partial<PlanViewProps> = {}): PlanViewProps {
@@ -46,7 +48,8 @@ function setupProps(overrides: Partial<PlanViewProps> = {}): PlanViewProps {
     rule: { text: 'No dia de plantar (até 28/fev), se a terra estiver seca, use o plano B: sorgo no lugar do milho.' },
     plan: buildPlan(rec, 'normal'),
     communityTo: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
-    pastTo: '/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
+    pastTo: '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
+    thirst: { milho_braquiaria: 'muita', crotalaria: 'pouca', sorgo: 'media' },
     showGainReference: true,
     ...overrides,
   }
@@ -118,7 +121,7 @@ describe('PlanView (tela 7)', () => {
     expect(screen.getByText('Troca o milho pelo sorgo no ano seco.')).toBeInTheDocument()
     expect(screen.queryByText(/últimos 20/)).not.toBeInTheDocument()
     expect(screen.getByRole('list', { name: 'Plano ano a ano' })).toHaveTextContent(
-      '2027SorgoNo lugar de milho com braquiária: aguenta mais a seca.',
+      '2027SorgoSede: água médiaNo lugar de milho com braquiária: aguenta mais a seca.',
     )
   })
 
@@ -212,12 +215,27 @@ describe('PlanView (tela 7)', () => {
     expect(document.body).not.toHaveTextContent('R$')
   })
 
-  it('leva ao replay da safra passada (P4)', () => {
+  it('leva ao detalhe de 2024 no explorador da Sugestão (a safra passada não é mais tela solta)', () => {
     setup()
 
     expect(screen.getByRole('link', { name: 'Como teria sido em 2024?' })).toHaveAttribute(
       'href',
-      '/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
+      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
     )
+  })
+
+  it('cada ano do plano tem a imagem da planta e o selo de sede (tarefa 0044)', () => {
+    setup()
+
+    const timeline = screen.getByRole('list', { name: 'Plano ano a ano' })
+    expect(within(timeline).getByRole('img', { name: 'Desenho da planta: Crotalária' })).toBeInTheDocument()
+    expect(within(timeline).getByText('Sede: pouca água')).toBeInTheDocument()
+    expect(within(timeline).getByText('Sede: muita água')).toBeInTheDocument()
+  })
+
+  it('o seletor "O que você quer mais?" fica no topo, como nas outras abas', () => {
+    setup()
+
+    expect(screen.getByRole('group', { name: 'O que você quer mais?' })).toBeInTheDocument()
   })
 })

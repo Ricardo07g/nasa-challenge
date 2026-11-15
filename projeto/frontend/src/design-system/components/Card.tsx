@@ -80,14 +80,24 @@ export function DataSourceCard({ icon, title, subtitle, readyLabel, children, ic
   )
 }
 
-type AlternativeCardProps = { label: string; title: string; text: string; icon?: ReactNode }
+type AlternativeCardProps = {
+  label: string
+  title: string
+  text: string
+  icon?: ReactNode
+  /** Imagem da planta no canto (tarefa 0044). */
+  media?: ReactNode
+}
 
-export function AlternativeCard({ label, title, text, icon }: AlternativeCardProps) {
+export function AlternativeCard({ label, title, text, icon, media }: AlternativeCardProps) {
   return (
     <div className={styles.alternative}>
-      <span className={styles.alternativeLabel}>
-        {icon}
-        {label}
+      <span className={styles.alternativeHead}>
+        <span className={styles.alternativeLabel}>
+          {icon}
+          {label}
+        </span>
+        {media && <span className={styles.alternativeMedia}>{media}</span>}
       </span>
       <h3 className={styles.alternativeTitle}>{title}</h3>
       <p className={styles.alternativeText}>{text}</p>

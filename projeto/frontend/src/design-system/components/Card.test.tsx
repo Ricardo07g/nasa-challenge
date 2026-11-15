@@ -85,6 +85,12 @@ describe('AlternativeCard', () => {
 
     expect(screen.getByTestId('icone')).toBeInTheDocument()
   })
+
+  it('leva a imagem da planta no canto (tarefa 0044)', () => {
+    render(<AlternativeCard label="Mais renda" title="Sorgo" text="x" media={<span>imagem do sorgo</span>} />)
+
+    expect(screen.getByText('imagem do sorgo')).toBeInTheDocument()
+  })
 })
 
 describe('SourceCard', () => {

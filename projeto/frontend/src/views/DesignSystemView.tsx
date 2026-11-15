@@ -192,9 +192,9 @@ export function DesignSystemView({ t, apiMode, backend, cropOptions, cropOptions
         <AnswerTabs
           label={t.answerTabs.label}
           tabs={[
-            { to: '/design-system#resposta', label: t.answerTabs.answer, current: true },
-            { to: '/design-system#plano', label: t.answerTabs.plan, current: false },
-            { to: '/design-system#opcoes', label: t.answerTabs.options, current: false },
+            { to: '/design-system#resposta', label: t.suggestion.tabs.suggestion, current: true },
+            { to: '/design-system#opcoes', label: t.suggestion.tabs.compare, current: false },
+            { to: '/design-system#plano', label: t.suggestion.tabs.plan, current: false },
           ]}
         />
         <div className={layout.grid}>

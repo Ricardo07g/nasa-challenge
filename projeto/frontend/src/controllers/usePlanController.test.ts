@@ -68,10 +68,20 @@ describe('usePlanController (tela 7)', () => {
       wrapper: providers('/plano?lat=-18.9543&lon=-48.1993'),
     })
 
-    expect(plan.result.current.nav.tabs[1]).toMatchObject({ label: 'Plano de 3 anos', current: true })
+    expect(plan.result.current.nav.tabs[2]).toMatchObject({ label: 'Plano de 3 anos', current: true })
     expect(plan.result.current.communityTo).toBe(`/comunidade?${flow}`)
-    expect(plan.result.current.pastTo).toBe(`/safra-passada?${flow}&ano=2024`)
+    // A safra passada virou o detalhe do ano no explorador da Sugestão (tarefa 0044)
+    expect(plan.result.current.pastTo).toBe(`/resposta?${flow}&ano=2024`)
     expect(noHarvest.result.current.redirectTo).toBe('/quando?lat=-18.9543&lon=-48.1993')
+  })
+
+  it('o objetivo do produtor troca o Plano A pelo plano sugerido para ele (tarefa 0044)', async () => {
+    const d = deps()
+    const { result } = renderHook(() => usePlanController(d), { wrapper: providers(`/plano?${flow}&objetivo=terra`) })
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+
+    expect(result.current.plan?.years.map((y) => y.crop)).toEqual(sample.objetivos?.terra?.plano)
+    expect(result.current.nav.objective).toBe('terra')
   })
 
   it('ponto sem dados no servidor vira o estado "fora da área"', async () => {

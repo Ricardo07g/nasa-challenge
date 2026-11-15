@@ -268,6 +268,17 @@ describe('buildPlan (tela 7)', () => {
     })
   })
 
+  it('com o plano de um objetivo do produtor (tarefa 0044), ele é o Plano A', () => {
+    const plan = buildPlan(rec, 'normal', ['crotalaria', 'crotalaria', 'crotalaria'])
+
+    expect(plan.years.map((y) => y.crop)).toEqual(['crotalaria', 'crotalaria', 'crotalaria'])
+    expect(buildPlan(rec, 'seco', ['crotalaria', 'crotalaria', 'crotalaria']).years[0]).toEqual({
+      year: 2027,
+      crop: 'sorgo',
+      swappedFrom: 'crotalaria',
+    })
+  })
+
   it('ano seco: mostra o que troca e de onde veio', () => {
     const plan = buildPlan(rec, 'seco')
 
