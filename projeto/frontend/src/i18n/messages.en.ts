@@ -141,29 +141,78 @@ export const en = {
   },
   when: {
     title: 'When do you harvest your soybeans?',
+    suggestionDate: (date: string, band: string) =>
+      `From the satellite (MODIS NDVI), soybeans here usually dry down around ${date} (${band}).`,
     suggestionPrefix: 'From the satellite, soybeans here usually dry down in',
+    suggestionApplied: 'We already put this day in the field.',
     suggestionSuffix: 'We already selected it.',
+    useSuggestion: 'Use the satellite day',
+    noSatellite: 'The satellite could not tell when soybeans dry down here.',
+    defaultMarked: 'We selected mid-February.',
     defaultSuggestion: 'The satellite could not tell. We selected mid-February.',
     hint: 'Not sure? Leave it as it is. You can change it later.',
     nextStep: 'Next step',
     cta: 'See the answer',
-    dateOption: 'Enter the exact date',
-    dateOptionHint: 'If you already know the day',
     dateLabel: 'Harvest day',
     dateBand: (date: string, band: string) => `${date} counts as ${band}.`,
     dateNeed: 'Pick a day inside the harvest window.',
+    dateEmpty: 'Enter the day or tap "I do not know the exact day".',
+    dontKnow: 'I do not know the exact day',
     whyTitle: 'Why do we ask?',
     whyText:
       'Rain fades after March. The earlier you harvest your soybeans, the more rain is left for the next crop.',
     chartLabel: 'Average rain per month: a lot in January, little in June',
     chartCaption: 'Rain in each month in the region. Illustrative drawing.',
-    chartDataLabel: (values: string) => `Average rain per month, in millimeters: ${values}`,
-    chartMonthValue: (month: string, mm: string) => `${month} ${mm} mm`,
-    chartSource: (first: number, last: number, years: number, source: string) =>
-      `Rain in each month in the region, in mm. ${
-        years === last - first + 1 ? `Average of ${first}–${last}` : `Average of ${years} years between ${first} and ${last}`
-      }, ${source}.`,
     months: { jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun' },
+    learnMore: (title: string) => `Learn more: ${title}`,
+    articles: {
+      rainEnd: 'When the rain ends',
+      sowSoon: 'Sowing right after harvest',
+      water: 'The water balance of your field',
+      worked: 'What "it worked" means',
+    },
+    leftTitle: 'Rain left after the harvest',
+    leftExact: (date: string, median: string, dry: string) =>
+      `Harvesting on ${date}, about ${median} mm of rain is left on average; in a dry year, ${dry} mm.`,
+    leftBand: (band: string, date: string, median: string, dry: string) =>
+      `Harvesting in ${band} (around ${date}), about ${median} mm of rain is left on average; in a dry year, ${dry} mm.`,
+    leftChartLabel: (date: string, median: string, dry: string) =>
+      `Chart: the later the harvest, the less rain is left. Harvesting on ${date}, ${median} mm on average and ${dry} mm in a dry year.`,
+    leftLegendMedian: 'On average',
+    leftLegendDry: 'Dry year',
+    leftCaption: (end: string, first: number, last: number, source: string, pct: number) =>
+      `Rain added up from the harvest day to ${end}. "On average" is the median of ${first}–${last}; in a "dry year", only ${pct}% of the years had less rain. Rain measured by ${source}.`,
+    endTitle: 'When the rain ends',
+    endText: (median: string, earliest: string, latest: string) =>
+      `In half of the years, the rain had ended by ${median}; the earliest was ${earliest} and the latest ${latest}.`,
+    endYear: (date: string, year: number) => `${date}, ${year}`,
+    endRule: (start: string, days: number, mm: string, source: string, first: number, last: number) =>
+      `End of the rain: the first day, from ${start} on, that starts ${days} days in a row with less than ${mm} mm added up. Rain from ${source}, ${first}–${last}.`,
+    etoTitle: 'Rain and what the crop uses, month by month',
+    etoDeficit: (month: string) => `In ${month}, the average rain falls below what the crop uses.`,
+    etoNoDeficit: 'From January to June, the average rain covers what the crop uses.',
+    etoLegendRain: 'Rain',
+    etoLegendEto: 'Crop water use',
+    etoTag: 'less rain',
+    etoChartLabel: (values: string) => `Rain and crop water use in each month, in millimeters: ${values}`,
+    etoMonthValue: (month: string, rain: string, eto: string) => `${month}, rain ${rain} and use ${eto}`,
+    etoCaption: (first: number, last: number, years: number, rainSource: string, etoSource: string) =>
+      `${
+        years === last - first + 1 ? `Average of ${first}–${last}` : `Average of ${years} years between ${first} and ${last}`
+      }, in mm. Rain measured by ${rainSource}. Crop water use: the reference evapotranspiration (ETo), computed with the ${etoSource} weather.`,
+    delayTitle: 'What a later harvest costs',
+    delayBand: { cedo: 'early', meio: 'in the middle', tarde: 'late' },
+    delayFirst: (band: string, good: number, total: number, crop: string | null) =>
+      crop
+        ? `Harvesting ${band}, ${crop} worked in ${good} of ${total} years`
+        : `Harvesting ${band}, it worked in ${good} of ${total} years`,
+    delayNext: (band: string, good: number, total: number, crop: string | null) =>
+      crop ? `${band}, ${crop}, ${good} of ${total}` : `${band}, ${good} of ${total}`,
+    delaySame: (crop: string) => `The best option is ${crop} in all three periods.`,
+    delayDiffers: 'The best option changes with the harvest period.',
+    delayRow: (crop: string, good: number, total: number) => `${crop}: worked in ${good} of ${total} years`,
+    delayYours: 'your choice',
+    delayNote: 'Result of the app calculation for the best option of each period, with the rain and heat of each year.',
     soyWarning: (safra: string) =>
       `We did not see soybeans at this point in the last season (${safra}). Check that you marked the right field.`,
     soyAdjust: 'Adjust on the map',

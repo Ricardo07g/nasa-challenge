@@ -1,8 +1,10 @@
 import { createHttpCommunityRepository } from './communityRepository'
+import { createHttpCustoAtrasoRepository } from './custoAtrasoRepository'
 import { createHttpExemploRepository } from './exemploRepository'
 import { createPhotonGeocodingRepository } from './geocodingRepository'
 import {
   createMockCommunityRepository,
+  createMockCustoAtrasoRepository,
   createMockExemploRepository,
   createMockPastSeasonRepository,
   createMockRecomendacaoRepository,
@@ -33,3 +35,4 @@ export const pastSeasonRepository = useHttp ? createHttpPastSeasonRepository() :
 export const pilotAreaRepository = useHttp ? createHttpPilotAreaRepository() : createMockPilotAreaRepository()
 /** Busca de endereço: Photon de verdade com a API real; cidades de exemplo, sem rede, no modo mock. */
 export const geocodingRepository = useHttp ? createPhotonGeocodingRepository() : createMockGeocodingRepository()
+export const custoAtrasoRepository = useHttp ? createHttpCustoAtrasoRepository() : createMockCustoAtrasoRepository()

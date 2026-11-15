@@ -198,3 +198,167 @@
   background: var(--color-risk-soft);
   border: 2px solid var(--color-risk);
 }
+
+/* Chuva que sobra depois da colheita (tela 3): mediana em linha cheia, ano seco tracejado */
+.leftSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: var(--color-divider);
+  stroke-width: 1;
+}
+
+.axisLine {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.svgText {
+  font-size: 11px;
+  fill: var(--color-text-muted);
+}
+
+.lineMedian {
+  fill: none;
+  stroke: var(--color-secondary);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.lineDry {
+  fill: none;
+  stroke: var(--color-risk);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.markerLine {
+  stroke: var(--color-text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 3;
+}
+
+.dotMedian {
+  fill: var(--color-secondary);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.dotDry {
+  fill: var(--color-risk);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.lineLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.legendSwatch {
+  width: 28px;
+  height: 8px;
+  flex: 0 0 auto;
+}
+
+/* Chuva e gasto da lavoura (ETo), mês a mês: chuva cheia, gasto listrado */
+.etoBars {
+  display: grid;
+  gap: 8px;
+  height: 200px;
+  padding-top: var(--space-5);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.etoColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  border-radius: var(--radius-2xs);
+}
+
+.etoColumn[data-highlight='true'] {
+  outline: 2px dashed var(--color-risk);
+  outline-offset: 2px;
+}
+
+.etoColumn[data-highlight='true'] .barLabel {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.etoPair {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.etoTrack {
+  flex: 0 1 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.etoRain,
+.etoUse {
+  position: relative;
+  display: block;
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+}
+
+.etoRain {
+  background: var(--color-secondary);
+}
+
+.etoUse {
+  border: 2px solid var(--color-soil);
+  border-bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-soil) 0 3px,
+    var(--color-surface) 3px 6px
+  );
+}
+
+.etoTag {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-weak-text);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.swatchRain,
+.swatchEto {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
+
+.swatchRain {
+  background: var(--color-secondary);
+}
+
+.swatchEto {
+  border: 2px solid var(--color-soil);
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-soil) 0 3px,
+    var(--color-surface) 3px 6px
+  );
+}
