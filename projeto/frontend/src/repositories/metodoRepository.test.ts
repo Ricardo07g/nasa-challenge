@@ -13,6 +13,7 @@ describe('metodoRepository (regras da tela "Como a conta é feita", tarefa 0049)
   it('dados de exemplo no formato do contrato', async () => {
     const rules = await createMockMetodoRepository().get()
 
-    expect(Object.keys(rules).sort()).toEqual(['agua', 'alertas', 'avisos', 'deu_certo', 'pesos', 'plano_b', 'renda', 'rotacao', 'sinal'])
+    // Tarefa 0066 do backend: o campo opcional `fontes`
+    expect(Object.keys(rules).sort()).toEqual(['agua', 'alertas', 'avisos', 'deu_certo', 'fontes', 'pesos', 'plano_b', 'renda', 'rotacao', 'sinal'])
   })
 })

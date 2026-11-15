@@ -9,7 +9,7 @@ import { ArrowUpRightIcon, GrainIcon, SatelliteIcon, SendIcon, SproutIcon } from
 import { formatDayMonth, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
-import type { MetodoRegras } from '../models/metodo'
+import type { FonteRegra, MetodoRegras } from '../models/metodo'
 import type { Opcao } from '../models/recomendacao'
 import type { RainSummary } from '../services/satelliteService'
 import type { SourceStatus } from '../services/sourceService'
@@ -43,42 +43,88 @@ function monthDay(lang: Lang, md: string): string {
   return formatDayMonth(lang, `2023-${md}`)
 }
 
-/** As regras novas da conta (tarefa 0049), cada uma numa frase, com os números do regras.yaml. */
+/** "a, b e c" / "a, b and c". */
+function joinWords(items: readonly string[], and: string): string {
+  return items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} ${and} ${items[items.length - 1]}`
+}
+
+/** A fonte de uma regra (tarefa 0066 do backend): as citações em links e, se for hipótese, o aviso. */
+function RuleSource({ t, source }: { t: Messages; source: FonteRegra | undefined }) {
+  const r = t.method.rules
+  if (!source) return null
+  const hypothesis = source.hipotese === 'sim' ? r.hypothesisAll : source.hipotese === 'parte' ? r.hypothesisPart : null
+  return (
+    <>
+      {source.citacoes.length > 0 && (
+        <span className={layout.muted}>
+          {' '}
+          {source.citacoes.length === 1 ? r.source : r.sources}:{' '}
+          {source.citacoes.map((item, index) => (
+            <span key={item.citacao}>
+              {index > 0 && '; '}
+              {item.url ? (
+                <a href={item.url} target="_blank" rel="noreferrer">
+                  {item.citacao}
+                  <span className="visually-hidden"> {t.common.newTab}</span>
+                </a>
+              ) : (
+                item.citacao
+              )}
+            </span>
+          ))}
+          .
+        </span>
+      )}
+      {hypothesis && <span className={layout.muted}> {hypothesis}</span>}
+    </>
+  )
+}
+
+/** As regras novas da conta (tarefa 0049), cada uma numa frase, com os números do regras.yaml e a fonte (tarefa 0066). */
 function Rules({ t, lang, rules }: { t: Messages; lang: Lang; rules: MetodoRegras }) {
   const r = t.method.rules
   const n = (value: number) => formatNumber(lang, value)
   const { deu_certo: d, pesos, agua, rotacao, plano_b: b, alertas, avisos, sinal } = rules
   const names = t.crops.names as Record<string, string>
-  const crops = rotacao.culturas_supressoras_nematoide.map((id) => (names[id] ?? id).toLocaleLowerCase(lang))
-  const items = [
-    r.worked(n(d.isna_grao_pct), n(d.janela_grao_meia_dias), n(d.isna_cobertura_pct), n(d.janela_cobertura_dias), n(d.calor_temp_c), n(d.calor_min_dias)),
-    r.weights(n(pesos.seguranca_pct), n(pesos.futuro_pct), n(pesos.solo_pct), n(pesos.renda_pct)),
-    r.income(n(rules.renda.nota_sem_grao)),
-    r.water(n(agua.percentil_seco)),
-    r.thirst(n(agua.sede_pouca_ate_mm), n(agua.sede_muita_desde_mm)),
-    r.rotation(n(rotacao.bonus_diversidade_2), n(rotacao.bonus_diversidade_3), crops.join(` ${r.and} `)),
-    r.planB(n(b.dias_antes_semeadura), n(b.anos_falha_min), n(b.sensibilidade_min_pct), n(b.precisao_min_pct), n(b.chance_max_pct)),
-    r.frost(n(alertas.geada_temp_c), monthDay(lang, alertas.geada_inicio), monthDay(lang, alertas.geada_fim)),
-    r.heavyRain(n(alertas.chuva_forte_mm), monthDay(lang, alertas.chuva_forte_inicio), monthDay(lang, alertas.chuva_forte_fim)),
-    r.fire(n(alertas.fogo_raio_km)),
+  const lower = (id: string) => (names[id] ?? id).toLocaleLowerCase(lang)
+  const crops = rotacao.culturas_supressoras_nematoide.map(lower)
+  const byCrop = Object.entries(d.isna_por_cultura_pct ?? {}).map(([id, pct]) => r.cropPct(lower(id), n(pct)))
+  const worked = r.worked(n(d.isna_grao_pct), n(d.janela_grao_meia_dias), n(d.isna_cobertura_pct), n(d.janela_cobertura_dias), n(d.calor_temp_c), n(d.calor_min_dias))
+  const items: { key: string; text: string }[] = [
+    { key: 'deu_certo', text: byCrop.length ? `${worked} ${r.workedByCrop(joinWords(byCrop, r.and))}` : worked },
+    { key: 'pesos', text: r.weights(n(pesos.seguranca_pct), n(pesos.futuro_pct), n(pesos.solo_pct), n(pesos.renda_pct)) },
+    { key: 'renda', text: r.income(n(rules.renda.nota_sem_grao)) },
+    { key: 'agua', text: r.water(n(agua.percentil_seco)) },
+    { key: 'sede', text: r.thirst(n(agua.sede_pouca_ate_mm), n(agua.sede_muita_desde_mm)) },
+    { key: 'rotacao', text: r.rotation(n(rotacao.bonus_diversidade_2), n(rotacao.bonus_diversidade_3), joinWords(crops, r.and)) },
+    {
+      key: 'plano_b',
+      text: r.planB(n(b.dias_antes_semeadura), n(b.anos_falha_min), n(b.sensibilidade_min_pct), n(b.precisao_min_pct), n(b.chance_max_pct)),
+    },
+    { key: 'geada', text: r.frost(n(alertas.geada_temp_c), monthDay(lang, alertas.geada_inicio), monthDay(lang, alertas.geada_fim)) },
+    {
+      key: 'chuva_forte',
+      text: r.heavyRain(n(alertas.chuva_forte_mm), monthDay(lang, alertas.chuva_forte_inicio), monthDay(lang, alertas.chuva_forte_fim)),
+    },
+    { key: 'fogo', text: r.fire(n(alertas.fogo_raio_km)) },
     // Sem os relatos de vizinhos (comunidade "em breve"): o `vizinhos_dias` e o `raio_km` da API não aparecem.
-    r.alerts(
-      n(avisos.terra_seca_percentil_max),
-      n(avisos.dias_sem_chuva_min),
-      n(avisos.calor_dias_min),
-      n(d.calor_temp_c),
-      n(avisos.calor_janela_dias),
-    ),
-    r.signal(n(sinal.fase_chance_min_pct), n(sinal.anos_fase_min), n(sinal.anos_ruins_seco_pct)),
-    r.xray,
+    {
+      key: 'avisos',
+      text: r.alerts(n(avisos.terra_seca_percentil_max), n(avisos.dias_sem_chuva_min), n(avisos.calor_dias_min), n(d.calor_temp_c), n(avisos.calor_janela_dias)),
+    },
+    { key: 'sinal', text: r.signal(n(sinal.fase_chance_min_pct), n(sinal.anos_fase_min), n(sinal.anos_ruins_seco_pct)) },
+    { key: 'raio_x', text: r.xray },
   ]
   return (
     <Card as="section" aria-label={r.title}>
       <h2 className={layout.cardTitle}>{r.title}</h2>
       <p className={layout.muted}>{r.intro}</p>
       <ul className={layout.stack}>
-        {items.map((text) => (
-          <li key={text}>{text}</li>
+        {items.map((item) => (
+          <li key={item.key}>
+            {item.text}
+            <RuleSource t={t} source={rules.fontes?.[item.key]} />
+          </li>
         ))}
       </ul>
     </Card>

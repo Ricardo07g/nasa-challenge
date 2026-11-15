@@ -12,6 +12,8 @@ export type MetodoRegras = {
     janela_cobertura_dias: number
     calor_temp_c: number
     calor_min_dias: number
+    /** O ISNA do ZARC de cada cultura que tem o seu, em % (tarefa 0066 do backend; opcional na API antiga). */
+    isna_por_cultura_pct?: Record<string, number>
   }
   pesos: { seguranca_pct: number; futuro_pct: number; solo_pct: number; renda_pct: number }
   renda: { tipos_com_grao: string[]; nota_sem_grao: number }
@@ -43,4 +45,15 @@ export type MetodoRegras = {
     raio_km: number
   }
   sinal: { estacao_previsao: string; fase_chance_min_pct: number; anos_fase_min: number; anos_ruins_seco_pct: number }
+  /**
+   * A fonte de cada regra (tarefa 0066 do backend; opcional): `deu_certo`, `pesos`, `renda`, `agua`, `sede`, `rotacao`,
+   * `plano_b`, `geada`, `chuva_forte`, `fogo`, `avisos` e `sinal`. Ausente ou sem a chave: a regra aparece sem fonte.
+   */
+  fontes?: Record<string, FonteRegra> | null
+}
+
+/** De onde vêm os números de uma regra: as citações conferidas e se ainda é hipótese do time (toda ou parte). */
+export type FonteRegra = {
+  citacoes: { citacao: string; url: string | null }[]
+  hipotese: 'nao' | 'parte' | 'sim'
 }

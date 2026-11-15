@@ -102,6 +102,8 @@ export function usePlanningController(deps: PlanningDeps = defaultDeps) {
           secondCrop: cards[1]?.crop ?? null,
           secondDeadline: cards[1]?.deadline ?? null,
           secondLate: cards[1]?.late ?? false,
+          // Tarefa 0066 do backend: o prazo do 2º ano vem do ZARC, menos na cultura sem ZARC (a crotalária)
+          secondZarc: cards[1] ? optionOf(cards[1].crop)?.prazo_zarc !== false : true,
           signal: flow.signal,
           planAB: plan?.plano_ab ?? null,
         })

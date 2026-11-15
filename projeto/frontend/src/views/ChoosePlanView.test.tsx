@@ -218,7 +218,7 @@ describe('ChoosePlanView: aba "1. Escolher"', () => {
     await userEvent.click(within(late).getByRole('button', { name: /Prazo para plantar/ }))
     const dialog = screen.getByRole('dialog', { name: 'Prazo para plantar' })
     expect(dialog).toHaveTextContent('Passou do prazo (28 de fevereiro)')
-    expect(dialog).toHaveTextContent(/o seguro rural não cobre/)
+    expect(dialog).toHaveTextContent(/o seguro rural pode não cobrir/)
     expect(dialog).toHaveTextContent(/ZARC é o Zoneamento Agrícola de Risco Climático/)
     expect(dialog).toHaveTextContent('ZARC (Ministério da Agricultura) e Embrapa.')
     await userEvent.keyboard('{Escape}')

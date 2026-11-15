@@ -152,7 +152,7 @@ const CROPS: CropSeed[] = [
     soil: {
       nota: 80,
       rotulo: 'bom',
-      texto: { pt: 'Adubo natural, quebra o nematoide', en: 'Natural fertilizer, breaks the nematode cycle' },
+      texto: { pt: 'Adubo verde, ajuda a baixar o nematoide', en: 'Green manure, helps lower nematodes' },
     },
     notes: { seguranca: 85, futuro: 80, solo: 80, renda: 0, final: 55 },
     limit: '2027-02-28',
@@ -301,6 +301,8 @@ function buildOption(seed: CropSeed, lang: Lang): Opcao {
     nome: seed.name[lang],
     na_janela: true,
     data_limite: seed.limit,
+    // Como a API (tarefa 0066 do backend): não há ZARC de crotalária, a data dela é sugestão do app
+    prazo_zarc: seed.id !== 'crotalaria',
     chuva: {
       anos_bons: seed.goodYears,
       anos: 20,

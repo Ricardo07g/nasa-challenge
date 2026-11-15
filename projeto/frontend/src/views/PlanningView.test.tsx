@@ -147,7 +147,7 @@ describe('PlanningView: "O que fazer agora"', () => {
       .getAllByRole('listitem')
       .find((step) => step.querySelector('h3')?.textContent === 'Plante milho sozinho')!
     expect(plant).toHaveAttribute('data-late', 'true')
-    expect(plant).toHaveTextContent('Passou do prazo do ZARC (28 de fevereiro): o seguro rural não cobre.')
+    expect(plant).toHaveTextContent('Passou do prazo do ZARC (28 de fevereiro): o risco sobe e o seguro rural pode não cobrir.')
   })
 })
 

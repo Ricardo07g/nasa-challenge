@@ -152,10 +152,10 @@ export const pt = {
     },
     taglines: {
       milho_braquiaria: 'Dá grão e cobre a terra.',
-      milho_safrinha: 'Dá grão, mas deixa pouca palha.',
+      milho_safrinha: 'Dá grão, mas deixa menos palha que o milho com braquiária.',
       sorgo: 'Dá grão com menos risco de seca.',
       milheto: 'Muita palha para cobrir a terra.',
-      crotalaria: 'Adubo natural e quebra o nematoide.',
+      crotalaria: 'Adubo verde que ajuda a baixar o nematoide.',
       pousio: 'A terra fica descoberta.',
     },
   },
@@ -720,6 +720,9 @@ export const pt = {
       plantSoon: (date: string, crop: string) => `Colha a soja por volta de ${date} e plante ${crop} logo depois.`,
       plantLate: (date: string, crop: string, deadline: string) =>
         `Colha a soja por volta de ${date} e plante ${crop} logo depois; o prazo do ZARC acabou em ${deadline}.`,
+      /** A cultura sem ZARC (a crotalária, tarefa 0066 do backend): a data é sugestão do app. */
+      plantLateSuggested: (date: string, crop: string, deadline: string) =>
+        `Colha a soja por volta de ${date} e plante ${crop} logo depois; a data sugerida acabou em ${deadline}.`,
       harvestOnly: (date: string) => `Colha a soja por volta de ${date}.`,
       planB: (crop: string) => `Em fevereiro, confira o sinal do outono: se o ano vier seco, troque para ${crop}.`,
       check: 'Em fevereiro, confira o sinal do outono.',
@@ -761,16 +764,21 @@ export const pt = {
         when: (date: string) => `até ${date}`,
         sub: 'prazo ZARC',
         title: (crop: string) => `Plante ${crop}`,
-        text: (date: string) => `Plante logo depois de colher: o prazo do ZARC vai até ${date}. Depois disso, o seguro rural não cobre.`,
-        late: (date: string) => `Passou do prazo do ZARC (${date}): o seguro rural não cobre.`,
-        lateNoDate: 'Passou do prazo do ZARC: o seguro rural não cobre.',
+        text: (date: string) =>
+          `Plante logo depois de colher: o prazo do ZARC vai até ${date}. Depois disso, o risco sobe e o seguro rural pode não cobrir.`,
+        late: (date: string) => `Passou do prazo do ZARC (${date}): o risco sobe e o seguro rural pode não cobrir.`,
+        lateNoDate: 'Passou do prazo do ZARC: o risco sobe e o seguro rural pode não cobrir.',
+        /** A cultura sem ZARC (a crotalária, tarefa 0066 do backend): a data é sugestão do app. */
+        subSuggested: 'data sugerida',
+        textSuggested: (date: string) => `Plante logo depois de colher, até ${date}: data sugerida pelo app (não há ZARC para esta planta).`,
+        lateSuggested: (date: string) => `Passou da data sugerida (${date}).`,
         soonSub: 'plantio',
         soon: 'Plante logo depois de colher a soja.',
       },
       water: {
         sub: { floracao: 'floração', pegamento: 'pegamento' },
         title: 'Fase em que a planta mais precisa de água',
-        flower: (days: number) => `É quando mais aparece veranico: a floração vem por volta de ${days} dias depois do plantio.`,
+        flower: (days: number) => `É quando o veranico mais prejudica: a floração vem por volta de ${days} dias depois do plantio.`,
         start: (days: number) => `Nos primeiros ${days} dias depois do plantio, a planta precisa de água para pegar.`,
       },
       cropHarvest: {
@@ -784,7 +792,9 @@ export const pt = {
         titleAlone: 'Próxima soja',
         text: (year: number) => `Abra o app de novo depois da colheita de ${year} para conferir o plano com a chuva daquele ano.`,
         deadline: (date: string) => `Plante até ${date} (prazo do ZARC).`,
-        late: (date: string) => `Passou do prazo do ZARC (${date}): o seguro rural não cobre.`,
+        late: (date: string) => `Passou do prazo do ZARC (${date}): o risco sobe e o seguro rural pode não cobrir.`,
+        deadlineSuggested: (date: string) => `Plante até ${date} (data sugerida).`,
+        lateSuggested: (date: string) => `Passou da data sugerida (${date}).`,
       },
     },
     alerts: {
@@ -890,8 +900,8 @@ export const pt = {
         noIncome: 'Nenhum ano do plano dá grão para vender: o ganho vem na terra e na soja seguinte.',
         cover: (crop: string, season: string, gives: string) => `${crop}, em ${season}, não dá grão, mas ${gives}: isso ajuda a soja seguinte.`,
         straw: 'deixa palha que protege a terra',
-        nitrogen: 'deixa nitrogênio para a soja',
-        nematode: 'quebra o ciclo do nematoide',
+        nitrogen: 'deixa nitrogênio na terra',
+        nematode: 'ajuda a baixar o nematoide',
         planB: (from: string, to: string) => `Plano B: se o outono vier seco, trocar ${from} por ${to}.`,
       },
       todo: '5. O que fazer e quando',
@@ -1078,7 +1088,7 @@ export const pt = {
       /** Todas com a mesma data limite: a data vai logo depois do prazo, como no pedido da seção 5.4. */
       textOneDate: (when: string, date: string, list: string, count: number) =>
         `Colhendo ${when}, já passou o prazo seguro de plantio (ZARC, ${date}) para ${list}. Por isso ${count === 1 ? 'ela não aparece' : 'elas não aparecem'}.`,
-      zarc: 'ZARC é o Zoneamento Agrícola de Risco Climático do Ministério da Agricultura: diz, para cada município, até quando plantar com o risco de clima mais baixo.',
+      zarc: 'ZARC é o Zoneamento Agrícola de Risco Climático do Ministério da Agricultura: diz, para cada município, tipo de solo e ciclo da cultivar, em que épocas plantar com risco de perda de 20%, 30% ou 40%.',
       frost: (years: number, total: number, temp: string) =>
         `Geada: em ${years} de ${total} anos a mínima chegou a ${temp} °C ou menos entre maio e julho (NASA POWER).`,
       and: 'e',
@@ -1179,10 +1189,10 @@ export const pt = {
       years === 0 ? 'Nenhum ano deixa nitrogênio na terra' : years === 1 ? '1 ano deixa nitrogênio na terra' : `${years} anos deixam nitrogênio na terra`,
     nematode: (years: number) =>
       years === 0
-        ? 'Nenhum ano quebra o ciclo do nematoide'
+        ? 'Nenhum ano ajuda a baixar o nematoide'
         : years === 1
-          ? '1 ano quebra o ciclo do nematoide'
-          : `${years} anos quebram o ciclo do nematoide`,
+          ? '1 ano ajuda a baixar o nematoide'
+          : `${years} anos ajudam a baixar o nematoide`,
     repeat: (crops: string) => `Repete a mesma cultura: ${crops}`,
     noRepeat: 'Nenhuma cultura se repete',
     bonus: (points: string) => `Variar a função das culturas (grão, gramínea e leguminosa) soma ${points} pontos à saúde da terra.`,
@@ -1300,8 +1310,10 @@ export const pt = {
         littleWater: 'Pede pouca água',
       },
       cons: {
-        late: (date: string) => `Passou do prazo do ZARC (${date}): o seguro não cobre`,
-        lateNoDate: 'Passou do prazo do ZARC: o seguro não cobre',
+        late: (date: string) => `Passou do prazo do ZARC (${date}): o risco sobe e o seguro pode não cobrir`,
+        lateNoDate: 'Passou do prazo do ZARC: o risco sobe e o seguro pode não cobrir',
+        /** A cultura sem ZARC (a crotalária, tarefa 0066 do backend): a data é sugestão do app. */
+        lateSuggested: (date: string) => `Passou da data sugerida (${date})`,
         risky: 'Falhou em muitos anos',
         noGrain: 'Não dá grão para vender',
         soilWeak: 'Ajuda pouco a terra',
@@ -1326,13 +1338,18 @@ export const pt = {
       futureSource: 'NEX-GDDP-CMIP6 (NASA), cenário SSP2-4.5, média dos modelos.',
       incomeText:
         '"Dá grão" quer dizer que há o que vender. O risco é em quantos dos 20 anos faltou água ou fez calor na fase que mais precisa. Sem valores em reais.',
-      soilText: 'Palhada, nitrogênio e o ciclo do nematoide. Os pontos da nota são hipótese do time, ainda não validada em campo.',
+      soilText: 'Palhada, nitrogênio e o nematoide. Os pontos da nota são hipótese do time, ainda não validada em campo.',
       deadlineOk: (limit: string, harvest: string) =>
         `Pelo ZARC (Ministério da Agricultura), o plantio vai até ${limit}. Plantando em ${harvest}, logo depois de colher a soja, dá tempo.`,
       deadlineLate: (limit: string, harvest: string) =>
-        `Pelo ZARC, o plantio ia até ${limit}. Plantando em ${harvest}, logo depois de colher a soja, passa do prazo: o risco sobe e o seguro rural não cobre. A conta mostra como seria plantando nesse dia.`,
+        `Pelo ZARC, o plantio ia até ${limit}. Plantando em ${harvest}, logo depois de colher a soja, passa do prazo: o risco sobe e o seguro rural pode não cobrir. A conta mostra como seria plantando nesse dia.`,
+      /** A cultura sem ZARC (a crotalária, tarefa 0066 do backend): a data é sugestão do app. */
+      deadlineSuggestedOk: (limit: string, harvest: string) =>
+        `Não há ZARC para esta planta: o app sugere plantar até ${limit}. Plantando em ${harvest}, logo depois de colher a soja, dá tempo.`,
+      deadlineSuggestedLate: (limit: string, harvest: string) =>
+        `Não há ZARC para esta planta: o app sugere plantar até ${limit}. Plantando em ${harvest}, logo depois de colher a soja, passa dessa data. A conta mostra como seria plantando nesse dia.`,
       deadlineNone: 'O motor não tem uma data limite do ZARC para esta cultura: plante logo depois de colher a soja.',
-      zarc: 'ZARC é o Zoneamento Agrícola de Risco Climático do Ministério da Agricultura: diz, para cada município, até quando plantar com o risco de clima mais baixo. Fora do prazo, o seguro rural e o Proagro não cobrem.',
+      zarc: 'ZARC é o Zoneamento Agrícola de Risco Climático do Ministério da Agricultura: diz, para cada município, tipo de solo e ciclo da cultivar, em que épocas plantar com risco de perda de 20%, 30% ou 40%. Fora dessas épocas, não há Proagro nem subvenção do seguro rural. A data do app é a última com risco de 20% no solo que mais guarda água; em solo arenoso, o prazo é mais cedo.',
       deadlineSource: 'ZARC (Ministério da Agricultura) e Embrapa.',
       engineSource: 'Conta do motor do Raiz Orbital, com dados da NASA. As regras estão em "Como a conta é feita".',
       prosCons: 'A favor e contra',
@@ -1598,7 +1615,7 @@ export const pt = {
     step3: 'Contamos em quantos anos faltou água ou sobrou calor na fase em que a planta mais precisa.',
     noAiTitle: 'Sem inteligência artificial, conta aberta',
     noAiText:
-      'Cada nota é uma regra que cabe numa frase. Os limites de falta de água e de calor vêm da Embrapa e do ZARC, o zoneamento usado no seguro e no crédito rural.',
+      'Cada nota é uma regra que cabe numa frase. Os limites de falta de água vêm do ZARC, o zoneamento usado no seguro e no crédito rural; o de calor, de artigo científico. Cada regra abaixo diz a fonte.',
     /** Tarefa 0040: a nota de renda sem preço nem custo (regra no regras.yaml do backend, grupo `renda`). */
     incomeTitle: 'Renda sem valores em reais',
     incomeText:
@@ -1614,11 +1631,19 @@ export const pt = {
       `A chuva vem em quadrados de cerca de ${km} km, não do seu talhão: seu pluviômetro vale mais.`,
     blindRainGeneric: 'A chuva vem de quadrados de vários quilômetros, não do seu talhão: seu pluviômetro vale mais.',
     blindRest:
-      'O clima de 2041 a 2060 é uma faixa entre modelos, não uma previsão. Os limites usados na conta são hipótese do time e ainda não foram validados em campo.',
+      'O clima de 2041 a 2060 é uma faixa entre modelos, não uma previsão. Alguns limites usados na conta são hipótese do time e ainda não foram validados em campo: cada regra abaixo diz quais.',
     /** Tarefa 0049: as regras novas, com os números do regras.yaml (`GET /api/metodo`), nunca fixos aqui. */
     rules: {
       title: 'As regras da conta',
-      intro: 'Cada número abaixo vem do arquivo de regras do motor (regras.yaml). Os marcados como hipótese do time ainda não foram validados em campo.',
+      intro: 'Cada número abaixo vem do arquivo de regras do motor (regras.yaml), com a fonte conferida quando há. Os marcados como hipótese do time ainda não foram validados em campo.',
+      /** Tarefa 0066 do backend: o ISNA do ZARC de cada cultura que tem o seu ("milho com braquiária 50%"). */
+      workedByCrop: (list: string) => `Pelo ZARC de cada cultura: ${list}.`,
+      cropPct: (crop: string, pct: string) => `${crop} ${pct}%`,
+      /** A fonte de cada regra (`fontes` do `GET /api/metodo`). */
+      source: 'Fonte',
+      sources: 'Fontes',
+      hypothesisAll: 'Hipótese do time, ainda não validada em campo.',
+      hypothesisPart: 'Parte dos números é hipótese do time, ainda não validada em campo.',
       worked: (grain: string, days: string, cover: string, coverDays: string, temp: string, heatDays: string) =>
         `Deu certo: a planta teve pelo menos ${grain}% da água que precisava na fase em que mais precisa (a floração, ${days} dias antes e depois; nas plantas de cobertura, ${cover}% nos primeiros ${coverDays} dias) e não fez ${temp} °C em ${heatDays} dias ou mais nessa fase.`,
       weights: (safety: string, future: string, soil: string, income: string) =>
@@ -1628,9 +1653,9 @@ export const pt = {
       water: (pct: string) =>
         `Água: o motor soma, dia a dia, o que a planta gasta (ETo do NASA POWER × Kc) e o que chove (GPM IMERG), com o que a terra guarda. Ano normal é o do meio; ano seco é aquele em que só ${pct}% dos anos tiveram falta maior.`,
       thirst: (low: string, high: string) =>
-        `Sede da cultura: pouca água abaixo de ${low} mm no ciclo; muita, a partir de ${high} mm (hipótese do time).`,
+        `Sede da cultura: pouca água abaixo de ${low} mm no ciclo; muita, a partir de ${high} mm.`,
       rotation: (two: string, three: string, crops: string) =>
-        `Nota da rotação: a média das notas dos 3 anos, com +${two} pontos para 2 funções diferentes e +${three} para 3 (grão, capim de cobertura, leguminosa). Quebram o ciclo do nematoide: ${crops}.`,
+        `Nota da rotação: a média das notas dos 3 anos, com +${two} pontos para 2 funções diferentes e +${three} para 3 (grão, capim de cobertura, leguminosa). Ajuda a baixar o nematoide: ${crops}.`,
       planB: (days: string, fails: string, catches: string, precision: string, chance: string) =>
         `Plano B: a cultura que mais deu certo nos anos em que a do Plano A falhou. "Secar" vira um número do pluviômetro (a chuva dos ${days} dias antes de plantar) só com ${fails} anos de falha ou mais, pegando ${catches}% das falhas, com ${precision}% dos anos marcados sendo de falha e chance de acaso de até ${chance}%. Senão, o Plano B aparece sem número.`,
       frost: (temp: string, from: string, to: string) =>

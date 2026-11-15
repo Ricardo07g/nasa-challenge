@@ -55,8 +55,11 @@ export type TimelineStep =
     }
   /** A colheita da soja. */
   | { kind: 'harvest'; date: string }
-  /** Plantar a cultura do 1º ano até o prazo do ZARC (`late` = passou do prazo, o seguro rural não cobre). */
-  | { kind: 'plant'; crop: CropId; sowing: string; deadline: string | null; late: boolean }
+  /**
+   * Plantar a cultura do 1º ano até o prazo (`late` = passou do prazo). `zarc` = o prazo vem do ZARC; `false` na
+   * cultura sem ZARC (a crotalária, tarefa 0066 do backend), em que a data é sugestão do app.
+   */
+  | { kind: 'plant'; crop: CropId; sowing: string; deadline: string | null; late: boolean; zarc: boolean }
   /**
    * A fase em que a planta mais precisa de água, pelo critério do motor: na floração, os dias até a floração com a
    * janela antes e depois; no pegamento (as coberturas), do plantio até o fim da janela.
@@ -76,7 +79,7 @@ export type TimelineStep =
    * Out–nov: a próxima soja e, depois dela, a cultura do 2º ano, com o prazo do ZARC dela (`deadline`, tarefa 0065;
    * null sem ele) e `late` quando ela passou do prazo.
    */
-  | { kind: 'next'; year: number; crop: CropId | null; deadline: string | null; late: boolean }
+  | { kind: 'next'; year: number; crop: CropId | null; deadline: string | null; late: boolean; zarc: boolean }
 
 export type TimelineInput = {
   /** Hoje (ISO). */
@@ -94,6 +97,8 @@ export type TimelineInput = {
   /** O prazo do ZARC do 2º ano (`data_limite` do /api/plano) e se ele passou do prazo. */
   secondDeadline?: string | null
   secondLate?: boolean
+  /** O prazo do 2º ano vem do ZARC (`prazo_zarc` da opção; tarefa 0066 do backend). Sem o dado, vem. */
+  secondZarc?: boolean
   signal: SinalOutono | null
   planAB: PlanoAB | null
 }
@@ -115,7 +120,14 @@ export function planTimeline(input: TimelineInput): TimelineStep[] {
     { kind: 'harvest', date: input.harvest },
   ]
   if (first) {
-    steps.push({ kind: 'plant', crop: firstCrop, sowing, deadline: first.data_limite, late: isLate(first) })
+    steps.push({
+      kind: 'plant',
+      crop: firstCrop,
+      sowing,
+      deadline: first.data_limite,
+      late: isLate(first),
+      zarc: first.prazo_zarc !== false,
+    })
     if (first.ciclo) {
       const windowDays = first.criterio?.janela_dias ?? 0
       if (first.criterio?.fase === 'pegamento') {
@@ -149,6 +161,7 @@ export function planTimeline(input: TimelineInput): TimelineStep[] {
     crop: input.secondCrop,
     deadline: input.secondDeadline ?? null,
     late: input.secondLate ?? false,
+    zarc: input.secondZarc ?? true,
   })
   return steps
 }
