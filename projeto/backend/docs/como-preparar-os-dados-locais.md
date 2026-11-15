@@ -17,7 +17,7 @@ alguns cartões (clima futuro, histórico do talhão).
 | Histórico do talhão (NDVI) | MODIS (MOD13Q1 + MYD13Q1) pelo AppEEARS ou pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` (o mesmo nome para as duas fontes) e, depois da carga, banco (`ndvi_point`) | "Sua área ficou parada em X de Y anos" e a colheita sugerida | script `fetch_ndvi` + carga no banco |
 | Chuva diária em 0,1° (refinamento da chuva do POWER) | GPM IMERG Final (`GPM_3IMERGDF` v07) pelo OPeNDAP do GES DISC | arquivo `data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` e, depois da carga, a chuva dos anos completos no banco (`climate_season`, `rain_source = gpm_imerg`) | "Chuva mais detalhada" conectada (10 km) e "(GPM IMERG + NASA POWER)" no "Por quê?" | script `fetch_imerg` + carga no banco (`--imerg`) |
 | El Niño / La Niña de cada safrinha | ONI da NOAA (não é da NASA) | arquivo `data/baixados/noaa_oni/oni.json` (só arquivo, sem tabela) | a marca de El Niño / La Niña nos quadrinhos de chuva e na frase de cada ano | script `fetch_oni` |
-| Região pelo satélite (lavoura parada na entressafra, num raio de 30 km) | MODIS (MOD13Q1, MYD13Q1 e o uso do solo MCD12Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` (sem tabela ainda) | "Na sua região": a área de lavoura parada, ano a ano | script `fetch_regiao_ndvi` |
+| Região pelo satélite (soja do ano parada depois da colheita, num raio de 30 km) | MODIS (MOD13Q1, MYD13Q1 e o uso do solo MCD12Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` (sem tabela ainda) | "Na sua região": a área de soja parada depois da colheita, ano a ano | script `fetch_regiao_ndvi` |
 | Chuva dos últimos 30 dias × média | GPM IMERG Late (`GPM_3IMERGDL`) + NASA POWER já no banco | arquivo `data/baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json` | "Sinal para o outono" (junto com o SMAP recente; só a chuva não acende o sinal) | script `fetch_imerg_late`, perto do plantio (fev/mar) |
 | Umidade da terra no dia de plantar (2016–2025) | SMAP L4 (`SPL4SMGP` 008) pelo OPeNDAP da Earthdata | arquivo `data/baixados/nasa_smap/smap_semeadura.json` e, depois da carga, banco (`smap_point`) | ainda nada: o balde inicial pelo SMAP é o R3.3 (até lá, 50% da CAD) | script `fetch_smap` + carga no banco |
 
@@ -73,7 +73,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Umidade da terra nos dias de semeadura (SMAP) | `uv run python -m pipeline.fetch_smap --dry-run` e depois `uv run python -m pipeline.fetch_smap` | ~6 min (720 recortes de ~2 s, 4 em paralelo, mais 30 buscas no CMR); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` |
 | Carregar os arquivos no banco (`cmip6_delta`, `ndvi_point`, `smap_point` e a chuva do IMERG no `climate_season`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json --imerg ../../data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json --smap ../../data/baixados/nasa_smap/smap_semeadura.json` | segundos | nenhuma |
 | El Niño / La Niña de cada safrinha (ONI) | `uv run python -m pipeline.fetch_oni` | segundos (1 pedido de ~23 KB à NOAA) | nenhuma |
-| Região pelo satélite (fazenda de exemplo, raio de 30 km) | `uv run python -m pipeline.fetch_regiao_ndvi` | ~20 min (41 pedidos à ORNL de ~25 a 40 s; num 502 ele espera e tenta de novo); se parar, rode de novo que continua do cache | nenhuma |
+| Região pelo satélite (fazenda de exemplo, raio de 30 km) | `uv run python -m pipeline.fetch_regiao_ndvi` | ~40 min do zero (81 pedidos à ORNL de ~25 a 40 s); ~20 min com o cache de abril a julho da primeira versão (faltam os 40 de jan–mar; o `--dry-run` mostra quantos faltam). Num 502 ele espera e tenta de novo; se parar, rode de novo que continua do cache | nenhuma |
 | Chuva dos últimos 30 dias (sinal para o outono) | `uv run python -m pipeline.fetch_imerg_late` | ~2 min (1 a 2 pedidos ao CMR + 30 ao OPeNDAP, um por dia; estimativa, ainda não medido com token); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` (com o *NASA GESDISC DATA ARCHIVE* autorizado) |
 
 - A pré-carga é idempotente: rodar de novo só completa o que faltou (por exemplo, solos em que o
@@ -129,10 +129,15 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   de 2005 a 2024 (as da série do motor; `--ano-inicio` e `--ano-fim` mudam isso) e imprime quais
   anos ficaram de El Niño, de La Niña e neutros. A regra do ano está no `regras.yaml` (grupo `enso`).
   Não precisa carregar no banco: a API lê o arquivo.
-- **Região pelo satélite** (tarefa 0034): grava em `data/baixados/nasa_modis_ndvi_regiao/` o JSON
-  e o cache `cache_ornl/` (uma resposta por pedido, em gzip; ~30 MB), a partir da raiz do
-  repositório. Antes, veja os 41 pedidos sem baixar nada: `uv run python -m pipeline.fetch_regiao_ndvi
-  --dry-run`. Outras regiões: `--centros "lat,lon;lat,lon"` (41 pedidos por centro) e `--raio-km`.
+- **Região pelo satélite** (tarefas 0034 e 0036): grava em `data/baixados/nasa_modis_ndvi_regiao/`
+  o JSON e o cache `cache_ornl/` (uma resposta por pedido, em gzip; ~60 MB), a partir da raiz do
+  repositório. Pede, para cada ano de 2016 a 2025, 1/jan a 31/mar (pico e colheita da soja) e abril
+  a julho (entressafra). Antes, veja os 81 pedidos sem baixar nada, quantos já estão no cache e o
+  tempo do que falta: `uv run python -m pipeline.fetch_regiao_ndvi --dry-run`. Quem já tem o cache
+  da primeira versão (só abril a julho) baixa só os 40 de jan–mar (~20 min). Outras regiões:
+  `--centros "lat,lon;lat,lon"` (81 pedidos por centro) e `--raio-km`. A regra da soja do ano
+  (pico de 1/jan a 15/mar ≥ 0,70, colheita ≤ 0,40 até 15/mai) fica no `regras.yaml`
+  (`regiao_ndvi`).
   A ORNL é pública, mas lenta e às vezes devolve 502: o script tenta de novo até 5 vezes por
   pedido (`--tentativas`) e, se desistir, o que já baixou fica no cache.
 - A **chuva dos últimos 30 dias** compara o IMERG Late com a média do NASA POWER **guardado** nos
@@ -177,7 +182,7 @@ O zip fica na raiz do repositório (também fora do git). Ele não leva `.env` n
 # arquivo do CMIP6, nex_gddp_cmip6
 curl -s "localhost:8000/api/talhao?lat=-18.9543&lon=-48.1993" | python3 -m json.tool
 
-# região pelo satélite (com o arquivo do fetch_regiao_ndvi): raio_km, fonte e os anos
+# região pelo satélite (com o arquivo do fetch_regiao_ndvi): raio_km, centro, distancia_km e os anos
 curl -s "localhost:8000/api/regiao?lat=-18.9543&lon=-48.1993" | python3 -m json.tool
 
 # o que está no banco
@@ -194,7 +199,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | Clima dos próximos anos | ✓ pronto (só onde há deltas: a caixa piloto inteira com `--area`; só a região da fazenda de exemplo com `--pontos`) | "Ainda não disponível para esta área" |
 | Histórico do talhão | faixa de 2016 a 2025 | não aparece (ou "Ainda não conectado") |
 | Anos de chuva (tocar num ano) | ponto de El Niño / La Niña em cima dos anos e "Ano de El Niño." na frase | a frase de cada ano aparece igual, sem a marca |
-| Na sua região (http://localhost:5173/comunidade) | "Em 2025, X% da área de lavoura ficou parada" e as barras de 2016 a 2025 | o bloco da região fica com erro (a API responde 404 `OUTSIDE_AREA`) |
+| Na sua região (http://localhost:5173/comunidade) | "Em 2025, X% da área de soja ficou parada depois da colheita" e as barras de 2016 a 2025 | o card diz que o satélite ainda não mediu a região da lavoura (a API responde 404 `OUTSIDE_AREA`) |
 | "Por quê?" de cada opção | frase do balde pelo SMAP (anos de 2016 em diante) | sem a frase; o balde começa em 50% da CAD |
 
 ## Problemas comuns

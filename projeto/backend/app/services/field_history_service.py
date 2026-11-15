@@ -29,7 +29,7 @@ def scaled_ndvi(value: float) -> float:
     return round(physical, NDVI_DECIMALS)
 
 
-def _month_day(text: str) -> tuple[int, int]:
+def month_day(text: str) -> tuple[int, int]:
     """'04-01' -> (4, 1), para comparar datas de anos diferentes sem montar `date`."""
     month, day = text.split("-")
     return int(month), int(day)
@@ -80,7 +80,7 @@ class FieldHistoryService:
     def in_entressafra(self, day: date) -> bool:
         """O dia cai na janela da entressafra (`janela_inicio` a `janela_fim`, inclusive)?"""
         regra = self._historico
-        inicio, fim = _month_day(regra.janela_inicio), _month_day(regra.janela_fim)
+        inicio, fim = month_day(regra.janela_inicio), month_day(regra.janela_fim)
         return inicio <= (day.month, day.day) <= fim
 
     def classify_year(self, ano: int, valores: Sequence[float]) -> HistoricoAno:

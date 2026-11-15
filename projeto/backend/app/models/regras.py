@@ -80,6 +80,24 @@ class RegrasHistoricoNdvi:
 
 
 @dataclass(frozen=True)
+class RegrasRegiaoNdvi:
+    """Soja do ano em cada pixel da região pelo satélite (P3, tarefa 0036).
+
+    Um pixel da máscara de lavoura só conta se mostrar a soja e a colheita: o maior NDVI de
+    `pico_inicio` a `pico_fim` chega a `pico_min_ndvi`, e depois do pico, até `colheita_fim`,
+    alguma observação fica em `colheita_max_ndvi` ou menos (a primeira é a data da colheita).
+    A entressafra usa as observações depois da colheita até `entressafra_fim`. Datas "MM-DD".
+    """
+
+    pico_inicio: str
+    pico_fim: str
+    pico_min_ndvi: float
+    colheita_fim: str
+    colheita_max_ndvi: float
+    entressafra_fim: str
+
+
+@dataclass(frozen=True)
 class RegrasRotacao:
     """Plano de 3 anos (PRD 7.7)."""
 
@@ -186,6 +204,7 @@ class Regras:
     solo: RegrasSolo
     ndvi: RegrasNdvi
     historico_ndvi: RegrasHistoricoNdvi
+    regiao_ndvi: RegrasRegiaoNdvi
     rotacao: RegrasRotacao
     sinal_outono: RegrasSinalOutono
     frases: dict[str, FrasesPorque]  # "pt" e "en"

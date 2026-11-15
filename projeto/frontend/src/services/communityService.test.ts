@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Community } from '../models/community'
 import type { RegiaoSatelite } from '../models/region'
-import { createCommunityService, regionPoints, regionSummary } from './communityService'
+import { createCommunityService, regionPlace, regionPoints, regionSummary } from './communityService'
 
 describe('regionPoints', () => {
   const center = { lat: -18.9543, lon: -48.1993 }
@@ -71,5 +71,23 @@ describe('regionSummary (P3)', () => {
 
   it('sem anos na série, não há o que mostrar', () => {
     expect(regionSummary({ ...region, anos: [] })).toBeNull()
+  })
+})
+
+describe('regionPlace (P3): onde fica o círculo medido pelo satélite', () => {
+  const region: RegiaoSatelite = { raio_km: 30, fonte: 'modis', anos: [] }
+
+  it('com o centro a até 1 km da lavoura, o círculo é em volta dela (sem distância)', () => {
+    expect(regionPlace({ ...region, distancia_km: 0 })).toEqual({ radiusKm: 30, distanceKm: null })
+    expect(regionPlace({ ...region, distancia_km: 1 })).toEqual({ radiusKm: 30, distanceKm: null })
+  })
+
+  it('mais longe, diz a que distância da lavoura fica o centro do círculo', () => {
+    expect(regionPlace({ ...region, distancia_km: 12.3 })).toEqual({ radiusKm: 30, distanceKm: 12.3 })
+  })
+
+  it('API antiga, sem distancia_km: como se o círculo fosse em volta da lavoura', () => {
+    expect(regionPlace(region)).toEqual({ radiusKm: 30, distanceKm: null })
+    expect(regionPlace({ ...region, distancia_km: null })).toEqual({ radiusKm: 30, distanceKm: null })
   })
 })

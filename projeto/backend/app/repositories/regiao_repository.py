@@ -25,7 +25,11 @@ def _optional_float(value: Any) -> float | None:
 
 
 def regiao_ano_from_json(item: Mapping[str, Any]) -> RegiaoAno:
-    """Um ano do arquivo (chaves em português); percentual ausente ou `null` vira None."""
+    """Um ano do arquivo (chaves em português); percentual ausente ou `null` vira None.
+
+    `n_pixels_lavoura` só existe nos arquivos da tarefa 0036 em diante: ausente vira None.
+    """
+    lavoura = item.get("n_pixels_lavoura")
     return RegiaoAno(
         ano=int(item["ano"]),
         n_pixels=int(item["n_pixels"]),
@@ -33,6 +37,7 @@ def regiao_ano_from_json(item: Mapping[str, Any]) -> RegiaoAno:
         pct_plantou=_optional_float(item.get("pct_plantou")),
         pct_incerto=_optional_float(item.get("pct_incerto")),
         pct_sem_dado=_optional_float(item.get("pct_sem_dado")),
+        n_pixels_lavoura=None if lavoura is None else int(lavoura),
     )
 
 

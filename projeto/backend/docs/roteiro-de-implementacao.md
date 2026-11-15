@@ -156,6 +156,7 @@ Cada linha diz quem decide e qual tarefa fica parada até lá.
 | Chave da fonte de chuva ✅ | **Decidido em 14/11: `gpm_imerg`** nos dois lados (o front já usava; o back deixou o `imerg_final` na [0027](tarefas/0027-imerg-na-conta.md)) | back + front | R3.4 |
 | Nomes do detalhe por ano (P1) (padrão adotado, **a revisar**) | Adotado na [tarefa 0035](tarefas/0035-detalhe-de-cada-ano.md): o contrato do front (`fase_critica`, `dias_sem_chuva`), que a tela já usa, no lugar do plano de evolução §4.1 (`floracao`, `dias_secos`, `isna`, `dias_calor`); a frase cita o calor quando ele causou o aperto. Dia seco de 1 mm (o dos avisos, tarefa 0019), não os 5 mm do §4.1 | back + front | P1 |
 | Fase do ENSO de cada safrinha (padrão adotado, **a revisar**) | Adotado na tarefa 0035: média do ONI da NOAA nas estações DJF, JFM e FMA do ano; +0,5 ou mais = El Niño, −0,5 ou menos = La Niña (grupo `enso` do `regras.yaml`). Outras opções: só o DJF, ou as 5 estações seguidas do "episódio" da NOAA | produto + agrônoma | — |
+| Máscara da região pelo satélite (P3) (padrão adotado em 15/11, **a revisar**) | Adotado na [tarefa 0036](tarefas/0036-regiao-calibrada.md): só conta o pixel com a soja do ano (pico de NDVI ≥ 0,70 de 1/jan a 15/mar e colheita, ≤ 0,40, até 15/mai) dentro do MCD12Q1 classe 12; a entressafra é lida depois da colheita (grupo `regiao_ndvi` do `regras.yaml`). Substitui a máscara de soja do MapBiomas, que só existe pelo Earth Engine. A primeira rodada, só com a classe 12, deu "plantou" de 83% a 98% (cana e café) | produto + agrônoma | P3 |
 
 ---
 

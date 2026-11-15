@@ -88,6 +88,18 @@ describe('useCommunityController (tela 8)', () => {
     const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
 
     await waitFor(() => expect(result.current.regionStatus).toBe('ready'))
+    // Os dados de exemplo são o círculo em volta da própria lavoura: sem distância a mostrar.
+    expect(result.current.regionDistance).toBeNull()
+  })
+
+  it('região de um círculo centrado longe da lavoura: diz a distância até o centro', async () => {
+    const d = deps()
+    d.community.region = vi.fn(async (point, lang) => ({ ...(await region.get(point, lang)), distancia_km: 12.3 }))
+    const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
+
+    await waitFor(() => expect(result.current.regionStatus).toBe('ready'))
+    expect(result.current.regionRadius).toBe(30)
+    expect(result.current.regionDistance).toBe(12.3)
   })
 
   it('sem o endpoint da região no backend (404 sem código), a região fica "Ainda não conectado"', async () => {
@@ -100,13 +112,15 @@ describe('useCommunityController (tela 8)', () => {
     expect(result.current.regionRadius).toBeNull()
   })
 
-  it('ponto fora das regiões que o satélite já calculou (404 OUTSIDE_AREA): "Ainda não conectado", sem erro', async () => {
+  it('ponto fora das regiões que o satélite já mediu (404 OUTSIDE_AREA): estado próprio, nem erro nem "Ainda não conectado"', async () => {
     const d = deps()
     d.community.region = vi.fn().mockRejectedValue(new ApiError('/api/regiao', 404, 'OUTSIDE_AREA'))
     const { result } = renderHook(() => useCommunityController(d), { wrapper: providers('/comunidade') })
 
-    await waitFor(() => expect(result.current.regionStatus).toBe('not-connected'))
+    await waitFor(() => expect(result.current.regionStatus).toBe('outside'))
     expect(result.current.region).toBeNull()
+    expect(result.current.regionRadius).toBeNull()
+    expect(result.current.regionDistance).toBeNull()
   })
 
   it('se a região falhar por outro motivo, mostra o erro e tenta de novo', async () => {

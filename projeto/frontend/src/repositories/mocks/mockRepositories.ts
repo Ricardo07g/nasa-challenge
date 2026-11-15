@@ -73,11 +73,14 @@ const IDLE: [number, number][] = [
 
 export function createMockRegionRepository(delayMs = 300): RegionRepository {
   return {
-    async get() {
+    async get(point) {
       await delay(delayMs)
       return {
         raio_km: 30,
         fonte: 'modis_mod13q1',
+        // O círculo de exemplo é sempre em volta do ponto pedido.
+        centro: { lat: point.lat, lon: point.lon },
+        distancia_km: 0,
         anos: IDLE.map(([ano, parado]) => ({ ano, pct_parado: parado, pct_incerto: 9, pct_plantou: 100 - parado - 9 })),
       }
     },

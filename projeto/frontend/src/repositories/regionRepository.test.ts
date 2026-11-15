@@ -19,4 +19,11 @@ describe('regionRepository (região pelo satélite, P3)', () => {
     expect(region.anos.at(-1)?.ano).toBe(2025)
     expect(region.anos.every((ano) => ano.pct_parado + ano.pct_plantou + ano.pct_incerto === 100)).toBe(true)
   })
+
+  it('dados de exemplo no contrato: o círculo em volta do ponto pedido (distância 0)', async () => {
+    const region = await createMockRegionRepository(0).get({ lat: -19.74, lon: -47.93 }, 'pt')
+
+    expect(region.centro).toEqual({ lat: -19.74, lon: -47.93 })
+    expect(region.distancia_km).toBe(0)
+  })
 })

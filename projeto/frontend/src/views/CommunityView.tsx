@@ -9,6 +9,7 @@ import { ToneBadge } from '../design-system/components/Status'
 import { CommunityIcon, RainIcon, SatelliteIcon, UncertainIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { Community } from '../models/community'
+import type { RegionStatus } from '../models/region'
 import type { BlockStatus } from '../models/screenStatus'
 import type { RegionSummary } from '../services/communityService'
 import { FlowError, FlowLoading } from './FlowStates'
@@ -25,12 +26,14 @@ export type CommunityViewProps = {
   points: readonly AreaPoint[]
   demo: 'tell' | 'rain' | null
   onDemo: (kind: 'tell' | 'rain') => void
-  /** P3: área parada na região pelo satélite (null sem o dado na API). */
+  /** P3: área de soja parada na região pelo satélite (null sem o dado na API). */
   region: RegionSummary | null
-  /** P3: "not-connected" enquanto o backend não tem /api/regiao. */
-  regionStatus: BlockStatus
+  /** P3: "not-connected" sem /api/regiao no backend; "outside" se o satélite não mediu a região do ponto. */
+  regionStatus: RegionStatus
   onRegionRetry: () => void
   regionRadius: number | null
+  /** P3: distância da lavoura ao centro do círculo medido; null quando o círculo é em volta dela. */
+  regionDistance: number | null
   /** Histórico da própria lavoura, para comparar com a região (só os anos certos; os sem certeza à parte). */
   history: { idle: number; known: number; uncertain: number } | null
 }
@@ -41,15 +44,30 @@ export type CommunityViewProps = {
  * O que a API ainda não manda aparece como "Ainda não conectado", sem sumir.
  */
 export function CommunityView(props: CommunityViewProps) {
-  const { t, backTo, status, onRetry, community, region, regionStatus, regionRadius } = props
+  const { t, backTo, status, onRetry, community, region, regionStatus, regionRadius, regionDistance } = props
   const c = t.community
+  const subtitle =
+    region && regionRadius
+      ? regionDistance
+        ? c.regionSubtitleAway(regionRadius, regionDistance)
+        : c.regionSubtitle(regionRadius)
+      : undefined
   return (
     <div className={layout.page}>
       <BackLink to={backTo}>{t.nav.back}</BackLink>
-      <PageHeading title={c.title} subtitle={region && regionRadius ? c.regionSubtitle(regionRadius) : undefined} />
+      <PageHeading title={c.title} subtitle={subtitle} />
       {regionStatus === 'ready' && region && <SatelliteRegion {...props} region={region} />}
       {regionStatus === 'not-connected' && (
         <NotConnectedCard icon={<SatelliteIcon />} iconTone="soil" title={c.regionTitle} label={t.common.notConnected} />
+      )}
+      {regionStatus === 'outside' && (
+        <Card as="section" aria-label={c.regionTitle}>
+          <h2 className={layout.iconTitle}>
+            <SatelliteIcon />
+            {c.regionTitle}
+          </h2>
+          <p>{c.regionOutside}</p>
+        </Card>
       )}
       {regionStatus === 'error' && (
         <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={props.onRegionRetry} />

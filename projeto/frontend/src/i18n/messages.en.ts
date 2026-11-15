@@ -350,12 +350,16 @@ export const en = {
   community: {
     title: 'In your region',
     regionTitle: 'Idle cropland in the region, by satellite',
-    regionSubtitle: (km: number) => `Within ${km} km of the field · seen by satellite`,
-    regionBig: (year: number, pct: number) => `In ${year}, ${pct}% of the cropland was left idle after soybeans.`,
+    regionSubtitle: (km: number) => `Within ${km} km of your field · seen by satellite`,
+    regionSubtitleAway: (km: number, distance: number) =>
+      `${km} km radius around a point ${distance} km from your field · seen by satellite`,
+    regionOutside:
+      "The satellite has not measured your field's region yet. For now, only a few regions near Uberlândia are measured.",
+    regionBig: (year: number, pct: number) => `In ${year}, ${pct}% of the soybean area was left idle after harvest.`,
     regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
       `Your field: idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}. In the region, on average ${average}% of the area stays idle.`,
     regionAverage: (average: number) => `In the region, on average ${average}% of the area stays idle after soybeans.`,
-    regionChart: '% of the area left idle after soybeans, year by year.',
+    regionChart: '% of the soybean area left idle after harvest, year by year.',
     regionNote: (pct: number) =>
       `Estimated from the MODIS satellite (NASA), 250 m pixels. For ${pct}% of the area the satellite could not tell. We only show the regional total, never a single farm.`,
     bridge: 'The satellite shows how much regional land stays idle. Neighbors tell you whether planting was worthwhile.',

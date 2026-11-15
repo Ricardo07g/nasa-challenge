@@ -1,4 +1,4 @@
-"""Região pelo satélite (P3): a lavoura num raio em volta de um ponto, na entressafra, ano a ano.
+"""Região pelo satélite (P3): a soja num raio em volta de um ponto, na entressafra, ano a ano.
 
 Pede à ORNL DAAC (`modis.ornl.gov/rst/api/v1`, pública, sem login) o recorte por área do NDVI do
 MODIS (MOD13Q1 e MYD13Q1, coleção 061, 250 m) e do uso do solo (MCD12Q1, 500 m) e grava o
@@ -13,12 +13,15 @@ Uso (a partir de projeto/backend; nenhuma credencial):
 
 Por que por área na ORNL: o tempo de um pedido quase não depende da área (medido em 14/11/2026:
 27 s para 9 × 9 pixels e 24 s para 241 × 241), e cada pedido aceita até 10 datas e ±100 km. A
-região inteira sai em 41 pedidos; uma grade de pontos precisaria de 41 pedidos por ponto.
+região inteira sai em 81 pedidos; uma grade de pontos precisaria de 81 pedidos por ponto.
 
-Regra (guia NDVI, "Região pelo satélite"), em cada ano da janela do `regras.yaml`
-(`historico_ndvi`): os pixels de 250 m com o centro dentro do raio e na lavoura do MCD12Q1 daquele
-ano; cada um classificado com a regra do talhão (`RegionClassifier`, as mesmas observações boas,
-janela, limites e mínimo); os pixels somados em percentuais. Só os totais saem do script (RNF-10).
+Regra (tarefa 0036), em cada ano do `historico_ndvi` do `regras.yaml`: os pixels de 250 m com o
+centro dentro do raio e na lavoura do MCD12Q1 daquele ano; entre eles, só os que mostram a soja do
+ano (pico e colheita, grupo `regiao_ndvi`), classificados com a regra do talhão só depois da
+colheita (`RegionClassifier`); os pixels somados em percentuais. Por isso os pedidos cobrem de
+1/jan (o começo do pico) até o fim da entressafra: 1/jan a 31/mar (soja e colheita) e a janela do
+talhão (abril a julho, os mesmos pedidos e nomes de cache da primeira versão). Só os totais saem do
+script (RNF-10).
 
 Cache e retomada: cada resposta fica em `cache_ornl/` (gzip). Se parar, rode de novo: o que já
 baixou não é pedido outra vez.
@@ -33,7 +36,7 @@ import time
 from array import array
 from collections import Counter
 from collections.abc import Callable, Iterable, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Final
@@ -41,7 +44,7 @@ from typing import Any, Final
 from app.config import get_settings
 from app.models.data_run import DataRun
 from app.models.regiao import RegiaoSatelite
-from app.models.regras import Regras, RegrasHistoricoNdvi
+from app.models.regras import Regras, RegrasHistoricoNdvi, RegrasRegiaoNdvi
 from app.models.talhao import NDVI_VALID_MAX, NDVI_VALID_MIN
 from app.repositories.external.http_client import (
     HttpRequest,
@@ -49,6 +52,7 @@ from app.repositories.external.http_client import (
     default_http_request,
 )
 from app.repositories.rules_repository import YamlRulesRepository
+from app.services.field_history_service import month_day
 from app.services.region_service import RegionClassifier, distance_m
 from pipeline.fetch_cmip6_deltas import repo_root
 from pipeline.fetch_ndvi import (
@@ -105,9 +109,11 @@ DEFAULT_CACHE_DIR: Final[Path] = DOWNLOADS_DIR / "cache_ornl"
 SOURCE_LABEL: Final[str] = f"MODIS {' + '.join(NDVI_PRODUCTS)}"
 _CLASSES_TEXT = ", ".join(str(c) for c in sorted(CROPLAND_CLASSES))
 MASK_LABEL: Final[str] = (
-    f"{LAND_COVER_PRODUCT} {LAND_COVER_BAND} "
-    f"{'classe' if len(CROPLAND_CLASSES) == 1 else 'classes'} {_CLASSES_TEXT} (lavouras)"
+    f"soja do ano (pico e colheita) em {LAND_COVER_PRODUCT} {LAND_COVER_BAND} "
+    f"{'classe' if len(CROPLAND_CLASSES) == 1 else 'classes'} {_CLASSES_TEXT}"
 )
+# Ano de referência (não bissexto) para a véspera de uma data "MM-DD".
+_REFERENCE_YEAR: Final[int] = 2001
 
 
 class OrnlError(RuntimeError):
@@ -175,16 +181,44 @@ class SubsetRequest:
         )
 
 
-def build_plan(regra: RegrasHistoricoNdvi) -> list[SubsetRequest]:
-    """NDVI e qualidade de Terra e Aqua na janela de cada ano, mais o uso do solo dos anos."""
+def _day_before(mmdd: str) -> str:
+    month, day = month_day(mmdd)
+    return f"{date(_REFERENCE_YEAR, month, day) - timedelta(days=1):%m-%d}"
+
+
+def request_windows(regra: RegrasHistoricoNdvi, soja: RegrasRegiaoNdvi) -> list[tuple[str, str]]:
+    """Janelas pedidas em cada ano ("MM-DD"): do começo do pico da soja até a véspera da
+    entressafra do talhão (se houver) e a entressafra do talhão.
+
+    A entressafra fica com os mesmos pedidos (e nomes de cache) da primeira versão. Uma regra da
+    soja que passe do fim da entressafra pediria dados que não são baixados: `ValueError`.
+    """
+    fim = month_day(regra.janela_fim)
+    for name in ("pico_fim", "colheita_fim", "entressafra_fim"):
+        if month_day(getattr(soja, name)) > fim:
+            raise ValueError(
+                f"regiao_ndvi.{name} ({getattr(soja, name)}) passa da janela pedida, que vai até "
+                f"historico_ndvi.janela_fim ({regra.janela_fim})"
+            )
+    windows = []
+    if month_day(soja.pico_inicio) < month_day(regra.janela_inicio):
+        windows.append((soja.pico_inicio, _day_before(regra.janela_inicio)))
+    windows.append((regra.janela_inicio, regra.janela_fim))
+    return windows
+
+
+def build_plan(regra: RegrasHistoricoNdvi, soja: RegrasRegiaoNdvi) -> list[SubsetRequest]:
+    """NDVI e qualidade de Terra e Aqua nas janelas de cada ano, mais o uso do solo dos anos."""
     years = range(regra.ano_inicio, regra.ano_fim + 1)
+    windows = request_windows(regra, soja)
     plan: list[SubsetRequest] = []
     for year in years:
         for product in NDVI_PRODUCTS:
-            days = composite_dates(product, year, regra.janela_inicio, regra.janela_fim)
-            for group in chunked(days):
-                for band in (NDVI_BAND, QUALITY_BAND):
-                    plan.append(SubsetRequest(product, band, group[0], group[-1], len(group)))
+            for start, end in windows:
+                days = composite_dates(product, year, start, end)
+                for group in chunked(days):
+                    for band in (NDVI_BAND, QUALITY_BAND):
+                        plan.append(SubsetRequest(product, band, group[0], group[-1], len(group)))
     for group in chunked([date(year, 1, 1) for year in years]):
         plan.append(
             SubsetRequest(LAND_COVER_PRODUCT, LAND_COVER_BAND, group[0], group[-1], len(group))
@@ -405,6 +439,14 @@ def _physical_ndvi(raw: int) -> float | None:
     return round(raw * NDVI_SCALE_FACTOR, NDVI_DECIMALS)
 
 
+@dataclass(frozen=True)
+class PixelCount:
+    """Contagem de um ano: os pixels de lavoura no raio e, entre eles, os de soja por situação."""
+
+    n_lavoura: int
+    situacoes: dict[str, int]
+
+
 def count_region_year(
     year: int,
     pairs: Sequence[tuple[Subset, Subset]],
@@ -413,9 +455,11 @@ def count_region_year(
     center: Point,
     radius_km: float,
     classifier: RegionClassifier,
-) -> dict[str, int]:
-    """Pixels de lavoura dentro do raio por situação no ano (`pairs` = NDVI e qualidade de cada
-    produto). Observação boa = qualidade 0 ou 1 e NDVI válido (sem o −3000 de preenchimento).
+) -> PixelCount:
+    """Pixels de lavoura dentro do raio e, dos que foram soja no ano, quantos por situação
+    (`pairs` = NDVI e qualidade de cada produto, com todas as datas do ano). Observação boa =
+    qualidade 0 ou 1 e NDVI válido (sem o −3000 de preenchimento). Pixel sem pico ou sem
+    colheita (cana, café, pasto, solo exposto) só entra em `n_lavoura`.
     """
     if not pairs:
         raise OrnlError(f"Sem camada de NDVI para {year}.")
@@ -440,8 +484,10 @@ def count_region_year(
             ndvi = _physical_ndvi(values[i]) if quality[i] in ACCEPTED_QUALITY else None
             if ndvi is not None:
                 observations.append((day, ndvi))
-        counts[classifier.classify_pixel(year, observations)] += 1
-    return dict(counts)
+        situacao = classifier.classify_pixel(year, observations)
+        if situacao is not None:
+            counts[situacao] += 1
+    return PixelCount(n_lavoura=len(pixels), situacoes=dict(counts))
 
 
 # --- região e arquivo do contrato -----------------------------------------------------------
@@ -483,10 +529,8 @@ def _build_region(
                 pairs.append((ndvi, quality))
         mask_years[year] = mask_year(year, cropland)
         mask = cropland[mask_years[year]] if mask_years[year] is not None else frozenset()
-        counts = count_region_year(
-            year, pairs, land_cover.grid, mask, center, radius_km, classifier
-        )
-        anos.append(classifier.summarize(year, counts))
+        count = count_region_year(year, pairs, land_cover.grid, mask, center, radius_km, classifier)
+        anos.append(classifier.summarize(year, count.situacoes, count.n_lavoura))
     region = RegiaoSatelite(
         lat=center.lat,
         lon=center.lon,
@@ -525,6 +569,7 @@ def build_region_payload(
                 "anos": [
                     {
                         "ano": ano.ano,
+                        "n_pixels_lavoura": ano.n_pixels_lavoura,
                         "n_pixels": ano.n_pixels,
                         "pct_parado": ano.pct_parado,
                         "pct_plantou": ano.pct_plantou,
@@ -541,6 +586,7 @@ def build_region_payload(
 
 def _params(
     regra: RegrasHistoricoNdvi,
+    soja: RegrasRegiaoNdvi,
     radius_km: float,
     km: int,
     centers: int,
@@ -561,7 +607,9 @@ def _params(
             "classes": sorted(CROPLAND_CLASSES),
             "anos_usados": {str(year): used for year, used in sorted(mask_years.items())},
         },
+        "soja_do_ano": asdict(soja),
         "janela": f"{regra.janela_inicio} a {regra.janela_fim}",
+        "janelas_pedidas": [f"{start} a {end}" for start, end in request_windows(regra, soja)],
         "anos": [regra.ano_inicio, regra.ano_fim],
         "limites": {
             "limite_plantou": regra.limite_plantou,
@@ -620,16 +668,20 @@ def _rules_from_settings() -> Regras:
 def _print_plan(
     plan: Sequence[SubsetRequest], centers: Sequence[Point], km: int, args: argparse.Namespace
 ) -> None:
+    """O plano e o tempo, sem rede: conta o que já está no cache e estima só o que falta."""
+    cache = SubsetCache(args.cache)
     for request in plan:
         print(
             f"{request.product} {request.band} {request.start} a {request.end} "
             f"({request.n_dates} datas)"
         )
     total = len(plan) * len(centers)
-    minutes = total * MEASURED_SECONDS_PER_REQUEST / 60
+    cached = sum(cache.has(r.cache_name(center, km)) for center in centers for r in plan)
+    minutes = (total - cached) * MEASURED_SECONDS_PER_REQUEST / 60
     print(
         f"Plano: {total} pedidos à ORNL ({len(plan)} por região, {len(centers)} região(ões)), "
-        f"caixa de ±{km} km para o raio de {args.raio_km:g} km; cerca de {minutes:.0f} min "
+        f"{cached} já no cache, {total - cached} a baixar; caixa de ±{km} km para o raio de "
+        f"{args.raio_km:g} km; cerca de {minutes:.0f} min "
         f"(~{MEASURED_SECONDS_PER_REQUEST:.0f} s por pedido). Saída: {args.saida}"
     )
 
@@ -644,9 +696,9 @@ def _write_payload(payload: dict[str, Any], output: Path, log: Callable[[str], N
         log(f"({region['lat']}, {region['lon']}), {region['raio_km']:g} km:")
         for ano in region["anos"]:
             log(
-                f"  {ano['ano']}: {ano['n_pixels']} pixels de lavoura; parado "
-                f"{ano['pct_parado']}%, plantou {ano['pct_plantou']}%, incerto "
-                f"{ano['pct_incerto']}%, sem dado {ano['pct_sem_dado']}%"
+                f"  {ano['ano']}: {ano['n_pixels_lavoura']} pixels de lavoura, {ano['n_pixels']} "
+                f"de soja do ano; parado {ano['pct_parado']}%, plantou {ano['pct_plantou']}%, "
+                f"incerto {ano['pct_incerto']}%, sem dado {ano['pct_sem_dado']}%"
             )
 
 
@@ -666,7 +718,7 @@ def run(
     try:
         rules = load_rules()
         regra = rules.historico_ndvi
-        plan = build_plan(regra)
+        plan = build_plan(regra, rules.regiao_ndvi)
         km = subset_km(args.raio_km)
         if args.dry_run:
             _print_plan(plan, centers, km, args)
@@ -697,7 +749,9 @@ def run(
             region, used = _build_region(center, args.raio_km, km, plan, cache, classifier, regra)
             regions.append(region)
             mask_years.update(used)
-        params = _params(regra, args.raio_km, km, len(centers), total, mask_years)
+        params = _params(
+            regra, rules.regiao_ndvi, args.raio_km, km, len(centers), total, mask_years
+        )
         _write_payload(build_region_payload(regions, params, now()), args.saida, log)
         return 0
     except (OrnlError, OSError, ValueError) as exc:

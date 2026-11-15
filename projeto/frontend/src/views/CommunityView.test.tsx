@@ -27,6 +27,7 @@ function setup(overrides: Partial<CommunityViewProps> = {}) {
     regionStatus: 'ready',
     onRegionRetry: vi.fn(),
     regionRadius: 30,
+    regionDistance: null,
     history: { idle: 5, known: 9, uncertain: 1 },
     ...overrides,
   }
@@ -43,16 +44,55 @@ describe('CommunityView (tela 8)', () => {
     setup()
 
     expect(screen.getByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
-    expect(screen.getByText('Até 30 km da lavoura · visto pelo satélite')).toBeInTheDocument()
-    expect(screen.getByText('Em 2025, 62% da área de lavoura ficou parada depois da soja.')).toBeInTheDocument()
+    expect(screen.getByText('Até 30 km da sua lavoura · visto pelo satélite')).toBeInTheDocument()
+    expect(screen.getByText('Em 2025, 62% da área de soja ficou parada depois da colheita.')).toBeInTheDocument()
     expect(
       screen.getByText('Sua área: parada em 5 de 9 anos (1 sem certeza). Na região, em média 65% da área fica parada.'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: '% da área parada depois da soja, ano a ano.' })).toHaveTextContent('62%')
+    expect(screen.getByRole('img', { name: '% da área de soja parada depois da colheita, ano a ano.' })).toHaveTextContent(
+      '62%',
+    )
     expect(screen.getByText(/Em 9% da área o satélite não conseguiu dizer/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
       'href',
       '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
+    )
+  })
+
+  it('círculo centrado longe da lavoura: o subtítulo diz o raio e a que distância fica o centro', () => {
+    setup({ regionDistance: 12.3 })
+
+    expect(
+      screen.getByText('Raio de 30 km em volta de um ponto a 12,3 km da sua lavoura · visto pelo satélite'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Até 30 km da sua lavoura · visto pelo satélite')).not.toBeInTheDocument()
+  })
+
+  it('o subtítulo e as frases da região em inglês', () => {
+    setup({ t: en, community: buildCommunity('en'), regionDistance: 12.3 })
+
+    expect(screen.getByText('30 km radius around a point 12.3 km from your field · seen by satellite')).toBeInTheDocument()
+    expect(screen.getByText('In 2025, 62% of the soybean area was left idle after harvest.')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: '% of the soybean area left idle after harvest, year by year.' })).toBeInTheDocument()
+  })
+
+  it('ponto fora das regiões medidas: o card explica, sem "Ainda não conectado" e sem erro', () => {
+    setup({ region: null, regionStatus: 'outside', regionRadius: null })
+
+    const card = screen.getByRole('region', { name: 'Área parada na região, pelo satélite' })
+    expect(card).toHaveTextContent(
+      'O satélite ainda não mediu a região da sua lavoura. Por enquanto, só algumas regiões perto de Uberlândia estão medidas.',
+    )
+    expect(card).not.toHaveTextContent('Ainda não conectado')
+    expect(screen.queryByRole('button', { name: 'Tentar de novo' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/visto pelo satélite/)).not.toBeInTheDocument()
+  })
+
+  it('ponto fora das regiões medidas, em inglês', () => {
+    setup({ t: en, community: buildCommunity('en'), region: null, regionStatus: 'outside', regionRadius: null })
+
+    expect(screen.getByRole('region', { name: 'Idle cropland in the region, by satellite' })).toHaveTextContent(
+      "The satellite has not measured your field's region yet. For now, only a few regions near Uberlândia are measured.",
     )
   })
 
@@ -73,7 +113,7 @@ describe('CommunityView (tela 8)', () => {
   it('sem a região na API, o bloco do satélite não some: diz "Ainda não conectado" e a comunidade continua', () => {
     setup({ region: null, regionStatus: 'not-connected', regionRadius: null })
 
-    expect(screen.queryByText(/da área de lavoura ficou parada/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/da área de soja ficou parada/)).not.toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Área parada na região, pelo satélite' })).toHaveTextContent(
       'Ainda não conectado',
     )
@@ -170,6 +210,7 @@ describe('CommunityView (tela 8)', () => {
           regionStatus="loading"
           onRegionRetry={vi.fn()}
           regionRadius={null}
+          regionDistance={null}
           history={null}
         />
       </MemoryRouter>,

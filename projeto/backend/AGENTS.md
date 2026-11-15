@@ -583,47 +583,64 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     "fonte": "nasa_power"
   }
   ```
-- **Região pelo satélite** (P3, tarefa 0034): `GET /api/regiao?lat&lon`, no contrato do front
-  (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem banco).
+- **Região pelo satélite** (P3, tarefas 0034 e 0036): `GET /api/regiao?lat&lon`, no contrato do
+  front (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem
+  banco).
   - `pipeline/fetch_regiao_ndvi.py` pede à **ORNL DAAC** (`modis.ornl.gov/rst/api/v1`, pública,
     sem credencial) o recorte **por área** do NDVI e da `pixel_reliability` de MOD13Q1 e MYD13Q1
-    (janela do `historico_ndvi`, abril a julho de 2016 a 2025) e o uso do solo **MCD12Q1**
-    (`LC_Type1`). Por área porque o tempo do pedido quase não depende da área (medido em 14/11:
-    ~25 s tanto para 9 × 9 quanto para 241 × 241 pixels); a ORNL aceita até 10 datas e ±100 km
-    por pedido. Uma região = **41 pedidos** (10 anos × 2 produtos × 2 bandas + 1 do uso do solo),
-    **~20 min** e ~30 MB de cache. O AppEEARS não foi usado: a fila estava parada.
+    e o uso do solo **MCD12Q1** (`LC_Type1`). Duas janelas por ano (2016 a 2025): **1/jan a
+    31/mar** (pico e colheita da soja; Terra e Aqua com 6 datas cada) e a do `historico_ndvi`,
+    **abril a julho** (os mesmos pedidos e nomes de cache da primeira versão). Por área porque o
+    tempo do pedido quase não depende da área (medido em 14/11: ~25 s tanto para 9 × 9 quanto para
+    241 × 241 pixels); a ORNL aceita até 10 datas e ±100 km por pedido. Uma região = **81
+    pedidos** (10 anos × 2 produtos × 2 bandas × 2 janelas + 1 do uso do solo), **~40 min** do
+    zero e ~60 MB de cache. Com o cache da primeira versão (abril a julho), faltam **40 pedidos,
+    ~20 min**. O AppEEARS não foi usado: a fila estava parada.
   - Caixa pedida: a ORNL conta o km como pixels de 250 m, mas o pixel tem 231,66 m
     (`kmAboveBelow=30` devolve ±27,9 km). 30 km pedem ±33 km, e o círculo é recortado no script.
   - **Máscara de lavoura**: classe **12** do IGBP (lavouras, pelo menos 60% cultivado), do
     MCD12Q1 do mesmo ano (sem o ano, o último antes). A 14 (mosaico com vegetação natural) fica de
-    fora: o cerrado e o pasto do mosaico confundiriam parado com plantou. A classe 12 também tem
-    cana e café (verdes o ano todo): o "plantou" da região tende a sair alto (calibrar).
-  - **Regra**: cada pixel de 250 m com o centro dentro do raio e na lavoura é classificado pelo
-    `RegionClassifier`, que usa o `classify_year` e o `in_entressafra` do `FieldHistoryService`
-    (a mesma regra do talhão: qualidade 0 ou 1, janela, mínimo de 3 observações, 0,60 e 0,45).
-    Os pixels viram percentuais (`RegionClassifier.summarize`, 1 casa): parado, plantou e
-    incerto sobre os classificados (somam 100); `pct_sem_dado` sobre todos os pixels de lavoura.
-    Nenhum pixel sai do script (RNF-10).
+    fora: o cerrado e o pasto do mosaico confundiriam parado com plantou.
+  - **Soja do ano** (tarefa 0036, grupo `regiao_ndvi` do `regras.yaml`; hipótese do time, a
+    revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI, que só existe
+    no Earth Engine): a classe 12 também tem cana e café (verdes o ano todo), e a janela fixa de
+    abril pegava a soja tardia ainda verde. Por isso, dentro da máscara, um pixel só conta se
+    mostrar a soja **e** a colheita: o maior NDVI de 1/jan a 15/mar chega a **0,70** (com o mesmo
+    valor em duas datas, vale a última) e, depois do pico e até 15/mai, alguma observação fica em
+    **0,40** ou menos (a primeira é a data da colheita). Sem pico ou sem colheita (perene, pasto,
+    solo exposto), o pixel fica fora dos percentuais.
+  - **Regra da entressafra**: cada pixel de soja do ano (250 m, centro dentro do raio) é
+    classificado pelo `RegionClassifier` com o `classify_year` do `FieldHistoryService` (a mesma
+    regra do talhão: qualidade 0 ou 1, mínimo de 3 observações, 0,60 e 0,45), mas só com as
+    observações **depois da data da colheita até 31/jul** (a própria observação da colheita fica
+    de fora). Os pixels viram percentuais (`RegionClassifier.summarize`, 1 casa): parado,
+    plantou e incerto sobre os classificados (somam 100); `pct_sem_dado` sobre os pixels de soja
+    (`n_pixels`); `n_pixels_lavoura` = a máscara inteira no raio. Nenhum pixel sai do script
+    (RNF-10).
   - **Cache e retomada**: uma resposta por arquivo (gzip) em `cache_ornl/`; parou (502, rede),
-    rode de novo. Saída padrão `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`, a
-    partir da raiz do repositório (fora do git).
+    rode de novo. O `--dry-run` conta o que já está no cache e estima o tempo só do que falta.
+    Saída padrão `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`, a partir da raiz
+    do repositório (fora do git).
 
     ```bash
-    uv run python -m pipeline.fetch_regiao_ndvi --dry-run   # os 41 pedidos e o tempo, sem rede
+    uv run python -m pipeline.fetch_regiao_ndvi --dry-run   # os 81 pedidos, o que falta e o tempo, sem rede
     uv run python -m pipeline.fetch_regiao_ndvi             # fazenda de exemplo, raio de 30 km
     uv run python -m pipeline.fetch_regiao_ndvi --centros "-18.9543,-48.1993;-17.5,-47.25" --raio-km 30
     ```
 
   - **API** (`RegionService`): a região mais perto cujo círculo (`raio_km` em volta do centro)
-    contém o ponto; só os anos com algum pixel classificado, em ordem. Fora de todos os círculos,
-    ou sem arquivo: 404 `OUTSIDE_AREA`. Região sem lavoura: `anos: []`. Exemplo (números
-    ilustrativos):
+    contém o ponto; só os anos com algum pixel classificado, em ordem; `centro` (o centro do
+    círculo usado) e `distancia_km` (do ponto pedido até o centro, haversine, 1 casa, calculada
+    no service). Fora de todos os círculos, ou sem arquivo: 404 `OUTSIDE_AREA`. Região sem soja:
+    `anos: []`. Arquivo antigo (sem `n_pixels_lavoura`): `n_pixels_lavoura: null`. Exemplo
+    (números ilustrativos):
 
     ```json
     {"raio_km": 30.0, "fonte": "MODIS MOD13Q1 + MYD13Q1",
-     "mascara": "MCD12Q1 LC_Type1 classe 12 (lavouras)",
+     "mascara": "soja do ano (pico e colheita) em MCD12Q1 LC_Type1 classe 12",
+     "centro": {"lat": -18.9543, "lon": -48.1993}, "distancia_km": 12.3,
      "anos": [{"ano": 2016, "pct_parado": 62.0, "pct_plantou": 29.0, "pct_incerto": 9.0,
-               "n_pixels": 13412, "pct_sem_dado": 1.5}]}
+               "n_pixels": 6120, "n_pixels_lavoura": 13412, "pct_sem_dado": 1.5}]}
     ```
 
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
@@ -860,20 +877,20 @@ em `versao_dados.parametros`. Não tem tabela no banco.
 
 ### Região pelo satélite: `RegiaoSatelite` (`app/models/regiao.py`)
 
-Uma região por centro e raio, com os percentuais da lavoura na entressafra de cada ano. O
-`pipeline/fetch_regiao_ndvi.py` grava e o `FileRegionRepository` lê (`REGIAO_PATH`). Só totais e
-percentuais: nenhum pixel nem ponto individual (RNF-10). Números ilustrativos:
+Uma região por centro e raio, com os percentuais da soja do ano na entressafra de cada ano (tarefa
+0036). O `pipeline/fetch_regiao_ndvi.py` grava e o `FileRegionRepository` lê (`REGIAO_PATH`). Só
+totais e percentuais: nenhum pixel nem ponto individual (RNF-10). Números ilustrativos:
 
 ```json
 {
-  "versao_dados": {"fonte": "modis_mod13q1", "parametros": {"servico": "ornl_daac", "tipo": "regiao", "mascara": {"produto": "MCD12Q1.061", "camada": "LC_Type1", "classes": [12]}}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-modis-ndvi-regiao"},
+  "versao_dados": {"fonte": "modis_mod13q1", "parametros": {"servico": "ornl_daac", "tipo": "regiao", "mascara": {"produto": "MCD12Q1.061", "camada": "LC_Type1", "classes": [12]}, "soja_do_ano": {"pico_inicio": "01-01", "pico_fim": "03-15", "pico_min_ndvi": 0.7, "colheita_fim": "05-15", "colheita_max_ndvi": 0.4, "entressafra_fim": "07-31"}, "janelas_pedidas": ["01-01 a 03-31", "04-01 a 07-31"]}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-modis-ndvi-regiao"},
   "regioes": [
     {
       "lat": -18.9543, "lon": -48.1993, "raio_km": 30.0,
-      "fonte": "MODIS MOD13Q1 + MYD13Q1", "mascara": "MCD12Q1 LC_Type1 classe 12 (lavouras)",
+      "fonte": "MODIS MOD13Q1 + MYD13Q1", "mascara": "soja do ano (pico e colheita) em MCD12Q1 LC_Type1 classe 12",
       "anos": [
-        {"ano": 2016, "n_pixels": 13412, "pct_parado": 62.0, "pct_plantou": 29.0, "pct_incerto": 9.0, "pct_sem_dado": 1.5},
-        {"ano": 2017, "n_pixels": 0, "pct_parado": null, "pct_plantou": null, "pct_incerto": null, "pct_sem_dado": null}
+        {"ano": 2016, "n_pixels_lavoura": 13412, "n_pixels": 6120, "pct_parado": 62.0, "pct_plantou": 29.0, "pct_incerto": 9.0, "pct_sem_dado": 1.5},
+        {"ano": 2017, "n_pixels_lavoura": 12980, "n_pixels": 0, "pct_parado": null, "pct_plantou": null, "pct_incerto": null, "pct_sem_dado": null}
       ]
     }
   ]
@@ -884,15 +901,19 @@ percentuais: nenhum pixel nem ponto individual (RNF-10). Números ilustrativos:
 | --- | --- | --- |
 | `lat`, `lon` | `lat`, `lon` | centro da região, WGS 84 |
 | `raio_km` | `raio_km` | maior que zero |
-| `fonte`, `mascara` | `fonte`, `mascara` | textos não vazios (produtos do NDVI e de onde vem a lavoura) |
+| `fonte`, `mascara` | `fonte`, `mascara` | textos não vazios (produtos do NDVI e de onde vem a soja) |
 | `anos[].ano` | `RegiaoAno.ano` | sem ano repetido na região |
-| `anos[].n_pixels` | `n_pixels` | pixels de 250 m de lavoura dentro do raio (0 ou mais) |
-| `anos[].pct_parado`, `pct_plantou`, `pct_incerto` | idem | 0 a 100, sobre os pixels classificados, somam 100 (±0,2 do arredondamento); os três `null` sem pixel classificado |
-| `anos[].pct_sem_dado` | `pct_sem_dado` | 0 a 100, sobre `n_pixels`; `null` só com `n_pixels` 0; 100 quando nenhum foi classificado |
+| `anos[].n_pixels_lavoura` | `n_pixels_lavoura` | pixels de 250 m da máscara de lavoura (MCD12Q1 classe 12) dentro do raio; nunca menor que `n_pixels`; ausente (arquivo de antes da tarefa 0036) vira `None` |
+| `anos[].n_pixels` | `n_pixels` | pixels da máscara com pico e colheita da soja no ano (grupo `regiao_ndvi`), 0 ou mais. No arquivo antigo, os pixels da máscara |
+| `anos[].pct_parado`, `pct_plantou`, `pct_incerto` | idem | 0 a 100, sobre os pixels de soja classificados, somam 100 (±0,2 do arredondamento); os três `null` sem pixel classificado |
+| `anos[].pct_sem_dado` | `pct_sem_dado` | 0 a 100, sobre `n_pixels` (menos de 3 observações boas depois da colheita); `null` só com `n_pixels` 0; 100 quando nenhum foi classificado |
 
 - `versao_dados.fonte` = `modis_mod13q1` (a mesma chave do NDVI do talhão); os `parametros` dizem o
-  serviço (`ornl_daac`), a máscara (produto, camada, classes e o ano usado em cada ano), a janela,
-  os anos, os limites, o raio, a caixa pedida (`km_pedido`) e o número de pedidos.
+  serviço (`ornl_daac`), a máscara (produto, camada, classes e o ano usado em cada ano), a regra da
+  soja do ano (`soja_do_ano`), as janelas pedidas, a janela do talhão, os anos, os limites, o raio,
+  a caixa pedida (`km_pedido`) e o número de pedidos.
+- A resposta da API (`RegiaoResponse`) junta `centro: {lat, lon}` e `distancia_km`, que não estão no
+  arquivo: o `RegionService` calcula para cada ponto pedido (ver "Dados da API").
 - Ainda não há tabela: a API lê o arquivo. O guia NDVI propõe a `regiao_entressafra` no PostGIS.
 
 ### Chuva recente: `RecentRainRecord` (`app/models/recent_rain.py`)
