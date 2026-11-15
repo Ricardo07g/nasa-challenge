@@ -661,18 +661,54 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   tarefa 0028): o `MonthlyRainService` soma a chuva de cada mês, de janeiro a junho, em cada
   temporada da célula (as que o `get_seasons` já devolve) e tira a média entre os anos, com uma
   casa decimal. Só entra o ano cuja série cobre de 1/jan a 30/jun. `fonte` = a `rain_source` das
-  temporadas (`nasa_power` hoje; com mais de uma, as chaves em ordem separadas por `+`, ex.:
-  `gpm_imerg+nasa_power`). Fora da área ou sem nenhum ano completo: `null` (o front mostra "Ainda
-  não conectado"). Na fazenda de exemplo (NASA POWER):
+  temporadas (`gpm_imerg` na caixa piloto depois da carga; com mais de uma, as chaves em ordem
+  separadas por `+`, ex.: `gpm_imerg+nasa_power`). Fora da área ou sem nenhum ano completo: `null`
+  (o bloco não aparece). Desde a tarefa 0042, cada mês traz também `eto_media_mm` (a média da ETo
+  do motor, `ClimateRiskService.reference_eto`, injetada no `dependencies.py`: a gravada ou
+  Hargreaves-Samani), e o bloco traz `fonte_eto` (`nasa_power`) e `mes_chuva_abaixo_eto` (o
+  primeiro mês em que a chuva média fica menor que a ETo média; `null` se nunca fica). Sem ETo
+  para algum ano, os três ficam `null`. Na fazenda de exemplo (banco local, IMERG):
 
   ```json
   "chuva_mensal": {
-    "meses": [{"mes": 1, "media_mm": 212.7}, {"mes": 2, "media_mm": 161.0}, {"mes": 3, "media_mm": 156.8},
-              {"mes": 4, "media_mm": 74.7}, {"mes": 5, "media_mm": 31.3}, {"mes": 6, "media_mm": 12.6}],
+    "meses": [{"mes": 1, "media_mm": 289.1, "eto_media_mm": 134.0}, "...",
+              {"mes": 4, "media_mm": 89.5, "eto_media_mm": 108.8}, "...",
+              {"mes": 6, "media_mm": 14.4, "eto_media_mm": 91.9}],
     "anos": [2005, 2006, "...", 2024],
-    "fonte": "nasa_power"
+    "fonte": "gpm_imerg", "fonte_eto": "nasa_power", "mes_chuva_abaixo_eto": 4
   }
   ```
+- **Tela 3 "Quando você colhe a soja?"** (remodelagem S3, tarefa 0042, RF-02, RF-16 e RF-27). As
+  regras ficam nos services, com os números no `regras.yaml`; o front só procura o dia na tabela.
+  - **Dia sugerido e faixa** (`colheita_sugerida.dia`, "MM-DD"): em cada ano, a primeira imagem de
+    fevereiro ou março abaixo de `ndvi.queda_colheita` (50%) do pico de janeiro a março; o dia é a
+    mediana dos anos, contada num ano comum (`app/services/calendar_days.py`: 29/fev = 28/fev) e
+    arredondada para baixo. A `faixa` sai do dia pela regra da data exata da tela 3
+    (`FieldHistoryService.harvest_band`, grupo `colheita`: até `cedo_ate` 02-10, e janeiro, cedo;
+    até `meio_ate` 02-20, meio; depois, tarde). O limite antigo de 22/fev
+    (`MID_HARVEST_DOY_LIMIT`) saiu: com ele, o satélite dizia "meio" para um dia que a tela chamava
+    de "tarde". Sem NDVI suficiente: `dia: null`, `faixa: meio`, `fonte: padrao`.
+  - **Chuva que sobra** (`chuva_que_sobra` do `/talhao`, `RemainingRainService`): para cada dia de
+    `colheita.janela_inicio` a `janela_fim` (15/jan a 31/mar, 76 dias de um ano comum), a chuva
+    somada do dia até `chuva_que_sobra.fim` (30/jun, inclusive) em cada ano que cobre a época
+    inteira; `mediana_mm` (mediana dos anos) e `seco_mm` (percentil `percentil_seco`, 20, com
+    interpolação linear entre os anos ordenados), 1 casa. `fonte` e `anos` como no `chuva_mensal`.
+    Sem ano completo: `null`.
+  - **Fim das chuvas** (`fim_das_chuvas` do `/talhao`, `RainEndService`): em cada ano, o primeiro
+    dia, a partir de `fim_das_chuvas.inicio` (1º/mar), que começa `dias` (20) dias seguidos com
+    menos de `chuva_max_mm` (10) mm **somados** (não por dia: decisão D35). `mediana` (arredondada
+    para baixo, num ano comum: em metade dos anos a chuva acabou até esse dia), `mais_cedo` e
+    `mais_tarde` (`{dia, ano}`), `anos`, `fonte` e a própria regra (`inicio`, `dias`,
+    `chuva_max_mm`). Se algum ano não tem esse dia dentro da série (até 31/jul), `null`: sem ele, a
+    mediana e o mais tarde sairiam errados. O raio-X da seção 4 deve usar este mesmo service.
+  - **Custo do atraso** (`GET /api/custo-atraso?lat&lon[&solo][&confirmadas]`,
+    `HarvestDelayService`): uma recomendação do motor (`RecommendationService.recommend`) por faixa,
+    com o mesmo solo e as mesmas safras confirmadas; devolve `faixas[]` (`colheita`, `semeadura`,
+    `melhor`, `nome`, `anos_bons`, `total_anos`; os da opção `null` quando nenhuma cabe na janela)
+    e `mesma_cultura`. Nada é recalculado fora do motor (um teste de rota confere que os números
+    são os do `/recomendacao` de cada faixa). Erros como no `/recomendacao` (404 `OUTSIDE_AREA`,
+    422). Sem cache HTTP: são 3 recomendações (~1 s na fazenda da UFU). Endpoint à parte, e não
+    campo do `/talhao`, para o `/talhao` (pedido já na tela 2) continuar rápido.
 - **Região pelo satélite** (P3, tarefas 0034 e 0036): `GET /api/regiao?lat&lon`, no contrato do
   front (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem
   banco).

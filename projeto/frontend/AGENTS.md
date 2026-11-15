@@ -153,6 +153,18 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   limite aparece tracejado com legenda em texto, e o ponto fora dele desliga o "Confirmar local"; enquanto a
   área carrega, o botão espera; se ela não carregar, a tela deixa seguir (o backend ainda responde
   `OUTSIDE_AREA` nas telas seguintes).
+- **Tela 3 "Quando você colhe" (tarefa 0042 do backend, RF-02, RF-16 e RF-27):** o campo do dia vem no
+  topo, já com o dia do satélite (`colheita_sugerida.dia`, posto no ano da época da colheita por
+  `services/harvestService.ts`); "Não sei o dia exato" abre as 3 faixas. **Sugestão = seleção:** a faixa
+  marcada é sempre a do dia no campo (`harvestFromDate`, a mesma regra do backend) e a faixa azul só diz
+  "Já deixamos esse dia no campo" quando o campo tem o dia do satélite; a faixa da URL (voltando da tela 4)
+  vale mais que a sugestão, e aí a faixa azul oferece "Usar o dia do satélite". As contas ficam no backend:
+  o front só procura o dia na tabela `chuva_que_sobra` (`services/rainLeftService.ts`; só com a faixa, usa o
+  dia de colheita da faixa no motor, `bandDate`), lê o `fim_das_chuvas` e o mês em destaque
+  (`mes_chuva_abaixo_eto`) e pede o custo do atraso a `GET /api/custo-atraso`
+  (`repositories/custoAtrasoRepository.ts` → `services/delayCostService.ts`). Gráficos do design system:
+  `RainLeftChart` (mediana em linha cheia, ano seco tracejado) e `RainEtoChart` (chuva cheia, gasto
+  listrado, mês em destaque com contorno e texto). Cada bloco sem dado não aparece.
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front.
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).
