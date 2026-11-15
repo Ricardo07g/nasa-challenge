@@ -19,7 +19,7 @@ Cada número tem um selo com a fonte e o tamanho da área medida. O dado vale pa
 
 ## Na sua lavoura
 
-Na tela [O que o satélite viu](/satelite), cada bloco mostra uma coisa:
+Na tela [Raio-X da sua terra](/satelite), cada bloco mostra uma coisa:
 
 - **Solo**: quanto de argila e de areia a terra tem, pelo mapa de solos SoilGrids, em quadrados de 250 m.
 - **Água que a terra guarda**: a água que fica ao alcance das raízes. O app divide essa água pelo gasto da planta na floração e diz quantos dias ela aguenta sem chuva.

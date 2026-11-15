@@ -146,6 +146,17 @@ describe('conteúdo do Guia', () => {
     }
   })
 
+  it('os links para a tela 4 (`/satelite`) usam o nome de hoje, "Raio-X da sua terra"', () => {
+    for (const [lang, t] of [['pt', pt], ['en', en]] as const) {
+      for (const [slug, raw] of bySlug(lang)) {
+        for (const l of links(parseMarkdown(parseFrontMatter(raw)!.body)).filter((x) => x.href === '/satelite')) {
+          expect(l.text, `${lang}/${slug}`).toBe(t.xray.eyebrow)
+        }
+        expect(raw.match(/O que o satélite viu|What the satellite saw/i)?.[0] ?? null, `${lang}/${slug}`).toBeNull()
+      }
+    }
+  })
+
   it('todo link externo é https e está na lista de fontes conferidas', () => {
     const allowed = new Set(VERIFIED_SOURCES.map((s) => s.url))
     for (const [slug, raw] of [...bySlug('pt'), ...bySlug('en')]) {

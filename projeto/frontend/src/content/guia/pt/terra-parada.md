@@ -31,7 +31,7 @@ Sem planta, não se forma palha nova. Estudos de erosão mostram que a palha sob
 
 ## Na sua lavoura
 
-O app mostra o histórico de anos parados em [O que o satélite viu](/satelite) e compara o pousio com as outras opções na aba [Escolher](/resposta). Veja o que muda quando a terra fica coberta em [palhada](/guia/palhada).
+O app mostra o histórico de anos parados em [Raio-X da sua terra](/satelite) e compara o pousio com as outras opções na aba [Escolher](/resposta). Veja o que muda quando a terra fica coberta em [palhada](/guia/palhada).
 
 ## Fontes
 

@@ -17,7 +17,7 @@ O dado é do produto MCD64A1, feito com os sensores MODIS dos satélites Terra e
 
 ## Na sua lavoura
 
-Na tela [O que o satélite viu](/satelite), o alerta de fogo diz em quantos dos últimos anos houve área queimada perto do seu ponto.
+Na tela [Raio-X da sua terra](/satelite), o alerta de fogo diz em quantos dos últimos anos houve área queimada perto do seu ponto.
 
 A palhada protege a terra, e a terra que queima fica descoberta. Veja [Palhada: por que cobrir a terra](/guia/palhada).
 

@@ -21,7 +21,7 @@ What helps:
 
 - **Sowing within the deadline.** Sowing late raises the chance of losses. See [the planting deadline and ZARC](/guia/prazo-de-plantio-zarc).
 
-In the app, the [Choose](/resposta) tab warns when a crop is past its deadline. The [What the satellite saw](/satelite) screen shows the alerts for your area.
+In the app, the [Choose](/resposta) tab warns when a crop is past its deadline. The [Your land's X-ray](/satelite) screen shows the alerts for your area.
 
 Which cultivar to choose for your cold is up to your agronomist.
 
