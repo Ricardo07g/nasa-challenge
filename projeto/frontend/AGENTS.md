@@ -182,21 +182,33 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `/guia/<slug>`. O Markdown é lido por `services/markdownService.ts` (títulos, parágrafos, listas, negrito
   e links; HTML vira texto puro e a view nunca usa `dangerouslySetInnerHTML`). Não adicione biblioteca de
   Markdown.
-- **Busca de endereço (serviço externo, tela "Onde fica a lavoura", tarefa 0041, RF-01):** instância pública
-  do **Photon** (komoot, `https://photon.komoot.io`, dados do OpenStreetMap), **sem chave e sem cadastro**:
-  nada de token nem variável `VITE_*` para ela. É compartilhada e corta quem abusa, então o uso justo é
-  regra: espera de 400 ms depois da última tecla (e depois de o mapa parar, no endereço aproximado do
-  *reverse*), **um pedido por vez** com o anterior cancelado (`controllers/useDebouncedRequest.ts`, com
-  `AbortController`), mínimo de 3 letras, `limit=5`, nenhuma busca ao abrir a tela nem em laço
-  (`SEARCH_DELAY_MS` e `MIN_SEARCH_LENGTH` em `services/geocodingService.ts`). O Photon não tem português:
-  em pt vai `lang=default` (nomes locais), em en `lang=en`. **Atribuição** "Endereços: © OpenStreetMap"
-  sempre visível junto da busca, com link para `https://www.openstreetmap.org/copyright` (o mapa tem a
-  dele). O `fetch` fica no `httpClient.ts` (`getExternalJson`, URL completa e `signal`; continua sendo o
-  único lugar com `fetch`), o pedido em `repositories/geocodingRepository.ts` e as regras (rótulos, 3
-  letras) no service. No modo `mock` e nos testes, `repositories/mocks/mockLocation.ts` busca em cidades de
-  exemplo, sem rede; teste de repository usa `vi.stubGlobal('fetch', ...)`. Coordenadas e link do Google
-  Maps colados são lidos por `services/locationInputService.ts` (puro; formatos na tarefa 0041). Serviço
-  externo novo segue o mesmo molde; se precisar de chave ou de uso em escala, a chamada vai para o backend.
+- **Endereço aproximado (serviço externo, tela "Onde fica a lavoura", tarefas 0041 e 0053, RF-01):** instância
+  pública do **Photon** (komoot, `https://photon.komoot.io`, dados do OpenStreetMap), **sem chave e sem cadastro**:
+  nada de token nem variável `VITE_*` para ela. Desde a tarefa 0053 só a busca **reversa** (`/reverse`, o "Perto
+  de {lugar}" do cartão do local); a busca por endereço saiu da tela. É compartilhada e corta quem abusa, então o
+  uso justo é regra: espera de 400 ms depois de o ponto parar (`SEARCH_DELAY_MS` em
+  `services/geocodingService.ts`), **um pedido por vez** com o anterior cancelado
+  (`controllers/useDebouncedRequest.ts`, com `AbortController`), nada ao abrir a tela sem ponto, nada para a
+  lavoura de demonstração (tem nome próprio) e nada em laço. Sem resposta, a cidade de referência mais perto
+  (`nearestPlace`). O Photon não tem português: em pt vai `lang=default` (nomes locais), em en `lang=en`. O
+  `fetch` fica no `httpClient.ts` (`getExternalJson`, URL completa e `signal`; continua sendo o único lugar com
+  `fetch`) e o pedido em `repositories/geocodingRepository.ts`. No modo `mock` e nos testes,
+  `repositories/mocks/mockLocation.ts` devolve a cidade de exemplo mais perto, sem rede; teste de repository usa
+  `vi.stubGlobal('fetch', ...)`. O Photon está nos créditos (`content/credits.ts`). Serviço externo novo segue o
+  mesmo molde; se precisar de chave ou de uso em escala, a chamada vai para o backend.
+- **Tela "Onde fica a lavoura" (`/onde`, tarefa 0053, RF-37):** três jeitos simples de marcar: tocar no mapa
+  (`design-system/components/FieldMap.tsx`: tocar põe o alfinete, arrastar ajusta), "Usar onde estou agora" (GPS,
+  no máximo 10 s: `GPS_TIMEOUT_MS` do `positionService`, que vale também com o pedido de permissão aberto) e "Usar
+  a lavoura de demonstração" (`EXAMPLE_FARM`; confirmar leva `exemplo=1`, para não virar o ponto salvo dos
+  avisos). Coordenadas e link do Google Maps ficam no modal "Outras formas de marcar", lidos por
+  `services/locationInputService.ts` (`parseLocationInput`, puro: o ponto ou `null`; um teste por formato aceito
+  e por entrada que não serve). O estado do cartão (`empty`, `marked`, `outside`) e quando o "Confirmar local" liga
+  ficam no `locationService` (`whereStatus`, `canConfirm`); o erro do GPS é o `empty` com o aviso. Quem decide o
+  enquadre do mapa é o controller (`view = { target: 'area' | 'point', seq }`: GPS, demonstração, ponto colado e
+  "Ver a área inteira" trocam o `seq`; tocar e arrastar não mexem). O crédito do Leaflet vai sem a bandeira (regra
+  do NASA Space Apps) e o "© OpenStreetMap" fica sempre visível. Os dois modais usam o `Modal` do design system.
+  No celular (até 900 px), o "Confirmar local" fica numa barra fixa com o estado numa linha, e a própria tela põe o
+  espaço embaixo do `body` (`:global(body):has(...)` no CSS dela) para a barra não cobrir o rodapé.
 - **"Como a conta é feita" (tela 9, tarefa 0049 do backend):** as regras novas (deu certo, pesos da nota, renda sem
   preço, água, sede da cultura, nota da rotação, Plano B, geada, chuva forte, fogo, avisos, sinal do outono e raio-X)
   aparecem no bloco "As regras da conta", com os números de `GET /api/metodo` (`repositories/metodoRepository.ts`,
@@ -208,10 +220,10 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   área carrega, o botão espera; se ela não carregar, a tela deixa seguir (o backend ainda responde
   `OUTSIDE_AREA` nas telas seguintes). **Área do MVP (tarefa 0051 do backend, RF-35):** a área não muda e as telas
   dizem que esta primeira versão funciona na região de Uberlândia e Uberaba (MG) e que vamos ampliar para todo o
-  Triângulo Mineiro: a frase sempre visível junto do mapa de `/onde` (`where.mvpNote`), os avisos de fora da área
-  (`where.outsideNotice`, `outsideText`), "De onde vem cada dado" (`method.sourcesArea`) e a página inicial do Guia
-  (`guide.mvpArea`). A tela inicial não fala mais do MVP (tarefa 0052: o selo e a frase saíram). Mudou a área? Troque
-  esses textos junto, em pt e en.
+  Triângulo Mineiro: a legenda do mapa de `/onde` e o modal "Onde o app funciona" (`where.areaLegend`,
+  `where.area.text`), os avisos de fora da área (`where.outsideNotice`, `outsideText`), "De onde vem cada dado"
+  (`method.sourcesArea`) e a página inicial do Guia (`guide.mvpArea`). A tela inicial não fala mais do MVP (tarefa
+  0052: o selo e a frase saíram). Mudou a área? Troque esses textos junto, em pt e en.
 - **Tela 3 "Quando você colhe" (tarefa 0042 do backend, RF-02, RF-16 e RF-27):** o campo do dia vem no
   topo, já com o dia do satélite (`colheita_sugerida.dia`, posto no ano da época da colheita por
   `services/harvestService.ts`); "Não sei o dia exato" abre as 3 faixas. **Sugestão = seleção:** a faixa
