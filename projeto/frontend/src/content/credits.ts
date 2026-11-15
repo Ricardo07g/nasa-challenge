@@ -30,12 +30,16 @@ export type CreditsContent = {
 
 const CROP_NAMES = { pt: pt.crops.names, en: en.crops.names }
 
-/** Uma linha por foto: cultura (e a legenda), arquivo com link para o Commons, autor e licença. */
+/**
+ * Uma linha por foto: a cultura e, de cada imagem, o arquivo com link para o Commons, o autor e a licença (a foto de
+ * 2 imagens, como no crédito dela, separa as duas com " | ").
+ */
 function photoLines(lang: Lang): string[] {
   return PLANT_PHOTO_CROPS.map((crop) => {
-    const photo = PLANT_PHOTOS[crop]
-    const caption = photo.caption ? ` (${photo.caption[lang]})` : ''
-    return `**${CROP_NAMES[lang][crop]}**${caption} · [${photo.file}](${photo.page}) · ${photo.author} · ${licenseLabel(photo.license, lang)}`
+    const images = PLANT_PHOTOS[crop].images.map(
+      (image) => `[${image.file}](${image.page}) · ${image.author} · ${licenseLabel(image.license, lang)}`,
+    )
+    return `**${CROP_NAMES[lang][crop]}** · ${images.join(' | ')}`
   })
 }
 

@@ -149,10 +149,12 @@ export function useChoosePlanController(deps: Deps = defaultDeps) {
         chooseForPlan(crop)
         return
       }
-      write(yearFlow(params, index, crop))
-      setAlert(index === 1 ? 'year2' : 'year3')
+      // Escolher de novo a sugestão do ano tira o ano da URL (volta a ser sugerido de verdade) e o alerta some.
+      const suggested = cards?.[index]?.suggested?.crop ?? null
+      write(yearFlow(params, index, crop, suggested))
+      setAlert(crop === suggested ? null : index === 1 ? 'year2' : 'year3')
     },
-    [params, choose, chooseForPlan, write],
+    [params, choose, cards, chooseForPlan, write],
   )
 
   const resetPlan = useCallback(() => {

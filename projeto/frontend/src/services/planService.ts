@@ -13,8 +13,10 @@ import { LAST_SEASONS } from './seasonService'
  * Aba "2. Plano de 3 anos" da tela 5 (pacote 2, tarefa 0056 do backend). O 1º ano é a escolha da aba 1; os
  * outros dois vêm da sugestão em cadeia do motor (`GET /api/plano/sugestao`), que considera o ano anterior
  * (rotação, nematoide, terra parada, prazo) e escreve o porquê. O produtor pode mudar o 2º ou o 3º ano (`ano2`,
- * `ano3` na URL): mudar o 2º refaz o 3º; mudar o 3º pede o plano inteiro ao `GET /api/plano`. As notas, a chuva
- * aproveitada, o Plano A/B e o sinal do outono vêm sempre da avaliação do plano que a tela mostra.
+ * `ano3` na URL): mudar o 2º refaz o 3º; mudar o 3º pede o plano inteiro ao `GET /api/plano`. A nossa sugestão de
+ * cada ano fica sempre à vista (`suggestedFor`, pacote 3, tarefa 0064): "Você mudou" só quando o ano é outra
+ * cultura, e escolher de novo a sugestão tira o ano da URL. As notas, a chuva aproveitada, o Plano A/B e o sinal do
+ * outono vêm sempre da avaliação do plano que a tela mostra.
  */
 
 /** Artigos do Guia da aba: rotação, a conta de água e o veranico (a seca). */
@@ -31,19 +33,70 @@ export function planEdits(params: Pick<FlowParams, 'ano2' | 'ano3'>): PlanEdits 
   return { year2: params.ano2 ?? null, year3: params.ano3 ?? null }
 }
 
-/** O que fixar no `/api/plano/sugestao`: o 1º ano e, se o produtor mudou, o 2º. */
-export function suggestionFixos(choice: CropId, edits: PlanEdits): CropId[] {
-  return edits.year2 ? [choice, edits.year2] : [choice]
+/**
+ * O que fixar no `/api/plano/sugestao` do plano que a tela mostra: o 1º ano e, se o produtor mudou o 2º para outra
+ * cultura que não a sugestão dele (`second`, quando já se sabe), o 2º.
+ */
+export function suggestionFixos(choice: CropId, edits: PlanEdits, second: CropId | null = null): CropId[] {
+  return edits.year2 && edits.year2 !== second ? [choice, edits.year2] : [choice]
 }
 
 /**
  * Com o 3º ano mudado, nada a sugerir: o plano inteiro vai para o `/api/plano`. O 2º ano é o mudado ou, sem ele,
- * o que a sugestão mostrava (precisa dela carregada). Sem o 3º ano mudado, null: a sugestão já é o plano final.
+ * o que a sugestão com o 1º ano fixo mostrava (precisa dela carregada). Sem o 3º ano mudado, null: a sugestão já é
+ * o plano final.
  */
-export function finalCrops(choice: CropId, edits: PlanEdits, base: PlanoAvaliado | null): CropId[] | null {
+export function finalCrops(choice: CropId, edits: PlanEdits, fromChoice: PlanoAvaliado | null): CropId[] | null {
   if (!edits.year3) return null
-  const second = edits.year2 ?? base?.anos[1]?.cultura
+  const second = edits.year2 ?? fromChoice?.anos[1]?.cultura
   return second ? [choice, second, edits.year3] : null
+}
+
+/** As respostas do motor que a aba usa para montar os cartões e saber a sugestão de cada ano. */
+export type PlanSources = {
+  /** O 1º ano: a escolha da aba 1. */
+  choice: CropId
+  /** A sugestão da aba Escolher (`suggestionOf`): a sugestão do 1º ano. */
+  suggestion: CropId
+  edits: PlanEdits
+  /** `/api/plano/sugestao?fixos=<1º ano>`: a sugestão do 2º ano e, com o 2º sugerido, a do 3º. */
+  fromChoice: PlanoAvaliado | null
+  /** `/api/plano/sugestao?fixos=<1º ano>,<2º ano>`: com o 2º ano mudado para outra cultura, a sugestão do 3º. */
+  fromYear2: PlanoAvaliado | null
+  /** `/api/plano` do plano inteiro, com o 3º ano mudado. */
+  final: PlanoAvaliado | null
+}
+
+/** A nossa sugestão para um ano: a cultura e o "Por quê:" do motor (null no 1º ano, que é a sugestão da aba 1). */
+export type YearSuggestion = { crop: CropId; motivo: string | null }
+
+/** A resposta só vale se é do plano pedido agora (o `useAsync` guarda a anterior enquanto a nova carrega). */
+function answerFor(answer: PlanoAvaliado | null, fixed: readonly CropId[]): PlanoAvaliado | null {
+  return answer && fixed.every((crop, index) => answer.anos[index]?.cultura === crop) ? answer : null
+}
+
+function suggestionAt(answer: PlanoAvaliado | null, index: number): YearSuggestion | null {
+  const year = answer?.anos[index]
+  return year ? { crop: year.cultura, motivo: year.motivo ?? null } : null
+}
+
+/**
+ * A nossa sugestão de cada ano (uma regra só para a etiqueta, o select e a linha "Nossa sugestão"):
+ * - 1º ano: a sugestão da aba Escolher;
+ * - 2º ano: o `anos[1]` da sugestão com o 1º ano fixo;
+ * - 3º ano: com o 2º ano sugerido, o `anos[2]` dessa mesma resposta; com o 2º mudado, o `anos[2]` da sugestão com
+ *   os dois fixos.
+ * O porquê vem da mesma resposta. null enquanto ela não chegou (ou ainda é a de um pedido anterior).
+ */
+export function suggestedFor(index: number, sources: PlanSources): YearSuggestion | null {
+  if (index === 0) return { crop: sources.suggestion, motivo: null }
+  const fromChoice = answerFor(sources.fromChoice, [sources.choice])
+  if (index === 1) return suggestionAt(fromChoice, 1)
+  const second = fromChoice?.anos[1]?.cultura
+  if (!second) return null
+  const year2 = sources.edits.year2
+  if (!year2 || year2 === second) return suggestionAt(fromChoice, 2)
+  return suggestionAt(answerFor(sources.fromYear2, [sources.choice, year2]), 2)
 }
 
 /** Etiqueta do cartão: "Sua escolha" (1º ano), "Nossa sugestão" ou "Você mudou". */
@@ -54,6 +107,8 @@ export type PlanCard = {
   season: number
   crop: CropId
   tag: PlanTag
+  /** A nossa sugestão para o ano (no select e na linha "Nossa sugestão"); null enquanto ela carrega. */
+  suggested: YearSuggestion | null
   /** Deu certo em `good` de `total` anos; null no pousio. */
   good: number | null
   total: number | null
@@ -65,39 +120,51 @@ export type PlanCard = {
 }
 
 /**
- * Os 3 cartões do plano. As culturas e os números vêm do plano final (com o 3º ano mudado) ou da sugestão; o
- * porquê, só nos anos sugeridos, vem sempre da sugestão. null enquanto a sugestão não chegou.
+ * Os 3 cartões do plano. As culturas e os números vêm do plano que a tela mostra: o final (com o 3º ano mudado; enquanto
+ * ele carrega, o sugerido), a sugestão com os dois anos fixos (com o 2º mudado) ou a sugestão com o 1º ano fixo. "Você mudou" só quando a
+ * cultura do ano é diferente da sugestão dele (sem a sugestão ainda, vale a URL); o porquê, só nos anos sugeridos.
+ * null enquanto o plano não chegou.
  */
-export function planCards(
-  choice: CropId,
-  edits: PlanEdits,
-  base: PlanoAvaliado | null,
-  final: PlanoAvaliado | null,
-  firstSeason: number,
-): PlanCard[] | null {
-  const shown = edits.year3 ? final : base
-  if (!base || !shown || shown.anos.length < 3) return null
+export function planCards(sources: PlanSources, firstSeason: number): PlanCard[] | null {
+  const { choice, edits } = sources
+  const second = suggestedFor(1, sources)?.crop ?? null
+  const suggestedPlan = suggestionFixos(choice, edits, second).length > 1 ? sources.fromYear2 : sources.fromChoice
+  // Com o 3º ano mudado, enquanto o plano final carrega, ficam os cartões da sugestão (a tela não pisca).
+  const shown = (edits.year3 ? sources.final : null) ?? suggestedPlan
+  if (!shown || shown.anos.length < 3) return null
   return shown.anos.slice(0, 3).map((ano, index) => {
-    const tag: PlanTag =
-      index === 0 ? 'choice' : (index === 1 ? edits.year2 : edits.year3) ? 'changed' : 'suggested'
+    const crop = index === 0 ? choice : ano.cultura
+    const suggested = suggestedFor(index, sources)
+    const edited = index === 1 ? edits.year2 : index === 2 ? edits.year3 : null
+    const tag: PlanTag = index === 0 ? 'choice' : (suggested ? crop !== suggested.crop : Boolean(edited)) ? 'changed' : 'suggested'
     return {
       season: firstSeason + index,
-      crop: index === 0 ? choice : ano.cultura,
+      crop,
       tag,
+      suggested,
       good: ano.anos_bons,
       total: ano.total_anos,
       sede: ano.sede,
-      motivo: tag === 'suggested' ? (base.anos[index]?.motivo ?? null) : null,
+      motivo: tag === 'suggested' ? (suggested?.motivo ?? ano.motivo ?? null) : null,
       late: ano.fora_do_prazo ?? !ano.na_janela,
     }
   })
 }
 
-/** Trocar a cultura de um ano: o 1º muda a escolha (e solta os outros); o 2º solta o 3º; o 3º só ele. */
-export function yearFlow<T extends FlowParams>(params: T, index: number, crop: CropId): T {
+/** O plano foi mudado (alerta e "Voltar ao plano sugerido"): algum ano diz "Você mudou"; sem cartões, a URL. */
+export function planEdited(cards: readonly PlanCard[] | null, edits: PlanEdits): boolean {
+  return cards ? cards.some((card) => card.tag === 'changed') : Boolean(edits.year2 || edits.year3)
+}
+
+/**
+ * Trocar a cultura de um ano: o 1º muda a escolha (e solta os outros); o 2º solta o 3º; o 3º só ele. Escolher de
+ * novo a sugestão do ano (`suggested`) tira o ano da URL, para ele voltar a ser sugerido de verdade.
+ */
+export function yearFlow<T extends FlowParams>(params: T, index: number, crop: CropId, suggested: CropId | null = null): T {
   if (index === 0) return { ...params, escolha: crop, ano2: undefined, ano3: undefined }
-  if (index === 1) return { ...params, ano2: crop, ano3: undefined }
-  return { ...params, ano3: crop }
+  const value = crop === suggested ? undefined : crop
+  if (index === 1) return { ...params, ano2: value, ano3: undefined }
+  return { ...params, ano3: value }
 }
 
 /** "Voltar ao plano sugerido": a escolha fica, os anos 2 e 3 voltam para a sugestão em cadeia. */

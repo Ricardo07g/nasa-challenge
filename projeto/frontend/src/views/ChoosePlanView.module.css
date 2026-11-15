@@ -720,6 +720,25 @@
   font-size: 15px;
 }
 
+/* "Nossa sugestão: {cultura} · Usar a sugestão", embaixo do select quando o ano é outra cultura */
+.yearSuggestion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  color: var(--color-text);
+  font-size: var(--font-size-tiny);
+  line-height: 1.4;
+}
+
+.yearSuggestion strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+.yearSuggestion .linkButton {
+  font-size: var(--font-size-tiny);
+}
+
 .grid2 {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);

@@ -167,6 +167,8 @@ function Package2({ t, demo }: { t: Messages; demo: Package2Demo }) {
 /** Vitrine do design system (só no ambiente local): tokens, componentes e ambiente. */
 export function DesignSystemView({ t, lang, apiMode, backend, cropOptions, cropOptionsError, pacote2 }: DesignSystemViewProps) {
   const d = t.designSystem
+  // Exemplo do bloco colorido: a foto do milheto com um arquivo que não existe.
+  const brokenPhoto = plantPhotoProps('milheto', lang)
   return (
     <div className={layout.page}>
       <PageHeading title={d.title} subtitle={d.intro} />
@@ -254,7 +256,7 @@ export function DesignSystemView({ t, lang, apiMode, backend, cropOptions, cropO
             </li>
           ))}
           <li className={styles.photo}>
-            <PlantPhoto {...plantPhotoProps('milheto', lang)} src="/fotos/nao-existe.jpg" />
+            <PlantPhoto {...brokenPhoto} images={[{ ...brokenPhoto.images[0], src: '/fotos/nao-existe.jpg' }]} />
             <span>{d.photoFallback}</span>
           </li>
         </ul>

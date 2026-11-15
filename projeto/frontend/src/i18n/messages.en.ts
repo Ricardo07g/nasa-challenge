@@ -1277,7 +1277,9 @@ export const en = {
       why: 'Why:',
       worked: (good: number, total: number) => `Worked in ${good} of ${total} years`,
       fallow: 'No crop: the soil stays bare.',
-      lateOption: (crop: string) => `${crop} (past the deadline)`,
+      option: (crop: string, suggested: boolean, late: boolean) =>
+        `${crop}${suggested ? ' · our suggestion' : ''}${late ? ' · past the deadline' : ''}`,
+      useSuggestion: 'Use the suggestion',
       alertYear1: 'Your year 1 changed to',
       alertYear1After: 'We redid the suggestion for the other years.',
       alertChanged: (season: string) => `You changed ${season} to`,

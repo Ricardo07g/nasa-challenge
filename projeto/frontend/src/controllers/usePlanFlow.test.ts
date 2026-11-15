@@ -45,6 +45,48 @@ describe('usePlanFlow (o plano de 3 anos da URL, o mesmo nas telas 5 e 6)', () =
     expect(result.current.edited).toBe(true)
   })
 
+  it('com o 2º ano mudado, pede a sugestão com o 1º ano (a do 2º) e com os dois (a do 3º); cada cartão leva a sua', async () => {
+    const d = deps()
+    const { result } = renderHook(() => usePlanFlow(d), {
+      wrapper: providers(`/planejamento?${flow}&escolha=sorgo&ano2=crotalaria`),
+    })
+
+    await waitFor(() => expect(result.current.cards?.[1].crop).toBe('crotalaria'))
+    expect(d.plan.suggest).toHaveBeenCalledWith(expect.objectContaining({ fixos: ['sorgo'] }), 'pt')
+    expect(d.plan.suggest).toHaveBeenCalledWith(expect.objectContaining({ fixos: ['sorgo', 'crotalaria'] }), 'pt')
+    await waitFor(() => expect(result.current.cards?.[2].suggested?.crop).toBe('milheto'))
+    expect(result.current.cards?.map((card) => [card.crop, card.tag, card.suggested?.crop])).toEqual([
+      ['sorgo', 'choice', 'milho_braquiaria'],
+      ['crotalaria', 'changed', 'milheto'],
+      ['milheto', 'suggested', 'milheto'],
+    ])
+    expect(result.current.edited).toBe(true)
+  })
+
+  it('o 2º ano igual à sugestão (link antigo) é "Nossa sugestão"; o 3º vem da sugestão com o 1º ano só', async () => {
+    const d = deps()
+    const { result } = renderHook(() => usePlanFlow(d), {
+      wrapper: providers(`/planejamento?${flow}&escolha=sorgo&ano2=milheto`),
+    })
+
+    await waitFor(() => expect(result.current.cards?.map((card) => card.tag)).toEqual(['choice', 'suggested', 'suggested']))
+    expect(result.current.cards?.map((card) => card.crop)).toEqual(['sorgo', 'milheto', 'sorgo'])
+    expect(result.current.cards?.[1].motivo).toMatch(/varia a cultura/)
+    expect(result.current.edited).toBe(false)
+  })
+
+  it('com o 3º ano mudado, se o /api/plano falhar, nada de cartão: a tela diz que não deu (nunca o sugerido no lugar)', async () => {
+    const d = deps()
+    d.plan.evaluate = vi.fn(() => Promise.reject(new Error('rede')))
+    const { result } = renderHook(() => usePlanFlow(d), {
+      wrapper: providers(`/planejamento?${flow}&escolha=sorgo&ano3=crotalaria`),
+    })
+
+    await waitFor(() => expect(result.current.evaluation.status).toBe('error'))
+    expect(result.current.cards).toBeNull()
+    expect(result.current.evaluation.data).toBeNull()
+  })
+
   it('sem ponto volta ao mapa', () => {
     const d = deps()
     const { result } = renderHook(() => usePlanFlow(d), { wrapper: providers('/planejamento') })

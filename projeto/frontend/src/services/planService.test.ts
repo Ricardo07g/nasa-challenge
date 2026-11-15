@@ -9,15 +9,18 @@ import {
   finalCrops,
   planBState,
   planCards,
+  planEdited,
   planEdits,
   planSignal,
   rainRows,
   rainSourceName,
   resetPlanFlow,
   signalParts,
+  suggestedFor,
   suggestionFixos,
   todayState,
   yearFlow,
+  type PlanSources,
 } from './planService'
 
 const point = { lat: -18.9543, lon: -48.1993, colheita: 'tarde' as const }
@@ -55,16 +58,32 @@ function plan(anos: AnoPlano[], extra: Partial<PlanoAvaliado> = {}): PlanoAvalia
   }
 }
 
+/** As respostas que a aba usa; sem dizer, o 1º ano é sorgo e a sugestão da aba Escolher também. */
+function sources(extra: Partial<PlanSources>): PlanSources {
+  return {
+    choice: 'sorgo',
+    suggestion: 'sorgo',
+    edits: { year2: null, year3: null },
+    fromChoice: null,
+    fromYear2: null,
+    final: null,
+    ...extra,
+  }
+}
+
 describe('planService: o plano em cadeia da aba "2. Plano de 3 anos" (tela 5, tarefa 0056)', () => {
   it('os anos que o produtor mudou vêm da URL', () => {
     expect(planEdits({ ano2: 'pousio' })).toEqual({ year2: 'pousio', year3: null })
     expect(planEdits({})).toEqual({ year2: null, year3: null })
   })
 
-  it('o que fixar no /api/plano/sugestao: o 1º ano e, se mudou, o 2º', () => {
+  it('o que fixar no /api/plano/sugestao: o 1º ano e, se mudou para outra cultura que não a sugestão, o 2º', () => {
     expect(suggestionFixos('sorgo', { year2: null, year3: null })).toEqual(['sorgo'])
     expect(suggestionFixos('sorgo', { year2: 'pousio', year3: null })).toEqual(['sorgo', 'pousio'])
     expect(suggestionFixos('sorgo', { year2: 'pousio', year3: 'sorgo' })).toEqual(['sorgo', 'pousio'])
+    // O 2º ano igual à sugestão (link antigo) é o plano sugerido: o 3º vem da sugestão com o 1º ano só.
+    expect(suggestionFixos('sorgo', { year2: 'milheto', year3: null }, 'milheto')).toEqual(['sorgo'])
+    expect(suggestionFixos('sorgo', { year2: 'pousio', year3: null }, 'milheto')).toEqual(['sorgo', 'pousio'])
   })
 
   it('com o 3º ano mudado, o plano final vai inteiro para o /api/plano (o 2º sugerido entra como está)', () => {
@@ -76,8 +95,9 @@ describe('planService: o plano em cadeia da aba "2. Plano de 3 anos" (tela 5, ta
   })
 
   it('os 3 cartões: safra, etiqueta, deu certo, sede, fora do prazo e o porquê só nos anos sugeridos', () => {
-    const base = buildSugestao({ ...point, fixos: ['sorgo', 'pousio'] }, 'pt')
-    const cards = planCards('sorgo', { year2: 'pousio', year3: null }, base, null, 2027)
+    const fromChoice = buildSugestao({ ...point, fixos: ['sorgo'] }, 'pt')
+    const fromYear2 = buildSugestao({ ...point, fixos: ['sorgo', 'pousio'] }, 'pt')
+    const cards = planCards(sources({ edits: { year2: 'pousio', year3: null }, fromChoice, fromYear2 }), 2027)
     expect(cards?.map((card) => [card.season, card.crop, card.tag])).toEqual([
       [2027, 'sorgo', 'choice'],
       [2028, 'pousio', 'changed'],
@@ -85,20 +105,26 @@ describe('planService: o plano em cadeia da aba "2. Plano de 3 anos" (tela 5, ta
     ])
     expect(cards?.[2].motivo).toMatch(/terra ficou descoberta/)
     expect(cards?.[0].motivo).toBeNull()
-    expect(cards?.[1]).toMatchObject({ good: null, total: null, sede: null })
+    expect(cards?.[1]).toMatchObject({ good: null, total: null, sede: null, motivo: null })
   })
 
   it('com o 3º ano mudado, os números vêm do plano final e o porquê do 2º ano fica o da sugestão', () => {
-    const base = plan([year('sorgo'), year('milheto', { fixo: false, motivo: 'varia a cultura' }), year('sorgo', { fixo: false })])
+    const fromChoice = plan([year('sorgo'), year('milheto', { fixo: false, motivo: 'varia a cultura' }), year('sorgo', { fixo: false })])
     const final = plan([year('sorgo'), year('milheto'), year('crotalaria', { anos_bons: 20, fora_do_prazo: true })])
-    const cards = planCards('sorgo', { year2: null, year3: 'crotalaria' }, base, final, 2027)
+    const cards = planCards(sources({ edits: { year2: null, year3: 'crotalaria' }, fromChoice, final }), 2027)
     expect(cards?.map((card) => card.tag)).toEqual(['choice', 'suggested', 'changed'])
     expect(cards?.[1].motivo).toBe('varia a cultura')
     expect(cards?.[2]).toMatchObject({ crop: 'crotalaria', good: 20, late: true, motivo: null })
   })
 
+  it('com o 3º ano mudado e o plano final ainda carregando, os cartões ficam os da sugestão (a tela não pisca)', () => {
+    const fromChoice = plan([year('sorgo'), year('milheto', { fixo: false }), year('sorgo', { fixo: false })])
+    const cards = planCards(sources({ edits: { year2: null, year3: 'crotalaria' }, fromChoice }), 2027)
+    expect(cards?.map((card) => card.crop)).toEqual(['sorgo', 'milheto', 'sorgo'])
+  })
+
   it('sem a sugestão ainda (carregando), nada de cartão', () => {
-    expect(planCards('sorgo', { year2: null, year3: null }, null, null, 2027)).toBeNull()
+    expect(planCards(sources({}), 2027)).toBeNull()
   })
 
   it('trocar o 1º ano solta o 2º e o 3º; trocar o 2º solta o 3º; trocar o 3º só grava ele', () => {
@@ -116,6 +142,108 @@ describe('planService: o plano em cadeia da aba "2. Plano de 3 anos" (tela 5, ta
       ano2: undefined,
       ano3: undefined,
     })
+  })
+})
+
+describe('planService: a nossa sugestão de cada ano, sempre visível (pacote 3, tarefa 0064)', () => {
+  // Cadeia do motor com o 1º ano fixo (sorgo): milheto e depois sorgo; com o 2º fixo em pousio, o 3º é milheto.
+  const fromChoice = plan([
+    year('sorgo'),
+    year('milheto', { fixo: false, motivo: 'varia a cultura' }),
+    year('sorgo', { fixo: false, motivo: 'dá grão para vender' }),
+  ])
+  const fromYear2 = plan([year('sorgo'), year('pousio'), year('milheto', { fixo: false, motivo: 'a terra ficou descoberta' })])
+
+  it('1º ano: a sugestão da aba Escolher (o porquê fica no cartão da aba 1)', () => {
+    expect(suggestedFor(0, sources({ suggestion: 'milho_braquiaria', fromChoice }))).toEqual({ crop: 'milho_braquiaria', motivo: null })
+  })
+
+  it('2º ano: o anos[1] da sugestão com o 1º ano fixo, com o porquê dessa mesma resposta', () => {
+    expect(suggestedFor(1, sources({ fromChoice }))).toEqual({ crop: 'milheto', motivo: 'varia a cultura' })
+    // Mesmo com o 2º ano mudado, a sugestão dele continua a da cadeia com o 1º ano só.
+    expect(suggestedFor(1, sources({ edits: { year2: 'pousio', year3: null }, fromChoice, fromYear2 }))).toEqual({
+      crop: 'milheto',
+      motivo: 'varia a cultura',
+    })
+  })
+
+  it('3º ano: com o 2º ano sugerido, o anos[2] da sugestão com o 1º ano fixo', () => {
+    expect(suggestedFor(2, sources({ fromChoice }))).toEqual({ crop: 'sorgo', motivo: 'dá grão para vender' })
+    // O 2º ano igual à sugestão (link antigo com ano2) não muda nada.
+    expect(suggestedFor(2, sources({ edits: { year2: 'milheto', year3: null }, fromChoice }))).toEqual({
+      crop: 'sorgo',
+      motivo: 'dá grão para vender',
+    })
+  })
+
+  it('3º ano: com o 2º ano mudado, o anos[2] da sugestão com os dois anos fixos', () => {
+    expect(suggestedFor(2, sources({ edits: { year2: 'pousio', year3: null }, fromChoice, fromYear2 }))).toEqual({
+      crop: 'milheto',
+      motivo: 'a terra ficou descoberta',
+    })
+    // Com o 3º ano mudado também: a sugestão dele não muda.
+    expect(suggestedFor(2, sources({ edits: { year2: 'pousio', year3: 'sorgo' }, fromChoice, fromYear2 }))?.crop).toBe('milheto')
+  })
+
+  it('enquanto a resposta não chega, ou se ela é de outro plano (pedido antigo), a sugestão do ano fica desconhecida', () => {
+    expect(suggestedFor(1, sources({}))).toBeNull()
+    expect(suggestedFor(2, sources({ edits: { year2: 'pousio', year3: null }, fromChoice }))).toBeNull()
+    // A resposta ainda é da escolha anterior (o 1º ano mudou) ou do 2º ano anterior.
+    expect(suggestedFor(1, sources({ choice: 'milheto', fromChoice }))).toBeNull()
+    expect(suggestedFor(2, sources({ edits: { year2: 'crotalaria', year3: null }, fromChoice, fromYear2 }))).toBeNull()
+  })
+
+  it('"Você mudou" só quando a cultura do ano é diferente da sugestão dele; o cartão leva a sugestão', () => {
+    const cards = planCards(sources({ edits: { year2: 'pousio', year3: null }, fromChoice, fromYear2 }), 2027)
+    expect(cards?.map((card) => [card.crop, card.tag, card.suggested?.crop])).toEqual([
+      ['sorgo', 'choice', 'sorgo'],
+      ['pousio', 'changed', 'milheto'],
+      ['milheto', 'suggested', 'milheto'],
+    ])
+  })
+
+  it('o 2º ano igual à sugestão (link antigo) volta a "Nossa sugestão", com o porquê, e o 3º segue a cadeia do 1º ano', () => {
+    const cards = planCards(sources({ edits: { year2: 'milheto', year3: null }, fromChoice }), 2027)
+    expect(cards?.map((card) => [card.crop, card.tag, card.motivo])).toEqual([
+      ['sorgo', 'choice', null],
+      ['milheto', 'suggested', 'varia a cultura'],
+      ['sorgo', 'suggested', 'dá grão para vender'],
+    ])
+  })
+
+  it('o 3º ano mudado para a própria sugestão também é "Nossa sugestão"', () => {
+    const final = plan([year('sorgo'), year('milheto'), year('sorgo')])
+    const cards = planCards(sources({ edits: { year2: null, year3: 'sorgo' }, fromChoice, final }), 2027)
+    expect(cards?.[2]).toMatchObject({ crop: 'sorgo', tag: 'suggested', motivo: 'dá grão para vender' })
+  })
+
+  it('o 1º ano é sempre "Sua escolha", com a sugestão da aba 1 ao lado quando é outra cultura', () => {
+    const cards = planCards(sources({ suggestion: 'milho_braquiaria', fromChoice }), 2027)
+    expect(cards?.[0]).toMatchObject({ crop: 'sorgo', tag: 'choice', suggested: { crop: 'milho_braquiaria', motivo: null } })
+  })
+
+  it('sem a sugestão do ano (carregando), vale o que está na URL: ano mudado é "Você mudou"', () => {
+    const stale = plan([year('sorgo'), year('milheto'), year('sorgo')])
+    const cards = planCards(sources({ edits: { year2: 'pousio', year3: null }, fromYear2: stale }), 2027)
+    expect(cards?.map((card) => card.tag)).toEqual(['choice', 'changed', 'suggested'])
+  })
+
+  it('o plano foi mudado quando algum cartão diz "Você mudou" (sem cartão, quando a URL tem ano mudado)', () => {
+    const changed = planCards(sources({ edits: { year2: 'pousio', year3: null }, fromChoice, fromYear2 }), 2027)
+    const back = planCards(sources({ edits: { year2: 'milheto', year3: null }, fromChoice }), 2027)
+    expect(planEdited(changed, { year2: 'pousio', year3: null })).toBe(true)
+    expect(planEdited(back, { year2: 'milheto', year3: null })).toBe(false)
+    expect(planEdited(null, { year2: 'pousio', year3: null })).toBe(true)
+    expect(planEdited(null, { year2: null, year3: null })).toBe(false)
+  })
+
+  it('escolher de novo a sugestão do 2º ano tira o ano2 (e solta o 3º); a do 3º tira o ano3', () => {
+    const params = { lat: 1, lon: 2, escolha: 'sorgo' as const, ano2: 'pousio' as const, ano3: 'sorgo' as const }
+    expect(yearFlow(params, 1, 'milheto', 'milheto')).toMatchObject({ escolha: 'sorgo', ano2: undefined, ano3: undefined })
+    expect(yearFlow(params, 2, 'milheto', 'milheto')).toMatchObject({ escolha: 'sorgo', ano2: 'pousio', ano3: undefined })
+    expect(yearFlow(params, 1, 'crotalaria', 'milheto')).toMatchObject({ ano2: 'crotalaria', ano3: undefined })
+    // No 1º ano, escolher a sugestão é escolher a cultura (muda a escolha, como na aba 1).
+    expect(yearFlow(params, 0, 'milho_braquiaria', 'milho_braquiaria')).toMatchObject({ escolha: 'milho_braquiaria', ano2: undefined })
   })
 })
 

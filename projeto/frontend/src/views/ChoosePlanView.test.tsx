@@ -150,6 +150,19 @@ describe('ChoosePlanView: aba "1. Escolher"', () => {
     expect(window.scrollY).toBe(600)
   })
 
+  it('a foto do milho com braquiária: o milho e a braquiária lado a lado, um crédito com os 2 autores, sem a legenda antiga', async () => {
+    renderAt(`/resposta?${flow}&pensa=sorgo`)
+    const card = (await screen.findByRole('heading', { level: 2, name: 'Milho com braquiária' })).closest('article')!
+
+    const photo = within(card).getByRole('img', { name: 'Milho com braquiária' })
+    expect([...photo.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toEqual(['/fotos/milho.jpg', '/fotos/braquiaria.jpg'])
+    const credit = within(card).getByRole('link', { name: newTabName('Christian Fischer') }).closest('[data-credit]')
+    expect(credit).toHaveTextContent(/^Foto: Christian Fischer.* · CC BY-SA 3\.0 \| Ethan Bass.* · CC BY-SA 4\.0$/)
+    expect(card).not.toHaveTextContent('na foto: a braquiária')
+    // A mesma foto em todo lugar: na coluna da comparação também.
+    expect(screen.getAllByRole('img', { name: 'Milho com braquiária' }).length).toBeGreaterThan(1)
+  })
+
   it('"Por que essa sugestão?" abre o modal grande com os blocos e o "Saiba mais" em nova aba', async () => {
     renderAt(`/resposta?${flow}`)
     await userEvent.click(await screen.findByRole('button', { name: 'Por que essa sugestão?' }))
@@ -265,6 +278,110 @@ describe('ChoosePlanView: aba "2. Plano de 3 anos"', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Voltar ao plano sugerido' }))
     await waitFor(() => expect(here(router)).not.toContain('ano2='))
+  })
+
+  it('trocar o 2º ano para outra cultura: "Você mudou" e a linha "Nossa sugestão: Milheto · Usar a sugestão", sem o porquê', async () => {
+    renderAt(`/plano?${flow}&escolha=sorgo`)
+    const select = await screen.findByRole('combobox', { name: 'O que plantar depois da soja 2027/28' })
+    const card = select.closest('li')!
+    expect(within(card).queryByRole('button', { name: /Usar a sugestão/ })).not.toBeInTheDocument()
+
+    await userEvent.selectOptions(select, 'crotalaria')
+
+    await waitFor(() => expect(within(card).getByRole('heading', { level: 3 })).toHaveTextContent('Crotalária'))
+    expect(card).toHaveTextContent('Você mudou')
+    expect(card).not.toHaveTextContent(/Por quê:/)
+    const use = within(card).getByRole('button', { name: /^Usar a sugestão ?\(depois da soja 2027\/28\)$/ })
+    expect(use.closest('p')).toHaveTextContent(/^Nossa sugestão:\s*Milheto · Usar a sugestão/)
+    expect(screen.getByText(/Você mudou 2027\/28 para/)).toBeInTheDocument()
+  })
+
+  it('voltar à sugestão pelo select: "Nossa sugestão", a linha some, o porquê volta, o alerta some e o 3º ano é refeito', async () => {
+    const { router, d } = renderAt(`/plano?${flow}&escolha=sorgo`)
+    const select = await screen.findByRole('combobox', { name: 'O que plantar depois da soja 2027/28' })
+    const card = select.closest('li')!
+    const third = screen.getByRole('combobox', { name: 'O que plantar depois da soja 2028/29' })
+    await userEvent.selectOptions(select, 'crotalaria')
+    await waitFor(() => expect(third).toHaveValue('milheto'))
+    expect(d.plan.suggest).toHaveBeenCalledWith(expect.objectContaining({ fixos: ['sorgo', 'crotalaria'] }), 'pt')
+    scrolled()
+
+    await userEvent.selectOptions(select, 'milheto')
+
+    await waitFor(() => expect(within(card).getByRole('heading', { level: 3 })).toHaveTextContent('Milheto'))
+    expect(here(router)).not.toContain('ano2=')
+    expect(card).toHaveTextContent('Nossa sugestão')
+    expect(card).not.toHaveTextContent('Você mudou')
+    expect(card).toHaveTextContent(/Por quê: varia a cultura/)
+    expect(within(card).queryByRole('button', { name: /Usar a sugestão/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Você mudou 2027\/28 para/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Voltar ao plano sugerido' })).not.toBeInTheDocument()
+    await waitFor(() => expect(third).toHaveValue('sorgo'))
+    expect(window.scrollY).toBe(600)
+  })
+
+  it('voltar à sugestão por "Usar a sugestão": o mesmo, e o foco volta ao select sem rolar a tela', async () => {
+    const { router } = renderAt(`/plano?${flow}&escolha=sorgo&ano2=crotalaria`)
+    const select = await screen.findByRole('combobox', { name: 'O que plantar depois da soja 2027/28' })
+    const card = select.closest('li')!
+    const use = await within(card).findByRole('button', { name: /Usar a sugestão/ })
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus')
+    scrolled()
+
+    await userEvent.click(use)
+
+    await waitFor(() => expect(select).toHaveValue('milheto'))
+    expect(here(router)).not.toContain('ano2=')
+    expect(card).toHaveTextContent('Nossa sugestão')
+    expect(card).toHaveTextContent(/Por quê:/)
+    expect(within(card).queryByRole('button', { name: /Usar a sugestão/ })).not.toBeInTheDocument()
+    expect(document.activeElement).toBe(select)
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true })
+    expect(window.scrollY).toBe(600)
+  })
+
+  it('no 1º ano: "Sua escolha" com a linha da sugestão da aba 1; "Usar a sugestão" muda a escolha', async () => {
+    const { router } = renderAt(`/plano?${flow}&escolha=sorgo`)
+    const select = await screen.findByRole('combobox', { name: 'O que plantar depois da soja 2026/27' })
+    const card = select.closest('li')!
+    expect(card).toHaveTextContent('Sua escolha')
+    const use = within(card).getByRole('button', { name: /^Usar a sugestão ?\(depois da soja 2026\/27\)$/ })
+    expect(use.closest('p')).toHaveTextContent(/^Nossa sugestão:\s*Milho com braquiária · Usar a sugestão/)
+
+    await userEvent.click(use)
+
+    await waitFor(() => expect(here(router)).toContain('escolha=milho_braquiaria'))
+    expect(card).toHaveTextContent('Sua escolha')
+    expect(within(card).queryByRole('button', { name: /Usar a sugestão/ })).not.toBeInTheDocument()
+  })
+
+  it('no select, a opção sugerida tem " · nossa sugestão", junto com " · passou do prazo" quando for o caso', async () => {
+    const rec = buildRecomendacao({ ...point, colheita: 'tarde' }, 'pt')
+    const late: Recomendacao = {
+      ...rec,
+      opcoes: rec.opcoes.map((o) => (o.id === 'milheto' ? { ...o, na_janela: false, fora_do_prazo: true } : o)),
+    }
+    renderAt(`/plano?${flow}&escolha=sorgo`, deps(late))
+    const first = await screen.findByRole('combobox', { name: 'O que plantar depois da soja 2026/27' })
+    const second = screen.getByRole('combobox', { name: 'O que plantar depois da soja 2027/28' })
+    const label = (select: HTMLElement, value: string) => within(select).getByRole('option', { name: new RegExp(`^${value}`) }).textContent
+
+    expect(label(first, 'Milho com braquiária')).toBe('Milho com braquiária · nossa sugestão')
+    expect(label(first, 'Sorgo')).toBe('Sorgo')
+    expect(label(first, 'Milho sozinho')).toBe('Milho sozinho · passou do prazo')
+    expect(label(second, 'Milheto')).toBe('Milheto · nossa sugestão · passou do prazo')
+    expect(label(second, 'Milho com braquiária')).toBe('Milho com braquiária')
+  })
+
+  it('em inglês: " · our suggestion", " · past the deadline" e "Use the suggestion"', async () => {
+    renderAt(`/plano?${flow}&escolha=sorgo&ano2=crotalaria`, deps(), 'en')
+    const second = await screen.findByRole('combobox', { name: 'What to plant after the 2027/28 soybeans' })
+    const card = second.closest('li')!
+
+    expect(within(second).getByRole('option', { name: /^Pearl millet/ })).toHaveTextContent('Pearl millet · our suggestion')
+    expect(within(second).getByRole('option', { name: /^Corn alone/ })).toHaveTextContent('Corn alone · past the deadline')
+    const use = await within(card).findByRole('button', { name: /^Use the suggestion ?\(after the 2027\/28 soybeans\)$/ })
+    expect(use.closest('p')).toHaveTextContent(/^Our suggestion:\s*Pearl millet · Use the suggestion/)
   })
 
   it('as notas: "Como é hoje" não preenchido, com o aviso e o "Preencher agora" que abre o modal', async () => {

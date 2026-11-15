@@ -1350,7 +1350,10 @@ export const pt = {
       why: 'Por quê:',
       worked: (good: number, total: number) => `Deu certo em ${good} de ${total} anos`,
       fallow: 'Sem lavoura: a terra fica descoberta.',
-      lateOption: (crop: string) => `${crop} (passou do prazo)`,
+      /** Opção do "O que plantar": a cultura sugerida para o ano e a que passou do prazo levam o aviso no texto. */
+      option: (crop: string, suggested: boolean, late: boolean) =>
+        `${crop}${suggested ? ' · nossa sugestão' : ''}${late ? ' · passou do prazo' : ''}`,
+      useSuggestion: 'Usar a sugestão',
       alertYear1: 'Seu 1º ano mudou para',
       alertYear1After: 'Refizemos a sugestão dos outros anos.',
       alertChanged: (season: string) => `Você mudou ${season} para`,

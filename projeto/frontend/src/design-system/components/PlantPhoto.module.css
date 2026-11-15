@@ -17,6 +17,19 @@
   object-fit: cover;
 }
 
+/* 2 imagens lado a lado (sem foto aberta da cultura inteira): metade cada uma, com um fio branco no meio */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--photo-pair-gap);
+  height: 100%;
+  background: var(--color-surface);
+}
+
+.pair .image {
+  min-width: 0;
+}
+
 /* Quando a foto não carrega: bloco colorido com o nome da cultura */
 .fallback {
   display: grid;
@@ -57,22 +70,4 @@
 .credit a:focus-visible {
   outline: 3px solid var(--color-focus-ring);
   outline-offset: -3px;
-}
-
-/* Legenda opcional ("na foto: a braquiária"), no canto de cima */
-.caption {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  overflow: hidden;
-  max-width: calc(100% - 12px);
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  background: var(--color-seal);
-  color: var(--color-text);
-  font-size: var(--font-size-micro);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1.4;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }

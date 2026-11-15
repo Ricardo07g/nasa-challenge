@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Link } from 'react-router'
 import { GuideLink } from '../design-system/components/GuideLink'
 import { PlantPhoto } from '../design-system/components/PlantPhoto'
@@ -112,6 +113,14 @@ function YearCard({ t, lang, state, choose, card, index }: PlanTabProps & { card
   const option = choose.ranked.find((item) => item.id === card.crop)
   const tag = card.tag === 'choice' ? c.tags.choice : card.tag === 'suggested' ? c.tags.suggestion : c.tags.changed
   const selectId = `ano-${index + 1}`
+  const suggested = card.suggested
+  const select = useRef<HTMLSelectElement>(null)
+  // Trocar (pelo select ou por "Usar a sugestão") grava na URL sem rolar; o foco volta ao select, também sem rolar
+  // (o botão "Usar a sugestão" some quando o ano volta para a sugestão).
+  const pick = (crop: CropId) => {
+    state.plan.chooseYear(index, crop)
+    select.current?.focus({ preventScroll: true })
+  }
   return (
     <li className={styles.yearCard} data-tag={card.tag}>
       <PlantPhoto {...plantPhotoProps(card.crop, lang)} height={130} className={styles.yearPhoto} />
@@ -143,17 +152,32 @@ function YearCard({ t, lang, state, choose, card, index }: PlanTabProps & { card
           <span className="visually-hidden">{p.chooseFor(season)}</span>
         </label>
         <select
+          ref={select}
           id={selectId}
           className={styles.select}
           value={card.crop}
-          onChange={(event) => state.plan.chooseYear(index, event.target.value as CropId)}
+          onChange={(event) => pick(event.target.value as CropId)}
         >
           {options.map((crop) => (
             <option key={crop} value={crop}>
-              {choose.late.has(crop) ? p.lateOption(cropName(t, crop)) : cropName(t, crop)}
+              {p.option(cropName(t, crop), crop === suggested?.crop, choose.late.has(crop))}
             </option>
           ))}
         </select>
+        {suggested && suggested.crop !== card.crop && (
+          <p className={styles.yearSuggestion}>
+            <Tag kind="suggestion">{c.tags.suggestion}</Tag>
+            <span className="visually-hidden">: </span>
+            {/* Cultura, ponto e link juntos: numa tela estreita, descem inteiros para a linha de baixo. */}
+            <span>
+              <strong>{cropName(t, suggested.crop)}</strong> ·{' '}
+              <button type="button" className={styles.linkButton} onClick={() => pick(suggested.crop)}>
+                {p.useSuggestion}
+                <span className="visually-hidden"> ({p.chooseFor(season)})</span>
+              </button>
+            </span>
+          </p>
+        )}
       </div>
     </li>
   )
