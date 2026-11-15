@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     # (saída do pipeline/fetch_imerg_late.py, A2.3). Sem arquivo: o sinal para o outono fica sem
     # o dado da terra agora.
     imerg_late_path: Path | None = None
+    # Umidade do SMAP L4 nos dias de semeadura por célula de 0,1° (saída do pipeline/fetch_smap.py).
+    # Sem arquivo (e sem linhas na tabela `smap_point`): o balde começa em 50% da CAD (PRD 7.2).
+    smap_path: Path | None = None
 
     # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
     # usam; a API não precisa de nenhuma (ADR-0005).

@@ -63,6 +63,7 @@ services:
       ONI_PATH: ${ONI_PATH:-/dados_baixados/noaa_oni/oni.json}
       REGIAO_PATH: ${REGIAO_PATH:-/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json}
       IMERG_LATE_PATH: ${IMERG_LATE_PATH:-/dados_baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json}
+      SMAP_PATH: ${SMAP_PATH:-/dados_baixados/nasa_smap/smap_semeadura.json}
     volumes:
       - ./backend/app:/app/app
       - ./backend/tests:/app/tests

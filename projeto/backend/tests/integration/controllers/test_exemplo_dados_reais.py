@@ -16,6 +16,7 @@ from app.dependencies import (
     get_enso_repository,
     get_ndvi_repository,
     get_satellite_ingestion_service,
+    get_smap_repository,
     get_soil_repository,
 )
 from app.main import app
@@ -23,6 +24,7 @@ from app.repositories.climate_repository import FixtureClimateRepository
 from app.repositories.crop_params_repository import YamlCropParamsRepository
 from app.repositories.enso_repository import FileEnsoRepository
 from app.repositories.ndvi_repository import CachedNdviRepository
+from app.repositories.smap_repository import FileSmapRepository
 from app.repositories.soil_repository import CachedSoilGridsRepository
 
 
@@ -38,6 +40,7 @@ def real_data_client() -> Iterator[TestClient]:
     app.dependency_overrides[get_soil_repository] = lambda: CachedSoilGridsRepository(None)
     app.dependency_overrides[get_ndvi_repository] = lambda: CachedNdviRepository(None)
     app.dependency_overrides[get_enso_repository] = lambda: FileEnsoRepository(None)
+    app.dependency_overrides[get_smap_repository] = lambda: FileSmapRepository(None)
     app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)
     app.dependency_overrides.clear()

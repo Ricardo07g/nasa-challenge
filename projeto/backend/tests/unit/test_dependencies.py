@@ -21,6 +21,11 @@ from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6R
 from app.repositories.recent_rain_repository import FileRecentRainRepository
 from app.repositories.regiao_repository import FileRegionRepository
 from app.repositories.sinal_outono_repository import NoAutumnSignalDataRepository
+from app.repositories.smap_repository import (
+    FileSmapRepository,
+    LayeredSmapRepository,
+    PostgisSmapRepository,
+)
 from app.repositories.soil_repository import CachedSoilGridsRepository, PostgisSoilRepository
 from app.services.region_service import RegionService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
@@ -46,6 +51,7 @@ def _clear_caches() -> None:
     dependencies.get_soil_repository.cache_clear()
     dependencies.get_region_repository.cache_clear()
     dependencies.get_recent_rain_repository.cache_clear()
+    dependencies.get_smap_repository.cache_clear()
 
 
 @pytest.fixture
@@ -55,6 +61,7 @@ def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None
         cmip6_path: Path | None = None,
         regiao_path: Path | None = None,
         imerg_late_path: Path | None = None,
+        smap_path: Path | None = None,
     ) -> None:
         settings = Settings(
             _env_file=None,
@@ -62,6 +69,7 @@ def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None
             cmip6_path=cmip6_path,
             regiao_path=regiao_path,
             imerg_late_path=imerg_late_path,
+            smap_path=smap_path,
         )
         monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
         _clear_caches()
@@ -242,3 +250,28 @@ def test_should_have_no_recent_rain_without_imerg_late_path(
 def test_should_keep_the_seasonal_forecast_empty_until_its_data_arrives() -> None:
     # GEOS-S2S (A2.1): só vem em NetCDF-4/HDF5, sem caminho sem biblioteca nova (tarefa 0032).
     assert isinstance(dependencies.get_seasonal_forecast_repository(), NoAutumnSignalDataRepository)
+
+
+def test_should_read_smap_from_table_then_file_when_database_url_is_set(
+    use_settings: Callable[..., None], tmp_path: Path
+) -> None:
+    use_settings(DATABASE_URL, smap_path=tmp_path / "smap.json")
+
+    smap = dependencies.get_smap_repository()
+
+    assert isinstance(smap, LayeredSmapRepository)
+    table, file = smap._sources
+    assert isinstance(table, PostgisSmapRepository)
+    assert isinstance(file, FileSmapRepository)
+    assert file._path == tmp_path / "smap.json"
+
+
+def test_should_read_smap_only_from_the_file_of_smap_path_without_database(
+    use_settings: Callable[..., None], tmp_path: Path
+) -> None:
+    use_settings(None, smap_path=tmp_path / "smap.json")
+
+    smap = dependencies.get_smap_repository()
+
+    assert isinstance(smap, FileSmapRepository)
+    assert smap._path == tmp_path / "smap.json"

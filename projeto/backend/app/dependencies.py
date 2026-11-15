@@ -43,6 +43,12 @@ from app.repositories.sinal_outono_repository import (
     RecentSoilMoistureRepository,
     SeasonalForecastRepository,
 )
+from app.repositories.smap_repository import (
+    CellSmapRepository,
+    FileSmapRepository,
+    LayeredSmapRepository,
+    PostgisSmapRepository,
+)
 from app.repositories.soil_repository import (
     CachedSoilGridsRepository,
     PostgisSoilRepository,
@@ -82,6 +88,7 @@ def get_crop_params_repository() -> CropParamsRepository:
 # Com DATABASE_URL (não vazia: `DATABASE_URL=` do .env.example chega como ""), clima e solo vêm do
 # PostGIS, com os arquivos como reserva, e a busca sob demanda fica ligada. Sem banco, só arquivos.
 # Deltas do CMIP6: tabela `cmip6_delta` (com banco), arquivo do CMIP6_PATH e a fixture, nessa ordem.
+# SMAP do dia de plantar: tabela `smap_point` (com banco) e o arquivo do SMAP_PATH, nessa ordem.
 
 
 @lru_cache
@@ -131,6 +138,16 @@ def get_region_service(
     repository: Annotated[RegionRepository, Depends(get_region_repository)],
 ) -> RegionService:
     return RegionService(repository)
+
+
+@lru_cache
+def get_smap_repository() -> CellSmapRepository:
+    """SMAP do dia de plantar (balde inicial, R3.3): tabela `smap_point`, depois o SMAP_PATH."""
+    settings = get_settings()
+    smap_file = FileSmapRepository(settings.smap_path)
+    if settings.database_url:
+        return LayeredSmapRepository(PostgisSmapRepository(settings.database_url), smap_file)
+    return smap_file
 
 
 def get_nasa_power_client() -> NasaPowerClientProtocol:
@@ -220,6 +237,7 @@ def get_talhao_service(
     ingestion_service: Annotated[
         SatelliteIngestionService | None, Depends(get_satellite_ingestion_service)
     ],
+    smap_repo: Annotated[CellSmapRepository, Depends(get_smap_repository)],
 ) -> TalhaoService:
     return TalhaoService(
         climate_repo=climate_repo,
@@ -227,6 +245,7 @@ def get_talhao_service(
         ndvi_repo=ndvi_repo,
         history_service=history_service,
         ingestion_service=ingestion_service,
+        smap_repo=smap_repo,
     )
 
 
@@ -259,6 +278,7 @@ def get_recommendation_service(
     ndvi_repo: Annotated[NdviRepository, Depends(get_ndvi_repository)],
     history_service: Annotated[FieldHistoryService, Depends(get_field_history_service)],
     year_detail_service: Annotated[YearDetailService, Depends(get_year_detail_service)],
+    smap_repo: Annotated[CellSmapRepository, Depends(get_smap_repository)],
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=crop_repo,
@@ -272,6 +292,7 @@ def get_recommendation_service(
         ndvi_repo=ndvi_repo,
         history_service=history_service,
         year_detail_service=year_detail_service,
+        smap_repo=smap_repo,
     )
 
 

@@ -47,6 +47,7 @@ def _clear_caches() -> None:
         dependencies.get_crop_params_repository,
         dependencies.get_ndvi_repository,
         dependencies.get_rules_repository,
+        dependencies.get_smap_repository,
     ):
         factory.cache_clear()
 

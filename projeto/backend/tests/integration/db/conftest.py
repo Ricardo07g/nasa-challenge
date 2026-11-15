@@ -24,7 +24,14 @@ from tests.integration.db.support import (
     run_alembic,
 )
 
-DATA_ENV_VARS = ("CULTURAS_PATH", "CLIMA_PATH", "SOLO_CACHE_PATH", "NDVI_CACHE_PATH", "CMIP6_PATH")
+DATA_ENV_VARS = (
+    "CULTURAS_PATH",
+    "CLIMA_PATH",
+    "SOLO_CACHE_PATH",
+    "NDVI_CACHE_PATH",
+    "CMIP6_PATH",
+    "SMAP_PATH",
+)
 
 
 @pytest.fixture(scope="session")
@@ -55,6 +62,7 @@ def _clear_dependency_caches() -> None:
     dependencies.get_soil_repository.cache_clear()
     dependencies.get_crop_params_repository.cache_clear()
     dependencies.get_ndvi_repository.cache_clear()
+    dependencies.get_smap_repository.cache_clear()
 
 
 @pytest.fixture
