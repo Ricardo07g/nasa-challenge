@@ -140,9 +140,23 @@ describe('rotas', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Pronto. O satélite já viu o resto.' }),
     ).toBeInTheDocument()
-    // A tela espera o raio-X: abre já com o painel, sem os cartões de antes passarem na frente.
-    expect(await screen.findByRole('heading', { name: 'Raio-X da sua terra' })).toBeInTheDocument()
+    // A tela espera o raio-X: abre já com o painel, sem o cartão da terra de antes passar na frente.
+    expect(await screen.findByRole('region', { name: 'Perto de Uberlândia (MG)' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Suas últimas safras' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Terra média' })).not.toBeInTheDocument()
+  })
+
+  it('/planejamento abre os blocos que saíram do raio-X, com o Voltar para a resposta (tarefa 0058)', async () => {
+    renderAt('/planejamento?lat=-18.9543&lon=-48.1993&colheita=meio&safras=2025:pousio')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Seu planejamento' })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Alertas da sua área' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Clima 2041–2060' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute(
+      'href',
+      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&safras=2025:pousio',
+    )
+    expect(document.title).toBe('Raiz Orbital – Seu planejamento')
   })
 
   it('a missão sem a colheita volta para a pergunta 2', async () => {

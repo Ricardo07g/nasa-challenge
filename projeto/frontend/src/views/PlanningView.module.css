@@ -1,0 +1,164 @@
+/*
+ * Tela final "Seu planejamento" (`/planejamento`, tarefa 0058): por enquanto, os alertas e os cartões que saíram
+ * do raio-X, com o mesmo visual de antes, no contêiner das telas novas (1280 px, margem de 52 px; 20 px no celular).
+ */
+.page {
+  width: 100%;
+  max-width: var(--page-width-v4);
+  margin-inline: auto;
+  padding: 22px var(--page-margin-v4) 36px;
+  color: var(--color-text-muted);
+}
+
+.title {
+  margin: 18px 0 0;
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin-top: 8px;
+}
+
+.sub p {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.4;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack);
+  margin-top: 22px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sectionTitle,
+.smallTitle {
+  font-family: var(--font-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+}
+
+/* Alertas da sua área: uma fileira de cartões curtos */
+.alerts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-orange-tint);
+  border-radius: var(--radius-lg);
+  background: var(--color-tint-orange);
+  color: var(--color-title-on-orange-tint);
+}
+
+.alertIcon {
+  display: flex;
+  flex: 0 0 auto;
+  color: var(--color-risk);
+}
+
+.alertText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.alertTitle {
+  font-family: var(--font-display);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Cartões menores lado a lado; um por linha no celular */
+.cardsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-stack);
+  align-items: start;
+}
+
+.bigNumber {
+  font-family: var(--font-display);
+  font-size: var(--font-size-best);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary-strong);
+}
+
+.mediumNumber {
+  font-family: var(--font-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-soft);
+}
+
+.seeLink {
+  width: fit-content;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.seeLink:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 14px var(--page-margin-v4) 24px;
+  }
+
+  .title {
+    margin-top: 12px;
+    font-size: 28px;
+  }
+
+  .sub {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .sub p {
+    font-size: 15.5px;
+  }
+
+  .content {
+    margin-top: 16px;
+  }
+}

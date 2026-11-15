@@ -5,6 +5,7 @@ import type { SeasonShare } from '../controllers/useSatelliteController'
 import type { Messages } from '../i18n/messages.pt'
 import { CULTURAS_RELATO } from '../models/community'
 import type { PlantingDraft } from '../services/communityService'
+import { seasonName } from '../services/seasonService'
 import { PlantingFields, PrivacyNotice, SendResult } from './CommunityForms'
 import styles from './CommunityView.module.css'
 import layout from './layout.module.css'
@@ -41,8 +42,8 @@ export function ShareSeasons({ t, state, communityTo, onToggle, onChange, onSend
           <p className={layout.muted}>{c.shareHint}</p>
           {state.showNotice && <PrivacyNotice t={t} />}
           {state.rows.map((row) => (
-            <div key={row.year} role="group" aria-label={c.shareYear(row.year)} className={layout.stack}>
-              <strong>{c.shareYear(row.year)}</strong>
+            <div key={row.year} role="group" aria-label={c.shareYear(seasonName(row.year))} className={layout.stack}>
+              <strong>{c.shareYear(seasonName(row.year))}</strong>
               {row.idle ? (
                 <p>{c.shareIdle}</p>
               ) : (

@@ -1,61 +1,31 @@
 import { useId, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Button, TextButton } from '../design-system/components/Button'
-import { Card, DataSourceCard } from '../design-system/components/Card'
-import { ChipGroup, RadioCard } from '../design-system/components/Choice'
-import { PageHeading } from '../design-system/components/Content'
-import {
-  CountUp,
-  InstrumentBlock,
-  InstrumentPanel,
-  Meter,
-  NdviHeatmap,
-  SplitBar,
-  type HeatLevel,
-} from '../design-system/components/Instrument'
+import type { ListenSummaryState } from '../controllers/useListenSummary'
+import type { SeasonsModel, XRayModel } from '../controllers/useSatelliteController'
+import { BackButton } from '../design-system/components/BackButton'
+import { GuideLink } from '../design-system/components/GuideLink'
+import { CountUp, InstrumentBlock, InstrumentPanel, LiveBadge, MoistureBar, SoilBar } from '../design-system/components/Instrument'
+import { ListenSummary } from '../design-system/components/ListenSummary'
 import { MiniMap } from '../design-system/components/MiniMap'
-import { BackLink } from '../design-system/components/Navigation'
-import { StripLegend, YearStrip, type CellState } from '../design-system/components/Status'
-import {
-  ClimateIcon,
-  DropIcon,
-  FireIcon,
-  FrostIcon,
-  HeavyRainIcon,
-  HistoryIcon,
-  SoilIcon,
-  WarningIcon,
-} from '../design-system/icons'
-import {
-  formatCoordinates,
-  formatDayMonth,
-  formatDecimal,
-  formatFullDate,
-  formatMonth,
-  formatNumber,
-} from '../i18n/format'
+import { Modal } from '../design-system/components/Modal'
+import { SeasonChart as SeasonChartFigure, type SeasonChartRowProps } from '../design-system/components/SeasonChart'
+import { ArrowRightIcon, CheckIcon, SatelliteIcon, WarningIcon } from '../design-system/icons'
+import { formatDayMonth, formatDecimal, formatFullDate, formatMonth, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
-import type { RaioX } from '../models/raioX'
-import { TEXTURAS, type Confirmacao, type SituacaoAno, type Textura } from '../models/talhao'
-import type { ConfirmRow } from '../services/confirmedSeasonsService'
-import {
-  regionSide,
-  soilParts,
-  type AreaAlert,
-  type Heatmap,
-  type XRayBlock,
-} from '../services/raioXService'
-import type { ClimateSummary, HistorySummary, RainSummary, SoilSummary } from '../services/satelliteService'
-import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
-import { futureClimateText } from './futureClimateText'
-import { ShareSeasons, type ShareSeasonsProps } from './ShareSeasons'
+import { xrayText, type XRayText } from '../i18n/xrayTexts'
+import type { CurrentChoice, SeasonAnswer } from '../models/seasonAnswers'
 import type { ScreenStatus } from '../models/screenStatus'
-import layout from './layout.module.css'
+import { TEXTURAS, type Textura } from '../models/talhao'
+import { parseInline } from '../services/markdownService'
+import type { XRayBlock } from '../services/raioXService'
+import type { SoilSummary } from '../services/satelliteService'
+import type { SeasonChart, SeasonChartStatus } from '../services/seasonChartService'
+import { satellitePeriod, seasonName } from '../services/seasonService'
+import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
+import { SeasonAnswersForm } from './SeasonAnswersForm'
+import { ShareSeasons, type ShareSeasonsProps } from './ShareSeasons'
 import styles from './SatelliteView.module.css'
-
-/** O painel do raio-X montado pelo controller: o dado do backend, os blocos, o lugar e o ponto. */
-export type XRayModel = { raio: RaioX; blocks: XRayBlock[]; place: string; point: { lat: number; lon: number } }
 
 export type SatelliteViewProps = {
   t: Messages
@@ -63,647 +33,399 @@ export type SatelliteViewProps = {
   backTo: string
   status: ScreenStatus
   onRetry: () => void
-  history: HistorySummary | null
-  /** As últimas safras para o produtor confirmar (tarefa 0039); vazio = sem o bloco. */
-  confirmations: ConfirmRow[]
-  /** "Plantei" / "Deixei parado"; `null` = tocou de novo na resposta marcada (volta para o satélite). */
-  onConfirmSeason: (year: number, value: Confirmacao | null) => void
-  /** "Compartilhar com a comunidade" das safras confirmadas (tarefa 0047); null = não oferece. */
-  share?: Omit<ShareSeasonsProps, 't'> | null
+  listen: ListenSummaryState
+  /** Raio-X da sua terra; null sem o dado (o painel não aparece). */
+  xray: XRayModel | null
+  /** O bloco com o modal aberto. */
+  detail: XRayBlock['kind'] | null
+  onOpenDetail: (kind: XRayBlock['kind']) => void
+  onCloseDetail: () => void
+  soil: SoilSummary
+  /** "Sua terra é diferente?": grava a terra na URL, sem rolar. */
+  onChooseSoil: (value: Textura) => void
+  chart: SeasonChart
+  seasons: SeasonsModel
+  onAnswerSeason: (year: number, answer: SeasonAnswer | null) => void
+  onChooseCurrent: (choice: CurrentChoice | null) => void
   /** O satélite não viu soja no ponto em nenhum ano: "Não parece uma lavoura de soja". */
   noSoy: boolean
-  /** "Ajustar no mapa": volta ao mapa com o ponto. */
   adjustTo: string
-  /** Anos de chuva usados de fato; null sem dado de chuva (só sem o raio-X). */
-  rain: RainSummary | null
-  /** NEX-GDDP-CMIP6 no talhão; null sem ele (só sem o raio-X). */
-  climate: ClimateSummary | null
-  soil: SoilSummary
-  soilOpen: boolean
-  onToggleSoil: () => void
-  onChooseSoil: (value: Textura) => void
+  /** "Compartilhar com a comunidade" das safras respondidas (tarefa 0047); null = não oferece. */
+  share?: Omit<ShareSeasonsProps, 't'> | null
   onConfirm: () => void
-  /** Raio-X da sua terra (tarefa 0043); null sem o dado (o painel não aparece). */
-  xray: XRayModel | null
-  /** Histórico do talhão em faixa de calor do NDVI; null sem a faixa (fica a faixa de quadrinhos). */
-  heatmap: Heatmap | null
-  /** Alertas da área que o dado indica (cada um só vem com risco). */
-  alerts: AreaAlert[]
-  /** Cartões menores (20 anos de chuva, clima 2041–2060); null sem o raio-X. */
-  cards: RaioX['cartoes'] | null
-  /** "ver na sugestão": a resposta com o caminho todo. */
-  answerTo: string
 }
 
-/** Artigos do Guia ligados a esta tela (tabela da seção 8 da remodelagem); só os que existem. */
-const ARTICLE = {
-  xray: '/guia/raio-x',
-  dryspell: '/guia/veranico',
-  heat: '/guia/calor-35-graus',
-  frost: '/guia/geada-na-safrinha',
-  fire: '/guia/fogo-na-palha',
-  erosion: '/guia/como-evitar-erosao',
+/** Texto do modal com o negrito (`**…**`) do dicionário, sem HTML. */
+function Rich({ text }: { text: string }) {
+  return (
+    <>
+      {parseInline(text).map((part, index) =>
+        part.type === 'strong' ? <strong key={index}>{part.text}</strong> : <span key={index}>{part.text}</span>,
+      )}
+    </>
+  )
 }
 
 /**
- * Cheio = plantou; contorno laranja = ficou parado; cinza com "?" = o satélite não teve certeza;
- * pontilhado com "–" = sem soja naquele ano.
+ * Tela 4 "Pronto. O satélite já viu o resto." (pacote 2, tarefa 0058): o raio-X da sua terra (blocos enxutos
+ * que abrem o detalhe num modal), "Suas últimas safras" (o gráfico do satélite e as confirmações por safra) e
+ * "Ver o que plantar". No celular, o botão fica preso embaixo, com quantas safras estão confirmadas.
  */
-const CELL: Record<SituacaoAno, CellState> = {
-  plantou: 'good',
-  parado: 'bad',
-  incerto: 'unknown',
-  sem_dado: 'unknown',
-  sem_soja: 'none',
-}
-
-/** Um ano comum só para escrever o "MM-DD" como "19 de abril". */
-const dayMonth = (lang: Lang, mmdd: string) => formatDayMonth(lang, `2023-${mmdd}`)
-
-/** Nome da cultura no meio da frase ("milho com braquiária"). */
-function cropName(t: Messages, id: string): string {
-  const names: Record<string, string> = t.crops.names
-  const name = names[id] ?? id
-  return name.charAt(0).toLowerCase() + name.slice(1)
-}
-
-function yearList(lang: Lang, years: readonly number[]): string {
-  if (years.length <= 1) return years.join('')
-  return `${years.slice(0, -1).join(', ')} ${lang === 'pt' ? 'e' : 'and'} ${years.at(-1)}`
-}
-
-/** Tela 4 "O que o satélite viu": o raio-X do ponto, o histórico, os alertas e os cartões menores. */
 export function SatelliteView(props: SatelliteViewProps) {
-  const { t, backTo, status } = props
+  const { t, backTo, status, listen } = props
   const s = t.satellite
   return (
-    <div className={layout.page}>
-      <BackLink to={backTo}>{t.nav.back}</BackLink>
-      <PageHeading title={s.title} subtitle={status === 'ready' || status === 'loading' ? s.subtitle : undefined} />
-      {status === 'loading' && <FlowLoading label={s.loading} />}
-      {status === 'error' && <FlowError t={t} message={s.error} onRetry={props.onRetry} />}
-      {status === 'outside' && <FlowOutside t={t} />}
-      {status === 'ready' && <Cards {...props} />}
+    <div className={styles.page}>
+      <BackButton to={backTo}>{t.nav.back}</BackButton>
+      <h1 className={styles.title}>{s.title}</h1>
+      {(status === 'ready' || status === 'loading') && (
+        <div className={styles.sub}>
+          <p>{s.subtitle}</p>
+          {status === 'ready' && (
+            <ListenSummary
+              supported={listen.supported}
+              speaking={listen.speaking}
+              onToggle={listen.toggle}
+              label={t.listen.summary}
+              stopLabel={t.listen.stop}
+            />
+          )}
+        </div>
+      )}
+      {status === 'loading' && (
+        <div className={styles.state}>
+          <FlowLoading label={s.loading} />
+        </div>
+      )}
+      {status === 'error' && (
+        <div className={styles.state}>
+          <FlowError t={t} message={s.error} onRetry={props.onRetry} />
+        </div>
+      )}
+      {status === 'outside' && (
+        <div className={styles.state}>
+          <FlowOutside t={t} />
+        </div>
+      )}
+      {status === 'ready' && (
+        <>
+          {props.xray ? <XRayPanel {...props} xray={props.xray} /> : <SoilCard {...props} />}
+          <SeasonsSection {...props} />
+          <Action {...props} />
+        </>
+      )}
     </div>
   )
 }
 
-function PanelLink({ to, children }: { to: string; children: ReactNode }) {
+function coordinates(lang: Lang, point: { lat: number; lon: number }): string {
+  return `${formatDecimal(lang, point.lat, 4)} · ${formatDecimal(lang, point.lon, 4)}`
+}
+
+function blockBar(text: XRayText): ReactNode {
+  if (text.bar?.kind === 'soil') return <SoilBar clay={text.bar.clay} silt={text.bar.silt} sand={text.bar.sand} />
+  if (text.bar?.kind === 'moisture') return <MoistureBar pct={text.bar.pct} />
+  return undefined
+}
+
+/** O painel escuro: o lugar, os 8 blocos (cada um abre o seu modal) e a nota. */
+function XRayPanel(props: SatelliteViewProps & { xray: XRayModel }) {
+  const { t, lang, xray, soil, detail, onOpenDetail, onCloseDetail } = props
+  const x = t.xray
+  const texts = xray.blocks.map((block) => xrayText(t, lang, block, soil))
+  const open = texts.find((text) => text.kind === detail) ?? null
+  const meta = [
+    coordinates(lang, xray.point),
+    xray.raio.altitude_m !== null ? x.altitude(formatNumber(lang, xray.raio.altitude_m)) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
   return (
-    <Link to={to} className={styles.panelLink}>
-      {children}
-    </Link>
+    <>
+      <InstrumentPanel
+        eyebrow={x.eyebrow}
+        title={xray.demo ? t.where.demoName : x.place(xray.place)}
+        media={<MiniMap label={x.mapLabel(xray.place)} point={xray.point} />}
+        meta={meta}
+        aside={xray.raio.leitura_recente && <LiveBadge>{x.latestReading(formatFullDate(lang, xray.raio.leitura_recente))}</LiveBadge>}
+        note={x.note}
+      >
+        {texts.map((text, index) => (
+          <InstrumentBlock
+            key={text.kind}
+            index={index}
+            label={text.label}
+            value={<CountUp value={text.amount} format={text.format} />}
+            unit={text.unit}
+            line={text.line}
+            badge={text.badge}
+            detailsLabel={x.details}
+            onOpen={() => onOpenDetail(text.kind)}
+            bar={blockBar(text)}
+          />
+        ))}
+      </InstrumentPanel>
+      <Modal open={open !== null} onClose={onCloseDetail} title={open?.title ?? ''} closeLabel={t.common.close}>
+        {open && (
+          <div className={styles.detail}>
+            <p className={styles.detailLabel}>{open.label}</p>
+            <p className={styles.detailValue}>
+              <span>{open.value}</span> <small>{open.unit}</small>
+            </p>
+            <p className={styles.detailText}>
+              <Rich text={open.text} />
+            </p>
+            {open.kind === 'soil' && <SoilChooser {...props} />}
+            <p className={styles.detailSource}>{open.source}</p>
+            {open.guide && (
+              <GuideLink slug={open.guide.slug} newTabLabel={t.common.newTab} className={styles.detailGuide}>
+                {open.guide.label}
+              </GuideLink>
+            )}
+          </div>
+        )}
+      </Modal>
+    </>
   )
 }
 
-/** Painel "Raio-X da sua terra": cabeçalho com o lugar e o mapa, os blocos e o rodapé. */
-function XRayPanel(props: SatelliteViewProps & { xray: XRayModel }) {
-  const { t, lang, xray } = props
-  const x = t.xray
-  const { raio, place, point } = xray
-  const header = (
-    <div className={styles.xrayHeader}>
-      <MiniMap label={x.mapLabel(place)} point={point} />
-      <div className={styles.xrayHeaderText}>
-        <p className={styles.xrayPlace}>{x.place(place)}</p>
-        <p>{x.coordinates(formatCoordinates(point))}</p>
-        {raio.leitura_recente && <p>{x.latestReading(formatFullDate(lang, raio.leitura_recente))}</p>}
-        {raio.altitude_m !== null && <p>{x.altitude(formatNumber(lang, raio.altitude_m))}</p>}
+/** "Sua terra é diferente?": arenosa, média ou argilosa (a marcada é a que vale na conta). */
+function SoilChooser({ t, soil, onChooseSoil }: SatelliteViewProps) {
+  const titleId = useId()
+  const x = t.xray.soil
+  return (
+    <div className={styles.soilChooser} role="group" aria-labelledby={titleId}>
+      <p id={titleId} className={styles.soilChooserTitle}>
+        {x.change}
+      </p>
+      <div className={styles.chips}>
+        {TEXTURAS.map((textura) => (
+          <button
+            key={textura}
+            type="button"
+            className={styles.chip}
+            aria-pressed={soil.textura === textura}
+            onClick={() => onChooseSoil(textura)}
+          >
+            {x.options[textura]}
+          </button>
+        ))}
       </div>
     </div>
   )
+}
+
+/** Sem o raio-X (falha ou API antiga): a terra num cartão claro, com a troca. */
+function SoilCard(props: SatelliteViewProps) {
+  const { t, soil } = props
+  const s = t.satellite
+  const titleId = useId()
+  const source = { map: s.soilFromMap, user: s.soilFromUser, default: s.soilDefault }[soil.source]
   return (
-    <InstrumentPanel title={x.panelTitle} header={header} footer={x.footer}>
-      {xray.blocks.map((block, index) => (
-        <XRayBlockView key={block.kind} {...props} block={block} index={index} />
-      ))}
-    </InstrumentPanel>
+    <section className={styles.soilCard} aria-labelledby={titleId}>
+      <h2 id={titleId} className={styles.soilCardTitle}>
+        {s.soilFallback(t.xray.textures[soil.textura])}
+      </h2>
+      <p className={styles.soilCardText}>{source}</p>
+      <SoilChooser {...props} />
+    </section>
   )
 }
 
-function XRayBlockView(props: SatelliteViewProps & { block: XRayBlock; index: number }) {
-  const { t, lang, block, index, soil, soilOpen, onToggleSoil } = props
-  const x = t.xray
-  const integer = (value: number) => formatNumber(lang, value)
-  const learnMore = (to: string, title: string) => <PanelLink to={to}>{x.learnMore(title)}</PanelLink>
-  switch (block.kind) {
-    case 'soil': {
-      const parts = soilParts(block.data)
-      return (
-        <InstrumentBlock
-          index={index}
-          label={x.soil.label}
-          value={<CountUp value={parts.clay} format={integer} />}
-          unit={x.soil.unit}
-          badge={x.badges.soil}
-          actions={
-            <>
-              <button type="button" className={styles.panelButton} aria-expanded={soilOpen} onClick={onToggleSoil}>
-                {soilOpen ? t.satellite.close : t.satellite.soilChange}
-              </button>
-              {learnMore(ARTICLE.xray, x.articles.xray)}
-            </>
-          }
-          sentence={
-            <>
-              {x.soil.sentence(t.soil[block.data.textura])}
-              {block.data.vizinho_km !== null && ` ${x.soil.neighbor(formatDecimal(lang, block.data.vizinho_km, 1))}`}
-              {soil.source === 'user' && ` ${x.soil.chosen(t.soil[soil.textura])}`}
-            </>
-          }
-        >
-          <SplitBar
-            label={x.soil.barLabel(parts.clay, parts.silt, parts.sand)}
-            parts={[
-              { key: 'clay', label: x.soil.parts.clay, pct: parts.clay },
-              { key: 'silt', label: x.soil.parts.silt, pct: parts.silt },
-              { key: 'sand', label: x.soil.parts.sand, pct: parts.sand },
-            ]}
-          />
-        </InstrumentBlock>
-      )
-    }
-    case 'water': {
-      const water = block.data
-      const days =
-        water.dias !== null && water.cultura && water.floracao
-          ? x.water.days(water.dias, cropName(t, water.cultura), dayMonth(lang, water.floracao))
-          : x.water.noCrop
-      const use =
-        water.dias !== null && water.consumo_mm_dia !== null && water.eto_mm_dia !== null && water.kc !== null
-          ? ` ${x.water.use(formatDecimal(lang, water.consumo_mm_dia, 1), formatDecimal(lang, water.eto_mm_dia, 1), formatDecimal(lang, water.kc, 2))}`
-          : ''
-      return (
-        <InstrumentBlock
-          index={index}
-          label={x.water.label}
-          value={<CountUp value={water.cad_mm} format={integer} />}
-          unit={x.water.unit}
-          badge={x.badges.water}
-          sentence={`${days}${use}`}
-          actions={learnMore(ARTICLE.xray, x.articles.xray)}
-        />
-      )
-    }
-    case 'moisture': {
-      const pct = Math.round(block.data.percentil)
-      return (
-        <InstrumentBlock
-          index={index}
-          label={x.moisture.label}
-          value={<CountUp value={pct} format={integer} />}
-          unit="%"
-          badge={x.badges.moisture}
-          sentence={x.moisture.sentence(pct, formatFullDate(lang, block.data.data))}
-        >
-          <Meter label={x.moisture.meterLabel(pct)} value={pct} lowLabel={x.moisture.low} highLabel={x.moisture.high} />
-        </InstrumentBlock>
-      )
-    }
-    case 'green': {
-      const green = block.data
-      const main = green.ultimo_ndvi ?? green.pico_ndvi ?? 0
-      const ndvi = (value: number) => formatDecimal(lang, value, 2)
-      const lines = [
-        green.ultimo_ndvi !== null && green.ultimo_data && x.green.last(ndvi(green.ultimo_ndvi), formatFullDate(lang, green.ultimo_data)),
-        green.pico_ndvi !== null &&
-          green.safra &&
-          (green.soja_vista === false
-            ? x.green.peakNoSoy(ndvi(green.pico_ndvi), green.safra, green.pico_data ? formatFullDate(lang, green.pico_data) : null)
-            : green.pico_data
-              ? x.green.peakOn(ndvi(green.pico_ndvi), green.safra, formatFullDate(lang, green.pico_data))
-              : x.green.peak(ndvi(green.pico_ndvi), green.safra)),
-        x.green.scale,
-      ].filter(Boolean)
-      return (
-        <InstrumentBlock
-          index={index}
-          label={x.green.label}
-          value={<CountUp value={main} format={ndvi} />}
-          unit={x.green.unit}
-          badge={x.badges.green}
-          sentence={lines.join(' ')}
-        />
-      )
-    }
-    case 'rain': {
-      const rain = block.data
-      const end = rain.fim_das_chuvas
-      const endText = end
-        ? ` ${x.rain.end(dayMonth(lang, end.mediana), dayMonth(lang, end.mais_cedo.dia), end.mais_cedo.ano, dayMonth(lang, end.mais_tarde.dia), end.mais_tarde.ano)}`
-        : ''
-      return (
-        <InstrumentBlock
-          index={index}
-          label={x.rain.label}
-          value={<CountUp value={rain.media_mm} format={integer} />}
-          unit={x.rain.unit}
-          badge={x.badges.rain}
-          sentence={`${x.rain.years(rain.anos.length)}${endText}`}
-        />
-      )
-    }
-    case 'dryspell':
-      return (
-        <InstrumentBlock
-          index={index}
-          label={x.dryspell.label}
-          value={<CountUp value={block.data.dias} format={integer} />}
-          unit={x.dryspell.unit}
-          badge={x.badges.dryspell}
-          sentence={x.dryspell.sentence(block.data.ano, dayMonth(lang, block.data.inicio))}
-          actions={learnMore(ARTICLE.dryspell, x.articles.dryspell)}
-        />
-      )
-    case 'heat': {
-      const heat = block.data
-      const years = heat.anos.length > 0 ? ` ${x.heat.years(yearList(lang, heat.anos))}` : ''
-      return (
-        <InstrumentBlock
-          index={index}
-          label={x.heat.label}
-          value={<CountUp value={heat.anos_com_calor} format={integer} />}
-          unit={x.heat.unit(heat.total_anos)}
-          badge={x.badges.heat}
-          sentence={`${x.heat.sentence(formatNumber(lang, heat.temp_c))}${years}`}
-          actions={learnMore(ARTICLE.heat, x.articles.heat)}
-        />
-      )
-    }
-    case 'region': {
-      const side = regionSide(block.data)
-      return (
-        <InstrumentBlock
-          index={index}
-          label={x.region.label}
-          value={<CountUp value={side.pct} format={integer} />}
-          unit="%"
-          badge={x.badges.region}
-          sentence={`${side.side === 'drier' ? x.region.drier(side.pct) : x.region.wetter(side.pct)} ${x.region.detail(integer(block.data.chuva_mm), block.data.celulas)}`}
-        />
-      )
-    }
+function seenText(t: Messages, seasons: SeasonsModel): string {
+  const ss = t.satellite.seasons
+  switch (seasons.seen.kind) {
+    case 'all':
+      return ss.seenAll
+    case 'some':
+      return ss.seenSome(seasons.seen.count)
+    case 'none':
+      return ss.seenNone
+    case 'no-reading':
+      return ss.noReading
   }
 }
 
-/** As 3 terras para o produtor escolher ("Não é? Trocar"). */
-function SoilChooser({ t, soil, onChooseSoil }: SatelliteViewProps) {
-  const s = t.satellite
+/** Nome da cultura no meio da frase ("pensa em milho sozinho"). */
+const lower = (text: string) => text.charAt(0).toLowerCase() + text.slice(1)
+
+function pastStatus(t: Messages, status: SeasonChartStatus): ReactNode {
+  const ss = t.satellite.seasons
+  if (status.kind === 'answer') {
+    const label = status.answer === 'sem_soja' ? ss.noSoy : t.seasons.options[status.answer]
+    return (
+      <b className={styles.answer} data-tone={status.answer === 'pousio' ? 'fallow' : undefined}>
+        <CheckIcon size={13} />
+        <span>{label}</span>
+      </b>
+    )
+  }
+  return <span>{status.kind === 'satellite' ? ss.satellite[status.situation] : ss.missing}</span>
+}
+
+function currentStatus(t: Messages, choice: CurrentChoice | null): ReactNode {
+  const ss = t.satellite.seasons
+  if (choice === null) return <span>{ss.toPlan}</span>
+  if (choice === 'nao_sei') return <b className={styles.plan}>{ss.notSure}</b>
+  const name = choice === 'pousio' ? t.seasons.fallowFuture : t.seasons.options[choice]
+  return <b className={styles.plan}>{ss.plans(lower(name))}</b>
+}
+
+/** Um ano comum só para escrever o "MM-DD" da coluna como "17 de janeiro". */
+const dayMonth = (lang: Lang, mmdd: string) => formatDayMonth(lang, `2023-${mmdd}`)
+
+function ChartFigure({ t, lang, chart }: SatelliteViewProps) {
+  const ss = t.satellite.seasons
+  const ndvi = (value: number) => formatDecimal(lang, value, 2)
+  const title = !chart.readings ? ss.chartTitleNoReading : chart.total > 0 ? ss.chartTitle(chart.idle, chart.total) : ss.chartTitleNoSoy
+  const { soy, harvest, offseason } = chart.marks
+  const marks = [
+    { key: 'soy' as const, label: ss.marks.soy, from: soy[0], to: soy[1] },
+    ...(harvest !== null ? [{ key: 'harvest' as const, label: ss.marks.harvest, from: harvest, to: harvest + 1 }] : []),
+    { key: 'after' as const, label: ss.marks.after, from: offseason[0], to: offseason[1] },
+  ]
+  const months = chart.months.map((month) => ({ label: formatMonth(lang, month.month).slice(0, 3), from: month.from, span: month.span }))
+  const rows: SeasonChartRowProps[] = [
+    ...chart.rows.map(
+      (row): SeasonChartRowProps => ({
+        key: row.year,
+        season: seasonName(row.year),
+        period: satellitePeriod(row.year, lang),
+        tone: row.confirmable ? 'confirmable' : 'plain',
+        cells:
+          row.cells?.map((cell, index) => ({
+            level: cell.level,
+            title:
+              cell.value === null
+                ? ss.cellEmpty(dayMonth(lang, chart.columns[index]))
+                : ss.cell(dayMonth(lang, chart.columns[index]), ndvi(cell.value)),
+          })) ?? null,
+        status: pastStatus(t, row.status),
+      }),
+    ),
+    {
+      key: chart.current.year,
+      season: seasonName(chart.current.year),
+      period: satellitePeriod(chart.current.year, lang),
+      tone: 'current',
+      cells: null,
+      status: currentStatus(t, chart.current.choice),
+    },
+  ]
+  const someEmpty = chart.rows.some((row) => row.cells === null || row.cells.some((cell) => cell.level === 0))
   return (
-    <div role="group" aria-label={s.soilChoose} className={layout.stack}>
-      {TEXTURAS.map((textura) => (
-        <RadioCard
-          key={textura}
-          title={s.soilOptions[textura].title}
-          sub={s.soilOptions[textura].sub}
-          selected={soil.textura === textura}
-          onSelect={() => onChooseSoil(textura)}
-        />
-      ))}
-    </div>
+    <SeasonChartFigure
+      title={title}
+      seasonLabel={ss.colSeason}
+      afterLabel={ss.colAfter}
+      columns={chart.columns.length}
+      marks={marks}
+      months={months}
+      rows={rows}
+      legend={
+        chart.readings
+          ? { title: ss.legendTitle, levels: ss.legend, noReading: someEmpty ? ss.legendNoReading : null, current: ss.legendCurrent, source: ss.chartSource }
+          : { title: null, levels: [], noReading: ss.legendNoReading, current: ss.legendCurrent, source: null }
+      }
+    />
   )
 }
 
 /** "Não parece uma lavoura de soja": um aviso, sem selo de "pronto". */
-function SoyWarning({ t, title, children }: { t: Messages; title: boolean; children?: ReactNode }) {
+function SoyWarning({ t, adjustTo }: SatelliteViewProps) {
   const s = t.satellite
   return (
     <div className={styles.soyWarning}>
-      <span className={styles.warningIcon}>
-        <WarningIcon size={22} />
-      </span>
-      <div className={layout.stack}>
-        {title ? <h2 className={styles.warningTitle}>{s.noSoyTitle}</h2> : <p className={styles.warningTitle}>{s.noSoyTitle}</p>}
-        {title && <p>{s.noSoyDetail}</p>}
-        {children}
+      <WarningIcon size={20} />
+      <div>
+        <p className={styles.soyWarningTitle}>{s.noSoyTitle}</p>
+        <p>{s.noSoyDetail}</p>
+        <Link to={adjustTo} className={styles.soyWarningLink}>
+          {s.adjustMap}
+        </Link>
       </div>
     </div>
   )
 }
 
-/** A faixa de calor do NDVI, com o que aconteceu em cada ano escrito no fim da linha. */
-function HeatmapFigure({ t, lang, heatmap, history }: { t: Messages; lang: Lang; heatmap: Heatmap; history: HistorySummary | null }) {
-  const x = t.xray.history
-  const columns = heatmap.columns
-  const ndvi = (value: number) => formatDecimal(lang, value, 2)
-  const marks = [
-    { label: x.marks.soy, from: heatmap.marks.soy[0], to: heatmap.marks.soy[1] },
-    ...(heatmap.marks.harvest !== null
-      ? [{ label: x.marks.harvest, from: heatmap.marks.harvest, to: heatmap.marks.harvest + 1 }]
-      : []),
-    { label: x.marks.offseason, from: heatmap.marks.offseason[0], to: heatmap.marks.offseason[1] },
-  ].filter((mark) => mark.to > mark.from)
-  const months = heatmap.months.map((month, index) => ({
-    label: formatMonth(lang, month.month).slice(0, 3),
-    from: month.from,
-    span: (heatmap.months[index + 1]?.from ?? columns.length) - month.from,
-  }))
-  const years = heatmap.rows.map((row) => row.year)
-  const rows = heatmap.rows.map((row) => {
-    const tag = row.situation ? x.tags[row.situation] : ''
-    return {
-      year: row.year,
-      tag: row.byProducer && tag ? x.byProducer(tag) : tag,
-      cells: row.cells.map((cell, index) => ({
-        level: cell.level as HeatLevel,
-        title:
-          cell.value === null
-            ? x.cellEmpty(dayMonth(lang, columns[index]))
-            : x.cell(dayMonth(lang, columns[index]), ndvi(cell.value)),
-      })),
-    }
-  })
-  return (
-    <>
-      <p className={layout.muted}>{x.subtitle}</p>
-      <NdviHeatmap
-        label={x.label(Math.min(...years), Math.max(...years), history?.idle ?? 0, history?.total ?? years.length)}
-        months={months}
-        marks={marks}
-        rows={rows}
-        legend={x.legend.map((label, index) => ({ level: (index + 1) as HeatLevel, label }))}
-        noDataLabel={x.noData}
-      />
-      <p className={layout.muted}>{x.source}</p>
-    </>
-  )
-}
-
-/** Histórico do talhão (faixa de calor do NDVI, ou os quadrinhos sem ela) e a confirmação das safras. */
-function HistoryCard(props: SatelliteViewProps) {
-  const { t, lang, history, heatmap, confirmations, onConfirmSeason, share, noSoy, adjustTo } = props
+/** "Suas últimas safras": o gráfico do satélite em cima e as confirmações embaixo. */
+function SeasonsSection(props: SatelliteViewProps) {
+  const { t, lang, chart, seasons, onAnswerSeason, onChooseCurrent, noSoy, share } = props
   const s = t.satellite
-  const x = t.xray.history
-  const confirm = confirmations.length > 0 && (
-    <ConfirmSeasons t={t} rows={confirmations} onConfirm={onConfirmSeason} share={share ?? null} />
-  )
-  if (!history && noSoy) {
-    return (
-      <Card as="section">
-        <SoyWarning t={t} title>
-          <div className={layout.cta}>
-            <Button to={adjustTo} variant="outline">
-              {s.adjustMap}
-            </Button>
-          </div>
-        </SoyWarning>
-        {heatmap && <HeatmapFigure t={t} lang={lang} heatmap={heatmap} history={history} />}
-        {confirm}
-      </Card>
-    )
-  }
-  // Sem histórico do satélite, o cartão não aparece (decisão D2); com anos para confirmar, o produtor
-  // responde direto (5.6 do pedido: "Sem NDVI para o ponto, pergunte direto").
-  if (!history) return confirm ? <Card>{confirm}</Card> : null
-  const others = x.others(history.uncertain, history.noSoy)
+  const ss = s.seasons
+  const titleId = useId()
+  const confirmId = useId()
+  const reading = seasons.seen.kind !== 'no-reading'
+  const first = chart.rows[0]?.year
   return (
-    <Card as="section">
-      <div className={styles.historyHead}>
-        <span className={styles.historyIcon}>
-          <HistoryIcon />
-        </span>
+    <section className={styles.seasons} aria-labelledby={titleId}>
+      <div className={styles.seasonsTop}>
         <div>
-          <h2 className={styles.historyTitle}>{x.title(history.idle, history.total)}</h2>
-          {others && <p className={layout.muted}>{others}</p>}
+          <h2 id={titleId} className={styles.seasonsTitle}>
+            {ss.title}
+          </h2>
+          <p className={styles.seasonsSub}>{chart.readings && first ? ss.subtitle(seasonName(first)) : ss.subtitleNoReading}</p>
         </div>
+        <p className={styles.satStatus} data-reading={reading}>
+          <SatelliteIcon size={15} />
+          <span>{seenText(t, seasons)}</span>
+        </p>
       </div>
-      {noSoy && <SoyWarning t={t} title={false} />}
-      {heatmap ? (
-        <HeatmapFigure t={t} lang={lang} heatmap={heatmap} history={history} />
-      ) : (
-        <>
-          <YearStrip
-            size="lg"
-            label={s.historyStripLabel(history.planted, history.known, history.uncertain)}
-            cells={history.situations.map((situation) => CELL[situation])}
-            years={history.years}
-          />
-          <StripLegend
-            items={[
-              { state: 'good', label: s.planted },
-              { state: 'bad', label: s.idle },
-              ...(history.uncertain > 0 ? [{ state: 'unknown' as const, label: s.uncertain }] : []),
-              ...(history.noSoy > 0 ? [{ state: 'none' as const, label: s.noSoy }] : []),
-            ]}
-          />
-          <p className={layout.muted}>
-            {s.historySource(formatMonth(lang, history.window.from), formatMonth(lang, history.window.to))}
-          </p>
-        </>
-      )}
-      {history.confirmed > 0 && <p className={layout.muted}>{s.historyConfirmed(history.confirmed)}</p>}
-      {confirm}
-    </Card>
-  )
-}
-
-/** "Confirme as últimas safras": um grupo de botões por ano, com o que o satélite viu ao lado. */
-function ConfirmSeasons({
-  t,
-  rows,
-  onConfirm,
-  share,
-}: {
-  t: Messages
-  rows: ConfirmRow[]
-  onConfirm: SatelliteViewProps['onConfirmSeason']
-  share: Omit<ShareSeasonsProps, 't'> | null
-}) {
-  const s = t.satellite
-  const titleId = useId()
-  const options = [
-    { value: 'plantou' as const, label: s.confirmPlanted },
-    { value: 'parado' as const, label: s.confirmIdle },
-  ]
-  return (
-    <section className={styles.confirm} aria-labelledby={titleId}>
-      <h3 id={titleId} className={styles.confirmTitle}>
-        {s.confirmTitle}
-      </h3>
-      <p className={layout.muted}>{s.confirmHint}</p>
-      {rows.map((row) => (
-        <div key={row.year} className={styles.confirmRow}>
-          <span className={styles.confirmYear}>
-            <strong>{row.year}</strong>
-            {row.satellite && (
-              <span className={layout.muted}>{s.satelliteSaw(s.satelliteSawLabels[row.satellite])}</span>
-            )}
-          </span>
-          <ChipGroup
-            label={s.confirmYear(row.year)}
-            options={options}
-            value={row.choice}
-            onChange={(value) => onConfirm(row.year, value)}
-            allowDeselect
-          />
+      {noSoy && <SoyWarning {...props} />}
+      <div className={styles.chart}>
+        <ChartFigure {...props} />
+      </div>
+      <section className={styles.confirm} aria-labelledby={confirmId}>
+        <h3 id={confirmId} className={styles.confirmTitle}>
+          {s.confirmTitle}
+        </h3>
+        <p className={styles.confirmSub}>{reading ? ss.confirmSub : ss.confirmSubNoReading}</p>
+        <SeasonAnswersForm
+          t={t}
+          lang={lang}
+          seasons={seasons.rows}
+          answers={seasons.answers}
+          onAnswer={onAnswerSeason}
+          current={{
+            choice: seasons.current.choice,
+            onChoose: onChooseCurrent,
+            harvestDate: seasons.current.harvestDate,
+            changeDateTo: seasons.current.changeDateTo,
+          }}
+        />
+      </section>
+      {share && (
+        <div className={styles.share}>
+          <ShareSeasons t={t} {...share} />
         </div>
-      ))}
-      {share && <ShareSeasons t={t} {...share} />}
+      )}
+      <div className={styles.seasonsFoot}>
+        <span>{ss.note}</span>
+        <GuideLink slug="rotacao-de-culturas" newTabLabel={t.common.newTab}>
+          {ss.rotation}
+        </GuideLink>
+      </div>
     </section>
   )
 }
 
-const ALERT_ICON = { frost: <FrostIcon />, heavyRain: <HeavyRainIcon />, fire: <FireIcon /> }
-
-/** Alertas da sua área: cada um só aparece se o dado indicar risco (o backend só manda esses). */
-function AreaAlerts({ t, lang, alerts }: SatelliteViewProps) {
-  const titleId = useId()
-  if (alerts.length === 0) return null
-  const a = t.xray.alerts
-  const items = alerts.map((alert) => {
-    switch (alert.kind) {
-      case 'frost':
-        return {
-          kind: alert.kind,
-          title: a.frost.title,
-          text: a.frost.text(alert.data.anos.length, alert.data.total_anos, formatNumber(lang, alert.data.temp_c)),
-          link: { to: ARTICLE.frost, title: t.xray.articles.frost },
-        }
-      case 'heavyRain':
-        return {
-          kind: alert.kind,
-          title: a.heavyRain.title,
-          text: a.heavyRain.text(
-            formatDecimal(lang, alert.data.media_dias_ano, 1),
-            formatNumber(lang, alert.data.limite_mm),
-            alert.data.dias,
-            alert.data.total_anos,
-          ),
-          link: { to: ARTICLE.erosion, title: t.xray.articles.erosion },
-        }
-      case 'fire':
-        return {
-          kind: alert.kind,
-          title: a.fire.title,
-          text: a.fire.text(formatNumber(lang, alert.data.raio_km), alert.data.anos.length, alert.data.total_anos),
-          link: { to: ARTICLE.fire, title: t.xray.articles.fire },
-        }
-    }
-  })
+/** "Ver o que plantar →": no computador, com o que falta ao lado; no celular, preso embaixo com a contagem. */
+function Action({ t, seasons, onConfirm }: SatelliteViewProps) {
+  const ss = t.satellite.seasons
+  const missing = 3 - seasons.answered
+  const reading = seasons.seen.kind !== 'no-reading'
+  const text = missing === 0 ? ss.done : reading ? ss.missingAction(missing) : ss.missingActionNoReading(missing)
   return (
-    <section aria-labelledby={titleId} className={layout.stack}>
-      <h2 id={titleId} className={styles.sectionTitle}>
-        {a.title}
-      </h2>
-      <ul className={styles.alerts}>
-        {items.map((item) => (
-          <li key={item.kind} className={styles.alert}>
-            <span className={styles.alertIcon}>{ALERT_ICON[item.kind]}</span>
-            <div className={styles.alertText}>
-              <h3 className={styles.alertTitle}>{item.title}</h3>
-              <p>{item.text}</p>
-              {item.link && (
-                <Link to={item.link.to} className={layout.iconLink}>
-                  {t.xray.learnMore(item.link.title)}
-                </Link>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-
-/** Cartões menores: em quantos anos a melhor opção deu certo e o clima de 2041 a 2060. */
-function SmallCards({ t, lang, cards, answerTo }: SatelliteViewProps & { cards: RaioX['cartoes'] }) {
-  const c = t.xray.cards
-  const rain = cards.chuva_20_anos
-  const future = cards.clima_futuro
-  const futureText = future && futureClimateText(t, lang, future)
-  const see = (
-    <Link to={answerTo} className={layout.iconLink}>
-      {c.seeAnswer}
-    </Link>
-  )
-  return (
-    <>
-      {rain && (
-        <Card as="section">
-          <h2 className={styles.smallTitle}>{c.rainTitle(rain.total_anos)}</h2>
-          <p className={styles.bigNumber}>{c.rainValue(rain.anos_bons, rain.total_anos)}</p>
-          <p>{c.rainText(cropName(t, rain.cultura))}</p>
-          {see}
-        </Card>
-      )}
-      {futureText && (
-        <Card as="section">
-          <h2 className={styles.smallTitle}>{c.futureTitle}</h2>
-          <p className={styles.mediumNumber}>{futureText.rain}</p>
-          <p className={styles.mediumNumber}>{futureText.heat}</p>
-          <p>{futureText.agreement}</p>
-          <p className={layout.muted}>{c.futureSource}</p>
-          {see}
-        </Card>
-      )}
-    </>
-  )
-}
-
-/** Sem o raio-X: os cartões de antes (chuva e clima), só com o dado que chegou. */
-function LegacyCards({ t, rain, climate }: SatelliteViewProps) {
-  const s = t.satellite
-  return (
-    <>
-      {rain && (
-        <DataSourceCard
-          icon={<DropIcon />}
-          iconTone="blue"
-          title={s.rainTitle(rain.years)}
-          subtitle={rain.period ? s.rainSubtitle(rain.period.start, rain.period.end, rain.skipped) : s.rainDaily}
-          readyLabel={t.common.ready}
-        />
-      )}
-      {climate && (
-        <DataSourceCard
-          icon={<ClimateIcon />}
-          iconTone="blue"
-          title={s.climateTitle}
-          subtitle={climate.period ? s.climateSubtitle(climate.period.start, climate.period.end) : s.climateSubtitleGeneric}
-          readyLabel={t.common.ready}
-        />
-      )}
-    </>
-  )
-}
-
-/** Sem o bloco de solo no painel: o cartão da terra de antes, com "Não é? Trocar". */
-function LegacySoilCard(props: SatelliteViewProps) {
-  const { t, soil, soilOpen, onToggleSoil } = props
-  const s = t.satellite
-  const soilSource = { map: s.soilFromMap, user: s.soilFromUser, default: s.soilDefault }[soil.source]
-  return (
-    <DataSourceCard icon={<SoilIcon />} title={s.soilTitle(t.soil[soil.textura])} subtitle={soilSource} readyLabel={t.common.ready}>
-      <TextButton expanded={soilOpen} onClick={onToggleSoil}>
-        {soilOpen ? s.close : s.soilChange}
-      </TextButton>
-      {soilOpen && <SoilChooser {...props} />}
-    </DataSourceCard>
-  )
-}
-
-function Cards(props: SatelliteViewProps) {
-  const { t, xray, cards, soilOpen, onConfirm } = props
-  const soilInPanel = xray?.blocks.some((block) => block.kind === 'soil') ?? false
-  return (
-    <div className={layout.stack}>
-      {xray && <XRayPanel {...props} xray={xray} />}
-      {soilInPanel && soilOpen && (
-        <Card>
-          <SoilChooser {...props} />
-        </Card>
-      )}
-      <HistoryCard {...props} />
-      <AreaAlerts {...props} />
-      <div className={styles.cardsRow}>
-        {cards ? <SmallCards {...props} cards={cards} /> : <LegacyCards {...props} />}
-        {!soilInPanel && <LegacySoilCard {...props} />}
-      </div>
-      <div className={styles.cta}>
-        <Button onClick={onConfirm} arrow>
-          {t.satellite.cta}
-        </Button>
-      </div>
+    <div className={styles.action} data-action-bar="">
+      <p className={styles.actionText}>{text}</p>
+      <p className={styles.barStatus}>
+        <CheckIcon size={16} />
+        <span>{missing === 0 ? ss.barDone : ss.barCount(seasons.answered)}</span>
+      </p>
+      <button type="button" className={styles.cta} onClick={onConfirm}>
+        <span>{t.satellite.cta}</span>
+        <ArrowRightIcon size={18} />
+      </button>
     </div>
   )
 }
