@@ -158,16 +158,19 @@ class FakeOrnl:
     """Serviço da ORNL de mentira: bandas, datas e recortes de um pixel, com valores de teste.
 
     `values[(produto, data_modis)] = (ndvi_bruto, pixel_reliability)`. Recorte cujo `startDate` está
-    em `failing` responde sempre 502 (o proxy da ORNL corta em ~60 s).
+    em `failing`, ou com mais de `max_dates` datas, responde sempre 502 (o proxy da ORNL corta o
+    pedido que passa de ~60 s).
     """
 
     def __init__(
         self,
         values: dict[tuple[str, str], tuple[int, int]],
         failing: set[tuple[str, str]] | None = None,
+        max_dates: int | None = None,
     ) -> None:
         self.values = values
         self.failing = failing or set()
+        self.max_dates = max_dates
         self.requests: list[HttpRequest] = []
 
     def __call__(self, request: HttpRequest, timeout: float) -> HttpResponse:
@@ -184,7 +187,9 @@ class FakeOrnl:
         assert endpoint == "subset", f"pedido inesperado: {path}"
         params = request.params
         start, end = str(params["startDate"]), str(params["endDate"])
-        if (product, start) in self.failing:
+        in_range = [d for p, d in self.values if p == product and start <= d <= end]
+        too_many = self.max_dates is not None and len(in_range) > self.max_dates
+        if (product, start) in self.failing or too_many:
             return _response(502, body=b"<html>502 Proxy Error</html>")
         items = []
         for (p, modis_date), (ndvi, quality) in sorted(self.values.items()):
@@ -279,6 +284,15 @@ def test_should_split_the_dates_in_blocks_that_never_cross_a_year() -> None:
     assert [len(b) for b in blocks] == [5, 5, 4, 5, 5, 4]
     assert all(len({d[1:5] for d in b}) == 1 for b in blocks)
     assert [d for b in blocks for d in b] == dates
+
+
+def test_should_plan_only_the_missing_dates_in_runs_of_consecutive_dates() -> None:
+    dates = modis_calendar("MOD13Q1")[:7]  # A2016001 ... A2016097
+
+    blocks = plan_blocks(dates, 5, skip={"A2016033"})
+
+    # O recorte vai do início ao fim: nunca pula por cima de uma data já guardada.
+    assert blocks == [("A2016001", "A2016017"), ("A2016049", "A2016065", "A2016081", "A2016097")]
 
 
 def test_should_refuse_more_than_10_dates_per_request() -> None:
@@ -452,8 +466,27 @@ def test_should_cache_only_checked_responses_and_reuse_them(tmp_path: Path) -> N
 
     assert first == second
     assert len(fake.subset_requests()) == 1
-    assert fetcher.is_subset_cached(block)
     assert not list(cache.rglob("*.part"))
+
+
+def test_should_read_the_cached_values_by_date_from_every_saved_block(tmp_path: Path) -> None:
+    fake = FakeOrnl(TEST_VALUES)
+    cache = tmp_path / "cache"
+    fetcher = CachedOrnlFetcher(_ornl_client(fake), cache, pause_seconds=0)
+    fetcher.subset(OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2016001",)))
+    fetcher.subset(OrnlBlock(DEFAULT_POINT, "MOD13Q1", ("A2016097", "A2016113")))
+
+    values = fetcher.cached_values(DEFAULT_POINT, "MOD13Q1")
+
+    assert values == {
+        ("A2016001", ORNL_NDVI_BAND): 6000,
+        ("A2016001", ORNL_QUALITY_BAND): 0,
+        ("A2016097", ORNL_NDVI_BAND): -3000,
+        ("A2016097", ORNL_QUALITY_BAND): 0,
+        ("A2016113", ORNL_NDVI_BAND): 4000,
+        ("A2016113", ORNL_QUALITY_BAND): 1,
+    }
+    assert fetcher.cached_values(DEFAULT_POINT, "MYD13Q1") == {}
 
 
 def test_should_not_cache_a_response_that_fails_the_check(tmp_path: Path) -> None:
@@ -466,7 +499,7 @@ def test_should_not_cache_a_response_that_fails_the_check(tmp_path: Path) -> Non
     with pytest.raises(OrnlUnavailableError):
         fetcher.subset(block)
 
-    assert not fetcher.is_subset_cached(block)
+    assert fetcher.cached_values(DEFAULT_POINT, "MOD13Q1") == {}
     assert not [p for p in cache.rglob("*") if p.is_file()]
 
 
@@ -555,6 +588,33 @@ def test_should_return_code_2_and_keep_what_was_fetched_when_a_block_fails(
     assert "rode de novo" in err
 
 
+def test_should_split_a_block_that_keeps_failing_into_halves(tmp_path: Path) -> None:
+    # Só passa recorte de até 2 datas (os maiores estouram o tempo e voltam 502).
+    values = {("MOD13Q1", d): (6000, 0) for d in modis_calendar("MOD13Q1")[:5]}
+    fake = FakeOrnl(values, max_dates=2)
+
+    code = _run_ornl(tmp_path, fake)
+
+    assert code == 0
+    sizes = [
+        len([d for d in values if r.params["startDate"] <= d[1] <= r.params["endDate"]])
+        for r in fake.subset_requests()
+    ]
+    # 5 datas: 2 tentativas e divide em 3 + 2; o de 3 tenta 2 vezes e divide em 2 + 1.
+    assert sizes == [5, 5, 3, 3, 2, 1, 2]
+    payload = json.loads((tmp_path / "saida" / "ndvi.json").read_text(encoding="utf-8"))
+    assert len(payload["pontos"][0]["serie"]) == 5
+
+
+def test_should_reuse_the_cache_when_the_dates_per_request_change(tmp_path: Path) -> None:
+    assert _run_ornl(tmp_path, FakeOrnl(TEST_VALUES)) == 0
+    second = FakeOrnl(TEST_VALUES)
+
+    assert _run_ornl(tmp_path, second, "--datas-por-pedido", "2") == 0
+
+    assert second.subset_requests() == []
+
+
 def test_should_stop_early_when_the_ornl_keeps_failing(tmp_path: Path) -> None:
     values = {("MOD13Q1", d): (6000, 0) for d in modis_calendar("MOD13Q1")[:14]}
     fake = FakeOrnl(values, failing={("MOD13Q1", d) for d in modis_calendar("MOD13Q1")})
@@ -580,8 +640,8 @@ def test_should_show_the_requests_and_estimated_time_on_ornl_dry_run(
     out = capsys.readouterr().out
     # 2 bandas + 2 listas de datas + recortes de até 5 datas: Terra 14/ano (5+5+4) e Aqua 13/ano
     # (5+5+3), 3 + 3 por ano em 10 anos.
-    assert "Pedidos: 64 (2 de bandas, 2 de datas, 60 recortes)" in out
-    assert "faltam: 64" in out
+    assert "Pedidos que faltam: 64 (2 de bandas, 2 de datas, 60 recortes)" in out
+    assert "composições já no cache: 0 de 270" in out
     assert "Tempo estimado" in out
     assert not (tmp_path / "ndvi.json").exists()
 
@@ -595,7 +655,7 @@ def test_should_count_only_what_is_missing_in_the_cache_on_dry_run(
     code = _run_ornl(tmp_path, FakeOrnl({}), "--dry-run")
 
     assert code == 0
-    assert "faltam: 0" in capsys.readouterr().out
+    assert "Pedidos que faltam: 0 (" in capsys.readouterr().out
 
 
 # --- caminhos padrão ----------------------------------------------------------------------

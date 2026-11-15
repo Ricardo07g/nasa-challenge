@@ -46,7 +46,7 @@ import re
 import sys
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Final
@@ -111,6 +111,9 @@ ORNL_TIMEOUT_SECONDS: Final[float] = 120.0
 ORNL_PAUSE_SECONDS: Final[float] = 5.0
 ORNL_MAX_RETRIES: Final[int] = 3
 ORNL_BACKOFF_SECONDS: Final[float] = 20.0
+# Bloco de várias datas: 1 retentativa e depois divide em duas metades (na rodada real de
+# 14/11/2026, os de 5 datas do Aqua deram 502 na 1ª tentativa quase sempre, a ~50–58 s por pedido).
+ORNL_RETRIES_BEFORE_SPLIT: Final[int] = 1
 # Recortes seguidos sem resposta (já depois das retentativas) para desistir: a ORNL caiu.
 ORNL_MAX_CONSECUTIVE_FAILURES: Final[int] = 3
 ORNL_CACHE_DIR_NAME: Final[str] = "cache_ornl"
@@ -641,24 +644,36 @@ def modis_calendar(product: str) -> list[str]:
     return dates
 
 
-def plan_blocks(modis_dates: Sequence[str], dates_per_request: int) -> list[tuple[str, ...]]:
-    """Agrupa as datas em blocos de até `dates_per_request`, sem cruzar o ano.
+def plan_blocks(
+    modis_dates: Sequence[str], dates_per_request: int, skip: Iterable[str] = ()
+) -> list[tuple[str, ...]]:
+    """Agrupa as datas que faltam em blocos de até `dates_per_request`, sem cruzar o ano.
 
-    Um recorte da ORNL vai do `startDate` ao `endDate`: dentro de um ano, as datas de jan–jul são
-    seguidas, e o bloco não traz nenhuma data de fora da janela.
+    Um recorte da ORNL vai do `startDate` ao `endDate`, então cada bloco é um trecho de datas
+    seguidas: nunca cruza o ano (as datas de jan–jul de um ano são seguidas) nem passa por cima de
+    uma data de `skip` (já no cache). Assim o recorte não traz data de fora da janela nem repetida.
     """
     if not 1 <= dates_per_request <= ORNL_MAX_DATES_PER_REQUEST:
         raise ValueError(
             f"datas por pedido: de 1 a {ORNL_MAX_DATES_PER_REQUEST} (limite da ORNL), "
             f"veio {dates_per_request}"
         )
-    by_year: dict[str, list[str]] = {}
+    skipped = set(skip)
+    runs: list[list[str]] = []
+    previous_year = None
     for modis_date in sorted(set(modis_dates)):
-        by_year.setdefault(modis_date[1:5], []).append(modis_date)
+        year = modis_date[1:5]
+        if modis_date in skipped:
+            previous_year = None  # fecha o trecho
+            continue
+        if year != previous_year:
+            runs.append([])
+            previous_year = year
+        runs[-1].append(modis_date)
     return [
-        tuple(year_dates[i : i + dates_per_request])
-        for year_dates in by_year.values()
-        for i in range(0, len(year_dates), dates_per_request)
+        tuple(run[i : i + dates_per_request])
+        for run in runs
+        for i in range(0, len(run), dates_per_request)
     ]
 
 
@@ -728,8 +743,8 @@ def parse_ornl_dates(payload: Any) -> list[str]:
     return season
 
 
-def _subset_values(payload: Any, block: OrnlBlock) -> dict[tuple[str, str], float]:
-    """(data, banda) → valor do pixel. Exige NDVI e qualidade em todas as datas do bloco."""
+def _band_values(payload: Any) -> dict[tuple[str, str], float]:
+    """(data, banda) → valor do pixel, só do NDVI e da qualidade; recusa valor fora do formato."""
     items = payload.get("subset") if isinstance(payload, dict) else None
     if not isinstance(items, list):
         raise OrnlError("O recorte da ORNL veio sem 'subset'.")
@@ -753,6 +768,16 @@ def _subset_values(payload: Any, block: OrnlBlock) -> dict[tuple[str, str], floa
             # A ORNL entrega o inteiro bruto; um valor já escalado levaria a escala duas vezes.
             raise OrnlError(f"O recorte trouxe {band} de {modis_date} fora do bruto: {value}")
         values[(modis_date, band)] = value
+    return values
+
+
+def _has_both_bands(values: Mapping[tuple[str, str], float], modis_date: str) -> bool:
+    return all((modis_date, band) in values for band in ORNL_BANDS)
+
+
+def _subset_values(payload: Any, block: OrnlBlock) -> dict[tuple[str, str], float]:
+    """Como `_band_values`, exigindo NDVI e qualidade em todas as datas do bloco."""
+    values = _band_values(payload)
     missing = [f"{d} {b}" for d in block.dates for b in ORNL_BANDS if (d, b) not in values]
     if missing:
         raise OrnlError(f"O recorte {block.label} veio sem {', '.join(missing)}.")
@@ -764,31 +789,45 @@ def check_ornl_subset(payload: Any, block: OrnlBlock) -> None:
     _subset_values(payload, block)
 
 
-def parse_ornl_subset(
-    payload: Any, block: OrnlBlock, point_id: str, band: NdviBand
+def _observations(
+    values: Mapping[tuple[str, str], float],
+    modis_dates: Iterable[str],
+    point: Point,
+    product: str,
+    point_id: str,
+    band: NdviBand,
 ) -> list[Observation]:
-    """Recorte conferido → observações, com o NDVI já multiplicado pela escala da ORNL.
+    """Valores brutos → observações, com o NDVI multiplicado pela escala da ORNL.
 
     O valor de preenchimento vira `None` (sem dado); o filtro de qualidade e de faixa é o mesmo do
-    AppEEARS (`build_ndvi_payload`).
+    AppEEARS (`build_ndvi_payload`). Data sem as duas bandas fica de fora.
     """
-    values = _subset_values(payload, block)
     observations: list[Observation] = []
-    for modis_date in block.dates:
+    for modis_date in modis_dates:
+        if not _has_both_bands(values, modis_date):
+            continue
         raw = values[(modis_date, ORNL_NDVI_BAND)]
         ndvi = None if raw == band.fill else round(raw * band.scale, NDVI_DECIMALS)
         observations.append(
             Observation(
                 point_id=point_id,
-                lat=block.point.lat,
-                lon=block.point.lon,
+                lat=point.lat,
+                lon=point.lon,
                 day=_modis_day(modis_date),
-                product=block.product,
+                product=product,
                 ndvi=ndvi,
                 quality=int(values[(modis_date, ORNL_QUALITY_BAND)]),
             )
         )
     return observations
+
+
+def parse_ornl_subset(
+    payload: Any, block: OrnlBlock, point_id: str, band: NdviBand
+) -> list[Observation]:
+    """Recorte conferido → observações das datas do bloco, com a escala aplicada."""
+    values = _subset_values(payload, block)
+    return _observations(values, block.dates, block.point, block.product, point_id, band)
 
 
 # --- ORNL DAAC: cliente, cache e extração -------------------------------------------------
@@ -823,10 +862,15 @@ class OrnlClient:
         self.last_seconds = 0.0
 
     def fetch(
-        self, path: str, params: dict[str, Any], check: Callable[[Any], object], label: str
+        self,
+        path: str,
+        params: dict[str, Any],
+        check: Callable[[Any], object],
+        label: str,
+        max_retries: int | None = None,
     ) -> str:
         request = HttpRequest(method="GET", url=f"{self._base_url}/{path}", params=params)
-        attempts = self._max_retries + 1
+        attempts = (self._max_retries if max_retries is None else max_retries) + 1
         problem = ""
         for attempt in range(attempts):
             if attempt:
@@ -919,11 +963,12 @@ class CachedOrnlFetcher:
         params: dict[str, Any],
         check: Callable[[Any], object],
         label: str,
+        max_retries: int | None = None,
     ) -> Any:
         cached = self._read_cached(path, check)
         if cached is not None:
             return cached
-        text = self._client.fetch(endpoint, params, check, label)
+        text = self._client.fetch(endpoint, params, check, label, max_retries)
         path.parent.mkdir(parents=True, exist_ok=True)
         partial = path.with_name(f"{path.name}.{os.getpid()}.part")
         partial.write_text(text, encoding="utf-8")
@@ -964,14 +1009,30 @@ class CachedOrnlFetcher:
             "kmLeftRight": 0,
         }
 
-    def subset(self, block: OrnlBlock) -> Any:
+    def subset(self, block: OrnlBlock, max_retries: int | None = None) -> Any:
         return self._get(
             self._subset_path(block),
             f"{block.product}/subset",
             self.subset_params(block),
             lambda payload: check_ornl_subset(payload, block),
             f"recorte {block.label}",
+            max_retries,
         )
+
+    def cached_values(self, point: Point, product: str) -> dict[tuple[str, str], float]:
+        """(data, banda) → valor de todos os recortes guardados do ponto e produto.
+
+        Lê por data, não pelo nome do bloco: mudar o `--datas-por-pedido` (ou dividir um bloco que
+        falhou) não perde o que já veio. Arquivo fora do formato é ignorado (pedido de novo).
+        """
+        values: dict[tuple[str, str], float] = {}
+        folder = self._point_dir(point) / product
+        for path in sorted(folder.glob("A*_A*.json")):
+            try:
+                values.update(_band_values(json.loads(path.read_text(encoding="utf-8"))))
+            except (ValueError, OrnlError):
+                self._log(f"Cache fora do formato em {path}; essas datas serão pedidas de novo.")
+        return values
 
     # --- só para o plano do --dry-run ---
 
@@ -982,9 +1043,6 @@ class CachedOrnlFetcher:
         payload = self._read_cached(self._dates_path(point, product), parse_ornl_dates)
         return None if payload is None else parse_ornl_dates(payload)
 
-    def is_subset_cached(self, block: OrnlBlock) -> bool:
-        return self._subset_path(block).is_file()
-
 
 @dataclass(frozen=True)
 class OrnlFetchResult:
@@ -993,45 +1051,85 @@ class OrnlFetchResult:
     scales: dict[str, float]
 
 
+class _FailureTracker:
+    """Guarda os recortes que falharam e desiste depois de `limit` seguidos (a ORNL caiu)."""
+
+    def __init__(self, limit: int, log: Callable[[str], None]) -> None:
+        self._limit = limit
+        self._log = log
+        self._consecutive = 0
+        self.failed: list[str] = []
+
+    def success(self) -> None:
+        self._consecutive = 0
+
+    def failure(self, block: OrnlBlock, exc: OrnlUnavailableError) -> None:
+        self._log(str(exc))
+        self.failed.append(block.label)
+        self._consecutive += 1
+        if self._consecutive >= self._limit:
+            raise OrnlUnavailableError(
+                f"{self._consecutive} recortes seguidos sem resposta: a ORNL parece fora do ar."
+            ) from exc
+
+
+def _fetch_block(
+    fetcher: CachedOrnlFetcher,
+    block: OrnlBlock,
+    tracker: _FailureTracker,
+    log: Callable[[str], None],
+) -> dict[tuple[str, str], float]:
+    """Pede o recorte; se falhar e tiver mais de uma data, divide em duas metades e pede cada uma.
+
+    Bloco de várias datas tenta `ORNL_RETRIES_BEFORE_SPLIT` vez(es) a mais antes de dividir (um
+    recorte menor cabe melhor nos ~60 s do proxy); bloco de uma data usa todas as retentativas e,
+    se ainda falhar, conta como falha.
+    """
+    single = len(block.dates) == 1
+    try:
+        payload = fetcher.subset(block, None if single else ORNL_RETRIES_BEFORE_SPLIT)
+    except OrnlUnavailableError as exc:
+        if single:
+            tracker.failure(block, exc)
+            return {}
+        half = (len(block.dates) + 1) // 2
+        log(f"{block.label}: sem resposta; divido em {half} + {len(block.dates) - half} datas.")
+        values = _fetch_block(fetcher, replace(block, dates=block.dates[:half]), tracker, log)
+        values.update(_fetch_block(fetcher, replace(block, dates=block.dates[half:]), tracker, log))
+        return values
+    tracker.success()
+    return _subset_values(payload, block)
+
+
 def fetch_ornl_observations(
     points: Sequence[Point],
     fetcher: CachedOrnlFetcher,
     dates_per_request: int,
     log: Callable[[str], None] = _log,
 ) -> OrnlFetchResult:
-    """Todos os recortes de jan–jul dos dois produtos, ponto a ponto.
+    """Todas as composições de jan–jul dos dois produtos, ponto a ponto.
 
-    Recorte sem resposta depois das retentativas fica de fora (e vai em `failed_blocks`); após
-    `ORNL_MAX_CONSECUTIVE_FAILURES` seguidos, desiste com `OrnlUnavailableError`.
+    Pede só as datas que ainda não estão no cache. Data sem resposta depois das retentativas e da
+    divisão fica de fora (o recorte vai em `failed_blocks`); após `ORNL_MAX_CONSECUTIVE_FAILURES`
+    seguidos, desiste com `OrnlUnavailableError`.
     """
     bands = {product: fetcher.ndvi_band(product) for product in PRODUCTS}
+    tracker = _FailureTracker(ORNL_MAX_CONSECUTIVE_FAILURES, log)
     observations: list[Observation] = []
-    failed: list[str] = []
-    consecutive = 0
     for index, point in enumerate(points):
         for product in PRODUCTS:
             dates = fetcher.season_dates(point, product)
-            for block_dates in plan_blocks(dates, dates_per_request):
+            values = fetcher.cached_values(point, product)
+            cached = [d for d in dates if _has_both_bands(values, d)]
+            for block_dates in plan_blocks(dates, dates_per_request, skip=cached):
                 block = OrnlBlock(point, product, block_dates)
-                try:
-                    payload = fetcher.subset(block)
-                except OrnlUnavailableError as exc:
-                    log(str(exc))
-                    failed.append(block.label)
-                    consecutive += 1
-                    if consecutive >= ORNL_MAX_CONSECUTIVE_FAILURES:
-                        raise OrnlUnavailableError(
-                            f"{consecutive} recortes seguidos sem resposta: "
-                            "a ORNL parece fora do ar."
-                        ) from exc
-                    continue
-                consecutive = 0
-                observations.extend(
-                    parse_ornl_subset(payload, block, _point_id(index), bands[product])
-                )
+                values.update(_fetch_block(fetcher, block, tracker, log))
+            observations.extend(
+                _observations(values, dates, point, product, _point_id(index), bands[product])
+            )
     return OrnlFetchResult(
         observations=observations,
-        failed_blocks=failed,
+        failed_blocks=tracker.failed,
         scales={product: band.scale for product, band in bands.items()},
     )
 
@@ -1048,25 +1146,25 @@ def ornl_plan_text(
     dates_per_request: int,
     pause_seconds: float,
 ) -> str:
-    """Plano do `--dry-run`: quantos pedidos, quantos já estão no cache e o tempo estimado.
+    """Plano do `--dry-run`: quantos pedidos faltam, o que já está no cache e o tempo estimado.
 
-    Sem a lista de datas no cache, conta pelo calendário do MODIS (`modis_calendar`).
+    Sem a lista de datas no cache, conta pelo calendário do MODIS (`modis_calendar`). Não conta as
+    retentativas nem as divisões de bloco.
     """
-    pending = sum(1 for product in PRODUCTS if not fetcher.is_bands_cached(product))
-    subsets = 0
+    bands = sum(1 for product in PRODUCTS if not fetcher.is_bands_cached(product))
+    dates_lists = subsets = composites = cached_composites = 0
     for point in points:
         for product in PRODUCTS:
             dates = fetcher.cached_season_dates(point, product)
             if dates is None:
-                pending += 1
+                dates_lists += 1
                 dates = modis_calendar(product)
-            for block_dates in plan_blocks(dates, dates_per_request):
-                subsets += 1
-                if not fetcher.is_subset_cached(OrnlBlock(point, product, block_dates)):
-                    pending += 1
-    bands_total = len(PRODUCTS)
-    dates_total = len(points) * len(PRODUCTS)
-    total = bands_total + dates_total + subsets
+            values = fetcher.cached_values(point, product)
+            cached = [d for d in dates if _has_both_bands(values, d)]
+            subsets += len(plan_blocks(dates, dates_per_request, skip=cached))
+            composites += len(dates)
+            cached_composites += len(cached)
+    pending = bands + dates_lists + subsets
     seconds = pending * (ORNL_MEASURED_SECONDS_PER_REQUEST + pause_seconds)
     pause = f"{pause_seconds:g}".replace(".", ",")
     return "\n".join(
@@ -1074,8 +1172,8 @@ def ornl_plan_text(
             f"NDVI pela ORNL DAAC ({ORNL_API_URL}), sem credencial.",
             f"Pontos: {len(points)} | produtos: {', '.join(PRODUCTS)} | {FIRST_YEAR} a "
             f"{LAST_YEAR}, janeiro a julho | até {dates_per_request} datas por pedido",
-            f"Pedidos: {total} ({bands_total} de bandas, {dates_total} de datas, {subsets} "
-            f"recortes); já no cache: {total - pending}; faltam: {pending}",
+            f"Pedidos que faltam: {pending} ({bands} de bandas, {dates_lists} de datas, "
+            f"{subsets} recortes) | composições já no cache: {cached_composites} de {composites}",
             f"Tempo estimado: ~{_duration(seconds)} (~{ORNL_MEASURED_SECONDS_PER_REQUEST:g} s por "
             f"pedido, medido de 19 a 57 s, mais {pause} s de pausa; cada 502 custa mais ~60 s e "
             "a retentativa)",
