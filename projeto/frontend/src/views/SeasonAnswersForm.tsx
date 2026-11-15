@@ -5,6 +5,7 @@ import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { CropId } from '../models/recomendacao'
 import type { CurrentChoice, SeasonAnswer, SeasonAnswers, SeasonRow, SeasonSatellite } from '../models/seasonAnswers'
+import type { Colheita } from '../models/talhao'
 import { nextAfterAnswer, nextSoyAnswer, soyState } from '../services/seasonAnswersService'
 import { afterSoyMonths, CURRENT_SEASON, seasonName, soyPeriod } from '../services/seasonService'
 import styles from './SeasonAnswersForm.module.css'
@@ -18,8 +19,10 @@ export type CurrentSeasonProps = {
   choice: CurrentChoice | null | undefined
   /** Tocar de novo na opção marcada devolve `null`. */
   onChoose: (choice: CurrentChoice | null) => void
-  /** A data da colheita escolhida na tela 2 (`data`, "AAAA-MM-DD"); sem ela, "no começo de 2027". */
+  /** A data da colheita escolhida na tela 2 (`data`, "AAAA-MM-DD"); sem ela, a época (`harvestBand`) ou "no começo de 2027". */
   harvestDate?: string | null
+  /** A época da colheita da tela 2 (`colheita`): vale só sem `harvestDate` ("colheita prevista no meio de fevereiro"). */
+  harvestBand?: Colheita | null
   /** "Trocar data": o link para `/quando` com o fluxo; sem ele, o link não aparece. */
   changeDateTo?: string
 }
@@ -109,6 +112,12 @@ function CurrentSeason({ t, lang, current }: { t: Messages; lang: Lang; current:
   const name = seasonName(CURRENT_SEASON)
   const year = String(CURRENT_SEASON)
   const date = current.harvestDate ?? null
+  const band = current.harvestBand ?? null
+  const harvest = date
+    ? s.harvestExpected(formatFullDate(lang, date))
+    : band
+      ? s.harvestExpectedBand(t.harvest[band].inline)
+      : s.harvestExpectedEarly(year)
   const choose = (choice: CurrentChoice) => current.onChoose(current.choice === choice ? null : choice)
   const chips: Chip[] = [
     ...OPTIONS.map(
@@ -134,7 +143,7 @@ function CurrentSeason({ t, lang, current }: { t: Messages; lang: Lang; current:
           <CheckIcon size={16} />
           <span>
             <b>{s.soyPlanted}</b>
-            <span>{date ? s.harvestExpected(formatFullDate(lang, date)) : s.harvestExpectedEarly(year)}</span>
+            <span>{harvest}</span>
             {current.changeDateTo && (
               <Link to={current.changeDateTo} className={styles.changeDate}>
                 {s.changeDate}

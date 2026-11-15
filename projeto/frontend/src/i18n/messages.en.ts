@@ -44,6 +44,7 @@ export const en = {
     soyPlanted: 'Soybeans planted',
     harvestExpected: (date: string) => `harvest expected on ${date}`,
     harvestExpectedEarly: (year: string) => `harvest expected in early ${year}`,
+    harvestExpectedBand: (band: string) => `harvest expected in ${band}`,
     changeDate: 'Change date',
     currentQuestion: (date: string, year: string) => `after harvest (${date}) until July ${year}: what you plan to plant`,
     currentQuestionNoDate: (year: string) => `after harvest until July ${year}: what you plan to plant`,

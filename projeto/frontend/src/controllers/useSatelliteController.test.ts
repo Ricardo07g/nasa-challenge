@@ -143,15 +143,17 @@ describe('useSatelliteController (tela 4, raio-X e últimas safras)', () => {
       expect(result.current.seasons.current).toEqual({
         choice: 'sorgo',
         harvestDate: '2027-03-03',
+        harvestBand: 'meio',
         changeDateTo: `/quando?${flow}&data=2027-03-03&safras=2025:pousio&pensa=sorgo`,
       })
       expect(result.current.seasons.answered).toBe(1)
     })
 
-    it('com só a época da colheita, a safra atual fica sem data', async () => {
+    it('com só a época da colheita, a safra atual fica sem data e com a época da URL', async () => {
       const { result } = await ready()
 
       expect(result.current.seasons.current.harvestDate).toBeNull()
+      expect(result.current.seasons.current.harvestBand).toBe('meio')
     })
 
     it('responder uma safra grava "safras" na URL e tira o "confirmadas" dos links antigos', async () => {
