@@ -1,6 +1,7 @@
 """Replay de uma safrinha passada no ponto (P4, plano de evolução 4.4).
 
-Repete a chuva e o calor de um ano da série do NASA POWER com a opção que o /recomendacao
+Repete a chuva (GPM IMERG; nos anos sem IMERG, NASA POWER) e o calor (NASA POWER) de um ano da
+série guardada com a opção que o /recomendacao
 escolhe para o ponto e a semeadura da faixa de colheita, e devolve os avisos que o produtor
 teria recebido (regras do `CropAlertService`, as mesmas do acompanhamento diário do P6).
 """

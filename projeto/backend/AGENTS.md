@@ -469,7 +469,7 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **previsão do ENSO** (`FileEnsoForecastRepository`, `ENSO_PREVISAO_PATH`): a chance oficial de
     El Niño, neutro e La Niña da NOAA CPC na estação do outono da safrinha (`sinal_enso.estacao_previsao`
     do `regras.yaml`: FMA, fevereiro a abril). **Sem o arquivo, sem a estação nele ou com ela já
-    passada, o `sinal` sai `null`** ("Ainda não conectado" na tela 7);
+    passada, o `sinal` sai `null`** (o cartão do sinal não aparece no Plano);
   - **ONI de cada ano** (`FileEnsoRepository`, `ONI_PATH`, tarefa 0035) com o `bom` de cada ano do
     `anos_detalhe` da opção do 1º ano do Plano A: em quantos anos daquela fase ela deu certo;
   - **o Plano A e o Plano B são os da tela do Plano** (tarefa 0049, S9): o service recebe as culturas
@@ -742,7 +742,10 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - `verde` (`NdviStripService.green`): `ultimo_ndvi`/`ultimo_data` (a última leitura da série do
     ponto) e `pico_ndvi`/`pico_data`/`safra` (o maior NDVI da janela do pico da soja,
     `regiao_ndvi.pico_inicio` a `pico_fim`, no último ano da série); sem série, o pico do mapa da soja
-    recente (RF-24).
+    recente (RF-24). `soja_vista` (tarefa 0049): o satélite viu a soja naquele verão, pela regra da
+    faixa do histórico (`FieldHistoryService.soy_harvest_date`: pico e colheita; sem série, o `vista`
+    do mapa da soja recente); `false` = o pico é só o maior verde de jan–mar e a tela não diz "pico da
+    soja"; `null` sem leitura do verão.
   - `chuva`: `media_mm` de `raio_x.chuva_inicio` a `chuva_fim` (a temporada guardada), `anos`,
     `fonte` e `fim_das_chuvas` (o mesmo objeto do `/talhao`).
   - `veranico`: `dias`, `ano` (empate: o mais recente), `inicio` ("MM-DD"), `total_anos`, `fonte`.
