@@ -61,8 +61,8 @@ SOIL_CAD_BY_TEXTURE: Final[dict[str, float]] = {
 NDVI_SCALE_FACTOR: Final[float] = 0.0001
 NDVI_DECIMALS: Final[int] = 4  # precisão do MOD13Q1 (fator 0,0001): tira o ruído do float
 MIN_NDVI_YEARS_FOR_SUGGESTION: Final[int] = 5
-EARLY_HARVEST_DOY_LIMIT: Final[int] = 41  # Feb 10
-MID_HARVEST_DOY_LIMIT: Final[int] = 53  # Feb 22
+# As faixas de colheita (até 10/fev cedo, até 20/fev meio) ficam no regras.yaml, grupo colheita
+# (tarefa 0042): a data exata da tela 3 e a faixa sugerida pelo NDVI usam a mesma regra.
 
 # Reference Year & Sowing Dates by Harvest Band (US-02: harvest + 3 days)
 REFERENCE_SOWING_YEAR: Final[int] = 2027
