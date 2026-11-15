@@ -141,6 +141,24 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   depois de confirmar as safras, "Compartilhar com a comunidade" (`views/ShareSeasons.tsx`, estado no
   `useSatelliteController`) grava o relato de plantio de cada safra confirmada. Os campos dos relatos
   ficam em `views/CommunityForms.tsx`, usados pelas duas telas.
+- **Avisos (`/avisos`, tarefa 0046 do backend, RF-31):** o contrato está em `models/avisos.ts`; as regras (o que vira
+  aviso, o nível e o contador) ficam no backend (`GET /api/avisos`), e o front só escreve as frases (bloco `alerts`
+  das mensagens, montadas em `views/alertTexts.ts` com os `valores` de cada `tipo`). **Ponto salvo no aparelho, sem
+  cadastro:** `repositories/savedPointRepository.ts` guarda no `localStorage` (chave `raiz-orbital.avisos.ponto`,
+  toda leitura e escrita em try/catch; sem `localStorage`, vale só para a visita) o último ponto do fluxo com a
+  colheita, o solo e as safras confirmadas, **nunca a fazenda de exemplo** (`exemplo=1`). Quem guarda é o
+  `controllers/useAlertsBadge.ts`, usado pelo `useShellController` (toda tela com o ponto na URL). A tela vale para o
+  ponto da URL ou, sem ele, para o salvo; sem nenhum, pede "Marcar minha lavoura" (`/onde`). O `avisosService` faz um
+  pedido por ponto e idioma na visita (o botão do cabeçalho e a tela usam o mesmo). **Botão do cabeçalho:** "Avisos"
+  logo depois de "Comunidade", com o `contador` da API num selo e no nome acessível ("Avisos: 2 avisos ativos");
+  sem ponto, sem aviso ou com falha, sem número. **Tela:** grupos na ordem Agora, O que mudou na sua área, Fora do
+  comum e Perto de você (grupo `null` não aparece; grupo vazio = "Nada fora do normal." com a última leitura); cada
+  aviso com o nível escrito e um ícone (triângulo em "Atenção", olho em "Fique de olho"; a cor só reforça), o que o
+  dado mostra, "O que fazer:", a fonte e a data; os relatos com "Relato de vizinho, não confirmado". Fora da
+  safrinha, o link "Ver como teriam sido os avisos em <ano>" vai para `/resposta?<parâmetros do fluxo>&ano=<ano>`
+  (nunca para `/safra-passada`). O rodapé fixo "Alertas oficiais" aparece sempre (com ou sem ponto), com os botões
+  `sms:40199`, `https://wa.me/556120344611`, `tel:193` e `tel:199` e o link `/guia/alertas-defesa-civil`. Até 480 px,
+  o cabeçalho fica mais justo e, se não couber, os botões descem uma linha.
 - **Gráfico com dado real:** tudo o que é desenhado vem da API, com a fonte e o período na legenda (ex.:
   "Média de 2005 a 2024, NASA POWER"). O mock traz o mesmo campo, no formato do contrato.
 - **Guia (`/guia`, tarefa 0048, RF-26):** os artigos são arquivos Markdown em
