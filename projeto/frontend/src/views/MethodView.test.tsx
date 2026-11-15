@@ -91,11 +91,11 @@ describe('MethodView (tela 9)', () => {
 
     const sources = screen.getByRole('region', { name: 'De onde vem cada dado' })
     expect(within(sources).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
-      'Chuva e calor, dia a dia',
+      'Calor e gasto de água da lavoura (ETo), dia a dia; a chuva, só nos anos sem o GPM IMERG',
       'Tipo de terra',
     ])
     expect(sources).toHaveTextContent('NASA POWER')
-    expect(sources).not.toHaveTextContent('GPM IMERG')
+    expect(sources).not.toHaveTextContent('GPM IMERG (NASA)') // o cartão do IMERG não aparece
     expect(sources).not.toHaveTextContent('NEX-GDDP-CMIP6')
     expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
   })

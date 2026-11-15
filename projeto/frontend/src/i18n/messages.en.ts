@@ -473,7 +473,6 @@ export const en = {
     prefer: 'If you prefer…',
   },
   options: {
-    title: 'All options',
     sortLabel: 'Put first the best at:',
     rank: (position: number) => `${position}.`,
     legend: (period: string) =>
@@ -792,30 +791,21 @@ export const en = {
     regionNote: (pct: number) =>
       `Estimated from the MODIS satellite (NASA), 250 m pixels. For ${pct}% of the area the satellite could not tell. We only show the regional total, never a single farm.`,
     bridge: 'The satellite shows how much regional land stays idle. Neighbors tell you whether planting was worthwhile.',
-    communityTitle: 'What neighbors say',
-    illustrative: 'Illustrative values',
     subtitle: (km: number, place: string, count: number) =>
       `Within ${km} km of ${place} · ${count} growers taking part`,
-    neighborsTitle: (year: number) => `What neighbors planted after soybeans in ${year}`,
     liked: (liked: number, total: number) => `${liked} of ${total} liked it`,
     dotsLabel: (liked: number, total: number) => `${liked} of ${total} neighbors liked it`,
-    dotsCaption: 'Each dot is a neighbor. Filled = liked the result.',
     tellMine: 'Tell how mine went',
     mapLabel: 'Region map with rain gauges and what each neighbor planted',
     legendGauge: 'Rain gauge',
     legendPlanted: 'Planted',
     legendIdle: 'Idle',
     rainTitle: 'It rained here',
-    yesterday: 'yesterday',
     reading: (gauge: number, satellite: number) => `${gauge} mm · satellite ${satellite} mm`,
     rainNote:
       "Your rain gauges correct the satellite's rain in the region and improve everyone's risk score.",
-    registerRain: "Record today's rain",
     privacy:
       'The map shows the region, never the exact location of farms. Names only appear with permission. Illustrative values.',
-    simulated: 'Simulated screen: recording is not connected yet.',
-    demoOnly: 'This is a demonstration. No data will be sent or saved.',
-    // Community reports without sign-up (remodeling section 7, task 0047)
     reportsSubtitle: (km: number) => `What neighbors report, within ${km} km of your field`,
     tellTitle: 'Tell what happened there',
     tellHint: 'No sign-up, no name and no typing text: just taps.',
@@ -967,7 +957,11 @@ export const en = {
     },
     sourcesTitle: 'Where each piece of data comes from',
     sources: {
-      nasa_power: { what: 'Rain and heat, day by day', source: 'NASA POWER', scale: 'about 50 km, daily' },
+      nasa_power: {
+        what: 'Heat and crop water use (ETo), day by day; rain only in the years without GPM IMERG',
+        source: 'NASA POWER',
+        scale: 'about 50 km, daily',
+      },
       gpm_imerg: { what: 'More detailed rain', source: 'GPM IMERG (NASA)', scale: '10 km squares, daily' },
       smap: { what: 'Soil moisture', source: 'SMAP L4 (NASA)', scale: '9 km, every 3 hours' },
       modis: { what: 'Field history', source: 'MODIS (NASA)', scale: '250 m, every 16 days' },

@@ -498,7 +498,6 @@ export const pt = {
     prefer: 'Se você prefere…',
   },
   options: {
-    title: 'Todas as opções',
     sortLabel: 'Colocar na frente quem é melhor em:',
     rank: (position: number) => `${position}º`,
     legend: (period: string) =>
@@ -826,31 +825,22 @@ export const pt = {
     regionNote: (pct: number) =>
       `Estimativa pelo satélite MODIS (NASA), pixel de 250 m. Em ${String(pct).replace('.', ',')}% da área o satélite não conseguiu dizer. Mostramos só o total da região, nunca uma fazenda.`,
     bridge: 'O satélite mostra quanto a região deixa a terra parada. Os vizinhos contam se valeu a pena plantar.',
-    communityTitle: 'O que os vizinhos contam',
-    illustrative: 'Valores ilustrativos',
     subtitle: (km: number, place: string, count: number) =>
       `Até ${km} km de ${place} · ${count} produtores participando`,
-    neighborsTitle: (year: number) => `O que os vizinhos plantaram depois da soja em ${year}`,
     liked: (liked: number, total: number) =>
       total === 1 ? `${liked} de 1 gostou` : `${liked} de ${total} gostaram`,
     dotsLabel: (liked: number, total: number) => `${liked} de ${total} vizinhos gostaram`,
-    dotsCaption: 'Cada bolinha é um vizinho. Cheia = gostou do resultado.',
     tellMine: 'Contar como foi a minha',
     mapLabel: 'Mapa da região com pluviômetros e o que cada vizinho plantou',
     legendGauge: 'Pluviômetro',
     legendPlanted: 'Plantou',
     legendIdle: 'Parado',
     rainTitle: 'Choveu aqui',
-    yesterday: 'ontem',
     reading: (gauge: number, satellite: number) => `${gauge} mm · satélite ${satellite} mm`,
     rainNote:
       'O pluviômetro de vocês corrige a chuva do satélite na região e melhora a conta de risco de todo mundo.',
-    registerRain: 'Registrar a chuva de hoje',
     privacy:
       'O mapa mostra a região, nunca a posição exata das fazendas. Nome só aparece com autorização. Valores ilustrativos.',
-    simulated: 'Tela simulada: o registro ainda não está ligado.',
-    demoOnly: 'Esta é uma demonstração. Nenhum dado será enviado ou guardado.',
-    // Relatos da comunidade sem cadastro (seção 7 da remodelagem, tarefa 0047)
     reportsSubtitle: (km: number) => `O que os vizinhos contam, até ${km} km da sua lavoura`,
     tellTitle: 'Conte o que aconteceu aí',
     tellHint: 'Sem cadastro, sem nome e sem texto: só toques.',
@@ -1010,7 +1000,11 @@ export const pt = {
     sourcesTitle: 'De onde vem cada dado',
     /** Uma por fonte do produto; a tela mostra só as que a API manda de fato (decisão D2). */
     sources: {
-      nasa_power: { what: 'Chuva e calor, dia a dia', source: 'NASA POWER', scale: 'cerca de 50 km, por dia' },
+      nasa_power: {
+        what: 'Calor e gasto de água da lavoura (ETo), dia a dia; a chuva, só nos anos sem o GPM IMERG',
+        source: 'NASA POWER',
+        scale: 'cerca de 50 km, por dia',
+      },
       gpm_imerg: { what: 'Chuva mais detalhada', source: 'GPM IMERG (NASA)', scale: 'quadrados de 10 km, por dia' },
       smap: { what: 'Umidade da terra', source: 'SMAP L4 (NASA)', scale: '9 km, a cada 3 horas' },
       modis: { what: 'Histórico do talhão', source: 'MODIS (NASA)', scale: '250 m, a cada 16 dias' },
