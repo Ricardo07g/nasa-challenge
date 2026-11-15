@@ -483,3 +483,54 @@ def test_should_refuse_an_alerts_screen_number_without_source(tmp_path: Path, fi
 
     with pytest.raises(ValueError, match=f"avisos_tela.{field}"):
         YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
+def test_should_load_the_chain_rules_of_the_three_year_plan() -> None:
+    # Tarefa 0056 (pacote 2, tela 5): a sugestão em cadeia do plano de 3 anos pesa o ano anterior.
+    # Números e listas são hipótese do time, a revisar pela agrônoma.
+    regras = YamlRulesRepository(SHIPPED).get_rules()
+
+    cadeia = regras.plano_cadeia
+    assert cadeia.bonus_cobrir_depois_do_parado == 10.0
+    assert cadeia.bonus_quebrar_nematoide_depois_do_milho == 5.0
+    assert cadeia.bonus_variar_funcao == 3.0
+    assert cadeia.culturas_cobertura_rapida == frozenset({"milheto"})
+    assert cadeia.culturas_que_multiplicam_nematoide == frozenset(
+        {"milho_safrinha", "milho_braquiaria"}
+    )
+    # As supressoras do nematoide continuam uma regra só (rotacao, PRD 7.7; tarefa 0049)
+    assert not hasattr(cadeia, "culturas_supressoras_nematoide")
+
+
+@pytest.mark.parametrize(
+    "field", ["bonus_cobrir_depois_do_parado", "culturas_cobertura_rapida", "bonus_variar_funcao"]
+)
+def test_should_refuse_a_chain_rule_without_source(tmp_path: Path, field: str) -> None:
+    raw = _shipped_raw()
+    del raw["plano_cadeia"][field]["fonte"]
+
+    with pytest.raises(ValueError, match=f"plano_cadeia.{field}"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
+def test_should_load_the_reason_of_each_suggested_year_in_portuguese_and_english() -> None:
+    # O "Por quê:" de cada ano sugerido (tela 5): uma frase por regra que pesou.
+    frases = YamlRulesRepository(SHIPPED).get_rules().frases_plano
+
+    assert set(frases) == {"pt", "en"}
+    assert frases["pt"].cobrir_depois_do_parado == "a terra ficou descoberta; cobre rápido"
+    assert frases["pt"].aguenta_seca.format(motivo="x") == "x e aguenta a seca"
+    assert "{cultura_fora}" in frases["en"].prazo and "{limite}" in frases["en"].prazo
+    for lang in ("pt", "en"):
+        textos = vars(frases[lang])
+        assert set(textos) == {
+            "cobrir_depois_do_parado",
+            "quebrar_nematoide_depois_do_milho",
+            "grao_depois_da_cobertura",
+            "cobertura_depois_do_grao",
+            "variar_funcao",
+            "prazo",
+            "melhor_nota",
+            "aguenta_seca",
+        }
+        assert all(texto.strip() for texto in textos.values())

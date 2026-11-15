@@ -426,6 +426,42 @@ class RegrasChuvaAproveitada:
 
 
 @dataclass(frozen=True)
+class RegrasPlanoCadeia:
+    """Sugestão em cadeia do plano de 3 anos (tarefa 0056): o que pesa o ano anterior.
+
+    Pontos somados à nota do plano (como o bônus de diversidade do PRD 7.7), por ano sugerido:
+    depois de deixar parado, uma cobertura que cobre rápido; depois do milho, uma supressora do
+    nematoide (`rotacao.culturas_supressoras_nematoide`); e uma função diferente da do ano
+    anterior (`rotacao.funcoes`). Hipótese do time, a revisar pela agrônoma.
+    """
+
+    bonus_cobrir_depois_do_parado: float
+    bonus_quebrar_nematoide_depois_do_milho: float
+    bonus_variar_funcao: float
+    culturas_cobertura_rapida: frozenset[str]
+    culturas_que_multiplicam_nematoide: frozenset[str]
+
+
+@dataclass(frozen=True)
+class FrasesPlano:
+    """O "Por quê:" de cada ano sugerido do plano de 3 anos em uma língua (tarefa 0056).
+
+    Sem o nome da cultura: a tela mostra o nome logo antes ("Para 2028/29 agora sugerimos
+    Milheto: a terra ficou descoberta; cobre rápido e aguenta a seca.").
+    `prazo`: {cultura_fora} {limite_fora} {limite}; `aguenta_seca`: {motivo}.
+    """
+
+    cobrir_depois_do_parado: str
+    quebrar_nematoide_depois_do_milho: str
+    grao_depois_da_cobertura: str
+    cobertura_depois_do_grao: str
+    variar_funcao: str
+    prazo: str
+    melhor_nota: str
+    aguenta_seca: str
+
+
+@dataclass(frozen=True)
 class Regras:
     """Todas as regras do motor, versão 0 (PRD 7)."""
 
@@ -457,3 +493,5 @@ class Regras:
     enso_acerto: RegrasEnsoAcerto
     plano_b: RegrasPlanoB
     chuva_aproveitada: RegrasChuvaAproveitada
+    plano_cadeia: RegrasPlanoCadeia
+    frases_plano: dict[str, FrasesPlano]  # "pt" e "en"

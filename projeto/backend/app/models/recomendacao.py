@@ -221,7 +221,8 @@ class ForaDaJanelaOpcao:
 class ObjetivoResultado:
     """Ordem das opções e plano sugerido para um objetivo do produtor (seção 5.1, tarefa 0044).
 
-    `ordem`: as opções na janela, da melhor para a pior no objetivo. `plano`: os 3 anos, começando
+    `ordem`: as opções na janela, da melhor para a pior no objetivo; depois, as fora do prazo do
+    ZARC, na mesma regra (tarefa 0056). `plano`: os 3 anos (só culturas no prazo), começando
     pela 1ª da ordem (`RotationPlanService.best_plan_starting_with`). `nota_plano`: a nota do plano
     pela regra do PRD 7.7 (média das notas finais + diversidade), comparável entre os objetivos.
     """
@@ -279,3 +280,10 @@ class Recomendacao:
     objetivos: Mapping[str, ObjetivoResultado] = field(default_factory=dict)
     clima_futuro: ClimaFuturo | None = None
     geada: AlertaGeada | None = None
+    # Tarefa 0056 (tela 5): as culturas fora do prazo do ZARC também com a conta do motor, na mesma
+    # semeadura (`na_janela` = False), da maior nota final para a menor. Ficam fora da sugestão,
+    # das alternativas e dos planos sugeridos (o seguro não cobre); `opcoes` continua só com as no
+    # prazo.
+    opcoes_fora_do_prazo: tuple[ResultadoOpcao, ...] = ()
+    # Notas do pousio nas combinações do PRD 7.7 (o plano em cadeia usa as mesmas)
+    notas_pousio: NotasOpcao | None = None

@@ -16,8 +16,8 @@ class _Frozen(BaseModel):
 class AnoPlanoSchema(_Frozen):
     cultura: str  # id do culturas.yaml (com o pousio)
     nome: str
-    na_janela: bool  # fora da janela de plantio, os números do motor são null
-    anos_bons: int | None  # anos sem aperto (deu certo); null no pousio e fora da janela
+    na_janela: bool  # false fora do prazo do ZARC (os números do motor vêm desde a tarefa 0056)
+    anos_bons: int | None  # anos sem aperto (deu certo); null no pousio
     total_anos: int | None
     futuro_anos_bons: int | None  # 2041-2060, média dos modelos (null sem CMIP6)
     sede: str | None  # pouca, media ou muita
@@ -25,6 +25,11 @@ class AnoPlanoSchema(_Frozen):
     deixa_nitrogenio: bool
     quebra_nematoide: bool
     usa_mm: int | None  # mediana da ETr no ciclo (o que a planta usou da água)
+    # Tarefa 0056 (tela 5): passou do prazo do ZARC (o seguro não cobre); o ano é do produtor
+    # (false nos anos sugeridos de /plano/sugestao); o porquê de um ano sugerido (null nos fixos)
+    fora_do_prazo: bool = False
+    fixo: bool = True
+    motivo: str | None = None
 
 
 class NotasPlanoSchema(_Frozen):
@@ -84,7 +89,7 @@ class PlanoResponse(_Frozen):
     chuva: ChuvaAproveitadaSchema | None
     plano_ab: PlanoABSchema | None
     # Sinal do outono com o Plano A e o Plano B desta tela (tarefa 0049); o mesmo formato do
-    # `sinal` do /recomendacao. null sem a previsão do ENSO, no pousio ou fora da janela.
+    # `sinal` do /recomendacao. null sem a previsão do ENSO ou no pousio.
     sinal: SinalSchema | None = None
 
     @classmethod

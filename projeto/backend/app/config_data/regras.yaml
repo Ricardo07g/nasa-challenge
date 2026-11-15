@@ -669,3 +669,56 @@ chuva_aproveitada:
   fim:
     valor: "07-31"
     fonte: "Pedido da remodelagem, seção 5.6: 'entre a colheita da soja e o fim de julho' (a série guardada vai até 31/jul; 30/jul nos anos bissextos)"
+
+plano_cadeia:
+  # Sugestão em cadeia do plano de 3 anos (pacote 2, tela 5; tarefa 0056). O produtor fixa o 1º ano
+  # (ou o 1º e o 2º) e o motor sugere os seguintes com a mesma conta do PRD 7.7 (média das notas
+  # finais + bônus de diversidade, as mesmas restrições, só culturas no prazo do ZARC) mais os pontos
+  # abaixo em cada ano sugerido, olhando o ano anterior. HIPÓTESE DO TIME, A REVISAR PELA AGRÔNOMA:
+  # os pontos, as listas e as frases do grupo `frases_plano`. Na lavoura de demonstração (15/11), com
+  # 10 pontos o milheto passa a crotalária depois da terra parada na colheita do meio de fevereiro
+  # (a crotalária ganha +5 de diversidade a mais; com menos de 7,5 pontos, ela ficaria).
+  bonus_cobrir_depois_do_parado:
+    valor: 10.0
+    fonte: "Hipótese do time, a revisar pela agrônoma (tela 5 do pacote 2: 'depois de deixar parado, uma cobertura que cubra rápido'): pontos na nota do plano para a cultura de `culturas_cobertura_rapida` no ano seguinte a um pousio que o produtor escolheu (o motor não sugere deixar parado para ganhar estes pontos), o mesmo tamanho do bônus de 3 funções do PRD 7.7"
+  bonus_quebrar_nematoide_depois_do_milho:
+    valor: 5.0
+    fonte: "Hipótese do time, a revisar pela agrônoma (tela 5: 'quebrar o nematoide depois do milho'): pontos para uma supressora do nematoide (rotacao.culturas_supressoras_nematoide, PRD 7.7) no ano seguinte a uma cultura de `culturas_que_multiplicam_nematoide`, o tamanho do bônus de 2 funções do PRD 7.7"
+  bonus_variar_funcao:
+    valor: 3.0
+    fonte: "Hipótese do time, a revisar pela agrônoma (tela 5: 'diversidade de função'): pontos quando a cultura não repete nenhuma função do ano anterior (rotacao.funcoes: grão, cobertura gramínea, cobertura leguminosa; o pousio não tem função). Menor que o bônus de diversidade do PRD 7.7, que já conta as funções do plano inteiro"
+  culturas_cobertura_rapida:
+    valor: [milheto]
+    fonte: "Hipótese do time, a revisar pela agrônoma: o milheto é a cobertura que fecha a terra mais rápido entre as 6 opções (o protótipo da tela 5 sugere o milheto depois da terra parada); a crotalária spectabilis começa devagar e a braquiária vem junto com o milho"
+  culturas_que_multiplicam_nematoide:
+    valor: [milho_safrinha, milho_braquiaria]
+    fonte: "Hipótese do time, a revisar pela agrônoma (tela 5: 'quebrar o nematoide depois do milho'): o milho multiplica o nematoide das lesões; o sorgo fica de fora até a agrônoma dizer"
+
+# O "Por quê:" de cada ano sugerido do plano de 3 anos (tarefa 0056), sem IA generativa.
+# RASCUNHO: agrônoma revisar. Uma frase pela regra que pesou, nesta ordem: cobrir depois do parado,
+# quebrar o nematoide depois do milho, prazo do ZARC, variar a função (grão depois de cobertura,
+# cobertura depois de grão ou outra troca); sem nenhuma, a melhor nota. Com a sede "pouca" da linha
+# "Água" (grupo agua), a frase ganha o `aguenta_seca`. Sem o nome da cultura: a tela mostra o nome
+# logo antes do "Por quê:".
+#   prazo: {cultura_fora} (a cultura que ganharia sem o prazo) {limite_fora} e {limite} (o prazo
+#     do ZARC de cada uma, "28/02" / "Feb 28")
+#   aguenta_seca: {motivo} (a frase da regra)
+frases_plano:
+  pt:
+    cobrir_depois_do_parado: "a terra ficou descoberta; cobre rápido"
+    quebrar_nematoide_depois_do_milho: "quebra o ciclo do nematoide que o milho multiplica"
+    grao_depois_da_cobertura: "dá grão para vender depois de um ano cuidando da terra"
+    cobertura_depois_do_grao: "cuida da terra depois de um ano de grão"
+    variar_funcao: "varia a função da planta na rotação"
+    prazo: "{cultura_fora} passou do prazo do ZARC ({limite_fora}); esta cabe no prazo (até {limite})"
+    melhor_nota: "tem a melhor nota do motor para esta colheita"
+    aguenta_seca: "{motivo} e aguenta a seca"
+  en:
+    cobrir_depois_do_parado: "the soil was left bare; it covers it fast"
+    quebrar_nematoide_depois_do_milho: "it breaks the nematode cycle that corn builds up"
+    grao_depois_da_cobertura: "it gives grain to sell after a year caring for the soil"
+    cobertura_depois_do_grao: "it cares for the soil after a year of grain"
+    variar_funcao: "it varies the role of the crop in the rotation"
+    prazo: "{cultura_fora} is past the ZARC deadline ({limite_fora}); this one fits (until {limite})"
+    melhor_nota: "it has the engine's best score for this harvest"
+    aguenta_seca: "{motivo} and handles drought"

@@ -133,6 +133,14 @@ describe('scoreRows (tela 9)', () => {
     expect(rows.map((row) => row.id)).toEqual(['milho_braquiaria', 'sorgo', 'milho_safrinha', 'crotalaria'])
     expect(rows[0]).toEqual({ id: 'milho_braquiaria', nome: 'milho_braquiaria', notas: options[1].notas })
   })
+
+  it('deixa de fora as culturas fora do prazo (o /recomendacao passou a trazer, tarefa 0056)', () => {
+    const fora = { ...options[0], id: 'milheto' as const, nome: 'milheto', na_janela: false }
+    const rows = scoreRows({ opcoes: [...options, fora] } as Recomendacao)
+
+    expect(rows.map((row) => row.id)).not.toContain('milheto')
+    expect(rows).toHaveLength(4)
+  })
 })
 
 describe('sem "Comece por um pedaço" (tarefa 0040: nenhum valor em reais)', () => {

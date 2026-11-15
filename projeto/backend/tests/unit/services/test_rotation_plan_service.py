@@ -323,6 +323,147 @@ def test_should_keep_the_nematode_rule_in_the_objective_plan() -> None:
     assert {"crotalaria", "milheto"} & set(plano)
 
 
+# Notas finais da lavoura de demonstração na colheita do meio de fevereiro (15/11/2026), para os
+# testes da cadeia; o pousio com CMIP6 (segurança 100, futuro 100, solo e renda 0) fica com 45.
+MEIO = [
+    _make_option("milho_braquiaria", 72.5),
+    _make_option("milho_safrinha", 65.0),
+    _make_option("sorgo", 65.0),
+    _make_option("crotalaria", 64.0),
+    _make_option("milheto", 56.5),
+]
+POUSIO_MEIO = NotasOpcao(seguranca=100.0, futuro=100.0, solo=0.0, renda=0.0, final=45.0)
+
+
+@pytest.mark.parametrize("first", ["milho_braquiaria", "sorgo", "milheto", "crotalaria"])
+@pytest.mark.parametrize("allow_fallow", [True, False])
+def test_should_give_the_same_plan_as_before_with_a_one_year_prefix_and_no_chain(
+    first: str, allow_fallow: bool
+) -> None:
+    # Tarefa 0056: a generalização para um prefixo fixo não muda o plano de antes (tarefa 0044).
+    service = RotationPlanService()
+    for axis in (None, lambda notas: notas.solo, lambda notas: notas.seguranca):
+        antes = service.best_plan_starting_with(
+            first, OBJECTIVE_OPTIONS, POUSIO, axis=axis, allow_fallow=allow_fallow
+        )
+        depois = service.best_plan_with_prefix(
+            (first,), OBJECTIVE_OPTIONS, POUSIO, axis=axis, allow_fallow=allow_fallow
+        )
+        assert depois == antes
+
+
+def test_should_keep_both_fixed_years_and_choose_only_the_third() -> None:
+    service = RotationPlanService()
+
+    plano = service.best_plan_with_prefix(("sorgo", "milheto"), OBJECTIVE_OPTIONS, POUSIO)
+
+    assert plano[:2] == ("sorgo", "milheto")
+    # sorgo (grão) + milheto (gramínea) + crotalária (leguminosa): +10 de diversidade
+    assert plano[2] == "crotalaria"
+
+
+def test_should_keep_a_fixed_crop_that_is_not_an_option_without_suggesting_it_again() -> None:
+    # O produtor pode fixar uma cultura fora do prazo do ZARC (ela não está nas opções que podem
+    # ser sugeridas); os anos seguintes só usam as opções e o pousio.
+    service = RotationPlanService()
+    opcoes = [o for o in MEIO if o.id in ("sorgo", "milheto")]
+
+    plano = service.best_plan_with_prefix(("milho_braquiaria",), opcoes, POUSIO_MEIO)
+
+    assert plano[0] == "milho_braquiaria"
+    assert set(plano[1:]) <= {"sorgo", "milheto", "pousio"}
+
+
+def test_should_never_suggest_a_third_fallow_in_a_row() -> None:
+    service = RotationPlanService()
+
+    plano = service.best_plan_with_prefix(("pousio", "pousio"), MEIO, POUSIO_MEIO, chain=True)
+
+    assert plano[2] != "pousio"
+
+
+def test_should_keep_the_nematode_rule_with_a_fixed_prefix() -> None:
+    service = RotationPlanService()
+
+    plano = service.best_plan_with_prefix(
+        ("milho_braquiaria", "sorgo"), MEIO, POUSIO_MEIO, nematoide=True
+    )
+
+    assert plano[2] in {"crotalaria", "milheto"}
+
+
+@pytest.mark.parametrize(
+    ("prev", "cur", "rules"),
+    [
+        ("pousio", "milheto", ("cobrir_depois_do_parado",)),
+        ("pousio", "crotalaria", ()),  # cobre, mas começa devagar (hipótese a revisar)
+        ("pousio", "sorgo", ()),
+        ("milho_safrinha", "crotalaria", ("quebrar_nematoide_depois_do_milho", "variar_funcao")),
+        ("milho_braquiaria", "milheto", ("quebrar_nematoide_depois_do_milho",)),  # gramínea
+        ("sorgo", "milheto", ("variar_funcao",)),
+        ("milheto", "sorgo", ("variar_funcao",)),
+        ("crotalaria", "milho_braquiaria", ("variar_funcao",)),
+        ("milheto", "milheto", ()),
+        ("sorgo", "pousio", ()),
+    ],
+)
+def test_should_tell_which_chain_rules_weigh_from_one_year_to_the_next(
+    prev: str, cur: str, rules: tuple[str, ...]
+) -> None:
+    assert RotationPlanService().transition_rules(prev, cur) == rules
+
+
+def test_should_cover_the_soil_fast_after_leaving_it_fallow() -> None:
+    # Tela 5: "Você mudou 2027/28 para Deixar parado. Para 2028/29 agora sugerimos Milheto". Só
+    # pela conta do PRD 7.7, a crotalária ganharia (+5 a mais de diversidade).
+    service = RotationPlanService()
+    prefixo = ("milho_braquiaria", "pousio")
+
+    sem_cadeia = service.best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO)
+    com_cadeia = service.best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO, chain=True)
+
+    assert sem_cadeia[2] == "crotalaria"
+    assert com_cadeia[2] == "milheto"
+
+
+def test_should_break_the_nematode_cycle_right_after_corn() -> None:
+    service = RotationPlanService()
+
+    sem_cadeia = service.best_plan_with_prefix(("milho_safrinha",), MEIO, POUSIO_MEIO)
+    com_cadeia = service.best_plan_with_prefix(("milho_safrinha",), MEIO, POUSIO_MEIO, chain=True)
+
+    assert sem_cadeia == ("milho_safrinha", "milho_braquiaria", "crotalaria")
+    assert com_cadeia == ("milho_safrinha", "crotalaria", "milho_braquiaria")
+
+
+def test_should_not_suggest_leaving_the_soil_fallow_just_to_cover_it_the_year_after() -> None:
+    # Colheita tarde na lavoura de demonstração: só sorgo (50) e milheto (58,8) no prazo. Os pontos
+    # de "cobrir depois do parado" valem só depois de um pousio que o produtor escolheu; senão,
+    # sorgo, parado, milheto (34,6 + 5 + 10) passaria sorgo, milheto, sorgo (36,3 + 5 + 3 + 3).
+    service = RotationPlanService()
+    tarde = [_make_option("milheto", 58.8), _make_option("sorgo", 50.0)]
+
+    plano = service.best_plan_with_prefix(("sorgo",), tarde, POUSIO_MEIO, chain=True)
+
+    assert plano == ("sorgo", "milheto", "sorgo")
+
+
+def test_should_take_the_chain_points_from_injected_rules() -> None:
+    base = load_default_rules()
+    sem_pontos = replace(
+        base.plano_cadeia,
+        bonus_cobrir_depois_do_parado=0.0,
+        bonus_quebrar_nematoide_depois_do_milho=0.0,
+        bonus_variar_funcao=0.0,
+    )
+    service = RotationPlanService(rules=replace(base, plano_cadeia=sem_pontos))
+    prefixo = ("milho_braquiaria", "pousio")
+
+    plano = service.best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO, chain=True)
+
+    assert plano == service.best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO)
+
+
 def test_should_take_number_of_dry_years_from_injected_rules() -> None:
     base = load_default_rules()
     service = RotationPlanService(rules=replace(base, rotacao=replace(base.rotacao, anos_secos=2)))

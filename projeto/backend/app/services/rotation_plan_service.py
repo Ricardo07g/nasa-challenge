@@ -1,9 +1,11 @@
 """Plano de 3 anos de entressafra (PRD 7.7): ano normal, ano seco e a sequência de hoje."""
 
 from collections.abc import Callable
+from collections.abc import Sequence as Seq
 from datetime import timedelta
 from itertools import groupby, product
 from operator import attrgetter
+from typing import Final
 
 from app.constants import ROTATION_HORIZON_YEARS, SCORE_MAX, SCORE_MIN
 from app.models.climate import ClimateSeason
@@ -14,6 +16,11 @@ from app.repositories.rules_repository import load_default_rules
 FALLOW_ID = "pousio"
 # Sequência de hoje enquanto o histórico do talhão (R3.2) não chega: soja/milho (PRD 7.7).
 TODAY_CROP_ID = "milho_safrinha"
+# Regras da sugestão em cadeia (grupo `plano_cadeia`, tarefa 0056), na ordem em que o "Por quê:"
+# de cada ano as procura. Os nomes são os das frases do grupo `frases_plano`.
+RULE_COVER_AFTER_FALLOW: Final[str] = "cobrir_depois_do_parado"
+RULE_NEMATODE_AFTER_CORN: Final[str] = "quebrar_nematoide_depois_do_milho"
+RULE_VARY_ROLE: Final[str] = "variar_funcao"
 
 Sequence = tuple[str, ...]
 
@@ -28,7 +35,9 @@ class RotationPlanService:
     """Gera as 216 sequências do PRD 7.7, aplica as restrições e escolhe o melhor plano."""
 
     def __init__(self, rules: Regras | None = None) -> None:
-        self._rotacao = (rules if rules is not None else load_default_rules()).rotacao
+        regras = rules if rules is not None else load_default_rules()
+        self._rotacao = regras.rotacao
+        self._cadeia = regras.plano_cadeia
 
     def select_driest_years(self, seasons: list[ClimateSeason]) -> list[int]:
         """Os anos com menos chuva de fevereiro a abril (PRD 7.7: 4 anos), do mais seco ao menos."""
@@ -73,14 +82,16 @@ class RotationPlanService:
         `max_pousios` pousios seguidos. Com nematoide = sim, sai a sequência sem supressora, mas só
         se alguma supressora estiver na lista: sem nenhuma, o filtro tiraria tudo.
         """
-        suppressors = self._rotacao.culturas_supressoras_nematoide
         filter_nematode = nematoide is True and self.has_nematode_suppressor(crop_ids)
-        return [
-            seq
-            for seq in self.all_sequences(crop_ids)
-            if longest_fallow_run(seq) <= self._rotacao.max_pousios
-            and not (filter_nematode and not suppressors & set(seq))
-        ]
+        return [seq for seq in self.all_sequences(crop_ids) if self._allowed(seq, filter_nematode)]
+
+    def _allowed(self, seq: Sequence, filter_nematode: bool) -> bool:
+        """PRD 7.7 passo 2: no máximo `max_pousios` pousios seguidos; com o filtro do nematoide,
+        alguma supressora na sequência."""
+        suppressors = self._rotacao.culturas_supressoras_nematoide
+        return longest_fallow_run(seq) <= self._rotacao.max_pousios and not (
+            filter_nematode and not suppressors & set(seq)
+        )
 
     def best_plan_starting_with(
         self,
@@ -93,32 +104,111 @@ class RotationPlanService:
     ) -> Sequence:
         """Melhor plano de 3 anos cujo 1º ano é `first` (tarefa 0044: a sugestão é o ano 1).
 
-        Mesmas sequências e restrições do PRD 7.7 (`candidate_sequences`, com o pousio). A nota de
-        cada sequência é a média da nota de cada ano mais o bônus de diversidade, sem o teto de 100
-        (o teto empataria planos diferentes): a nota do eixo do objetivo (`axis`: segurança, renda
-        ou solo) ou, sem objetivo, a nota final. No empate, vale a mesma conta com a nota final;
-        depois, a primeira sequência na ordem das opções.
+        É o `best_plan_with_prefix` com só o 1º ano fixo e sem as regras da cadeia (o plano de cada
+        objetivo e o Plano A do `/recomendacao` continuam os da tarefa 0044).
+        """
+        return self.best_plan_with_prefix(
+            (first,), opcoes, pousio, axis=axis, nematoide=nematoide, allow_fallow=allow_fallow
+        )
+
+    def best_plan_with_prefix(
+        self,
+        prefix: Seq[str],
+        opcoes: list[ResultadoOpcao],
+        pousio: NotasOpcao,
+        axis: Callable[[NotasOpcao], float] | None = None,
+        nematoide: bool | None = None,
+        allow_fallow: bool = True,
+        chain: bool = False,
+    ) -> Sequence:
+        """Melhor plano de 3 anos que começa pelos anos fixos de `prefix` (tarefas 0044 e 0056).
+
+        Os anos seguintes saem só de `opcoes` (as culturas no prazo) e do pousio; o prefixo pode ter
+        qualquer cultura (o produtor pode fixar uma fora do prazo do ZARC). Mesmas restrições do
+        PRD 7.7 (`_allowed`) na sequência inteira. A nota de cada sequência é a média da nota de
+        cada ano mais o bônus de diversidade, sem o teto de 100 (o teto empataria planos
+        diferentes): a nota do eixo do objetivo (`axis`: segurança, renda ou solo) ou, sem
+        objetivo, a nota final. Ano fixo sem nota nas opções conta 0 (é igual em todas as
+        sequências). No empate, vale a mesma conta com a nota final; depois, a primeira sequência
+        na ordem das opções.
 
         `allow_fallow=False` tira o pousio das combinações (plano de um objetivo do produtor: com
         segurança 100, o pousio ganharia o "mais segurança" sem ter lavoura para proteger).
+        `chain=True` soma os pontos das regras da cadeia (`transition_bonus`) em cada ano sugerido.
         """
+        fixed = tuple(prefix)
         crop_ids = [o.id for o in opcoes if o.id != FALLOW_ID]
         if allow_fallow:
             crop_ids.append(FALLOW_ID)
         finals = {o.id: o.notas.final for o in opcoes} | {FALLOW_ID: pousio.final}
         nota = axis or attrgetter("final")
         scores = {o.id: nota(o.notas) for o in opcoes} | {FALLOW_ID: nota(pousio)}
-        sequences = [s for s in self.candidate_sequences(crop_ids, nematoide) if s[0] == first]
+        filter_nematode = nematoide is True and self.has_nematode_suppressor([*crop_ids, *fixed])
+        rest = ROTATION_HORIZON_YEARS - len(fixed)
+        sequences = [
+            fixed + tail
+            for tail in product(crop_ids, repeat=rest)
+            if self._allowed(fixed + tail, filter_nematode)
+        ]
         if not sequences:
-            return (first,) * ROTATION_HORIZON_YEARS
+            return fixed + (fixed[-1],) * rest
+
+        def bonus(seq: Sequence) -> float:
+            return self.transition_bonus(seq, start=len(fixed)) if chain else 0.0
+
         return max(
             sequences,
-            key=lambda seq: (self._raw_score(seq, scores), self._raw_score(seq, finals)),
+            key=lambda seq: (
+                self._raw_score(seq, scores) + bonus(seq),
+                self._raw_score(seq, finals) + bonus(seq),
+            ),
+        )
+
+    def transition_rules(self, prev: str, cur: str) -> tuple[str, ...]:
+        """As regras da cadeia que valem de um ano (`prev`) para o seguinte (`cur`), tarefa 0056.
+
+        - `cobrir_depois_do_parado`: depois do pousio, uma cultura de `culturas_cobertura_rapida`;
+        - `quebrar_nematoide_depois_do_milho`: depois de uma cultura de
+          `culturas_que_multiplicam_nematoide`, uma supressora do PRD 7.7;
+        - `variar_funcao`: nenhuma função repetida do ano anterior (o pousio não tem função).
+        """
+        cadeia = self._cadeia
+        rules: list[str] = []
+        if prev == FALLOW_ID and cur in cadeia.culturas_cobertura_rapida:
+            rules.append(RULE_COVER_AFTER_FALLOW)
+        if (
+            prev in cadeia.culturas_que_multiplicam_nematoide
+            and cur in self._rotacao.culturas_supressoras_nematoide
+        ):
+            rules.append(RULE_NEMATODE_AFTER_CORN)
+        roles_prev = self._rotacao.funcoes.get(prev, frozenset())
+        roles_cur = self._rotacao.funcoes.get(cur, frozenset())
+        if roles_prev and roles_cur and not roles_prev & roles_cur:
+            rules.append(RULE_VARY_ROLE)
+        return tuple(rules)
+
+    def transition_bonus(self, seq: Sequence, start: int = 1) -> float:
+        """Pontos das regras da cadeia nos anos a partir de `start` (os anos sugeridos).
+
+        "Cobrir depois do parado" só vale depois de um pousio fixo (um ano antes de `start`, que o
+        produtor escolheu): o motor não sugere deixar a terra parada para ganhar esses pontos.
+        """
+        cadeia = self._cadeia
+        points = {
+            RULE_COVER_AFTER_FALLOW: cadeia.bonus_cobrir_depois_do_parado,
+            RULE_NEMATODE_AFTER_CORN: cadeia.bonus_quebrar_nematoide_depois_do_milho,
+            RULE_VARY_ROLE: cadeia.bonus_variar_funcao,
+        }
+        return sum(
+            points[rule]
+            for i in range(max(start, 1), len(seq))
+            for rule in self.transition_rules(seq[i - 1], seq[i])
+            if not (rule == RULE_COVER_AFTER_FALLOW and i - 1 >= start)
         )
 
     def _raw_score(self, seq: Sequence, scores: dict[str, float]) -> float:
         """Média das notas dos 3 anos + bônus de diversidade, sem o teto (só para comparar)."""
-        return sum(scores[crop] for crop in seq) / len(seq) + self.diversity_bonus(seq)
+        return sum(scores.get(crop, 0.0) for crop in seq) / len(seq) + self.diversity_bonus(seq)
 
     def build_3_year_plans(
         self,

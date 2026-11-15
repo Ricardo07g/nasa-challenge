@@ -10,9 +10,15 @@ faixa de colheita e o mesmo solo); aqui só se junta os 3 anos:
 - Plano A / Plano B do 1º ano (`PlanBService`);
 - sinal do outono com esse Plano A e esse Plano B (tarefa 0049): com o plano editado, o sinal fala
   do Plano A que a tela mostra.
+
+Tarefa 0056 (pacote 2, tela 5): a cultura fora do prazo do ZARC vem com a conta do motor (a mesma
+semeadura) e o aviso `fora_do_prazo`, e entra nas médias; o Plano B continua só entre as culturas
+no prazo. `suggest` completa o plano a partir de 1 ou 2 anos fixos (`PlanSuggestionService`, com o
+porquê de cada ano sugerido) e avalia o plano inteiro com a mesma conta.
 """
 
 from collections.abc import Iterable, Sequence
+from dataclasses import replace
 from datetime import date
 from statistics import mean, median
 from typing import Final, Protocol
@@ -28,13 +34,14 @@ from app.models.plano import (
     PlanoAvaliado,
     TerraPlano,
 )
-from app.models.recomendacao import ForaDaJanelaOpcao, ResultadoOpcao
+from app.models.recomendacao import ForaDaJanelaOpcao, NotasOpcao, ResultadoOpcao
 from app.models.regras import Regras
 from app.models.sinal_outono import SinalOutono
 from app.repositories.crop_params_repository import CropParamsRepository
 from app.repositories.rules_repository import load_default_rules
 from app.services.errors import ValidationDomainError
 from app.services.plan_b_service import PlanBService
+from app.services.plan_suggestion_service import PlanSuggestionService
 from app.services.recommendation_service import soil_score
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 
@@ -47,8 +54,12 @@ class PlanRecommendation(Protocol):
     celula_id: str
     colheita: str
     semeadura: date
+    nematoide: bool | None
     opcoes: Sequence[ResultadoOpcao]
     fora_da_janela: Sequence[ForaDaJanelaOpcao]
+    # Tarefa 0056: as culturas fora do prazo com a conta do motor e as notas do pousio
+    opcoes_fora_do_prazo: Sequence[ResultadoOpcao]
+    notas_pousio: NotasOpcao | None
 
 
 class PlanRecommender(Protocol):
@@ -109,6 +120,7 @@ class PlanEvaluationService:
         self._plan_service = plan_service
         self._rules = rules if rules is not None else load_default_rules()
         self._plan_b = PlanBService(self._rules)
+        self._suggestion = PlanSuggestionService(plan_service, self._rules)
 
     def evaluate(
         self,
@@ -129,14 +141,71 @@ class PlanEvaluationService:
         rec = self._recommender.recommend(
             lat=lat, lon=lon, colheita=colheita, solo_override=solo_override, lang=lang
         )
+        return self._assemble(lat, lon, rec, crops, lang)
+
+    def suggest(
+        self,
+        lat: float,
+        lon: float,
+        fixos: Sequence[str],
+        colheita: str = "meio",
+        solo_override: str | None = None,
+        lang: str = "pt-BR",
+    ) -> PlanoAvaliado:
+        """O plano em cadeia (tarefa 0056): os anos `fixos` (1 ou 2), os sugeridos e a avaliação.
+
+        Os anos sugeridos saem do `PlanSuggestionService` (só culturas no prazo do ZARC e o pousio,
+        com o porquê); o plano inteiro é avaliado como no `evaluate`, numa chamada só ao motor.
+
+        Raises:
+            ValidationDomainError: sem 1 ou 2 anos fixos, cultura desconhecida ou faixa/solo
+                inválidos.
+            OutsideAreaError: o ponto não tem dados (o mesmo do `/recomendacao`).
+        """
+        if not 1 <= len(fixos) < ROTATION_HORIZON_YEARS:
+            raise ValidationDomainError(
+                f"Fixe 1 ou {ROTATION_HORIZON_YEARS - 1} anos do plano; o motor sugere os outros."
+            )
+        self._known(fixos)
+        rec = self._recommender.recommend(
+            lat=lat, lon=lon, colheita=colheita, solo_override=solo_override, lang=lang
+        )
+        sugeridos = self._suggestion.suggest(
+            fixos,
+            rec.opcoes,
+            rec.opcoes_fora_do_prazo,
+            rec.notas_pousio,  # type: ignore[arg-type]  # o motor sempre manda
+            nematoide=rec.nematoide,
+            lang=lang,
+        )
+        plano = self._assemble(lat, lon, rec, self._check([a.cultura for a in sugeridos]), lang)
+        anos = tuple(
+            replace(ano, fixo=s.fixo, motivo=s.motivo)
+            for ano, s in zip(plano.anos, sugeridos, strict=True)
+        )
+        return replace(plano, anos=anos)
+
+    def _assemble(
+        self,
+        lat: float,
+        lon: float,
+        rec: PlanRecommendation,
+        crops: Sequence[CropParams],
+        lang: str,
+    ) -> PlanoAvaliado:
         en = lang.lower().startswith("en")
-        by_id = {o.id: o for o in rec.opcoes}
+        by_id = {o.id: o for o in (*rec.opcoes, *rec.opcoes_fora_do_prazo)}
         out_names = {f.id: f.nome for f in rec.fora_da_janela}
         years = tuple(self._year(crop, by_id.get(crop.id), out_names, en) for crop in crops)
         seasons = self._climate_repo.get_seasons(rec.celula_id)
         first = years[0]
+        # Plano A = a cultura do 1º ano, mesmo fora do prazo; o Plano B só entre as no prazo
+        first_option = by_id.get(first.cultura)
+        opcoes_ab = list(rec.opcoes)
+        if first_option is not None and not first_option.na_janela:
+            opcoes_ab.append(first_option)
         plano_ab = self._plan_b.plan_ab(
-            first.cultura, list(rec.opcoes), seasons, rec.semeadura, nome_a=first.nome
+            first.cultura, opcoes_ab, seasons, rec.semeadura, nome_a=first.nome
         )
         return PlanoAvaliado(
             colheita=rec.colheita,
@@ -146,7 +215,7 @@ class PlanEvaluationService:
             terra=self._soil_facts(crops, years),
             chuva=self._used_rain(seasons, rec.semeadura, years),
             plano_ab=plano_ab,
-            sinal=self._signal(lat, lon, first, plano_ab, rec.opcoes, seasons, lang),
+            sinal=self._signal(lat, lon, first, plano_ab, opcoes_ab, seasons, lang),
         )
 
     def _signal(
@@ -159,7 +228,8 @@ class PlanEvaluationService:
         seasons: Sequence[ClimateSeason],
         lang: str,
     ) -> SinalOutono | None:
-        """O sinal do outono do Plano A da tela; sem sinal no pousio ou fora da janela."""
+        """O sinal do outono do Plano A da tela; sem sinal no pousio ou sem o Plano A/B (cultura
+        fora do prazo sem a conta do motor)."""
         if self._sinal_service is None or plano_ab is None or first.cultura == FALLOW_ID:
             return None
         return self._sinal_service.evaluate(
@@ -177,6 +247,9 @@ class PlanEvaluationService:
             raise ValidationDomainError(
                 f"O plano precisa de {ROTATION_HORIZON_YEARS} culturas, uma por ano."
             )
+        return self._known(anos)
+
+    def _known(self, anos: Sequence[str]) -> list[CropParams]:
         known = {c.id: c for c in self._crop_repo.list_all()}
         unknown = [crop for crop in anos if crop not in known]
         if unknown:
@@ -197,10 +270,12 @@ class PlanEvaluationService:
             "quebra_nematoide": crop.id in self._rules.rotacao.culturas_supressoras_nematoide,
         }
         if option is None:
+            # Pousio, ou cultura fora do prazo sem a conta do motor (motor antigo)
             return AnoPlano(
                 cultura=crop.id,
                 nome=out_names.get(crop.id, own_name),
                 na_janela=crop.id == FALLOW_ID,
+                fora_do_prazo=crop.id != FALLOW_ID,
                 anos_bons=None,
                 total_anos=None,
                 futuro_anos_bons=None,
@@ -211,7 +286,8 @@ class PlanEvaluationService:
         return AnoPlano(
             cultura=crop.id,
             nome=option.nome,
-            na_janela=True,
+            na_janela=option.na_janela,
+            fora_do_prazo=not option.na_janela,
             anos_bons=option.anos_bons_chuva,
             total_anos=option.total_anos,
             futuro_anos_bons=option.futuro.anos_bons_media if option.futuro else None,

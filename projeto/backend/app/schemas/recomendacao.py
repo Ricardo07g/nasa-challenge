@@ -198,6 +198,7 @@ class OpcaoSchema(_Frozen):
     id: str
     nome: str
     na_janela: bool
+    # Prazo do ZARC no ano de referência (AAAA-MM-DD, ex.: "2027-02-28"); null no pousio
     data_limite: str | None
     chuva: ChuvaSchema
     futuro: FuturoSchema | None
@@ -214,6 +215,9 @@ class OpcaoSchema(_Frozen):
     ciclo: CicloSchema | None = None
     observar: ObservarSchema | None = None
     enso_acerto: list[EnsoAcertoSchema] = Field(default_factory=list)
+    # Tarefa 0056 (tela 5): passou do prazo do ZARC desta colheita (= not na_janela). A cultura
+    # vem com a conta do motor, mas fica fora da sugestão, das alternativas e dos planos.
+    fora_do_prazo: bool = False
 
     @classmethod
     def from_model(cls, o: ResultadoOpcao) -> "OpcaoSchema":
@@ -221,6 +225,7 @@ class OpcaoSchema(_Frozen):
             id=o.id,
             nome=o.nome,
             na_janela=o.na_janela,
+            fora_do_prazo=not o.na_janela,
             data_limite=o.data_limite,
             chuva=ChuvaSchema(
                 anos_bons=o.anos_bons_chuva,
@@ -401,7 +406,8 @@ class RecomendacaoResponse(_Frozen):
             alternativas=[
                 AlternativaSchema(motivo=a.motivo, opcao=a.opcao) for a in rec.alternativas
             ],
-            opcoes=[OpcaoSchema.from_model(o) for o in rec.opcoes],
+            # As no prazo primeiro (a ordem do motor), depois as fora do prazo (tarefa 0056)
+            opcoes=[OpcaoSchema.from_model(o) for o in (*rec.opcoes, *rec.opcoes_fora_do_prazo)],
             fora_da_janela=[
                 ForaDaJanelaSchema(id=f.id, nome=f.nome, texto=f.texto, data_limite=f.data_limite)
                 for f in rec.fora_da_janela

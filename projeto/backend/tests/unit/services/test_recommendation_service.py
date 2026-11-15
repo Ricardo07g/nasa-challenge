@@ -1234,3 +1234,119 @@ def test_should_give_the_planting_deadline_of_each_crop_out_of_the_window() -> N
         "milho_braquiaria": "2027-02-28",
         "crotalaria": "2027-02-28",
     }
+
+
+class LateDeadlineCrops(FakeCropParamsRepository):
+    """As mesmas culturas, mas com o prazo do ZARC do milho sozinho em 31 de março."""
+
+    def list_all(self) -> list[CropParams]:
+        return [
+            replace(c, semeadura_limite_mes_dia="03-31") if c.id == "milho_safrinha" else c
+            for c in CROPS
+        ]
+
+
+def test_should_also_evaluate_the_crops_past_the_planting_deadline() -> None:
+    # Tarefa 0056 (tela 5): as culturas fora do prazo do ZARC entram na conta, com a mesma data de
+    # semeadura (logo depois da colheita), para aparecer na comparação. O aviso continua.
+    rec = _service(FakeClimateRepository(dry_years=(2007, 2014))).recommend(
+        lat=-18.95, lon=-48.20, colheita="tarde"
+    )
+
+    fora = {o.id: o for o in rec.opcoes_fora_do_prazo}
+    assert set(fora) == {"milho_safrinha", "milho_braquiaria", "crotalaria"}
+    assert {f.id for f in rec.fora_da_janela} == set(fora)
+    milho = fora["milho_safrinha"]
+    assert milho.na_janela is False
+    assert milho.data_limite == "2027-02-28"
+    assert milho.total_anos == 20
+    assert milho.anos_bons_chuva == 18  # 2007 e 2014 sem chuva de fevereiro a junho
+    assert {d.semeadura for d in milho.anos_detalhe} == {date(y, 3, 3) for y in range(2005, 2025)}
+    assert milho.porque and milho.agua is not None
+    # Da melhor nota final para a pior, como as opções no prazo
+    finais = [o.notas.final for o in rec.opcoes_fora_do_prazo]
+    assert finais == sorted(finais, reverse=True)
+
+
+def test_should_give_a_crop_past_the_deadline_the_same_numbers_as_if_it_fitted() -> None:
+    # Nada de conta à parte: fora do prazo, a cultura tem os números que teria no prazo.
+    climate = FakeClimateRepository(dry_years=(2007, 2014))
+    fora = _service(climate).recommend(lat=-18.95, lon=-48.20, colheita="tarde")
+    no_prazo = RecommendationService(
+        crop_repo=LateDeadlineCrops(),
+        climate_repo=climate,
+        soil_repo=FakeSoilRepository(),
+        risk_service=ClimateRiskService(WaterBalanceCalculator()),
+        plan_service=RotationPlanService(),
+    ).recommend(lat=-18.95, lon=-48.20, colheita="tarde")
+
+    milho_fora = next(o for o in fora.opcoes_fora_do_prazo if o.id == "milho_safrinha")
+    milho_no_prazo = _opcao(no_prazo, "milho_safrinha")
+    assert replace(milho_fora, na_janela=True, data_limite="2027-03-31") == milho_no_prazo
+
+
+def test_should_keep_the_suggestion_alternatives_and_plans_only_with_crops_in_the_window() -> None:
+    # Decisão padrão da tarefa 0056 (a revisar): o seguro não cobre fora do prazo, então a
+    # sugestão, as alternativas e os planos sugeridos continuam só com as culturas no prazo. Na
+    # ordem de cada objetivo, as fora do prazo vêm depois, também pela nota do eixo.
+    rec = _service(FakeClimateRepository(dry_years=(2007, 2014))).recommend(
+        lat=-18.95, lon=-48.20, colheita="tarde"
+    )
+
+    no_prazo = {"sorgo", "milheto"}
+    assert {o.id for o in rec.opcoes} == no_prazo
+    assert rec.melhor in no_prazo
+    assert {a.opcao for a in rec.alternativas} <= no_prazo
+    for plano in (rec.plano_normal, rec.plano_seco, rec.plano_hoje):
+        assert set(plano.anos) <= no_prazo | {"pousio"}
+    notas = {o.id: o.notas for o in (*rec.opcoes, *rec.opcoes_fora_do_prazo)}
+    for objetivo in rec.objetivos.values():
+        assert set(objetivo.plano) <= no_prazo | {"pousio"}
+        assert set(objetivo.ordem[:2]) == no_prazo
+        assert set(objetivo.ordem[2:]) == {"milho_safrinha", "milho_braquiaria", "crotalaria"}
+    terra = [notas[i].solo for i in rec.objetivos["terra"].ordem[2:]]
+    assert terra == sorted(terra, reverse=True)
+
+
+def test_should_not_change_the_numbers_of_the_crops_in_the_window() -> None:
+    # Avaliar as culturas fora do prazo não muda nada das que estão no prazo.
+    climate = FakeClimateRepository(dry_years=(2007, 2014))
+
+    class OnlyInWindow(FakeCropParamsRepository):
+        def list_all(self) -> list[CropParams]:
+            return [c for c in CROPS if c.id in ("pousio", "sorgo", "milheto")]
+
+    so_no_prazo = RecommendationService(
+        crop_repo=OnlyInWindow(),
+        climate_repo=climate,
+        soil_repo=FakeSoilRepository(),
+        risk_service=ClimateRiskService(WaterBalanceCalculator()),
+        plan_service=RotationPlanService(),
+    ).recommend(lat=-18.95, lon=-48.20, colheita="tarde")
+    todas = _service(climate).recommend(lat=-18.95, lon=-48.20, colheita="tarde")
+
+    assert todas.opcoes == so_no_prazo.opcoes
+    assert (todas.melhor, todas.alternativas) == (so_no_prazo.melhor, so_no_prazo.alternativas)
+    assert todas.plano_normal == so_no_prazo.plano_normal
+    assert {k: o.plano for k, o in todas.objetivos.items()} == {
+        k: o.plano for k, o in so_no_prazo.objetivos.items()
+    }
+
+
+def test_should_have_nothing_past_the_deadline_when_every_crop_fits() -> None:
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert rec.opcoes_fora_do_prazo == ()
+    assert rec.fora_da_janela == ()
+
+
+def test_should_give_the_fallow_scores_used_in_the_plans() -> None:
+    # O plano em cadeia (tarefa 0056) usa as mesmas notas do pousio do PRD 7.7.
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert rec.notas_pousio is not None
+    assert (rec.notas_pousio.seguranca, rec.notas_pousio.solo, rec.notas_pousio.renda) == (
+        100.0,
+        0.0,
+        0.0,
+    )
