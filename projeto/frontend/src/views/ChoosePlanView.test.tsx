@@ -150,6 +150,19 @@ describe('ChoosePlanView: aba "1. Escolher"', () => {
     expect(window.scrollY).toBe(600)
   })
 
+  it('a foto do milho com braquiária: o milho e a braquiária lado a lado, um crédito com os 2 autores, sem a legenda antiga', async () => {
+    renderAt(`/resposta?${flow}&pensa=sorgo`)
+    const card = (await screen.findByRole('heading', { level: 2, name: 'Milho com braquiária' })).closest('article')!
+
+    const photo = within(card).getByRole('img', { name: 'Milho com braquiária' })
+    expect([...photo.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toEqual(['/fotos/milho.jpg', '/fotos/braquiaria.jpg'])
+    const credit = within(card).getByRole('link', { name: newTabName('Christian Fischer') }).closest('[data-credit]')
+    expect(credit).toHaveTextContent(/^Foto: Christian Fischer.* · CC BY-SA 3\.0 \| Ethan Bass.* · CC BY-SA 4\.0$/)
+    expect(card).not.toHaveTextContent('na foto: a braquiária')
+    // A mesma foto em todo lugar: na coluna da comparação também.
+    expect(screen.getAllByRole('img', { name: 'Milho com braquiária' }).length).toBeGreaterThan(1)
+  })
+
   it('"Por que essa sugestão?" abre o modal grande com os blocos e o "Saiba mais" em nova aba', async () => {
     renderAt(`/resposta?${flow}`)
     await userEvent.click(await screen.findByRole('button', { name: 'Por que essa sugestão?' }))

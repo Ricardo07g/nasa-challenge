@@ -54,18 +54,23 @@ describe('créditos (modal global "Créditos e uso de IA", regra do NASA Space A
       expect(lines).toHaveLength(PLANT_PHOTO_CROPS.length)
 
       PLANT_PHOTO_CROPS.forEach((crop, index) => {
-        const photo = PLANT_PHOTOS[crop]
+        const { images } = PLANT_PHOTOS[crop]
         const line = lines[index]
-        expect(line.startsWith(`**${t.crops.names[crop]}**`), line).toBe(true)
-        expect(line).toContain(`[${photo.file}](${photo.page})`)
-        expect(line).toContain(` · ${photo.author} · ${licenseLabel(photo.license, lang)}`)
-        expect(parseInline(line).filter((part) => part.type === 'link')).toEqual([
-          { type: 'link', text: photo.file, href: photo.page, external: true },
-        ])
+        expect(line.startsWith(`**${t.crops.names[crop]}** · `), line).toBe(true)
+        for (const image of images) {
+          expect(line).toContain(`[${image.file}](${image.page}) · ${image.author} · ${licenseLabel(image.license, lang)}`)
+        }
+        expect(parseInline(line).filter((part) => part.type === 'link')).toEqual(
+          images.map((image) => ({ type: 'link', text: image.file, href: image.page, external: true })),
+        )
       })
     }
-    expect(groupText('pt', 'photos')).toContain('**Milho com braquiária** (na foto: a braquiária)')
-    expect(groupText('en', 'photos')).toContain('**Corn with brachiaria** (photo shows the brachiaria)')
+    // A foto de 2 imagens: as duas na mesma linha, separadas como no crédito da foto, sem a legenda antiga.
+    expect(groupText('pt', 'photos')).toContain(
+      '**Milho com braquiária** · [ZeaMays.jpg](https://commons.wikimedia.org/wiki/File:ZeaMays.jpg) · Christian Fischer · CC BY-SA 3.0 | [Strip of Brachiaria brizantha (signal grass).jpg]',
+    )
+    expect(groupText('pt', 'photos')).not.toContain('na foto: a braquiária')
+    expect(groupText('en', 'photos')).not.toContain('photo shows the brachiaria')
     expect(groupText('pt', 'photos')).toContain('NRCS Pacific Islands Area · Domínio público')
   })
 

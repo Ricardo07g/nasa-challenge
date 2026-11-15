@@ -48,16 +48,20 @@ describe('CreditsModal (global: o rodapé de todas as telas abre este modal)', (
     expect(items).toHaveLength(7)
     expect(items[0]).toHaveTextContent('Fotos reais do Wikimedia Commons, só reduzidas (até 800 px de largura)')
 
-    const millet = PLANT_PHOTOS.milheto
+    const millet = PLANT_PHOTOS.milheto.images[0]
     const link = within(photos).getByRole('link', { name: newTabName(millet.file) })
     expect(link).toHaveAttribute('href', millet.page)
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noopener')
     expect(items[1]).toHaveTextContent(`Milheto · ${millet.file} (abre em nova aba) · Shikoha Tautiko · CC BY-SA 4.0`)
-    expect(within(photos).getAllByRole('link')).toHaveLength(6)
+    // 6 culturas; a de milho com braquiária tem 2 imagens (o milho e a braquiária), cada uma com o seu link.
+    expect(within(photos).getAllByRole('link')).toHaveLength(7)
     expect(link.textContent).toBe(`${millet.file} (abre em nova aba)`)
     expect(link.querySelector('.visually-hidden')?.textContent).toBe(' (abre em nova aba)')
-    expect(photos).toHaveTextContent('Milho com braquiária (na foto: a braquiária)')
+    expect(items[2]).toHaveTextContent(
+      'Milho com braquiária · ZeaMays.jpg (abre em nova aba) · Christian Fischer · CC BY-SA 3.0 | Strip of Brachiaria brizantha (signal grass).jpg (abre em nova aba) · Ethan Bass · CC BY-SA 4.0',
+    )
+    expect(photos).not.toHaveTextContent('na foto: a braquiária')
     expect(photos).toHaveTextContent('NRCS Pacific Islands Area · Domínio público')
     expect(photos).not.toHaveTextContent('](')
   })
@@ -68,7 +72,7 @@ describe('CreditsModal (global: o rodapé de todas as telas abre este modal)', (
     expect(screen.getByRole('dialog', { name: 'Credits and use of AI' })).toHaveTextContent('Use of AI')
     const photos = screen.getByRole('region', { name: 'Plant photos' })
     expect(
-      within(photos).getByRole('link', { name: newTabName(PLANT_PHOTOS.crotalaria.file, '(opens in a new tab)') }),
+      within(photos).getByRole('link', { name: newTabName(PLANT_PHOTOS.crotalaria.images[0].file, '(opens in a new tab)') }),
     ).toBeInTheDocument()
     expect(photos).toHaveTextContent('NRCS Pacific Islands Area · Public domain')
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
