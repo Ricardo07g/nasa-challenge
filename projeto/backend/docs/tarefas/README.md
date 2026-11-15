@@ -32,6 +32,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0022**](0022-carga-dos-arquivos-no-banco.md) | **Carga dos arquivos do CMIP6 e do NDVI no banco (`cmip6_delta`, `ndvi_point`, `data_run`)** | **Concluída** | **Média** | `pipeline/load_files_to_db.py`, repositories |
 | [**0023**](0023-cmip6-por-area.md) | **CMIP6 por área: um pedido por arquivo para a caixa inteira (OPeNDAP ASCII, 378 pedidos, ~45 min) e saída em data/baixados** | **Concluída** | **Alta** | `pipeline/fetch_cmip6_deltas.py` |
 | [**0017**](0017-ndvi-appeears.md) | **Script do NDVI do MODIS pelo AppEEARS (MOD13Q1 + MYD13Q1, 2016–2025, jan–jul)** | **Concluída** | **Alta** | `pipeline/fetch_ndvi.py`, `http_client.py` |
+| [**0024**](0024-ndvi-pela-ornl.md) | **NDVI do MODIS pela ORNL DAAC (`--fonte ornl`): sem credencial e sem fila, recortes de 5 datas com retentativa e cache; saída em data/baixados** | **Concluída** | **Alta** | `pipeline/fetch_ndvi.py` |
 | [**0025**](0025-cache-que-revalida.md) | **Cache que revalida em /recomendacao: `public, no-cache` + ETag do corpo e 304 (no lugar do `max-age` de um dia)** | **Concluída** | **Alta** | `app/controllers/http_cache.py`, `app/controllers/recomendacao_controller.py` |
 | [**0028**](0028-chuva-de-cada-mes.md) | **Chuva de cada mês na região (jan a jun) em /talhao e o gráfico da tela 3 com dado real** | **Concluída** | **Média** | `app/services/monthly_rain_service.py`, `app/schemas/talhao.py`, front da tela 3 |
 

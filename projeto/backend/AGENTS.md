@@ -325,18 +325,38 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - `porque` da recomendação: frase do histórico (modelo `frases.<língua>.historico` do `regras.yaml`,
     PRD 7.6), contando só os anos certos (parado + plantou). Sem série ou sem ano certo, não há frase.
   - `/exemplo` recomenda com a `colheita_sugerida` do talhão (PRD 7.9), não mais com `meio` fixo.
-- **NDVI do MODIS** (tarefa 0017): `pipeline/fetch_ndvi.py` pede ao AppEEARS uma tarefa por ponto
-  (MOD13Q1 e MYD13Q1 061, jan–jul de 2016 a 2025), espera terminar, baixa os CSVs e grava o arquivo do
-  contrato do NDVI (qualidade 0 ou 1, fator 0,0001 aplicado) em `data/output/ndvi_modis_appeears.json`
-  (fora do git; a API lê pelo `NDVI_CACHE_PATH`). Credencial pelo `Settings`: `APPEEARS_TOKEN` e, se
-  faltar ou vencer, `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` (o `EARTHDATA_TOKEN` não serve).
-  Estourou o limite de espera: código 2 e a dica para retomar com `--tarefa-existente <id>`. Os CSVs
-  brutos ficam em `appeears_<id>/`, ao lado da saída, e podem ser convertidos de novo com `--csv`.
+- **NDVI do MODIS** (tarefas 0017 e 0024): `pipeline/fetch_ndvi.py` traz a série de MOD13Q1 e
+  MYD13Q1 (coleção 061, jan–jul de 2016 a 2025) de cada ponto e grava o arquivo do contrato do NDVI
+  (qualidade 0 ou 1, fator 0,0001 aplicado, sem o −3000). Duas fontes, **mesmo arquivo**: saída
+  padrão `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` a partir da **raiz do
+  repositório** (pelo caminho do script, como o CMIP6; fora do git), que o compose liga no
+  `NDVI_CACHE_PATH`. O nome do arquivo fica o mesmo para as duas; `versao_dados.parametros.servico`
+  diz de onde veio (`appeears` ou `ornl`). Os brutos ficam ao lado da saída.
+  - **`--fonte appeears`** (padrão): uma tarefa por execução (todos os pontos), espera terminar e
+    baixa os CSVs (guardados em `appeears_<id>/`, reconvertíveis com `--csv`). Credencial pelo
+    `Settings`: `APPEEARS_TOKEN` e, se faltar ou vencer, `EARTHDATA_USERNAME` +
+    `EARTHDATA_PASSWORD` (o `EARTHDATA_TOKEN` não serve). Estourou o limite de espera: código 2 e a
+    dica para retomar com `--tarefa-existente <id>`. A fila pode levar horas.
+  - **`--fonte ornl`**: o serviço de recortes do MODIS da ORNL DAAC
+    (`https://modis.ornl.gov/rst/api/v1`), **sem credencial e sem fila**, mas lento: cada pedido
+    que dá certo leva de 19 a 60 s e o proxy corta em ~60 s com 502 (14/11/2026). Pede a escala e o
+    preenchimento do NDVI (`/bands`, a ORNL entrega o inteiro bruto), a lista de datas de cada ponto
+    e recortes de um pixel com todas as bandas e até `--datas-por-pedido` datas (padrão 5, máximo 10
+    do serviço), sem cruzar o ano: 64 pedidos para um ponto (~1,6 h na rodada real), 188 para três
+    (~4,7 h).
+    Retentativa com espera crescente (rede, 5xx, corpo fora do formato) e `--pausa` entre pedidos;
+    bloco de várias datas que falha 2 vezes é dividido em duas metades, até 1 data. Cache em
+    `cache_ornl/` (só resposta conferida, arquivo provisório renomeado), lido **por data**: só pede
+    o que falta, e mudar o `--datas-por-pedido` entre execuções não perde nada. Data que ficou sem
+    resposta ou 3 falhas seguidas: código 2, nada gravado na saída; rode de novo que continua do
+    cache.
 
   ```bash
-  uv run python -m pipeline.fetch_ndvi --dry-run          # mostra o pedido, sem rede
-  uv run python -m pipeline.fetch_ndvi                    # fazenda de exemplo
+  uv run python -m pipeline.fetch_ndvi --dry-run                 # AppEEARS: mostra o pedido, sem rede
+  uv run python -m pipeline.fetch_ndvi                           # AppEEARS, fazenda de exemplo
   uv run python -m pipeline.fetch_ndvi --pontos "-18.9543,-48.1993;-17.5,-47.25"
+  uv run python -m pipeline.fetch_ndvi --fonte ornl --dry-run    # ORNL: pedidos, cache e tempo
+  uv run python -m pipeline.fetch_ndvi --fonte ornl              # ORNL, fazenda de exemplo
   ```
 - **Chuva de cada mês** (`chuva_mensal` de `/talhao` e do talhão do `/exemplo`, gráfico da tela 3,
   tarefa 0028): o `MonthlyRainService` soma a chuva de cada mês, de janeiro a junho, em cada
