@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     # de um ponto (saída do pipeline/fetch_regiao_ndvi.py). Sem arquivo: /api/regiao responde
     # 404 OUTSIDE_AREA.
     regiao_path: Path | None = None
+    # Chuva dos últimos 30 dias por célula de 0,1° pelo IMERG Late, com a média dos mesmos dias
+    # (saída do pipeline/fetch_imerg_late.py, A2.3). Sem arquivo: o sinal para o outono fica sem
+    # o dado da terra agora.
+    imerg_late_path: Path | None = None
 
     # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
     # usam; a API não precisa de nenhuma (ADR-0005).

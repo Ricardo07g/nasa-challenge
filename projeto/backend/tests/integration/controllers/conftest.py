@@ -11,6 +11,7 @@ from app.dependencies import (
     get_crop_params_repository,
     get_enso_repository,
     get_ndvi_repository,
+    get_recent_rain_repository,
     get_satellite_ingestion_service,
     get_soil_repository,
 )
@@ -20,6 +21,7 @@ from app.models.crop_option import CropParams
 from app.models.enso import OniYear
 from app.models.talhao import NdviRecord, SoloInfo
 from app.repositories.climate_repository import cell_id_for
+from app.repositories.sinal_outono_repository import NoAutumnSignalDataRepository
 
 DAYS = 212
 
@@ -176,6 +178,8 @@ def client() -> Iterator[TestClient]:
     app.dependency_overrides[get_ndvi_repository] = FakeNdviRepository
     # O arquivo do ONI da máquina (ONI_PATH) nunca entra nos testes
     app.dependency_overrides[get_enso_repository] = FakeEnsoRepository
+    # Sem a chuva recente do IMERG_LATE_PATH do ambiente (o compose aponta para data/baixados).
+    app.dependency_overrides[get_recent_rain_repository] = NoAutumnSignalDataRepository
     # Sem busca sob demanda: ponto sem dados fica fora da área (nada de rede real nos testes).
     app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)

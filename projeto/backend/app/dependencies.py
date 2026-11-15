@@ -34,6 +34,7 @@ from app.repositories.ndvi_repository import (
     CachedNdviRepository,
     NdviRepository,
 )
+from app.repositories.recent_rain_repository import FileRecentRainRepository
 from app.repositories.regiao_repository import FileRegionRepository, RegionRepository
 from app.repositories.rules_repository import RulesRepository, YamlRulesRepository
 from app.repositories.sinal_outono_repository import (
@@ -180,8 +181,9 @@ def get_rotation_plan_service(rules: Annotated[Regras, Depends(get_rules)]) -> R
     return RotationPlanService(rules)
 
 
-# Sinal para o outono (RF-20): GEOS-S2S, SMAP e chuva recente chegam nas tarefas A2.1 a A2.3.
-# Até lá, nenhuma fonte tem dado e o `sinal` de /recomendacao sai nulo.
+# Sinal para o outono (RF-20): uma fonte por repository. A chuva recente (A2.3) vem do arquivo
+# do IMERG_LATE_PATH; GEOS-S2S (A2.1, tarefa 0032) e SMAP recente (A2.2) ainda não têm dado. Sem
+# dado nenhum, o `sinal` de /recomendacao sai nulo (a chuva sozinha não diz se a terra está seca).
 
 
 @lru_cache
@@ -196,7 +198,7 @@ def get_recent_soil_moisture_repository() -> RecentSoilMoistureRepository:
 
 @lru_cache
 def get_recent_rain_repository() -> RecentRainRepository:
-    return NoAutumnSignalDataRepository()
+    return FileRecentRainRepository(get_settings().imerg_late_path)
 
 
 def get_sinal_outono_service(
