@@ -136,6 +136,16 @@ describe('conteúdo do Guia', () => {
     }
   })
 
+  it('"Como ler os avisos" escreve os níveis como a tela mostra', () => {
+    for (const [lang, t] of [['pt', pt], ['en', en]] as const) {
+      const raw = bySlug(lang).get('como-ler-os-avisos')!
+      for (const level of [t.alerts.level.atencao, t.alerts.level.fique_de_olho]) {
+        expect(raw, `${lang}: ${level}`).toContain(`**${level}**`)
+      }
+      expect(raw).not.toMatch(/\*\*Warning\*\*|\*\*Keep an eye on it\*\*/)
+    }
+  })
+
   it('todo link externo é https e está na lista de fontes conferidas', () => {
     const allowed = new Set(VERIFIED_SOURCES.map((s) => s.url))
     for (const [slug, raw] of [...bySlug('pt'), ...bySlug('en')]) {

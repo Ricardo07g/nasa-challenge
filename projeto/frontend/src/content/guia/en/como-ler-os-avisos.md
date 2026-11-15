@@ -15,7 +15,7 @@ The Alerts screen puts together what satellites and the El Niño forecast show a
 
 The alerts help you get ready, but they are not official alerts. The app sends no messages: the alerts show up when you open the app, for the field saved on your device.
 
-Each alert gives the level (**Warning** or **Keep an eye on it**), what the data shows, what to do, the source and the date of the reading. A reading older than 15 days is marked as old.
+Each alert gives the level (**Attention** or **Watch**), what the data shows, what to do, the source and the date of the reading. A reading older than 15 days is marked as old.
 
 ## In your field
 
