@@ -98,6 +98,8 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
   Para criar nova migração: `uv run alembic revision -m "descricao"`
 - Tabelas (migração inicial `cb6b775d83e3` + R1.6 `6e961f333ddc`):
   - `grid_cell`, `climate_season` e `soil_point`: gravadas pela busca sob demanda (ver "Dados da API");
+    o `climate_season.rain_source` é `nasa_power` ou, nos anos trocados pela carga do IMERG,
+    `gpm_imerg`;
   - `cmip6_delta`, `ndvi_point`, `smap_point` e `data_run` (com `version`): no formato do "Contrato
     dos dados das fontes", abaixo. `PostgisCmip6Repository`, `PostgisNdviRepository`,
     `PostgisSmapRepository` e `PostgisDataRunRepository` gravam e leem. A API já lê o `cmip6_delta`
@@ -273,14 +275,16 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - Depois da pré-carga, a célula da fazenda de exemplo (`-190_-482`) sai do banco (POWER de agora,
     com Penman-Monteith), não mais da fixture.
 
-- **Carga dos arquivos no banco** (tarefa 0022): `pipeline/load_files_to_db.py` copia o arquivo do
-  CMIP6 para o `cmip6_delta` e o do NDVI para o `ndvi_point`. Não busca nada na rede. Rode depois da
-  pré-carga (o `cmip6_delta` só aceita célula que já está em `grid_cell`).
+- **Carga dos arquivos no banco** (tarefas 0022 e 0027): `pipeline/load_files_to_db.py` copia o
+  arquivo do CMIP6 para o `cmip6_delta`, o do NDVI para o `ndvi_point` e a chuva do IMERG para o
+  `climate_season`. Não busca nada na rede. Rode depois da pré-carga (o `cmip6_delta` só aceita
+  célula que já está em `grid_cell`, e o IMERG só troca temporada que já está no `climate_season`).
+  Dá para passar um, dois ou os três arquivos.
 
   ```bash
   # da pasta projeto/backend, com DATABASE_URL apontando para o banco que recebe a carga
-  uv run python -m pipeline.load_files_to_db --cmip6 <arquivo> --ndvi <arquivo> --dry-run
-  uv run python -m pipeline.load_files_to_db --cmip6 <arquivo> --ndvi <arquivo>
+  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --dry-run
+  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq>
   ```
 
   - **CMIP6:** cada célula de `grid_cell` recebe os deltas do ponto do arquivo cuja `cobertura`
@@ -289,17 +293,37 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **NDVI:** a série de cada ponto, lida pelo `CachedNdviRepository` (sem neve, nuvem nem NDVI
     vazio) e gravada pelo `PostgisNdviRepository.save_ndvi_history`. Registro sem `produto` ou
     `qualidade` (cache antigo) ou com o NDVI bruto não cabe na tabela e conta como pulado.
-  - **Conferência antes de gravar:** os dois arquivos são lidos primeiro. Arquivo ausente, sem
+  - **IMERG** (`--imerg`, R3.4): para cada célula e ano que já estão no `climate_season` com a
+    mesma janela (212 dias desde 1/jan), o `rain_mm` passa a ser a série do IMERG e o
+    `rain_source` passa a `gpm_imerg`, **só quando o ano do IMERG está completo** (nenhum dia
+    `null`). Ano incompleto continua com o NASA POWER; célula ou ano que não está no banco (ou com
+    outra janela) fica de fora. Nenhuma temporada é criada e as outras séries (temperatura, ETo)
+    não mudam. Pelo `PostgisClimateRepository` (`list_season_windows` e `replace_seasons_rain`).
+  - **Conferência antes de gravar:** os arquivos são lidos primeiro. Arquivo ausente, sem
     `versao_dados`, de outra fonte (o `versao_dados.fonte` tem de ser `nex_gddp_cmip6` /
-    `modis_mod13q1`) ou fora do contrato: nada é gravado (saída 1).
-  - **Idempotente** (upsert). **`data_run`:** uma linha por fonte com linhas gravadas, com a
-    `version` do `versao_dados` do arquivo e, em `params`, o nome do arquivo (sem a pasta), as
-    contagens e o `versao_dados.parametros` do arquivo (`parametros_do_arquivo`).
+    `modis_mod13q1` / `gpm_imerg`) ou fora do contrato: nada é gravado (saída 1).
+  - **Idempotente** (upsert; a chuva, update). **`data_run`:** uma linha por fonte com linhas
+    gravadas, com a `version` do `versao_dados` do arquivo e, em `params`, o nome do arquivo (sem a
+    pasta), as contagens e o `versao_dados.parametros` do arquivo (`parametros_do_arquivo`). No
+    IMERG, as contagens são `celulas_no_arquivo`, `temporadas_no_arquivo`, `temporadas_trocadas`,
+    `temporadas_incompletas` e `temporadas_sem_clima`.
   - **Células novas:** a busca sob demanda cria células depois da carga. Elas ficam sem linha no
     `cmip6_delta`, mas a API acha os deltas no arquivo (ordem tabela → arquivo, abaixo). Rodar a
     carga de novo copia essas células. A ingestão não muda.
   - O pacote do time leva a cópia do banco com as duas tabelas: quem recebe não roda a carga.
     Caminho dos arquivos e comando completo: `docs/como-preparar-os-dados-locais.md`.
+
+- **Chuva do IMERG na conta** (R3.4, tarefa 0027): depois da carga (`--imerg`, acima), as
+  temporadas trocadas têm `rain_source = gpm_imerg` e o motor usa a chuva do IMERG nelas, sem
+  mudança no código do balde (ele lê o `rain_mm`). Nos outros anos (e células) segue o POWER.
+  - `/talhao` lista `{"fonte": "gpm_imerg", "periodo": "2005-2024"}` em `dados`, depois do
+    `nasa_power`, quando algum ano da célula tem a chuva do IMERG. O front já lê essa chave
+    (`satelliteService.ts`: período da chuva; `sourceService.ts`: fonte conectada e chuva em 10 km).
+  - O "Por quê?" diz "(GPM IMERG + NASA POWER)" quando algum ano da série é do IMERG
+    (`RAIN_SOURCE_NAMES`); sem nenhum, "(NASA POWER)".
+  - **Voltar ao POWER:** a carga apaga a chuva do POWER das temporadas trocadas. Para voltar, rode a
+    pré-carga com `--forcar`: o upsert do `save_cell_seasons` regrava a chuva **e** o `rain_source`.
+  - Sem banco (só a fixture), não há IMERG.
 
 - **Sinal para o outono** (`sinal` de `/recomendacao`, RF-20, tarefa 0015): o `SinalOutonoService` aplica a
   regra do PRD 7.10 (limiares em `regras.yaml`, grupo `sinal_outono`) a três fontes, uma por repository
@@ -589,7 +613,9 @@ pixel. O arquivo é a saída do `pipeline/fetch_imerg.py` (R2.4).
   fica para quem usa.
 - `versao_dados.parametros` traz também a variável e a unidade, o serviço, a caixa, o retângulo de
   pixels e o número de células.
-- Ainda não há tabela própria: a tarefa 0027 (R3.4) leva a série para o `climate_season`.
+- Não há tabela própria: a carga (`load_files_to_db.py --imerg`, tarefa 0027) leva os anos completos
+  para o `rain_mm` do `climate_season`, com `rain_source = gpm_imerg`. O `FileImergRepository`
+  (`app/repositories/imerg_repository.py`) lê o arquivo nos models.
 
 ## Configuração e segredos
 
