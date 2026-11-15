@@ -26,7 +26,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | feito na branch `feat/remodelagem-s8-guia` (19 artigos em pt e en; faltam 7 do tema, ver a tarefa 0048) |
 | S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | ✅ na branch (15/11 ~04:00), revisada |
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | ✅ na branch (15/11 ~05:00), revisada |
-| S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | a fazer |
+| S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | feito na branch `feat/remodelagem-s4-raio-x` (falta o merge, a revisão e a extração completa do MCD64A1, ver a tarefa 0043) |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | a fazer |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | a fazer |
@@ -96,6 +96,18 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D52 | 15/11 | Tela: o resumo de plantio usa a safra mais recente com relatos; a chuva é a média dos relatos de hoje e dos 6 dias anteriores; o selo "Exemplo" vai em cada linha do resumo que tem algum relato de exemplo e em cada evento. Mapa: etiqueta com ícone e número por tipo, legenda em texto e a lista completa para o leitor de tela; abre enquadrando o círculo de 30 km. | Etiquetas com o texto inteiro se sobrepunham no celular (células a ~10 km); o nome de cada ícone fica na legenda, então nada depende só de cor. |
 | D53 | 15/11 | i18n só com acréscimos no bloco `community`; as chaves da comunidade simulada ficaram (a página `/design-system` ainda usa algumas). O RF novo é o RF-28; se outra seção também pegar o RF-28, renumerar no merge (como no D13). | Regra de só acrescentar com a S3 rodando em paralelo. |
 | D54 | 15/11 | Migração `3f7c2a9d4e81` revisa a `6e961f333ddc`. Se outra seção criar migração com a mesma base, o merge deixa duas cabeças no Alembic: a segunda a entrar passa a revisar a outra. O teste antigo da R1.6 passou a descer até a migração inicial (não mais `downgrade -1`). | O `alembic upgrade head` falha com duas cabeças; melhor resolver no merge do que travar as seções. |
+| D55 | 15/11 | O raio-X é um endpoint novo, `GET /api/raio-x?lat&lon[&colheita][&solo][&confirmadas]`, e não campos do `/talhao`. | Ele roda o motor uma vez (a melhor opção vai no bloco da água e no cartão dos 20 anos), ~0,5 s na UFU; o `/talhao`, pedido já na tela 2, continua leve (mesmo motivo do D34). |
+| D56 | 15/11 | A tela 4 pede o raio-X sem as safras confirmadas; a faixa de calor junta o NDVI do raio-X com o histórico do `/talhao` já com as respostas do produtor (no front). | Confirmar uma safra não recarrega o painel (o mesmo do talhão, tarefa 0039); as confirmações só mudam a frase do "Por quê?", não a melhor opção do motor. |
+| D57 | 15/11 | "Aguenta cerca de N dias sem chuva na floração" = ⌊CAD ÷ (ETo média do motor nos dias da janela do aperto, floração ± 15 dias, nos 20 anos × `kc_pico`)⌋ da melhor opção do motor, arredondado para baixo. Vale também para a cobertura (floração estimada); no pousio, só a CAD. **A revisar.** | É a conta do pedido com os números do motor; arredondar para baixo não promete água que a terra não tem. |
+| D58 | 15/11 | Célula sem solo: o raio-X usa o ponto gravado mais perto, de qualquer célula, até 15 km (`raio_x.solo_vizinho_max_km`), e diz a distância; o motor continua só com o solo da célula (ou o padrão). A CAD do bloco 2 é a do solo mostrado ou, se o produtor trocou a terra, a da escolha dele (a do motor). | Pedido da seção 4; mudar o solo do motor mexeria em todas as telas. Na caixa, 2 das 225 células não têm solo (ex.: −19,75 / −47,95 usa o ponto a 10,5 km). |
+| D59 | 15/11 | Bloco 8: compara só células da caixa com a mesma fonte de chuva (IMERG) e com a janela inteira; diz "mais seca que X%" quando a maioria chove mais e "mais chuvosa que Y%" quando a maioria chove menos. Mínimo de 10 células. | A frase do pedido ("mais seca que X%") viraria "mais seca que 38%" na UFU, que lê como seca quando a área é das mais chuvosas. |
+| D60 | 15/11 | Maior veranico: o dia seco é o dos avisos (menos de 1 mm); empate entre anos fica com o mais recente. | Uma regra só de dia seco; o ano mais recente é o que o produtor lembra. |
+| D61 | 15/11 | Faixa de calor: 14 colunas de 16 dias desde 1º/jan pelo dia do ano (o calendário do MODIS), Terra e Aqua juntos (fica o maior NDVI bom do intervalo); 5 cores que sempre escurecem, cortes 0,30 / 0,45 / 0,60 / 0,75 (0,45 e 0,60 são os do histórico do talhão), "sem leitura" listrado. "Colheita" = a coluna do dia em que a soja costuma secar (RF-16); sem ele, a entressafra começa em abril (janela do histórico) e não há marca de colheita. | Escala acessível sem depender de cor (legenda numérica e o resultado do ano escrito em cada linha). |
+| D62 | 15/11 | Título do histórico: "Na entressafra, sua área ficou parada em X de N anos.", com N = todos os anos (10); os anos sem certeza e sem soja vão numa linha embaixo. | Texto do pedido ("X de 10 anos"); antes o total eram só os anos certos. |
+| D63 | 15/11 | Alertas (hipótese do time, grupo `alertas_area`): geada com 1 ano ou mais; chuva forte com média de 0,1 dia por ano ou mais (2 dias em 20 anos); fogo a até 5 km, com 1 ano ou mais. O MCD64A1 existe na ORNL: entrou o script, e **não** o índice substituto de tempo seco. Sem granizo. | "Cada um só aparece se o dado indicar risco": um ano já é risco; a chuva forte precisa de um piso para não aparecer por 1 dia em 20 anos. |
+| D64 | 15/11 | Cartão "Clima 2041–2060": a chuva de março a maio de cada modelo é a variação de cada mês pesada pela chuva média do mês na célula; a máxima, a média simples dos meses; o cartão mostra a média dos modelos e quantos indicam menos chuva, mais chuva e mais calor. | Março chove mais que maio: a média simples das porcentagens exageraria o mês mais seco. |
+| D65 | 15/11 | Cabeçalho do painel: o lugar é a cidade de referência mais perto (lista do front, sem rede), não o endereço do Photon; altitude não aparece (o `grid_cell` não tem a coluna e o pedido manda não buscar fora). | Evita um pedido externo a cada visita da tela 4; a altitude do POWER chega na busca, mas não é gravada. |
+| D66 | 15/11 | Sem o raio-X (API antiga ou falha), a tela 4 volta aos cartões de antes (chuva, terra e clima) e à faixa de quadrinhos. O mock do raio-X fica num arquivo próprio (`repositories/mocks/raioXFixture.ts`). O RF-29 é o próximo livre do PRD: se a S7 também pegar o RF-29 (ou o D55 a D66), renumerar no merge. | A tela nunca fica vazia; arquivos próprios evitam conflito com a S7 (que mexe nos fixtures da comunidade). |
 
 ## Revisão por seção
 
@@ -178,6 +190,30 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
   de 16 dias (Terra e Aqua defasados em 8): o dia é a data da composição em que o NDVI caiu, não o dia exato
   da colheita. Com a regra nova (D31), um ponto com mediana em 21 ou 22/fev passa de "meio" para "tarde".
 
+- **S4, histórico da UFU: parada em 0 de 10 anos.** O NDVI depois da colheita fica entre 0,7 e 0,9 em abril e
+  maio todos os anos (a faixa de calor mostra isso): o pixel plantou (ou tem capim) em todas as
+  entressafras de 2017 a 2026. Pode ser real (área experimental), mas vale conferir com o ICIAG-UFU.
+- **S4, região na UFU:** 330,7 mm de março a maio contra a mediana da caixa de 325,6 mm (1,6% a mais), e a
+  frase diz "mais chuvosa que 62% da região". A caixa é pouco variada nessa época: a porcentagem parece
+  maior que a diferença em mm (o bloco escreve os mm logo depois).
+- **S4, chuva forte na UFU:** 5 dias com 50 mm ou mais em fevereiro e março em 20 anos = 0,25 dia por ano,
+  que a tela escreve "0,3 dia por ano" (o pedido pede a média por ano). "5 dias em 20 anos", que a frase
+  também diz, é mais fácil de ler.
+- **S4, maior veranico na UFU: 43 dias, a partir de 19/abr/2024.** De março a maio, o trecho seco mais
+  longo quase sempre é o começo da seca no fim de abril e em maio, não um veranico dentro da época de
+  chuva. O número é real (IMERG), mas a janela do pedido mistura as duas coisas.
+- **S4, água que a terra guarda depende da faixa de colheita:** na colheita tarde (a do satélite na UFU) a
+  melhor opção é milheto (Kc 1,0, 16 dias); no cedo e no meio, milho com braquiária (Kc 1,2, 13 dias). É
+  o mesmo efeito do custo do atraso da S3 (a melhor cultura muda).
+- **S4, clima 2041–2060 na UFU:** chuva de março a maio +2,2% (2 de 3 modelos indicam mais chuva) e máxima
+  +1,3 °C (3 de 3). Com chuva quase igual, combina com a nota "futuro" igual à "segurança" já anotada
+  na S1.
+- **S4, "Umidade da terra agora" é de novembro:** o SMAP recente é de 10/11/2026 (percentil 59, "nesta
+  época" = novembro), longe da época de plantio da safrinha; e a "última leitura" do NDVI é de
+  28/07/2026, porque a série só vai até julho.
+- **S4, MCD64A1 na conferência:** nenhum pixel queimado em 2016 num quadrado de ~10 km perto da fazenda
+  (2 pedidos). O alerta de fogo só vai ter número depois da extração completa.
+
 ## O que não foi possível e por quê
 
 - **S7, chuva do satélite ao lado da chuva relatada:** não há chuva recente do satélite ligada (o
@@ -201,3 +237,14 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
   exemplo e a URL dizem faixas diferentes; fica para a S9 (consistência) ou para quem mexer no exemplo.
 - **S3, artigos do Guia:** com os dois desta seção, faltam 5 (plantio direto, sementes, erosão, raio-X e fogo
   na palha), como na S8.
+- **S4, altitude no cabeçalho do raio-X:** o `grid_cell` não tem altitude (o POWER devolve na busca, mas
+  ela não é gravada) e o pedido manda não buscar fora. Para ter, seria uma migração e a pré-carga de
+  novo.
+- **S4, extração completa do MCD64A1:** o script está pronto e conferido com 2 pedidos (131 s); a caixa
+  inteira são 240 pedidos (~2,3 h) e fica com o orquestrador:
+  `uv run python -m pipeline.fetch_area_queimada`. Até lá, o alerta de fogo não aparece.
+- **S4, "Saiba mais" do alerta de chuva forte:** o artigo "Como evitar erosão" não existe (D9); o link
+  entra quando ele for escrito.
+- **S4, conferência em 390 px:** o Chrome sem interface desta máquina não abre janela mais estreita que
+  ~500 px (o Guia, já revisado, sai cortado do mesmo jeito). A tela foi vista em 1280 e ~500 px; a
+  revisão no celular fica para a revisão da seção.
