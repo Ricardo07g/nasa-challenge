@@ -57,8 +57,19 @@ export function consTexts(t: Messages, lang: Lang, option: Opcao | null): string
   if (!option) return [...c.fallowCons]
   return consOf(option).map((reason) => {
     if (reason !== 'late') return c.cons[reason]
-    return option.data_limite ? c.cons.late(formatDayMonth(lang, option.data_limite)) : c.cons.lateNoDate
+    if (!option.data_limite) return c.cons.lateNoDate
+    const date = formatDayMonth(lang, option.data_limite)
+    // Tarefa 0066 do backend: a crotalária não tem ZARC; a data dela é sugestão do app (sem falar em seguro)
+    return option.prazo_zarc === false ? c.cons.lateSuggested(date) : c.cons.late(date)
   })
+}
+
+/** O texto do modal da célula do prazo: o ZARC, ou, na cultura sem ZARC (crotalária), a data sugerida pelo app. */
+export function deadlineCellText(t: Messages, option: Opcao, limit: string | null, sowing: string, late: boolean): string {
+  const c = t.choose.cell
+  if (!limit) return c.deadlineNone
+  if (option.prazo_zarc === false) return late ? c.deadlineSuggestedLate(limit, sowing) : c.deadlineSuggestedOk(limit, sowing)
+  return late ? c.deadlineLate(limit, sowing) : c.deadlineOk(limit, sowing)
 }
 
 /** A frase do porquê no cartão da sugestão: até 2 pontos a favor; sem nenhum, o resumo da cultura. */

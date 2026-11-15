@@ -83,6 +83,15 @@ describe('usePlanningController (tela 6 "Seu planejamento", pacote 3)', () => {
     expect(result.current.harvest).toEqual({ date: null, band: 'meio', day: '2027-02-15' })
   })
 
+  it('a crotalária não tem ZARC (tarefa 0066 do backend): o plantio e a próxima soja dizem data sugerida', async () => {
+    const first = (await ready(`/planejamento?${flow}&escolha=crotalaria`)).result.current.timeline!
+    const second = (await ready(`/planejamento?${flow}&escolha=sorgo&ano2=crotalaria`)).result.current.timeline!
+
+    expect(first.find((step) => step.kind === 'plant')).toMatchObject({ crop: 'crotalaria', zarc: false })
+    expect(second.find((step) => step.kind === 'plant')).toMatchObject({ crop: 'sorgo', zarc: true })
+    expect(second.find((step) => step.kind === 'next')).toMatchObject({ crop: 'crotalaria', zarc: false })
+  })
+
   it('o 1º ano fora do prazo (milho sozinho na colheita tarde) marca o plantio', async () => {
     const { result } = await ready(`/planejamento?${flow}&escolha=milho_safrinha`)
     expect(result.current.timeline!.find((step) => step.kind === 'plant')).toMatchObject({ late: true, deadline: '2027-02-28' })

@@ -218,6 +218,9 @@ class OpcaoSchema(_Frozen):
     # Tarefa 0056 (tela 5): passou do prazo do ZARC desta colheita (= not na_janela). A cultura
     # vem com a conta do motor, mas fica fora da sugestão, das alternativas e dos planos.
     fora_do_prazo: bool = False
+    # Tarefa 0066: o `data_limite` vem de portaria do ZARC; falso na crotalária (sem ZARC: a data
+    # é sugestão do app e a tela não fala em ZARC nem em seguro). Opcional para o front antigo.
+    prazo_zarc: bool = True
 
     @classmethod
     def from_model(cls, o: ResultadoOpcao) -> "OpcaoSchema":
@@ -226,6 +229,7 @@ class OpcaoSchema(_Frozen):
             nome=o.nome,
             na_janela=o.na_janela,
             fora_do_prazo=not o.na_janela,
+            prazo_zarc=o.prazo_zarc,
             data_limite=o.data_limite,
             chuva=ChuvaSchema(
                 anos_bons=o.anos_bons_chuva,

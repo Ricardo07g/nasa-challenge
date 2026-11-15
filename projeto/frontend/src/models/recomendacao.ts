@@ -101,6 +101,11 @@ export type Opcao = {
   fora_do_prazo?: boolean
   /** Data limite de plantio do ZARC (ADR 0002); null quando não houver. */
   data_limite: string | null
+  /**
+   * O `data_limite` vem de portaria do ZARC (tarefa 0066 do backend). `false` na crotalária, que não tem ZARC: a data
+   * é sugestão do app e a tela não fala em ZARC nem em seguro. Ausente (API antiga) = vem do ZARC.
+   */
+  prazo_zarc?: boolean
   chuva: { anos_bons: number; anos: number; faixa: boolean[]; rotulo: Rotulo; texto: string }
   /** Clima de 2041–2060 (NEX-GDDP-CMIP6); null enquanto não houver o dado. */
   futuro: {

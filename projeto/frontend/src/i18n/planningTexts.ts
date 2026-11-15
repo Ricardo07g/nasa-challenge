@@ -96,12 +96,20 @@ export function stepText(t: Messages, lang: Lang, step: TimelineStep): StepText 
         }
       }
       const deadline = formatDayMonth(lang, step.deadline)
+      // Tarefa 0066 do backend: a cultura sem ZARC (crotalária) tem data sugerida, sem ZARC nem seguro
+      const text = step.zarc
+        ? step.late
+          ? p.plant.late(deadline)
+          : p.plant.text(deadline)
+        : step.late
+          ? p.plant.lateSuggested(deadline)
+          : p.plant.textSuggested(deadline)
       return {
         ...base,
         when: p.plant.when(formatShortDayMonth(lang, step.deadline)),
-        sub: p.plant.sub,
+        sub: step.zarc ? p.plant.sub : p.plant.subSuggested,
         title,
-        text: step.late ? p.plant.late(deadline) : p.plant.text(deadline),
+        text,
         late: step.late,
       }
     }
@@ -125,12 +133,20 @@ export function stepText(t: Messages, lang: Lang, step: TimelineStep): StepText 
       // Tarefa 0065: o prazo do ZARC do 2º ano vai no mesmo passo, antes do "Abra o app de novo"
       const again = p.next.text(step.year + 1)
       const deadline = step.deadline ? formatDayMonth(lang, step.deadline) : null
+      const when = (date: string) =>
+        step.zarc
+          ? step.late
+            ? p.next.late(date)
+            : p.next.deadline(date)
+          : step.late
+            ? p.next.lateSuggested(date)
+            : p.next.deadlineSuggested(date)
       return {
         ...base,
         when: p.next.when,
         sub: String(step.year),
         title: step.crop ? p.next.title(cropInSentence(t, step.crop)) : p.next.titleAlone,
-        text: !deadline ? again : `${step.late ? p.next.late(deadline) : p.next.deadline(deadline)} ${again}`,
+        text: !deadline ? again : `${when(deadline)} ${again}`,
         late: step.late,
       }
     }
@@ -211,7 +227,8 @@ export function planningSummary(t: Messages, lang: Lang, input: SummaryInput): s
   let harvest: string
   if (!plant) harvest = s.harvestOnly(date)
   else if (!plant.deadline) harvest = s.plantSoon(date, crop(0))
-  else if (plant.late) harvest = s.plantLate(date, crop(0), formatDayMonth(lang, plant.deadline))
+  else if (plant.late)
+    harvest = (plant.zarc ? s.plantLate : s.plantLateSuggested)(date, crop(0), formatDayMonth(lang, plant.deadline))
   else harvest = s.plant(date, crop(0), formatDayMonth(lang, plant.deadline))
   return [
     s.plan(crop(0), seasonName(CURRENT_SEASON), crop(1), seasonName(CURRENT_SEASON + 1), crop(2), seasonName(CURRENT_SEASON + 2)),

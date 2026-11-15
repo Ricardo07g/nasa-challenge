@@ -93,6 +93,68 @@ def test_should_ship_culturas_yaml_without_price_cost_or_yield() -> None:
             assert campo not in data, f"{crop_id}.{campo}"
 
 
+def test_should_ship_zarc_deadlines_of_uberlandia_and_uberaba() -> None:
+    """Prazos do ZARC de MG vigentes (tarefa 0066): último decêndio com risco de até 20%, Grupo I,
+    no solo que mais guarda água, o mais cedo entre Uberlândia e Uberaba. Crotalária sem ZARC."""
+    repo = YamlCropParamsRepository(SHIPPED_CULTURAS)
+
+    limites = {c.id: c.semeadura_limite_mes_dia for c in repo.list_all()}
+    zarc = {c.id: c.prazo_zarc for c in repo.list_all()}
+
+    assert limites["milho_safrinha"] == "02-10"
+    assert limites["milho_braquiaria"] == "02-10"
+    assert limites["sorgo"] == "03-20"
+    assert limites["milheto"] == "04-20"
+    assert limites["crotalaria"] == "02-28"
+    assert zarc == {
+        "pousio": False,
+        "milho_safrinha": True,
+        "milho_braquiaria": True,
+        "sorgo": True,
+        "milheto": True,
+        "crotalaria": False,
+    }
+
+
+def test_should_ship_a_source_for_every_number_of_each_crop() -> None:
+    """Cada número de cada cultura diz de onde veio (tarefa 0066): citação ou "hipótese do time"."""
+    raw = yaml.safe_load(SHIPPED_CULTURAS.read_text(encoding="utf-8"))
+    campos = (
+        "semeadura_limite_mes_dia",
+        "dias_florescer",
+        "ciclo_dias",
+        "kc_pico",
+        "nota_solo",
+        "n_deixado_kg",
+    )
+
+    for crop_id, data in raw["culturas"].items():
+        if crop_id == "pousio":
+            continue
+        fontes = data.get("fontes") or {}
+        for campo in campos:
+            assert str(fontes.get(campo) or "").strip(), f"{crop_id}.fontes.{campo}"
+
+
+def test_should_ship_soil_points_backed_by_the_nematode_field_trial() -> None:
+    """Debiasi et al. (2016): só as crotalárias reduziram o nematoide das lesões; milho, sorgo,
+    braquiárias e milheto sozinho não diferiram da testemunha (tarefa 0066)."""
+    repo = YamlCropParamsRepository(SHIPPED_CULTURAS)
+
+    pragas = {c.id: c.solo_pragas for c in repo.list_all()}
+    floracao = {c.id: c.dias_florescer for c in repo.list_all()}
+
+    assert pragas == {
+        "pousio": 0,
+        "milho_safrinha": 0,
+        "sorgo": 0,
+        "milho_braquiaria": 0,
+        "milheto": 0,
+        "crotalaria": 30,
+    }
+    assert floracao["crotalaria"] == 70
+
+
 def test_should_return_crop_params_when_queried_by_canonical_or_alias_id(tmp_path: Path) -> None:
     repo = _repo(tmp_path)
 
@@ -140,7 +202,8 @@ def test_should_read_how_to_steps_in_portuguese_and_english(tmp_path: Path) -> N
 
 
 def test_should_load_shipped_culturas_yaml_with_prd_soil_points() -> None:
-    # O culturas.yaml que vai junto com a API precisa carregar (PRD 7.4: totais da nota de solo).
+    # O culturas.yaml que vai junto com a API precisa carregar (PRD 7.4: totais da nota de solo;
+    # tarefa 0066: pragas só na crotalária, a única que reduziu o nematoide no campo).
     repo = YamlCropParamsRepository(Settings(_env_file=None).culturas_path)
 
     totals = {c.id: c.solo_palhada + c.solo_nitrogenio + c.solo_pragas for c in repo.list_all()}
@@ -148,9 +211,9 @@ def test_should_load_shipped_culturas_yaml_with_prd_soil_points() -> None:
     assert totals == {
         "pousio": 0,
         "milho_safrinha": 20,
-        "sorgo": 35,
-        "milho_braquiaria": 50,
-        "milheto": 55,
+        "sorgo": 20,
+        "milho_braquiaria": 40,
+        "milheto": 35,
         "crotalaria": 85,
     }
 

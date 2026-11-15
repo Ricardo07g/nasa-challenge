@@ -84,8 +84,9 @@ describe('MethodView (tela 9)', () => {
     expect(screen.getByText('Em três passos, e o que o satélite não enxerga.')).toBeInTheDocument()
     expect(screen.getByText(/Pegamos a chuva e o calor de cada ano/)).toBeInTheDocument()
     expect(screen.getByText(/Contamos em quantos anos faltou água/)).toBeInTheDocument()
+    // Tarefa 0066 do backend: a água vem do ZARC; o calor, de artigo científico (não da Embrapa)
     expect(screen.getByRole('region', { name: 'Sem inteligência artificial, conta aberta' })).toHaveTextContent(
-      'Embrapa e do ZARC',
+      'Os limites de falta de água vêm do ZARC',
     )
     // Tarefa 0049: o cartão "em breve" da validação saiu (só aparece o que está ligado).
     expect(screen.queryByRole('region', { name: 'Bateu com o que aconteceu?' })).not.toBeInTheDocument()
@@ -141,7 +142,7 @@ describe('MethodView (tela 9)', () => {
     expect(rules).toHaveTextContent('só 25% dos anos tiveram falta maior')
     expect(rules).toHaveTextContent('pouca água abaixo de 270 mm no ciclo; muita, a partir de 330 mm')
     expect(rules).toHaveTextContent('+4 pontos para 2 funções diferentes e +9 para 3')
-    expect(rules).toHaveTextContent('Quebram o ciclo do nematoide: crotalária e milheto.')
+    expect(rules).toHaveTextContent('Ajuda a baixar o nematoide: crotalária e milheto.')
     expect(rules).toHaveTextContent('chuva dos 14 dias antes de plantar')
     expect(rules).toHaveTextContent('4 anos de falha ou mais, pegando 55% das falhas, com 65% dos anos marcados')
     expect(rules).toHaveTextContent('acaso de até 8%')
@@ -157,6 +158,31 @@ describe('MethodView (tela 9)', () => {
     expect(rules).toHaveTextContent('Raio-X')
     expect(screen.getByRole('region', { name: 'Renda sem valores em reais' })).toHaveTextContent('nota 5 na renda')
     expect(screen.queryByText(/hoje zero/)).not.toBeInTheDocument()
+  })
+
+  it('cada regra mostra a fonte conferida; "ainda não validado em campo" só no que é hipótese (tarefa 0066)', () => {
+    const fontes: NonNullable<MetodoRegras['fontes']> = {
+      deu_certo: {
+        hipotese: 'parte',
+        citacoes: [{ citacao: 'ZARC de MG (Portaria SPA/MAPA nº 324/2026)', url: 'https://www.in.gov.br/portaria-324' }],
+      },
+      geada: { hipotese: 'nao', citacoes: [{ citacao: 'Wrege et al. (2018), Rev. Bras. Climatologia 22', url: 'https://ojs.ufgd.edu.br/x' }] },
+      fogo: { hipotese: 'sim', citacoes: [] },
+    }
+    setup({ rules: { ...RULES, deu_certo: { ...RULES.deu_certo, isna_por_cultura_pct: { milho_braquiaria: 50, sorgo: 45 } }, fontes } })
+
+    const items = within(screen.getByRole('region', { name: 'As regras da conta' })).getAllByRole('listitem')
+    const item = (start: string) => items.find((li) => li.textContent?.startsWith(start))!
+    const worked = item('Deu certo')
+    expect(worked).toHaveTextContent('Pelo ZARC de cada cultura: milho com braquiária 50% e sorgo 45%.')
+    expect(within(worked).getByRole('link', { name: /ZARC de MG/ })).toHaveAttribute('href', 'https://www.in.gov.br/portaria-324')
+    expect(worked).toHaveTextContent('Parte dos números é hipótese do time, ainda não validada em campo.')
+    const frost = item('Geada')
+    expect(within(frost).getByRole('link', { name: /Wrege et al\. \(2018\)/ })).toHaveAttribute('target', '_blank')
+    expect(frost).not.toHaveTextContent(/hipótese do time/)
+    expect(item('Fogo')).toHaveTextContent('Hipótese do time, ainda não validada em campo.')
+    // Regra sem a fonte na API (campo opcional): nada a mais
+    expect(item('Nota final')).not.toHaveTextContent(/Fonte|hipótese/)
   })
 
   it('sem as regras (API antiga ou falha), o bloco das regras não aparece', () => {

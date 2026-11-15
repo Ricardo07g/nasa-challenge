@@ -100,11 +100,10 @@ class ClimateRiskService:
         if crop.tipo == "cobertura":
             ini_crit = 0
             fim_crit = min(clima.janela_cobertura_dias, crop.ciclo_dias)
-            isna_threshold = clima.isna_cobertura
         else:
             ini_crit = max(0, crop.dias_florescer - clima.janela_grao_meia_dias)
             fim_crit = min(crop.ciclo_dias, crop.dias_florescer + clima.janela_grao_meia_dias)
-            isna_threshold = clima.isna_grao
+        isna_threshold = clima.isna_min(crop.id, cobertura=crop.tipo == "cobertura")
 
         resultados: list[ResultadoAno] = []
         for season in seasons:

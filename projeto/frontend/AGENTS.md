@@ -335,7 +335,11 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   preço, água, sede da cultura, nota da rotação, Plano B, geada, chuva forte, fogo, avisos, sinal do outono e raio-X)
   aparecem no bloco "As regras da conta", com os números de `GET /api/metodo` (`repositories/metodoRepository.ts`,
   lidos do `regras.yaml`; o mock em `repositories/mocks/mockMetodo.ts`). A tela nunca repete número de regra: sem a
-  rota (API antiga) ou com falha, o bloco não aparece e o texto da renda fica sem o número. **Sem os relatos de
+  rota (API antiga) ou com falha, o bloco não aparece e o texto da renda fica sem o número. **Fonte de cada regra
+  (tarefa 0066 do backend):** com o campo opcional `fontes` do `/api/metodo`, cada regra mostra "Fonte(s):" com as
+  citações em links (nova aba) e, só quando a `hipotese` não é `nao`, o aviso "Hipótese do time, ainda não validada em
+  campo." (`sim`) ou "Parte dos números é hipótese do time…" (`parte`); sem a chave, a regra aparece sem fonte. O
+  "deu certo" diz o ISNA do ZARC de cada cultura (`isna_por_cultura_pct`). **Sem os relatos de
   vizinhos** (15/11/2026, comunidade "em breve"): a regra dos avisos fala só do SMAP e do NASA POWER, e o
   `avisos.vizinhos_dias` e o `avisos.raio_km` da API não aparecem (continuam no model, que é o contrato); o
   `messages.test.ts` barra "vizinh"/"relato" (e "neighbo"/"report") no bloco `method`.
@@ -430,6 +434,14 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   Alertas e clima, Fontes e aviso), 2 folhas A4 na lavoura de demonstração. Os cartões dos anos no celular: foto de 108 px
   à esquerda; a 360 px as barras do "Deu certo" ficam com 56 px e o "X de 20" desce se não couber (sem rolagem lateral).
   É a **única tela com "Imprimir relatório"**.
+- **Prazo sem ZARC (tarefa 0066 do backend, RF-49):** a opção traz `prazo_zarc` (opcional; ausente = vem do ZARC).
+  Com `false` (a crotalária, que não tem ZARC), nenhuma tela fala em ZARC nem em seguro para ela: "Passou da data
+  sugerida ({data})" no "Contra" (`consTexts`), o modal do prazo com `deadlineSuggestedOk`/`Late` e sem a explicação
+  do ZARC (`deadlineCellText`), e, na tela 6, o passo do plantio e o da próxima soja com `zarc: false`
+  (`planTimeline`, `secondZarc` pela opção do 2º ano) e o resumo falado com `plantLateSuggested`. Fora do prazo do
+  ZARC, as frases dizem "o risco sobe e o seguro pode não cobrir" (o prazo do app é o de risco de 20% no solo que mais
+  guarda água; o ZARC ainda indica épocas de 30% e 40%). O `messages.test.ts` barra as frases que a revisão com fontes
+  tirou ("quebra o ciclo do nematoide", "nitrogênio para a soja", "aguenta a seca", "deixa pouca palha").
 - **Tela 5 "Escolher" + "Plano de 3 anos" (pacote 2, tarefa 0059, RF-42; motor na tarefa 0056 do backend):** as
   antigas abas Sugestão, Comparar e Plano (tarefas 0044 e 0045) viraram **uma tela com 2 abas** (`ChoosePlanPage` →
   `controllers/useChoosePlanController.ts` → `views/ChoosePlanView.tsx`, com `ChooseTab`, `PlanTab` e `ChooseModals`).

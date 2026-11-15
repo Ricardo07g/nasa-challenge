@@ -193,14 +193,15 @@ def test_should_drop_only_more_than_two_fallows_in_a_row() -> None:
     assert ("pousio", "milheto", "pousio") in sequences
 
 
-def test_should_keep_only_sequences_with_crotalaria_or_millet_when_nematoide_is_true() -> None:
-    # PRD §11: nematoide = sim -> nenhum plano sem crotalária ou milheto nos 3 anos
+def test_should_keep_only_sequences_with_crotalaria_when_nematoide_is_true() -> None:
+    # PRD §11: nematoide = sim -> nenhum plano sem supressora nos 3 anos. Tarefa 0066: só a
+    # crotalária reduziu o nematoide no campo (Debiasi et al. 2016); o milheto saiu da lista.
     sequences = RotationPlanService().candidate_sequences(ALL_CROPS, nematoide=True)
 
     assert sequences
-    assert all({"crotalaria", "milheto"} & set(seq) for seq in sequences)
-    # 215 sem 3 pousios, menos as 63 só com pousio, milho, sorgo e milho + braquiária (4³ - 1)
-    assert len(sequences) == 215 - 63
+    assert all("crotalaria" in seq for seq in sequences)
+    # 215 sem 3 pousios, menos as 124 sem crotalária (5³ - 1)
+    assert len(sequences) == 215 - 124
 
 
 def test_should_put_fallow_in_dry_plan_when_every_crop_does_worse_than_fallow_in_dry_years() -> (
@@ -274,9 +275,9 @@ def test_should_start_the_suggested_plan_with_the_given_crop() -> None:
 
     plano = service.best_plan_with_prefix(("sorgo",), OBJECTIVE_OPTIONS, POUSIO)
 
-    # sorgo (grão) + milho com braquiária (grão, gramínea) + crotalária (leguminosa): +10, e a
-    # crotalária quebra o nematoide depois do milho
-    assert plano == ("sorgo", "milho_braquiaria", "crotalaria")
+    # sorgo (grão) + crotalária (leguminosa) + milho com braquiária (grão, gramínea): +10, e a
+    # crotalária ajuda a baixar o nematoide que o sorgo multiplica (tarefa 0066)
+    assert plano == ("sorgo", "crotalaria", "milho_braquiaria")
 
 
 def test_should_score_the_plan_by_the_objective_axis_when_one_is_given() -> None:
@@ -399,7 +400,8 @@ def test_should_keep_the_nematode_rule_with_a_fixed_prefix() -> None:
         ("pousio", "crotalaria", ()),  # cobre, mas começa devagar (hipótese a revisar)
         ("pousio", "sorgo", ()),
         ("milho_safrinha", "crotalaria", ("quebrar_nematoide_depois_do_milho", "variar_funcao")),
-        ("milho_braquiaria", "milheto", ("quebrar_nematoide_depois_do_milho",)),  # gramínea
+        ("milho_braquiaria", "milheto", ()),  # gramínea; milheto não é supressora (tarefa 0066)
+        ("sorgo", "crotalaria", ("quebrar_nematoide_depois_do_milho", "variar_funcao")),
         ("sorgo", "milheto", ("variar_funcao",)),
         ("milheto", "sorgo", ("variar_funcao",)),
         ("crotalaria", "milho_braquiaria", ("variar_funcao",)),

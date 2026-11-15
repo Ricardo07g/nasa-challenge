@@ -19,6 +19,7 @@ const plant: Extract<TimelineStep, { kind: 'plant' }> = {
   sowing: '2027-03-03',
   deadline: '2027-03-20',
   late: false,
+  zarc: true,
 }
 
 describe('stepText (as frases de cada passo de "O que fazer agora")', () => {
@@ -63,14 +64,33 @@ describe('stepText (as frases de cada passo de "O que fazer agora")', () => {
       when: 'até 20 mar',
       sub: 'prazo ZARC',
       title: 'Plante sorgo',
-      text: 'Plante logo depois de colher: o prazo do ZARC vai até 20 de março. Depois disso, o seguro rural não cobre.',
+      text: 'Plante logo depois de colher: o prazo do ZARC vai até 20 de março. Depois disso, o risco sobe e o seguro rural pode não cobrir.',
       late: false,
     })
-    const late = stepText(pt, 'pt', { ...plant, crop: 'milho_braquiaria', deadline: '2027-02-28', late: true })
-    expect(late).toMatchObject({ when: 'até 28 fev', late: true, text: 'Passou do prazo do ZARC (28 de fevereiro): o seguro rural não cobre.' })
-    expect(stepText(en, 'en', { ...plant, deadline: '2027-02-28', late: true }).text).toBe(
-      'Past the ZARC deadline (February 28): crop insurance does not cover it.',
+    const late = stepText(pt, 'pt', { ...plant, crop: 'milho_braquiaria', deadline: '2027-02-10', late: true })
+    expect(late).toMatchObject({
+      when: 'até 10 fev',
+      late: true,
+      text: 'Passou do prazo do ZARC (10 de fevereiro): o risco sobe e o seguro rural pode não cobrir.',
+    })
+    expect(stepText(en, 'en', { ...plant, deadline: '2027-02-10', late: true }).text).toBe(
+      'Past the ZARC deadline (February 10): the risk goes up and crop insurance may not cover it.',
     )
+  })
+
+  it('a crotalária não tem ZARC (tarefa 0066 do backend): a data é sugerida, sem falar em ZARC nem em seguro', () => {
+    const crot = { ...plant, crop: 'crotalaria', deadline: '2027-02-28', zarc: false } as const
+    expect(stepText(pt, 'pt', crot)).toMatchObject({
+      sub: 'data sugerida',
+      text: 'Plante logo depois de colher, até 28 de fevereiro: data sugerida pelo app (não há ZARC para esta planta).',
+    })
+    expect(stepText(pt, 'pt', { ...crot, late: true }).text).toBe('Passou da data sugerida (28 de fevereiro).')
+    expect(stepText(en, 'en', { ...crot, late: true }).text).toBe('Past the suggested date (February 28).')
+    const next = { kind: 'next', year: 2027, crop: 'crotalaria', deadline: '2028-02-28', late: false, zarc: false } as const
+    expect(stepText(pt, 'pt', next).text).toBe(
+      'Plante até 28 de fevereiro (data sugerida). Abra o app de novo depois da colheita de 2028 para conferir o plano com a chuva daquele ano.',
+    )
+    expect(stepText(pt, 'pt', { ...next, late: true }).text).toMatch(/^Passou da data sugerida \(28 de fevereiro\)\./)
   })
 
   it('a fase da água (floração ou pegamento), a colheita da cultura e a próxima soja', () => {
@@ -80,7 +100,7 @@ describe('stepText (as frases de cada passo de "O que fazer agora")', () => {
       when: 'abr–mai',
       sub: 'floração',
       title: 'Fase em que a planta mais precisa de água',
-      text: 'É quando mais aparece veranico: a floração vem por volta de 65 dias depois do plantio.',
+      text: 'É quando o veranico mais prejudica: a floração vem por volta de 65 dias depois do plantio.',
     })
     expect(
       stepText(pt, 'pt', { kind: 'water', crop: 'milheto', phase: 'pegamento', from: '2027-03-03', to: '2027-04-02', flowerDays: 50, windowDays: 30 })
@@ -92,7 +112,7 @@ describe('stepText (as frases de cada passo de "O que fazer agora")', () => {
       title: 'Colha e deixe a palha no chão',
     })
     expect(stepText(pt, 'pt', { kind: 'cropHarvest', crop: 'milheto', grain: false, date: '2027-06-01' }).title).toBe('Deixe a palha no chão')
-    const next = { kind: 'next', year: 2027, crop: 'milheto', deadline: null, late: false } as const
+    const next = { kind: 'next', year: 2027, crop: 'milheto', deadline: null, late: false, zarc: true } as const
     expect(stepText(pt, 'pt', next)).toMatchObject({
       when: 'out–nov',
       sub: '2027',
@@ -106,7 +126,7 @@ describe('stepText (as frases de cada passo de "O que fazer agora")', () => {
       'Plante até 15 de março (prazo do ZARC). Abra o app de novo depois da colheita de 2028 para conferir o plano com a chuva daquele ano.',
     )
     expect(stepText(pt, 'pt', { ...next, deadline: '2028-02-28', late: true })).toMatchObject({
-      text: 'Passou do prazo do ZARC (28 de fevereiro): o seguro rural não cobre. Abra o app de novo depois da colheita de 2028 para conferir o plano com a chuva daquele ano.',
+      text: 'Passou do prazo do ZARC (28 de fevereiro): o risco sobe e o seguro rural pode não cobrir. Abra o app de novo depois da colheita de 2028 para conferir o plano com a chuva daquele ano.',
       late: true,
     })
     expect(stepText(en, 'en', { ...next, deadline: '2028-03-15' }).text).toBe(
@@ -142,16 +162,18 @@ describe('planningAlertText (os cartões dos alertas)', () => {
 describe('gainText ("Como o plano ajuda a ganhar")', () => {
   const gain = {
     income: [{ crop: 'sorgo' as const, seasons: [2027, 2029] }],
-    covers: [{ crop: 'milheto' as const, season: 2028, straw: true, nitrogen: false, nematode: true }],
+    covers: [{ crop: 'crotalaria' as const, season: 2028, straw: true, nitrogen: true, nematode: true }],
     planB: { from: 'sorgo' as const, to: 'milheto' as const },
   }
 
   it('renda, o que as coberturas devolvem e o Plano B, em pt e en', () => {
+    // Tarefa 0066 do backend: "deixa nitrogênio na terra" (a soja inoculada tira o seu do ar) e "ajuda a baixar o
+    // nematoide" (Debiasi et al. 2016: a diferença some na colheita da soja).
     expect(gainText(pt, gain)).toBe(
-      'Sorgo dá grão para vender em 2026/27 e 2028/29. Milheto, em 2027/28, não dá grão, mas deixa palha que protege a terra e quebra o ciclo do nematoide: isso ajuda a soja seguinte. Plano B: se o outono vier seco, trocar sorgo por milheto.',
+      'Sorgo dá grão para vender em 2026/27 e 2028/29. Crotalária, em 2027/28, não dá grão, mas deixa palha que protege a terra, deixa nitrogênio na terra e ajuda a baixar o nematoide: isso ajuda a soja seguinte. Plano B: se o outono vier seco, trocar sorgo por milheto.',
     )
     expect(gainText(en, gain)).toBe(
-      'Sorghum gives grain to sell in 2026/27 and 2028/29. Pearl millet, in 2027/28, gives no grain, but leaves straw that protects the soil and breaks the nematode cycle: this helps the next soybeans. Plan B: if autumn looks dry, swap sorghum for pearl millet.',
+      'Sorghum gives grain to sell in 2026/27 and 2028/29. Crotalaria, in 2027/28, gives no grain, but leaves straw that protects the soil, adds nitrogen to the soil and helps lower nematodes: this helps the next soybeans. Plan B: if autumn looks dry, swap sorghum for pearl millet.',
     )
   })
 
@@ -180,6 +202,11 @@ describe('planningSummary ("Ouvir resumo" da tela 6)', () => {
     )
     expect(planningSummary(pt, 'pt', { ...base, crops: ['pousio', 'milheto', 'sorgo'], plant: null, planB: null })).toContain(
       'Colha a soja por volta de 3 de março. Em fevereiro',
+    )
+    // A crotalária não tem ZARC (tarefa 0066 do backend)
+    const crot = { ...plant, crop: 'crotalaria', deadline: '2027-02-28', late: true, zarc: false } as const
+    expect(planningSummary(pt, 'pt', { ...base, crops: ['crotalaria', 'milheto', 'sorgo'], plant: crot, planB: null })).toContain(
+      'plante crotalária logo depois; a data sugerida acabou em 28 de fevereiro.',
     )
   })
 })

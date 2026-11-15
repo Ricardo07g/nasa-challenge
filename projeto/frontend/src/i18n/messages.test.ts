@@ -76,6 +76,36 @@ describe('sem revisão pendente da agrônoma (15/11/2026)', () => {
   })
 })
 
+describe('só o que a fonte sustenta (tarefa 0066 do backend, revisão com fontes)', () => {
+  const texts = (obj: unknown): string[] =>
+    typeof obj === 'string'
+      ? [obj]
+      : typeof obj === 'function'
+        ? [String((obj as (...args: string[]) => unknown)('x', 'x', 'x', 'x', 'x', 'x', 'x'))]
+        : obj && typeof obj === 'object'
+          ? Object.values(obj).flatMap(texts)
+          : []
+  // A crotalária reduz o nematoide antes e no começo da soja, mas a diferença some na colheita (Debiasi et al.
+  // 2016): "quebra o ciclo" promete demais. A soja inoculada tira o nitrogênio do ar: o da crotalária fica na terra,
+  // não é "para a soja". A sede "pouca" é consumo baixo, não tolerância à seca.
+  const unsupported = /quebra[mr]? o (ciclo do )?nematoide|break[s]? the nematode|nitrog[eê]nio para a soja|nitrogen for the soybean|aguenta a seca|and handles drought|deixa pouca palha|little straw left/i
+
+  it('nenhum texto da interface diz o que a literatura não sustenta, em pt e en', () => {
+    expect(texts(pt).filter((text) => unsupported.test(text))).toEqual([])
+    expect(texts(en).filter((text) => unsupported.test(text))).toEqual([])
+  })
+
+  it('a crotalária não tem prazo do ZARC: a data dela é sugestão do app', () => {
+    expect(pt.choose.compare.cons.lateSuggested('x')).not.toMatch(/ZARC|seguro/)
+    expect(en.choose.compare.cons.lateSuggested('x')).not.toMatch(/ZARC|insurance/)
+    expect(pt.choose.cell.deadlineSuggestedLate('x', 'y')).not.toMatch(/prazo do ZARC|pelo ZARC|seguro/i)
+    expect(pt.choose.cell.deadlineSuggestedLate('x', 'y')).toContain('Não há ZARC')
+    expect(en.choose.cell.deadlineSuggestedOk('x', 'y')).not.toMatch(/ZARC deadline|by ZARC|insurance/i)
+    expect(pt.planning.timeline.plant.lateSuggested('x')).not.toMatch(/ZARC|seguro/)
+    expect(en.planning.timeline.next.lateSuggested('x')).not.toMatch(/ZARC|insurance/)
+  })
+})
+
 describe('"Como a conta é feita" sem os relatos de vizinhos (15/11/2026)', () => {
   // A comunidade está "em breve" (COMMUNITY_OPEN = false): a regra dos avisos não fala dos relatos.
   const texts = (obj: unknown): string[] =>

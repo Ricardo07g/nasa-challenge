@@ -204,6 +204,8 @@ class ResultadoOpcao:
     ciclo: CicloOpcao | None = None
     observar: ObservarOpcao | None = None
     enso_acerto: tuple[EnsoAcerto, ...] = ()
+    # O `data_limite` vem de portaria do ZARC (tarefa 0066); falso na crotalária, sem ZARC.
+    prazo_zarc: bool = True
 
 
 @dataclass(frozen=True)

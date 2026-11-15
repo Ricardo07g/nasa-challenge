@@ -13,7 +13,7 @@ import { failureCounts } from '../services/compareService'
 import { isLate } from '../services/choiceService'
 import { CURRENT_SEASON, seasonName } from '../services/seasonService'
 import { clearEnsoNotes, yearBars, type YearBar } from '../services/suggestionService'
-import { consTexts, CROP_GUIDE, cropName, deadlineText, futureTexts, prosTexts, waterTexts } from './choiceTexts'
+import { consTexts, CROP_GUIDE, cropName, deadlineCellText, deadlineText, futureTexts, prosTexts, waterTexts } from './choiceTexts'
 import { futureClimateText } from './futureClimateText'
 import { SeasonTimeline } from './SeasonTimeline'
 import styles from './ChoosePlanView.module.css'
@@ -315,11 +315,12 @@ function cellDetail(t: Messages, lang: Lang, state: ChoosePlanState, option: Opc
   const limit = option.data_limite ? formatFullDate(lang, option.data_limite) : null
   return {
     value: deadlineText(t, lang, option).text,
-    text: !limit ? c.deadlineNone : late ? c.deadlineLate(limit, sowing) : c.deadlineOk(limit, sowing),
+    text: deadlineCellText(t, option, limit, sowing, late),
     prosCons: false,
     source: c.deadlineSource,
     late,
-    zarc: true,
+    // A explicação do ZARC e o "Saiba mais" só na cultura com ZARC (tarefa 0066 do backend)
+    zarc: option.prazo_zarc !== false,
   }
 }
 

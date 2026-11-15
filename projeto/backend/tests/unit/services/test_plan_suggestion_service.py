@@ -47,6 +47,7 @@ def _opcao(
         notas_seco=notas,
         porque=(),
         como_fazer=(),
+        prazo_zarc=crop_id != "crotalaria",  # tarefa 0066: não há ZARC de crotalária
         agua=AguaOpcao(
             precisa_mm=300,
             chove_mm=300,
@@ -87,13 +88,14 @@ def test_should_suggest_a_fast_cover_after_the_producer_leaves_the_soil_fallow()
         ("milheto", False),
     ]
     assert anos[0].motivo is None and anos[1].motivo is None
-    assert anos[2].motivo == "a terra ficou descoberta; cobre rápido e aguenta a seca"
+    # Tarefa 0066: a sede "pouca" é consumo baixo no ciclo, não tolerância à seca
+    assert anos[2].motivo == "a terra ficou descoberta; cobre rápido e pede pouca água"
 
 
 def test_should_write_the_reason_in_english() -> None:
     anos = _service().suggest(["milho_braquiaria", "pousio"], MEIO, (), POUSIO, lang="en-US")
 
-    assert anos[2].motivo == "the soil was left bare; it covers it fast and handles drought"
+    assert anos[2].motivo == "the soil was left bare; it covers it fast and needs little water"
 
 
 def test_should_suggest_the_second_and_third_years_after_the_first() -> None:
@@ -101,8 +103,10 @@ def test_should_suggest_the_second_and_third_years_after_the_first() -> None:
 
     assert [a.cultura for a in anos] == ["milho_safrinha", "crotalaria", "milho_braquiaria"]
     assert [a.fixo for a in anos] == [True, False, False]
-    # A crotalária (sede pouca) quebra o nematoide logo depois do milho
-    assert anos[1].motivo == ("quebra o ciclo do nematoide que o milho multiplica e aguenta a seca")
+    # A crotalária (sede pouca) ajuda a baixar o nematoide logo depois do milho (tarefa 0066)
+    assert anos[1].motivo == (
+        "ajuda a baixar o nematoide que o milho e o sorgo multiplicam e pede pouca água"
+    )
     # Milho com braquiária (sede muita): grão depois de uma cobertura, sem "aguenta a seca"
     assert anos[2].motivo == "dá grão para vender depois de um ano cuidando da terra"
 
@@ -129,28 +133,42 @@ def test_should_keep_a_first_year_past_the_deadline_and_suggest_only_crops_in_ti
     assert anos[0].cultura == "milho_braquiaria" and anos[0].fixo
     assert {a.cultura for a in anos[1:]} <= {"milheto", "sorgo", "pousio"}
     assert anos[1].cultura == "milheto"
-    assert anos[1].motivo == ("quebra o ciclo do nematoide que o milho multiplica e aguenta a seca")
+    # Tarefa 0066: o milheto não é mais supressora do nematoide (Debiasi et al. 2016), e repete a
+    # função de capim do consórcio: fica a melhor nota
+    assert anos[1].motivo == "tem a melhor nota do motor para esta colheita e pede pouca água"
 
 
 def test_should_say_the_deadline_weighed_when_a_late_crop_would_win_without_it() -> None:
-    # Sem o prazo do ZARC, a crotalária (nota de teste 90) ganharia o 2º ano; o motor sugere o
-    # milheto e diz que o prazo pesou.
-    fora = [_opcao("crotalaria", 90.0, "2027-02-28", na_janela=False)]
+    # Sem o prazo do ZARC, uma cultura com ZARC (nota de teste 90) ganharia o 2º ano; o motor
+    # sugere o milheto e diz que o prazo pesou.
+    fora = [replace(_opcao("crotalaria", 90.0, "2027-02-28", na_janela=False), prazo_zarc=True)]
 
     anos = _service().suggest(["sorgo"], TARDE, fora, POUSIO)
 
     assert [a.cultura for a in anos] == ["sorgo", "milheto", "sorgo"]
     assert anos[1].motivo == (
         "crotalária passou do prazo do ZARC (28/02); esta cabe no prazo (até 15/03) "
-        "e aguenta a seca"
+        "e pede pouca água"
     )
     assert anos[2].motivo == "dá grão para vender depois de um ano cuidando da terra"
     # Em inglês o motor já manda o nome em inglês nas opções
     fora_en = [replace(fora[0], nome="Crotalaria")]
     en = _service().suggest(["sorgo"], TARDE, fora_en, POUSIO, lang="en")
     assert en[1].motivo == (
-        "crotalaria is past the ZARC deadline (Feb 28); this one fits (until Mar 15) and handles "
-        "drought"
+        "crotalaria is past the ZARC deadline (Feb 28); this one fits (until Mar 15) and needs "
+        "little water"
+    )
+
+
+def test_should_call_the_crotalaria_deadline_a_suggested_date_not_a_zarc_one() -> None:
+    # Tarefa 0066: não há ZARC de crotalária; a data dela é sugestão do app.
+    fora = [_opcao("crotalaria", 90.0, "2027-02-28", na_janela=False)]
+
+    anos = _service().suggest(["sorgo"], TARDE, fora, POUSIO)
+
+    assert anos[1].motivo == (
+        "crotalária passou da data sugerida (28/02); esta cabe no prazo (até 15/03) "
+        "e pede pouca água"
     )
 
 
@@ -160,7 +178,7 @@ def test_should_vary_the_cover_or_fall_back_to_the_best_score() -> None:
     # Duas coberturas de funções diferentes: crotalária (leguminosa) depois do milheto (gramínea)
     anos = service.suggest(["milho_braquiaria", "milheto"], MEIO[3:], (), POUSIO)
     assert anos[2].cultura == "crotalaria"
-    assert anos[2].motivo == "varia a função da planta na rotação e aguenta a seca"
+    assert anos[2].motivo == "varia a função da planta na rotação e pede pouca água"
 
     # Nenhuma regra da cadeia: a melhor nota (sorgo de novo, sede média)
     anos = service.suggest(["sorgo", "sorgo"], [MEIO[2]], (), POUSIO)
@@ -172,7 +190,7 @@ def test_should_give_the_reason_of_the_cover_after_grain() -> None:
     anos = _service().suggest(["sorgo", "sorgo"], [MEIO[2], MEIO[4]], (), POUSIO)
 
     assert anos[2].cultura == "milheto"
-    assert anos[2].motivo == "cuida da terra depois de um ano de grão e aguenta a seca"
+    assert anos[2].motivo == "cuida da terra depois de um ano de grão e pede pouca água"
 
 
 def test_should_keep_the_nematode_rule_of_prd_7_7() -> None:
@@ -209,7 +227,7 @@ def test_should_choose_the_years_by_the_objective_axis_with_the_same_chain() -> 
     assert [a.motivo for a in anos] == [
         None,
         "dá grão para vender depois de um ano cuidando da terra",
-        "quebra o ciclo do nematoide que o milho multiplica e aguenta a seca",
+        "ajuda a baixar o nematoide que o milho e o sorgo multiplicam e pede pouca água",
     ]
 
 

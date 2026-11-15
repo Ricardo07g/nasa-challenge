@@ -5,9 +5,10 @@ Uso (a partir de projeto/backend):
     uv run python -m pipeline.fetch_oni --dry-run   # mostra o pedido e os anos, sem rede
     uv run python -m pipeline.fetch_oni             # anos da série do motor (2005 a 2024)
 
-Baixa a tabela pública do ONI (Oceanic Niño Index, ERSST v5) do CPC da NOAA, sem credencial: um
-pedido de ~23 KB, uma linha por estação de 3 meses (`SEAS YR TOTAL ANOM`). A NOAA rotula cada
-estação pelo mês do meio: o DJF de 2016 é dez/2015 a fev/2016.
+Baixa a tabela pública do RONI (Relative Oceanic Niño Index, ERSST v6), o índice oficial do CPC da
+NOAA desde 01/02/2026 (tarefa 0066), sem credencial: um pedido de ~15 KB, uma linha por estação de 3
+meses (`SEAS YR ANOM`; a tabela antiga do ONI, `SEAS YR TOTAL ANOM`, também é lida). A NOAA rotula
+cada estação pelo mês do meio: o DJF de 2016 é dez/2015 a fev/2016.
 
 Regra do ano da safrinha (grupo `enso` do `regras.yaml`, hipótese do time, a revisar): a média do
 ONI das estações DJF, JFM e FMA do ano (dezembro do ano anterior a abril), arredondada em 2 casas
@@ -40,10 +41,15 @@ from app.repositories.rules_repository import load_default_rules
 from pipeline.fetch_cmip6_deltas import repo_root
 
 SOURCE_KEY: Final[str] = "noaa_oni"
-ONI_URL: Final[str] = "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
-ONI_PRODUCT: Final[str] = "NOAA CPC Oceanic Niño Index (ONI, ERSST v5)"
+# Tarefa 0066: desde 01/02/2026 o índice oficial da NOAA é o RONI (Relative ONI: o Niño 3.4 menos a
+# média dos trópicos, reescalado), com os mesmos ±0,5 °C (NWS Public Information Statement 26-05).
+# As chances da previsão que o sinal do outono usa são verificadas por ele.
+ONI_URL: Final[str] = "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt"
+ONI_PRODUCT: Final[str] = "NOAA CPC Relative Oceanic Niño Index (RONI, ERSST v6)"
 ONI_TIMEOUT_SECONDS: Final[float] = 60.0
 ONI_HEADER: Final[tuple[str, ...]] = ("SEAS", "YR", "TOTAL", "ANOM")
+# A tabela do RONI não tem a coluna do total (`SEAS YR ANOM`); as duas são lidas.
+RONI_HEADER: Final[tuple[str, ...]] = ("SEAS", "YR", "ANOM")
 # As 12 estações de 3 meses da tabela, na ordem do ano.
 ONI_SEASONS: Final[frozenset[str]] = frozenset(
     {"DJF", "JFM", "FMA", "MAM", "AMJ", "MJJ", "JJA", "JAS", "ASO", "SON", "OND", "NDJ"}
@@ -57,21 +63,22 @@ DEFAULT_OUTPUT = DOWNLOADS_DIR / "oni.json"
 
 
 def parse_oni_table(text: str) -> dict[tuple[str, int], float]:
-    """A tabela `SEAS YR TOTAL ANOM` como {(estação, ano): anomalia}.
+    """Tabela do RONI (`SEAS YR ANOM`) ou do ONI (`SEAS YR TOTAL ANOM`): {(estação, ano): anomalia}.
 
     Raises:
         ValueError: sem o cabeçalho (ex.: página de erro) ou com linha fora do formato. Nada de
             ler pela metade: resposta estranha nunca vira dado.
     """
     lines = [line.split() for line in text.splitlines() if line.strip()]
-    if not lines or tuple(lines[0]) != ONI_HEADER:
-        raise ValueError(f"a resposta não é a tabela do ONI (cabeçalho {' '.join(ONI_HEADER)})")
+    header = tuple(lines[0]) if lines else ()
+    if header not in (ONI_HEADER, RONI_HEADER):
+        raise ValueError(f"a resposta não é a tabela do ONI (cabeçalho {' '.join(RONI_HEADER)})")
     table: dict[tuple[str, int], float] = {}
     for fields in lines[1:]:
         error = f"linha fora do formato da tabela do ONI: {' '.join(fields)!r}"
-        if len(fields) != len(ONI_HEADER) or fields[0] not in ONI_SEASONS:
+        if len(fields) != len(header) or fields[0] not in ONI_SEASONS:
             raise ValueError(error)
-        season, year, _total, anomaly = fields
+        season, year, anomaly = fields[0], fields[1], fields[-1]
         try:
             table[(season, int(year))] = float(anomaly)
         except ValueError as exc:

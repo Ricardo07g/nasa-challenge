@@ -32,3 +32,6 @@ class CropParams:
     como_fazer: tuple[str, ...] = ()
     nome_en: str = ""
     como_fazer_en: tuple[str, ...] = ()  # vazio = sem tradução (o service usa o português)
+    # O prazo vem de uma portaria do ZARC (tarefa 0066). Falso na crotalária (não há ZARC de plantas
+    # de cobertura): a data dela é sugestão do app, e o texto não pode chamá-la de prazo do ZARC.
+    prazo_zarc: bool = True

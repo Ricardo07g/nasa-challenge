@@ -137,7 +137,8 @@ class PlanSuggestionService:
             and option is not None
             and option.data_limite
         ):
-            text = frases.prazo.format(
+            template = frases.prazo if winner.prazo_zarc else frases.prazo_sugerido
+            text = template.format(
                 cultura_fora=_lower_first(winner.nome),
                 limite_fora=_day_month(winner.data_limite, en),
                 limite=_day_month(option.data_limite, en),

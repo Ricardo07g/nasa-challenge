@@ -148,7 +148,11 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `ENSO_PREVISAO_PATH`, `AREA_QUEIMADA_PATH`). Nunca
   coloque caminho fixo (como `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4). Sem preço, custo
-  nem produtividade (tarefa 0040): o `tipo` diz se a cultura dá grão para vender.
+  nem produtividade (tarefa 0040): o `tipo` diz se a cultura dá grão para vender. Desde a tarefa 0066, cada cultura
+  tem o bloco `fontes` (a citação curta de cada número, ou "Hipótese do time"; um teste confere) e o `prazo_zarc`
+  (o `semeadura_limite_mes_dia` vem de portaria do ZARC; `false` na crotalária, que não tem ZARC). Regra do prazo:
+  o último decêndio do ZARC de MG vigente com risco de até 20%, Grupo I, no solo que mais guarda água, o mais cedo
+  entre Uberlândia e Uberaba (tabela em `docs/tarefas/0066-regras-com-fonte.md`).
 - **Renda sem reais** (tarefa 0040, seção 1 da remodelagem): nenhum valor em reais na API. A nota de
   renda é a segurança climática da própria opção para quem dá grão (`tipo` em `renda.tipos_com_grao`
   do `regras.yaml`: `grao` e `consorcio`) e `renda.nota_sem_grao` (0) para cobertura e pousio; a nota
@@ -162,7 +166,12 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
   negócio nova com número vai para lá, não para `app/constants.py`. Os services recebem as regras
-  por parâmetro (padrão: este arquivo) e `dependencies.py` injeta as do `REGRAS_PATH`.
+  por parâmetro (padrão: este arquivo) e `dependencies.py` injeta as do `REGRAS_PATH`. **Fonte (tarefa 0066):**
+  número conferido cita a fonte em forma curta (autores, ano, revista ou portaria, DOI ou link aberto); sem fonte, a
+  `fonte` começa com "Hipótese do time" (`REVIEWED_SOURCES` em `test_rules_repository.py` confere os revisados).
+  O ISNA de "deu certo" é o do ZARC de cada cultura (`clima.isna_por_cultura`, `RegrasClima.isna_min`); as outras
+  ficam com `isna_grao` ou `isna_cobertura`. O grupo `fontes_metodo` guarda a fonte de cada regra da tela "Como a
+  conta é feita" (citações e `hipotese`: `nao`, `parte` ou `sim`).
 - **Avisos da safra** (tarefa 0019): as regras de veranico e calor (grupos `avisos` e
   `frases_safra` do `regras.yaml`) ficam só no `CropAlertService`, que recebe a série diária, a
   cultura e a semeadura e devolve a linha do tempo. O replay `GET /api/safra-passada` (P4) usa esse
@@ -197,10 +206,13 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `max_lon` dos `PILOT_*` do `app/constants.py` (`PilotAreaService`). É a **fonte única** dos limites:
   o front desenha a caixa e bloqueia o ponto fora dela lendo esta rota, sem repetir os números. Mudou a
   caixa? Mude só as constantes.
-- **ONI da NOAA** (P1, tarefa 0035): `pipeline/fetch_oni.py` baixa a tabela pública do ONI
-  (`https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt`, um pedido de ~23 KB, **sem
-  credencial**) e grava o arquivo do contrato ONI (abaixo) em `data/baixados/noaa_oni/oni.json`, a
-  partir da raiz do repositório (fora do git). Regra do ano da safrinha (grupo `enso` do
+- **ONI da NOAA** (P1, tarefa 0035): `pipeline/fetch_oni.py` baixa a tabela pública do **RONI**
+  (`https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt`, `SEAS YR ANOM`, ~15 KB, **sem
+  credencial**; desde a tarefa 0066: o RONI é o índice oficial da NOAA desde 01/02/2026, NWS PNS 26-05, e é por ele que
+  a NOAA verifica as chances da previsão; o parser lê também a tabela antiga do ONI) e grava o arquivo do contrato ONI
+  (abaixo; a chave `noaa_oni` continua) em `data/baixados/noaa_oni/oni.json`. Arquivo baixado antes da tarefa 0066 ainda
+  é ONI: rode o script de novo. O caminho é a partir da raiz do repositório (fora do git). Regra do ano da safrinha
+  (grupo `enso` do
   `regras.yaml`, hipótese do time, **a revisar**): média do ONI das estações DJF, JFM e FMA do ano
   (dezembro do ano anterior a abril: o verão e o começo do outono, da colheita da soja até a fase
   crítica), arredondada em 2 casas; +0,5 ou mais = `el_nino`, −0,5 ou menos = `la_nina` (limiares da
@@ -488,7 +500,10 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     não se saiu melhor que o A nesses anos, ou não há Plano B ("Nenhuma outra cultura se saiu melhor
     nesses anos.");
   - `seco` (marca o Plano B): a opção do 1º ano do Plano A deu errado em metade ou mais dos anos da
-    fase (`fracao_anos_ruins_seco`) e a do Plano B se saiu melhor nesses anos;
+    fase (`fracao_anos_ruins_seco`), **foi pior nesses anos do que nos outros** (proporção maior e teste exato de
+    Fisher unilateral, hipergeométrico, com p até `p_max_seco` = 0,10; tarefa 0066, `_PhaseRecord.
+    pior_que_os_outros`) e a do Plano B se saiu melhor nesses anos. Metade ou mais ruins, mas sem diferença dos
+    outros anos: `incerto`, com "Nos outros anos, {cultura} falhou tanto quanto: a fase não muda a conta.";
   - `normal` (marca o Plano A): no resto.
   - **Sem a regra da data** (tarefa 0049, S9 da remodelagem): o `regra_dia_plantar` e o `regra_data`
     (chuva dos 30 dias antes da data limite) saíram da API, porque nenhuma tela usava mais (a tela do
@@ -882,7 +897,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   o raio-X, o replay, os avisos e o sinal não mudam. No JSON do `/recomendacao` e do `/exemplo`,
   `opcoes[]` traz as no prazo e depois as fora do prazo, cada uma com `fora_do_prazo` (= `!na_janela`).
   O `data_limite` continua `AAAA-MM-DD` (o front tira o MM-DD). O model também leva
-  `notas_pousio` (as notas do pousio do PRD 7.7, para o plano em cadeia).
+  `notas_pousio` (as notas do pousio do PRD 7.7, para o plano em cadeia). Desde a tarefa 0066, cada opção traz
+  `prazo_zarc` (o `prazo_zarc` do `culturas.yaml`; `false` na crotalária): na cultura sem ZARC, o `fora_da_janela`
+  usa a frase `fora_da_janela_sugerida` ("data sugerida") e o "Por quê:" do plano, a `prazo_sugerido`.
 - **Abas Comparar e Plano de 3 anos** (remodelagem S5b, tarefa 0045, RF-32; contrato completo em
   `docs/tarefas/0045-comparar-e-plano.md`). O Comparar só usa o `/recomendacao`; o Plano usa o
   endpoint novo **`GET /api/plano?lat&lon&anos=a,b,c[&colheita][&solo]`** (`PlanEvaluationService`,
@@ -933,7 +950,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     só a conta do PRD 7.7). Só culturas no prazo e o pousio são sugeridas. O
     `motivo` é a frase do grupo `frases_plano` da 1ª regra que pesou: cobrir depois do parado,
     quebrar o nematoide depois do milho, prazo (sem o prazo do ZARC, uma cultura fora dele ganharia
-    o ano), variar a função, melhor nota; com a sede `pouca`, "e aguenta a seca". O Plano A do
+    o ano), variar a função, melhor nota; com a sede `pouca`, "e pede pouca água" (desde a tarefa 0066; antes "e
+    aguenta a seca", mas a sede mede o consumo, não a tolerância à seca). O Plano A do
     `/recomendacao` e os planos de `objetivos` usam a mesma cadeia e as mesmas frases (`motivos`,
     tarefa 0065; o `/api/plano/sugestao` não recebe `nematoide`, `gado` nem `confirmadas`: com eles,
     o Plano A pode ser outro). Sem 1 ou 2 anos fixos ou com
@@ -1086,7 +1104,10 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `regras.yaml` os números que a tela explica (`deu_certo` com o ISNA em %, `pesos` em %, `renda`, `agua` com a
   sede, `rotacao` com o bônus e as supressoras do nematoide, `plano_b`, `alertas` de geada, chuva forte e fogo,
   `avisos` e `sinal`). Só números (as frases são do front), sem banco e sem cache HTTP. Os schemas têm o prefixo
-  `Metodo` para não colidir no OpenAPI com os do `/recomendacao`.
+  `Metodo` para não colidir no OpenAPI com os do `/recomendacao`. Desde a tarefa 0066, campos opcionais:
+  `deu_certo.isna_por_cultura_pct` (o ISNA do ZARC de cada cultura, em %) e `fontes` (do grupo `fontes_metodo`: para
+  `deu_certo`, `pesos`, `renda`, `agua`, `sede`, `rotacao`, `plano_b`, `geada`, `chuva_forte`, `fogo`, `avisos` e
+  `sinal`, as `citacoes` com `citacao` e `url` e a `hipotese`: `nao`, `parte` ou `sim`).
 - **Avisos do ponto marcado** (`GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas][&cultura]`, tela
   "Avisos", remodelagem S6, tarefa 0046, RF-31). Roda o motor uma vez (`RecommendationService.recommend`, com a
   mesma colheita, solo e safras confirmadas do `/recomendacao`) e junta os grupos. O `AvisosService` só busca e

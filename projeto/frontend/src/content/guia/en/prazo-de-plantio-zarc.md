@@ -17,13 +17,16 @@ The ZARC is the Agricultural Climate Risk Zoning, an agricultural policy and ris
 
 In the corn zoning for Minas Gerais and the Center-West, researchers ran the crop's water balance for each soil type. Sowing after the best time raised the risk of water shortage during grain filling, especially in soils that hold little water.
 
+The Minas Gerais orders give the periods by municipality, soil type and cultivar cycle, with a 20%, 30% or 40% risk of loss. To get Proagro and the crop insurance subsidy, the farmer must follow the ZARC. Cover crops, like crotalaria, have no ZARC.
+
 ## In your field
 
-Each municipality has its own dates. Check the Ministry of Agriculture's order for your crop and your municipality.
+Each municipality has its own dates. Check the Ministry of Agriculture's order for your crop, your municipality and your soil.
 
 On the [When you harvest](/quando) screen, you say when you harvest the soybeans: early February, mid-February or late February and March. If a crop is past its deadline, the [Choose](/resposta) tab warns you.
 
 ## Sources
 
 - [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
+- [Ministry of Agriculture: ZARC orders for Minas Gerais (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/portarias/safra-vigente/minas-gerais/minas-gerais-mg)
 - [Sans et al. (2001), Revista Brasileira de Agrometeorologia: climate risk zoning for maize in Minas Gerais and the Center-West](https://www.alice.cnptia.embrapa.br/handle/doc/485595)

@@ -4,6 +4,9 @@
 #
 # Cada número tem `valor` e `fonte`. A API não carrega um número sem fonte.
 # "Hipótese do time" = valor a calibrar com a agrônoma e com os resultados reais.
+# Tarefa 0066 (revisão com fontes): os números conferidos citam a fonte em forma curta (autores, ano,
+# revista ou portaria, DOI ou link); os que não acharam fonte começam com "Hipótese do time".
+# Revisão completa: docs/tarefas/0066-regras-com-fonte.md.
 # Os parâmetros de cada cultura (ciclo, Kc, data limite, nota de solo) ficam em culturas.yaml.
 # Nenhum número em reais: a renda é só fatos (grupo `renda`, tarefa 0040).
 # ==============================================================================
@@ -12,22 +15,25 @@ clima:
   # Ano com aperto (PRD 7.2): ISNA abaixo do limiar na janela crítica OU calor na janela.
   isna_grao:
     valor: 0.55
-    fonte: "PRD 7.2 e plano técnico §4.2: ISNA de 0,55 do ZARC da soja em MG na floração e no enchimento (hipótese aplicada ao milho e ao sorgo)"
+    fonte: "ZARC milho 2ª safra MG, Portaria SPA/MAPA nº 324, de 28/07/2026, item 1.14.a: ISNA 0,55 na fase III (floração e enchimento); o mesmo da soja em MG (Portaria SPA/MAPA nº 200/2026). https://www.in.gov.br/web/dou/-/portaria-spa/mapa-n-324-de-28-de-julho-de-2026-722143549"
   isna_cobertura:
     valor: 0.50
-    fonte: "PRD 7.2 item 4: cobertura falha no estabelecimento com ISNA abaixo de 0,50"
+    fonte: "Hipótese do time: não há ZARC de plantas de cobertura; vale para a crotalária (o milheto tem o ISNA do ZARC dele em isna_por_cultura)"
+  isna_por_cultura:
+    valor: {milho_braquiaria: 0.50, sorgo: 0.45, milheto: 0.60}
+    fonte: "ZARC de MG: consórcio milho-braquiária 0,50 na fase III (Portaria SPA/MAPA nº 339/2026, item 1.17.a); sorgo granífero 0,45 na fase III (Portaria SPA/MAPA nº 275/2026, item 1.8.4); milheto 0,60 na fase I, estabelecimento (Portaria SPA/MAPA nº 345/2020, item IV). As outras culturas ficam com isna_grao ou isna_cobertura"
   janela_grao_meia_dias:
     valor: 15
-    fonte: "PRD 7.2 item 2: janela crítica de 15 dias antes a 15 dias depois do florescimento"
+    fonte: "Andrade et al. (1999), Crop Science 39(2):453-459, doi:10.2135/cropsci1999.0011183X0039000200026x: o período crítico do milho são os 31 dias em volta do embonecamento"
   janela_cobertura_dias:
     valor: 30
-    fonte: "PRD 7.2 item 4: estabelecimento da cobertura nos primeiros 30 dias"
+    fonte: "Hipótese do time: nenhuma fonte para 30 dias; o ZARC do milho 2ª safra usa 20 dias na fase I, estabelecimento (Portaria SPA/MAPA nº 324/2026, item 1.12)"
   calor_temp_c:
     valor: 35.0
-    fonte: "PRD 7.2 item 3: máxima de 35 °C ou mais na floração, ligada a aborto de flores"
+    fonte: "Hatfield & Prueger (2015), Weather and Climate Extremes 10:4-10, doi:10.1016/j.wace.2015.08.001: a viabilidade do pólen do milho cai acima de 35 °C (no sorgo, a partir de 33 °C)"
   calor_min_dias:
     valor: 3
-    fonte: "PRD 7.2 item 3: 3 dias ou mais com calor na janela crítica"
+    fonte: "Hipótese do time: sem número na literatura; a floração do milho dura 3 a 5 dias (Hatfield & Prueger, 2015)"
   # A perda de produtividade pelo ISNA (0%, 30% e 60%) só servia à margem em reais e saiu com ela
   # (tarefa 0040).
 
@@ -35,16 +41,16 @@ nota_final:
   # Nota final = soma de (peso x nota). Sem CMIP6, o futuro sai e os outros pesos são reescalados.
   peso_seguranca:
     valor: 0.30
-    fonte: "PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15"
+    fonte: "Hipótese do time (PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15): os pesos são escolha de quem decide, sem fonte agronômica"
   peso_solo:
     valor: 0.25
-    fonte: "PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15"
+    fonte: "Hipótese do time (PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15)"
   peso_renda:
     valor: 0.30
-    fonte: "PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15"
+    fonte: "Hipótese do time (PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15)"
   peso_futuro:
     valor: 0.15
-    fonte: "PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15"
+    fonte: "Hipótese do time (PRD 7.6 e RF-05; plano técnico §4.5: pesos padrão 30/25/30/15)"
   bonus_gado_milho_braquiaria:
     valor: 15.0
     fonte: "ADR-0004: com gado = sim, milho + braquiária ganha 15 pontos (pecuária ainda em decisão, R4.7)"
@@ -104,7 +110,7 @@ ndvi:
   # Os limites do histórico do talhão (PRD 7.8) ficam em historico_ndvi.
   queda_colheita:
     valor: 0.50
-    fonte: "PRD 7.9: soja secando quando o NDVI cai abaixo de 50% do pico do verão"
+    fonte: "Hipótese do time (PRD 7.9): soja secando quando o NDVI cai abaixo de 50% do pico do verão. A literatura usa fração da amplitude (pico menos base), escolhida pelo usuário (Eklundh & Jönsson, 2017, TIMESAT 3.3 Manual, §4.3); a colheita fica perto de 90% da queda (Carneiro de Santana et al., 2024, Remote Sensing 16:2520)"
 
 colheita:
   # Tela 3 "Quando você colhe a soja?" (tarefa 0042). A data exata vira uma das três faixas do motor
@@ -132,7 +138,7 @@ chuva_que_sobra:
     fonte: "Pedido da remodelagem, seção 3 ('da data escolhida até junho'): até 30 de junho, inclusive"
   percentil_seco:
     valor: 20
-    fonte: "Pedido da remodelagem, seção 3 ('a de um ano seco, percentil 20'): 1 em cada 5 anos teve menos chuva que isso. Hipótese do time, a revisar"
+    fonte: "Convenção do ZARC: níveis de risco de 20%, 30% e 40% (Portaria SPA/MAPA nº 324/2026, item 1.6); Sans et al. (2001), Rev. Bras. Agrometeorologia 9(3):527-535, usam o ISNA de 80% dos anos. Ano seco = 1 em cada 5 anos teve menos chuva (pedido da remodelagem, seção 3)"
 
 fim_das_chuvas:
   # Fim das chuvas na célula (tela 3, tarefa 0042; o raio-X da seção 4 usa o mesmo): em cada ano, o
@@ -206,7 +212,7 @@ alertas_area:
   # ORNL DAAC). NÃO há alerta de granizo: nenhuma fonte que o app usa mede granizo.
   geada_temp_c:
     valor: 3.0
-    fonte: "Pedido da remodelagem, seção 4 ('anos com mínima de 3 °C ou menos entre maio e julho'). A mínima é a do ar a 2 m na célula do NASA POWER (~50 km): no chão pode gear com o ar um pouco mais quente. Hipótese do time, a revisar pela agrônoma"
+    fonte: "Wrege et al. (2018), Revista Brasileira de Climatologia 22:524-553: mínima no abrigo abaixo de 3 °C é a referência de geada no chão (Grodzki et al., 1996). O ZARC do milho 2ª safra de MG usa mínimas menores que 2 °C no abrigo (Portaria SPA/MAPA nº 324/2026, item 1.14.c). A mínima é a do ar a 2 m na célula do NASA POWER (~50 km), que suaviza as baixadas frias"
   geada_inicio:
     valor: "05-01"
     fonte: "Pedido da remodelagem, seção 4 ('entre maio e julho')"
@@ -218,7 +224,7 @@ alertas_area:
     fonte: "Hipótese do time, a revisar: um ano com geada na série já é risco e o alerta aparece; sem nenhum, não aparece"
   chuva_forte_mm:
     valor: 50.0
-    fonte: "Pedido da remodelagem, seção 4 ('dias com 50 mm ou mais em fevereiro e março')"
+    fonte: "INMET, avisos de Chuvas Intensas: 'Perigo' com 50 a 100 mm/dia (feed oficial de avisos, lido em 15/11/2026). A erosão começa com chuvas bem menores (Wischmeier & Smith, 1978, USDA Agriculture Handbook 537: chuva abaixo de 12,7 mm só conta com intensidade alta)"
   chuva_forte_inicio:
     valor: "02-01"
     fonte: "Pedido da remodelagem, seção 4 ('em fevereiro e março'): logo depois da colheita da soja, com a terra descoberta"
@@ -230,7 +236,7 @@ alertas_area:
     fonte: "Hipótese do time, a revisar: o alerta aparece com média de 0,1 dia por ano ou mais (2 dias assim em 20 anos); com menos, a chuva forte é rara demais para ser risco da área"
   fogo_raio_km:
     valor: 5.0
-    fonte: "Hipótese do time, a revisar: fogo a até 5 km do ponto (pixels de 500 m do MCD64A1 com o centro dentro do raio), perto o bastante para chegar na palha"
+    fonte: "Hipótese do time: nenhuma fonte diz a que distância uma queimada vira risco para a palhada. Fogo a até 5 km do ponto (pixels de 500 m do MCD64A1, Giglio et al., 2018, Remote Sensing of Environment 217:72-85, com o centro dentro do raio)"
   fogo_anos_min:
     valor: 1
     fonte: "Hipótese do time, a revisar: um ano com fogo perto já é risco e o alerta aparece"
@@ -253,10 +259,10 @@ historico_ndvi:
     fonte: "PRD 7.8 e guia do histórico NDVI: entressafra de 1º de abril a 31 de julho"
   limite_plantou:
     valor: 0.60
-    fonte: "PRD 7.8: maior NDVI da entressafra acima de 0,6 = segunda safra ou cobertura (Embrapa, 2021; a calibrar com 5 talhões)"
+    fonte: "Hipótese do time (PRD 7.8: maior NDVI da entressafra acima de 0,6 = segunda safra ou cobertura; a calibrar com talhões da região). A referência 'Embrapa, 2021' não foi encontrada; os números 0,6 e 0,45 de Spera et al. (2014), Environ. Res. Lett. 9:064010, são de EVI e com outro sentido"
   limite_parado:
     valor: 0.45
-    fonte: "PRD 7.8: maior NDVI da entressafra abaixo de 0,45 = pousio (Embrapa, 2021; a calibrar com 5 talhões)"
+    fonte: "Hipótese do time (PRD 7.8: maior NDVI da entressafra abaixo de 0,45 = pousio; a calibrar com talhões da região). Em Mato Grosso o pousio rebrota verde (Chen et al., 2018, Int. J. Appl. Earth Obs. Geoinf. 69:133-147)"
   min_observacoes:
     valor: 3
     fonte: "Guia do histórico NDVI (Regra do talhão): com menos de 3 observações boas na janela, o ano fica sem_dado (hipótese do time, a calibrar)"
@@ -278,19 +284,19 @@ regiao_ndvi:
   # só com as observações depois da colheita até entressafra_fim. Datas "MM-DD"; NDVI de -1 a 1.
   pico_inicio:
     valor: "01-01"
-    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Início da janela do pico da soja"
+    fonte: "Hipótese do time; substitui a máscara de soja do MapBiomas do guia NDVI. A revisão (tarefa 0066) indica começar em 1º/dez: no Triângulo o pico pode cair em dezembro (Oliveira et al., 2016, Ciência Rural 46(9):1683-1688: 0,93 em 19/dez, em Planura, MG). Fica em 1º/jan até baixar o NDVI de dezembro (a série guardada começa em janeiro)"
   pico_fim:
     valor: "03-15"
-    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Fim da janela do pico da soja"
+    fonte: "Risso et al. (2012), PAB 47(9):1317-1326, doi:10.1590/S0100-204X2012000900017: a janela do pico da soja 'não deve ir além de meados de março'"
   pico_min_ndvi:
     valor: 0.70
-    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Maior NDVI da janela do pico a partir do qual há soja"
+    fonte: "Risso et al. (2012), PAB 47(9):1317-1326: no pico, a soja em bom estado passa de 0,85 de NDVI; 0,70 é conservador. Sozinho não separa soja de pasto: vale junto com a colheita"
   colheita_fim:
     valor: "05-15"
-    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Última data em que se procura a colheita depois do pico"
+    fonte: "Conab, Progresso de safra 2025/26: soja de MG 98% colhida até 25/04 e 100% até 08/05 (média de 5 anos: 99,95% até 08/05)"
   colheita_max_ndvi:
     valor: 0.40
-    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. NDVI até o qual a observação depois do pico conta como colheita"
+    fonte: "Oliveira et al. (2016), Ciência Rural 46(9):1683-1688: 0,25 na colheita (Planura, MG); Carneiro de Santana et al. (2024), Remote Sensing 16:2520: fim do ciclo perto de 0,37. Na dupla safra, parte dos pixels não registra a queda no composto de 16 dias"
   entressafra_fim:
     valor: "07-31"
     fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Fim da entressafra (o mesmo do historico_ndvi.janela_fim do talhão)"
@@ -313,7 +319,7 @@ soja_recente:
     fonte: "Hipótese do time, a revisar pela agrônoma (decisão do usuário de 15/11/2026): janela de 1º de janeiro a 15 de março"
   ndvi_minimo:
     valor: 0.70
-    fonte: "Hipótese do time, a revisar pela agrônoma (decisão do usuário de 15/11/2026): soja vista com o maior NDVI da janela de 0,70 ou mais; o mesmo limite do pico da soja da região (regiao_ndvi.pico_min_ndvi, tarefa 0036)"
+    fonte: "Risso et al. (2012), PAB 47(9):1317-1326: no pico, a soja passa de 0,85 de NDVI; 0,70 é conservador. O mesmo limite do pico da soja da região (regiao_ndvi.pico_min_ndvi, tarefa 0036; decisão do usuário de 15/11/2026)"
   min_observacoes:
     valor: 2
     fonte: "Hipótese do time, a revisar pela agrônoma (decisão do usuário de 15/11/2026): com menos de 2 observações boas na janela (verão com nuvem), o pixel fica sem dado e o app não avisa"
@@ -328,18 +334,18 @@ rotacao:
     fonte: "PRD 7.7: ano seco = menor chuva de fevereiro a abril"
   max_pousios:
     valor: 2
-    fonte: "PRD 7.7: descartar mais de 2 pousios seguidos (o pousio entra nas 216 combinações)"
+    fonte: "Hipótese do time (PRD 7.7: descartar mais de 2 pousios seguidos; o pousio entra nas 216 combinações). Nenhuma fonte dá o número; a terra descoberta perde mais água e terra (Dechen et al., 2015, Bragantia 74(2):224-233)"
   bonus_diversidade_2:
     valor: 5.0
-    fonte: "PRD 7.7: +5 com 2 funções diferentes"
+    fonte: "Hipótese do time (PRD 7.7: +5 com 2 funções diferentes). A direção tem fonte: rotação com mais culturas aumenta o C e o N do solo, mais ainda com cobertura (McDaniel et al., 2014, Ecological Applications 24(3):560-570); o número, não"
   bonus_diversidade_3:
     valor: 10.0
-    fonte: "PRD 7.7: +10 com 3 funções diferentes (grão, cobertura gramínea, cobertura leguminosa)"
+    fonte: "Hipótese do time (PRD 7.7: +10 com 3 funções diferentes: grão, cobertura gramínea, cobertura leguminosa). Direção como no bonus_diversidade_2 (McDaniel et al., 2014); o número, não"
   # A penalidade de 12 pontos para milho safrinha nos 3 anos saiu no R4.3 (tarefa 0016): não está no
   # PRD 7.7, e o bônus por função já deixa o milho repetido sem os +5/+10.
   culturas_supressoras_nematoide:
-    valor: [crotalaria, milheto]
-    fonte: "PRD 7.7: com nematoide = sim, descartar 3 anos sem crotalária ou milheto (só quando uma delas cabe na janela; sem nenhuma, o plano sai e a descrição avisa)"
+    valor: [crotalaria]
+    fonte: "Debiasi et al. (2016), PAB 51(10):1720-1728, doi:10.1590/S0100-204X2016001000003: no campo, as crotalárias reduziram Pratylenchus brachyurus antes e no começo da soja; o milheto sozinho, o milho e as braquiárias não diferiram da testemunha. A C. spectabilis também reduz M. javanica e M. incognita (Dias et al., 2010, Embrapa Soja, Circular Técnica 76). PRD 7.7: com nematoide = sim, descartar 3 anos sem supressora (só quando uma cabe na janela)"
   funcoes:
     # O bônus de diversidade conta as funções diferentes do plano, não as culturas.
     valor:
@@ -380,13 +386,16 @@ sinal_enso:
     fonte: "Hipótese do time, a revisar (tarefa 0038): fevereiro a abril, da semeadura à floração da safrinha. É a última estação da média do ONI dos anos da série (grupo enso: DJF, JFM e FMA), então a fase prevista e a dos anos passados medem a mesma época; e é prevista com 1 mês a menos de antecedência que MAM (mais acerto, antes da barreira de previsibilidade do outono)"
   fase_chance_min_pct:
     valor: 50
-    fonte: "Hipótese do time, a revisar (tarefa 0038): a fase mais provável precisa de 50% ou mais (mais provável que as outras duas juntas); abaixo disso, sem sinal claro"
+    fonte: "Hipótese do time (tarefa 0038): a fase mais provável precisa de 50% ou mais (mais provável que as outras duas juntas). A NOAA CPC não define limiar numérico (ENSO Alert System); nas discussões mensais ela diz 'likely' a partir de ~55%"
   anos_fase_min:
     valor: 5
-    fonte: "Hipótese do time, a revisar (tarefa 0038): pelo menos 5 anos daquela fase na série (2005 a 2024) para contar como a opção se saiu; com menos, sem sinal claro"
+    fonte: "Hipótese do time (tarefa 0038): pelo menos 5 anos daquela fase na série (2005 a 2024). Ropelewski & Halpert (1987), Monthly Weather Review 115:1606-1626, só compõem estações com 5 episódios ou mais (mínimo de cálculo, não de significância)"
   fracao_anos_ruins_seco:
     valor: 0.5
-    fonte: "Hipótese do time, a revisar (tarefa 0038): sinal de seco (Plano B) quando a opção do 1º ano do Plano A deu errado (aperto do motor, PRD 7.2) em metade ou mais dos anos daquela fase, e a do Plano B se saiu melhor neles"
+    fonte: "Hipótese do time (tarefa 0038): sinal de seco (Plano B) quando a opção do 1º ano do Plano A deu errado (aperto do motor, PRD 7.2) em metade ou mais dos anos daquela fase, e a do Plano B se saiu melhor neles. Desde a tarefa 0066 vale junto com o p_max_seco (pior que nos outros anos)"
+  p_max_seco:
+    valor: 0.10
+    fonte: "Tarefa 0066: com 5 anos da fase em 20, a regra da metade sozinha dispara por acaso de 13% a 50% das vezes (distribuição hipergeométrica). Por isso o seco também pede que a fase tenha mais anos ruins que os outros anos, com o teste exato de Fisher unilateral (hipergeométrico) com p de até 0,10, o nível usado por Iizumi et al. (2014), Nature Communications 5:3712, para o efeito do ENSO nas safras"
   smap_faixas_pct:
     valor: [20.0, 45.0, 55.0, 80.0]
     fonte: "Hipótese do time, a revisar (tarefa 0038): percentis do SMAP de agora que separam 5 faixas (mais seca, um pouco mais seca, perto do normal, um pouco mais úmida, mais úmida que o normal). O 20 é o da terra seca do PRD 7.10. Só informa: o SMAP não decide o plano"
@@ -471,13 +480,13 @@ enso:
   # números ao gravar a fase de cada ano no arquivo do ONI (ONI_PATH); a API lê a fase pronta.
   el_nino_oni_min:
     valor: 0.5
-    fonte: "NOAA CPC (ONI_v5, https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php): El Niño com ONI de +0,5 °C ou mais. A NOAA pede 5 estações seguidas para chamar de episódio; aqui vale a média das estações abaixo (hipótese do time, a revisar)"
+    fonte: "NOAA CPC: El Niño com o índice de +0,5 °C ou mais. Desde 01/02/2026 o índice oficial é o RONI (Relative ONI), com os mesmos ±0,5 °C (NWS Public Information Statement 26-05, https://www.weather.gov/media/notification/pdf_2026/pns26-05_Relative_ONI.pdf); o pipeline/fetch_oni.py baixa o RONI. A NOAA pede 5 estações seguidas para chamar de episódio; aqui vale a média das estações abaixo"
   la_nina_oni_max:
     valor: -0.5
-    fonte: "NOAA CPC (ONI_v5): La Niña com ONI de −0,5 °C ou menos (mesma ressalva das 5 estações seguidas)"
+    fonte: "NOAA CPC: La Niña com o índice de −0,5 °C ou menos, pelo RONI desde 01/02/2026 (NWS PNS 26-05; mesma ressalva das 5 estações seguidas)"
   estacoes:
     valor: [DJF, JFM, FMA]
-    fonte: "Hipótese do time (tarefa 0035, a revisar): média do ONI das estações DJF, JFM e FMA do ano da safrinha (dezembro do ano anterior a abril), o verão e o começo do outono, da colheita da soja até a fase crítica. É quando o ENSO costuma estar no auge (o El Niño de 2015/16 marca a safrinha de 2016)"
+    fonte: "Hipótese do time (tarefa 0035): média das estações DJF, JFM e FMA do ano da safrinha (dezembro do ano anterior a abril), da colheita da soja até a fase crítica. Não é critério da NOAA; Iizumi et al. (2014), Nature Communications 5:3712, também usam o índice de 3 meses na fase reprodutiva"
 
 # Modelos de frase do "Por quê?" (PRD 7.6, plano técnico §4.8), sem IA generativa.
 # Os campos entre chaves são preenchidos pela conta; o número da frase é o mesmo da conta.
@@ -505,6 +514,7 @@ frases:
     historico: "Seu talhão ficou em pousio em {parado} de {anos_certos} entressafras vistas pelo satélite de {ano_inicio} a {ano_fim} (NDVI do MODIS)."
     balde_smap: "O balde de água começou com a umidade da terra medida pelo SMAP no dia de plantar em {anos_smap} dos {total} anos ({ano_inicio} a {ano_fim}); nos outros, com {padrao_pct}% da água disponível."
     fora_da_janela: "{cultura}: o plantio vai só até {limite} (ZARC), e com a colheita {faixa} não dá tempo."
+    fora_da_janela_sugerida: "{cultura}: o plantio vai só até {limite} (data sugerida), e com a colheita {faixa} não dá tempo."
     colheita_cedo: "no começo de fevereiro"
     colheita_meio: "no meio de fevereiro"
     colheita_tarde: "no fim de fevereiro ou em março"
@@ -521,6 +531,7 @@ frases:
     historico: "Your field was left fallow in {parado} of {anos_certos} off-seasons seen by the satellite from {ano_inicio} to {ano_fim} (MODIS NDVI)."
     balde_smap: "The water bucket started from the soil moisture measured by SMAP on sowing day in {anos_smap} of the {total} years ({ano_inicio} to {ano_fim}); in the other years, at {padrao_pct}% of the available water."
     fora_da_janela: "{cultura}: sowing only until {limite} (ZARC); with the soybean harvest {faixa}, there is no time."
+    fora_da_janela_sugerida: "{cultura}: sowing only until {limite} (suggested date); with the soybean harvest {faixa}, there is no time."
     colheita_cedo: "in early February"
     colheita_meio: "in mid-February"
     colheita_tarde: "in late February or March"
@@ -620,13 +631,13 @@ agua:
   # abaixo deixam milho em "muita", sorgo em "média" e milheto e crotalária em "pouca".
   sede_pouca_ate_mm:
     valor: 280.0
-    fonte: "Hipótese do time, a revisar pela agrônoma (tarefa 0044): consumo da cultura no ciclo abaixo de 280 mm = pouca água"
+    fonte: "Hipótese do time (tarefa 0044): consumo da cultura no ciclo abaixo de 280 mm = pouca água. Só a ordem tem fonte: milho 500–800 mm, sorgo e milheto 450–650 mm no ciclo de verão (Brouwer & Heibloem, 1986, FAO Irrigation Water Management Training Manual 3, Tabela 14)"
   sede_muita_desde_mm:
     valor: 325.0
-    fonte: "Hipótese do time, a revisar pela agrônoma (tarefa 0044): consumo da cultura no ciclo de 325 mm ou mais = muita água; entre os dois cortes, média"
+    fonte: "Hipótese do time (tarefa 0044): consumo da cultura no ciclo de 325 mm ou mais = muita água; entre os dois cortes, média. Só a ordem tem fonte (Brouwer & Heibloem, 1986, FAO, Tabela 14)"
   percentil_seco:
     valor: 20
-    fonte: "Pedido da remodelagem, seção 5.3 ('percentil 20 dos 20 anos'), com o sentido do ano seco da tela 3 (chuva_que_sobra.percentil_seco): só 20% dos anos foram piores. Para a falta de água, em que mais é pior, é o percentil 80 da falta (interpolação linear entre os anos ordenados)"
+    fonte: "Convenção do ZARC: níveis de risco de 20%, 30% e 40% (Portaria SPA/MAPA nº 324/2026, item 1.6); Sans et al. (2001), Rev. Bras. Agrometeorologia 9(3):527-535, usam o ISNA de 80% dos anos. Pedido da remodelagem, seção 5.3 ('percentil 20 dos 20 anos'), com o sentido do ano seco da tela 3: só 20% dos anos foram piores. Para a falta de água, em que mais é pior, é o percentil 80 da falta (interpolação linear entre os anos ordenados)"
 
 enso_acerto:
   # Frase "Em anos de La Niña, deu certo em X de Y" da aba Sugestão (seção 5.4, tarefa 0044): só
@@ -689,36 +700,109 @@ plano_cadeia:
     fonte: "Hipótese do time, a revisar pela agrônoma (tela 5: 'diversidade de função'): pontos quando a cultura não repete nenhuma função do ano anterior (rotacao.funcoes: grão, cobertura gramínea, cobertura leguminosa; o pousio não tem função). Menor que o bônus de diversidade do PRD 7.7, que já conta as funções do plano inteiro"
   culturas_cobertura_rapida:
     valor: [milheto]
-    fonte: "Hipótese do time, a revisar pela agrônoma: o milheto é a cobertura que fecha a terra mais rápido entre as 6 opções (o protótipo da tela 5 sugere o milheto depois da terra parada); a crotalária spectabilis começa devagar e a braquiária vem junto com o milho"
+    fonte: "Pacheco et al. (2017), PAB 52(8):582-591, doi:10.1590/S0100-204X2017000800003: o milheto solteiro teve o estabelecimento mais rápido e mais cobertura do solo na safrinha. Entre as 6 opções é a cobertura que fecha a terra mais rápido (a braquiária vem junto com o milho)"
   culturas_que_multiplicam_nematoide:
-    valor: [milho_safrinha, milho_braquiaria]
-    fonte: "Hipótese do time, a revisar pela agrônoma (tela 5: 'quebrar o nematoide depois do milho'): o milho multiplica o nematoide das lesões; o sorgo fica de fora até a agrônoma dizer"
+    valor: [milho_safrinha, milho_braquiaria, sorgo]
+    fonte: "Debiasi et al. (2016), PAB 51(10):1720-1728: a maior parte dos híbridos de milho e de sorgo e as braquiárias são hospedeiros favoráveis de Pratylenchus brachyurus; no campo, milho e braquiárias não reduziram o nematoide (tela 5: 'quebrar o nematoide depois do milho')"
 
 # O "Por quê:" de cada ano sugerido do plano de 3 anos (tarefa 0056), sem IA generativa.
 # RASCUNHO: agrônoma revisar. Uma frase pela regra que pesou, nesta ordem: cobrir depois do parado,
 # quebrar o nematoide depois do milho, prazo do ZARC, variar a função (grão depois de cobertura,
 # cobertura depois de grão ou outra troca); sem nenhuma, a melhor nota. Com a sede "pouca" da linha
-# "Água" (grupo agua), a frase ganha o `aguenta_seca`. Sem o nome da cultura: a tela mostra o nome
-# logo antes do "Por quê:".
+# "Água" (grupo agua), a frase ganha o `aguenta_seca` (desde a tarefa 0066, "pede pouca água": a
+# sede mede o consumo, não a tolerância à seca). Sem o nome da cultura: a tela mostra o nome logo
+# antes do "Por quê:".
 #   prazo: {cultura_fora} (a cultura que ganharia sem o prazo) {limite_fora} e {limite} (o prazo
-#     do ZARC de cada uma, "28/02" / "Feb 28")
+#     do ZARC de cada uma, "28/02" / "Feb 28"); prazo_sugerido: o mesmo, quando a cultura_fora não
+#     tem ZARC (crotalária, tarefa 0066)
 #   aguenta_seca: {motivo} (a frase da regra)
+# Tarefa 0066: "ajuda a baixar" no lugar de "quebra o ciclo" (a crotalária reduz o nematoide das
+# lesões antes e no começo da soja, mas na colheita da soja a diferença some: Debiasi et al., 2016).
 frases_plano:
   pt:
     cobrir_depois_do_parado: "a terra ficou descoberta; cobre rápido"
-    quebrar_nematoide_depois_do_milho: "quebra o ciclo do nematoide que o milho multiplica"
+    quebrar_nematoide_depois_do_milho: "ajuda a baixar o nematoide que o milho e o sorgo multiplicam"
     grao_depois_da_cobertura: "dá grão para vender depois de um ano cuidando da terra"
     cobertura_depois_do_grao: "cuida da terra depois de um ano de grão"
     variar_funcao: "varia a função da planta na rotação"
     prazo: "{cultura_fora} passou do prazo do ZARC ({limite_fora}); esta cabe no prazo (até {limite})"
+    prazo_sugerido: "{cultura_fora} passou da data sugerida ({limite_fora}); esta cabe no prazo (até {limite})"
     melhor_nota: "tem a melhor nota do motor para esta colheita"
-    aguenta_seca: "{motivo} e aguenta a seca"
+    aguenta_seca: "{motivo} e pede pouca água"
   en:
     cobrir_depois_do_parado: "the soil was left bare; it covers it fast"
-    quebrar_nematoide_depois_do_milho: "it breaks the nematode cycle that corn builds up"
+    quebrar_nematoide_depois_do_milho: "it helps lower the nematodes that corn and sorghum build up"
     grao_depois_da_cobertura: "it gives grain to sell after a year caring for the soil"
     cobertura_depois_do_grao: "it cares for the soil after a year of grain"
     variar_funcao: "it varies the role of the crop in the rotation"
     prazo: "{cultura_fora} is past the ZARC deadline ({limite_fora}); this one fits (until {limite})"
+    prazo_sugerido: "{cultura_fora} is past the suggested date ({limite_fora}); this one fits (until {limite})"
     melhor_nota: "it has the engine's best score for this harvest"
-    aguenta_seca: "{motivo} and handles drought"
+    aguenta_seca: "{motivo} and needs little water"
+
+# Fonte de cada regra da tela "Como a conta é feita" (GET /api/metodo, campo `fontes`; tarefa 0066).
+# Só fontes abertas e conferidas (artigo revisado, livro técnico ou fonte oficial), em forma curta.
+# hipotese: "nao" (todos os números da regra têm fonte), "parte" (algum continua hipótese do time) ou
+# "sim" (nenhum tem fonte). A tela mostra "ainda não validado em campo" só quando não é "nao".
+# Revisão completa: docs/tarefas/0066-regras-com-fonte.md.
+fontes_metodo:
+  deu_certo:
+    hipotese: parte  # os 3 dias de calor, os 30 dias e o ISNA da crotalária
+    citacoes:
+      - citacao: "ZARC de MG: ISNA de cada cultura (Portaria SPA/MAPA nº 324/2026, milho; nº 339/2026, consórcio; nº 275/2026, sorgo; nº 345/2020, milheto)"
+        url: "https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/portarias/safra-vigente/minas-gerais/minas-gerais-mg"
+      - citacao: "Andrade et al. (1999), Crop Science 39(2): período crítico do milho em volta do embonecamento"
+        url: "https://doi.org/10.2135/cropsci1999.0011183X0039000200026x"
+      - citacao: "Hatfield & Prueger (2015), Weather and Climate Extremes 10: pólen do milho acima de 35 °C"
+        url: "https://doi.org/10.1016/j.wace.2015.08.001"
+  pesos:
+    hipotese: sim
+    citacoes: []
+  renda:
+    hipotese: sim
+    citacoes: []
+  agua:
+    hipotese: nao
+    citacoes:
+      - citacao: "Allen et al. (1998), FAO Irrigation and Drainage Paper 56: ETc = ETo × Kc"
+        url: "https://www.fao.org/4/x0490e/x0490e0b.htm"
+      - citacao: "ZARC: níveis de risco de 20%, 30% e 40% (Portaria SPA/MAPA nº 324/2026)"
+        url: "https://www.in.gov.br/web/dou/-/portaria-spa/mapa-n-324-de-28-de-julho-de-2026-722143549"
+  sede:
+    hipotese: sim
+    citacoes: []
+  rotacao:
+    hipotese: parte  # os pontos do bônus
+    citacoes:
+      - citacao: "Debiasi et al. (2016), Pesquisa Agropecuária Brasileira 51(10): só as crotalárias reduziram o nematoide das lesões no campo"
+        url: "https://doi.org/10.1590/S0100-204X2016001000003"
+      - citacao: "McDaniel et al. (2014), Ecological Applications 24(3): rotação com mais culturas melhora o carbono e o nitrogênio do solo"
+        url: "https://doi.org/10.1890/13-0616.1"
+  plano_b:
+    hipotese: sim
+    citacoes: []
+  geada:
+    hipotese: nao
+    citacoes:
+      - citacao: "Wrege et al. (2018), Revista Brasileira de Climatologia 22: mínima abaixo de 3 °C no abrigo indica geada no chão"
+        url: "https://ojs.ufgd.edu.br/rbclima/article/download/14053/7294/45093"
+  chuva_forte:
+    hipotese: nao
+    citacoes:
+      - citacao: "INMET, avisos de Chuvas Intensas: 'Perigo' com 50 a 100 mm por dia"
+        url: "https://apiprevmet3.inmet.gov.br/avisos/rss"
+  fogo:
+    hipotese: sim
+    citacoes: []
+  avisos:
+    hipotese: parte  # os dias seguidos e a janela
+    citacoes:
+      - citacao: "Hatfield & Prueger (2015), Weather and Climate Extremes 10: calor de 35 °C"
+        url: "https://doi.org/10.1016/j.wace.2015.08.001"
+  sinal:
+    hipotese: parte  # a chance mínima, os 5 anos e a metade dos anos
+    citacoes:
+      - citacao: "NOAA CPC: previsão oficial do ENSO e índice RONI, ±0,5 °C (NWS PNS 26-05, 2026)"
+        url: "https://www.weather.gov/media/notification/pdf_2026/pns26-05_Relative_ONI.pdf"
+      - citacao: "Minuzzi et al. (2007), Revista Brasileira de Meteorologia 22(3): La Niña e a estação chuvosa no Sudeste"
+        url: "https://doi.org/10.1590/S0102-77862007000300008"

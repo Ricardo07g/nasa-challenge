@@ -1,6 +1,6 @@
 ---
 titulo: Crotalária
-resumo: Leguminosa de cobertura que fixa nitrogênio do ar e ajuda contra alguns nematoides.
+resumo: Leguminosa de cobertura que fixa nitrogênio do ar e ajuda a baixar alguns nematoides.
 tema: culturas
 slug: crotalaria
 rascunho: nao
@@ -10,22 +10,24 @@ relacionados: adubo-verde, nematoide, rotacao-de-culturas
 
 ## Em uma frase
 
-Leguminosa de cobertura que **fixa nitrogênio do ar** e ajuda contra alguns nematoides.
+Leguminosa de cobertura que **fixa nitrogênio do ar** e ajuda a baixar alguns nematoides.
 
 ## Por que importa
 
-A crotalária é muito usada em rotação por ter grande potencial de fixar nitrogênio do ar. Num estudo publicado na Revista Caatinga, *Crotalaria juncea* e *C. spectabilis* multiplicaram pouco dois nematoides das lesões radiculares e foram indicadas como opções de rotação ou sucessão contra eles.
+As mais conhecidas são a *Crotalaria juncea*, a *C. ochroleuca* e a *C. spectabilis*. Elas fixam nitrogênio do ar e deixam esse nitrogênio na palhada.
+
+Num estudo de campo em Mato Grosso, as crotalárias reduziram o nematoide das lesões antes e no começo da soja. Na colheita da soja, a diferença sumiu. A melhor opção do estudo foi a *C. spectabilis*.
 
 ## Conheça
 
-- **Serve para:** cobertura e nitrogênio.
-- **Nitrogênio:** grande potencial de fixação biológica.
-- **Nematoides:** opção contra os nematoides das lesões radiculares, segundo o estudo.
-- **Quando plantar:** a data limite vem do ZARC do seu município.
+- **Serve para:** cobertura e nitrogênio na terra.
+- **Nematoides:** ajuda a baixar o das lesões e, a *C. spectabilis*, também os de galha.
+- **Época:** é planta de dia curto; semeada mais tarde, faz menos massa.
+- **Quando plantar:** não há ZARC para a crotalária nem para outras plantas de cobertura.
 
 ## Passo a passo
 
-1. **Confira o prazo** do ZARC no seu município.
+1. **Converse com o agrônomo** sobre a época: não há prazo do ZARC para ela.
 2. **Semeie** logo depois da soja.
 3. **Deixe crescer** e cobrir a terra.
 4. **Plante a soja** em cima da cobertura.
@@ -36,6 +38,7 @@ O app mostra a crotalária na aba [Escolher](/resposta) e no [Plano de 3 anos](/
 
 ## Fontes
 
-- [Costa et al. (2006), Ciência e Agrotecnologia: crescimento e nutrição da Crotalaria juncea](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/203830/1/CAv30n5costa.pdf)
-- [Santana-Gomes et al. (2019), Revista Caatinga: nematoides das lesões radiculares em plantas de cobertura](https://doi.org/10.1590/1983-21252019v32n201rc)
-- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
+- [Garcia e Staut (2018), Embrapa Agropecuária Oeste, Circular Técnica 44: como inserir crotalária em sistemas de grãos](https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1101109/1/CT44.pdf)
+- [Debiasi et al. (2016), Pesquisa Agropecuária Brasileira: práticas na entressafra contra o nematoide das lesões](https://doi.org/10.1590/S0100-204X2016001000003)
+- [Dias et al. (2010), Embrapa Soja, Circular Técnica 76: nematoides em soja](https://www.infoteca.cnptia.embrapa.br/bitstream/doc/854178/1/CT76eletronica.pdf)
+- [Ministério da Agricultura: portarias do ZARC em Minas Gerais (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/portarias/safra-vigente/minas-gerais/minas-gerais-mg)

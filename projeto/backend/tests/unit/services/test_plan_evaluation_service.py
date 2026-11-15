@@ -219,7 +219,7 @@ def test_should_give_the_zarc_deadline_and_the_cycle_of_each_year() -> None:
 
     plano = service.evaluate(-18.95, -48.2, ["milho_braquiaria", "sorgo", "pousio"])
 
-    assert [a.data_limite for a in plano.anos] == ["2027-02-28", "2028-03-20", None]
+    assert [a.data_limite for a in plano.anos] == ["2027-02-10", "2028-03-20", None]
     assert [(a.ciclo.dias_florescer, a.ciclo.ciclo_dias) for a in plano.anos[:2]] == [
         (60, 120),
         (65, 115),
@@ -243,8 +243,8 @@ def test_should_average_the_engine_scores_and_add_the_diversity_bonus_to_soil_he
 
     assert plano.notas.seguranca == pytest.approx(85.0)  # (80 + 80 + 95) / 3
     assert plano.notas.futuro == pytest.approx(85.0)
-    # (50 + 50 + 85) / 3 = 61,7; grão, cobertura gramínea e leguminosa = 3 funções: +10 (PRD 7.7)
-    assert plano.notas.solo == pytest.approx(71.7)
+    # (40 + 40 + 85) / 3 = 55; grão, cobertura gramínea e leguminosa = 3 funções: +10 (PRD 7.7)
+    assert plano.notas.solo == pytest.approx(65.0)
     assert plano.terra.bonus_diversidade == 10.0
 
 
@@ -257,8 +257,8 @@ def test_should_leave_fallow_out_of_safety_but_count_it_as_bare_soil() -> None:
     assert (pousio.cultura, pousio.nome, pousio.na_janela) == ("pousio", "Deixar parado", True)
     assert (pousio.anos_bons, pousio.usa_mm, pousio.cobre_terra) == (None, None, False)
     assert plano.notas.seguranca == pytest.approx(82.5)  # só sorgo (70) e crotalária (95)
-    # (35 + 0 + 85) / 3 = 40; sorgo grão + crotalária leguminosa = 2 funções: +5
-    assert plano.notas.solo == pytest.approx(45.0)
+    # (20 + 0 + 85) / 3 = 35; sorgo grão + crotalária leguminosa = 2 funções: +5
+    assert plano.notas.solo == pytest.approx(40.0)
 
 
 def test_should_have_no_safety_score_for_a_plan_that_is_all_fallow() -> None:
@@ -344,7 +344,7 @@ def test_should_suggest_the_next_years_with_the_reason_and_evaluate_the_whole_pl
     # Sem milheto nas opções de teste: a crotalária (sede pouca) pela melhor nota
     assert (
         plano.anos[2].motivo
-        == "it has the engine's best score for this harvest and handles drought"
+        == "it has the engine's best score for this harvest and needs little water"
     )
     sem_motivo = tuple(replace(a, fixo=True, motivo=None) for a in plano.anos)
     avaliado = service.evaluate(
@@ -366,7 +366,8 @@ def test_should_redo_the_second_and_third_years_when_the_first_one_changes() -> 
     com_sorgo = service.suggest(-18.95, -48.2, ["sorgo"])
     com_milho = service.suggest(-18.95, -48.2, ["milho_braquiaria"])
 
-    assert [a.cultura for a in com_sorgo.anos] == ["sorgo", "milho_braquiaria", "crotalaria"]
+    # Tarefa 0066: o sorgo multiplica o nematoide das lesões; a crotalária vem logo depois dele
+    assert [a.cultura for a in com_sorgo.anos] == ["sorgo", "crotalaria", "milho_braquiaria"]
     assert [a.cultura for a in com_milho.anos] == ["milho_braquiaria", "crotalaria", "crotalaria"]
     assert all(a.motivo for a in com_sorgo.anos[1:])
 

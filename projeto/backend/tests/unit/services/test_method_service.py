@@ -45,6 +45,58 @@ def test_should_take_every_number_of_the_method_screen_from_the_rules() -> None:
     assert metodo.sinal.fase_chance_min_pct == regras.sinal_enso.fase_chance_min_pct
 
 
+def test_should_send_the_zarc_isna_of_each_crop_in_percent() -> None:
+    # Tarefa 0066: o ZARC de MG tem um ISNA por cultura; a tela diz qual
+    metodo = MethodService(load_default_rules()).rules()
+
+    assert metodo.deu_certo.isna_por_cultura_pct == {
+        "milho_braquiaria": 50,
+        "milheto": 60,
+        "sorgo": 45,
+    }
+
+
+def test_should_send_the_source_of_each_rule_and_whether_it_is_a_team_hypothesis() -> None:
+    # Tarefa 0066: cada regra mostra a fonte quando há; "ainda não validado em campo" fica só no
+    # que continua hipótese do time (toda a regra ou parte dela).
+    fontes = MethodService(load_default_rules()).rules().fontes
+
+    assert set(fontes) == {
+        "deu_certo",
+        "pesos",
+        "renda",
+        "agua",
+        "sede",
+        "rotacao",
+        "plano_b",
+        "geada",
+        "chuva_forte",
+        "fogo",
+        "avisos",
+        "sinal",
+    }
+    assert {chave: f.hipotese for chave, f in fontes.items()} == {
+        "deu_certo": "parte",
+        "pesos": "sim",
+        "renda": "sim",
+        "agua": "nao",
+        "sede": "sim",
+        "rotacao": "parte",
+        "plano_b": "sim",
+        "geada": "nao",
+        "chuva_forte": "nao",
+        "fogo": "sim",
+        "avisos": "parte",
+        "sinal": "parte",
+    }
+    for chave, fonte in fontes.items():
+        if fonte.hipotese != "sim":
+            assert fonte.citacoes, chave
+        assert all(c.citacao.strip() for c in fonte.citacoes)
+    assert any("Portaria SPA/MAPA" in c.citacao for c in fontes["deu_certo"].citacoes)
+    assert any("Debiasi" in c.citacao for c in fontes["rotacao"].citacoes)
+
+
 def test_should_follow_the_injected_rules_not_fixed_numbers() -> None:
     base = load_default_rules()
     rules = replace(

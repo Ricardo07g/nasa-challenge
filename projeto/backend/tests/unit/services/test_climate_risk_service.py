@@ -151,6 +151,36 @@ def test_should_judge_water_shortage_of_cover_crops_by_their_own_isna_threshold(
     assert (result.falta_agua, result.calor, result.aperto) == (False, False, False)
 
 
+def test_should_use_the_zarc_isna_of_the_crop_when_it_has_its_own() -> None:
+    # Tarefa 0066: o ZARC de MG tem um ISNA por cultura (sorgo 0,45 na floração); a cultura sem
+    # ISNA próprio fica com o do tipo (grão 0,55). Mesmo ano e mesmo ISNA para as duas culturas.
+    base = load_default_rules()
+    seasons = [_make_season(2021, daily_rain=1.3)]
+    milho = _make_crop("milho_safrinha")
+    sorgo = _make_crop("sorgo")
+    service = ClimateRiskService(
+        WaterBalanceCalculator(),
+        replace(base, clima=replace(base.clima, isna_grao=0.99, isna_por_cultura={"sorgo": 0.0})),
+    )
+
+    [r_milho] = service.simulate_historical(milho, seasons, date(2027, 2, 18), cad_mm=60.0)
+    [r_sorgo] = service.simulate_historical(sorgo, seasons, date(2027, 2, 18), cad_mm=60.0)
+
+    assert r_milho.isna == pytest.approx(r_sorgo.isna)
+    assert (r_milho.falta_agua, r_sorgo.falta_agua) == (True, False)
+
+
+def test_should_ship_the_zarc_isna_of_each_crop() -> None:
+    # Portarias do ZARC de MG: consórcio 0,50 e sorgo 0,45 na fase III; milheto 0,60 na fase I.
+    clima = load_default_rules().clima
+
+    assert clima.isna_por_cultura == {"milho_braquiaria": 0.50, "sorgo": 0.45, "milheto": 0.60}
+    assert clima.isna_min("milho_safrinha", cobertura=False) == 0.55
+    assert clima.isna_min("sorgo", cobertura=False) == 0.45
+    assert clima.isna_min("milheto", cobertura=True) == 0.60
+    assert clima.isna_min("crotalaria", cobertura=True) == 0.50
+
+
 def test_should_compute_eto_from_temperatures_and_latitude_when_season_has_no_eto() -> None:
     wb = WaterBalanceCalculator()
     service = ClimateRiskService(wb)

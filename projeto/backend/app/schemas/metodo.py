@@ -4,6 +4,7 @@ Só números do `regras.yaml`; as frases ficam no front (pt e en).
 """
 
 from dataclasses import asdict
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -17,6 +18,8 @@ class _Frozen(BaseModel):
 class MetodoDeuCertoSchema(_Frozen):
     isna_grao_pct: int
     isna_cobertura_pct: int
+    # Tarefa 0066: o ISNA do ZARC de cada cultura que tem o seu (opcional para o front antigo)
+    isna_por_cultura_pct: dict[str, int] = {}
     janela_grao_meia_dias: int
     janela_cobertura_dias: int
     calor_temp_c: float
@@ -82,6 +85,16 @@ class MetodoSinalSchema(_Frozen):
     anos_ruins_seco_pct: int
 
 
+class MetodoCitacaoSchema(_Frozen):
+    citacao: str
+    url: str | None = None
+
+
+class MetodoFonteSchema(_Frozen):
+    citacoes: list[MetodoCitacaoSchema]
+    hipotese: Literal["nao", "parte", "sim"]
+
+
 class MetodoResponse(_Frozen):
     deu_certo: MetodoDeuCertoSchema
     pesos: MetodoPesosSchema
@@ -92,6 +105,8 @@ class MetodoResponse(_Frozen):
     alertas: MetodoAlertasSchema
     avisos: MetodoAvisosSchema
     sinal: MetodoSinalSchema
+    # Tarefa 0066: a fonte de cada regra (opcional: o front sem ele só não mostra a fonte)
+    fontes: dict[str, MetodoFonteSchema] | None = None
 
     @classmethod
     def from_model(cls, metodo: MetodoRegras) -> "MetodoResponse":

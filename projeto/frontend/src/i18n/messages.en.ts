@@ -130,10 +130,10 @@ export const en = {
     },
     taglines: {
       milho_braquiaria: 'Grain, and it covers the soil.',
-      milho_safrinha: 'Grain, but little straw left.',
+      milho_safrinha: 'Grain, but less straw than corn with brachiaria.',
       sorgo: 'Grain with less drought risk.',
       milheto: 'Lots of straw to cover the soil.',
-      crotalaria: 'Natural fertilizer and breaks the nematode cycle.',
+      crotalaria: 'Green manure that helps lower nematodes.',
       pousio: 'The soil stays bare.',
     },
   },
@@ -656,6 +656,8 @@ export const en = {
       plantSoon: (date: string, crop: string) => `Harvest the soybeans around ${date} and plant ${crop} right after.`,
       plantLate: (date: string, crop: string, deadline: string) =>
         `Harvest the soybeans around ${date} and plant ${crop} right after; the ZARC deadline ended on ${deadline}.`,
+      plantLateSuggested: (date: string, crop: string, deadline: string) =>
+        `Harvest the soybeans around ${date} and plant ${crop} right after; the suggested date ended on ${deadline}.`,
       harvestOnly: (date: string) => `Harvest the soybeans around ${date}.`,
       planB: (crop: string) => `In February, check the autumn signal: if the year looks dry, switch to ${crop}.`,
       check: 'In February, check the autumn signal.',
@@ -697,16 +699,20 @@ export const en = {
         when: (date: string) => `by ${date}`,
         sub: 'ZARC deadline',
         title: (crop: string) => `Plant ${crop}`,
-        text: (date: string) => `Plant right after harvest: the ZARC deadline is ${date}. After that, crop insurance does not cover it.`,
-        late: (date: string) => `Past the ZARC deadline (${date}): crop insurance does not cover it.`,
-        lateNoDate: 'Past the ZARC deadline: crop insurance does not cover it.',
+        text: (date: string) =>
+          `Plant right after harvest: the ZARC deadline is ${date}. After that, the risk goes up and crop insurance may not cover it.`,
+        late: (date: string) => `Past the ZARC deadline (${date}): the risk goes up and crop insurance may not cover it.`,
+        lateNoDate: 'Past the ZARC deadline: the risk goes up and crop insurance may not cover it.',
+        subSuggested: 'suggested date',
+        textSuggested: (date: string) => `Plant right after harvest, by ${date}: a date suggested by the app (there is no ZARC for this plant).`,
+        lateSuggested: (date: string) => `Past the suggested date (${date}).`,
         soonSub: 'sowing',
         soon: 'Plant right after the soybean harvest.',
       },
       water: {
         sub: { floracao: 'flowering', pegamento: 'establishment' },
         title: 'When the plant needs water most',
-        flower: (days: number) => `This is when dry spells show up most: flowering comes about ${days} days after sowing.`,
+        flower: (days: number) => `This is when a dry spell hurts most: flowering comes about ${days} days after sowing.`,
         start: (days: number) => `In the first ${days} days after sowing, the plant needs water to establish.`,
       },
       cropHarvest: {
@@ -720,7 +726,9 @@ export const en = {
         titleAlone: 'Next soybeans',
         text: (year: number) => `Open the app again after the ${year} harvest to check the plan with that year's rain.`,
         deadline: (date: string) => `Plant by ${date} (ZARC deadline).`,
-        late: (date: string) => `Past the ZARC deadline (${date}): crop insurance does not cover it.`,
+        late: (date: string) => `Past the ZARC deadline (${date}): the risk goes up and crop insurance may not cover it.`,
+        deadlineSuggested: (date: string) => `Plant by ${date} (suggested date).`,
+        lateSuggested: (date: string) => `Past the suggested date (${date}).`,
       },
     },
     alerts: {
@@ -824,8 +832,8 @@ export const en = {
         noIncome: 'No year of the plan gives grain to sell: the gain comes in the soil and the next soybeans.',
         cover: (crop: string, season: string, gives: string) => `${crop}, in ${season}, gives no grain, but ${gives}: this helps the next soybeans.`,
         straw: 'leaves straw that protects the soil',
-        nitrogen: 'leaves nitrogen for the soybeans',
-        nematode: 'breaks the nematode cycle',
+        nitrogen: 'adds nitrogen to the soil',
+        nematode: 'helps lower nematodes',
         planB: (from: string, to: string) => `Plan B: if autumn looks dry, swap ${from} for ${to}.`,
       },
       todo: '5. What to do and when',
@@ -1007,7 +1015,7 @@ export const en = {
         `Harvesting ${when}, the safe sowing deadline has already passed for ${list}. That is why ${count === 1 ? 'it does not show up' : 'they do not show up'}.`,
       textOneDate: (when: string, date: string, list: string, count: number) =>
         `Harvesting ${when}, the safe sowing deadline (ZARC, ${date}) has already passed for ${list}. That is why ${count === 1 ? 'it does not show up' : 'they do not show up'}.`,
-      zarc: 'ZARC is the Agricultural Climate Risk Zoning of the Brazilian Ministry of Agriculture: for each municipality, it says until when to plant with the lowest climate risk.',
+      zarc: 'ZARC is the Agricultural Climate Risk Zoning of the Brazilian Ministry of Agriculture: for each municipality, soil type and cultivar cycle, it says when to plant with a 20%, 30% or 40% risk of loss.',
       frost: (years: number, total: number, temp: string) =>
         `Frost: in ${years} of ${total} years the minimum reached ${temp} °C or less between May and July (NASA POWER).`,
       and: 'and',
@@ -1106,10 +1114,10 @@ export const en = {
       years === 0 ? 'No year leaves nitrogen in the soil' : years === 1 ? '1 year leaves nitrogen in the soil' : `${years} years leave nitrogen in the soil`,
     nematode: (years: number) =>
       years === 0
-        ? 'No year breaks the nematode cycle'
+        ? 'No year helps lower nematodes'
         : years === 1
-          ? '1 year breaks the nematode cycle'
-          : `${years} years break the nematode cycle`,
+          ? '1 year helps lower nematodes'
+          : `${years} years help lower nematodes`,
     repeat: (crops: string) => `Repeats the same crop: ${crops}`,
     noRepeat: 'No crop is repeated',
     bonus: (points: string) => `Varying the role of the crops (grain, grass and legume) adds ${points} points to soil health.`,
@@ -1225,8 +1233,9 @@ export const en = {
         littleWater: 'Needs little water',
       },
       cons: {
-        late: (date: string) => `Past the ZARC deadline (${date}): insurance does not cover it`,
-        lateNoDate: 'Past the ZARC deadline: insurance does not cover it',
+        late: (date: string) => `Past the ZARC deadline (${date}): the risk goes up and insurance may not cover it`,
+        lateNoDate: 'Past the ZARC deadline: the risk goes up and insurance may not cover it',
+        lateSuggested: (date: string) => `Past the suggested date (${date})`,
         risky: 'Failed in many years',
         noGrain: 'No grain to sell',
         soilWeak: 'Helps the soil little',
@@ -1251,13 +1260,17 @@ export const en = {
       futureSource: 'NEX-GDDP-CMIP6 (NASA), SSP2-4.5 scenario, mean of the models.',
       incomeText:
         '"Grain" means there is something to sell. The risk is in how many of the 20 years water ran short or it was hot at the stage it needs water most. No money values.',
-      soilText: 'Straw, nitrogen and the nematode cycle. The score points are a team hypothesis, not yet validated in the field.',
+      soilText: 'Straw, nitrogen and nematodes. The score points are a team hypothesis, not yet validated in the field.',
       deadlineOk: (limit: string, harvest: string) =>
         `By ZARC (Ministry of Agriculture), sowing goes until ${limit}. Sowing on ${harvest}, right after the soybean harvest, there is time.`,
       deadlineLate: (limit: string, harvest: string) =>
-        `By ZARC, sowing went until ${limit}. Sowing on ${harvest}, right after the soybean harvest, is past the deadline: risk goes up and crop insurance does not cover it. The math shows sowing on that day.`,
+        `By ZARC, sowing went until ${limit}. Sowing on ${harvest}, right after the soybean harvest, is past the deadline: risk goes up and crop insurance may not cover it. The math shows sowing on that day.`,
+      deadlineSuggestedOk: (limit: string, harvest: string) =>
+        `There is no ZARC for this plant: the app suggests sowing until ${limit}. Sowing on ${harvest}, right after the soybean harvest, there is time.`,
+      deadlineSuggestedLate: (limit: string, harvest: string) =>
+        `There is no ZARC for this plant: the app suggests sowing until ${limit}. Sowing on ${harvest}, right after the soybean harvest, is past that date. The math shows sowing on that day.`,
       deadlineNone: 'The engine has no ZARC deadline for this crop: sow right after the soybean harvest.',
-      zarc: 'ZARC is the Ministry of Agriculture agricultural climate risk zoning: for each municipality, it says until when to sow with the lowest climate risk. Past the deadline, crop insurance and Proagro do not cover it.',
+      zarc: 'ZARC is the Ministry of Agriculture agricultural climate risk zoning: for each municipality, soil type and cultivar cycle, it says when to sow with a 20%, 30% or 40% risk of loss. Outside those periods, there is no Proagro or crop insurance subsidy. The app date is the last one with a 20% risk in the soil that holds the most water; in sandy soil, the deadline is earlier.',
       deadlineSource: 'ZARC (Ministry of Agriculture) and Embrapa.',
       engineSource: 'Raiz Orbital engine math, with NASA data. The rules are in "How the math works".',
       prosCons: 'For and against',
@@ -1513,7 +1526,7 @@ export const en = {
     step3: 'We count in how many years water was short or heat was too high when the crop needed it most.',
     noAiTitle: 'No artificial intelligence, open math',
     noAiText:
-      'Each score is a rule that fits in one sentence. Water-shortage and heat limits come from Embrapa and ZARC, the agricultural zoning used for crop insurance and rural credit.',
+      'Each score is a rule that fits in one sentence. Water-shortage limits come from ZARC, the agricultural zoning used for crop insurance and rural credit; the heat limit, from a scientific paper. Each rule below gives its source.',
     incomeTitle: 'Income without money values',
     incomeText:
       'Income does not use prices or costs. Options that give grain to sell get the same income score as their safety score: in how many years it worked, from 0 to 100. Options with no grain (cover crops and fallow land) get a fixed income score: they are an investment in the soil, and that counts in the soil score.',
@@ -1525,10 +1538,16 @@ export const en = {
     blindRain: (km: number) => `Rain comes in squares of about ${km} km, not from your field: your rain gauge is worth more.`,
     blindRainGeneric: 'Rain comes in squares several kilometers wide, not from your field: your rain gauge is worth more.',
     blindRest:
-      'The 2041–2060 climate is a range across models, not a forecast. The limits used in the calculation are a team hypothesis and have not been validated in the field yet.',
+      'The 2041–2060 climate is a range across models, not a forecast. Some limits used in the calculation are a team hypothesis and have not been validated in the field yet: each rule below says which.',
     rules: {
       title: 'The rules of the calculation',
-      intro: 'Every number below comes from the engine rules file (regras.yaml). Those marked as a team hypothesis have not been validated in the field yet.',
+      intro: 'Every number below comes from the engine rules file (regras.yaml), with the checked source when there is one. Those marked as a team hypothesis have not been validated in the field yet.',
+      workedByCrop: (list: string) => `By the ZARC of each crop: ${list}.`,
+      cropPct: (crop: string, pct: string) => `${crop} ${pct}%`,
+      source: 'Source',
+      sources: 'Sources',
+      hypothesisAll: 'Team hypothesis, not yet validated in the field.',
+      hypothesisPart: 'Some of these numbers are a team hypothesis, not yet validated in the field.',
       worked: (grain: string, days: string, cover: string, coverDays: string, temp: string, heatDays: string) =>
         `It worked: the plant had at least ${grain}% of the water it needed in the stage that needs it most (flowering, ${days} days before and after; for cover crops, ${cover}% in the first ${coverDays} days) and it did not reach ${temp} °C on ${heatDays} days or more in that stage.`,
       weights: (safety: string, future: string, soil: string, income: string) =>
@@ -1538,9 +1557,9 @@ export const en = {
       water: (pct: string) =>
         `Water: the engine adds up, day by day, what the plant uses (NASA POWER ETo × Kc) and the rain (GPM IMERG), with what the soil holds. A normal year is the middle one; a dry year is one where only ${pct}% of the years had a bigger shortage.`,
       thirst: (low: string, high: string) =>
-        `Crop thirst: little water below ${low} mm in the cycle; a lot from ${high} mm up (team hypothesis).`,
+        `Crop thirst: little water below ${low} mm in the cycle; a lot from ${high} mm up.`,
       rotation: (two: string, three: string, crops: string) =>
-        `Rotation score: the average of the 3 years, with +${two} points for 2 different roles and +${three} for 3 (grain, grass cover, legume). Crops that break the nematode cycle: ${crops}.`,
+        `Rotation score: the average of the 3 years, with +${two} points for 2 different roles and +${three} for 3 (grain, grass cover, legume). Helps lower nematodes: ${crops}.`,
       planB: (days: string, fails: string, catches: string, precision: string, chance: string) =>
         `Plan B: the crop that worked most often in the years when the plan A crop failed. "Dry" becomes a rain gauge number (rain in the ${days} days before planting) only with ${fails} failed years or more, catching ${catches}% of the failures, with ${precision}% of the flagged years being failures and a chance of luck of up to ${chance}%. Otherwise, plan B shows without a number.`,
       frost: (temp: string, from: string, to: string) =>

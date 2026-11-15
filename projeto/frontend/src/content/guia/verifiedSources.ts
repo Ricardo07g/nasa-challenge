@@ -53,7 +53,7 @@ export const VERIFIED_SOURCES: VerifiedSource[] = [
     url: 'https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola',
     kind: 'official',
     citation: 'Ministério da Agricultura e Pecuária: Zoneamento Agrícola de Risco Climático',
-    confirms: 'O ZARC é um instrumento de política agrícola e gestão de riscos; analisa clima, solo e ciclos das cultivares, e cada município identifica a melhor época de plantio. Resultado publicado em portarias do MAPA.',
+    confirms: 'O ZARC é um instrumento de política agrícola e gestão de riscos; analisa clima, solo e ciclos das cultivares, e cada município identifica a melhor época de plantio. Resultado publicado em portarias do MAPA. "Para fazer jus ao Proagro, ao Proagro Mais e à subvenção federal ao prêmio do seguro rural, o produtor deve observar as recomendações" do ZARC (conferido de novo em 15/11/2026, tarefa 0066 do backend).',
     checkedOn: CHECKED,
   },
   {
@@ -61,6 +61,22 @@ export const VERIFIED_SOURCES: VerifiedSource[] = [
     kind: 'official',
     citation: 'Lei nº 10.711, de 5 de agosto de 2003 (Sistema Nacional de Sementes e Mudas)',
     confirms: 'Inscrição no Renasem para quem produz e comercializa sementes (art. 8º); identificação obrigatória na embalagem, carimbo, rótulo ou etiqueta (art. 21); definição do processo de certificação e das sementes certificadas (art. 2º); documentos que acompanham a semente no transporte e na venda (art. 31).',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/portarias/safra-vigente/minas-gerais/minas-gerais-mg',
+    kind: 'official',
+    citation: 'Ministério da Agricultura e Pecuária: portarias do ZARC da safra vigente, Minas Gerais',
+    confirms:
+      'Lista das portarias do ZARC vigentes em MG (atualizada em 11/11/2026): milho 2ª safra, milho consorciado com braquiária 2ª safra, sorgo granífero e milheto, entre outras; não há portaria de crotalária nem de plantas de cobertura. As portarias indicam épocas de semeadura por município, tipo de solo e grupo de cultivar, com níveis de risco de 20%, 30% e 40%.',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://www.weather.gov/media/notification/pdf_2026/pns26-05_Relative_ONI.pdf',
+    kind: 'official',
+    citation: 'NOAA National Weather Service, Public Information Statement 26-05 (13/01/2026): Relative Oceanic Niño Index',
+    confirms:
+      'Desde 1º de fevereiro de 2026, o índice oficial do El Niño e da La Niña da NOAA é o RONI (ONI relativo): a anomalia da temperatura do mar no Niño 3.4 menos a anomalia média dos trópicos, reescalada; El Niño e La Niña com +0,5 °C e -0,5 °C por 5 estações seguidas ou mais.',
     checkedOn: CHECKED,
   },
   {
@@ -221,6 +237,51 @@ export const VERIFIED_SOURCES: VerifiedSource[] = [
     kind: 'article',
     citation: 'Giglio, L. et al. The Collection 6 MODIS burned area mapping algorithm and product. Remote Sensing of Environment, v. 217, p. 72-85, 2018.',
     confirms: 'MCD64A1 Coleção 6: área queimada global a 500 m, dos sensores MODIS dos satélites Terra e Aqua, com data da queimada; detecta muito mais queimadas pequenas que a versão 5.1.',
+    checkedOn: CHECKED,
+  },
+
+  // Revisão com fontes (tarefa 0066 do backend): nematoide, espécies de cobertura e El Niño / La Niña.
+  {
+    url: 'https://doi.org/10.1590/S0100-204X2016001000003',
+    kind: 'article',
+    citation:
+      'Debiasi, H. et al. Práticas culturais na entressafra da soja para o controle de Pratylenchus brachyurus. Pesquisa Agropecuária Brasileira, v. 51, n. 10, p. 1720-1728, 2016.',
+    confirms:
+      'Campo em Vera (MT), 3 entressafras: as crotalárias (C. spectabilis, C. ochroleuca e C. juncea) e C. spectabilis + milheto reduziram o nematoide das lesões antes da semeadura e no começo da soja; na colheita da soja, a população não diferiu entre os tratamentos. Milheto, milho, braquiária ruziziensis, capim-marandu e o pousio não diferiram da testemunha. C. spectabilis, sozinha ou com milheto, é a melhor opção.',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://www.infoteca.cnptia.embrapa.br/bitstream/doc/854178/1/CT76eletronica.pdf',
+    kind: 'book',
+    citation: 'Dias, W. P. et al. Nematóides em soja: identificação e controle. Londrina: Embrapa Soja, 2010 (Circular Técnica 76).',
+    confirms:
+      'A adubação verde com Crotalaria spectabilis contribui para reduzir M. javanica e M. incognita. Para o nematoide de cisto, o cultivo de não hospedeiras só na entressafra (maio a agosto) não mostrou ser boa opção: a rotação de culturas não deve ser substituída pela sucessão.',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1101109/1/CT44.pdf',
+    kind: 'book',
+    citation: 'Garcia, R. A.; Staut, L. A. Como inserir crotalária em sistemas de produção de grãos. Dourados: Embrapa Agropecuária Oeste, 2018 (Circular Técnica 44).',
+    confirms:
+      'Crotalaria juncea, C. ochroleuca e C. spectabilis estão entre as mais conhecidas, com mais sementes no mercado; são sensíveis ao fotoperíodo (plantas de dia curto), e a biomassa cai com o atraso da semeadura na entressafra; as crotalárias fazem simbiose eficiente para fixar nitrogênio.',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1005394/1/p.6670.pdf',
+    kind: 'book',
+    citation:
+      'Ceccon, G. Consórcio milho-braquiária. In: Padovan, M. P. et al. (Ed.). Tecnologias para a agricultura familiar. Dourados: Embrapa Agropecuária Oeste, 2014, p. 65-69 (Documentos 122).',
+    confirms:
+      'Para cobertura do solo ou pasto de curto tempo, como na safrinha, a braquiária-ruziziensis é a espécie mais indicada (semente de menor custo, cobre o solo mais rápido e é fácil de dessecar); para formar pasto perene, a braquiária-brizantha (Marandu, Xaraés, Piatã).',
+    checkedOn: CHECKED,
+  },
+  {
+    url: 'https://doi.org/10.1590/S0102-77862007000300008',
+    kind: 'article',
+    citation:
+      'Minuzzi, R. B. et al. Influência da La Niña na estação chuvosa da região Sudeste do Brasil. Revista Brasileira de Meteorologia, v. 22, n. 3, p. 345-353, 2007.',
+    confirms:
+      'Com La Niña, as chuvas tendem a começar mais tarde no Triângulo Mineiro e há estiagem forte em grande parte de Minas Gerais no verão (dezembro a fevereiro); o fim da estação chuvosa não muda de forma consistente.',
     checkedOn: CHECKED,
   },
 ]
