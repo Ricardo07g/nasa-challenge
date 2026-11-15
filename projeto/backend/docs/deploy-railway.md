@@ -78,6 +78,9 @@ o último deploy dele, com a mensagem `commit <sha>`, e espera o SUCCESS. *Run w
   `RAILWAY_TOKEN` do ambiente `production` do GitHub, que libera só para o `main`. Para trocar: crie outro token
   (Railway → projeto → *Settings* → *Tokens*) e rode `gh secret set RAILWAY_TOKEN --env production` colando o valor;
   depois apague o antigo no painel.
+  O script confere o token antes de tudo (consulta `projectToken` da API) e diz no log de que projeto e ambiente
+  ele é, ou se é um token de conta ou inválido. As consultas (serviços, deploys, status, `COMMIT_SHA`) vão direto
+  à API GraphQL com o cabeçalho `Project-Access-Token`; só o upload usa o CLI (`railway up`).
 - **Carimbo da versão:** antes de cada `railway up`, o script grava a variável `COMMIT_SHA` no serviço
   (`--skip-deploys`). O backend devolve no `/api/health` (`commit`) e o build do front grava `/versao.json`; o job
   `Site no ar` confere que os dois estão no commit do merge.
