@@ -1,11 +1,11 @@
 import { ChipGroup } from '../design-system/components/Choice'
 import { OptionCompareCard, PageHeading } from '../design-system/components/Content'
 import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
-import { StatusPill } from '../design-system/components/Status'
-import { DropIcon, MoneyIcon, SoilIcon } from '../design-system/icons'
+import { NotConnected, StatusPill } from '../design-system/components/Status'
+import { ClimateIcon, DropIcon, MoneyIcon, SoilIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import type { Eixo, Opcao } from '../models/recomendacao'
-import type { LateSummary } from '../services/recomendacaoRules'
+import { futureSummary, type LateSummary } from '../services/recomendacaoRules'
 import type { RainSummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
 import type { ScreenStatus } from '../models/screenStatus'
@@ -26,6 +26,18 @@ export type OptionsViewProps = {
 }
 
 const AXES: readonly Eixo[] = ['chuva', 'dinheiro', 'terra']
+
+/** Clima de 2041–2060 da opção, no mesmo formato do cartão da resposta; sem o CMIP6, "Ainda não conectado". */
+function futureRow(t: Messages, option: Opcao) {
+  const future = futureSummary(option)
+  return {
+    label: t.answer.future,
+    icon: <ClimateIcon />,
+    iconTone: 'blue' as const,
+    value: future ? t.answer.futureYears(future.good, future.total, future.range) : undefined,
+    extra: future ? undefined : <NotConnected label={t.common.notConnected} />,
+  }
+}
 
 /** Tela 6 "Todas as opções": reordenar, um cartão por opção e "Deixar parado" como linha de base. */
 export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary, rain }: OptionsViewProps) {
@@ -68,6 +80,7 @@ export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary, ra
                     extra: <RainYears t={t} option={option} />,
                     pill: <StatusPill rotulo={option.chuva.rotulo}>{t.labels[option.chuva.rotulo]}</StatusPill>,
                   },
+                  futureRow(t, option),
                   {
                     label: t.axes.dinheiro,
                     value: option.dinheiro.texto,

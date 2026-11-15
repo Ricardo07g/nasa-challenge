@@ -80,10 +80,34 @@ function lateSummary(recomendacao: Recomendacao): LateSummary {
   }
 }
 
+export type FutureSummary = {
+  /** Anos em que daria certo (média dos modelos). */
+  good: number
+  total: number
+  /** Faixa entre os modelos; null quando todos dão o mesmo número. */
+  range: { min: number; max: number } | null
+}
+
+/**
+ * Clima de 2041–2060 (NEX-GDDP-CMIP6): em quantos anos a opção daria certo, com a faixa entre os
+ * modelos. O total de anos é o mesmo da chuva de hoje. Sem o dado do CMIP6 na API, null.
+ */
+export function futureSummary(option: Opcao): FutureSummary | null {
+  if (!option.futuro) return null
+  const { anos_bons_media, anos_bons_min, anos_bons_max } = option.futuro
+  return {
+    good: anos_bons_media,
+    total: option.chuva.anos,
+    range: anos_bons_min === anos_bons_max ? null : { min: anos_bons_min, max: anos_bons_max },
+  }
+}
+
 export type AnswerSummary = {
   /** Ano da soja que vem antes da entressafra ("Depois da soja de 2027…"). */
   year: number
   best: Opcao
+  /** Linha do clima de 2041–2060 no cartão da resposta; null sem o CMIP6. */
+  future: FutureSummary | null
   alternatives: { motivo: Motivo; option: Opcao; text: string }[]
   late: LateSummary
 }
@@ -95,6 +119,7 @@ export function buildAnswer(recomendacao: Recomendacao): AnswerSummary | null {
   return {
     year: harvestYear(recomendacao.entrada.semeadura),
     best,
+    future: futureSummary(best),
     alternatives: recomendacao.alternativas.flatMap(({ motivo, opcao }) => {
       const option = findOption(recomendacao.opcoes, opcao)
       return option ? [{ motivo, option, text: alternativeSummary(motivo, option).map(sentence).join(' ') }] : []

@@ -25,7 +25,8 @@ type MetricRowProps = {
   /** Azul para dado de satélite (chuva); verde para o resto. */
   iconTone?: 'green' | 'blue'
   label: string
-  value: string
+  /** Sem valor (dado que a API ainda não manda), fica só o eixo e o conteúdo (ex.: "Ainda não conectado"). */
+  value?: string
   pill?: ReactNode
   children?: ReactNode
 }
@@ -38,7 +39,7 @@ export function MetricRow({ icon, iconTone = 'green', label, value, pill, childr
       </span>
       <div className={styles.metricText}>
         <span className={styles.metricLabel}>{label}</span>
-        <span className={styles.metricValue}>{value}</span>
+        {value && <span className={styles.metricValue}>{value}</span>}
         {children}
       </div>
       {pill && <span className={styles.metricPill}>{pill}</span>}

@@ -36,6 +36,18 @@ describe('MetricRow', () => {
 
     expect(screen.getByTestId('icone').parentElement).toHaveAttribute('data-tone', 'blue')
   })
+
+  it('sem valor (dado que a API ainda não manda), mostra o eixo e o conteúdo, sem frase vazia', () => {
+    const { container } = render(
+      <MetricRow icon={<svg />} label="Clima 2041–2060">
+        <NotConnected label="Ainda não conectado" />
+      </MetricRow>,
+    )
+
+    expect(screen.getByText('Clima 2041–2060')).toBeInTheDocument()
+    expect(screen.getByText('Ainda não conectado')).toBeInTheDocument()
+    expect(container.querySelector('[class*="metricValue"]')).toBeNull()
+  })
 })
 
 describe('YearStrip', () => {

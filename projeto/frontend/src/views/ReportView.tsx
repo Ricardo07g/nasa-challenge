@@ -9,7 +9,7 @@ import type { Messages } from '../i18n/messages.pt'
 import type { NivelSinal, Recomendacao } from '../models/recomendacao'
 import type { ScreenStatus } from '../models/screenStatus'
 import type { SituacaoAno, Talhao } from '../models/talhao'
-import { harvestYear } from '../services/recomendacaoRules'
+import { futureSummary, harvestYear, type FutureSummary } from '../services/recomendacaoRules'
 import { reportSources } from '../services/reportService'
 import { historySummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
@@ -69,6 +69,10 @@ function Sheet({ t, lang, talhao, recomendacao: rec, example, place, today }: Re
   const r = t.report
   const best = rec.opcoes.find((option) => option.id === rec.melhor)
   const sowing = formatFullDate(lang, rec.entrada.semeadura)
+  // Futuro, sinal e histórico: sem o dado na API, fica "Ainda não conectado" (não some).
+  const notConnected = <NotConnected label={t.common.notConnected} />
+  const futureCell = (future: FutureSummary | null) =>
+    future ? r.futureOf(future.good, future.total, future.range) : notConnected
   const sections: { title: string; body: ReactNode }[] = [
     {
       title: r.place,
@@ -100,6 +104,7 @@ function Sheet({ t, lang, talhao, recomendacao: rec, example, place, today }: Re
             <tr>
               <th scope="col">{r.headers.crop}</th>
               <th scope="col">{r.headers.years}</th>
+              <th scope="col">{r.headers.future}</th>
               <th scope="col">{r.headers.margin}</th>
               <th scope="col">{r.headers.soil}</th>
             </tr>
@@ -108,7 +113,14 @@ function Sheet({ t, lang, talhao, recomendacao: rec, example, place, today }: Re
             {rec.opcoes.map((option) => (
               <tr key={option.id}>
                 <th scope="row">{option.nome}</th>
-                <td>{option.na_janela ? r.yearsOf(option.chuva.anos_bons, option.chuva.anos) : t.options.outOfWindowTitle}</td>
+                {option.na_janela ? (
+                  <>
+                    <td>{r.yearsOf(option.chuva.anos_bons, option.chuva.anos)}</td>
+                    <td>{futureCell(futureSummary(option))}</td>
+                  </>
+                ) : (
+                  <td colSpan={2}>{t.options.outOfWindowTitle}</td>
+                )}
                 <td>{formatCurrency(lang, option.dinheiro.margem_ha)}</td>
                 <td>{option.terra.texto}</td>
               </tr>
@@ -118,8 +130,6 @@ function Sheet({ t, lang, talhao, recomendacao: rec, example, place, today }: Re
       ),
     },
   ]
-  // Sinal e histórico: sem o dado na API, a seção fica com "Ainda não conectado" (não some).
-  const notConnected = <NotConnected label={t.common.notConnected} />
   const signal = rec.sinal
   sections.push({
     title: t.plan.signalTitle(harvestYear(rec.entrada.semeadura)),

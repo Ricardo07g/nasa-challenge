@@ -236,6 +236,11 @@ export const pt = {
     /** O período vem do talhão (dados[]); o backend pode descartar ano com dia faltando. */
     rainYears: (years: number, start: string, end: string) => `${years} anos entre ${start} e ${end}`,
     rainYearsCount: (years: number) => `${years} anos`,
+    /** Clima de 2041–2060 (NEX-GDDP-CMIP6), no cartão da resposta e em cada opção. */
+    future: 'Clima 2041–2060',
+    /** O total é o mesmo da chuva; sem faixa quando todos os modelos dão o mesmo número. */
+    futureYears: (good: number, total: number, range: { min: number; max: number } | null) =>
+      `Daria certo em ${good} de ${total} anos${range ? ` (de ${range.min} a ${range.max}, conforme o modelo)` : ''}`,
     /** P1: o detalhe de cada ano da faixa (ainda não vem da API). */
     yearDetail: 'O que aconteceu em cada ano',
     yearOpen: (year: number) => `Ver o ano ${year}`,
@@ -330,9 +335,18 @@ export const pt = {
     sowing: (date: string) => `Semeadura em ${date} · dentro da janela de plantio`,
     sowingOut: (date: string) => `Semeadura em ${date} · fora da janela de plantio`,
     table: 'Todas as opções',
-    headers: { crop: 'Opção', years: 'Anos que deram certo', margin: 'Sobra por hectare', soil: 'Terra' },
+    headers: {
+      crop: 'Opção',
+      years: 'Anos que deram certo',
+      future: 'Clima 2041–2060',
+      margin: 'Sobra por hectare',
+      soil: 'Terra',
+    },
     /** Anos bons de N: os dois números vêm da API (chuva.anos_bons e chuva.anos). */
     yearsOf: (good: number, total: number) => `${good} de ${total}`,
+    /** Clima de 2041–2060: média dos modelos e, quando eles discordam, a faixa entre eles. */
+    futureOf: (good: number, total: number, range: { min: number; max: number } | null) =>
+      `${good} de ${total}${range ? ` (de ${range.min} a ${range.max})` : ''}`,
     history: 'Histórico da área',
     idle: (idle: number, known: number, uncertain: number) =>
       `Ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,

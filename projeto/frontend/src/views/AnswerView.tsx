@@ -3,8 +3,8 @@ import { Button } from '../design-system/components/Button'
 import { AlternativeCard, Card } from '../design-system/components/Card'
 import { Disclosure, NumberedSteps, RecommendationHero } from '../design-system/components/Content'
 import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
-import { MetricRow, StatusPill } from '../design-system/components/Status'
-import { DropIcon, LeafIcon, MoneyIcon, ReportIcon, ShieldIcon, SoilIcon, SproutIcon } from '../design-system/icons'
+import { MetricRow, NotConnected, StatusPill } from '../design-system/components/Status'
+import { ClimateIcon, DropIcon, LeafIcon, MoneyIcon, ReportIcon, ShieldIcon, SoilIcon, SproutIcon } from '../design-system/icons'
 import { formatDayMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
@@ -56,7 +56,7 @@ export function AnswerView(props: AnswerViewProps) {
 
 function Answer({ t, lang, answer, aviso, sampleData, reportTo, telegramHref, rain }: AnswerViewProps & { answer: AnswerSummary }) {
   const a = t.answer
-  const { best, late, alternatives } = answer
+  const { best, future, late, alternatives } = answer
   const plant = best.data_limite ? `${a.plantUntil} ${formatDayMonth(lang, best.data_limite)}.` : a.plantSoon
   return (
     <>
@@ -77,6 +77,14 @@ function Answer({ t, lang, answer, aviso, sampleData, reportTo, telegramHref, ra
                 pill={<StatusPill rotulo={best.chuva.rotulo}>{t.labels[best.chuva.rotulo]}</StatusPill>}
               >
                 <RainYears t={t} option={best} />
+              </MetricRow>
+              <MetricRow
+                icon={<ClimateIcon />}
+                iconTone="blue"
+                label={a.future}
+                value={future ? a.futureYears(future.good, future.total, future.range) : undefined}
+              >
+                {!future && <NotConnected label={t.common.notConnected} />}
               </MetricRow>
               <MetricRow
                 icon={<MoneyIcon />}

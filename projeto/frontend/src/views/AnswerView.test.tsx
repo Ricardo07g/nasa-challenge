@@ -69,6 +69,58 @@ describe('AnswerView (tela 5)', () => {
     expect(screen.queryByText('2006–2025')).not.toBeInTheDocument()
   })
 
+  it('mostra o clima de 2041–2060 no cartão, logo depois da chuva, sem precisar abrir o "Por quê?"', () => {
+    setup()
+
+    const row = screen.getByText('Clima 2041–2060').parentElement!
+    expect(row).toHaveTextContent('Clima 2041–2060Daria certo em 12 de 20 anos (de 10 a 13, conforme o modelo)')
+    expect(screen.getByRole('button', { name: 'Por quê?' })).toHaveAttribute('aria-expanded', 'false')
+    const card = row.closest('[class*="card"]')!
+    expect(card.textContent).toMatch(/Deu certo em 14 de 20 anos.*Clima 2041–2060.*Sobra perto de R\$ 700/)
+  })
+
+  it('quando todos os modelos dão o mesmo número, a linha do futuro fica sem a faixa', () => {
+    const answer = buildAnswer(buildRecomendacao(params, 'pt'))!
+    setup({ answer: { ...answer, future: { good: 19, total: 20, range: null } } })
+
+    const row = screen.getByText('Clima 2041–2060').parentElement!
+    expect(row).toHaveTextContent('Clima 2041–2060Daria certo em 19 de 20 anos')
+    expect(row).not.toHaveTextContent('conforme o modelo')
+  })
+
+  it('sem o dado do CMIP6, a linha do futuro fica com "Ainda não conectado" (não some)', () => {
+    const answer = buildAnswer(buildRecomendacao(params, 'pt'))!
+    setup({ answer: { ...answer, future: null } })
+
+    const row = screen.getByText('Clima 2041–2060').parentElement!
+    expect(row.querySelector('[data-status="not-connected"]')).toHaveTextContent('Ainda não conectado')
+    expect(row).not.toHaveTextContent('Daria certo')
+  })
+
+  describe('linha do futuro em inglês', () => {
+    const answer = buildAnswer(buildRecomendacao(params, 'en'))!
+    const row = () => screen.getByText('2041–2060 climate').parentElement!
+
+    it('com a faixa entre os modelos', () => {
+      setup({ t: en, lang: 'en', answer })
+
+      expect(row()).toHaveTextContent('2041–2060 climateWould work in 12 of 20 years (10 to 13, depending on the model)')
+    })
+
+    it('sem faixa quando todos os modelos dão o mesmo número', () => {
+      setup({ t: en, lang: 'en', answer: { ...answer, future: { good: 19, total: 20, range: null } } })
+
+      expect(row()).toHaveTextContent('2041–2060 climateWould work in 19 of 20 years')
+      expect(row()).not.toHaveTextContent('depending on the model')
+    })
+
+    it('sem o dado do CMIP6', () => {
+      setup({ t: en, lang: 'en', answer: { ...answer, future: null } })
+
+      expect(row()).toHaveTextContent('2041–2060 climateNot connected yet')
+    })
+  })
+
   it('sem o período da chuva no talhão, a legenda diz só quantos anos (sem inventar datas)', () => {
     setup({ rain: { years: 20, period: null, skipped: 0 } })
 

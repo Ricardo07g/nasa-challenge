@@ -64,6 +64,36 @@ describe('OptionsView (tela 6)', () => {
     expect(screen.queryByText(/de 2006 a 2025/)).not.toBeInTheDocument()
   })
 
+  it('cada opção mostra o clima de 2041–2060 no mesmo formato da resposta, logo depois da chuva', () => {
+    setup()
+
+    const [first, second] = screen.getAllByRole('article')
+    expect(first).toHaveTextContent('Clima 2041–2060Daria certo em 12 de 20 anos (de 10 a 13, conforme o modelo)')
+    expect(first.textContent).toMatch(/Deu certo em 14 de 20 anos.*Clima 2041–2060.*Sobra perto de R\$ 700/)
+    expect(second).toHaveTextContent('Sorgo')
+    expect(second).toHaveTextContent('Clima 2041–2060Daria certo em 15 de 20 anos (de 13 a 16, conforme o modelo)')
+  })
+
+  it('quando todos os modelos dão o mesmo número, a opção fica sem a faixa', () => {
+    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
+    const futuro = { anos_bons_media: 19, anos_bons_min: 19, anos_bons_max: 19, modelos: 3, cenario: 'ssp245' }
+    setup({ summary: summary({ ...rec, opcoes: rec.opcoes.map((o) => (o.id === 'sorgo' ? { ...o, futuro } : o)) }) })
+
+    const sorgo = screen.getByRole('article', { name: 'Sorgo' })
+    expect(sorgo).toHaveTextContent('Clima 2041–2060Daria certo em 19 de 20 anos')
+    expect(sorgo).not.toHaveTextContent('conforme o modelo')
+  })
+
+  it('sem o dado do CMIP6, a linha do futuro de cada opção fica com "Ainda não conectado" (não some)', () => {
+    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
+    setup({ summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, futuro: null })) }) })
+
+    const sorgo = screen.getByRole('article', { name: 'Sorgo' })
+    expect(sorgo).toHaveTextContent('Clima 2041–2060Ainda não conectado')
+    expect(sorgo.querySelector('[data-status="not-connected"]')).not.toBeNull()
+    expect(sorgo).not.toHaveTextContent('Daria certo')
+  })
+
   it('sem os detalhes dos anos na API, a legenda marca o que falta como "Ainda não conectado"', () => {
     const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
     setup({ summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, anos_detalhe: undefined })) }) })
@@ -127,6 +157,16 @@ describe('OptionsView (tela 6)', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'All options' })).toBeInTheDocument()
     expect(screen.getAllByRole('article')[0]).toHaveTextContent('1.')
+    expect(screen.getAllByRole('article')[0]).toHaveTextContent(
+      '2041–2060 climateWould work in 12 of 20 years (10 to 13, depending on the model)',
+    )
+  })
+
+  it('em inglês, sem o dado do CMIP6', () => {
+    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'en')
+    setup({ t: en, summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, futuro: null })) }) })
+
+    expect(screen.getAllByRole('article')[0]).toHaveTextContent('2041–2060 climateNot connected yet')
   })
 
   it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {

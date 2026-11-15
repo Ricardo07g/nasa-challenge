@@ -105,7 +105,8 @@ export function YearTimeline({ label, items }: { label: string; items: readonly 
 
 type CompareRow = {
   label: string
-  value: string
+  /** Sem valor (dado que a API ainda não manda), o `extra` diz o que falta (ex.: "Ainda não conectado"). */
+  value?: string
   /** Ícone do eixo (gota, nota, broto); azul para dado de satélite. */
   icon?: ReactNode
   iconTone?: 'green' | 'blue'
@@ -151,7 +152,7 @@ export function OptionCompareCard({ rank, name, rows, highlighted = false, unava
             )}
             <span className={styles.compareText}>
               <span className={styles.compareLabel}>{row.label}</span>
-              <span className={styles.compareValue}>{row.value}</span>
+              {row.value && <span className={styles.compareValue}>{row.value}</span>}
               {row.extra && <span className={styles.compareExtra}>{row.extra}</span>}
               {row.pill && <span className={styles.comparePill}>{row.pill}</span>}
             </span>

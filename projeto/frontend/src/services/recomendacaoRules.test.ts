@@ -9,6 +9,7 @@ import {
   plantingRule,
   testAreaTotals,
   findOption,
+  futureSummary,
   optionsSummary,
   harvestYear,
   planSummary,
@@ -149,6 +150,52 @@ describe('buildAnswer (tela 5)', () => {
 
   it('sem a melhor opção na lista, não há resposta para mostrar', () => {
     expect(buildAnswer(recomendacao({ melhor: 'pousio' }))).toBeNull()
+  })
+
+  it('traz o clima de 2041–2060 da melhor opção, para a linha do futuro no cartão', () => {
+    const best = { ...options[1], futuro: { anos_bons_media: 14, anos_bons_min: 13, anos_bons_max: 15, modelos: 3, cenario: 'ssp245' } }
+
+    expect(buildAnswer(recomendacao({ opcoes: [options[0], best] }))?.future).toEqual({
+      good: 14,
+      total: 20,
+      range: { min: 13, max: 15 },
+    })
+  })
+
+  it('sem o CMIP6 na API, a linha do futuro fica sem dado (null)', () => {
+    expect(buildAnswer(recomendacao())?.future).toBeNull()
+  })
+})
+
+describe('futureSummary (clima de 2041–2060, NEX-GDDP-CMIP6)', () => {
+  const futuro = (media: number, min: number, max: number) => ({
+    anos_bons_media: media,
+    anos_bons_min: min,
+    anos_bons_max: max,
+    modelos: 3,
+    cenario: 'ssp245',
+  })
+
+  it('anos bons pela média dos modelos, com a faixa entre os modelos', () => {
+    expect(futureSummary({ ...options[1], futuro: futuro(14, 13, 15) })).toEqual({
+      good: 14,
+      total: 20,
+      range: { min: 13, max: 15 },
+    })
+  })
+
+  it('o total de anos é o mesmo da chuva de hoje (chuva.anos)', () => {
+    const option = { ...options[1], chuva: { ...options[1].chuva, anos: 18 }, futuro: futuro(12, 10, 13) }
+
+    expect(futureSummary(option)?.total).toBe(18)
+  })
+
+  it('quando todos os modelos dão o mesmo número, não há faixa', () => {
+    expect(futureSummary({ ...options[1], futuro: futuro(19, 19, 19) })).toEqual({ good: 19, total: 20, range: null })
+  })
+
+  it('sem o dado do CMIP6, devolve null', () => {
+    expect(futureSummary(options[1])).toBeNull()
   })
 })
 
