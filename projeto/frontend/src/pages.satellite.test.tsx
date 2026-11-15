@@ -99,3 +99,16 @@ describe('tela 4: clicar numa opção não mexe na rolagem', () => {
     expect(window.scrollY).toBe(640)
   })
 })
+
+describe('tela 4: a comunidade está "em breve" (pacote 3, tarefa 0061)', () => {
+  it('com as safras respondidas, a tela não oferece "Compartilhar com a comunidade" nem leva aos relatos', async () => {
+    renderPage()
+    await screen.findByRole('region', { name: 'Suas últimas safras' })
+
+    await userEvent.click(within(screen.getByRole('group', { name: 'Depois da soja na safra 2023/24' })).getByRole('button', { name: 'Sorgo' }))
+
+    expect(screen.queryByRole('button', { name: 'Compartilhar com a comunidade' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/comunidade/i)).not.toBeInTheDocument()
+    expect(screen.queryAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('/comunidade'))).toEqual([])
+  })
+})
