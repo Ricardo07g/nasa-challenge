@@ -112,6 +112,9 @@ HISTORICAL_END_YEAR: Final[int] = 2024
 # Temporada de clima: 212 dias a partir de 1/jan (1/jan a 31/jul; em ano bissexto, a 30/jul),
 # igual à fixture (pipeline/export_climate_fixture.py) e à tabela climate_season (plano técnico §5)
 CLIMATE_SEASON_DAYS: Final[int] = 212
+# Chave da fonte da chuva do GPM IMERG Final (`climate_season.rain_source`, `/talhao` `dados[]`):
+# a mesma que o front procura. Decisão adotada na tarefa 0026, a revisar (roteiro §5).
+IMERG_RAIN_SOURCE: Final[str] = "gpm_imerg"
 
 SOILGRIDS_QUERY_URL: Final[str] = "https://rest.isric.org/soilgrids/v2.0/properties/query"
 SOILGRIDS_DEPTHS: Final[tuple[str, ...]] = ("0-5cm", "5-15cm", "15-30cm")

@@ -16,6 +16,7 @@ from app.config import Settings
 from app.models.climate import Cmip6Delta
 from app.models.data_run import DataRun
 from app.models.talhao import NdviRecord
+from app.repositories.climate_repository import SeasonWindow
 from pipeline import load_files_to_db
 from pipeline.load_files_to_db import FilesToDbLoader, LoadError, describe_plan
 
@@ -101,16 +102,30 @@ def _ndvi_file(
 
 
 class FakeDatabase:
-    """Faz o papel do PostGIS: as células de `grid_cell` e o que a carga grava."""
+    """Faz o papel do PostGIS: as células de `grid_cell`, as temporadas e o que a carga grava."""
 
-    def __init__(self, cell_ids: list[str] | None = None) -> None:
+    def __init__(
+        self, cell_ids: list[str] | None = None, windows: list[SeasonWindow] | None = None
+    ) -> None:
         self.cell_ids = list(cell_ids or [])
+        self.windows = list(windows or [])
         self.cmip6: dict[str, list[Cmip6Delta]] = {}
         self.ndvi: list[tuple[float, float, list[NdviRecord]]] = []
+        self.rain: list[tuple[str, dict[tuple[str, int], tuple[float, ...]]]] = []
         self.runs: list[DataRun] = []
 
     def list_cell_ids(self) -> list[str]:
         return list(self.cell_ids)
+
+    def list_season_windows(self) -> list[SeasonWindow]:
+        return list(self.windows)
+
+    def replace_seasons_rain(
+        self, rain_source: str, rains: dict[tuple[str, int], tuple[float, ...]]
+    ) -> int:
+        self.rain.append((rain_source, dict(rains)))
+        keys = {(w.cell_id, w.year) for w in self.windows}
+        return sum(1 for key in rains if key in keys)
 
     def save_cmip6_deltas(self, cell_id: str, deltas: list[Cmip6Delta]) -> None:
         self.cmip6[cell_id] = list(deltas)
@@ -122,12 +137,17 @@ class FakeDatabase:
         self.runs.append(run)
 
     def wrote_anything(self) -> bool:
-        return bool(self.cmip6 or self.ndvi or self.runs)
+        return bool(self.cmip6 or self.ndvi or self.rain or self.runs)
 
 
 def _loader(db: FakeDatabase) -> FilesToDbLoader:
     return FilesToDbLoader(
-        grid_repo=db, cmip6_repo=db, ndvi_repo=db, run_repo=db, clock=lambda: FINISHED
+        grid_repo=db,
+        cmip6_repo=db,
+        ndvi_repo=db,
+        run_repo=db,
+        season_repo=db,
+        clock=lambda: FINISHED,
     )
 
 
@@ -437,3 +457,199 @@ def test_main_should_report_a_refused_file_and_write_nothing(
     assert code == 1
     assert "nada foi gravado" in capsys.readouterr().err.lower()
     assert not db.wrote_anything()
+
+
+# --- IMERG → chuva do climate_season (R3.4, tarefa 0027) -------------------------------------
+
+DAYS = 212
+NEIGHBOR_CELL = "-190_-481"
+COMPLETE = [2.5] * DAYS
+INCOMPLETE = [2.5] * (DAYS - 1) + [None]
+
+
+def _window(cell_id: str, year: int, days: int = DAYS, start: date | None = None) -> SeasonWindow:
+    return SeasonWindow(cell_id=cell_id, year=year, start_date=start or date(year, 1, 1), days=days)
+
+
+def _imerg_cell(cell_id: str, seasons: dict[int, list[Any]]) -> dict[str, Any]:
+    lat_idx, lon_idx = (int(part) for part in cell_id.split("_"))
+    return {
+        "celula": cell_id,
+        "lat": (lat_idx + 0.5) / 10,
+        "lon": (lon_idx + 0.5) / 10,
+        "temporadas": [
+            {"ano": year, "inicio": f"{year}-01-01", "chuva_mm": rain}
+            for year, rain in seasons.items()
+        ],
+    }
+
+
+def _imerg_file(tmp_path: Path, celulas: list[dict[str, Any]], fonte: str = "gpm_imerg") -> Path:
+    path = tmp_path / "imerg.json"
+    payload = {
+        "versao_dados": {
+            "fonte": fonte,
+            "parametros": {"produto": "GPM_3IMERGDF", "anos": [2005, 2006]},
+            "fim": "2026-11-14T13:00:00Z",
+            "versao": "teste-imerg",
+        },
+        "celulas": celulas,
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def test_should_replace_the_rain_of_complete_imerg_years_in_climate_season(
+    tmp_path: Path,
+) -> None:
+    db = FakeDatabase(windows=[_window(FARM_CELL, 2005), _window(FARM_CELL, 2006)])
+    path = _imerg_file(tmp_path, [_imerg_cell(FARM_CELL, {2005: COMPLETE, 2006: INCOMPLETE})])
+    loader = _loader(db)
+
+    loader.run(loader.plan(imerg_path=path))
+
+    assert db.rain == [("gpm_imerg", {(FARM_CELL, 2005): tuple(COMPLETE)})]
+
+
+def test_should_keep_power_where_the_imerg_year_has_a_missing_day(tmp_path: Path) -> None:
+    db = FakeDatabase(windows=[_window(FARM_CELL, 2005)])
+    loader = _loader(db)
+
+    plan = loader.plan(
+        imerg_path=_imerg_file(tmp_path, [_imerg_cell(FARM_CELL, {2005: INCOMPLETE})])
+    )
+    loader.run(plan)
+
+    assert plan.imerg is not None
+    assert (plan.imerg.rows, plan.imerg.incomplete) == (0, 1)
+    assert not db.wrote_anything()  # sem temporada trocada, sem data_run
+
+
+@pytest.mark.parametrize(
+    "windows",
+    [
+        [],  # a célula nem está no banco
+        [_window(FARM_CELL, 2006)],  # o ano não está no banco
+        [_window(FARM_CELL, 2005, days=213)],  # outra janela: a chuva não casaria com o resto
+        [_window(FARM_CELL, 2005, start=date(2005, 2, 1))],
+    ],
+)
+def test_should_never_create_or_misalign_a_season(
+    tmp_path: Path, windows: list[SeasonWindow]
+) -> None:
+    db = FakeDatabase(windows=windows)
+    loader = _loader(db)
+
+    plan = loader.plan(imerg_path=_imerg_file(tmp_path, [_imerg_cell(FARM_CELL, {2005: COMPLETE})]))
+    loader.run(plan)
+
+    assert plan.imerg is not None
+    assert (plan.imerg.rows, plan.imerg.without_climate) == (0, 1)
+    assert not db.wrote_anything()
+
+
+def test_should_record_one_imerg_run_with_the_file_version_and_counts(tmp_path: Path) -> None:
+    db = FakeDatabase(
+        windows=[_window(FARM_CELL, 2005), _window(FARM_CELL, 2006), _window(NEIGHBOR_CELL, 2005)]
+    )
+    path = _imerg_file(
+        tmp_path,
+        [
+            _imerg_cell(FARM_CELL, {2005: COMPLETE, 2006: INCOMPLETE}),
+            _imerg_cell(NEIGHBOR_CELL, {2005: COMPLETE, 2006: COMPLETE}),
+        ],
+    )
+    loader = _loader(db)
+
+    loader.run(loader.plan(imerg_path=path))
+
+    assert db.runs == [
+        DataRun(
+            source="gpm_imerg",
+            params={
+                "script": "pipeline.load_files_to_db",
+                "arquivo": "imerg.json",
+                "arquivo_fim": "2026-11-14T13:00:00Z",
+                "celulas_no_arquivo": 2,
+                "temporadas_no_arquivo": 4,
+                "temporadas_trocadas": 2,
+                "temporadas_incompletas": 1,
+                "temporadas_sem_clima": 1,
+                "parametros_do_arquivo": {"produto": "GPM_3IMERGDF", "anos": [2005, 2006]},
+            },
+            finished_at=FINISHED,
+            version="teste-imerg",
+        )
+    ]
+
+
+@pytest.mark.parametrize("fonte", ["imerg_final", "nasa_power"])
+def test_should_refuse_an_imerg_file_of_another_source(tmp_path: Path, fonte: str) -> None:
+    db = FakeDatabase(windows=[_window(FARM_CELL, 2005)])
+    path = _imerg_file(tmp_path, [_imerg_cell(FARM_CELL, {2005: COMPLETE})], fonte=fonte)
+
+    with pytest.raises(LoadError, match="gpm_imerg"):
+        _loader(db).plan(imerg_path=path)
+
+
+def test_should_refuse_an_imerg_file_outside_the_contract(tmp_path: Path) -> None:
+    db = FakeDatabase(windows=[_window(FARM_CELL, 2005)])
+    path = _imerg_file(tmp_path, [_imerg_cell(FARM_CELL, {2005: [2.5] * 211})])
+
+    with pytest.raises(LoadError, match="fora do contrato"):
+        _loader(db).plan(imerg_path=path)
+
+    assert not db.wrote_anything()
+
+
+def test_should_refuse_a_missing_imerg_file(tmp_path: Path) -> None:
+    with pytest.raises(LoadError, match="não encontrado"):
+        _loader(FakeDatabase()).plan(imerg_path=tmp_path / "nao-existe.json")
+
+
+def test_should_describe_the_imerg_load(tmp_path: Path) -> None:
+    db = FakeDatabase(windows=[_window(FARM_CELL, 2005), _window(FARM_CELL, 2006)])
+    path = _imerg_file(
+        tmp_path,
+        [
+            _imerg_cell(FARM_CELL, {2005: COMPLETE, 2006: INCOMPLETE}),
+            _imerg_cell(NEIGHBOR_CELL, {2005: COMPLETE}),
+        ],
+    )
+
+    text = describe_plan(_loader(db).plan(imerg_path=path), dry_run=True)
+
+    assert "IMERG (imerg.json, versão teste-imerg)" in text
+    assert "2 células e 3 temporadas no arquivo" in text
+    assert "1 temporadas com a chuva trocada para gpm_imerg (a gravar)" in text
+    assert "1 incompletas (ficam com o NASA POWER)" in text
+    assert "1 sem a mesma temporada no climate_season" in text
+
+
+def test_main_should_load_only_the_imerg_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    db = FakeDatabase(windows=[_window(FARM_CELL, 2005)])
+    monkeypatch.setattr(load_files_to_db, "get_settings", lambda: _settings("postgresql://teste"))
+    monkeypatch.setattr(load_files_to_db, "build_loader", lambda url: _loader(db))
+    path = _imerg_file(tmp_path, [_imerg_cell(FARM_CELL, {2005: COMPLETE})])
+
+    code = load_files_to_db.main(["--imerg", str(path)])
+
+    assert code == 0
+    assert [run.source for run in db.runs] == ["gpm_imerg"]
+    assert "1 temporadas com a chuva trocada para gpm_imerg (gravadas)" in capsys.readouterr().out
+
+
+def test_main_dry_run_should_read_the_imerg_file_without_a_database(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(load_files_to_db, "get_settings", lambda: _settings(None))
+    path = _imerg_file(tmp_path, [_imerg_cell(FARM_CELL, {2005: COMPLETE})])
+
+    code = load_files_to_db.main(["--imerg", str(path), "--dry-run"])
+
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "1 sem a mesma temporada no climate_season" in out
+    assert "--dry-run: nada foi gravado." in out
