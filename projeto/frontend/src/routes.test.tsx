@@ -279,4 +279,34 @@ describe('rotas', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'O que plantar depois da soja?' })).toBeInTheDocument()
   })
+
+  // Tela "Avisos" (seção 6 da remodelagem, tarefa 0046)
+  it('/avisos sem ponto pede para marcar a lavoura, com os alertas oficiais e o botão no cabeçalho', async () => {
+    window.localStorage.clear()
+    renderAt('/avisos')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Avisos' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Marcar minha lavoura' })).toHaveAttribute('href', '/onde')
+    expect(screen.getByRole('region', { name: 'Alertas oficiais' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Avisos' })).toHaveAttribute('href', '/avisos')
+    expect(document.title).toBe('Raiz Orbital – Avisos')
+  })
+
+  it('/guia/como-ler-os-avisos abre o artigo dos avisos, em pt e en', async () => {
+    renderAt('/guia/como-ler-os-avisos')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Como ler os avisos' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia/como-ler-os-avisos', 'en')
+    expect(await screen.findByRole('heading', { level: 1, name: 'How to read the alerts' })).toBeInTheDocument()
+  })
+
+  it('/avisos com o ponto da lavoura mostra os grupos e o número no botão do cabeçalho', async () => {
+    window.localStorage.clear()
+    renderAt('/avisos?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    expect(await screen.findByRole('region', { name: 'Agora' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Perto de você' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Avisos: 2 avisos ativos' })).toBeInTheDocument()
+  })
 })

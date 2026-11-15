@@ -1,5 +1,7 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { buildAvisos } from '../repositories/mocks/mockAvisos'
+import type { AvisosService } from '../services/avisosService'
 import type { SpeechService } from '../services/speechService'
 import type { TelegramService } from '../services/telegramService'
 import { providers } from '../test/providers'
@@ -106,5 +108,37 @@ describe('useShellController: modo dos dados', () => {
     const { result } = renderHook(() => useShellController(speech, telegram, 'http'), { wrapper: providers('/', 'pt') })
 
     expect(result.current.demoNotice).toBeNull()
+  })
+})
+
+describe('useShellController: botão "Avisos" (tarefa 0046)', () => {
+  function alerts(): AvisosService {
+    return {
+      get: vi.fn((point) => Promise.resolve(buildAvisos(point, 'pt'))),
+      savedPoint: vi.fn(() => null),
+      savePoint: vi.fn(),
+    }
+  }
+
+  it('o botão fica ao lado da Comunidade, leva o ponto e mostra o número de avisos ativos', async () => {
+    const avisos = alerts()
+    const { result } = renderHook(() => useShellController(speech, telegram, 'mock', avisos), {
+      wrapper: providers('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio', 'pt'),
+    })
+
+    expect(result.current.header.alerts).toMatchObject({
+      label: 'Avisos',
+      to: '/avisos?lat=-18.9543&lon=-48.1993&colheita=meio',
+    })
+    await waitFor(() => expect(result.current.header.alerts?.count).toBe(2))
+    expect(result.current.header.alerts?.countLabel).toBe('Avisos: 2 avisos ativos')
+  })
+
+  it('sem ponto, o botão aparece sem número', () => {
+    const { result } = renderHook(() => useShellController(speech, telegram, 'mock', alerts()), {
+      wrapper: providers('/', 'en'),
+    })
+
+    expect(result.current.header.alerts).toEqual({ label: 'Alerts', to: '/avisos', count: null, countLabel: null })
   })
 })

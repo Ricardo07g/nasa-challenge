@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router'
-import { CommunityIcon, LogoMark, SendIcon, SpeakerIcon, StopIcon } from '../icons'
+import { AlertsIcon, CommunityIcon, LogoMark, SendIcon, SpeakerIcon, StopIcon } from '../icons'
 import styles from './Header.module.css'
 
 export type AppHeaderProps = {
@@ -7,6 +7,11 @@ export type AppHeaderProps = {
   slogan: string
   /** Link do topo para a Comunidade (leva junto o ponto da lavoura, se houver). */
   community: { label: string; to: string }
+  /**
+   * Tela "Avisos" (tarefa 0046): ao lado da Comunidade, com o número de avisos ativos em texto
+   * (`countLabel` vira o nome acessível). Sem ponto ou sem aviso, `count` é null e o botão fica sem número.
+   */
+  alerts?: { label: string; to: string; count: number | null; countLabel: string | null }
   /** P5: link do bot do Telegram (só quando configurado). */
   telegram?: { href: string; label: string }
   listen: {
@@ -25,7 +30,7 @@ export type AppHeaderProps = {
   }
 }
 
-export function AppHeader({ homeLabel, slogan, community, telegram, listen, lang }: AppHeaderProps) {
+export function AppHeader({ homeLabel, slogan, community, alerts, telegram, listen, lang }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
@@ -41,6 +46,21 @@ export function AppHeader({ homeLabel, slogan, community, telegram, listen, lang
             <CommunityIcon />
             <span className={styles.communityText}>{community.label}</span>
           </NavLink>
+          {alerts && (
+            <NavLink
+              to={alerts.to}
+              className={styles.community}
+              aria-label={alerts.count !== null && alerts.countLabel ? alerts.countLabel : alerts.label}
+            >
+              <AlertsIcon />
+              <span className={styles.communityText}>{alerts.label}</span>
+              {alerts.count !== null && (
+                <span className={styles.alertsCount} aria-hidden="true">
+                  {alerts.count}
+                </span>
+              )}
+            </NavLink>
+          )}
           {telegram && (
             <a
               href={telegram.href}

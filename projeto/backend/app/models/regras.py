@@ -262,6 +262,34 @@ class RegrasAvisos:
 
 
 @dataclass(frozen=True)
+class RegrasAvisosTela:
+    """Tela "Avisos" (/avisos, remodelagem S6, tarefa 0046). À parte do `RegrasAvisos` (P4 e P6).
+
+    Agora: terra seca com o percentil do SMAP até `terra_seca_percentil_max` (leitura antiga com
+    mais de `smap_antiga_dias`); nos últimos `power_dias` do NASA POWER, `dias_sem_chuva_min` dias
+    seguidos sem chuva até a última leitura ou `calor_dias_min` dias de calor nos últimos
+    `calor_janela_dias`. Perto: relatos dos últimos `vizinhos_dias`. O que mudou: os anos desde
+    `ano_recente_inicio` contra os de antes, só com a diferença mínima de cada `mudou_*`.
+    """
+
+    terra_seca_percentil_max: float
+    smap_antiga_dias: int
+    power_dias: int
+    dias_sem_chuva_min: int
+    calor_dias_min: int
+    calor_janela_dias: int
+    vizinhos_dias: int
+    ano_recente_inicio: int
+    outono_inicio: str
+    outono_fim: str
+    mudou_veranico_dias_min: float
+    mudou_fim_chuvas_dias_min: int
+    mudou_calor_dias_min: float
+    mudou_falta_agua_mm_min: float
+    mudou_deu_certo_pct_min: float
+
+
+@dataclass(frozen=True)
 class FrasesSafra:
     """Textos dos eventos da linha do tempo da safra em uma língua (P4 e P6)."""
 
@@ -405,6 +433,7 @@ class Regras:
     sinal_outono: RegrasSinalOutono
     frases: dict[str, FrasesPorque]  # "pt" e "en"
     avisos: RegrasAvisos
+    avisos_tela: RegrasAvisosTela
     frases_safra: dict[str, FrasesSafra]  # "pt" e "en"
     enso: RegrasEnso
     frases_ano: dict[str, FrasesAno]  # "pt" e "en"

@@ -29,7 +29,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | ✅ na branch (15/11 ~04:00), revisada; extração completa do MCD64A1 rodando |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | ✅ na branch (15/11 ~04:12), revisada; irrigação opcional não feita |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
-| S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | a fazer |
+| S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | feito na branch `feat/remodelagem-s6-avisos` (15/11), falta merge e revisão |
 | S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~03:10), revisada |
 | S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | a fazer |
 
@@ -122,6 +122,21 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D78 | 15/11 | O aviso único da colheita tarde é montado no front (pt e en) com `fora_da_janela[].data_limite`; o "quando" vem da faixa da URL ("depois de 20 de fevereiro") e as datas vão por extenso ("28 de fevereiro"), não "28/02". | A data exata não vai para a URL (D33); por extenso é o que o "Ouvir" lê bem. |
 | D79 | 15/11 | O relatório saiu inteiro (tela, botão, controller e service); as chaves de i18n `report`, `past` e `answerTabs.answer/options` ficaram sem uso até a S9. O RF novo é o RF-30 (renumerar no merge se a S4 também pegar o RF-30, como no D13). | Regra de só acrescentar no i18n enquanto a S4 roda. |
 | D80 | 15/11 | "Como fazer": manejo = os passos do `culturas.yaml` com "Rascunho: a revisar pela agrônoma." (são rascunho no YAML); "o que observar" = veranico típico (mediana, para baixo) e anos de calor da fase crítica, do motor, e o fim das chuvas do `/talhao` (S3). Irrigação (opcional da 5.3) não foi feita. | Regra geral: nada de recomendação agronômica nova. A irrigação fica atrás de uma opção desligada e não muda o "deu certo"; ficou para depois por tempo. |
+| D90 | 15/11 | S6: os limites da tela "Avisos" ficam num grupo novo, `avisos_tela`, do `regras.yaml` (logo depois do `avisos`, também no model e no carregador); o grupo `avisos` (replay P4 e acompanhamento P6, com o `dia_seco_abaixo_mm` que o raio-X usa) não muda. | O `avisos` já existia com outro sentido; um grupo à parte não mexe em quem já usa. A posição logo depois do `avisos` evita conflito com a S5a, que acrescenta no fim. |
+| D91 | 15/11 | S6: o ponto dos avisos é o último ponto do fluxo (com a colheita, o solo e as safras confirmadas), guardado no `localStorage` (`raiz-orbital.avisos.ponto`, com try/catch) pelo botão do cabeçalho em toda tela que tem o ponto na URL; a fazenda de exemplo (`exemplo=1`) nunca é guardada. A tela usa o ponto da URL e, sem ele, o salvo; sem nenhum, pede "Marcar minha lavoura". | Sem cadastro, como pede a seção 6. A S7 só guardava o identificador do aparelho (`deviceRepository`), e nada no fluxo guardava o ponto. O cabeçalho está em todas as telas. |
+| D92 | 15/11 | S6: o contador do botão "Avisos" conta só os avisos de "Agora" e de "Perto de você"; mudanças e recordes são informação. A conta é do backend (`contador`). O número fica num selo e no nome acessível ("Avisos: 2 avisos ativos"); sem ponto, sem aviso ou com falha, o botão fica sem número. | Os grupos 2 e 3 não mudam até a série ganhar um ano: contar com eles deixaria o botão sempre aceso. Uma regra só, no backend. |
+| D93 | 15/11 | S6: um endpoint, `GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas]`, com os 4 grupos, o `periodo`, a `safrinha` e o `contador`. Cada aviso: `tipo`, `nivel`, `fontes`, `data`, `antiga` e `valores`; as frases ficam no front (pt e en), como no raio-X. Grupo `null` = sem dado; `avisos: []` = "Nada fora do normal" com a `ultima_leitura`. | Um pedido serve o botão e a tela; roda o motor uma vez (~0,5 s com o POWER em cache). Frases no front trocam de língua sem pedir de novo. |
+| D94 | 15/11 | S6: nível "Atenção" para o que pede ação agora (terra seca, dias sem chuva, calor, avisos do replay na safrinha); "Fique de olho" para a previsão do ENSO, as mudanças, os recordes e os relatos de vizinhos (não confirmados). As mudanças para melhor também aparecem, com "Mudou para melhor, mas são poucos anos: não conte com isso." | O pedido só permite os dois níveis; os grupos 2 a 4 são contexto ou relato sem confirmação. O pedido manda mostrar as mudanças acima do limite, não só as ruins. |
+| D95 | 15/11 | S6: o NASA POWER recente é pedido pelo backend no centro da célula de 0,1°, para os 30 dias até ontem (dia de Uberlândia), com cache na memória do processo por 24 h (por célula e janela), no máximo 8 s, e 15 min de espera depois de uma falha. A última leitura é o último dia com chuva e máxima; dia sem dado no meio para a contagem dos dias secos; a janela inteira seca vira "pelo menos N dias". | O botão do cabeçalho espera essa resposta: não pode ficar 24 s nas novas tentativas do cliente. O POWER sai com ~2 a 3 dias de atraso (em 15/11, o último dia é 12/11). |
+| D96 | 15/11 | S6: "mais seca que em X% dos anos nesta época" usa X = 100 − percentil do SMAP, arredondado (o percentil do arquivo é a parte dos dias da climatologia com a umidade abaixo da de agora). | É a leitura certa do percentil; "anos" é o texto do pedido (a climatologia são janelas de 7 dias de 2016 a 2025). |
+| D97 | 15/11 | S6: o aviso de El Niño / La Niña usa a mesma estação e a mesma chance mínima do sinal (FMA, 50%); neutro mais provável, nenhuma fase com 50% ou a estação já passada = sem aviso. O histórico é a melhor opção do motor (`bom` do `anos_detalhe`) nos anos da fase (ONI) e nos outros; sem o ONI, só a previsão. | Uma regra só para a previsão; comparar com os outros anos mostra se a fase pesa, sem chamar El Niño de "ano seco" (PRD 7.10). |
+| D98 | 15/11 | S6: safrinha em andamento = hoje entre a semeadura do motor para a faixa (no ano de hoje) e a colheita (semeadura + ciclo da melhor opção), com o "hoje" injetado. Fora dela, a tela mostra a próxima safrinha e "Ver como teriam sido os avisos em 2024" para `/resposta?<parâmetros do fluxo>&ano=2024` (o último ano da série). Pousio: sem safrinha. | A URL guarda só a faixa, e a semeadura é a mesma da conta. Ajuste do orquestrador: a S5a tirou a tela solta da safra passada, e o `ano` da `/resposta` abre o detalhe do ano no explorador. |
+| D99 | 15/11 | S6, "O que mudou": média por ano no veranico, no calor e na falta de água; mediana no fim das chuvas (como na tela 3); parte dos anos no "deu certo". Mínimos (hipótese do time): 5 dias, 10 dias, 1 dia por ano, 25 mm e 25 pontos percentuais. Janelas de março a maio do raio-X. Falta de água = ETc − ETr no ciclo, com o balde do motor (`cycle_deficits`). | Com 5 anos recentes, um ano só vale 20 pontos: o mínimo de 25 pede mais que um ano. A falta de água em mm não existia no motor; a conta usa o mesmo balde do `simulate_historical`. |
+| D100 | 15/11 | S6, "Fora do comum": só temporadas inteiras; empate fica com o ano mais recente (D60); o fim das chuvas mais cedo é o `mais_cedo` do `RainEndService` (sem ele, a linha não aparece, D36); o recorde de calor só aparece com 1 dia ou mais. | As mesmas regras do raio-X e da tela 3: o número bate nas três telas. |
+| D101 | 15/11 | S6, "Perto de você": eventos da comunidade no raio da comunidade (30 km), dos últimos 7 dias (hoje e os 6 antes, no dia de Uberlândia), um aviso por tipo de evento com o número de relatos e o mais recente. Sem banco, o grupo não aparece. | Uma linha por tipo não repete "geada" cinco vezes; o dia é o mesmo do resumo da comunidade (D52). |
+| D102 | 15/11 | S6: o "rodapé fixo" é o último bloco da tela, que aparece sempre (com ou sem ponto e com ou sem avisos), e não uma barra presa na tela. Botões: `sms:40199`, `https://wa.me/556120344611` (sem texto pronto), `tel:193` e `tel:199`, e o artigo do Guia. | Uma barra presa cobriria os avisos no celular. Os links são os do pedido e do orquestrador. |
+| D103 | 15/11 | S6: até 480 px o cabeçalho fica mais justo (menos respiro, nome em 18 px, logo em 34 px) e, se ainda não couber, os botões descem uma linha. Em 390 px cabe numa linha; em 360 px desce. | Com o botão novo, o nome "Raiz Orbital" ficava por baixo do ícone da Comunidade em 390 px. |
+| D104 | 15/11 | S6: artigo novo do Guia "Como ler os avisos" (tema clima, sem rascunho, por ser de dados), só com fontes já conferidas em `verifiedSources.ts`; a tela liga com "Saiba mais". O RF novo é o RF-31 (a S5a usa o RF-30). | Explica os níveis, os grupos e as fontes sem número novo. |
 
 ## Revisão por seção
 
@@ -323,6 +338,22 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
 - **S5a, plano "Cuidar da terra" na fazenda: crotalária nos 3 anos.** Repetir a mesma cobertura três vezes
   vai contra a diversidade que o próprio PRD 7.7 premia na rotação; o plano de renda repete milho com
   braquiária. Vale a S5b (plano editável) e a agrônoma olharem.
+- **S6, falta de água no ciclo é grande na UFU:** milho com braquiária, 101,6 mm por ano em 2005–2019 e 177,4 mm
+  em 2020–2024. O ciclo (18/fev + 120 dias = 18/jun) entra na seca, então a conta junta a falta do fim do ciclo,
+  quando o grão já está formado; o "deu certo" olha só a fase crítica. Vale comparar com a linha "Água" da S5a.
+- **S6, "deu certo" caiu de 13 de 15 para 3 de 5 na UFU** (milho com braquiária), e no ponto da terra seca de 15 de
+  15 para 3 de 5 (milheto). São 5 anos: a frase diz que é pouco, mas a queda chama a atenção.
+- **S6, El Niño na UFU:** milho com braquiária deu certo em 5 de 7 anos de El Niño e em 11 de 13 nos outros (71% ×
+  85%). Com 7 anos, 1 ano a mais muda a leitura.
+- **S6, maior veranico de março a maio subiu de 20,8 para 27,2 dias na UFU, e o fim das chuvas veio 11 dias mais
+  cedo (24/abr → 13/abr):** os dois medem quase a mesma coisa (o começo da seca cai dentro da janela de março a
+  maio, como já anotado na S4).
+- **S6, POWER recente com atraso:** em 15/11, o último dia com dado no POWER é 12/11; 13 e 14/11 voltam −999. A
+  data da leitura vai em cada aviso.
+- **S6, calor em novembro:** no ponto −19,55 / −48,95, 5 dias de 35 °C ou mais de 3 a 12/11, e o aviso de calor
+  aparece fora da safrinha. O "o que fazer" ficou condicional ("Se a lavoura estiver na floração…").
+- **S6, terra seca:** só 3 das 225 células têm o SMAP de 10/11 no percentil 20 ou menos, todas no sudoeste da caixa
+  (−19,55 / −48,95: 15,3). A UFU está no 59,3.
 
 ## O que não foi possível e por quê
 
@@ -367,3 +398,13 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
 - **S4, conferência em 390 px:** o Chrome sem interface desta máquina não abre janela mais estreita que
   ~500 px (o Guia, já revisado, sai cortado do mesmo jeito). A tela foi vista em 1280 e ~500 px; a
   revisão no celular fica para a revisão da seção.
+
+- **S6, safrinha em andamento com dado real:** em 15/11 não há safrinha; a regra dos avisos do replay nos dias
+  recentes foi conferida só com o "hoje" injetado nos testes (fev a jun de 2027).
+- **S6, link do ano antes da S5a:** `/resposta?…&ano=2024` abre a Sugestão sem o detalhe do ano até a S5a entrar.
+- **S6, cache do POWER:** fica na memória do processo; reiniciar a API (ou ter mais de um processo) pede o POWER de
+  novo. Um cache em arquivo ou no banco pediria migração ou caminho novo, e o pedido não exige.
+- **S6, chuva recente × normal:** não comparada, como manda o pedido (a série guardada só tem janeiro a julho).
+- **S6, notificação:** sem push, como no pedido; os avisos aparecem quando o app é aberto.
+- **S6, falta de água da linha "Água":** o grupo 2 tem a conta dele (`cycle_deficits`, mesmo balde do motor); se a
+  S5a trouxer a falta de água por ano, unificar no merge.

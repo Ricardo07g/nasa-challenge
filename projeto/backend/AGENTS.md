@@ -963,6 +963,44 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   com o `COMMUNITY_DEVICE_SALT` (o `CHECK` exige 64 dígitos hexadecimais) e nunca volta na
   resposta; a listagem não traz o hash, a hora do envio nem o ponto exato. Não grave nem registre
   em log o ponto ou o identificador do aparelho. Detalhes: `docs/tarefas/0047-comunidade.md`.
+- **Avisos do ponto marcado** (`GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas]`, tela "Avisos",
+  remodelagem S6, tarefa 0046, RF-31). Roda o motor uma vez (`RecommendationService.recommend`, com a mesma
+  colheita, solo e safras confirmadas do `/recomendacao`) e junta quatro grupos. O `AvisosService` só busca e
+  monta; as regras ficam em `AvisosAgoraService`, `AvisosMudancaService` e `AvisosVizinhosService`, com os números
+  no grupo `avisos_tela` do `regras.yaml` (à parte do `avisos` do replay P4/P6, que não muda). Reaproveita sem
+  repetir: o dia seco (`avisos.dia_seco_abaixo_mm`), o calor (`clima.calor_temp_c`), as janelas de março a maio do
+  raio-X (`raio_x.veranico_*`, `calor_*`), o fim das chuvas (`RainEndService`), a estação e a chance mínima da
+  previsão do ENSO (`sinal_enso`), o raio da comunidade (`comunidade.raio_km`) e a regra de avisos do replay
+  (`CropAlertService`). Só números: as frases são do front.
+  - **Resposta:** `ponto`, `celula_id`, `hoje` (dia de Uberlândia, UTC−3), `contador` (avisos de `agora` e de
+    `perto`: é o número do botão do cabeçalho), `agora`, `mudou`, `periodo` (`recente_inicio`, `recente_fim`,
+    `antes_inicio`, `antes_fim`), `recordes`, `perto`, `raio_km`, `vizinhos_dias` e `safrinha` (`em_andamento`,
+    `cultura`, `nome`, `semeadura`, `colheita`, `explorar_ano`). Cada grupo é `{avisos, ultima_leitura}`: `null` =
+    sem dado (o front não desenha); `avisos: []` = "Nada fora do normal" com a `ultima_leitura`.
+  - **Cada aviso:** `tipo`, `nivel` (`atencao` ou `fique_de_olho`), `fontes` (`smap`, `nasa_power`, `gpm_imerg`,
+    `noaa`, `comunidade`), `data` (da leitura), `antiga` (SMAP com mais de `smap_antiga_dias`) e `valores`:
+    `terra_seca` (`percentil`, `mais_seca_que_pct` = 100 − percentil), `dias_sem_chuva` (`dias`, `desde`,
+    `no_minimo`), `calor` (`dias`, `janela_dias`, `temp_c`), `enso` (`fase`, `chance_pct`, `estacao`, `ano`,
+    `cultura`, `nome`, `anos_fase`, `bons_fase`, `anos_outros`, `bons_outros`, `ano_inicio`, `ano_fim`; o histórico
+    é `null` sem o ONI), `safrinha_veranico` e `safrinha_calor` (`dias`, `cultura`, `nome`; o calor com `temp_c`),
+    `mudou_veranico`, `mudou_calor` (com `temp_c`) e `mudou_falta_agua` (com `cultura` e `nome`) (`antes`,
+    `recente`), `mudou_fim_chuvas` (`antes`, `recente` em "MM-DD", `diferenca_dias`), `mudou_deu_certo`
+    (`antes_bons`, `antes_total`, `recente_bons`, `recente_total`, `cultura`, `nome`), `recorde_veranico` (`dias`,
+    `ano`, `inicio`), `recorde_outono_seco` (`chuva_mm`, `ano`, `media_mm`), `recorde_fim_chuvas` (`dia`, `ano`),
+    `recorde_calor` (`dias`, `ano`, `temp_c`) e `vizinho_evento` (`evento`, `relatos`).
+  - **NASA POWER recente** (`PowerRecentWeatherRepository`, `get_recent_weather_repository`): os
+    `avisos_tela.power_dias` (30) dias até ontem no centro da célula de 0,1°, pela mesma API diária da pré-carga
+    (sem chave). Cache na memória do processo por 24 h, por célula e janela; falha ou mais de 8 s = `None` (os
+    avisos dele não aparecem) e 15 min de espera antes de tentar de novo. A última leitura é o último dia com
+    chuva e máxima (o POWER sai com ~2 a 3 dias de atraso). A chuva recente nunca é comparada com "o normal": a
+    série guardada só tem janeiro a julho.
+  - **Safrinha:** semeadura = o dia do motor para a faixa no ano de hoje; colheita = semeadura + ciclo da melhor
+    opção; `em_andamento` com hoje entre as duas (o "hoje" é injetado no service). Fora dela, `explorar_ano` é o
+    último ano da série (o front liga `/resposta?…&ano=<ano>`).
+  - **Falta de água** do grupo `mudou`: ETc − ETr no ciclo da melhor opção, com o balde do motor (SMAP do dia de
+    plantar ou 50% da CAD; `cycle_deficits` em `avisos_mudanca_service.py`).
+  - Sem banco, `perto` é `null` (a comunidade responde 503 por dentro). Erros como no `/recomendacao` (404
+    `OUTSIDE_AREA`, 422). Sem cache HTTP.
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
   ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre
