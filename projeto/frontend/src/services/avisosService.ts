@@ -11,14 +11,17 @@ import type { FlowParams } from './flowParams'
 import { confirmadasFromAnswers, currentChoiceCrop, parseSeasonAnswers } from './seasonAnswersService'
 
 export type AvisosService = {
-  /** Os avisos do ponto; o mesmo pedido serve o botão do cabeçalho e a tela (um por visita). */
-  get(point: PontoAvisos, lang: Lang): Promise<Avisos>
+  /**
+   * Os avisos do ponto; o mesmo pedido serve o botão do cabeçalho e a tela (um por ponto, idioma e cultura na
+   * visita). `cultura`: a do 1º ano do plano (tarefa 0065 do backend), para a falta de água e o "deu certo".
+   */
+  get(point: PontoAvisos, lang: Lang, cultura?: CropId | null): Promise<Avisos>
   savedPoint(): PontoAvisos | null
   savePoint(point: PontoAvisos): void
 }
 
-function cacheKey(point: PontoAvisos, lang: Lang): string {
-  return `${lang}|${point.lat}|${point.lon}|${point.colheita ?? ''}|${point.solo ?? ''}|${point.confirmadas ?? ''}`
+function cacheKey(point: PontoAvisos, lang: Lang, cultura: CropId | null): string {
+  return `${lang}|${point.lat}|${point.lon}|${point.colheita ?? ''}|${point.solo ?? ''}|${point.confirmadas ?? ''}|${cultura ?? ''}`
 }
 
 /**
@@ -32,11 +35,11 @@ export function createAvisosService(
 ): AvisosService {
   const cache = new Map<string, Promise<Avisos>>()
   return {
-    get(point, lang) {
-      const key = cacheKey(point, lang)
+    get(point, lang, cultura = null) {
+      const key = cacheKey(point, lang, cultura)
       const cached = cache.get(key)
       if (cached) return cached
-      const request = repository.get(point, lang)
+      const request = repository.get(point, lang, cultura)
       cache.set(key, request)
       request.catch(() => cache.delete(key))
       return request
@@ -87,9 +90,9 @@ export function alertsPoint(flow: PontoAvisos | null, saved: PontoAvisos | null)
 }
 
 /**
- * Quantos avisos ativos (pacote 3, tela 7): só os que a tela mostra, os cartões de "Agora". O `contador` da API
- * ainda soma o "Perto de você" (relatos de vizinhos), que saiu da tela; contado aqui, o sino e o resumo dizem o
- * mesmo número que os cartões.
+ * Quantos avisos ativos (pacote 3, tela 7): só os que a tela mostra, os cartões de "Agora". Desde a tarefa 0065 do
+ * backend, o `contador` da API também conta só o "Agora", mas inclui tipos que a tela não sabe escrever; contado
+ * aqui, o sino e o resumo dizem o mesmo número que os cartões.
  */
 export function activeCount(avisos: Avisos): number {
   return nowAlerts(avisos).length
@@ -159,8 +162,8 @@ function inOrder(avisos: readonly Aviso[], order: readonly string[]): Aviso[] {
 
 /**
  * Os quadros de "Como a sua área está mudando" (até 4). Os da cultura valem só para a cultura do 1º ano do plano
- * (`planCrop`): a API conta para a melhor opção do motor, e um quadro de outra cultura não aparece (sem dado, o
- * item não aparece). Sem a cultura do plano, ficam os da API.
+ * (`planCrop`): a tela manda essa cultura à API (tarefa 0065 do backend), e um quadro de outra cultura (resposta
+ * antiga ou pedido sem a cultura) não aparece. Sem a cultura do plano, ficam os da API.
  */
 export function changeTiles(avisos: Avisos, planCrop: string | null): Aviso[] {
   const list = inOrder(avisos.mudou?.avisos ?? [], CHANGE_ORDER).filter(

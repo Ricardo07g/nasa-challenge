@@ -52,6 +52,21 @@ describe('avisosService (tela "Avisos")', () => {
     expect(repository.get).toHaveBeenCalledTimes(3)
   })
 
+  it('a cultura do plano vai à API e o cache separa por cultura (tarefa 0065)', async () => {
+    const repository = { get: vi.fn((point, lang) => Promise.resolve(buildAvisos(point, lang))) }
+    const service = createAvisosService(repository, savedPoints())
+
+    await service.get(POINT, 'pt', 'sorgo')
+    await service.get({ ...POINT }, 'pt', 'sorgo')
+    await service.get(POINT, 'pt')
+    await service.get(POINT, 'pt', null)
+    await service.get(POINT, 'pt', 'milheto')
+
+    expect(repository.get).toHaveBeenCalledTimes(3)
+    expect(repository.get).toHaveBeenNthCalledWith(1, POINT, 'pt', 'sorgo')
+    expect(repository.get).toHaveBeenNthCalledWith(2, POINT, 'pt', null)
+  })
+
   it('pede de novo depois de uma falha', async () => {
     const repository = {
       get: vi.fn().mockRejectedValueOnce(new Error('fora do ar')).mockResolvedValue(buildAvisos(POINT, 'pt')),
@@ -176,7 +191,7 @@ describe('avisosService: o resumo do topo (pacote 3, tela 7)', () => {
     expect(headerCount(avisos)).toBe(2)
   })
 
-  it('o `contador` da API ainda soma o "Perto de você", que saiu da tela: o relato de vizinho não conta', () => {
+  it('o número não usa o `contador` da API: um relato de vizinho (API antiga, com o "Perto de você") não conta', () => {
     const neighbor = aviso('vizinho_evento', { evento: 'geada', relatos: 1 }, { fontes: ['comunidade'] })
     const avisos: Avisos = { ...withNow([watch], 2), perto: { avisos: [neighbor], ultima_leitura: '2026-11-15' } }
     const onlyNeighbor: Avisos = { ...withNow([], 1), perto: { avisos: [neighbor], ultima_leitura: '2026-11-15' } }

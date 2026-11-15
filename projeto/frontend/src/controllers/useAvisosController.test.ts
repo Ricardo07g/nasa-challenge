@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Avisos, PontoAvisos } from '../models/avisos'
 import type { SafraPassada } from '../models/pastSeason'
+import type { CropId } from '../models/recomendacao'
 import { ApiError } from '../repositories/httpClient'
 import { buildAvisos } from '../repositories/mocks/mockAvisos'
 import { buildRecomendacao } from '../repositories/mocks/fixtures'
@@ -25,7 +26,8 @@ const REPLAY: SafraPassada = {
 
 function deps(
   saved: PontoAvisos | null = null,
-  get: (point: PontoAvisos) => Promise<Avisos> = (point) => Promise.resolve(buildAvisos(point, 'pt')),
+  get: (point: PontoAvisos, lang: 'pt' | 'en', cultura?: CropId | null) => Promise<Avisos> = (point, _lang, cultura) =>
+    Promise.resolve(buildAvisos(point, 'pt', cultura)),
 ) {
   const avisos: AvisosService = {
     get: vi.fn(get),
@@ -60,7 +62,8 @@ describe('useAvisosController (tela "Avisos", pacote 3)', () => {
     const { result } = renderHook(() => useAvisosController(d), { wrapper: providers(FIELD) })
 
     await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(d.avisos.get).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
+    // A cultura do 1º ano do plano (sem escolha, a sugestão da tela 5) vai junto (tarefa 0065)
+    expect(d.avisos.get).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt', 'milho_braquiaria')
     expect(result.current.place).toBe('Lavoura perto de Uberlândia (MG)')
     expect(result.current.summary).toEqual({ count: 2, attention: 1, tone: 'attention' })
     expect(result.current.now.map((a) => a.tipo)).toEqual(['terra_seca', 'enso'])
@@ -75,7 +78,7 @@ describe('useAvisosController (tela "Avisos", pacote 3)', () => {
     })
 
     await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(d.avisos.get).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993, colheita: 'tarde', exemplo: true }, 'pt')
+    expect(d.avisos.get).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993, colheita: 'tarde', exemplo: true }, 'pt', 'milho_braquiaria')
     expect(result.current.place).toBe('Lavoura de demonstração, perto de Uberlândia (MG)')
     expect(d.farm.recomendacao).toHaveBeenCalledWith(expect.objectContaining({ exemplo: true, colheita: 'tarde' }), 'pt')
   })
@@ -85,11 +88,13 @@ describe('useAvisosController (tela "Avisos", pacote 3)', () => {
     const { result } = renderHook(() => useAvisosController(d), { wrapper: providers('/avisos') })
 
     await waitFor(() => expect(result.current.plan).toEqual({ crop: 'sorgo', deadline: '2027-03-20', late: false }))
-    expect(d.avisos.get).toHaveBeenCalledWith({ lat: -19.55, lon: -48.95, colheita: 'tarde', escolha: 'sorgo' }, 'pt')
+    expect(d.avisos.get).toHaveBeenCalledWith({ lat: -19.55, lon: -48.95, colheita: 'tarde', escolha: 'sorgo' }, 'pt', 'sorgo')
     expect(result.current.backTo).toBe('/')
   })
 
-  it('"Seu plano": a escolha da tela 5 com o prazo do ZARC, e os quadros da cultura só dessa cultura', async () => {
+  it('"Seu plano": a escolha da tela 5 com o prazo do ZARC; a cultura vai à API e os quadros são dela', async () => {
+    // Tarefa 0065: antes, com o plano começando por outra cultura que não a melhor, os quadros da
+    // cultura sumiam; agora a API conta para a cultura do plano.
     const d = deps()
     const { result } = renderHook(() => useAvisosController(d), {
       wrapper: providers('/avisos?lat=-18.9543&lon=-48.1993&colheita=tarde&escolha=sorgo'),
@@ -97,7 +102,33 @@ describe('useAvisosController (tela "Avisos", pacote 3)', () => {
 
     await waitFor(() => expect(result.current.plan).toEqual({ crop: 'sorgo', deadline: '2027-03-20', late: false }))
     await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(result.current.changes.map((a) => a.tipo)).toEqual(['mudou_veranico', 'mudou_fim_chuvas', 'mudou_calor'])
+    expect(d.avisos.get).toHaveBeenCalledTimes(1)
+    expect(d.avisos.get).toHaveBeenCalledWith(expect.objectContaining({ escolha: 'sorgo' }), 'pt', 'sorgo')
+    expect(result.current.changes.map((a) => [a.tipo, a.valores.cultura ?? null])).toEqual([
+      ['mudou_veranico', null],
+      ['mudou_fim_chuvas', null],
+      ['mudou_falta_agua', 'sorgo'],
+      ['mudou_deu_certo', 'sorgo'],
+    ])
+  })
+
+  it('espera a recomendação (a cultura do plano) antes de pedir os avisos', async () => {
+    const d = deps()
+    d.farm.recomendacao = vi.fn(() => new Promise<never>(() => {}))
+    const { result } = renderHook(() => useAvisosController(d), { wrapper: providers(FIELD) })
+
+    await waitFor(() => expect(d.farm.recomendacao).toHaveBeenCalled())
+    expect(result.current.status).toBe('loading')
+    expect(d.avisos.get).not.toHaveBeenCalled()
+  })
+
+  it('sem a recomendação (falha), a cultura é a escolha da URL; sem escolha, nenhuma (a API usa a melhor opção)', async () => {
+    const d = deps()
+    d.farm.recomendacao = vi.fn(() => Promise.reject(new Error('fora do ar')))
+    const { result } = renderHook(() => useAvisosController(d), { wrapper: providers(`${FIELD}&escolha=crotalaria`) })
+
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    expect(d.avisos.get).toHaveBeenCalledWith(expect.objectContaining({ escolha: 'crotalaria' }), 'pt', 'crotalaria')
   })
 
   it('sem colheita não há recomendação: a cultura é a sugestão dos avisos e a linha fica sem o prazo', async () => {
@@ -106,6 +137,7 @@ describe('useAvisosController (tela "Avisos", pacote 3)', () => {
 
     await waitFor(() => expect(result.current.status).toBe('ready'))
     expect(d.farm.recomendacao).not.toHaveBeenCalled()
+    expect(d.avisos.get).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993 }, 'pt', null)
     expect(result.current.plan).toEqual({ crop: 'milho_braquiaria', deadline: null, late: false })
   })
 

@@ -80,7 +80,8 @@ export type AvisosState = {
  * Tela "Avisos" (seção 6 da remodelagem, tarefa 0046; refeita no pacote 3, tela 7, tarefa 0062). Vale para o ponto
  * da URL (inclusive a lavoura de demonstração, que a tela mostra mas o aparelho nunca guarda) ou, sem ele, o último
  * ponto marcado no fluxo, salvo no aparelho. Sem ponto, a tela pede "Marcar minha lavoura". A cultura do plano e o
- * prazo vêm da mesma recomendação da tela 5; o exemplo de um ano só é pedido quando o modal abre.
+ * prazo vêm da mesma recomendação da tela 5, e a cultura vai à API dos avisos; o exemplo de um ano só é pedido
+ * quando o modal abre.
  */
 export function useAvisosController(deps: Deps = defaultDeps): AvisosState {
   const { lang, messages: t } = useI18n()
@@ -91,10 +92,6 @@ export function useAvisosController(deps: Deps = defaultDeps): AvisosState {
   const point = useMemo(() => alertsPoint(flow, deps.avisos.savedPoint()), [flow, deps.avisos])
   const pointKey = point ? JSON.stringify(point) : ''
 
-  const state = useAsync(
-    () => (point ? deps.avisos.get(point, lang) : Promise.resolve(null)),
-    [pointKey, lang, deps.avisos],
-  )
   // A recomendação da tela 5 (quase sempre já no cache): a cultura do plano e o "Prazo para plantar".
   const recomendacao = useAsync(
     () =>
@@ -113,8 +110,16 @@ export function useAvisosController(deps: Deps = defaultDeps): AvisosState {
         : Promise.resolve(null),
     [pointKey, lang, deps.farm],
   )
-  const avisos = state.data ?? null
   const rec = recomendacao.status === 'ready' ? (recomendacao.data ?? null) : null
+  // Tarefa 0065 do backend: a cultura do 1º ano do plano vai à API (a falta de água e o "deu certo" dela). Espera a
+  // recomendação; sem ela (sem colheita ou falha), a escolha da URL ou nenhuma (a API usa a melhor opção).
+  const planKnown = !point?.colheita || recomendacao.status !== 'loading'
+  const sentCrop = point && planKnown ? planCropOf(point, rec, null) : null
+  const state = useAsync(
+    () => (point && planKnown ? deps.avisos.get(point, lang, sentCrop) : Promise.resolve(null)),
+    [pointKey, lang, deps.avisos, planKnown, sentCrop],
+  )
+  const avisos = state.data ?? null
 
   let status: AvisosStatus = state.status
   if (!point) status = 'no-point'

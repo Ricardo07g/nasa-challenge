@@ -2,18 +2,40 @@
  * Avisos de demonstração (só com VITE_API_MODE=mock, desligado por padrão; a tela mostra o aviso fixo
  * "Modo de demonstração"). Os números imitam o formato de `GET /api/avisos` e não são da NASA.
  *
- * Pacote 3 (tela 7): o "Perto de você" saiu da tela, então o exemplo não traz relato de vizinho e o
- * `contador` (o número do sino) é igual aos avisos de "Agora". O "Fique de olho" vem antes do "Atenção"
- * de propósito: quem põe o "Atenção" primeiro é a tela.
+ * Pacote 3 (tela 7): o "Perto de você" saiu da tela e, desde a tarefa 0065 do backend, a API manda `perto: null`
+ * e o `contador` só com os avisos de "Agora" (o número do sino). O "Fique de olho" vem antes do "Atenção" de
+ * propósito: quem põe o "Atenção" primeiro é a tela. Com a `cultura` do plano, os quadros da falta de água e do
+ * "deu certo" falam dela (os números de exemplo continuam os mesmos); no pousio, não vêm.
  */
 import type { Lang } from '../../i18n/language'
-import type { Avisos, PontoAvisos } from '../../models/avisos'
+import type { Aviso, Avisos, PontoAvisos } from '../../models/avisos'
+import type { CropId } from '../../models/recomendacao'
 import type { AvisosRepository } from '../avisosRepository'
 import { delay } from './delay'
+import { buildRecomendacao } from './fixtures'
 
 const SERIES_END = '2024-07-30'
+const CROP_CHANGES: readonly string[] = ['mudou_falta_agua', 'mudou_deu_certo']
 
-export function buildAvisos(point: PontoAvisos, lang: Lang): Avisos {
+/** Os quadros da cultura com a cultura do plano: o nome da opção de exemplo; no pousio (sem conta), saem. */
+function withPlanCrop(avisos: Aviso[], point: PontoAvisos, lang: Lang, cultura: CropId): Aviso[] {
+  if (cultura === 'pousio') return avisos.filter((aviso) => !CROP_CHANGES.includes(aviso.tipo))
+  const option = buildRecomendacao({ lat: point.lat, lon: point.lon, colheita: point.colheita ?? 'meio' }, lang).opcoes.find(
+    (opcao) => opcao.id === cultura,
+  )
+  if (!option) return avisos
+  return avisos.map((aviso) =>
+    CROP_CHANGES.includes(aviso.tipo) ? { ...aviso, valores: { ...aviso.valores, cultura, nome: option.nome } } : aviso,
+  )
+}
+
+export function buildAvisos(point: PontoAvisos, lang: Lang, cultura?: CropId | null): Avisos {
+  const avisos = sampleAvisos(point, lang)
+  if (!cultura || !avisos.mudou) return avisos
+  return { ...avisos, mudou: { ...avisos.mudou, avisos: withPlanCrop(avisos.mudou.avisos, point, lang, cultura) } }
+}
+
+function sampleAvisos(point: PontoAvisos, lang: Lang): Avisos {
   const crop = lang === 'en' ? 'Corn with brachiaria' : 'Milho com braquiária'
   return {
     ponto: { lat: point.lat, lon: point.lon },
@@ -145,7 +167,7 @@ export function buildAvisos(point: PontoAvisos, lang: Lang): Avisos {
       ],
       ultima_leitura: SERIES_END,
     },
-    perto: { avisos: [], ultima_leitura: '2026-11-15' },
+    perto: null,
     raio_km: 30,
     vizinhos_dias: 7,
     safrinha: {
@@ -161,9 +183,9 @@ export function buildAvisos(point: PontoAvisos, lang: Lang): Avisos {
 
 export function createMockAvisosRepository(delayMs = 300): AvisosRepository {
   return {
-    async get(point, lang) {
+    async get(point, lang, cultura) {
       await delay(delayMs)
-      return buildAvisos(point, lang)
+      return buildAvisos(point, lang, cultura)
     },
   }
 }
