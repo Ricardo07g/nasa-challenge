@@ -518,7 +518,9 @@ def get_raio_x_service(
 
 # Tela "Avisos" (remodelagem S6, tarefa 0046). O NASA POWER dos últimos dias é pedido pela API, com
 # cache de 24 h por célula (um repository por processo); sem resposta, os avisos dele não aparecem.
-# Os relatos dos vizinhos vêm do service da comunidade (sem banco, o grupo "Perto de você" some).
+# Os relatos dos vizinhos ("Perto de você") ficam desligados desde a tarefa 0065 (a comunidade está
+# "em breve"): nem o service da comunidade nem o `AvisosVizinhosService` entram, e o `perto` sai
+# null. Para religar, passe `community_service` e `vizinhos_service` ao `AvisosService`.
 @lru_cache
 def get_recent_weather_repository() -> RecentWeatherRepository:
     return PowerRecentWeatherRepository(NasaPowerClient())
@@ -536,7 +538,6 @@ def get_avisos_service(
     recent_weather_repo: Annotated[RecentWeatherRepository, Depends(get_recent_weather_repository)],
     forecast_repo: Annotated[EnsoForecastRepository, Depends(get_enso_forecast_repository)],
     enso_repo: Annotated[EnsoRepository, Depends(get_enso_repository)],
-    community_service: Annotated[CommunityReportService, Depends(get_community_report_service)],
     smap_repo: Annotated[CellSmapRepository, Depends(get_smap_repository)],
     rules: Annotated[Regras, Depends(get_rules)],
 ) -> AvisosService:
@@ -550,9 +551,10 @@ def get_avisos_service(
         recent_weather_repo=recent_weather_repo,
         forecast_repo=forecast_repo,
         enso_repo=enso_repo,
-        community_service=community_service,
+        community_service=None,
         smap_repo=smap_repo,
         rules=rules,
+        vizinhos_service=None,
     )
 
 

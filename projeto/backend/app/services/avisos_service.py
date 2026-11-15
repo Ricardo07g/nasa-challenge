@@ -6,8 +6,10 @@ Só busca os dados nos repositories e monta os quatro grupos; cada regra mora no
   previsão do ENSO com o ONI e a safrinha em andamento;
 - O que mudou e Fora do comum (`AvisosMudancaService`): a série guardada da célula e a melhor
   opção do motor (a mesma do `/recomendacao`, com a mesma colheita, solo e safras confirmadas);
-- Perto de você (`AvisosVizinhosService`): os relatos da comunidade (sem banco, o grupo some).
-O contador do botão "Avisos" do cabeçalho conta os avisos de Agora e de Perto de você.
+- Perto de você (`AvisosVizinhosService`): os relatos da comunidade. Desligado desde a tarefa
+  0065 (a comunidade está "em breve"): sem o service dos vizinhos injetado, o grupo é None e a
+  comunidade nem é lida. Volta quando a comunidade voltar (sem banco, o grupo também some).
+O contador do botão "Avisos" do cabeçalho conta só os avisos de Agora (tarefa 0065).
 """
 
 from collections.abc import Callable, Iterable, Sequence
@@ -66,6 +68,7 @@ class AvisosService:
         smap_repo: CellSmapRepository | None = None,
         rules: Regras | None = None,
         today: Callable[[], date] = pilot_today,
+        vizinhos_service: AvisosVizinhosService | None = None,
     ) -> None:
         self._rules = rules if rules is not None else load_default_rules()
         self._recommender = recommender
@@ -82,7 +85,8 @@ class AvisosService:
         self._today = today
         self._agora = AvisosAgoraService(self._rules, today=today)
         self._mudanca = AvisosMudancaService(self._rules)
-        self._vizinhos = AvisosVizinhosService(self._rules)
+        # "Perto de você" desligado sem o service dos vizinhos (tarefa 0065)
+        self._vizinhos = vizinhos_service
 
     def avisos(
         self,
@@ -124,7 +128,7 @@ class AvisosService:
             raio_km=self._rules.comunidade.raio_km,
             vizinhos_dias=self._rules.avisos_tela.vizinhos_dias,
             safrinha=safrinha,
-            contador=len(agora.avisos) + (len(perto.avisos) if perto else 0),
+            contador=len(agora.avisos),
         )
 
     # --- Agora ---------------------------------------------------------------------------------
@@ -205,7 +209,7 @@ class AvisosService:
     # --- Perto de você -------------------------------------------------------------------------
 
     def _nearby_group(self, lat: float, lon: float, today: date) -> GrupoAvisos | None:
-        if self._community is None:
+        if self._vizinhos is None or self._community is None:
             return None
         try:
             reports = self._community.nearby(lat, lon)

@@ -1,8 +1,9 @@
-"""A tela Avisos do ponto junta os quatro grupos e o contador (tarefa 0046).
+"""A tela Avisos do ponto junta os grupos e o contador (tarefas 0046 e 0065).
 
 Repositories e motor falsos, com valores de teste (não são de nenhuma fonte real). As regras de
 cada grupo têm teste próprio; aqui fica a montagem: de onde vem cada dado, o que some sem dado e
-o que conta no botão "Avisos".
+o que conta no botão "Avisos". Desde a tarefa 0065, o "Perto de você" (relatos dos vizinhos) fica
+desligado: só volta com o `AvisosVizinhosService` injetado.
 """
 
 from datetime import date, timedelta
@@ -17,6 +18,7 @@ from app.models.enso_forecast import EnsoForecast, EnsoSeasonForecast
 from app.models.sinal_outono import RecentSoilMoisture
 from app.models.talhao import SoloInfo
 from app.services.avisos_service import AvisosService
+from app.services.avisos_vizinhos_service import AvisosVizinhosService
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import CommunityUnavailableError, OutsideAreaError
 from app.services.water_balance_calculator import WaterBalanceCalculator
@@ -100,8 +102,10 @@ class FakeCommunity:
     def __init__(self, reports: tuple[NearbyReport, ...] = (), unavailable: bool = False) -> None:
         self._reports = reports
         self._unavailable = unavailable
+        self.calls = 0
 
     def nearby(self, lat: float, lon: float) -> NearbyReports:
+        self.calls += 1
         if self._unavailable:
             raise CommunityUnavailableError("sem banco")
         return NearbyReports(raio_km=30.0, anos_safra=(2024, 2025, 2026), relatos=self._reports)
@@ -148,19 +152,32 @@ def _service(**overrides: object) -> AvisosService:
     return AvisosService(**deps)  # type: ignore[arg-type]
 
 
-def test_should_join_the_four_groups_and_count_now_and_nearby() -> None:
-    avisos = _service().avisos(LAT, LON, colheita="meio")
+def test_should_join_the_groups_and_count_only_the_alerts_of_now() -> None:
+    community = FakeCommunity((FROST,))
+
+    avisos = _service(community_service=community).avisos(LAT, LON, colheita="meio")
 
     assert (avisos.lat, avisos.lon, avisos.celula_id, avisos.hoje) == (LAT, LON, CELL, TODAY)
     assert [a.tipo for a in avisos.agora.avisos] == ["terra_seca", "dias_sem_chuva", "enso"]
     assert avisos.agora.ultima_leitura == date(2026, 11, 12)
-    assert avisos.perto is not None
-    assert [a.valores["evento"] for a in avisos.perto.avisos] == ["geada"]
     assert (avisos.raio_km, avisos.vizinhos_dias) == (30.0, 7)
-    # Contador: os 3 de agora e o 1 de perto; mudanças e recordes são informação, não alerta.
-    assert avisos.contador == 4
+    # Tarefa 0065: os relatos dos vizinhos ficam de fora (o grupo é null e a comunidade nem é
+    # lida); o contador conta só os 3 de agora. Mudanças e recordes são informação, não alerta.
+    assert avisos.perto is None
+    assert community.calls == 0
+    assert avisos.contador == 3
     assert avisos.mudou is not None and avisos.recordes is not None
     assert avisos.periodo is not None and avisos.periodo.recente_inicio == 2020
+
+
+def test_should_bring_back_the_nearby_group_with_the_neighbours_service_but_not_count_it() -> None:
+    # O "Perto de você" volta quando a comunidade voltar (o service dos vizinhos injetado); mesmo
+    # assim, o contador fica só com os avisos de agora (a tela conta só os cartões de "Agora").
+    avisos = _service(vizinhos_service=AvisosVizinhosService()).avisos(LAT, LON)
+
+    assert avisos.perto is not None
+    assert [a.valores["evento"] for a in avisos.perto.avisos] == ["geada"]
+    assert avisos.contador == 3
 
 
 @pytest.mark.parametrize("nivel", ["normal", "seco", "incerto"])
@@ -202,17 +219,18 @@ def test_should_show_nothing_out_of_normal_with_the_last_reading_date() -> None:
         recent_soil_moisture_repo=FakeRecentSmap(RecentSoilMoisture(59.3, date(2026, 11, 10))),
         recent_weather_repo=FakeRecentWeather(None),
         forecast_repo=FakeForecast(None),
-        community_service=FakeCommunity(),
     ).avisos(LAT, LON)
 
     assert avisos.agora.avisos == ()
     assert avisos.agora.ultima_leitura == date(2026, 11, 10)
-    assert avisos.perto is not None and avisos.perto.avisos == ()
     assert avisos.contador == 0
 
 
 def test_should_leave_out_the_nearby_group_without_the_community() -> None:
-    avisos = _service(community_service=FakeCommunity(unavailable=True)).avisos(LAT, LON)
+    avisos = _service(
+        community_service=FakeCommunity(unavailable=True),
+        vizinhos_service=AvisosVizinhosService(),
+    ).avisos(LAT, LON)
 
     assert avisos.perto is None
     assert avisos.contador == 3
