@@ -1069,7 +1069,11 @@ export const en = {
         goodOthers: number,
       ) =>
         `In the ${years} ${phase} years since ${start}, ${crop} worked in ${good} here; in the other ${others} years, in ${goodOthers}. These are few years.`,
-      ensoTodo: 'Look at plan B in the 3-year plan before deciding what to plant.',
+      ensoTodo: {
+        normal: 'The autumn signal marks plan A. Check the plan in the 3-year plan.',
+        seco: 'The autumn signal marks plan B. Look at plan B in the 3-year plan before deciding what to plant.',
+        incerto: 'No clear signal for autumn. Look at plan A and plan B in the 3-year plan before deciding what to plant.',
+      },
       safrinhaDry: (crop: string, days: number, date: string) =>
         `${crop}: ${days} days without rain close to the stage that needs water most (up to ${date}).`,
       safrinhaHeat: (crop: string, days: number, temp: number, date: string) =>

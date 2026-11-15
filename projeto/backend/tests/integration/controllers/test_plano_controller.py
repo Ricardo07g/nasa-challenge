@@ -7,6 +7,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.constants import PROBLEM_JSON_MEDIA_TYPE
+from app.dependencies import get_enso_forecast_repository
+from app.main import app
+from tests.integration.controllers.test_recomendacao_controller import FakeEnsoForecastRepository
 
 UFU = {"lat": -18.9543, "lon": -48.1993}
 PLANO = "milho_braquiaria,sorgo,crotalaria"
@@ -17,7 +20,17 @@ def test_should_evaluate_any_three_year_plan(client: TestClient) -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert set(body) == {"colheita", "semeadura", "anos", "notas", "terra", "chuva", "plano_ab"}
+    assert set(body) == {
+        "colheita",
+        "semeadura",
+        "anos",
+        "notas",
+        "terra",
+        "chuva",
+        "plano_ab",
+        "sinal",
+    }
+    assert body["sinal"] is None  # sem a previsão do ENSO no conftest, sem sinal
     assert (body["colheita"], body["semeadura"]) == ("meio", "2027-02-18")
     assert [a["cultura"] for a in body["anos"]] == PLANO.split(",")
     assert set(body["anos"][0]) == {
@@ -62,6 +75,21 @@ def test_should_give_the_same_numbers_as_the_recommendation(client: TestClient) 
             opcao["agua"]["sede"],
         )
         assert ano["nome"] == opcao["nome"]
+
+
+def test_should_give_the_autumn_signal_of_the_plan_on_screen(client: TestClient) -> None:
+    # S9 (tarefa 0049): com o plano editado, o sinal fala do Plano A que a tela mostra, e com o
+    # plano sugerido, dá o mesmo veredito do /recomendacao (que vai para o aviso de El Niño).
+    app.dependency_overrides[get_enso_forecast_repository] = FakeEnsoForecastRepository
+    rec = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"}).json()
+    sugerido = ",".join(rec["plano_3_anos"]["normal"]["anos"])
+
+    mesmo = client.get("/api/plano", params={**UFU, "colheita": "meio", "anos": sugerido}).json()
+    editado = client.get("/api/plano", params={**UFU, "colheita": "meio", "anos": PLANO}).json()
+
+    assert mesmo["sinal"] == rec["sinal"]
+    assert set(editado["sinal"]) == {"nivel", "motivo", "fonte", "data", "smap_agora"}
+    assert "milho_braquiaria" in editado["sinal"]["motivo"]  # o nome da cultura do conftest
 
 
 def test_should_take_the_language_from_accept_language(client: TestClient) -> None:

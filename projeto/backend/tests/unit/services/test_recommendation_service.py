@@ -16,6 +16,7 @@ from app.models.talhao import NdviRecord, SoloInfo
 from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.errors import OutsideAreaError, ValidationDomainError
+from app.services.plan_b_service import PlanBService
 from app.services.raio_x_service import RaioXService
 from app.services.recommendation_service import (
     RecommendationService,
@@ -625,6 +626,36 @@ def test_should_add_autumn_signal_with_plan_a_and_plan_b_of_the_recommendation()
     assert rec.sinal is not None
     assert rec.sinal.nivel == "normal"  # nenhum ano com aperto na série de teste
     assert rec.sinal.fonte == ("Fonte de teste", "NASA POWER")
+
+
+class SpySinalService(SinalOutonoService):
+    """Guarda o que o motor pede ao sinal (sem previsão: devolve None)."""
+
+    def __init__(self) -> None:
+        data = FakeForecastOnly()
+        super().__init__(data, data, data, today=lambda: date(2026, 11, 15))
+        self.calls: list[dict[str, object]] = []
+
+    def evaluate(self, **kwargs: object) -> None:  # type: ignore[override]
+        self.calls.append(kwargs)
+        return None
+
+
+def test_should_give_the_signal_the_plan_a_and_the_plan_b_shown_on_the_plan_screen() -> None:
+    # S9 (tarefa 0049): o Plano B do sinal é o da tela do Plano (PlanBService: a cultura que mais
+    # deu certo quando a do Plano A falhou), para o sinal e a tela falarem do mesmo Plano B.
+    climate = FakeClimateRepository(dry_years=(2007, 2014))
+    spy = SpySinalService()
+
+    rec = _service(climate, sinal=spy).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    ab = PlanBService().plan_ab(
+        rec.plano_normal.anos[0], list(rec.opcoes), climate.get_seasons(CELL_ID), rec.semeadura
+    )
+    assert ab is not None
+    (call,) = spy.calls
+    assert call["cultura_a"] == rec.plano_normal.anos[0] == rec.melhor
+    assert call["cultura_b"] == ab.cultura_b
 
 
 def test_should_write_texts_in_english_when_language_is_en() -> None:

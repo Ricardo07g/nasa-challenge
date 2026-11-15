@@ -6,6 +6,7 @@ from datetime import date
 from pydantic import BaseModel, ConfigDict
 
 from app.models.plano import PlanoAvaliado
+from app.schemas.recomendacao import SinalSchema
 
 
 class _Frozen(BaseModel):
@@ -82,7 +83,12 @@ class PlanoResponse(_Frozen):
     terra: TerraPlanoSchema
     chuva: ChuvaAproveitadaSchema | None
     plano_ab: PlanoABSchema | None
+    # Sinal do outono com o Plano A e o Plano B desta tela (tarefa 0049); o mesmo formato do
+    # `sinal` do /recomendacao. null sem a previsão do ENSO, no pousio ou fora da janela.
+    sinal: SinalSchema | None = None
 
     @classmethod
     def from_model(cls, plano: PlanoAvaliado) -> "PlanoResponse":
-        return cls.model_validate(asdict(plano))
+        data = asdict(plano)
+        data["sinal"] = SinalSchema.from_model(plano.sinal) if plano.sinal is not None else None
+        return cls.model_validate(data)

@@ -18,7 +18,8 @@ export type ValorAviso = boolean | number | string | null
  * - `dias_sem_chuva`: dias, desde, no_minimo (NASA POWER)
  * - `calor`: dias, janela_dias, temp_c (NASA POWER)
  * - `enso`: fase, chance_pct, estacao, ano, cultura, nome, anos_fase, bons_fase, anos_outros, bons_outros,
- *   ano_inicio, ano_fim (NOAA e a série da célula; o histórico é `null` sem o ONI)
+ *   ano_inicio, ano_fim (NOAA e a série da célula; o histórico é `null` sem o ONI) e sinal (o veredito do
+ *   sinal do outono, `normal`, `seco` ou `incerto`, o mesmo do Plano de 3 anos; `null` sem ele)
  * - `safrinha_veranico`, `safrinha_calor`: dias, cultura, nome (NASA POWER, só durante a safrinha)
  * - `mudou_veranico`, `mudou_calor` (com temp_c), `mudou_falta_agua` (com cultura e nome): antes, recente
  * - `mudou_fim_chuvas`: antes, recente ("MM-DD"), diferenca_dias

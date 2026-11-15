@@ -37,6 +37,7 @@ export function buildAvisos(point: PontoAvisos, lang: Lang): Avisos {
             bons_outros: 11,
             ano_inicio: 2005,
             ano_fim: 2024,
+            sinal: 'normal',
           },
         },
       ],

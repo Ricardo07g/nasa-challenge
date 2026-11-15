@@ -15,7 +15,7 @@ import pytest
 from app.models.climate import ClimateSeason
 from app.models.enso import FaseEnso, OniYear
 from app.models.enso_forecast import EnsoForecast, EnsoSeasonForecast
-from app.models.recomendacao import AnoDetalhe, NotasOpcao, PlanoRotacao, ResultadoOpcao
+from app.models.recomendacao import AnoDetalhe, NotasOpcao, ResultadoOpcao
 from app.models.regras import Regras
 from app.models.sinal_outono import RecentSoilMoisture, SinalOutono, SmapAgora
 from app.repositories.rules_repository import load_default_rules
@@ -128,10 +128,6 @@ def _opcoes(milho_bad: Sequence[int] = MILHO_BAD, sorgo_bad: Sequence[int] = SOR
     ]
 
 
-PLANO_A = PlanoRotacao(anos=("milho_safrinha", "crotalaria", "milheto"), nota=67.4, descricao="")
-PLANO_B = PlanoRotacao(anos=("sorgo", "crotalaria", "milheto"), nota=62.4, descricao="")
-
-
 def _season(year: int, rain: Sequence[float], source: str = "nasa_power") -> ClimateSeason:
     return ClimateSeason(
         cell_id="-190_-482",
@@ -166,8 +162,8 @@ def _evaluate(
     params: dict[str, Any] = {
         "lat": LAT,
         "lon": LON,
-        "plano_a": PLANO_A,
-        "plano_b": PLANO_B,
+        "cultura_a": "milho_safrinha",
+        "cultura_b": "sorgo",
         "opcoes": _opcoes(),
         "seasons": _flat_seasons(),
     }
@@ -301,14 +297,26 @@ def test_should_be_uncertain_when_plan_b_did_not_do_better_in_those_years() -> N
     )
 
 
-def test_should_mark_plan_b_when_both_plans_start_with_the_same_crop() -> None:
-    plano_b = PlanoRotacao(anos=("milho_safrinha", "milheto", "milheto"), nota=60.0, descricao="")
-
-    sinal = _evaluate(_forecast((10, 20, 70)), plano_b=plano_b)
+def test_should_be_uncertain_without_a_plan_b_when_plan_a_failed_in_the_phase() -> None:
+    # S9 (tarefa 0049): o Plano B é o da tela (a cultura que mais deu certo quando a do Plano A
+    # falhou). Sem Plano B, o sinal não pode marcar um plano que a tela não mostra.
+    sinal = _evaluate(_forecast((10, 20, 70)), cultura_b=None)
 
     assert sinal is not None
-    assert sinal.nivel == "seco"
-    assert sinal.motivo.endswith("Nos 6 anos de El Niño desde 2005, milho sozinho deu certo em 2.")
+    assert sinal.nivel == "incerto"
+    assert sinal.motivo.endswith(
+        "Nos 6 anos de El Niño desde 2005, milho sozinho deu certo em 2. "
+        "Nenhuma outra cultura se saiu melhor nesses anos."
+    )
+
+
+def test_should_talk_about_the_plan_a_and_plan_b_crops_it_receives() -> None:
+    # O Plano A que a tela mostra (o sugerido ou o editado) é o que o sinal avalia.
+    sinal = _evaluate(_forecast((10, 20, 70)), cultura_a="sorgo", cultura_b="milho_safrinha")
+
+    assert sinal is not None
+    assert sinal.nivel == "normal"  # sorgo deu certo em 5 dos 6 anos de El Niño
+    assert "sorgo deu certo em 5." in sinal.motivo
 
 
 def test_should_take_the_limits_from_the_injected_rules() -> None:

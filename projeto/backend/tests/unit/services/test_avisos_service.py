@@ -28,8 +28,9 @@ MILHO = crop("milho_safrinha", ciclo=120, kc=1.2)
 
 
 class FakeRecommender:
-    def __init__(self, outside: bool = False) -> None:
+    def __init__(self, outside: bool = False, sinal: str | None = None) -> None:
         self.outside = outside
+        self.sinal = sinal
         self.calls: list[dict[str, object]] = []
 
     def recommend(self, **kwargs: object) -> SimpleNamespace:
@@ -43,6 +44,7 @@ class FakeRecommender:
             melhor="milho_safrinha",
             solo="argiloso",
             opcoes=(best,),
+            sinal=None if self.sinal is None else SimpleNamespace(nivel=self.sinal),
         )
 
 
@@ -159,6 +161,23 @@ def test_should_join_the_four_groups_and_count_now_and_nearby() -> None:
     assert avisos.contador == 4
     assert avisos.mudou is not None and avisos.recordes is not None
     assert avisos.periodo is not None and avisos.periodo.recente_inicio == 2020
+
+
+@pytest.mark.parametrize("nivel", ["normal", "seco", "incerto"])
+def test_should_give_the_enso_warning_the_verdict_of_the_autumn_signal(nivel: str) -> None:
+    # S9 (tarefa 0049): o Plano dizia "O sinal marca o Plano A" e o aviso, "Veja o Plano B". O aviso
+    # leva o veredito do sinal (o mesmo do Plano de 3 anos) para o "o que fazer" seguir ele.
+    avisos = _service(recommender=FakeRecommender(sinal=nivel)).avisos(LAT, LON)
+
+    enso = next(a for a in avisos.agora.avisos if a.tipo == "enso")
+    assert enso.valores["sinal"] == nivel
+
+
+def test_should_leave_the_enso_verdict_empty_without_the_signal() -> None:
+    avisos = _service().avisos(LAT, LON)
+
+    enso = next(a for a in avisos.agora.avisos if a.tipo == "enso")
+    assert enso.valores["sinal"] is None
 
 
 def test_should_ask_power_for_the_last_30_days_up_to_yesterday() -> None:

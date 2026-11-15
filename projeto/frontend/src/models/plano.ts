@@ -1,4 +1,4 @@
-import type { CropId, Sede } from './recomendacao'
+import type { CropId, Sede, SinalOutono } from './recomendacao'
 import type { Colheita, Textura } from './talhao'
 
 /**
@@ -84,6 +84,11 @@ export type PlanoAvaliado = {
   terra: TerraPlano
   chuva: ChuvaAproveitada | null
   plano_ab: PlanoAB | null
+  /**
+   * Sinal do outono com o Plano A e o Plano B desta tela (tarefa 0049 do backend): com o plano editado, fala
+   * do Plano A que a tela mostra. Ausente (API antiga) = vale o da recomendação; null = sem sinal.
+   */
+  sinal?: SinalOutono | null
 }
 
 export type PlanoParams = {

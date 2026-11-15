@@ -73,7 +73,8 @@ export function alertText(t: Messages, lang: Lang, aviso: Aviso, ctx: Context): 
               n(v.anos_outros),
               n(v.bons_outros),
             )}`
-      return { shows: `${forecast}${history}`, todo: k.ensoTodo }
+      const todo = k.ensoTodo[s(v.sinal) as keyof typeof k.ensoTodo] ?? k.ensoTodo.incerto
+      return { shows: `${forecast}${history}`, todo }
     }
     case 'safrinha_veranico':
       return { shows: k.safrinhaDry(s(v.nome), n(v.dias), date), todo: k.safrinhaTodo }

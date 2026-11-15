@@ -541,12 +541,17 @@ def get_plan_evaluation_service(
     crop_repo: Annotated[CropParamsRepository, Depends(get_crop_params_repository)],
     plan_service: Annotated[RotationPlanService, Depends(get_rotation_plan_service)],
     rules: Annotated[Regras, Depends(get_rules)],
+    sinal_service: Annotated[SinalOutonoService, Depends(get_sinal_outono_service)],
 ) -> PlanEvaluationService:
-    """Plano de 3 anos qualquer (aba "Plano", tarefa 0045): a conta do motor de cada ano."""
+    """Plano de 3 anos qualquer (aba "Plano", tarefa 0045): a conta do motor de cada ano.
+
+    O sinal do outono vai junto, com o Plano A e o Plano B da tela (tarefa 0049).
+    """
     return PlanEvaluationService(
         recommender=recommender,
         climate_repo=climate_repo,
         crop_repo=crop_repo,
         plan_service=plan_service,
         rules=rules,
+        sinal_service=sinal_service,
     )

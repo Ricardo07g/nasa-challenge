@@ -141,7 +141,7 @@ def test_should_show_the_forecast_and_how_the_best_option_did_in_similar_years(
 ) -> None:
     best = option("milho_braquiaria", "Milho com braquiária", bad_years=(2005, 2016, 2007))
 
-    aviso = service.enso(_forecast(), ONI, best, rain_sources=("gpm_imerg",))
+    aviso = service.enso(_forecast(), ONI, best, rain_sources=("gpm_imerg",), sinal="normal")
 
     assert aviso is not None
     assert (aviso.tipo, aviso.nivel, aviso.data) == ("enso", FIQUE_DE_OLHO, ISSUED)
@@ -159,6 +159,9 @@ def test_should_show_the_forecast_and_how_the_best_option_did_in_similar_years(
         "bons_outros": 12,
         "ano_inicio": 2005,
         "ano_fim": 2024,
+        # S9 (tarefa 0049): o veredito do sinal do outono, para o "o que fazer" dar o mesmo conselho
+        # do Plano de 3 anos
+        "sinal": "normal",
     }
 
 
@@ -171,6 +174,7 @@ def test_should_show_only_the_forecast_without_the_oni_of_each_year(
     assert aviso.fontes == ("noaa",)
     assert aviso.valores["anos_fase"] is None
     assert aviso.valores["bons_fase"] is None
+    assert aviso.valores["sinal"] is None  # sem o sinal, o front dá o conselho geral
 
 
 @pytest.mark.parametrize(

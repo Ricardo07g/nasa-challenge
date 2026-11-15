@@ -154,7 +154,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   sem ponto, sem aviso ou com falha, sem número. **Tela:** grupos na ordem Agora, O que mudou na sua área, Fora do
   comum e Perto de você (grupo `null` não aparece; grupo vazio = "Nada fora do normal." com a última leitura); cada
   aviso com o nível escrito e um ícone (triângulo em "Atenção", olho em "Fique de olho"; a cor só reforça), o que o
-  dado mostra, "O que fazer:", a fonte e a data; os relatos com "Relato de vizinho, não confirmado". Fora da
+  dado mostra, "O que fazer:", a fonte e a data (no El Niño / La Niña, o "o que fazer" segue o `valores.sinal`, o
+  veredito do sinal do outono, para dar o mesmo conselho do Plano de 3 anos); os relatos com "Relato de vizinho, não confirmado". Fora da
   safrinha, o link "Ver como teriam sido os avisos em <ano>" vai para `/resposta?<parâmetros do fluxo>&ano=<ano>`
   (nunca para `/safra-passada`). O rodapé fixo "Alertas oficiais" aparece sempre (com ou sem ponto), com os botões
   `sms:40199`, `https://wa.me/556120344611`, `tel:193` e `tel:199` e o link `/guia/alertas-defesa-civil`. Até 480 px,
@@ -260,7 +261,9 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   fica na tela com "Recalculando…"), pedido duas vezes: o plano e o "Como é hoje". O "Como é hoje"
   junta o histórico do `/talhao` com as confirmações da tela 4 e o "O que foi?" (os `QuestionChips` e as
   culturas do relato da S7, sem "outra"); sem as 3 safras conhecidas, usa o `plano_3_anos.hoje` e diz que
-  é uma referência. O número de "secar" só aparece com `plano_ab.limite.separa`. A fonte da chuva sai do
+  é uma referência. O número de "secar" só aparece com `plano_ab.limite.separa`. O cartão do sinal do
+  outono usa o `sinal` do `/api/plano` (o Plano A e o Plano B da tela; `planSignal` no `planService`); sem o
+  campo (API antiga) ou enquanto carrega, o do `/recomendacao`, só no plano sugerido (tarefa 0049). A fonte da chuva sai do
   `chuva.fonte` (`rainSourceName`). Não há mais o botão "Como teria sido em 2024?" nem a regra antiga
   da data na tela (o sinal do outono continua). Links do Guia: `COMPARE_ARTICLES` e `PLAN_ARTICLES` (um
   teste confere que existem em pt e en).

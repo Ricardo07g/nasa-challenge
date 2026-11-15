@@ -5,8 +5,11 @@ Regra (hipótese do time, a revisar; números no `regras.yaml`, grupo `sinal_ens
    outono da safrinha (FMA). Sem fase mais provável com a chance mínima: `incerto`.
 2. Histórico: nos anos daquela fase (ONI de cada ano, `EnsoRepository`), em quantos a opção do
    1º ano do Plano A deu certo (o `bom` do `anos_detalhe`, PRD 7.2). Com poucos anos: `incerto`.
-   Com problema em metade ou mais deles: `seco` (Plano B), se o 1º ano do Plano B se saiu melhor
-   nesses anos (ou é a mesma cultura); senão, `incerto`. No resto: `normal` (Plano A).
+   Com problema em metade ou mais deles: `seco` (Plano B), se a cultura do Plano B se saiu melhor
+   nesses anos; sem Plano B ou com ele pior, `incerto`. No resto: `normal` (Plano A).
+   O Plano A e o Plano B são as culturas que a tela do Plano mostra (tarefa 0049): o 1º ano
+   do plano (o sugerido ou o editado) e a cultura que mais deu certo quando ela falhou
+   (`PlanBService`).
 3. SMAP de agora: uma frase com o percentil, só para informar (não decide o plano).
 Mostra chance, nunca certeza, e nunca inventa previsão: sem a previsão do ENSO, não há sinal.
 A regra antiga da data (chuva dos 30 dias antes da data limite, `regra_dia_plantar`) saiu na S9 da
@@ -24,7 +27,7 @@ from typing import Final
 from app.models.climate import ClimateSeason
 from app.models.enso import FaseEnso
 from app.models.enso_forecast import EnsoSeasonForecast, season_middle_month
-from app.models.recomendacao import PlanoRotacao, ResultadoOpcao
+from app.models.recomendacao import ResultadoOpcao
 from app.models.regras import Regras
 from app.models.sinal_outono import (
     NivelSinal,
@@ -171,15 +174,16 @@ class SinalOutonoService:
         self,
         lat: float,
         lon: float,
-        plano_a: PlanoRotacao,
-        plano_b: PlanoRotacao,
+        cultura_a: str,
+        cultura_b: str | None,
         opcoes: Sequence[ResultadoOpcao],
         seasons: Sequence[ClimateSeason] = (),
         lang: str = "pt-BR",
     ) -> SinalOutono | None:
         """Sinal para o ponto, entre o Plano A e o Plano B.
 
-        O Plano A é o melhor plano do ano normal e o Plano B, o do ano seco (PRD 7.7 e 7.10).
+        `cultura_a`: a cultura do 1º ano do plano que a tela mostra; `cultura_b`: a do Plano B dela
+        (`PlanBService`), ou None sem Plano B (tarefa 0049).
         `seasons` é a série de chuva guardada da célula (a mesma do motor): o histórico de cada
         opção vem dela, e a fonte da chuva entra nas fontes do sinal.
         Devolve None sem a previsão do ENSO, sem a estação do outono nela ou com ela já passada.
@@ -191,7 +195,9 @@ class SinalOutonoService:
 
         en = lang.lower().startswith("en")
         by_id = {o.id: o for o in opcoes}
-        nivel, motivo = self._level_and_reason(season, forecast.fonte, plano_a, plano_b, by_id, en)
+        nivel, motivo = self._level_and_reason(
+            season, forecast.fonte, cultura_a, cultura_b, by_id, en
+        )
         rain_sources = self._rain_sources(seasons)
         moisture = self._soil_moisture_repo.get_recent_soil_moisture(lat, lon)
         smap_agora = self._smap_now(moisture, en) if moisture is not None else None
@@ -210,8 +216,8 @@ class SinalOutonoService:
         self,
         season: EnsoSeasonForecast,
         fonte: str,
-        plano_a: PlanoRotacao,
-        plano_b: PlanoRotacao,
+        first_a: str,
+        first_b: str | None,
         by_id: dict[str, ResultadoOpcao],
         en: bool,
     ) -> tuple[NivelSinal, str]:
@@ -234,7 +240,6 @@ class SinalOutonoService:
             else f"Previsão para {period}: {label} ({chance}%, {fonte})."
         )
         phases = {item.ano: item.fase for item in self._enso_repo.get_oni_years()}
-        first_a, first_b = plano_a.anos[0], plano_b.anos[0]
         name_a = self._name(by_id, first_a, en)
         record_a = _record(by_id.get(first_a), phases, fase)
         if record_a is None:
@@ -255,22 +260,27 @@ class SinalOutonoService:
         years = _years_text(record_a.anos, fase, en)
 
         ruins = (record_a.anos - record_a.bons) / record_a.anos
-        record_b = _record(by_id.get(first_b), phases, fase) if first_b != first_a else None
+        has_b = first_b is not None and first_b != first_a
+        record_b = _record(by_id.get(first_b), phases, fase) if has_b and first_b else None
         show_b = record_b is not None and ruins >= regras.fracao_anos_ruins_seco
         if ruins < regras.fracao_anos_ruins_seco:
             nivel = NORMAL
-        elif record_b is None or record_b.bons > record_a.bons:
+        elif record_b is not None and record_b.bons > record_a.bons:
             nivel = SECO
         else:
             nivel = INCERTO
-        name_b = self._name(by_id, first_b, en)
+        name_b = self._name(by_id, first_b, en) if first_b else ""
         if en:
             history = f"In the {years} since {record_a.inicio}, {name_a} worked in {record_a.bons}"
             if show_b and record_b is not None:
                 history += f" and {name_b} in {record_b.bons}"
             history += "."
             if nivel == INCERTO:
-                history += " Plan B did not do better in those years."
+                history += (
+                    " Plan B did not do better in those years."
+                    if record_b is not None
+                    else " No other crop did better in those years."
+                )
         else:
             prefix = "No" if record_a.anos == 1 else "Nos"
             history = (
@@ -280,7 +290,11 @@ class SinalOutonoService:
                 history += f" e {name_b} em {record_b.bons}"
             history += "."
             if nivel == INCERTO:
-                history += " O plano B não foi melhor nesses anos."
+                history += (
+                    " O plano B não foi melhor nesses anos."
+                    if record_b is not None
+                    else " Nenhuma outra cultura se saiu melhor nesses anos."
+                )
         return nivel, f"{forecast_part} {history}"
 
     @staticmethod

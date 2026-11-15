@@ -47,6 +47,15 @@ describe('usePlanController (aba Plano de 3 anos, tarefa 0045)', () => {
     expect(result.current.plan?.choices).toEqual([...sample.objetivos!.equilibrio!.ordem, 'pousio'])
   })
 
+  it('o sinal do outono vem da avaliação do plano da tela (tarefa 0049)', async () => {
+    const d = deps()
+    const sinal = { ...sample.sinal!, nivel: 'seco' as const, motivo: 'Sinal do plano (teste).' }
+    d.evaluate.mockImplementation((params: PlanoParams) => Promise.resolve({ ...buildPlano(params, 'pt'), sinal }))
+    const { result } = await ready(`/plano?${flow}`, d)
+
+    await waitFor(() => expect(result.current.signal?.motivo).toBe('Sinal do plano (teste).'))
+  })
+
   it('avalia o plano e o "Como é hoje" no /api/plano, com a faixa da recomendação', async () => {
     const { result, d } = await ready()
 

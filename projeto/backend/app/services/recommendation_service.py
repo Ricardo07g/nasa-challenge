@@ -34,6 +34,7 @@ from app.models.recomendacao import (
     ResultadoOpcao,
 )
 from app.models.regras import Regras, RegrasNotaFinal, RegrasRenda, RegrasRotulos, RegrasSolo
+from app.models.sinal_outono import SinalOutono
 from app.models.talhao import Confirmacao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.crop_params_repository import CropParamsRepository
@@ -47,6 +48,7 @@ from app.services.crop_alert_service import COVER_CROP_TYPE
 from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
 from app.services.future_climate_service import FutureClimateService
+from app.services.plan_b_service import PlanBService
 from app.services.raio_x_climate_service import RaioXClimateService
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
@@ -262,6 +264,8 @@ class RecommendationService:
         self._facts_service = SuggestionFactsService(self._rules)
         self._future_service = FutureClimateService(self._rules)
         self._cell_climate_service = RaioXClimateService(self._rules)
+        # Plano B do sinal do outono: o mesmo da tela do Plano (tarefa 0049)
+        self._plan_b_service = PlanBService(self._rules)
 
     def recommend(
         self,
@@ -423,22 +427,40 @@ class RecommendationService:
                 if is_en
                 else "Ajuda a decidir. Não substitui o agrônomo."
             ),
-            sinal=(
-                self._sinal_service.evaluate(
-                    lat=lat,
-                    lon=lon,
-                    plano_a=plano_normal,
-                    plano_b=plano_seco,
-                    opcoes=opcoes,
-                    seasons=seasons,
-                    lang=lang,
-                )
-                if self._sinal_service is not None
-                else None
+            sinal=self._autumn_signal(
+                lat, lon, plano_normal.anos[0], opcoes, seasons, semeadura, lang
             ),
             objetivos=objetivos,
             clima_futuro=self._future_service.summarize(deltas, seasons),
             geada=self._cell_climate_service.frost(seasons),
+        )
+
+    def _autumn_signal(
+        self,
+        lat: float,
+        lon: float,
+        cultura_a: str,
+        opcoes: list[ResultadoOpcao],
+        seasons: list[ClimateSeason],
+        semeadura: date,
+        lang: str,
+    ) -> SinalOutono | None:
+        """Sinal do outono com o Plano A (o 1º ano do plano sugerido) e o Plano B da tela do Plano.
+
+        O Plano B é o do `PlanBService` (a cultura que mais deu certo quando a do Plano A falhou),
+        o mesmo do cartão "Plano A e Plano B" (tarefa 0049): o sinal e a tela falam do mesmo plano.
+        """
+        if self._sinal_service is None:
+            return None
+        ab = self._plan_b_service.plan_ab(cultura_a, opcoes, seasons, semeadura)
+        return self._sinal_service.evaluate(
+            lat=lat,
+            lon=lon,
+            cultura_a=cultura_a,
+            cultura_b=ab.cultura_b if ab else None,
+            opcoes=opcoes,
+            seasons=seasons,
+            lang=lang,
         )
 
     def _objectives(

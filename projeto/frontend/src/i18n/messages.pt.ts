@@ -1107,7 +1107,12 @@ export const pt = {
         goodOthers: number,
       ) =>
         `Nos ${years} anos de ${phase} desde ${start}, ${crop} deu certo em ${good} aqui; nos outros ${others} anos, em ${goodOthers}. São poucos anos.`,
-      ensoTodo: 'Veja o Plano B no Plano de 3 anos antes de decidir o que plantar.',
+      /** O mesmo conselho do sinal do outono no Plano de 3 anos (tarefa 0049). */
+      ensoTodo: {
+        normal: 'O sinal do outono marca o Plano A. Confira o plano no Plano de 3 anos.',
+        seco: 'O sinal do outono marca o Plano B. Veja o Plano B no Plano de 3 anos antes de decidir o que plantar.',
+        incerto: 'Sem sinal claro para o outono. Veja o Plano A e o Plano B no Plano de 3 anos antes de decidir o que plantar.',
+      },
       safrinhaDry: (crop: string, days: number, date: string) =>
         `${crop}: ${days} dias sem chuva perto da fase que mais precisa de água (até ${date}).`,
       safrinhaHeat: (crop: string, days: number, temp: number, date: string) =>
