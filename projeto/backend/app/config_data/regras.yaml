@@ -414,6 +414,60 @@ avisos:
     valor: 7
     fonte: "Plano de evolução 4.4: a semana do limite de avisos; hipótese do time: 7 dias corridos que terminam no dia do aviso (a revisar)"
 
+avisos_tela:
+  # Tela "Avisos" (/avisos, remodelagem S6, tarefa 0046). Grupo à parte do `avisos` (replay P4 e
+  # acompanhamento P6), que continua igual. Reaproveita sem repetir: o dia seco
+  # (avisos.dia_seco_abaixo_mm), o calor (clima.calor_temp_c), o raio da comunidade
+  # (comunidade.raio_km), a estação e a chance mínima da previsão do ENSO (sinal_enso) e as janelas
+  # de março a maio do veranico e do calor (raio_x). Terra seca pelo SMAP; dias sem chuva e calor
+  # pelo NASA POWER dos últimos dias; mudanças e recordes na série guardada da célula (chuva do GPM
+  # IMERG; temperatura do NASA POWER).
+  terra_seca_percentil_max:
+    valor: 20.0
+    fonte: "Pedido da remodelagem, seção 6 ('percentil do SMAP de 20 ou menos'); é também o percentil da terra seca do PRD 7.10 (sinal_outono.smap_percentil_seco)"
+  smap_antiga_dias:
+    valor: 15
+    fonte: "Pedido da remodelagem, seção 6 ('leitura com mais de 15 dias é marcada como antiga')"
+  power_dias:
+    valor: 30
+    fonte: "Pedido da remodelagem, seção 6 ('os últimos 30 dias da célula' na API do NASA POWER)"
+  dias_sem_chuva_min:
+    valor: 10
+    fonte: "Pedido da remodelagem, seção 6 ('10 ou mais dias seguidos com menos de 1 mm até a última leitura'); são os 10 dias do veranico do plano de evolução 4.4 (avisos.veranico_min_dias)"
+  calor_dias_min:
+    valor: 3
+    fonte: "Pedido da remodelagem, seção 6 ('3 ou mais dias de 35 °C nos últimos 10'); são os 3 dias do calor do motor (clima.calor_min_dias)"
+  calor_janela_dias:
+    valor: 10
+    fonte: "Pedido da remodelagem, seção 6 ('nos últimos 10' dias até a última leitura)"
+  vizinhos_dias:
+    valor: 7
+    fonte: "Pedido da remodelagem, seção 6 ('eventos relatados pela comunidade nos últimos 7 dias'): hoje e os 6 dias antes, no dia de Uberlândia, como o resumo de chuva da comunidade (decisão D52)"
+  ano_recente_inicio:
+    valor: 2020
+    fonte: "Pedido da remodelagem, seção 6 ('compare 2020–2024 com 2005–2019'): os anos a partir deste são os recentes; os de antes, a referência"
+  outono_inicio:
+    valor: "03-01"
+    fonte: "Pedido da remodelagem, seção 6 ('outono mais seco'): março a maio, a mesma época do veranico e do calor do raio-X (seção 4)"
+  outono_fim:
+    valor: "05-31"
+    fonte: "Pedido da remodelagem, seção 6 ('outono mais seco'): até 31 de maio"
+  mudou_veranico_dias_min:
+    valor: 5.0
+    fonte: "Hipótese do time, a revisar: a média do maior veranico de março a maio de cada ano só aparece como mudança com 5 dias ou mais de diferença entre 2020–2024 e 2005–2019 (metade do veranico do aviso, 10 dias)"
+  mudou_fim_chuvas_dias_min:
+    valor: 10
+    fonte: "Hipótese do time, a revisar: a mediana do fim das chuvas só aparece como mudança com 10 dias ou mais de diferença (o fim das chuvas na UFU varia de 16/mar a 22/jun nos 20 anos)"
+  mudou_calor_dias_min:
+    valor: 1.0
+    fonte: "Hipótese do time, a revisar: a média de dias com 35 °C ou mais de março a maio por ano só aparece como mudança com 1 dia por ano ou mais de diferença"
+  mudou_falta_agua_mm_min:
+    valor: 25.0
+    fonte: "Hipótese do time, a revisar: a média da falta de água no ciclo da melhor opção (ETc menos ETr do balanço do motor) só aparece como mudança com 25 mm ou mais de diferença (a CAD da terra argilosa é 60 mm)"
+  mudou_deu_certo_pct_min:
+    valor: 25.0
+    fonte: "Hipótese do time, a revisar: a parte dos anos em que a melhor opção deu certo só aparece como mudança com 25 pontos percentuais ou mais de diferença (com 5 anos recentes, cada ano vale 20 pontos: um ano só não basta)"
+
 enso:
   # Marca de El Niño / La Niña de cada safrinha no detalhe dos anos (P1, plano de evolução 4.1).
   # Só informa: não entra na conta. É dado da NOAA, não da NASA. O pipeline/fetch_oni.py usa estes

@@ -433,3 +433,41 @@ def test_should_refuse_an_x_ray_number_without_source(
 
     with pytest.raises(ValueError, match=".".join(path)):
         YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
+def test_should_load_the_alerts_screen_rule() -> None:
+    # Remodelagem S6 (tarefa 0046), seção 6 do pedido: terra seca com o percentil do SMAP de 20 ou
+    # menos (leitura antiga com mais de 15 dias), 30 dias do NASA POWER, 10 dias seguidos sem chuva,
+    # 3 dias de calor nos últimos 10, relatos dos últimos 7 dias e 2020–2024 contra 2005–2019.
+    regra = YamlRulesRepository(SHIPPED).get_rules().avisos_tela
+
+    assert (regra.terra_seca_percentil_max, regra.smap_antiga_dias) == (20.0, 15)
+    assert (regra.power_dias, regra.dias_sem_chuva_min) == (30, 10)
+    assert (regra.calor_dias_min, regra.calor_janela_dias) == (3, 10)
+    assert regra.vizinhos_dias == 7
+    assert regra.ano_recente_inicio == 2020
+    assert (regra.outono_inicio, regra.outono_fim) == ("03-01", "05-31")
+    assert regra.mudou_veranico_dias_min > 0
+    assert regra.mudou_fim_chuvas_dias_min > 0
+    assert regra.mudou_calor_dias_min > 0
+    assert regra.mudou_falta_agua_mm_min > 0
+    assert regra.mudou_deu_certo_pct_min > 0
+
+
+def test_should_keep_the_crop_alerts_group_as_it_was() -> None:
+    # O grupo `avisos` (replay P4 e acompanhamento P6) continua igual: a tela /avisos tem o dela.
+    regra = YamlRulesRepository(SHIPPED).get_rules().avisos
+
+    assert (regra.dia_seco_abaixo_mm, regra.veranico_min_dias) == (1.0, 10)
+    assert not hasattr(regra, "terra_seca_percentil_max")
+
+
+@pytest.mark.parametrize(
+    "field", ["terra_seca_percentil_max", "dias_sem_chuva_min", "mudou_falta_agua_mm_min"]
+)
+def test_should_refuse_an_alerts_screen_number_without_source(tmp_path: Path, field: str) -> None:
+    raw = _shipped_raw()
+    del raw["avisos_tela"][field]["fonte"]
+
+    with pytest.raises(ValueError, match=f"avisos_tela.{field}"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
