@@ -242,7 +242,6 @@ def test_should_load_the_enso_forecast_signal_rules() -> None:
     assert sinal.fase_chance_min_pct == 50
     assert sinal.anos_fase_min == 5
     assert sinal.fracao_anos_ruins_seco == 0.5
-    assert sinal.dias_regra_data == 30
     assert sinal.smap_faixas_pct == (20.0, 45.0, 55.0, 80.0)
 
 

@@ -483,19 +483,16 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     fase (`fracao_anos_ruins_seco`) e o 1º ano do Plano B se saiu melhor (ou é a mesma cultura, ou
     pousio);
   - `normal` (marca o Plano A): no resto.
-  - **Regra da data** (`regra_dia_plantar.texto` e `regra_data`): "Se nos 30 dias antes de <data
-    limite> chover menos que X mm (60% da média de M mm), vá de plano B". M é a média da chuva da
-    data limite − 30 dias até a véspera na série guardada da célula (a mesma `climate_season` do
-    motor: POWER ou IMERG), X = `sinal_outono.chuva_fracao_seco` × M, em mm inteiros; a data limite
-    é a da cultura do 1º ano do Plano A (ou do B, se o A começa em pousio). Sem a série, volta a
-    frase antiga do dia de plantar ("se a terra estiver seca").
+  - **Sem a regra da data** (tarefa 0049, S9 da remodelagem): o `regra_dia_plantar` e o `regra_data`
+    (chuva dos 30 dias antes da data limite) saíram da API, porque nenhuma tela usava mais (a tela do
+    Plano trocou a regra pelo Plano A / Plano B com o número derivado da série, tarefa 0045). O
+    `sinal_outono.chuva_fracao_seco` ficou sem uso no `regras.yaml`, como o `chance_seco_min`.
   - `motivo`: "Previsão para fevereiro a abril de 2027: El Niño (98%, NOAA). Nos 7 anos de El Niño
     desde 2005, milho sozinho deu certo em 5." O nome da fonte vem do arquivo (`fonte`). Nunca chama
     El Niño de "ano seco" (PRD 7.10).
   - Contrato do front (`SinalOutono` em `src/models/recomendacao.ts`): `nivel`, `motivo`, `fonte` (a
-    previsão primeiro, depois a chuva da regra e o `SMAP`), `data` (dia da emissão da previsão),
-    `regra_dia_plantar`, e os opcionais `regra_data` (`data_limite`, `inicio`, `dias`,
-    `chuva_min_mm`, `media_mm`) e `smap_agora` (`percentil`, `data`, `texto`).
+    previsão primeiro, depois a fonte da chuva da série e o `SMAP`), `data` (dia da emissão da
+    previsão) e o opcional `smap_agora` (`percentil`, `data`, `texto`).
   - **Fora do sinal** (continuam no repositório, sem uso): o GEOS-S2S (`SeasonalForecastRepository`,
     `NoAutumnSignalDataRepository`; só NetCDF-4/HDF5, tarefa 0032) e a chuva recente do IMERG Late
     (`FileRecentRainRepository`, `IMERG_LATE_PATH`; só de fev a jul, tarefa 0033).

@@ -430,7 +430,6 @@ class RecommendationService:
                     plano_a=plano_normal,
                     plano_b=plano_seco,
                     opcoes=opcoes,
-                    semeadura=semeadura,
                     seasons=seasons,
                     lang=lang,
                 )

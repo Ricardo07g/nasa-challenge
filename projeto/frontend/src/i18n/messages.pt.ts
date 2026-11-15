@@ -35,9 +35,6 @@ export const pt = {
   },
   answerTabs: {
     label: 'Telas da resposta',
-    answer: 'Resposta',
-    plan: 'Plano de 3 anos',
-    options: 'Todas as opções',
   },
   stepper: {
     label: (current: number, total: number) => `Pergunta ${current} de ${total}`,
@@ -469,8 +466,6 @@ export const pt = {
       `${good} anos bons e ${total - good} anos com falta de água`,
     why: 'Por quê?',
     close: 'Fechar',
-    lateWarning: (crops: string, count: number) =>
-      `Já não dá tempo: ${crops} ${count === 1 ? 'fica' : 'ficam'} fora da janela de plantio.`,
     rainEnough: 'Choveu o bastante',
     rainShort: 'Faltou chuva',
     /** O período vem do talhão (dados[]); o backend pode descartar ano com dia faltando. */
@@ -486,21 +481,14 @@ export const pt = {
     ensoNina: 'La Niña (NOAA)',
     howTitle: 'Como fazer',
     howNote: 'Dose de semente e herbicida: combine com o seu agrônomo.',
-    seePlan: 'Ver plano de 3 anos',
-    seeAll: 'Ver todas as opções',
     prefer: 'Se você prefere…',
   },
   options: {
     title: 'Todas as opções',
     sortLabel: 'Colocar na frente quem é melhor em:',
     rank: (position: number) => `${position}º`,
-    fallowRain: 'Não depende de chuva',
-    fallowIncome: 'Não dá grão',
-    fallowSoil: 'Fica descoberta',
     legend: (period: string) =>
       `Cada quadrinho é um ano (${period}). Cheio: choveu o bastante. Vazio: faltou chuva na hora que a planta mais precisa.`,
-    outOfWindowTitle: 'Fora da janela de plantio',
-    seePlan: 'Ver plano de 3 anos',
   },
   plan: {
     title: 'Plano de 3 anos',
@@ -513,33 +501,7 @@ export const pt = {
     planChoice: 'Qual plano seguir',
     planA: 'Plano A',
     planB: 'Plano B, se secar',
-    keepPlanB: 'Deixe o plano B na manga.',
-    swapTagline: (from: string) => `No lugar de ${from}: aguenta mais a seca.`,
-    plantingRule: (date: string, planA: string, planB: string) =>
-      `No dia de plantar (até ${date}), se a terra estiver seca, use o plano B: ${planB} no lugar de ${planA}.`,
-    rootWater: 'O satélite mede a água na raiz. Você não precisa adivinhar.',
-    rainRuleNote: 'Meça a chuva no seu pluviômetro. A média vem da série de chuva do satélite no seu ponto.',
-    withPlan: 'Com plano',
-    today: 'Como é hoje',
-    coveredAll: (total: number) => `Terra coberta nos ${total} anos`,
-    coveredSome: (covered: number, total: number) => `Terra coberta em ${covered} de ${total} anos`,
-    grainYears: (grain: number, total: number) => `Grão em ${grain} de ${total} anos`,
-    gainTitle: 'O ganho vem na soja seguinte',
-    gainText:
-      'Num estudo no Cerrado, a soja depois de grão com braquiária rendeu 11% a mais do que depois de terra parada.',
-    gainNote: 'Referência ilustrativa; estudo a confirmar.',
     regionLink: 'Ver o que acontece na sua região',
-  },
-  past: {
-    button: (year: number) => `Como teria sido em ${year}?`,
-    title: (year: number) => `Como teria sido a safrinha de ${year}`,
-    text: (year: number) =>
-      `Repetimos a chuva e o calor de ${year} (dados da NASA) com a melhor opção. Estes são os avisos que você teria recebido.`,
-    choose: 'Escolha o ano',
-    seco: (year: number) => `${year} · ano seco`,
-    bom: (year: number) => `${year} · ano bom`,
-    noWarnings: 'Nenhum aviso nesta safra.',
-    note: 'Valores de exemplo. No app, o ano e as datas vêm dos dados reais.',
   },
   /** Abas da resposta e aba Sugestão (seção 5 da remodelagem, tarefa 0044). */
   suggestion: {
@@ -832,36 +794,6 @@ export const pt = {
     methodTitle: 'Também no Telegram',
     method:
       'Mande a localização da lavoura e diga quando colhe a soja. O bot responde em texto e em áudio, com o link desta página. Quem quiser recebe avisos de falta de chuva e calor. Em português e em inglês.',
-  },
-  report: {
-    button: 'Relatório para banco ou seguro',
-    savePdf: 'Salvar em PDF',
-    title: 'Relatório da lavoura · Raiz Orbital',
-    place: 'Local e data',
-    coords: (coords: string) => `Coordenadas: ${coords}`,
-    today: (date: string) => `Data de hoje: ${date}`,
-    dataVersion: (version: string) => `Versão dos dados: ${version}`,
-    best: 'Opção recomendada e semeadura planejada',
-    sowing: (date: string) => `Semeadura em ${date} · dentro da janela de plantio`,
-    sowingOut: (date: string) => `Semeadura em ${date} · fora da janela de plantio`,
-    table: 'Todas as opções',
-    headers: {
-      crop: 'Opção',
-      years: 'Anos que deram certo',
-      future: 'Clima 2041–2060',
-      income: 'Renda',
-      soil: 'Terra',
-    },
-    /** Anos bons de N: os dois números vêm da API (chuva.anos_bons e chuva.anos). */
-    yearsOf: (good: number, total: number) => `${good} de ${total}`,
-    /** Clima de 2041–2060: média dos modelos e, quando eles discordam, a faixa entre eles. */
-    futureOf: (good: number, total: number, range: { min: number; max: number } | null) =>
-      `${good} de ${total}${range ? ` (de ${range.min} a ${range.max})` : ''}`,
-    history: 'Histórico da área',
-    idle: (idle: number, known: number, uncertain: number) =>
-      `Ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
-    sources: 'Fontes',
-    footer: 'Ajuda a decidir. Não é laudo técnico, não substitui o ZARC oficial nem o agrônomo responsável.',
   },
   community: {
     title: 'Na sua região',

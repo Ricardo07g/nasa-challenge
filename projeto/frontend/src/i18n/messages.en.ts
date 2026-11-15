@@ -33,9 +33,6 @@ export const en = {
   },
   answerTabs: {
     label: 'Answer screens',
-    answer: 'Answer',
-    plan: '3-year plan',
-    options: 'All options',
   },
   stepper: {
     label: (current: number, total: number) => `Question ${current} of ${total}`,
@@ -450,8 +447,6 @@ export const en = {
       `${good} good years and ${total - good} years short of water`,
     why: 'Why?',
     close: 'Close',
-    lateWarning: (crops: string, count: number) =>
-      `Too late to plant: ${crops} ${count === 1 ? 'is' : 'are'} outside the planting window.`,
     rainEnough: 'Enough rain',
     rainShort: 'Not enough rain',
     rainYears: (years: number, start: string, end: string) => `${years} years between ${start} and ${end}`,
@@ -464,21 +459,14 @@ export const en = {
     ensoNina: 'La Niña (NOAA)',
     howTitle: 'How to do it',
     howNote: 'Seed rate and herbicide: agree on them with your agronomist.',
-    seePlan: 'See the 3-year plan',
-    seeAll: 'See all options',
     prefer: 'If you prefer…',
   },
   options: {
     title: 'All options',
     sortLabel: 'Put first the best at:',
     rank: (position: number) => `${position}.`,
-    fallowRain: 'Does not depend on rain',
-    fallowIncome: 'No grain',
-    fallowSoil: 'Soil stays bare',
     legend: (period: string) =>
       `Each square is one year (${period}). Filled: there was enough rain. Empty: rain was short when the crop needed it most.`,
-    outOfWindowTitle: 'Outside the planting window',
-    seePlan: 'See the 3-year plan',
   },
   plan: {
     title: '3-year plan',
@@ -491,33 +479,7 @@ export const en = {
     planChoice: 'Which plan to follow',
     planA: 'Plan A',
     planB: 'Plan B, if it dries',
-    keepPlanB: 'Keep plan B ready.',
-    swapTagline: (from: string) => `Instead of ${from}: handles drought better.`,
-    plantingRule: (date: string, planA: string, planB: string) =>
-      `On sowing day (by ${date}), if the soil is dry, use plan B: ${planB} instead of ${planA}.`,
-    rootWater: 'The satellite measures water around the roots. You do not need to guess.',
-    rainRuleNote: 'Measure the rain with your rain gauge. The average comes from the satellite rain series at your point.',
-    withPlan: 'With the plan',
-    today: 'How it is today',
-    coveredAll: (total: number) => `Soil covered in all ${total} years`,
-    coveredSome: (covered: number, total: number) => `Soil covered in ${covered} of ${total} years`,
-    grainYears: (grain: number, total: number) => `Grain in ${grain} of ${total} years`,
-    gainTitle: 'The gain shows up in the next soybean crop',
-    gainText:
-      'In a study in the Cerrado, soybeans after grain with brachiaria yielded 11% more than after idle land.',
-    gainNote: 'Illustrative reference; study to be confirmed.',
     regionLink: 'See what happens in your region',
-  },
-  past: {
-    button: (year: number) => `How would ${year} have gone?`,
-    title: (year: number) => `How the ${year} second crop would have gone`,
-    text: (year: number) =>
-      `We replayed the rain and heat of ${year} (NASA data) with the best option. These are the warnings you would have received.`,
-    choose: 'Choose the year',
-    seco: (year: number) => `${year} · dry year`,
-    bom: (year: number) => `${year} · good year`,
-    noWarnings: 'No warnings this season.',
-    note: 'Example values. In the app, the year and dates come from real data.',
   },
   suggestion: {
     tabs: { suggestion: 'Suggestion', compare: 'Compare', plan: '3-year plan' },
@@ -804,34 +766,6 @@ export const en = {
     methodTitle: 'Also on Telegram',
     method:
       'Send your field location and say when you harvest soybeans. The bot replies in text and audio, with a link to this page. You can opt into low-rainfall and heat warnings. In Portuguese and English.',
-  },
-  report: {
-    button: 'Report for bank or insurance',
-    savePdf: 'Save as PDF',
-    title: 'Field report · Raiz Orbital',
-    place: 'Place and date',
-    coords: (coords: string) => `Coordinates: ${coords}`,
-    today: (date: string) => `Today: ${date}`,
-    dataVersion: (version: string) => `Data version: ${version}`,
-    best: 'Recommended option and planned sowing',
-    sowing: (date: string) => `Sowing on ${date} · inside the planting window`,
-    sowingOut: (date: string) => `Sowing on ${date} · outside the planting window`,
-    table: 'All options',
-    headers: {
-      crop: 'Option',
-      years: 'Years it worked',
-      future: '2041–2060 climate',
-      income: 'Income',
-      soil: 'Soil',
-    },
-    yearsOf: (good: number, total: number) => `${good} of ${total}`,
-    futureOf: (good: number, total: number, range: { min: number; max: number } | null) =>
-      `${good} of ${total}${range ? ` (${range.min} to ${range.max})` : ''}`,
-    history: 'Field history',
-    idle: (idle: number, known: number, uncertain: number) =>
-      `Left idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,
-    sources: 'Sources',
-    footer: 'Helps you decide. Not a technical report; it does not replace the official ZARC or the responsible agronomist.',
   },
   community: {
     title: 'In your region',

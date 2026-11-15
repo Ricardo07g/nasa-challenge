@@ -65,29 +65,6 @@ class RecentRain:
 
 
 @dataclass(frozen=True)
-class RegraDiaPlantar:
-    """Regra do dia de plantar: até `data_limite`, a frase diz quando ir de Plano B.
-
-    Com a série de chuva, a frase é a regra da data (`RegraData`, tarefa 0038).
-    """
-
-    data_limite: date
-    texto: str
-
-
-@dataclass(frozen=True)
-class RegraData:
-    """Regra da data (tarefa 0038): chuva de `inicio` até a véspera de `data_limite` (`dias` dias)
-    abaixo de `chuva_min_mm` -> Plano B. `media_mm` é a média desses dias na série da célula."""
-
-    data_limite: date
-    inicio: date
-    dias: int
-    chuva_min_mm: int
-    media_mm: int
-
-
-@dataclass(frozen=True)
 class SmapAgora:
     """A umidade da terra agora pelo SMAP, só para informar (não decide o plano)."""
 
@@ -104,6 +81,4 @@ class SinalOutono:
     motivo: str
     fonte: tuple[str, ...]  # a 1ª é a da previsão do ENSO
     data: date  # dia em que a previsão do ENSO foi publicada
-    regra_dia_plantar: RegraDiaPlantar
-    regra_data: RegraData | None = None  # None sem a série de chuva da célula
     smap_agora: SmapAgora | None = None  # None sem o SMAP recente do ponto

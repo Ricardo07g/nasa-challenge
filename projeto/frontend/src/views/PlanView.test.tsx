@@ -24,7 +24,6 @@ const testSignal: SinalOutono = {
   motivo: 'Previsão de teste: El Niño (70%, Fonte de teste).',
   fonte: ['Fonte de teste'],
   data: '2026-11-14',
-  regra_dia_plantar: { data_limite: '2027-02-28', texto: 'Regra antiga de teste.' },
 }
 
 const nav = {

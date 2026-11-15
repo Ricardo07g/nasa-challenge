@@ -1,13 +1,13 @@
 """Unit tests for SinalOutonoService (RF-20, tarefa 0038), com repositories falsos.
 
 Regra: previsão do El Niño / La Niña para fevereiro a abril + como a opção do 1º ano do Plano A se
-saiu nos anos daquela fase; regra da data com a chuva dos 30 dias antes da data limite; o SMAP de
-agora só informa. Todos os números são de teste (não são da NOAA, da NASA nem do SMAP).
+saiu nos anos daquela fase; o SMAP de agora só informa. A regra antiga da data saiu na S9 (tarefa
+0049). Todos os números são de teste (não são da NOAA, da NASA nem do SMAP).
 """
 
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import date, timedelta
+from datetime import date
 from typing import Any
 
 import pytest
@@ -17,12 +17,11 @@ from app.models.enso import FaseEnso, OniYear
 from app.models.enso_forecast import EnsoForecast, EnsoSeasonForecast
 from app.models.recomendacao import AnoDetalhe, NotasOpcao, PlanoRotacao, ResultadoOpcao
 from app.models.regras import Regras
-from app.models.sinal_outono import RecentSoilMoisture, RegraData, SinalOutono, SmapAgora
+from app.models.sinal_outono import RecentSoilMoisture, SinalOutono, SmapAgora
 from app.repositories.rules_repository import load_default_rules
 from app.services.sinal_outono_service import SinalOutonoService
 
 LAT, LON = -18.9543, -48.1993
-SEMEADURA = date(2027, 2, 18)
 ISSUED = date(2026, 11, 14)
 TODAY = date(2026, 11, 15)
 SOURCE = "Fonte de teste"
@@ -170,7 +169,6 @@ def _evaluate(
         "plano_a": PLANO_A,
         "plano_b": PLANO_B,
         "opcoes": _opcoes(),
-        "semeadura": SEMEADURA,
         "seasons": _flat_seasons(),
     }
     params.update(kwargs)
@@ -353,113 +351,23 @@ def test_should_return_no_signal_when_the_forecast_season_is_already_over() -> N
     assert _evaluate(_forecast(), today=date(2027, 4, 30)) is not None
 
 
-# --- regra da data -----------------------------------------------------------------------------
+# --- fontes e o SMAP de agora ------------------------------------------------------------------
 
 
-def test_should_give_the_date_rule_with_a_fraction_of_the_30_day_average_rain() -> None:
-    # 5 mm/dia em todos os anos: 150 mm nos 30 dias antes de 28/fev; 60% = 90 mm
-    sinal = _evaluate(_forecast())
-
-    assert sinal is not None
-    assert sinal.regra_data == RegraData(
-        data_limite=date(2027, 2, 28),
-        inicio=date(2027, 1, 29),
-        dias=30,
-        chuva_min_mm=90,
-        media_mm=150,
-    )
-    assert sinal.regra_dia_plantar.data_limite == date(2027, 2, 28)
-    assert sinal.regra_dia_plantar.texto == (
-        "Se nos 30 dias antes de 28/fev chover menos que 90 mm (60% da média de 150 mm), "
-        "vá de plano B: sorgo no lugar de milho sozinho."
-    )
-
-
-def test_should_sum_only_the_30_days_before_the_deadline_in_each_year() -> None:
-    # 1 mm em cada dia de 29/jan a 27/fev; 50 mm em 28/jan e em 28/fev (fora da janela)
-    def rain(year: int) -> list[float]:
-        start = date(year, 1, 1)
-        days = [start + timedelta(days=i) for i in range(212)]
-        window = (date(year, 1, 29), date(year, 2, 27))
-        return [
-            1.0 if window[0] <= d <= window[1] else 50.0 if d.day == 28 and d.month < 3 else 0.0
-            for d in days
-        ]
-
-    sinal = _evaluate(_forecast(), seasons=[_season(y, rain(y)) for y in YEARS])
-
-    assert sinal is not None
-    assert sinal.regra_data is not None
-    assert sinal.regra_data.media_mm == 30
-    assert sinal.regra_data.chuva_min_mm == 18
-
-
-def test_should_average_the_window_over_the_years() -> None:
-    seasons = [_season(2005, [4.0] * 212), _season(2006, [6.0] * 212)]
-
-    sinal = _evaluate(_forecast(), seasons=seasons)
-
-    assert sinal is not None
-    assert sinal.regra_data is not None
-    assert (sinal.regra_data.media_mm, sinal.regra_data.chuva_min_mm) == (150, 90)
-
-
-def test_should_say_the_first_year_stays_when_both_plans_start_with_the_same_crop() -> None:
-    plano_b = PlanoRotacao(anos=("milho_safrinha", "milheto", "milheto"), nota=60.0, descricao="")
-
-    sinal = _evaluate(_forecast(), plano_b=plano_b)
-
-    assert sinal is not None
-    assert sinal.regra_dia_plantar.texto == (
-        "Se nos 30 dias antes de 28/fev chover menos que 90 mm (60% da média de 150 mm), "
-        "siga o plano B; o 1º ano continua com milho sozinho."
-    )
-
-
-def test_should_say_plans_are_the_same_when_plan_b_equals_plan_a() -> None:
-    sinal = _evaluate(_forecast(), plano_b=PLANO_A)
-
-    assert sinal is not None
-    assert sinal.regra_dia_plantar.texto == (
-        "Os planos A e B são iguais: plante milho sozinho até 28/fev, chova ou não."
-    )
-
-
-def test_should_write_the_date_rule_in_english() -> None:
-    sinal = _evaluate(_forecast(), opcoes=_opcoes(en=True), lang="en")
-
-    assert sinal is not None
-    assert sinal.regra_dia_plantar.texto == (
-        "If less than 90 mm of rain falls in the 30 days before Feb 28 (60% of the 150 mm "
-        "average), go with plan B: sorghum instead of corn alone."
-    )
-
-
-def test_should_take_plan_b_deadline_when_plan_a_starts_with_fallow() -> None:
-    plano_a = PlanoRotacao(anos=("pousio", "crotalaria", "milheto"), nota=50.0, descricao="")
-
-    sinal = _evaluate(_forecast(), plano_a=plano_a)
-
-    assert sinal is not None
-    assert sinal.regra_dia_plantar.data_limite == date(2027, 3, 20)
-    assert "sorgo no lugar de pousio" in sinal.regra_dia_plantar.texto
-    # Pousio não tem histórico na faixa de chuva: sem como comparar
-    assert sinal.nivel == "incerto"
-
-
-def test_should_keep_the_planting_day_rule_without_the_rain_series() -> None:
+def test_should_list_only_the_forecast_as_source_without_the_rain_series() -> None:
     sinal = _evaluate(_forecast(), seasons=[])
 
     assert sinal is not None
-    assert sinal.regra_data is None
-    assert sinal.regra_dia_plantar.texto == (
-        "No dia de plantar (até 28/fev), se a terra estiver seca, use o plano B: "
-        "sorgo no lugar de milho sozinho."
-    )
     assert sinal.fonte == (SOURCE,)
 
 
-# --- fontes e o SMAP de agora ------------------------------------------------------------------
+def test_should_not_bring_the_old_date_rule_anymore() -> None:
+    # S9 (tarefa 0049): a regra da data (regra_dia_plantar, regra_data) não tem mais tela.
+    sinal = _evaluate(_forecast())
+
+    assert sinal is not None
+    assert not hasattr(sinal, "regra_dia_plantar")
+    assert not hasattr(sinal, "regra_data")
 
 
 def test_should_list_the_forecast_and_the_rain_series_as_sources() -> None:

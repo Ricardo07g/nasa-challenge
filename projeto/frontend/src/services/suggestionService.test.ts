@@ -7,7 +7,6 @@ import {
   clearEnsoNotes,
   cropArticle,
   lateNotice,
-  optionsForObjective,
   rankForObjective,
   selectedYear,
   suggestedPlan,
@@ -96,16 +95,6 @@ describe('rankForObjective (seção 5.1: a ordem vem pronta do motor)', () => {
     const old = rec({ objetivos: undefined })
     expect(rankForObjective(old, 'seguranca').map((o) => o.id)).toEqual(['crotalaria', 'milho_braquiaria', 'sorgo'])
     expect(rankForObjective(old, null).map((o) => o.id)).toEqual(['milho_braquiaria', 'sorgo', 'crotalaria'])
-  })
-})
-
-describe('optionsForObjective (aba Comparar)', () => {
-  it('as que cabem na janela na ordem do objetivo; as fora da janela vão para o fim', () => {
-    const late = opcao('milho_safrinha', 10, 60, 20, 50, { na_janela: false })
-    const summary = optionsForObjective(rec({ opcoes: [...OPTIONS, late], fora_da_janela: [{ id: 'milho_safrinha', nome: 'Milho sozinho', texto: 'x' }] }), 'terra')
-
-    expect(summary.options.map((o) => o.id)).toEqual(['crotalaria', 'milho_braquiaria', 'sorgo', 'milho_safrinha'])
-    expect(summary.late.names).toEqual(['Milho sozinho'])
   })
 })
 

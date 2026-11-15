@@ -128,16 +128,6 @@ export type Plano = { anos: CropId[]; nota: number; descricao: string }
 
 export type NivelSinal = 'normal' | 'seco' | 'incerto'
 
-/** Regra da data (tarefa 0038): chuva de `inicio` à véspera de `data_limite` abaixo de `chuva_min_mm` → Plano B. */
-export type RegraData = {
-  data_limite: string
-  inicio: string
-  dias: number
-  chuva_min_mm: number
-  /** Média desses dias na série de chuva guardada da célula. */
-  media_mm: number
-}
-
 /** A umidade da terra agora pelo SMAP (tarefa 0038): só informa, não decide o plano. */
 export type SmapAgora = { percentil: number; data: string; texto: string }
 
@@ -152,9 +142,6 @@ export type SinalOutono = {
   fonte: string[]
   /** Dia em que a previsão do ENSO foi publicada (ISO). */
   data: string
-  /** Com a série de chuva, o texto é a regra da data. */
-  regra_dia_plantar: { data_limite: string; texto: string }
-  regra_data?: RegraData | null
   smap_agora?: SmapAgora | null
 }
 
@@ -203,9 +190,6 @@ export type Exemplo = {
   talhao: Talhao
   recomendacao: Recomendacao
 }
-
-/** Tipo de cada cultura (PRD §5): quais dão grão e quais deixam a terra coberta. */
-export const GRAIN_CROPS: ReadonlySet<CropId> = new Set(['milho_braquiaria', 'milho_safrinha', 'sorgo'])
 export const COVER_CROPS: ReadonlySet<CropId> = new Set([
   'milho_braquiaria',
   'milho_safrinha',

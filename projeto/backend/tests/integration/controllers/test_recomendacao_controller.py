@@ -1,7 +1,7 @@
 """Integration tests for GET /api/recomendacao and GET /api/exemplo (contrato do plano §3.2)."""
 
 from dataclasses import replace
-from datetime import date, timedelta
+from datetime import date
 from hashlib import sha256
 
 import httpx2
@@ -376,8 +376,8 @@ def test_should_send_null_autumn_signal_until_the_signal_data_arrives(client: Te
 def test_should_send_autumn_signal_in_the_front_contract_when_the_forecast_exists(
     client: TestClient,
 ) -> None:
-    # Contrato do front: SinalOutono em projeto/frontend/src/models/recomendacao.ts; `regra_data` e
-    # `smap_agora` entram como campos opcionais (tarefa 0038).
+    # Contrato do front: SinalOutono em projeto/frontend/src/models/recomendacao.ts; `smap_agora`
+    # entra como campo opcional (tarefa 0038). A regra antiga da data saiu na S9 (tarefa 0049).
     app.dependency_overrides[get_enso_forecast_repository] = FakeEnsoForecastRepository
 
     response = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"})
@@ -385,33 +385,11 @@ def test_should_send_autumn_signal_in_the_front_contract_when_the_forecast_exist
     assert response.status_code == 200
     body = response.json()
     sinal = body["sinal"]
-    assert set(sinal) == {
-        "nivel",
-        "motivo",
-        "fonte",
-        "data",
-        "regra_dia_plantar",
-        "regra_data",
-        "smap_agora",
-    }
+    assert set(sinal) == {"nivel", "motivo", "fonte", "data", "smap_agora"}
     assert sinal["nivel"] in {"normal", "seco", "incerto"}
     assert "El Niño (70%, Fonte de teste)" in sinal["motivo"]
     assert sinal["fonte"] == ["Fonte de teste", "NASA POWER"]
     assert sinal["data"] == "2026-11-14"
-    primeira_a = next(
-        o for o in body["opcoes"] if o["id"] == body["plano_3_anos"]["normal"]["anos"][0]
-    )
-    assert sinal["regra_dia_plantar"]["data_limite"] == primeira_a["data_limite"]
-    assert sinal["regra_dia_plantar"]["texto"].startswith("Se nos 30 dias antes de")
-    # Série de teste: 8 mm por dia (240 mm em 30 dias), mas 2007 e 2014 sem chuva desde 1º/fev
-    # (só 24 mm de 29 a 31/jan): média (18 × 240 + 2 × 24) / 20 = 218,4 mm; 60% = 131 mm
-    assert sinal["regra_data"] == {
-        "data_limite": primeira_a["data_limite"],
-        "inicio": (date.fromisoformat(primeira_a["data_limite"]) - timedelta(days=30)).isoformat(),
-        "dias": 30,
-        "chuva_min_mm": 131,
-        "media_mm": 218,
-    }
     assert sinal["smap_agora"] is None
 
 

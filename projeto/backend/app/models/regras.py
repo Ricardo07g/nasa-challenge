@@ -232,7 +232,7 @@ class RegrasSinalOutono:
     chance_seco_min: float  # chance (0 a 1) de chuva abaixo do normal que já é sinal de seco
     chance_normal_max: float  # abaixo disso (e com a terra sem falta de água) é sinal de normal
     smap_percentil_seco: float  # terra seca: percentil do SMAP abaixo disso...
-    chuva_fracao_seco: float  # ...e chuva recente abaixo desta fração da média
+    chuva_fracao_seco: float  # ...e chuva recente abaixo desta fração da média (sem uso)
 
 
 @dataclass(frozen=True)
@@ -243,7 +243,6 @@ class RegrasSinalEnso:
     fase_chance_min_pct: int  # chance mínima (%) da fase mais provável para haver sinal
     anos_fase_min: int  # mínimo de anos daquela fase na série para contar o histórico
     fracao_anos_ruins_seco: float  # anos ruins do Plano A na fase a partir dos quais é seco
-    dias_regra_data: int  # dias antes da data limite somados na regra da data
     smap_faixas_pct: tuple[float, ...]  # percentis do SMAP que separam as faixas da frase
 
 

@@ -1,4 +1,4 @@
-"""Sinal para o outono, regra da data e SMAP de agora (RF-20; tarefa 0038, decisão de 15/11/2026).
+"""Sinal para o outono e SMAP de agora (RF-20; tarefa 0038, decisão de 15/11/2026).
 
 Regra (hipótese do time, a revisar; números no `regras.yaml`, grupo `sinal_enso`):
 1. Previsão do ENSO: a chance oficial de El Niño, neutro e La Niña da NOAA CPC para a estação do
@@ -7,17 +7,18 @@ Regra (hipótese do time, a revisar; números no `regras.yaml`, grupo `sinal_ens
    1º ano do Plano A deu certo (o `bom` do `anos_detalhe`, PRD 7.2). Com poucos anos: `incerto`.
    Com problema em metade ou mais deles: `seco` (Plano B), se o 1º ano do Plano B se saiu melhor
    nesses anos (ou é a mesma cultura); senão, `incerto`. No resto: `normal` (Plano A).
-3. Regra da data: chuva dos 30 dias antes da data limite do Plano A abaixo de `chuva_fracao_seco`
-   (grupo `sinal_outono`) vezes a média desses dias na série guardada da célula -> Plano B.
-4. SMAP de agora: uma frase com o percentil, só para informar (não decide o plano).
+3. SMAP de agora: uma frase com o percentil, só para informar (não decide o plano).
 Mostra chance, nunca certeza, e nunca inventa previsão: sem a previsão do ENSO, não há sinal.
+A regra antiga da data (chuva dos 30 dias antes da data limite, `regra_dia_plantar`) saiu na S9 da
+remodelagem (tarefa 0049): a tela do Plano trocou a regra pelo Plano A / Plano B com o número
+derivado da série (tarefa 0045).
 """
 
 import math
 from bisect import bisect_right
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date
 from typing import Final
 
 from app.models.climate import ClimateSeason
@@ -28,8 +29,6 @@ from app.models.regras import Regras
 from app.models.sinal_outono import (
     NivelSinal,
     RecentSoilMoisture,
-    RegraData,
-    RegraDiaPlantar,
     SinalOutono,
     SmapAgora,
 )
@@ -45,7 +44,6 @@ SOURCE_SOIL: Final[str] = "SMAP"
 # Nome de cada fonte da chuva guardada (`climate_season.rain_source`), na ordem em que aparece.
 RAIN_SOURCE_NAMES: Final[dict[str, str]] = {"nasa_power": "NASA POWER", "gpm_imerg": "GPM IMERG"}
 FALLOW_NAME = {"pt": "pousio", "en": "fallow"}
-MONTHS_PT = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
 MONTHS_EN = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 MONTH_NAMES_PT = (
     "janeiro",
@@ -147,14 +145,6 @@ def _few_years_text(anos: int, fase: FaseEnso | None, en: bool) -> str:
     return f"Only {_years_text(anos, fase, en)}" if en else f"Só {_years_text(anos, fase, en)}"
 
 
-def _same_day_in(year: int, day: date) -> date:
-    """O mesmo dia e mês em outro ano (29/fev vira 28/fev no ano que não é bissexto)."""
-    try:
-        return day.replace(year=year)
-    except ValueError:
-        return date(year, day.month, day.day - 1)
-
-
 class SinalOutonoService:
     """Junta a previsão do ENSO, o histórico das opções e a chuva guardada no sinal da tela 7."""
 
@@ -171,7 +161,6 @@ class SinalOutonoService:
         self._soil_moisture_repo = soil_moisture_repo
         regras = rules if rules is not None else load_default_rules()
         self._regras = regras.sinal_enso
-        self._chuva_fracao = regras.sinal_outono.chuva_fracao_seco
         if len(self._regras.smap_faixas_pct) != len(SMAP_BANDS_PT) - 1:
             raise ValueError(
                 f"sinal_enso.smap_faixas_pct precisa de {len(SMAP_BANDS_PT) - 1} percentis"
@@ -185,14 +174,14 @@ class SinalOutonoService:
         plano_a: PlanoRotacao,
         plano_b: PlanoRotacao,
         opcoes: Sequence[ResultadoOpcao],
-        semeadura: date,
         seasons: Sequence[ClimateSeason] = (),
         lang: str = "pt-BR",
     ) -> SinalOutono | None:
-        """Sinal para o ponto, com a regra da data entre o Plano A e o Plano B.
+        """Sinal para o ponto, entre o Plano A e o Plano B.
 
         O Plano A é o melhor plano do ano normal e o Plano B, o do ano seco (PRD 7.7 e 7.10).
-        `seasons` é a série de chuva guardada da célula (a mesma do motor), para a regra da data.
+        `seasons` é a série de chuva guardada da célula (a mesma do motor): o histórico de cada
+        opção vem dela, e a fonte da chuva entra nas fontes do sinal.
         Devolve None sem a previsão do ENSO, sem a estação do outono nela ou com ela já passada.
         """
         forecast = self._forecast_repo.get_enso_forecast()
@@ -201,11 +190,9 @@ class SinalOutonoService:
             return None
 
         en = lang.lower().startswith("en")
-        lang_key = "en" if en else "pt"
         by_id = {o.id: o for o in opcoes}
         nivel, motivo = self._level_and_reason(season, forecast.fonte, plano_a, plano_b, by_id, en)
-        limite = self._deadline(plano_a, plano_b, by_id, semeadura)
-        regra_data, rain_sources = self._date_rule(limite, seasons)
+        rain_sources = self._rain_sources(seasons)
         moisture = self._soil_moisture_repo.get_recent_soil_moisture(lat, lon)
         smap_agora = self._smap_now(moisture, en) if moisture is not None else None
         fonte = (forecast.fonte, *rain_sources) + ((SOURCE_SOIL,) if smap_agora else ())
@@ -214,10 +201,6 @@ class SinalOutonoService:
             motivo=motivo,
             fonte=fonte,
             data=forecast.emitida_em,
-            regra_dia_plantar=self._planting_rule(
-                plano_a, plano_b, by_id, limite, regra_data, lang_key
-            ),
-            regra_data=regra_data,
             smap_agora=smap_agora,
         )
 
@@ -316,125 +299,14 @@ class SinalOutonoService:
         nome = option.nome if option else FALLOW_NAME["en" if en else "pt"]
         return nome[:1].lower() + nome[1:]
 
-    # --- regra da data -------------------------------------------------------------------------
+    # --- fontes --------------------------------------------------------------------------------
 
     @staticmethod
-    def _deadline(
-        plano_a: PlanoRotacao,
-        plano_b: PlanoRotacao,
-        by_id: dict[str, ResultadoOpcao],
-        semeadura: date,
-    ) -> date:
-        """Data limite da cultura do 1º ano do Plano A (ou do B, se o A começa sem data limite)."""
-
-        def deadline(crop_id: str) -> date | None:
-            option = by_id.get(crop_id)
-            return date.fromisoformat(option.data_limite) if option and option.data_limite else None
-
-        return deadline(plano_a.anos[0]) or deadline(plano_b.anos[0]) or semeadura
-
-    def _date_rule(
-        self, limite: date, seasons: Sequence[ClimateSeason]
-    ) -> tuple[RegraData | None, tuple[str, ...]]:
-        """Média da chuva nos `dias` dias antes da data limite, em cada ano da série que os tem.
-
-        Devolve a regra (None sem nenhum ano com a janela inteira) e as fontes da chuva usada.
-        """
-        dias = self._regras.dias_regra_data
-        totals: list[float] = []
-        sources: set[str] = set()
-        for season in seasons:
-            end = _same_day_in(season.year, limite)
-            first = (end - timedelta(days=dias) - season.start_date).days
-            last = (end - season.start_date).days  # a data limite fica de fora
-            if first < 0 or last > len(season.rain_mm):
-                continue
-            totals.append(sum(season.rain_mm[first:last]))
-            sources.add(season.rain_source)
-        if not totals:
-            return None, ()
-        media = sum(totals) / len(totals)
-        regra = RegraData(
-            data_limite=limite,
-            inicio=limite - timedelta(days=dias),
-            dias=dias,
-            chuva_min_mm=round(self._chuva_fracao * media),
-            media_mm=round(media),
-        )
+    def _rain_sources(seasons: Sequence[ClimateSeason]) -> tuple[str, ...]:
+        """Nomes das fontes da chuva da série, na ordem de RAIN_SOURCE_NAMES (as outras no fim)."""
+        sources = {season.rain_source for season in seasons}
         names = tuple(name for key, name in RAIN_SOURCE_NAMES.items() if key in sources)
-        others = tuple(sorted(sources - RAIN_SOURCE_NAMES.keys()))
-        return regra, names + others
-
-    def _planting_rule(
-        self,
-        plano_a: PlanoRotacao,
-        plano_b: PlanoRotacao,
-        by_id: dict[str, ResultadoOpcao],
-        limite: date,
-        regra: RegraData | None,
-        lang: str,
-    ) -> RegraDiaPlantar:
-        """A frase da regra: a da data (com a chuva) ou, sem a série, a do dia de plantar."""
-        en = lang == "en"
-        dia = (
-            f"{MONTHS_EN[limite.month - 1]} {limite.day}"
-            if en
-            else f"{limite.day}/{MONTHS_PT[limite.month - 1]}"
-        )
-        first_a, first_b = plano_a.anos[0], plano_b.anos[0]
-        a, b = self._name(by_id, first_a, en), self._name(by_id, first_b, en)
-        if plano_a.anos == plano_b.anos:
-            texto = (
-                f"Plans A and B are the same: plant {a} by {dia}, rain or not."
-                if en
-                else f"Os planos A e B são iguais: plante {a} até {dia}, chova ou não."
-            )
-            return RegraDiaPlantar(data_limite=limite, texto=texto)
-        if regra is None:
-            return RegraDiaPlantar(
-                data_limite=limite, texto=self._soil_rule(a, b, dia, first_a == first_b, en)
-            )
-
-        pct = round(self._chuva_fracao * PERCENT)
-        if en:
-            cond = (
-                f"If less than {regra.chuva_min_mm} mm of rain falls in the {regra.dias} days "
-                f"before {dia} ({pct}% of the {regra.media_mm} mm average)"
-            )
-            then = (
-                f"follow plan B; the 1st year stays with {a}."
-                if first_a == first_b
-                else f"go with plan B: {b} instead of {a}."
-            )
-        else:
-            cond = (
-                f"Se nos {regra.dias} dias antes de {dia} chover menos que {regra.chuva_min_mm} mm "
-                f"({pct}% da média de {regra.media_mm} mm)"
-            )
-            then = (
-                f"siga o plano B; o 1º ano continua com {a}."
-                if first_a == first_b
-                else f"vá de plano B: {b} no lugar de {a}."
-            )
-        return RegraDiaPlantar(data_limite=limite, texto=f"{cond}, {then}")
-
-    @staticmethod
-    def _soil_rule(a: str, b: str, dia: str, same_first: bool, en: bool) -> str:
-        """Regra do dia de plantar sem a série de chuva (PRD 7.10): terra seca no dia -> Plano B."""
-        if same_first:
-            return (
-                f"On sowing day (by {dia}), if the soil is dry, follow plan B; the 1st year stays "
-                f"with {a}."
-                if en
-                else f"No dia de plantar (até {dia}), se a terra estiver seca, siga o plano B; "
-                f"o 1º ano continua com {a}."
-            )
-        return (
-            f"On sowing day (by {dia}), if the soil is dry, use plan B: {b} instead of {a}."
-            if en
-            else f"No dia de plantar (até {dia}), se a terra estiver seca, use o plano B: {b} "
-            f"no lugar de {a}."
-        )
+        return names + tuple(sorted(sources - RAIN_SOURCE_NAMES.keys()))
 
     # --- SMAP de agora -------------------------------------------------------------------------
 

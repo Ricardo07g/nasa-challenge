@@ -16,7 +16,6 @@ import {
   harvestYear,
   sortOptions,
   type FutureSummary,
-  type LateSummary,
 } from './recomendacaoRules'
 
 /**
@@ -60,21 +59,6 @@ export function rankForObjective(recomendacao: Recomendacao, objetivo: Objetivo 
   const ordem = recomendacao.objetivos?.[objetivo ?? 'equilibrio']?.ordem
   if (!ordem) return sortOptions(inWindow, objetivo ? AXIS_OF[objetivo] : null)
   return ordem.flatMap((id) => findOption(inWindow, id) ?? [])
-}
-
-/**
- * Aba Comparar (a S5b refaz o conteúdo): as que cabem na janela na ordem do objetivo; as que não cabem vão
- * para o fim, como na tela 6.
- */
-export function optionsForObjective(recomendacao: Recomendacao, objetivo: Objetivo | null): { options: Opcao[]; late: LateSummary } {
-  const outOfWindow = recomendacao.opcoes.filter((option) => !option.na_janela)
-  return {
-    options: [...rankForObjective(recomendacao, objetivo), ...outOfWindow],
-    late: {
-      names: recomendacao.fora_da_janela.map((item) => item.nome),
-      texts: recomendacao.fora_da_janela.map((item) => item.texto),
-    },
-  }
 }
 
 /** Sede de cada cultura que tem a linha "Água" (para o selo nos anos do Plano). */

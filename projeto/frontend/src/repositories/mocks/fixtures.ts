@@ -574,14 +574,6 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
           : 'Forecast for February to April 2027 (NOAA): no phase stands out (La Niña 30%, neutral 40%, El Niño 30%).',
       fonte: ['NOAA', 'NASA POWER', 'SMAP'],
       data: '2026-11-12',
-      regra_dia_plantar: {
-        data_limite: '2027-02-28',
-        texto:
-          lang === 'pt'
-            ? 'Se nos 30 dias antes de 28/fev chover menos que 130 mm (60% da média de 216 mm), vá de plano B: sorgo no lugar de milho com braquiária.'
-            : 'If less than 130 mm of rain falls in the 30 days before Feb 28 (60% of the 216 mm average), go with plan B: sorghum instead of corn with brachiaria.',
-      },
-      regra_data: { data_limite: '2027-02-28', inicio: '2027-01-29', dias: 30, chuva_min_mm: 130, media_mm: 216 },
       smap_agora: {
         percentil: 59,
         data: '2026-11-10',

@@ -625,13 +625,6 @@ def test_should_add_autumn_signal_with_plan_a_and_plan_b_of_the_recommendation()
     assert rec.sinal is not None
     assert rec.sinal.nivel == "normal"  # nenhum ano com aperto na série de teste
     assert rec.sinal.fonte == ("Fonte de teste", "NASA POWER")
-    primeira_a = _opcao(rec, rec.plano_normal.anos[0])
-    assert rec.sinal.regra_dia_plantar.data_limite == date.fromisoformat(
-        primeira_a.data_limite or ""
-    )
-    # 8 mm por dia na série de teste: 240 mm em 30 dias; 60% = 144 mm
-    assert rec.sinal.regra_data is not None
-    assert (rec.sinal.regra_data.media_mm, rec.sinal.regra_data.chuva_min_mm) == (240, 144)
 
 
 def test_should_write_texts_in_english_when_language_is_en() -> None:
