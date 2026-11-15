@@ -7,12 +7,17 @@ nenhuma credencial entra no git.** Senhas e segredos ficam só nas variáveis da
 
 | Serviço | Origem | Rede | O que faz |
 | --- | --- | --- | --- |
-| `db` | imagem `postgis/postgis:17-3.5` + volume em `/var/lib/postgresql/data` | só privada (TCP proxy só para carregar os dados, depois apagado) | PostgreSQL 17 + PostGIS 3.5 |
+| `db` | imagem `postgis/postgis:17-3.5` + volume em `/var/lib/postgresql/data` | só privada (nenhuma porta pública) | PostgreSQL 17 + PostGIS 3.5, a mesma imagem do compose |
 | `backend` | pasta `projeto/backend`, `Dockerfile` e `railway.json` | privada (domínio público opcional) | FastAPI. Antes de cada deploy roda `alembic upgrade head`. Volume em `/dados` com os arquivos de `data/baixados` |
 | `frontend` | pasta `projeto/frontend`, `Dockerfile.prod` e `railway.json` | domínio público `*.up.railway.app` | build do Vite + Caddy (`Caddyfile`), que serve o site e repassa `/api/*` ao backend pela rede privada |
 
-O backend e o front dormem depois de ~10 min sem acesso (`sleepApplication` no `railway.json`) e acordam no primeiro
-pedido. O primeiro clique depois de um tempo parado leva alguns segundos a mais.
+Os três serviços dormem depois de ~10 min sem acesso (`sleepApplication`) e acordam no primeiro pedido. O primeiro
+clique depois de um tempo parado leva alguns segundos a mais. O banco pode dormir porque a API abre uma conexão nova a
+cada pedido (sem pool): a conexão do backend acorda o `db` pela rede privada.
+
+**O backend escuta em `0.0.0.0`, não em `::`.** O asyncio abre o socket IPv6 só para IPv6 (`IPV6_V6ONLY`), e o health
+check da Railway chega por IPv4: com `--host ::` o deploy falha com "replicas never became healthy". A rede privada
+deste projeto aceita IPv4, e o Caddy do front alcança o backend assim.
 
 ## Variáveis (só nomes; os valores ficam no painel da Railway)
 
@@ -39,19 +44,37 @@ pedido. O primeiro clique depois de um tempo parado leva alguns segundos a mais.
    - `railway volume add --service db --mount-path /var/lib/postgresql/data`.
 2. **Backend e frontend:**
    - `railway add --service backend` e `railway add --service frontend`, com as variáveis acima;
-   - `railway volume add --service backend --mount-path /dados`;
-   - o deploy sai de uma **cópia limpa do `main`** (um worktree), nunca da pasta de trabalho com o `.env`:
-     `railway up --service backend` dentro de `projeto/backend` e `railway up --service frontend` dentro de
-     `projeto/frontend`.
+   - `railway volume add --mount-path /dados` com o backend ligado (`railway service link backend`; o `--service`
+     não funciona nesse comando);
+   - **o `railway up` não aplica o `railway.json`**: as configurações de cada serviço (Dockerfile, start, pre-deploy,
+     health check e `sleepApplication`) vão pela API (`railway api` com a mutação `serviceInstanceUpdate`), com os
+     mesmos valores do `railway.json`. Sem isso, o front sobe com o `Dockerfile` de desenvolvimento;
+   - o deploy sai de uma **cópia limpa do `main`** (um worktree), nunca da pasta de trabalho com o `.env`, a partir da
+     raiz do repositório: `railway up projeto/backend --path-as-root --service backend` e
+     `railway up projeto/frontend --path-as-root --service frontend`.
 3. **Dados:**
-   - **Banco:** criar um TCP proxy no `db` (`railway tcp-proxy create`) e carregar o dump só de dados (as tabelas já foram
-     criadas pela migração do backend). Apagar o TCP proxy no fim.
-   - **Arquivos:** `railway volume files upload <pasta> /dados/<pasta>` com as pastas de `data/baixados`, sem os caches
-     brutos (`cache_*`).
-4. **Domínio do front:** `railway domain --service frontend`. Depois, o `CORS_ORIGINS` do backend com esse domínio.
+   - **Banco, sem abrir porta pública:**
+     1. dump só de dados das tabelas do app (`grid_cell`, `climate_season`, `soil_point`, `cmip6_delta`,
+        `ndvi_point`, `smap_point`, `data_run`), com `pg_dump --data-only --no-owner --no-privileges -t ...`
+        no banco local; as tabelas já foram criadas pela migração do backend;
+     2. `railway volume files --volume db-volume upload dados.sql /carga_dados.sql`;
+     3. `railway ssh --service db` e `psql -v ON_ERROR_STOP=1 -1 -f /var/lib/postgresql/data/carga_dados.sql`;
+     4. conferir as contagens com as do banco local e apagar o arquivo do volume
+        (`railway volume files delete --volume db-volume /carga_dados.sql`).
+   - **Arquivos:** só os 9 arquivos que os `*_PATH` apontam (~4 MB), cada um na sua pasta:
+     `railway volume files --volume backend-volume upload <pasta> /<pasta>`. Os caches brutos (`cache_*`) e o NDVI
+     por área completo não vão. Depois, reiniciar o backend.
+4. **Domínio do front:** `railway domain --service frontend`. O `CORS_ORIGINS` não é preciso: o navegador só fala
+   com o domínio do front, que repassa o `/api/*` ao backend.
 
 ## Deploy automático
 
 Com o repositório conectado aos serviços (painel da Railway → serviço → *Source* → GitHub, pasta `projeto/backend` ou
 `projeto/frontend`, branch `main`), cada merge no `main` publica sozinho. A conexão pede, uma vez, a autorização do app
 da Railway no GitHub do dono do repositório.
+
+Ao conectar o GitHub, conferir na primeira publicação se a Railway leu o `railway.json` da pasta (o deploy mostra o
+start com `0.0.0.0` e o Dockerfile certo). Se não leu, as configurações feitas pela API continuam valendo.
+
+**Atenção:** a Railway avisa que o `railway.json` (config-as-code) deixa de valer depois de 01/12/2026. Antes disso,
+migrar para o formato novo de infraestrutura como código da Railway, ou manter as configurações pela API.
