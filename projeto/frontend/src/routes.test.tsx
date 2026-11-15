@@ -434,12 +434,26 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'How to read the alerts' })).toBeInTheDocument()
   })
 
-  it('/avisos com o ponto da lavoura mostra os grupos e o número no botão do cabeçalho', async () => {
+  it('/avisos com o ponto da lavoura (pacote 3): o resumo com o mesmo número do sino, sem o "Perto de você"', async () => {
     window.localStorage.clear()
     renderAt('/avisos?lat=-18.9543&lon=-48.1993&colheita=meio')
 
     expect(await screen.findByRole('region', { name: 'Agora' })).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Perto de você' })).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'Avisos: 2 avisos ativos' })).toBeInTheDocument()
+    expect(document.querySelector('[data-summary]')).toHaveTextContent('2 avisos agora')
+    expect(screen.queryByRole('region', { name: 'Perto de você' })).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Alertas oficiais' })).toHaveAttribute('id', 'alertas-oficiais')
+    expect(screen.getByRole('region', { name: 'Comunidade da sua região' })).toBeInTheDocument()
+  })
+
+  it('/avisos na lavoura de demonstração mostra os avisos dela, com o nome, em pt e en', async () => {
+    window.localStorage.clear()
+    renderAt('/avisos?lat=-18.9543&lon=-48.1993&colheita=tarde&exemplo=1')
+    expect(await screen.findByText(/Lavoura de demonstração, perto de Uberlândia \(MG\) · atualizado em/)).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/avisos?lat=-18.9543&lon=-48.1993&colheita=tarde&exemplo=1', 'en')
+    expect(await screen.findByText(/Demo field, near Uberlândia \(MG\) · updated on/)).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Now' })).toBeInTheDocument()
   })
 })

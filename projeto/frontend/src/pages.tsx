@@ -334,24 +334,10 @@ export function GuideArticlePage() {
   return <GuideArticleView t={t} article={article} listen={listen} />
 }
 
-/** Tela "Avisos" (seção 6 da remodelagem, tarefa 0046): os avisos do ponto salvo no aparelho. */
+/** Tela "Avisos" (seção 6 da remodelagem, tarefa 0046; refeita no pacote 3, tarefa 0062). */
 export function AvisosPage() {
   const { lang, messages: t } = useI18n()
   useDocumentTitle(t.alerts.title)
   const state = useAvisosController()
-  return (
-    <AvisosView
-      t={t}
-      lang={lang}
-      status={state.status}
-      onRetry={state.retry}
-      avisos={state.avisos}
-      groups={state.groups}
-      place={state.place}
-      explorerTo={state.explorerTo}
-      markTo={state.markTo}
-      backTo={state.backTo}
-      listen={state.listen}
-    />
-  )
+  return <AvisosView t={t} lang={lang} state={state} />
 }

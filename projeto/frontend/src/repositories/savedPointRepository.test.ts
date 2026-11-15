@@ -59,6 +59,23 @@ describe('savedPointRepository (ponto dos avisos salvo no aparelho, sem cadastro
     expect(repo.get()).toEqual({ lat: -18.9, lon: -48.2 })
   })
 
+  it('pacote 3: guarda junto a cultura do 1º ano do plano e o objetivo da tela 5', () => {
+    const storage = memoryStorage()
+    const point = { lat: -18.9, lon: -48.2, escolha: 'sorgo' as const, objetivo: 'renda' as const }
+
+    createLocalSavedPointRepository(() => storage).save(point)
+
+    expect(createLocalSavedPointRepository(() => storage).get()).toEqual(point)
+  })
+
+  it('pacote 3: plano estragado fica de fora, e a marca da lavoura de demonstração nunca volta', () => {
+    const repo = createLocalSavedPointRepository(() =>
+      memoryStorage({ [KEY]: '{"lat":-18.9,"lon":-48.2,"escolha":"soja_transgenica","objetivo":"lucro","exemplo":true}' }),
+    )
+
+    expect(repo.get()).toEqual({ lat: -18.9, lon: -48.2 })
+  })
+
   it('ignora o que não é um ponto válido (outro formato ou valor estragado)', () => {
     const broken = createLocalSavedPointRepository(() => memoryStorage({ [KEY]: '{"lat":"x"}' }))
     const notJson = createLocalSavedPointRepository(() => memoryStorage({ [KEY]: 'não é json' }))

@@ -7,7 +7,11 @@
  * try/catch, e aí o ponto vale só para esta visita.
  */
 import type { PontoAvisos } from '../models/avisos'
+import { OBJETIVOS, type CropId, type Objetivo } from '../models/recomendacao'
 import { COLHEITAS, TEXTURAS, type Colheita, type Textura } from '../models/talhao'
+
+/** As culturas que podem ser o 1º ano do plano (as do `culturas.yaml` e o "Deixar parado"). */
+const CROPS: readonly string[] = ['milho_braquiaria', 'milho_safrinha', 'sorgo', 'milheto', 'crotalaria', 'pousio']
 
 export type SavedPointRepository = {
   get(): PontoAvisos | null
@@ -43,6 +47,9 @@ function parsePoint(raw: string | null): PontoAvisos | null {
   if (typeof item.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item.data)) point.data = item.data
   if (typeof item.safras === 'string' && /^[0-9a-z:,_]+$/.test(item.safras)) point.safras = item.safras
   if (typeof item.pensa === 'string' && /^[a-z_]+$/.test(item.pensa)) point.pensa = item.pensa as PontoAvisos['pensa']
+  // Pacote 3 (tela 7): o plano da tela 5. A marca da lavoura de demonstração (`exemplo`) nunca é lida.
+  if (CROPS.includes(item.escolha as string)) point.escolha = item.escolha as CropId
+  if (OBJETIVOS.includes(item.objetivo as Objetivo)) point.objetivo = item.objetivo as Objetivo
   return point
 }
 

@@ -256,6 +256,17 @@
   --modal-large-gap: 24px; /* borda em volta do modal grande (8 px no celular) */
 
   /*
+   * Pacote 3 · tela 7 "Avisos" (tarefa 0062): o laranja dos "Alertas oficiais" e do "Atenção" reaproveita os tokens
+   * do "Fora da área"; o verde, o azul, o texto e as bordas, os de cima. Aqui ficam só as cores novas.
+   */
+  --color-watch-bg: #eaf0f6; /* "Fique de olho": etiqueta do nível e ícone do resumo */
+  --color-card-hover: #fafcfb; /* cartão de aviso e quadro com o mouse em cima */
+  --color-struck: #c3cbc6; /* risco do valor antigo nos quadros de "Como a sua área está mudando" */
+  --color-official-caption: #8a5a3a; /* linha de cima dos botões dos alertas oficiais */
+  --color-official-caption-strong: #fde6d4; /* a mesma linha nos botões laranja cheios (193 e 199) */
+  --soon-bg: linear-gradient(160deg, #f2f8f4, #fff); /* cartão "Em breve: Comunidade da sua região" */
+
+  /*
    * Tela 4 "Raio-X da sua terra" (pacote 2, tarefa 0058): o painel escuro com os blocos enxutos e o gráfico
    * "Suas últimas safras". Contraste sobre o fundo do painel: texto 11:1, rótulo 8:1, número 10:1, nota 6,8:1.
    */

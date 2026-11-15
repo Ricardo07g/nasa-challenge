@@ -1631,57 +1631,143 @@ export const en = {
   },
   // "Alerts" screen (section 6 of the redesign, backend task 0046, RF-31)
   alerts: {
-    summaryNoPoint:
-      'Here you see the dry soil, heat and rain alerts for your field. Mark where it is to see the alerts, with no sign-up. In an emergency, call 193 for the fire brigade or 199 for Civil Defense.',
-    summary: (place: string, count: number | null) =>
-      `${
-        count === null
-          ? `These are the alerts for your field near ${place}.`
-          : `Your field near ${place} has ${count === 0 ? 'no active alerts' : count === 1 ? '1 active alert' : `${count} active alerts`} now.`
-      } Each alert says what the data shows and what to do. In an emergency, call 193 for the fire brigade or 199 for Civil Defense.`,
     title: 'Alerts',
-    subtitle: 'For the field marked on this device. Alerts show up when you open the app.',
     headerLabel: 'Alerts',
     headerCount: (count: number) => (count === 1 ? 'Alerts: 1 active alert' : `Alerts: ${count} active alerts`),
     place: (place: string) => `Field near ${place}`,
+    demoPlace: (place: string) => `Demo field, near ${place}`,
+    context: (place: string, date: string) => `${place} · updated on **${date}**`,
+    readGuide: 'How to read the alerts',
     needPoint: 'To see the alerts, mark where your field is. The point is kept only on this device, with no sign-up.',
     markField: 'Mark my field',
-    level: { atencao: 'Warning', fique_de_olho: 'Keep an eye on it' },
-    groups: {
-      agora: 'Now',
-      mudou: 'What changed in your area',
-      recordes: 'Out of the ordinary',
-      perto: 'Near you',
+    listen: {
+      noPoint:
+        'Here you see the dry soil, heat and rain alerts for your field. Mark where it is to see the alerts, with no sign-up. In an emergency, call 193 for the fire brigade or 199 for Civil Defense.',
+      waiting:
+        'Here you see the dry soil, heat and rain alerts for your field. For official alerts, text your ZIP code to 40199.',
+      none: 'Nothing out of the ordinary on your field now. Alerts show up here when something changes.',
+      some: (count: number, list: string) =>
+        `You have ${count === 1 ? '1 alert' : `${count} alerts`} now. ${list ? `${list}. ` : ''}For official alerts, text your ZIP code to 40199.`,
     },
-    nothing: 'Nothing out of the ordinary.',
-    lastReading: (date: string) => `Last reading: ${date}.`,
-    readingOn: (date: string) => `reading of ${date}`,
-    dataUntil: (date: string) => `data until ${date}`,
-    reportedOn: (date: string) => `reported on ${date}`,
+    status: {
+      noneTitle: 'Nothing out of the ordinary now',
+      noneText: 'Alerts show up here and in the bell at the top when something changes.',
+      count: (count: number) => (count === 1 ? '1 alert now' : `${count} alerts now`),
+      attention: (count: number) => (count === 1 ? '1 needs attention.' : `${count} need attention.`),
+      watch: 'Worth watching, not urgent.',
+      legend: 'What each level means',
+      legendAttention: 'act now',
+      legendWatch: 'keep an eye on it',
+    },
+    level: { atencao: 'Attention', fique_de_olho: 'Watch' },
+    now: {
+      title: 'Now',
+      recent: 'Satellite readings and outlook from this week',
+      until: (date: string) => `Satellite readings and outlook up to ${date}`,
+      details: 'Details',
+      todo: 'What to do:',
+      emptyTitle: 'Nothing out of the ordinary',
+      emptyText: 'Heat, dry days and soil moisture are within the expected range.',
+    },
+    plan: {
+      line: (crop: string, deadline: string | null) =>
+        `Your plan: **${crop}**${deadline ? `, plant by ${deadline}` : ''}. During the season, dry-spell and flowering-heat alerts show up here.`,
+      late: (crop: string, deadline: string) =>
+        `Your plan: **${crop}**, but the ZARC planting deadline (${deadline}) has passed. During the season, dry-spell and flowering-heat alerts show up here.`,
+      fallow: 'Your plan: **leave the land fallow** after soybeans.',
+    },
+    example: {
+      link: (year: number) => `See example: ${year} alerts`,
+      title: (year: number) => `What the alerts would have looked like in ${year}`,
+      subtitle: 'An example with what happened in your area that autumn.',
+      loading: 'Building the example…',
+      nothing: (year: number) => `In ${year}, there was nothing out of the ordinary to warn about in your area.`,
+      source: (year: number) => `Source: GPM IMERG and NASA POWER (NASA). Example built with ${year} data.`,
+      autumn: 'Mar–May',
+      drySince: (date: string) => `The dry spell had started on ${date}.`,
+      dryRecord: (days: number, since: number | null) =>
+        `A dry spell of ${days} days in a row without rain began, the longest from March to May${since ? ` since ${since}` : ''}.`,
+      heatRecord: (days: number, temp: number, since: number | null) =>
+        `${days} days at ${temp} °C or more from March to May, the hottest year${since ? ` since ${since}` : ''}. At flowering, strong heat drops flowers.`,
+      dryAutumnRecord: (mm: string, average: string, since: number | null) =>
+        `Only ${mm} mm of rain from March to May (the average is ${average} mm): the driest autumn${since ? ` since ${since}` : ''}.`,
+      rainEndRecord: (date: string, since: number | null) =>
+        `Autumn rain ended on ${date}, the earliest end of the rains${since ? ` since ${since}` : ''}.`,
+    },
+    detail: { meaning: 'What it means', todo: 'What to do' },
+    changed: {
+      title: 'How your area is changing',
+      intro: (recentStart: number, recentEnd: number, beforeStart: number, beforeEnd: number) =>
+        `${recentStart}–${recentEnd} compared with ${beforeStart}–${beforeEnd}.`,
+      fewYears: 'Few years: it shows what happened, not a forecast.',
+      seeDetails: 'See details',
+      before: 'before',
+      after: 'after',
+      days: (value: string) => `${value} days`,
+      mm: (value: string) => `${value} mm`,
+      workedValue: (good: number, total: number) => `${good} of ${total}`,
+      drySpellLabel: 'Longest dry spell (Mar–May)',
+      rainEndLabel: 'End of the rains',
+      heatLabel: (temp: number) => `Days at ${temp} °C or more (Mar–May)`,
+      shortageLabel: (crop: string) => `Water shortfall · ${crop}`,
+      workedLabel: (crop: string) => `Worked · ${crop}`,
+      drySpell: (recent: string, before: string, recentPeriod: string, beforePeriod: string, longer: boolean) =>
+        `The longest run without rain between March and May got ${longer ? 'longer' : 'shorter'}: ${recent} days on average in ${recentPeriod}, against ${before} days in ${beforePeriod}.`,
+      rainEnd: (days: number, earlier: boolean, recentPeriod: string, beforePeriod: string) =>
+        days === 0
+          ? `Autumn rain ended, on average, on the same day in ${recentPeriod} and in ${beforePeriod}.`
+          : `Autumn rain ended, on average, ${days} ${days === 1 ? 'day' : 'days'} ${earlier ? 'earlier' : 'later'} in ${recentPeriod} than in ${beforePeriod}.`,
+      heat: (recent: string, before: string, temp: number, recentPeriod: string, beforePeriod: string) =>
+        `Days with highs of ${temp} °C or more between March and May went from ${before} a year in ${beforePeriod} to ${recent} in ${recentPeriod}.`,
+      shortage: (crop: string, recent: string, before: string, recentPeriod: string, beforePeriod: string) =>
+        `On average, ${crop} was short ${recent} mm of water over the season in ${recentPeriod}, against ${before} mm in ${beforePeriod}. Very dry years pull the average up.`,
+      worked: (
+        crop: string,
+        recentGood: number,
+        recentTotal: number,
+        beforeGood: number,
+        beforeTotal: number,
+        recentPeriod: string,
+        beforePeriod: string,
+      ) =>
+        `${crop} worked in ${recentGood} of ${recentTotal} years in ${recentPeriod}; in ${beforeGood} of ${beforeTotal} years in ${beforePeriod}.`,
+      drySpellTodo: 'Favor crops that handle a few weeks without rain and plant right after harvest.',
+      rainEndTodo: 'Every day counts: the sooner you plant after soybeans, the more rain the crop gets.',
+      heatTodo: 'At flowering, strong heat drops flowers. Keep this in mind when choosing what to plant.',
+      shortageTodo: 'Keep this in mind when choosing what to plant: crops that need less water suffer less.',
+      workedTodo: 'Keep this in mind when choosing what to plant.',
+      betterTodo: 'It changed for the better, but these are few years: do not count on it.',
+    },
+    records: {
+      title: 'It already happened here',
+      intro: (start: number, end: number) =>
+        `The most extreme from ${start} to ${end} in your area. It can happen again: plan for a year like that.`,
+      introNoYears: 'The most extreme in the series in your area. It can happen again: plan for a year like that.',
+      extreme: (start: number, end: number) => `It was the most extreme from ${start} to ${end} in your area.`,
+      drySpellLabel: 'Longest dry spell',
+      dryAutumnLabel: 'Driest autumn',
+      rainEndLabel: 'Rain ended earliest',
+      heatLabel: 'Hottest year',
+      days: (value: string) => `${value} days`,
+      mm: (value: string) => `${value} mm`,
+      drySpell: (date: string, year: number) => `in a row without rain, from ${date}, ${year}`,
+      dryAutumn: (year: number, average: string) => `March to May ${year} (average is ${average} mm)`,
+      rainEnd: (year: number) => `in ${year}`,
+      heat: (temp: number, year: number) => `at ${temp} °C or more, March to May ${year}`,
+      todo: 'It already happened here and can happen again. Favor a plan that holds up in a year like that, such as the Plan B in your 3-year plan.',
+    },
+    readingOn: (date: string) => `read on ${date}`,
+    dataUntil: (date: string) => `data through ${date}`,
     oldReading: 'Old reading',
-    todo: 'What to do:',
     source: (names: string) => `Source: ${names}`,
     sources: {
       smap: 'NASA SMAP',
       nasa_power: 'NASA POWER',
       gpm_imerg: 'GPM IMERG (NASA)',
-      noaa: 'NOAA',
+      noaa: 'NOAA CPC',
       comunidade: 'neighbor report',
     },
-    changedIntro: (recentStart: number, recentEnd: number, beforeStart: number, beforeEnd: number) =>
-      `${recentStart} to ${recentEnd} compared with ${beforeStart} to ${beforeEnd}, in your area.`,
-    fewYears: 'These are few years: it shows what happened, not a forecast.',
-    recordsIntro: (start: number, end: number) =>
-      `The most extreme things that happened in your area from ${start} to ${end}.`,
-    nearbyIntro: (km: number, days: number) => `Events reported by neighbors within ${km} km, in the last ${days} days.`,
-    unconfirmed: 'Neighbor report, not confirmed',
     period: (start: number, end: number) => `${start}–${end}`,
-    safrinhaRunning: (crop: string) =>
-      `Second crop under way (${crop}): the crop alerts use the rain and heat of the last days.`,
-    safrinhaNext: (crop: string, date: string) =>
-      `The next second crop (${crop}) starts around ${date}. While it grows, the crop alerts show up here.`,
-    safrinhaLink: (year: number) => `See what the alerts would have been in ${year}`,
-    guideLink: 'Learn more: how to read the alerts',
     phases: { el_nino: 'El Niño', la_nina: 'La Niña' },
     seasons: {
       DJF: 'December to February',
@@ -1698,16 +1784,36 @@ export const en = {
       NDJ: 'November to January',
     },
     kinds: {
-      dry: (pct: number) => `The soil is drier than in ${pct}% of years at this time of year.`,
-      dryTodo: 'Check the soil moisture before planting or fertilizing.',
-      noRain: (days: number, date: string, atLeast: boolean) =>
-        `${atLeast ? 'At least ' : ''}${days} days in a row without rain (less than 1 mm a day) up to ${date}.`,
-      noRainTodo: 'Talk to your agronomist before planting or fertilizing.',
-      heat: (days: number, window: number, temp: number) =>
-        `${days} days at ${temp} °C or more in the last ${window} days.`,
-      heatTodo: 'If the crop is flowering, strong heat makes flowers drop. Talk to your agronomist.',
+      dryTitle: 'The soil is drier than normal',
+      dryNumber: (pct: number) => `drier than in ${pct}% of years`,
+      dryShort: 'Check soil moisture before planting or fertilizing.',
+      dryMeaning: (pct: number) =>
+        `The SMAP satellite (NASA) estimates the water in the soil, in the root layer. Today your area is drier than in ${pct}% of years at this time of year.`,
+      dryTodo: 'Check soil moisture before planting or fertilizing. With dry soil, seeds may not sprout and fertilizer is lost.',
+      dryGuide: 'Learn more: the water math of your field',
+      noRainTitle: 'Days in a row without rain',
+      noRainNumber: (days: number, atLeast: boolean) => `${atLeast ? 'at least ' : ''}${days} days without rain`,
+      noRainShort: 'Talk to your agronomist before planting or fertilizing.',
+      noRainMeaning: (days: number, date: string, atLeast: boolean) =>
+        `${atLeast ? 'At least' : 'There were'} ${days} days in a row without rain (less than 1 mm a day) up to ${date}.`,
+      noRainTodo:
+        'Talk to your agronomist before planting or fertilizing. With dry soil, seeds may not sprout and fertilizer is lost.',
+      noRainGuide: 'Learn more: dry spell',
+      heatTitle: (window: number) => `Strong heat in the last ${window} days`,
+      heatNumber: (days: number, temp: number) => `${days} days at ${temp} °C or more`,
+      heatShort: 'If the crop is flowering, talk to your agronomist.',
+      heatMeaning: (days: number, temp: number, window: number) =>
+        `There were ${days} days with highs of ${temp} °C or more in the last ${window} days. At flowering, strong heat drops flowers and cuts yield.`,
+      heatTodo: 'If the crop is flowering, talk to your agronomist. Avoid spraying in the hottest hours.',
+      heatGuide: 'Learn more: heat at flowering',
+      ensoTitle: {
+        el_nino: (months: string, year: number) => `El Niño expected for ${months} ${year}`,
+        la_nina: (months: string, year: number) => `La Niña expected for ${months} ${year}`,
+      },
+      ensoNumber: (chance: number) => `${chance}% chance`,
+      ensoShort: 'Check the signal in February, before planting.',
       ensoForecast: (phase: string, months: string, year: number, chance: number) =>
-        `NOAA forecast for ${months} ${year}: ${phase}, with a ${chance}% chance.`,
+        `NOAA expects ${phase} for ${months} ${year}, with a ${chance}% chance.`,
       ensoHistory: (
         years: number,
         phase: string,
@@ -1723,66 +1829,48 @@ export const en = {
         seco: 'The autumn signal marks plan B. Look at plan B in the 3-year plan before deciding what to plant.',
         incerto: 'No clear signal for autumn. Look at plan A and plan B in the 3-year plan before deciding what to plant.',
       },
-      safrinhaDry: (crop: string, days: number, date: string) =>
-        `${crop}: ${days} days without rain close to the stage that needs water most (up to ${date}).`,
-      safrinhaHeat: (crop: string, days: number, temp: number, date: string) =>
-        `${crop}: ${days} days in a row at ${temp} °C or more close to the stage that needs water most (up to ${date}).`,
+      ensoGuide: 'Learn more: El Niño and La Niña',
+      safrinhaDryTitle: (crop: string) => `Dry spell in the second crop (${crop})`,
+      safrinhaDryNumber: (days: number) => `${days} days without rain`,
+      safrinhaDryMeaning: (crop: string, days: number, date: string) =>
+        `There were ${days} days without rain up to ${date}, close to the stage when the ${crop} crop needs water most.`,
+      safrinhaHeatTitle: (crop: string) => `Heat in the second crop (${crop})`,
+      safrinhaHeatNumber: (days: number, temp: number) => `${days} days in a row at ${temp} °C or more`,
+      safrinhaHeatMeaning: (crop: string, days: number, temp: number, date: string) =>
+        `There were ${days} days in a row at ${temp} °C or more up to ${date}, close to the stage when the ${crop} crop needs water most.`,
+      safrinhaShort: 'Talk to your agronomist.',
       safrinhaTodo: 'Talk to your agronomist.',
-      changedDrySpell: (recent: string, before: string, recentPeriod: string, beforePeriod: string) =>
-        `Longest dry spell from March to May: ${recent} days on average in ${recentPeriod}; ${before} days in ${beforePeriod}.`,
-      changedRainEnd: (
-        recent: string,
-        before: string,
-        recentPeriod: string,
-        beforePeriod: string,
-        days: number,
-        earlier: boolean,
-      ) =>
-        `End of the rains: ${recent} in ${recentPeriod}; ${before} in ${beforePeriod} (${days} days ${earlier ? 'earlier' : 'later'}).`,
-      changedHeat: (recent: string, before: string, temp: number, recentPeriod: string, beforePeriod: string) =>
-        `Days at ${temp} °C or more from March to May: ${recent} a year in ${recentPeriod}; ${before} in ${beforePeriod}.`,
-      changedShortage: (crop: string, recent: string, before: string, recentPeriod: string, beforePeriod: string) =>
-        `Water shortage of ${crop} in the cycle, averaged over the years: ${recent} mm a year in ${recentPeriod}; ${before} mm in ${beforePeriod}. Very dry years pull the average up.`,
-      changedWorked: (
-        crop: string,
-        recentGood: number,
-        recentTotal: number,
-        beforeGood: number,
-        beforeTotal: number,
-        recentPeriod: string,
-        beforePeriod: string,
-      ) =>
-        `${crop} worked in ${recentGood} of ${recentTotal} years in ${recentPeriod}; in ${beforeGood} of ${beforeTotal} years in ${beforePeriod}.`,
-      changedWorseTodo: 'Take this into account when choosing what to plant.',
-      changedBetterTodo: 'It changed for the better, but these are few years: do not count on it.',
-      recordDrySpell: (days: number, date: string, year: number) =>
-        `Longest dry spell from March to May: ${days} days in a row without rain from ${date}, ${year}.`,
-      recordDryAutumn: (mm: string, year: number, average: string) =>
-        `Driest autumn: ${mm} mm from March to May ${year} (the average is ${average} mm).`,
-      recordRainEnd: (date: string, year: number) => `Earliest end of the rains: ${date}, ${year}.`,
-      recordHeat: (days: number, temp: number, year: number) =>
-        `Hottest year: ${days} days at ${temp} °C or more from March to May ${year}.`,
-      recordTodo: 'It already happened here and can come back: plan with a year like this in mind.',
-      neighbor: (event: string, count: number, km: number, date: string) =>
-        count === 1
-          ? `${event}: 1 neighbor report within ${km} km, on ${date}.`
-          : `${event}: ${count} neighbor reports within ${km} km; the latest on ${date}.`,
-      neighborTodo: 'Look at your field to check.',
-      neighborFireTodo: 'In case of fire, call 193 (Fire Department).',
+    },
+    guides: {
+      drySpell: 'Learn more: dry spell',
+      rainEnd: 'Learn more: when the rain ends',
+      water: 'Learn more: the water math of your field',
+      worked: 'Learn more: what "it worked" means',
+      heat: 'Learn more: heat at flowering',
     },
     official: {
       title: 'Official alerts',
-      notice: 'These alerts are not official alerts and do not replace the Civil Defense or INMET.',
-      intro: 'To get the official Civil Defense alerts on your phone, for free:',
-      sms: 'SMS: send the ZIP code (CEP) of the place to 40199 (in rural areas, use your town’s CEP).',
-      smsButton: 'Send SMS to 40199',
-      whatsapp: 'WhatsApp: send "Oi" to (61) 2034-4611.',
-      whatsappButton: 'Open the WhatsApp chat',
-      app: 'Severe alerts arrive on their own through "Defesa Civil Alerta", with no sign-up.',
-      calls: 'In case of fire, call 193 (Fire Department). Civil Defense emergency: 199.',
-      call193: 'Call 193 (Fire Department)',
-      call199: 'Call 199 (Civil Defense)',
-      guide: 'How to get the official Civil Defense alerts',
+      notice: 'These alerts do not replace Civil Defense or INMET.',
+      intro: 'Get official alerts for free:',
+      smsCaption: 'Text your ZIP code',
+      sms: 'Send to 40199',
+      whatsappCaption: 'Civil Defense WhatsApp',
+      whatsapp: 'Send "Oi"',
+      fireCaption: 'Fire',
+      fire: 'Call 193',
+      civilCaption: 'Civil Defense',
+      civil: 'Call 199',
+      guide: 'How to get official alerts',
+    },
+    soon: {
+      tag: 'Coming soon',
+      title: "Your region's community",
+      text: 'A space to follow your region together with your neighbors.',
+      items: [
+        'What neighbors planted after soybeans and how it went',
+        'How much it rained on each field',
+        'Hail, fire or flash floods near you',
+      ],
     },
   },
 } satisfies Messages
