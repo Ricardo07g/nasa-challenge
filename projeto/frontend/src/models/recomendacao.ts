@@ -90,6 +90,12 @@ export type Opcao = {
   id: CropId
   nome: string
   na_janela: boolean
+  /**
+   * Passou do prazo do ZARC (tarefa 0056 do backend): a cultura vem com a conta inteira (plantio logo depois da
+   * colheita), depois das que estão no prazo, para ser comparada e escolhida com o aviso. Nunca é a sugestão.
+   * Ausente (API antiga) = `!na_janela`.
+   */
+  fora_do_prazo?: boolean
   /** Data limite de plantio do ZARC (ADR 0002); null quando não houver. */
   data_limite: string | null
   chuva: { anos_bons: number; anos: number; faixa: boolean[]; rotulo: Rotulo; texto: string }

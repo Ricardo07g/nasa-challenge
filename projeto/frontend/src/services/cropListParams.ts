@@ -17,11 +17,14 @@ export const PLAN_YEARS = 3
 
 const isCrop = (value: string): value is CropId => (CROP_IDS as readonly string[]).includes(value)
 
-/** `comparar`: até 3 culturas conhecidas, sem repetir e sem o pousio; nenhuma = `undefined`. */
+/** Uma cultura só (`escolha`, `ano2`, `ano3` da tela 5); fora da lista, `undefined`. */
+export function parseCrop(text: string | null | undefined): CropId | undefined {
+  return text && isCrop(text) ? text : undefined
+}
+
+/** `comparar`: até 3 culturas conhecidas, sem repetir (tela 5: o "Deixar parado" também); nenhuma = `undefined`. */
 export function parseCompared(text: string | null | undefined): CropId[] | undefined {
-  const crops = [...new Set((text ?? '').split(',').map((piece) => piece.trim()))].filter(
-    (crop): crop is CropId => isCrop(crop) && crop !== 'pousio',
-  )
+  const crops = [...new Set((text ?? '').split(',').map((piece) => piece.trim()))].filter(isCrop)
   return crops.length ? crops.slice(0, MAX_COMPARED) : undefined
 }
 

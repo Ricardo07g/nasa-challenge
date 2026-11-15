@@ -1,64 +1,10 @@
-import type { CropId, Objetivo, Opcao, Recomendacao, Sede } from '../models/recomendacao'
-import { MAX_COMPARED } from './cropListParams'
-import { rankForObjective } from './suggestionService'
+import type { Opcao } from '../models/recomendacao'
 
 /**
- * Aba Comparar (seção 5.5 da remodelagem, tarefa 0045): até 3 culturas lado a lado. A ordem vem pronta do
- * motor (`objetivos`); as linhas usam só o que a API manda. "Por que usar" e "Por que evitar" saem dos
- * rótulos do motor (cortes do `regras.yaml`), da sede da cultura e do clima de 2041–2060: nenhum número
- * novo no navegador.
+ * Pontos a favor e contra de cada cultura (tela 5, "Comparar até 3"; antes, a aba Comparar da tarefa 0045). Saem
+ * dos rótulos do motor (cortes do `regras.yaml`), da sede da cultura e do clima de 2041–2060: nenhum número novo
+ * no navegador.
  */
-
-/** Artigos do Guia da linha Terra (tabela "Links nas telas" da seção 8). */
-export const COMPARE_ARTICLES = {
-  straw: '/guia/palhada',
-  greenManure: '/guia/adubo-verde',
-  nematode: '/guia/nematoide',
-} as const
-
-/** As culturas comparadas: as da URL que cabem na janela desta colheita; sem nenhuma, as 3 melhores do objetivo. */
-export function comparedCrops(recomendacao: Recomendacao, objetivo: Objetivo | null, fromUrl: readonly CropId[] | undefined): CropId[] {
-  const ranked = rankForObjective(recomendacao, objetivo).map((option) => option.id)
-  const chosen = (fromUrl ?? []).filter((crop) => ranked.includes(crop))
-  return chosen.length ? chosen.slice(0, MAX_COMPARED) : ranked.slice(0, MAX_COMPARED)
-}
-
-export type CompareChip = {
-  id: CropId
-  nome: string
-  sede: Sede | null
-  selected: boolean
-  /** Fora da janela de plantio: desligado, com a data limite do ZARC (ISO; null sem a data). */
-  disabled: boolean
-  limit: string | null
-}
-
-/** Um chip por cultura: as da janela na ordem do objetivo; depois, as que já passaram do prazo, desligadas. */
-export function compareChips(recomendacao: Recomendacao, objetivo: Objetivo | null, selected: readonly CropId[]): CompareChip[] {
-  const inWindow = rankForObjective(recomendacao, objetivo).map((option) => ({
-    id: option.id,
-    nome: option.nome,
-    sede: option.agua?.sede ?? null,
-    selected: selected.includes(option.id),
-    disabled: false,
-    limit: option.data_limite,
-  }))
-  const late = recomendacao.fora_da_janela.map((item) => ({
-    id: item.id,
-    nome: item.nome,
-    sede: null,
-    selected: false,
-    disabled: true,
-    limit: item.data_limite ?? null,
-  }))
-  return [...inWindow, ...late]
-}
-
-/** Tocar no chip: põe (até 3) ou tira (sempre fica pelo menos uma). */
-export function toggleCompared(selected: readonly CropId[], crop: CropId): CropId[] {
-  if (selected.includes(crop)) return selected.length > 1 ? selected.filter((id) => id !== crop) : [...selected]
-  return selected.length < MAX_COMPARED ? [...selected, crop] : [...selected]
-}
 
 /** Por que falhou: anos por falta de água e anos por calor (um ano pode ter os dois); null sem o explorador. */
 export function failureCounts(option: Opcao): { water: number; heat: number; failed: number } | null {

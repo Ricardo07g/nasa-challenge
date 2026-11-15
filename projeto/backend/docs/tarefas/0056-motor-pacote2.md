@@ -2,7 +2,7 @@
 
 - **Identificador:** `0056`
 - **Título:** Culturas fora do prazo do ZARC também na conta, sugestão em cadeia do plano de 3 anos com o porquê de cada ano e os campos do "E se o ano vier seco?"
-- **Status:** Concluída na branch `feat/motor-pacote2` (sem merge; o front da tela 5 vem depois, lendo este contrato)
+- **Status:** Concluída
 - **Prioridade:** Alta (pacote 2, tela 5)
 - **PRD:** RF-39 (nova)
 - **Módulos Afetados:** `app/services/recommendation_service.py`, `app/models/recomendacao.py`, `app/schemas/recomendacao.py`, `app/services/rotation_plan_service.py`, `app/services/plan_suggestion_service.py` (novo), `app/services/plan_evaluation_service.py`, `app/models/plano.py`, `app/schemas/plano.py`, `app/controllers/plano_controller.py`, `app/config_data/regras.yaml` (grupos `plano_cadeia` e `frases_plano`), `app/models/regras.py`, `app/repositories/rules_repository.py`

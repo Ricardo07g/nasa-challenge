@@ -2,7 +2,7 @@ import { OBJETIVOS, type CropId, type Objetivo } from '../models/recomendacao'
 import type { CurrentChoice } from '../models/seasonAnswers'
 import { COLHEITAS, TEXTURAS, type Colheita, type Textura } from '../models/talhao'
 import { formatConfirmadas, parseConfirmadas } from './confirmedSeasonsService'
-import { formatToday, parseCompared, parsePlan, parseToday } from './cropListParams'
+import { formatToday, parseCompared, parseCrop, parsePlan, parseToday } from './cropListParams'
 import { formatSeasonAnswers, parseCurrentChoice, parseSeasonAnswers } from './seasonAnswersService'
 
 /** O que a URL guarda entre as telas (RF-18): dá para recarregar ou compartilhar a mesma resposta. */
@@ -31,6 +31,14 @@ export type FlowParams = {
   safras?: string
   /** Pacote 2 (tarefa 0054): o que o produtor pensa plantar depois da soja 2026/27 (uma cultura ou "nao_sei"). */
   pensa?: CurrentChoice
+  /**
+   * Tela 5 do pacote 2: a cultura escolhida para o plano (o 1º ano). Sem ela, vale a escolha atual (`pensa`) ou,
+   * com "Ainda não sei", a sugestão.
+   */
+  escolha?: CropId
+  /** Tela 5: o 2º e o 3º ano que o produtor mudou no plano; sem eles, a sugestão em cadeia do motor. */
+  ano2?: CropId
+  ano3?: CropId
 }
 
 function readNumber(value: string | null): number | null {
@@ -60,6 +68,9 @@ export function readFlowParams(search: URLSearchParams): (FlowParams & { exemplo
     data: readDate(search.get('data')),
     safras: formatSeasonAnswers(parseSeasonAnswers(search.get('safras'))),
     pensa: parseCurrentChoice(search.get('pensa')),
+    escolha: parseCrop(search.get('escolha')),
+    ano2: parseCrop(search.get('ano2')),
+    ano3: parseCrop(search.get('ano3')),
   }
 }
 
@@ -91,7 +102,9 @@ export function buildFlowQuery(params: FlowParams): string {
   // Pacote 2 (tarefa 0054): as respostas das últimas safras e a escolha atual, também legíveis.
   const safras = params.safras ? `&safras=${params.safras}` : ''
   const pensa = params.pensa ? `&pensa=${params.pensa}` : ''
-  return `?${query.toString()}${confirmadas}${comparar}${plano}${hoje}${safras}${pensa}`
+  // Tela 5: a escolha do plano e os anos mudados (só letras e "_").
+  const plan = (['escolha', 'ano2', 'ano3'] as const).map((key) => (params[key] ? `&${key}=${params[key]}` : '')).join('')
+  return `?${query.toString()}${confirmadas}${comparar}${plano}${hoje}${safras}${pensa}${plan}`
 }
 
 /** Query da URL atual que segue para o próximo link ("" se ainda não tem ponto marcado). */

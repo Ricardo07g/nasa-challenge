@@ -1,0 +1,70 @@
+/* Abas da tela 5 (protótipo do pacote 2): pílula branca com borda; a aba atual em verde cheio */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--radius-cta);
+  background: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 15.5px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: var(--color-tint-green-soft);
+}
+
+.tab[aria-selected='true'] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.tab:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.number {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-tint-green-soft);
+  color: var(--color-primary);
+  font-size: 12.5px;
+  font-weight: var(--font-weight-bold);
+}
+
+.tab[aria-selected='true'] .number {
+  background: var(--color-on-primary-soft);
+  color: var(--color-on-primary);
+}
+
+/* No celular, as duas abas dividem a largura */
+@media (max-width: 900px) {
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tab {
+    padding: 0 8px;
+    font-size: 14.5px;
+  }
+}

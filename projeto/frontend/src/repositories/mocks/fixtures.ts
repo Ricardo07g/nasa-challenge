@@ -513,7 +513,16 @@ const OUT_OF_WINDOW: Text = {
 export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recomendacao {
   const all = CROPS.map((seed) => buildOption(seed, lang))
   const late = params.colheita === 'tarde'
-  const opcoes = late ? all.filter((opcao) => opcao.id !== 'milho_safrinha') : all
+  const inWindow = late ? all.filter((opcao) => opcao.id !== 'milho_safrinha') : all
+  // Tarefa 0056: a cultura fora do prazo também vem com a conta, depois das que estão no prazo.
+  const outOfWindow: Opcao[] = late
+    ? all
+        .filter((opcao) => opcao.id === 'milho_safrinha')
+        .map((opcao) => ({ ...opcao, na_janela: false, fora_do_prazo: true, data_limite: '2027-02-28' }))
+    : []
+  const opcoes = [...inWindow.map((opcao) => ({ ...opcao, fora_do_prazo: false })), ...outOfWindow]
+  const objetivos = objectives(inWindow, PLAN_A)
+  for (const objetivo of Object.values(objetivos ?? {})) objetivo?.ordem.push(...outOfWindow.map((opcao) => opcao.id))
   const alternativas: { motivo: Motivo; opcao: CropId }[] = [
     { motivo: 'menos_risco', opcao: 'milheto' },
     { motivo: 'mais_renda', opcao: 'sorgo' },
@@ -540,7 +549,7 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
           },
         ]
       : [],
-    objetivos: objectives(opcoes, PLAN_A),
+    objetivos,
     clima_futuro: CLIMA_FUTURO_EXEMPLO,
     geada: late ? { anos: [2011], total_anos: 20, temp_c: 3, menor_temp_c: 2.4, fonte: 'nasa_power' } : null,
     pousio: {

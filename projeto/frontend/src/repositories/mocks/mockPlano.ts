@@ -4,7 +4,7 @@
  * modo de demonstração.
  */
 import type { Lang } from '../../i18n/language'
-import type { AnoPlano, PlanoAvaliado, PlanoParams } from '../../models/plano'
+import type { AnoPlano, PlanoAvaliado, PlanoParams, PlanoSugestaoParams } from '../../models/plano'
 import type { CropId, Opcao } from '../../models/recomendacao'
 import type { PlanoRepository } from '../planoRepository'
 import { delay } from './delay'
@@ -34,25 +34,27 @@ function year(crop: CropId, option: Opcao | undefined, lang: Lang): AnoPlano {
       sede: null,
       usa_mm: null,
       ...facts,
+      fora_do_prazo: false,
     }
   }
   return {
     cultura: crop,
     nome: option.nome,
-    na_janela: true,
+    na_janela: option.na_janela,
     anos_bons: option.chuva.anos_bons,
     total_anos: option.chuva.anos,
     futuro_anos_bons: option.futuro?.anos_bons_media ?? null,
     sede: option.agua?.sede ?? null,
     usa_mm: option.agua ? option.agua.precisa_mm - option.agua.falta_normal_mm : null,
     ...facts,
+    fora_do_prazo: !option.na_janela,
   }
 }
 
 export function buildPlano(params: PlanoParams, lang: Lang): PlanoAvaliado {
   const rec = buildRecomendacao({ lat: params.lat, lon: params.lon, colheita: params.colheita }, lang)
   const byId = new Map(rec.opcoes.map((option) => [option.id, option]))
-  const anos = params.anos.map((crop) => year(crop, byId.get(crop), lang))
+  const anos = params.anos.map((crop) => ({ ...year(crop, byId.get(crop), lang), fixo: true, motivo: null }))
   const options = params.anos.flatMap((crop) => byId.get(crop) ?? [])
   const distinct = new Set(params.anos.filter((crop) => crop !== 'pousio')).size
   const bonus = distinct >= 3 ? 10 : distinct === 2 ? 5 : 0
@@ -124,11 +126,52 @@ export function buildPlano(params: PlanoParams, lang: Lang): PlanoAvaliado {
   }
 }
 
+/** O porquê de exemplo de cada ano sugerido (só no modo mock; a regra real é a do motor, a revisar pela agrônoma). */
+const REASONS: Record<'fallow' | 'variety' | 'grain' | 'dry', Record<Lang, string>> = {
+  fallow: {
+    pt: 'a terra ficou descoberta; cobre rápido e aguenta a seca',
+    en: 'the soil was left bare; it covers it fast and handles drought',
+  },
+  variety: { pt: 'varia a cultura e quebra o ciclo do nematoide', en: 'it varies the crop and breaks the nematode cycle' },
+  grain: {
+    pt: 'dá grão para vender depois de um ano cuidando da terra',
+    en: 'it gives grain to sell after a year caring for the soil',
+  },
+  dry: { pt: 'é a que mais aguenta a seca', en: 'it handles drought best' },
+}
+
+/** Cadeia de exemplo (a do protótipo): milheto depois de terra parada ou de sorgo; sorgo depois de milheto. */
+function nextCrop(previous: CropId): { crop: CropId; reason: keyof typeof REASONS } {
+  if (previous === 'pousio') return { crop: 'milheto', reason: 'fallow' }
+  if (previous === 'sorgo') return { crop: 'milheto', reason: 'variety' }
+  if (previous === 'milheto') return { crop: 'sorgo', reason: 'grain' }
+  return { crop: 'milheto', reason: 'dry' }
+}
+
+export function buildSugestao(params: PlanoSugestaoParams, lang: Lang): PlanoAvaliado {
+  const crops = [...params.fixos]
+  const reasons: (string | null)[] = crops.map(() => null)
+  while (crops.length < 3) {
+    const next = nextCrop(crops[crops.length - 1])
+    crops.push(next.crop)
+    reasons.push(REASONS[next.reason][lang])
+  }
+  const plano = buildPlano({ lat: params.lat, lon: params.lon, colheita: params.colheita, solo: params.solo, anos: crops }, lang)
+  return {
+    ...plano,
+    anos: plano.anos.map((ano, index) => ({ ...ano, fixo: index < params.fixos.length, motivo: reasons[index] })),
+  }
+}
+
 export function createMockPlanoRepository(delayMs = 300): PlanoRepository {
   return {
     async get(params, lang) {
       await delay(delayMs)
       return buildPlano(params, lang)
+    },
+    async suggest(params, lang) {
+      await delay(delayMs)
+      return buildSugestao(params, lang)
     },
   }
 }

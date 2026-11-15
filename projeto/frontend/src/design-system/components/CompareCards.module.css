@@ -1,0 +1,160 @@
+/*
+ * Comparar até 3 (tela 5). Computador: uma tabela (coluna dos nomes das linhas + uma coluna por cultura), com as
+ * linhas alinhadas por `subgrid`. Celular: cartões que arrastam para o lado.
+ */
+.wrap {
+  min-width: 0;
+}
+
+.grid {
+  display: grid;
+  overflow: hidden;
+  grid-template-columns: 150px repeat(var(--compare-cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--compare-rows), auto);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.labels,
+.card {
+  display: grid;
+  grid-row: 1 / span var(--compare-rows);
+  grid-template-rows: subgrid;
+  min-width: 0;
+}
+
+.labels {
+  background: var(--color-page);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-soft);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.labelHead {
+  background: var(--color-surface);
+}
+
+.labelFoot {
+  border-top: 1px solid var(--color-border);
+}
+
+.card {
+  border-left: 1px solid var(--color-border);
+}
+
+.card[data-highlighted] {
+  background: var(--color-compare-chosen);
+}
+
+.head {
+  min-width: 0;
+  padding: 14px 14px 10px;
+}
+
+.cell {
+  min-width: 0;
+  padding: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.foot {
+  padding: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.mobileOnly {
+  display: none;
+}
+
+/* Celular e tablet: um cartão completo por cultura, arrastando para o lado (sem rolar a página) */
+@media (max-width: 900px) {
+  .grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 2px 2px 6px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .labels {
+    display: none;
+  }
+
+  .card {
+    display: flex;
+    flex: 0 0 86%;
+    flex-direction: column;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    scroll-snap-align: start;
+  }
+
+  .grid[data-single] .card {
+    flex-basis: 100%;
+  }
+
+  .card[data-highlighted] {
+    border-color: var(--color-primary);
+  }
+
+  .head {
+    padding: 10px 10px 6px;
+  }
+
+  .cell {
+    padding: 4px 6px;
+  }
+
+  .mobileOnly {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-border-control);
+  }
+
+  .dot[data-active='true'] {
+    width: 20px;
+    border-radius: 4px;
+    background: var(--color-primary);
+  }
+
+  .hint {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: 13px;
+    font-weight: var(--font-weight-semibold);
+  }
+}

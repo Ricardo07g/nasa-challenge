@@ -22,6 +22,12 @@ export type AnoPlano = {
   quebra_nematoide: boolean
   /** Mediana do que a planta usou da água no ciclo (ETr do balanço), em mm. */
   usa_mm: number | null
+  /** Tarefa 0056: a cultura passou do prazo do ZARC (vem com os números, entra nas médias). */
+  fora_do_prazo?: boolean
+  /** Tarefa 0056: o ano veio do produtor (`true`) ou da sugestão em cadeia (`false`, só no `/api/plano/sugestao`). */
+  fixo?: boolean
+  /** Tarefa 0056: o porquê do ano sugerido, frase pronta no idioma, sem o nome da cultura; null nos anos fixos. */
+  motivo?: string | null
 }
 
 /** Notas de 0 a 100; null quando nenhum ano tem o dado (ex.: plano só com pousio, ou sem o CMIP6). */
@@ -89,6 +95,18 @@ export type PlanoAvaliado = {
    * do Plano A que a tela mostra. Ausente (API antiga) = vale o da recomendação; null = sem sinal.
    */
   sinal?: SinalOutono | null
+}
+
+/**
+ * `GET /api/plano/sugestao?lat&lon&fixos=a[,b][&colheita][&solo]` (tarefa 0056): o produtor fixa o 1º ano (ou o
+ * 1º e o 2º) e o motor completa o plano em cadeia; a resposta é o mesmo JSON do `/api/plano`.
+ */
+export type PlanoSugestaoParams = {
+  lat: number
+  lon: number
+  colheita: Colheita
+  fixos: readonly CropId[]
+  solo?: Textura
 }
 
 export type PlanoParams = {

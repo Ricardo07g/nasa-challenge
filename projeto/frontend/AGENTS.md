@@ -321,48 +321,41 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   ("Alertas da sua área", "20 anos de chuva" e "Clima 2041–2060"; sem o raio-X, os cartões de antes), com o
   `BackButton` para `/resposta` e o "Ouvir resumo" (`planningSummary`). `PlanningView` + `usePlanningController`.
   Será refeita no próximo pacote; o link para ela ("Ver meu planejamento →") é do Plano de 3 anos.
-- **Abas da resposta e aba Sugestão (tarefa 0044 do backend, RF-05, RF-22 e RF-30):** as abas são
-  "Sugestão", "Comparar" e "Plano de 3 anos", nessa ordem (`controllers/useAnswerNav.ts`); as URLs
-  continuam `/resposta`, `/opcoes` e `/plano`. O topo das três (`views/AnswerHeader.tsx`) tem o "Voltar",
-  as abas e o seletor "O que você quer mais?" ("Mais segurança", "Renda", "Cuidar da terra"; sem escolha =
-  equilíbrio). O objetivo fica na URL (`objetivo=seguranca|renda|terra`, lido e escrito pelo
-  `flowParams.ts`, então segue em todas as telas) e **não pede nada à API**: a ordem e o plano de cada
-  objetivo vêm prontos do motor (`objetivos` do `/recomendacao`); `services/suggestionService.ts` só
-  escolhe (sem o campo, API antiga, reordena pelo eixo como antes). Na Sugestão: a 1ª opção do objetivo é o
-  "Ano 1 do seu plano" e o plano do objetivo aparece em miniatura (`MiniPlan`); "deu certo" é explicado com
-  o `criterio` da API (nunca número fixo na tela); o explorador ano a ano (`YearBarsChart`: barra =
-  `anos_detalhe[].isna`, linha de corte = `criterio.isna_min`, ano com aperto listrado, "N"/"L" escritos
-  para El Niño/La Niña) abre o detalhe do ano tocado, com o `ano` na URL; o detalhe pede a safra dia a dia
-  a `GET /api/safra-passada` com a `colheita` da URL e a `opcao` mostrada (`pastSeasonService`). A frase de
-  El Niño / La Niña só aparece com `enso_acerto[].clara`. A linha "Água" (`WaterBar`) e o selo "Sede da
-  cultura" (`ThirstBadge`, 1 a 3 gotas e o texto) vêm de `opcoes[].agua`; sem o campo, não aparecem. O
-  aviso da colheita tarde é um só, com as culturas de `fora_da_janela` juntas pela `data_limite`
-  (`lateNotice`). Toda imagem de cultura é o `PlantImage` do design system. Os links "Saiba mais" da aba
-  ficam em `SUGGESTION_ARTICLES` e `cropArticle` (um teste confere que o artigo existe em pt e en).
-  **Não há mais relatório nem a tela solta da safra passada:** `/relatorio` e `/safra-passada?…&ano=X`
-  levam para `/resposta` (com o `ano`, na safra passada). Não crie link para elas.
-- **Abas Comparar e Plano de 3 anos (tarefa 0045 do backend, RF-32):** o estado fica na URL, pelo
-  `flowParams.ts` (segue entre as abas): `comparar` (até 3 culturas, sem o pousio), `plano` (os 3 anos, o
-  pousio vale) e `hoje` (o "O que foi?" do "Como é hoje", `2024:pousio,2025:sorgo`), sem codificar `:` e
-  `,` (`services/cropListParams.ts`). Trocar o objetivo limpa `comparar` e `plano`. **Comparar**
-  (`services/compareService.ts`): sem escolha, as 3 primeiras da ordem do objetivo; chips com a imagem e o
-  selo de sede (`CropPicker` do design system; fora da janela, desligado com a data limite); colunas
-  numa `CompareTable` (rótulo da linha em cima das células, para 3 colunas caberem em 390 px); "Por que
-  usar" e "Por que evitar" só dos rótulos e da sede que a API manda (nenhum corte novo no front);
-  "Se você prefere…" abre a aba (saiu da Sugestão); "Usar no meu plano" é um link para `/plano` com a
-  cultura no ano 1. **Plano** (`services/planService.ts`): cada ano escolhe numa lista nativa
-  (`SelectField`) entre as culturas que cabem na janela e o pousio; o plano da URL com cultura fora da
-  janela volta ao sugerido. As notas, a saúde da terra, a chuva aproveitada e o Plano A/B vêm do
-  `GET /api/plano` (`repositories/planoRepository.ts`; cache em memória por plano; o último resultado
-  fica na tela com "Recalculando…"), pedido duas vezes: o plano e o "Como é hoje". O "Como é hoje"
-  junta o histórico do `/talhao` com as confirmações da tela 4 e o "O que foi?" (os `QuestionChips` e as
-  culturas do relato da S7, sem "outra"); sem as 3 safras conhecidas, usa o `plano_3_anos.hoje` e diz que
-  é uma referência. O número de "secar" só aparece com `plano_ab.limite.separa`. O cartão do sinal do
-  outono usa o `sinal` do `/api/plano` (o Plano A e o Plano B da tela; `planSignal` no `planService`); sem o
-  campo (API antiga) ou enquanto carrega, o do `/recomendacao`, só no plano sugerido (tarefa 0049). A fonte da chuva sai do
-  `chuva.fonte` (`rainSourceName`). Não há mais o botão "Como teria sido em 2024?" nem a regra antiga
-  da data na tela (o sinal do outono continua). Links do Guia: `COMPARE_ARTICLES` e `PLAN_ARTICLES` (um
-  teste confere que existem em pt e en).
+- **Tela 5 "Escolher" + "Plano de 3 anos" (pacote 2, tarefa 0059, RF-42; motor na tarefa 0056 do backend):** as
+  antigas abas Sugestão, Comparar e Plano (tarefas 0044 e 0045) viraram **uma tela com 2 abas** (`ChoosePlanPage` →
+  `controllers/useChoosePlanController.ts` → `views/ChoosePlanView.tsx`, com `ChooseTab`, `PlanTab`, `ChooseModals` e
+  `PlanReport`). `/resposta` e `/opcoes` abrem "1. Escolher"; `/plano`, "2. Plano de 3 anos". As abas são o `Tabs` do
+  design system (`tablist`; setas, Home e End); trocar de aba é `useReplaceUrl` (sem rolar); o botão do fim da aba 1
+  abre a aba 2 do topo. O "Voltar" vai para `/satelite`. **O que fica na URL** (`flowParams.ts`): `objetivo`,
+  `comparar` (até 3, o pousio vale), `escolha` (o 1º ano do plano; sem ela, o `pensa` do raio-X e, com "Ainda não
+  sei", a sugestão), `ano2` e `ano3` (os anos que o produtor mudou) e `ano` (o ano aberto no "Por que essa
+  sugestão?", que o link dos avisos usa). Escolher para o plano congela a comparação da tela com a cultura e solta
+  `ano2`/`ano3`; trocar o objetivo solta a comparação (e os anos, sem `escolha`). Regras: `services/choiceService.ts`
+  (ordem com as fora do prazo no fim, `isLate` = `fora_do_prazo` ou, na API antiga, `!na_janela`; a sugestão é sempre
+  a 1ª no prazo; comparação de partida, caixinhas, fluxos) e `services/planService.ts` (o que fixar no
+  `/api/plano/sugestao`, o plano final com o 3º ano mudado no `/api/plano`, os cartões, `todayState`, o sinal em 2
+  frases, o Plano B do `plano_ab` e a chuva aproveitada). **Aba Escolher:** "O que você quer mais?" (3 botões
+  `aria-pressed`), o cartão "Nossa sugestão" com o modal grande (explorador `YearBarsChart` com o detalhe do ano e a
+  safra dia a dia, `WaterBar`, clima, renda e terra, como fazer, Saiba mais) e "Usar no meu plano" → "✓ Está no seu
+  plano" (mesmo tamanho), "Comparar:" com as 6 culturas em caixinhas (até 3, mínimo 1) e o `CompareCards` do design
+  system (um DOM só: tabela com `subgrid` no computador, cartões com `scroll-snap`, bolinhas e a dica no celular; a
+  coluna dos nomes das linhas é `aria-hidden` e cada célula repete o nome). Toda célula é um botão que abre um modal
+  com o número, a explicação e a fonte. Fora do prazo pode ser comparada e escolhida, sempre com "Passou do prazo
+  ({data})"; "Deixar parado" não tem conta ("Sem lavoura: não entra na conta", a terra pelo `pousio.texto`).
+  Nenhum corte novo no front: os rótulos Bom/Médio/Fraco são os da API e o clima 2041–2060 fica sem rótulo.
+  **Aba Plano:** 3 cartões em cadeia (o "Por quê:" é o `motivo` do motor), "O que plantar" nativo em cada ano,
+  alerta (`role="status"`) com "Voltar ao plano sugerido", notas "Seu plano × Como é hoje" (cada nota abre a conta),
+  chuva aproveitada, "E se o ano vier seco?" (o `sinal`, o SMAP, o Plano A e o **Plano B do motor**, nunca fixo;
+  "Não precisa" com `motivo` `pousio` ou `nunca_falhou`) e "Ver meu planejamento →" (`/planejamento`). **"Como é
+  hoje"** = as 3 últimas safras do raio-X (`todayCrops`): sem resposta, "não preenchido" com o
+  `MissingSeasonsNotice` (grava `safras` sem rolar); com "Não plantei" (`sem_soja`), "Sem soja em {safra}: não dá para
+  comparar", **sem** o aviso. **Relatório:** "Imprimir relatório" chama `window.print()` (injetado no controller);
+  `PlanReport` fica num portal direto no `<body>`, `hidden` na tela, e o CSS de impressão esconde o resto do `<body>`
+  (o cabeçalho do relatório é `<div>`: o `global.css` esconde todo `<header>` na impressão). Com a recomendação na
+  mão, um novo pedido não apaga a tela (sem pisca nem rolagem). Fotos: `PlantPhoto` no cartão, nas colunas e nos
+  anos. Links do Guia: `GuideLink` (nova aba), slugs em `CROP_GUIDE` (`views/choiceTexts.ts`) e `PLAN_ARTICLES`.
+  **Não há mais relatório antigo nem a tela solta da safra passada:** `/relatorio` e `/safra-passada?…&ano=X` levam
+  para `/resposta` (com o `ano`, que abre o "Por que essa sugestão?" naquele ano). Não crie link para elas.
 - **Cabeçalho e rodapé globais (remodelagem, tarefa 0052, RF-36):** valem para todas as telas (`ShellView`, estado no
   `useShellController`). **Cabeçalho** (`design-system/components/Header.tsx`): logo, "Raiz Orbital" (nunca quebra
   linha) e o slogan (some no celular) à esquerda; à direita, **só três itens**: Comunidade (pílula verde-clara, com o
@@ -405,7 +398,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   imagem usados (o modal de créditos), e mapa com OpenStreetMap mostra "© OpenStreetMap" sobre o próprio mapa; (3)
   toda imagem ou vídeo gerado por IA leva a marca d'água visível "Imagem gerada por IA" (a foto da Início, do
   Lovable, leva), e o uso de IA em código e textos fica declarado nos créditos.
-- **Fotos das plantas (tarefa 0055):** fotos reais do Wikimedia Commons, **baixadas** para `public/fotos/` (nunca
+- **Fotos das plantas (tarefa 0055):** toda foto de cultura nas telas novas é o `PlantPhoto` (a tela 5 usa no cartão
+  da sugestão, na comparação e no plano). Fotos reais do Wikimedia Commons, **baixadas** para `public/fotos/` (nunca
   link direto), só CC BY, CC BY-SA ou domínio público, sem logo nem marca, com até 800 px de largura e 250 KB. Os dados
   de cada cultura (arquivo, autor, licença, link do Commons, `alt` e a legenda opcional, em pt e en) ficam só em
   `content/plantPhotos.ts`; a tela mostra com `<PlantPhoto {...plantPhotoProps(cultura, lang)} height={…} />`

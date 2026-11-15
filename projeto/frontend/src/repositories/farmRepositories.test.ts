@@ -177,10 +177,13 @@ describe('repositories mock (dados de exemplo no formato do contrato)', () => {
     expect(rec.aviso).toMatch(/agronomist/)
   })
 
-  it('colheita tarde tira o milho sozinho da janela de plantio', async () => {
+  it('colheita tarde tira o milho sozinho da janela de plantio (tarefa 0056: vem por último, fora do prazo)', async () => {
     const rec = await createMockRecomendacaoRepository(0).get({ ...UBERLANDIA, colheita: 'tarde' }, 'pt')
 
-    expect(rec.opcoes.map((opcao) => opcao.id)).not.toContain('milho_safrinha')
+    const late = rec.opcoes.filter((opcao) => opcao.fora_do_prazo)
+    expect(late.map((opcao) => opcao.id)).toEqual(['milho_safrinha'])
+    expect(rec.opcoes.at(-1)).toMatchObject({ id: 'milho_safrinha', na_janela: false, data_limite: '2027-02-28' })
+    expect(rec.objetivos?.equilibrio?.ordem.at(-1)).toBe('milho_safrinha')
     expect(rec.fora_da_janela.map((opcao) => opcao.id)).toEqual(['milho_safrinha'])
     expect(rec.alternativas.map((alternativa) => alternativa.opcao)).not.toContain('milho_safrinha')
   })

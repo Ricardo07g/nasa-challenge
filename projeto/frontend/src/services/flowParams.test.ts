@@ -99,9 +99,9 @@ describe('objetivo do produtor na URL (tarefa 0044)', () => {
 describe('culturas comparadas, plano editado e "como é hoje" na URL (tarefa 0045)', () => {
   const read = (query: string) => readFlowParams(new URLSearchParams(`lat=1&lon=2&${query}`))
 
-  it('lê até 3 culturas para comparar, sem repetir, sem o pousio e só ids conhecidos', () => {
+  it('lê até 3 culturas para comparar, sem repetir e só ids conhecidos (tela 5: o pousio vale)', () => {
     expect(read('comparar=sorgo,milheto')?.comparar).toEqual(['sorgo', 'milheto'])
-    expect(read('comparar=sorgo,sorgo,trigo,pousio,crotalaria')?.comparar).toEqual(['sorgo', 'crotalaria'])
+    expect(read('comparar=sorgo,sorgo,trigo,pousio,crotalaria')?.comparar).toEqual(['sorgo', 'pousio', 'crotalaria'])
     expect(read('comparar=sorgo,milheto,crotalaria,milho_safrinha')?.comparar).toEqual(['sorgo', 'milheto', 'crotalaria'])
     expect(read('comparar=')?.comparar).toBeUndefined()
   })
@@ -185,5 +185,22 @@ describe('data da colheita, últimas safras e escolha atual na URL (pacote 2, ta
     expect(keepFlowQuery('?lat=1&lon=2&data=2027-02-18&safras=2025:soja&pensa=milheto&ano=2016')).toBe(
       '?lat=1&lon=2&data=2027-02-18&safras=2025:soja&pensa=milheto',
     )
+  })
+})
+
+describe('escolha do plano e anos mudados (tela 5 do pacote 2)', () => {
+  const read = (query: string) => readFlowParams(new URLSearchParams(`lat=1&lon=2&${query}`))
+
+  it('lê a cultura escolhida para o 1º ano e os anos 2 e 3 que o produtor mudou (o pousio vale)', () => {
+    const params = read('escolha=crotalaria&ano2=pousio&ano3=milheto')
+    expect(params).toMatchObject({ escolha: 'crotalaria', ano2: 'pousio', ano3: 'milheto' })
+    expect(read('escolha=trigo&ano2=&ano3=x')).toMatchObject({ escolha: undefined, ano2: undefined, ano3: undefined })
+  })
+
+  it('monta a URL com os três no fim, legíveis, e repassa entre as telas', () => {
+    expect(buildFlowQuery({ lat: 1, lon: 2, colheita: 'tarde', escolha: 'sorgo', ano2: 'pousio', ano3: 'milheto' })).toBe(
+      '?lat=1&lon=2&colheita=tarde&escolha=sorgo&ano2=pousio&ano3=milheto',
+    )
+    expect(keepFlowQuery('?lat=1&lon=2&pensa=sorgo&escolha=milheto&ano2=sorgo')).toBe('?lat=1&lon=2&pensa=sorgo&escolha=milheto&ano2=sorgo')
   })
 })

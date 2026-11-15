@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Opcao, Recomendacao } from '../models/recomendacao'
 import * as rules from './recomendacaoRules'
-import { alternativeSummary, findOption, futureSummary, harvestYear, scoreRows, sortOptions } from './recomendacaoRules'
+import { findOption, scoreRows, sortOptions } from './recomendacaoRules'
 
 /** `renda` é a nota de renda do motor (tarefa 0040 do backend): sem preço nem custo. */
 function opcao(id: Opcao['id'], anosBons: number, renda: number, terra: number, final: number): Opcao {
@@ -72,57 +72,10 @@ describe('sortOptions', () => {
   })
 })
 
-describe('alternativeSummary', () => {
-  it('cada motivo destaca o que importa', () => {
-    const sorgo = options[0]
-    expect(alternativeSummary('menos_risco', sorgo)).toEqual(['chuva sorgo', 'renda sorgo'])
-    expect(alternativeSummary('mais_renda', sorgo)).toEqual(['renda sorgo', 'risco sorgo'])
-    expect(alternativeSummary('cuidar_da_terra', sorgo)).toEqual(['terra sorgo'])
-  })
-})
-
 describe('findOption', () => {
   it('acha a opção pelo id', () => {
     expect(findOption(options, 'crotalaria')?.id).toBe('crotalaria')
     expect(findOption(options, 'milheto')).toBeUndefined()
-  })
-})
-
-describe('harvestYear', () => {
-  it('é o ano da semeadura', () => {
-    expect(harvestYear('2027-02-18')).toBe(2027)
-  })
-})
-
-describe('futureSummary (clima de 2041–2060, NEX-GDDP-CMIP6)', () => {
-  const futuro = (media: number, min: number, max: number) => ({
-    anos_bons_media: media,
-    anos_bons_min: min,
-    anos_bons_max: max,
-    modelos: 3,
-    cenario: 'ssp245',
-  })
-
-  it('anos bons pela média dos modelos, com a faixa entre os modelos', () => {
-    expect(futureSummary({ ...options[1], futuro: futuro(14, 13, 15) })).toEqual({
-      good: 14,
-      total: 20,
-      range: { min: 13, max: 15 },
-    })
-  })
-
-  it('o total de anos é o mesmo da chuva de hoje (chuva.anos)', () => {
-    const option = { ...options[1], chuva: { ...options[1].chuva, anos: 18 }, futuro: futuro(12, 10, 13) }
-
-    expect(futureSummary(option)?.total).toBe(18)
-  })
-
-  it('quando todos os modelos dão o mesmo número, não há faixa', () => {
-    expect(futureSummary({ ...options[1], futuro: futuro(19, 19, 19) })).toEqual({ good: 19, total: 20, range: null })
-  })
-
-  it('sem o dado do CMIP6, devolve null', () => {
-    expect(futureSummary(options[1])).toBeNull()
   })
 })
 

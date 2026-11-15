@@ -287,6 +287,14 @@
   --color-season-confirmable: #eef5f0; /* as 3 safras que o produtor confirma */
   --color-season-current: #eef3f8; /* a safra atual (2026/27) no gráfico */
   --color-sat-status-bg: #f1f2f1; /* "Sem leitura do satélite neste ponto" */
+
+  /* Tela 5 do pacote 2 ("Escolher" e "Plano de 3 anos", tarefa 0059) */
+  --color-on-primary-soft: rgb(255 255 255 / 20%); /* número da aba escolhida, sobre o verde */
+  --color-compare-chosen: #f6fbf8; /* coluna da escolha do plano na comparação */
+  --color-suggestion-wash: linear-gradient(120deg, #f2f8f4, #fff 60%); /* cartão "Nossa sugestão" */
+  --color-plan-alert-bg: #f3f7fb; /* alerta "Você mudou…" do plano */
+  --color-plan-alert-border: #c7d8e8;
+  --year-bad-stripes: repeating-linear-gradient(45deg, var(--color-risk) 0 3px, #f6dcc8 3px 6px); /* ano que falhou */
 }
 
 /* Celular e tablet (até 900 px, protótipos da remodelagem v4): margem menor e cabeçalho mais baixo */
