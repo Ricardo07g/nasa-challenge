@@ -254,3 +254,22 @@ def test_should_have_no_safrinha_alerts_outside_the_safrinha(service: AvisosAgor
     safrinha = service.safrinha(crop(ciclo=120), "Milho sozinho", SOWING, explorar_ano=2024)
 
     assert service.safrinha_alerts(crop(), "Milho", safrinha, _days([0.0] * 30)) == []
+
+
+def test_should_bring_the_heat_of_the_engine_in_the_safrinha_heat_alert() -> None:
+    # 2 dias seguidos de 36 °C na fase crítica (10 e 11/abr): aviso de calor do replay no 2º dia.
+    service = AvisosAgoraService(today=lambda: date(2027, 4, 20))
+    safrinha = service.safrinha(crop(ciclo=120), "Milho sozinho", SOWING, explorar_ano=2024)
+    temps: list[float | None] = [30.0] * 30
+    temps[21] = temps[22] = 36.0  # 30 dias até 18/abr: o índice 21 é 10/abr
+    days = _days([6.0] * 30, temps, end=date(2027, 4, 18))
+
+    avisos = service.safrinha_alerts(crop(ciclo=120), "Milho sozinho", safrinha, days)
+
+    assert [(a.tipo, a.data) for a in avisos] == [("safrinha_calor", date(2027, 4, 11))]
+    assert avisos[0].valores == {
+        "dias": 2,
+        "cultura": "milho_safrinha",
+        "nome": "Milho sozinho",
+        "temp_c": 35.0,
+    }

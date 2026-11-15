@@ -215,6 +215,7 @@ class AvisosAgoraService:
             if d.chuva_mm is not None and d.tmax_c is not None
         ]
         events = self._alerts.timeline(crop, nome, safrinha.semeadura, series)
+        heat: dict[str, float] = {"temp_c": self._rules.clima.calor_temp_c}
         return [
             Aviso(
                 tipo=SAFRINHA_ALERTS[event.tipo],
@@ -225,6 +226,7 @@ class AvisosAgoraService:
                     "dias": self._run_until(series, event.data, event.tipo == "aviso_calor"),
                     "cultura": crop.id,
                     "nome": nome,
+                    **(heat if event.tipo == "aviso_calor" else {}),
                 },
             )
             for event in events
