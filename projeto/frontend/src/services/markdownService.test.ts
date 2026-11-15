@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseMarkdown, plainText } from './markdownService'
+import { parseInline, parseMarkdown, plainText } from './markdownService'
 
 describe('parseMarkdown', () => {
   it('lê títulos de nível 2 e 3, parágrafos e listas', () => {
@@ -41,5 +41,19 @@ describe('parseMarkdown', () => {
 
   it('ignora linhas em branco extras', () => {
     expect(parseMarkdown('\n\n\n')).toEqual([])
+  })
+})
+
+describe('parseInline (uma linha só, ex.: os créditos)', () => {
+  it('lê o negrito no começo e no meio da linha, e o resto vira texto', () => {
+    expect(parseInline('**GPM IMERG Final** · chuva de cada dia')).toEqual([
+      { type: 'strong', text: 'GPM IMERG Final' },
+      { type: 'text', text: ' · chuva de cada dia' },
+    ])
+    expect(parseInline('gerada por IA no **Lovable**, não é uma foto real.')).toEqual([
+      { type: 'text', text: 'gerada por IA no ' },
+      { type: 'strong', text: 'Lovable' },
+      { type: 'text', text: ', não é uma foto real.' },
+    ])
   })
 })
