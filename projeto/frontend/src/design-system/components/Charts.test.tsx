@@ -78,4 +78,32 @@ describe('RainBarChart com o valor em cima das barras', () => {
     expect(chart).toHaveTextContent('63%')
     expect(chart.querySelector('[data-tone="earth"]')).not.toBeNull()
   })
+
+  it('o valor fica preso em cima da própria barra: não tira altura da barra mais alta', () => {
+    // Antes, o texto ocupava espaço na coluna e a barra de 100% encolhia: 213 mm parecia só 14% maior
+    // que 161 mm (são 32%).
+    render(
+      <RainBarChart
+        label="Chuva média por mês"
+        caption="Média de 2005 a 2024"
+        bars={[
+          { label: 'Jan', value: 100, tone: 'strong', display: '213' },
+          { label: 'Fev', value: 76, tone: 'strong', display: '161' },
+        ]}
+      />,
+    )
+
+    const chart = screen.getByRole('img', { name: 'Chuva média por mês' })
+    const bars = chart.querySelectorAll('[data-bar]')
+    expect(bars[0]).toHaveTextContent('213')
+    expect(bars[0]).toHaveStyle({ height: '100%' })
+    expect(bars[1]).toHaveTextContent('161')
+    expect(chart).toHaveAttribute('data-values', 'true')
+  })
+
+  it('sem valores, a área das barras não reserva espaço para eles', () => {
+    render(<RainBarChart label="Chuva" caption="Exemplo" bars={[{ label: 'Jan', value: 100, tone: 'strong' }]} />)
+
+    expect(screen.getByRole('img', { name: 'Chuva' })).not.toHaveAttribute('data-values')
+  })
 })

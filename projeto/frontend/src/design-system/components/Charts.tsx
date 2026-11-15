@@ -8,21 +8,27 @@ type Bar = {
   display?: string
 }
 
-/** Barras de chuva por mês (tela 3). `value` é a altura em % da maior barra. */
+/**
+ * Barras de chuva por mês (tela 3). `value` é a altura em % da maior barra. O `display` fica preso em
+ * cima da própria barra (sem ocupar altura), para a barra de 100% não encolher.
+ */
 export function RainBarChart({ label, caption, bars }: { label: string; caption: string; bars: readonly Bar[] }) {
+  const withValues = bars.some((bar) => bar.display)
   return (
     <figure className={styles.figure}>
       <div
         role="img"
         aria-label={label}
         className={styles.bars}
+        data-values={withValues || undefined}
         style={{ gridTemplateColumns: `repeat(${bars.length}, minmax(0, 1fr))` }}
       >
         {bars.map((bar) => (
           <span key={bar.label} className={styles.barColumn}>
             <span className={styles.barTrack}>
-              {bar.display && <span className={styles.barValue}>{bar.display}</span>}
-              <span data-bar className={styles.bar} data-tone={bar.tone} style={{ height: `${bar.value}%` }} />
+              <span data-bar className={styles.bar} data-tone={bar.tone} style={{ height: `${bar.value}%` }}>
+                {bar.display && <span className={styles.barValue}>{bar.display}</span>}
+              </span>
             </span>
             <span className={styles.barLabel}>{bar.label}</span>
           </span>
