@@ -58,11 +58,22 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 
 ## Revisão por seção
 
-(preenchida depois de cada merge)
+### S8 — Guia (revisada em 15/11 ~02:45)
+
+- ✅ `/guia` com os 5 temas e busca por título; `/guia/<artigo>` com a estrutura fixa (Em uma frase, Por que importa, Na sua lavoura, Fontes; nas culturas, Conheça e Passo a passo). Conferido no Chrome sem interface em 1280 e 390 px.
+- ✅ 19 artigos em pt e en: os 12 prioritários (6 culturas, deu certo, conta de água, rotação, prazo/ZARC, veranico, alertas da Defesa Civil) e 7 de apoio (palhada, adubo verde, nematoide, geada, El Niño/La Niña, calor de 35 °C, clima 2041–2060). Entre 156 e 214 palavras.
+- ✅ "Rascunho: a revisar pela agrônoma" no topo dos de cultura, plantio e manejo.
+- ✅ Números conferidos contra o `culturas.yaml` (Kc 1,20 do milho, floração 60 e ciclo 120 dias, limite 28/02) e o `regras.yaml` (ISNA 0,55 / 0,50, fase crítica ±15 dias, 35 °C em 3 dias).
+- ✅ Fontes só de páginas abertas e conferidas (gov.br, Embrapa, NASA, NOAA), com um teste que barra link externo fora da lista `verifiedSources.ts`. Os números da Defesa Civil (SMS 40199, WhatsApp (61) 2034-4611, 193 e 199) foram conferidos no gov.br.
+- ✅ Ilustrações próprias em SVG das 6 opções (D4); Markdown renderizado sem `innerHTML` e sem biblioteca nova.
+- ⚠️ Faltaram 7 artigos: plantio direto, sementes e erosão (sem fonte aberta conferida); "quando a chuva acaba" e "raio-X" (descrevem telas das seções 3 e 4, que ainda não existem); "plantar logo depois da colheita" (sem fonte e depende do custo do atraso da S3); fogo na palha (só guias estaduais, não conferidos). Os links das telas para esses artigos entram quando as seções 3, 4 e 6 forem feitas.
+- ⚠️ A S8 entrou antes da S1 (a S1 ainda estava rodando). Não há conflito: arquivos diferentes.
 
 ## Números estranhos encontrados
 
-(preenchido ao longo do trabalho)
+- **"Deu certo" no pedido × motor:** o pedido diz "nenhum dia de 35 °C nessa fase"; o motor (`regras.yaml`, `calor_min_dias`) conta aperto com **3 dias ou mais** de 35 °C na fase crítica. Os textos seguem o motor; mudar a regra é decisão da agrônoma.
+- **Soja recente (RF-24):** 96% dos pixels da caixa piloto têm pico de NDVI ≥ 0,70 em jan–mar de 2026 (pasto e cerrado também ficam verdes na chuva). O aviso do começo pega cidade, água e solo exposto, mas não distingue soja de pasto.
+- **Região pelo satélite calibrada (tarefa 0036):** depois de tirar cana, café e pasto, a soja do ano é 45–58% da lavoura, mas "parado" ainda fica entre 0,7% e 6% (plantou 72–96%). Só 2 de 10 anos passam no critério de crível combinado com o usuário (parado entre 5% e 80%), então a região continua escondida. Pode ser real (safrinha comum no Triângulo) ou mato que rebrota com a chuva de março.
 
 ## O que não foi possível e por quê
 
