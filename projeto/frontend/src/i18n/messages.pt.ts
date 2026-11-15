@@ -220,7 +220,7 @@ export const pt = {
       crop ? `${band}, ${crop}, ${good} de ${total}` : `${band}, ${good} de ${total}`,
     delaySame: (crop: string) => `A melhor opção é ${crop} nas três épocas.`,
     delayDiffers: 'A melhor opção muda com a época da colheita.',
-    delayRow: (crop: string, good: number, total: number) => `${crop}: deu certo em ${good} de ${total} anos`,
+    delayRow: (crop: string, good: number, total: number) => `${crop}, deu certo em ${good} de ${total} anos`,
     delayYours: 'sua escolha',
     delayNote: 'Resultado da conta do app para a melhor opção de cada época, com a chuva e o calor de cada ano.',
     /** RF-24: o satélite não viu soja no ponto marcado na última safra (aviso que deixa seguir). */

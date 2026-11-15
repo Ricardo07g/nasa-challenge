@@ -235,7 +235,7 @@ function DelayCostSection({ t, cost, selected }: { t: Messages; cost: DelayCost;
         <ul className={layout.stack}>
           {cost.bands.map((band) => (
             <li key={band.band}>
-              <strong>{t.harvest[band.band].title}</strong> {w.delayRow(cropName(t, band.crop), band.good, band.total)}
+              <strong>{t.harvest[band.band].title}:</strong> {w.delayRow(cropName(t, band.crop), band.good, band.total)}
               {band.band === selected && <span> ({w.delayYours})</span>}
             </li>
           ))}
@@ -252,7 +252,15 @@ function DelayCostSection({ t, cost, selected }: { t: Messages; cost: DelayCost;
 export function WhenView(props: WhenViewProps) {
   const { t, lang, backTo, selected, date, dateBand, window, bandsOpen, rainChart, rainLeft, rainEnd, delayCost } = props
   const w = t.when
-  const status = date === '' ? w.dateEmpty : dateBand ? w.dateBand(formatDayMonth(lang, date), t.harvest[dateBand].inline) : w.dateNeed
+  // Enquanto o talhão carrega (sem sugestão ainda), o campo não pede nada: o dia do satélite vem já.
+  const status =
+    date === ''
+      ? props.suggestion
+        ? w.dateEmpty
+        : undefined
+      : dateBand
+        ? w.dateBand(formatDayMonth(lang, date), t.harvest[dateBand].inline)
+        : w.dateNeed
   const chart = rainChart !== null && rainChart !== 'loading' ? rainChart : null
   const cost = delayCost !== null && delayCost !== 'loading' ? delayCost : null
   return (

@@ -164,8 +164,11 @@ export function RainEtoChart({
                 </span>
               </span>
             </span>
-            <span className={styles.barLabel}>{bar.label}</span>
-            {bar.tag && <span className={styles.etoTag}>{bar.tag}</span>}
+            {/* Pé de altura igual em todos os meses: o texto do destaque não encurta as barras. */}
+            <span className={styles.etoFoot}>
+              <span className={styles.barLabel}>{bar.label}</span>
+              {bar.tag && <span className={styles.etoTag}>{bar.tag}</span>}
+            </span>
           </span>
         ))}
       </div>

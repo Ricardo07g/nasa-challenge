@@ -162,6 +162,14 @@ describe('WhenView (tela 3)', () => {
     expect(props.onUseSuggestion).toHaveBeenCalled()
   })
 
+  it('enquanto o talhão carrega, o campo fica vazio sem pedir nada e sem faixa azul', () => {
+    setup({ suggestion: null, suggestionApplied: false, date: '', dateBand: null, selected: 'meio' })
+
+    expect(screen.getByLabelText('Dia da colheita')).toHaveValue('')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Pelo satélite|Não deu para ver/)).not.toBeInTheDocument()
+  })
+
   it('mudar o dia chama o controller; dia fora da época pede outro', async () => {
     const props = setup({ date: '2027-05-02', dateBand: null, suggestionApplied: false })
 
@@ -267,7 +275,7 @@ describe('WhenView (tela 3)', () => {
     )
     expect(cost).toHaveTextContent('A melhor opção muda com a época da colheita.')
     const yours = within(cost).getByText(/sua escolha/)
-    expect(yours.closest('li')).toHaveTextContent('Fim de fevereiro ou março')
+    expect(yours.closest('li')).toHaveTextContent('Fim de fevereiro ou março: milheto, deu certo em 20 de 20 anos (sua escolha)')
     expect(within(cost).getByRole('link', { name: 'Saiba mais: Plantar logo depois da colheita' })).toHaveAttribute(
       'href',
       '/guia/plantar-logo-depois-da-colheita',

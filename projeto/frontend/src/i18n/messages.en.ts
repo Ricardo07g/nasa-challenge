@@ -210,7 +210,7 @@ export const en = {
       crop ? `${band}, ${crop}, ${good} of ${total}` : `${band}, ${good} of ${total}`,
     delaySame: (crop: string) => `The best option is ${crop} in all three periods.`,
     delayDiffers: 'The best option changes with the harvest period.',
-    delayRow: (crop: string, good: number, total: number) => `${crop}: worked in ${good} of ${total} years`,
+    delayRow: (crop: string, good: number, total: number) => `${crop}, worked in ${good} of ${total} years`,
     delayYours: 'your choice',
     delayNote: 'Result of the app calculation for the best option of each period, with the rain and heat of each year.',
     soyWarning: (safra: string) =>
