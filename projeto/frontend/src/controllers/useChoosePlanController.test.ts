@@ -122,6 +122,47 @@ describe('useChoosePlanController (tela 5: "1. Escolher" e "2. Plano de 3 anos")
     expect(result.current.plan.alert).toBeNull()
   })
 
+  it('escolher de novo a sugestão do 2º ano tira o ano2 (e o ano3): "Nossa sugestão", o 3º refeito e sem alerta', async () => {
+    const { result, d } = await ready(`/plano?${flow}&escolha=sorgo&ano3=pousio`)
+    await waitFor(() => expect(result.current.plan.cards?.[2].crop).toBe('pousio'))
+
+    act(() => result.current.plan.chooseYear(1, 'crotalaria'))
+    expect(location()).toContain('ano2=crotalaria')
+    expect(location()).not.toContain('ano3=')
+    await waitFor(() => expect(d.suggest).toHaveBeenLastCalledWith(expect.objectContaining({ fixos: ['sorgo', 'crotalaria'] }), 'pt'))
+    await waitFor(() => expect(result.current.plan.cards?.[1]).toMatchObject({ crop: 'crotalaria', tag: 'changed' }))
+    expect(result.current.plan.cards?.[1].suggested?.crop).toBe('milheto')
+    expect(result.current.plan.alert).toBe('year2')
+
+    act(() => result.current.plan.chooseYear(1, 'milheto'))
+    expect(location()).not.toContain('ano2=')
+    expect(location()).not.toContain('ano3=')
+    await waitFor(() => expect(result.current.plan.cards?.map((card) => [card.crop, card.tag])).toEqual([
+      ['sorgo', 'choice'],
+      ['milheto', 'suggested'],
+      ['sorgo', 'suggested'],
+    ]))
+    expect(result.current.plan.cards?.[1].motivo).toMatch(/varia a cultura/)
+    expect(result.current.plan.alert).toBeNull()
+    expect(result.current.plan.edited).toBe(false)
+  })
+
+  it('escolher de novo a sugestão do 3º ano tira só o ano3 e o alerta some', async () => {
+    const { result } = await ready(`/plano?${flow}&escolha=sorgo&ano2=pousio`)
+    await waitFor(() => expect(result.current.plan.cards?.[2].suggested?.crop).toBe('milheto'))
+
+    act(() => result.current.plan.chooseYear(2, 'sorgo'))
+    expect(location()).toContain('ano3=sorgo')
+    expect(result.current.plan.alert).toBe('year3')
+
+    act(() => result.current.plan.chooseYear(2, 'milheto'))
+    expect(location()).toContain('ano2=pousio')
+    expect(location()).not.toContain('ano3=')
+    expect(result.current.plan.alert).toBeNull()
+    await waitFor(() => expect(result.current.plan.cards?.[2]).toMatchObject({ crop: 'milheto', tag: 'suggested' }))
+    expect(result.current.plan.edited).toBe(true)
+  })
+
   it('mudar o 3º ano avalia o plano inteiro no /api/plano', async () => {
     const { result, d } = await ready(`/plano?${flow}&escolha=sorgo`)
     await waitFor(() => expect(result.current.plan.cards).not.toBeNull())
