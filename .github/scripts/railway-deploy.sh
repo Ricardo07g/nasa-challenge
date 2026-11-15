@@ -11,6 +11,7 @@
 #   próximo deploy.
 # - Se o main já andou além deste commit, não publica: a rodada do commit mais novo publica tudo.
 # - FORCAR=true (o "Run workflow" à mão) publica mesmo sem mudança.
+# - Antes do deploy, grava COMMIT_SHA=<sha> no serviço: o /api/health e o /versao.json mostram o commit no ar.
 # - Sai com 0 se publicou com SUCCESS (build, migração e health check passaram) ou se não precisava publicar.
 #   Grava publicou=true|false no GITHUB_OUTPUT.
 set -euo pipefail
@@ -77,7 +78,14 @@ if [[ "${FORCAR:-false}" != "true" ]]; then
   fi
 fi
 
-# 3. Publica e espera.
+# 3. Carimba a versão: o /api/health (backend) e o /versao.json (frontend) passam a dizer este commit.
+if ! saida_var="$(railway variable set "COMMIT_SHA=$commit" --service "$servico" --skip-deploys 2>&1)"; then
+  echo "O railway variable set falhou:" >&2
+  echo "$saida_var" >&2
+  exit 1
+fi
+
+# 4. Publica e espera.
 echo "Enviando projeto/$servico (${commit:0:7}) para a Railway..."
 if ! resposta="$(railway up "projeto/$servico" --path-as-root --service "$servico" \
   --detach --json --message "commit $commit" 2>&1)"; then

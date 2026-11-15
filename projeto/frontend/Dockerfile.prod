@@ -9,6 +9,11 @@ RUN npm ci
 COPY . .
 ENV VITE_API_MODE=http
 RUN npm run build
+# Commit que está no ar (/versao.json). A Railway passa a variável COMMIT_SHA do serviço como argumento
+# do build; o CI grava a variável antes de cada deploy e o smoke test confere. Fora do deploy, "local".
+# Fica depois do build para não invalidar o cache das camadas de cima.
+ARG COMMIT_SHA=local
+RUN printf '{"commit":"%s"}\n' "$COMMIT_SHA" > dist/versao.json
 
 FROM caddy:2.10-alpine
 COPY Caddyfile /etc/caddy/Caddyfile

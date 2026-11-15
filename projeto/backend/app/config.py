@@ -87,6 +87,10 @@ class Settings(BaseSettings):
     # e o "apagar o meu" recomeçam quando a API reinicia).
     community_device_salt: str | None = None
 
+    # Commit que está no ar (/api/health). O CI grava COMMIT_SHA na Railway antes de cada deploy
+    # (.github/scripts/railway-deploy.sh); fora do deploy, "local".
+    commit_sha: str = "local"
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def split_origins(cls, value: object) -> object:

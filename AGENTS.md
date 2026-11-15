@@ -69,7 +69,9 @@ protegido: **o merge só libera com estas checagens verdes** (vale para pessoas 
 
 **Deploy:** a cada merge no `main`, com tudo verde, o `.github/scripts/railway-deploy.sh` publica na Railway só o
 serviço que mudou desde o último deploy dele (no backend, mudança só em `docs/` ou `.md` não publica), espera o
-deploy chegar a SUCCESS (migração e health check) e o job `Site no ar` confere o endereço público. Para publicar à
+deploy chegar a SUCCESS (migração e health check) e o job `Site no ar` confere o endereço público. **Carimbo da
+versão:** antes do deploy, o script grava `COMMIT_SHA` no serviço; o `/api/health` (`commit`) e o `/versao.json` do
+site dizem o commit no ar, e o `Site no ar` só passa se for o commit do merge. Para publicar à
 mão: Actions → CI/CD → *Run workflow* no `main` (ambos, backend ou frontend).
 
 - **Segredo:** só o `RAILWAY_TOKEN` (token do projeto na Railway), no ambiente `production` do GitHub, que libera só

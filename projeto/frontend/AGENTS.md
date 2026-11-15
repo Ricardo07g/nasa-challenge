@@ -571,6 +571,10 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `projeto/frontend/.env.example` (para o `npm run dev`, copie para `.env.local`) e em `projeto/.env.example` (compose):
   `VITE_API_MODE`, `VITE_TELEGRAM_BOT_URL` e `VITE_ABRIR_COM_DEMONSTRACAO` (pacote 2; só `false`, `0` ou `nao`
   desligam). Nos testes, o `test.env` do `vite.config.ts` fixa o valor.
+- **Imagem de produção (`Dockerfile.prod`, deploy na Railway):** build do Vite + Caddy (`Caddyfile`), que repassa
+  `/api/*` ao backend. O build grava `dist/versao.json` com o argumento `COMMIT_SHA` (a Railway passa a variável do
+  serviço, que o deploy do CI grava; sem ela, `local`): o smoke test do CI confere o commit no ar. Não é `VITE_*`:
+  não vai para o código do app.
 - **Idioma:** textos da interface em português (produtor) e inglês (juízes), conforme o PRD (RNF-03).
   **O inglês é o padrão do site** (15/11/2026): sem escolha salva, abre em inglês, seja qual for o idioma do navegador
   (`detectLanguage` em `i18n/language.ts`; o `index.html` começa com `lang="en"`). Quem troca para PT no cabeçalho

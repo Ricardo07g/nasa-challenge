@@ -60,7 +60,8 @@ deste projeto aceita IPv4, e o Caddy do front alcança o backend assim.
      2. `railway volume files --volume db-volume upload dados.sql /carga_dados.sql`;
      3. `railway ssh --service db` e `psql -v ON_ERROR_STOP=1 -1 -f /var/lib/postgresql/data/carga_dados.sql`;
      4. conferir as contagens com as do banco local e apagar o arquivo do volume
-        (`railway volume files delete --volume db-volume /carga_dados.sql`).
+        (`railway volume files --volume db-volume delete /carga_dados.sql --yes`, num terminal fora do Claude Code: o CLI
+        recusa apagar arquivo quando roda dentro de um agente).
    - **Arquivos:** só os 9 arquivos que os `*_PATH` apontam (~4 MB), cada um na sua pasta:
      `railway volume files --volume backend-volume upload <pasta> /<pasta>`. Os caches brutos (`cache_*`) e o NDVI
      por área completo não vão. Depois, reiniciar o backend.
@@ -77,6 +78,9 @@ o último deploy dele, com a mensagem `commit <sha>`, e espera o SUCCESS. *Run w
   `RAILWAY_TOKEN` do ambiente `production` do GitHub, que libera só para o `main`. Para trocar: crie outro token
   (Railway → projeto → *Settings* → *Tokens*) e rode `gh secret set RAILWAY_TOKEN --env production` colando o valor;
   depois apague o antigo no painel.
+- **Carimbo da versão:** antes de cada `railway up`, o script grava a variável `COMMIT_SHA` no serviço
+  (`--skip-deploys`). O backend devolve no `/api/health` (`commit`) e o build do front grava `/versao.json`; o job
+  `Site no ar` confere que os dois estão no commit do merge.
 - **Não conecte o GitHub nos serviços da Railway** (*Source* → GitHub): o deploy sairia duas vezes, e sem esperar o
   CI.
 - O deploy feito à mão da máquina (`railway up` sem `--message "commit <sha>"`) faz o próximo deploy do CI publicar de
