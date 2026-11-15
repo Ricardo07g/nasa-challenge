@@ -18,10 +18,11 @@ alguns cartões (clima futuro, histórico do talhão).
 | Chuva diária em 0,1° (refinamento da chuva do POWER) | GPM IMERG Final (`GPM_3IMERGDF` v07) pelo OPeNDAP do GES DISC | arquivo `data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` e, depois da carga, a chuva dos anos completos no banco (`climate_season`, `rain_source = gpm_imerg`) | "Chuva mais detalhada" conectada (10 km) e "(GPM IMERG + NASA POWER)" no "Por quê?" | script `fetch_imerg` + carga no banco (`--imerg`) |
 | El Niño / La Niña de cada safrinha | ONI da NOAA (não é da NASA) | arquivo `data/baixados/noaa_oni/oni.json` (só arquivo, sem tabela) | a marca de El Niño / La Niña nos quadrinhos de chuva e na frase de cada ano | script `fetch_oni` |
 | Região pelo satélite (lavoura parada na entressafra, num raio de 30 km) | MODIS (MOD13Q1, MYD13Q1 e o uso do solo MCD12Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` (sem tabela ainda) | "Na sua região": a área de lavoura parada, ano a ano | script `fetch_regiao_ndvi` |
+| Chuva dos últimos 30 dias × média | GPM IMERG Late (`GPM_3IMERGDL`) + NASA POWER já no banco | arquivo `data/baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json` | "Sinal para o outono" (junto com o SMAP recente; só a chuva não acende o sinal) | script `fetch_imerg_late`, perto do plantio (fev/mar) |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
-aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH` e `REGIAO_PATH` para os arquivos acima. Arquivo
-ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`).
+aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH` e `IMERG_LATE_PATH` para os
+arquivos acima. Arquivo ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`).
 
 ## Caminho rápido: receber o pacote de alguém do time (~5 min)
 
@@ -69,6 +70,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Carregar os arquivos no banco (`cmip6_delta`, `ndvi_point` e a chuva do IMERG no `climate_season`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json --imerg ../../data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` | segundos | nenhuma |
 | El Niño / La Niña de cada safrinha (ONI) | `uv run python -m pipeline.fetch_oni` | segundos (1 pedido de ~23 KB à NOAA) | nenhuma |
 | Região pelo satélite (fazenda de exemplo, raio de 30 km) | `uv run python -m pipeline.fetch_regiao_ndvi` | ~20 min (41 pedidos à ORNL de ~25 a 40 s; num 502 ele espera e tenta de novo); se parar, rode de novo que continua do cache | nenhuma |
+| Chuva dos últimos 30 dias (sinal para o outono) | `uv run python -m pipeline.fetch_imerg_late` | ~2 min (1 a 2 pedidos ao CMR + 30 ao OPeNDAP, um por dia; estimativa, ainda não medido com token); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` (com o *NASA GESDISC DATA ARCHIVE* autorizado) |
 
 - A pré-carga é idempotente: rodar de novo só completa o que faltou (por exemplo, solos em que o
   SoilGrids não respondeu). Solo sem dado no mapa (área urbana) nunca é gravado.
@@ -129,6 +131,12 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   --dry-run`. Outras regiões: `--centros "lat,lon;lat,lon"` (41 pedidos por centro) e `--raio-km`.
   A ORNL é pública, mas lenta e às vezes devolve 502: o script tenta de novo até 5 vezes por
   pedido (`--tentativas`) e, se desistir, o que já baixou fica no cache.
+- A **chuva dos últimos 30 dias** compara o IMERG Late com a média do NASA POWER **guardado** nos
+  mesmos dias (do banco, depois da pré-carga; sem `DATABASE_URL`, só a célula da fazenda de
+  exemplo, pela fixture). O POWER guardado vai de 1/jan a 31/jul: rode de fevereiro a julho. Fora
+  disso, o script avisa que não há média e não mexe no arquivo que já existe. Veja o plano antes
+  com `uv run python -m pipeline.fetch_imerg_late --dry-run` (sem rede e sem token); `--fim
+  AAAA-MM-DD` fixa o último dia somado e `--area="lat_min,lat_max,lon_min,lon_max"` troca a caixa.
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).

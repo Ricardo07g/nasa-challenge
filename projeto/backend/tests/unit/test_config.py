@@ -13,6 +13,7 @@ DATA_ENV_VARS = (
     "CMIP6_PATH",
     "ONI_PATH",
     "REGIAO_PATH",
+    "IMERG_LATE_PATH",
 )
 CREDENTIAL_ENV_VARS = (
     "EARTHDATA_TOKEN",
@@ -109,6 +110,21 @@ def test_regiao_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -
     settings = Settings(_env_file=None)
 
     assert settings.regiao_path == tmp_path / "regiao.json"
+
+
+def test_imerg_late_path_defaults_to_none_so_there_is_no_recent_rain_without_the_file() -> None:
+    # Sem o arquivo da chuva recente (IMERG Late, A2.3), o sinal para o outono fica sem a terra.
+    settings = Settings(_env_file=None)
+
+    assert settings.imerg_late_path is None
+
+
+def test_imerg_late_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("IMERG_LATE_PATH", str(tmp_path / "chuva_30d.json"))
+
+    settings = Settings(_env_file=None)
+
+    assert settings.imerg_late_path == tmp_path / "chuva_30d.json"
 
 
 def test_rules_path_defaults_to_file_shipped_with_the_app() -> None:

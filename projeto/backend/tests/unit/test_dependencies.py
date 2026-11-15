@@ -18,7 +18,9 @@ from app.repositories.climate_repository import (
     PostgisClimateRepository,
 )
 from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6Repository
+from app.repositories.recent_rain_repository import FileRecentRainRepository
 from app.repositories.regiao_repository import FileRegionRepository
+from app.repositories.sinal_outono_repository import NoAutumnSignalDataRepository
 from app.repositories.soil_repository import CachedSoilGridsRepository, PostgisSoilRepository
 from app.services.region_service import RegionService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
@@ -43,18 +45,23 @@ def _clear_caches() -> None:
     dependencies.get_climate_repository.cache_clear()
     dependencies.get_soil_repository.cache_clear()
     dependencies.get_region_repository.cache_clear()
+    dependencies.get_recent_rain_repository.cache_clear()
 
 
 @pytest.fixture
 def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None]]:
     def _apply(
-        database_url: str | None, cmip6_path: Path | None = None, regiao_path: Path | None = None
+        database_url: str | None,
+        cmip6_path: Path | None = None,
+        regiao_path: Path | None = None,
+        imerg_late_path: Path | None = None,
     ) -> None:
         settings = Settings(
             _env_file=None,
             database_url=database_url,
             cmip6_path=cmip6_path,
             regiao_path=regiao_path,
+            imerg_late_path=imerg_late_path,
         )
         monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
         _clear_caches()
@@ -195,3 +202,43 @@ def test_should_read_the_region_from_the_file_of_regiao_path(
     assert isinstance(repository, FileRegionRepository)
     assert repository._path == tmp_path / "regiao.json"
     assert isinstance(service, RegionService)
+
+
+def _write_recent_rain_file(path: Path) -> Path:
+    # Arquivo do contrato da chuva recente com valores de teste (não é dado do IMERG).
+    payload = {
+        "versao_dados": {"fonte": "imerg_late", "parametros": {}, "fim": "2027-03-01T12:00:00Z",
+                         "versao": "2027.03-teste"},
+        "celulas": [{"cell_id": "-190_-482", "lat": -18.95, "lon": -48.15, "data": "2027-02-28",
+                     "dias": 30, "chuva_30d_mm": 90.0, "media_30d_mm": 200.0,
+                     "fracao_da_media": 0.45, "anos_media": 20}],
+    }  # fmt: skip
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def test_should_read_recent_rain_from_the_file_of_imerg_late_path(
+    use_settings: Callable[..., None], tmp_path: Path
+) -> None:
+    use_settings(None, imerg_late_path=_write_recent_rain_file(tmp_path / "chuva.json"))
+
+    repo = dependencies.get_recent_rain_repository()
+    rain = repo.get_recent_rain(-18.9543, -48.1993)
+
+    assert isinstance(repo, FileRecentRainRepository)
+    assert rain is not None
+    assert (rain.chuva_mm, rain.media_mm, rain.dias) == (90.0, 200.0, 30)
+
+
+def test_should_have_no_recent_rain_without_imerg_late_path(
+    use_settings: Callable[..., None],
+) -> None:
+    # Sem o arquivo, nenhuma chuva recente: o sinal segue sem a terra (ou nulo, sem nada).
+    use_settings(None)
+
+    assert dependencies.get_recent_rain_repository().get_recent_rain(-18.9543, -48.1993) is None
+
+
+def test_should_keep_the_seasonal_forecast_empty_until_its_data_arrives() -> None:
+    # GEOS-S2S (A2.1): só vem em NetCDF-4/HDF5, sem caminho sem biblioteca nova (tarefa 0032).
+    assert isinstance(dependencies.get_seasonal_forecast_repository(), NoAutumnSignalDataRepository)
