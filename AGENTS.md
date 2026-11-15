@@ -35,6 +35,8 @@ projeto/
   backend/                API em Python (FastAPI)   -> ver projeto/backend/AGENTS.md
   frontend/               interface em React + Vite -> ver projeto/frontend/AGENTS.md
 .pre-commit-config.yaml   checagens antes de cada commit (segredos, lint)
+.github/workflows/ci-cd.yml  CI em todo PR e deploy na Railway a cada merge no main
+.github/scripts/          script do deploy na Railway e o teste dele
 ```
 
 ## Como rodar
@@ -52,6 +54,30 @@ Mudou dependência do frontend? Rode `docker compose up --build -V` para recriar
 
 Deploy na Railway (banco PostGIS, backend e front, que dormem depois de ~10 min sem uso): veja
 `projeto/backend/docs/deploy-railway.md`. Nenhuma credencial vai para o git: segredos só nas variáveis da Railway.
+
+## CI/CD (GitHub Actions)
+
+O workflow `.github/workflows/ci-cd.yml` roda em **todo pull request** e em todo push no `main`. O `main` é
+protegido: **o merge só libera com estas checagens verdes** (vale para pessoas e agentes):
+
+| Checagem | O que roda |
+| --- | --- |
+| `Segredos e pre-commit` | gitleaks nos commits novos e nos arquivos de agora; teste do script de deploy; `pre-commit run --all-files` |
+| `Backend` | `uv sync --frozen`, `ruff check`, `ruff format --check`, `pytest` com os testes `db` num PostGIS 17-3.5 descartável, e as migrações subindo, descendo e subindo de novo num banco vazio |
+| `Frontend` | `npm ci`, `npm run lint`, `npm test`, `npm run build` |
+| `Imagem Docker (backend)` e `(frontend)` | build das imagens de produção (`Dockerfile` e `Dockerfile.prod`), sem publicar |
+
+**Deploy:** a cada merge no `main`, com tudo verde, o `.github/scripts/railway-deploy.sh` publica na Railway só o
+serviço que mudou desde o último deploy dele (no backend, mudança só em `docs/` ou `.md` não publica), espera o
+deploy chegar a SUCCESS (migração e health check) e o job `Site no ar` confere o endereço público. Para publicar à
+mão: Actions → CI/CD → *Run workflow* no `main` (ambos, backend ou frontend).
+
+- **Segredo:** só o `RAILWAY_TOKEN` (token do projeto na Railway), no ambiente `production` do GitHub, que libera só
+  para o `main`. PR, inclusive de fork, nunca recebe o token. Nunca use `pull_request_target` nem coloque token no
+  workflow.
+- **Actions de terceiros:** sempre fixadas pelo SHA do commit, com a versão em comentário.
+- **Mudou o script de deploy?** Rode `bash .github/scripts/test_railway_deploy.sh` (Railway falsa, sem rede).
+- **Workflow:** confira com `actionlint` (e `shellcheck` nos scripts) antes de abrir o PR.
 
 Dados locais para testar com dado real (clima, solo, CMIP6, NDVI; pasta `data/baixados`, fora do git):
 veja `projeto/backend/docs/como-preparar-os-dados-locais.md`.
@@ -128,7 +154,7 @@ O time usa Claude e Gemini ao mesmo tempo. Para não pisar no trabalho um do out
 3. Commits pequenos, mensagem em português no formato Conventional Commits
    (ex.: `feat(backend): adiciona endpoint do talhão`).
 4. Mexa só no que a tarefa pede. Não reformate nem reorganize arquivos fora do escopo.
-5. Integração no `main` sempre por pull request.
+5. Integração no `main` sempre por pull request, com o CI verde (ver "CI/CD").
 6. Mudou uma convenção, comando ou estrutura? Atualize o `AGENTS.md` certo **no mesmo PR**.
 7. Decisões importantes (biblioteca nova, mudança de arquitetura) vão na descrição do PR.
 
@@ -140,6 +166,7 @@ O time usa Claude e Gemini ao mesmo tempo. Para não pisar no trabalho um do out
 - Frontend: `npm test` + `npm run lint` + `npm run build` passando.
 - `pre-commit run --all-files` sem erros.
 - `docker compose up --build` continua subindo.
+- CI verde no PR (as checagens de "CI/CD"; sem elas o merge não libera).
 - README e `AGENTS.md` atualizados se algo mudou.
 
 ## Idioma e estilo

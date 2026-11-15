@@ -67,14 +67,20 @@ deste projeto aceita IPv4, e o Caddy do front alcança o backend assim.
 4. **Domínio do front:** `railway domain --service frontend`. O `CORS_ORIGINS` não é preciso: o navegador só fala
    com o domínio do front, que repassa o `/api/*` ao backend.
 
-## Deploy automático
+## Deploy automático (GitHub Actions)
 
-Com o repositório conectado aos serviços (painel da Railway → serviço → *Source* → GitHub, pasta `projeto/backend` ou
-`projeto/frontend`, branch `main`), cada merge no `main` publica sozinho. A conexão pede, uma vez, a autorização do app
-da Railway no GitHub do dono do repositório.
+Cada merge no `main` publica sozinho pelo workflow `.github/workflows/ci-cd.yml` (detalhes no `AGENTS.md` da raiz,
+seção "CI/CD"): com o CI verde, o `.github/scripts/railway-deploy.sh` roda `railway up` só no serviço que mudou desde
+o último deploy dele, com a mensagem `commit <sha>`, e espera o SUCCESS. *Run workflow* no `main` publica à mão.
 
-Ao conectar o GitHub, conferir na primeira publicação se a Railway leu o `railway.json` da pasta (o deploy mostra o
-start com `0.0.0.0` e o Dockerfile certo). Se não leu, as configurações feitas pela API continuam valendo.
+- **Token:** um token do projeto na Railway (ambiente `production`, nome `github-actions`), guardado só no secret
+  `RAILWAY_TOKEN` do ambiente `production` do GitHub, que libera só para o `main`. Para trocar: crie outro token
+  (Railway → projeto → *Settings* → *Tokens*) e rode `gh secret set RAILWAY_TOKEN --env production` colando o valor;
+  depois apague o antigo no painel.
+- **Não conecte o GitHub nos serviços da Railway** (*Source* → GitHub): o deploy sairia duas vezes, e sem esperar o
+  CI.
+- O deploy feito à mão da máquina (`railway up` sem `--message "commit <sha>"`) faz o próximo deploy do CI publicar de
+  novo, porque o CI não sabe qual commit está no ar.
 
 **Atenção:** a Railway avisa que o `railway.json` (config-as-code) deixa de valer depois de 01/12/2026. Antes disso,
 migrar para o formato novo de infraestrutura como código da Railway, ou manter as configurações pela API.
