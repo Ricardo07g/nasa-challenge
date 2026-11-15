@@ -98,6 +98,27 @@ class ColheitaSugerida:
 
 
 @dataclass(frozen=True)
+class ChuvaMes:
+    """Chuva média de um mês na célula (mm): a média, entre os anos, do total daquele mês."""
+
+    mes: int
+    media_mm: float
+
+
+@dataclass(frozen=True)
+class ChuvaMensal:
+    """Chuva de cada mês na região, de janeiro a junho (gráfico da tela 3).
+
+    `anos` = os anos que entraram na média, em ordem; `fonte` = a `rain_source` das temporadas
+    (mais de uma: as chaves em ordem, separadas por `+`).
+    """
+
+    meses: tuple[ChuvaMes, ...]
+    anos: tuple[int, ...]
+    fonte: str
+
+
+@dataclass(frozen=True)
 class FonteDado:
     """Uma fonte de dado usada na conta, com o período (plano técnico §3.1, campo `dados`)."""
 
@@ -119,3 +140,5 @@ class Talhao:
     colheita_sugerida: ColheitaSugerida
     historico: HistoricoTalhao | None
     dados_fontes: tuple[FonteDado, ...]
+    # None fora da área ou sem temporada de 1/jan a 30/jun (o front mostra "Ainda não conectado").
+    chuva_mensal: ChuvaMensal | None = None
