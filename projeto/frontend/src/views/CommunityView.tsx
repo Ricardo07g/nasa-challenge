@@ -4,6 +4,7 @@ import { Card, NotConnectedCard } from '../design-system/components/Card'
 import { NeighborRow, RainBarChart, RainReadingRow } from '../design-system/components/Charts'
 import { PageHeading } from '../design-system/components/Content'
 import { ErrorState } from '../design-system/components/Feedback'
+import { Link } from 'react-router'
 import { BackLink } from '../design-system/components/Navigation'
 import { ToneBadge } from '../design-system/components/Status'
 import { CommunityIcon, RainIcon, SatelliteIcon, UncertainIcon } from '../design-system/icons'
@@ -70,6 +71,9 @@ export function CommunityView(props: CommunityViewProps) {
       {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={onRetry} />}
       {status === 'not-connected' && <CommunityNotConnected t={t} />}
       {status === 'ready' && community && <Region {...props} community={community} />}
+      <p>
+        <Link to="/guia">{t.guide.communityLink}</Link>
+      </p>
     </div>
   )
 }

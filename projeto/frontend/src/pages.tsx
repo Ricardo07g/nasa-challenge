@@ -1,9 +1,10 @@
 /**
  * Ligação de cada rota: controller (estado) → view (desenho). Sem lógica aqui.
  */
-import { Navigate, Outlet, ScrollRestoration } from 'react-router'
+import { Navigate, Outlet, ScrollRestoration, useParams } from 'react-router'
 import { useAnswerController } from './controllers/useAnswerController'
 import { useCommunityController } from './controllers/useCommunityController'
+import { useGuideArticleController, useGuideController } from './controllers/useGuideController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useMethodController } from './controllers/useMethodController'
 import { useMissionController } from './controllers/useMissionController'
@@ -23,6 +24,7 @@ import { buildFlowQuery } from './services/flowParams'
 import { AnswerView } from './views/AnswerView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
+import { GuideArticleView, GuideView } from './views/GuideView'
 import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
 import { OptionsView } from './views/OptionsView'
@@ -320,4 +322,28 @@ export function DesignSystemPage() {
   useDocumentTitle(t.designSystem.title)
   const state = useDesignSystemController()
   return <DesignSystemView t={t} {...state} />
+}
+
+export function GuidePage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.guide.title)
+  const state = useGuideController()
+  return (
+    <GuideView
+      t={t}
+      backTo="/comunidade"
+      groups={state.groups}
+      query={state.query}
+      onQuery={state.setQuery}
+      count={state.count}
+    />
+  )
+}
+
+export function GuideArticlePage() {
+  const { messages: t } = useI18n()
+  const { artigo = '' } = useParams()
+  const { article } = useGuideArticleController(artigo)
+  useDocumentTitle(article?.title ?? t.guide.title)
+  return <GuideArticleView t={t} article={article} />
 }

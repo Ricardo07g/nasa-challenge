@@ -23,7 +23,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | # | Seção do pedido | Tarefa | O que entra | Junto com | Estado |
 | --- | --- | --- | --- | --- | --- |
 | S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | a fazer |
-| S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | a fazer |
+| S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | feito na branch `feat/remodelagem-s8-guia` (19 artigos em pt e en; faltam 7 do tema, ver a tarefa 0048) |
 | S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | a fazer |
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | a fazer |
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | a fazer |
@@ -50,6 +50,11 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D6 | 15/11 | O Guia (S8) é escrito com o modelo Sonnet; as seções de código, com o modelo padrão. | Poupa a janela de uso no trabalho de texto, sem perder a revisão (o orquestrador revisa). |
 | D8 | 15/11 | Tudo numa branch (`feat/remodelagem`) e num PR sem merge; as telas são revisadas num segundo ambiente local (API na porta 8001 e front na 5174, a partir do worktree da branch), sem mexer no checkout que o Docker do usuário usa. | Pedido do usuário; o checkout principal segue no `main`, que ele usa para testar. |
 | D7 | 15/11 | O orquestrador não consegue ler o percentual da janela de 5 horas. Mitigação: no máximo 2 subagentes ao mesmo tempo, entregas pequenas e commitadas, e a retomada automática a cada 30 min continua depois que a janela libera. | Não há ferramenta que mostre o uso; o que dá para garantir é não perder trabalho. |
+| D9 | 15/11 | O Guia tem 19 artigos em pt e en: os 12 prioritários e 7 de apoio (palhada, adubo verde, nematoide, geada, El Niño e La Niña, calor de 35 °C, clima de 2041 a 2060). Faltam 7 (plantio direto, sementes, plantar logo depois da colheita, erosão, quando a chuva acaba, raio-X, fogo na palha). | Os que faltam dependem de uma fonte conferida ou de telas das seções 3 e 4, ainda não feitas; é melhor faltar artigo do que citar o que não foi aberto. |
+| D10 | 15/11 | Todo link externo dos artigos precisa estar em `src/content/guia/verifiedSources.ts` (data e o que a página confirma); um teste barra qualquer outro. | Garante a regra "só cite página que você abriu". |
+| D11 | 15/11 | Artigos de cultura, plantio e manejo, e também os de geada, conta de água e palhada, saem como rascunho (`rascunho: sim`); a view põe "Rascunho: a revisar pela agrônoma." no topo. | Pedido do usuário; os números são hipótese do time. |
+| D12 | 15/11 | O Markdown vira uma árvore de blocos (`markdownService`) e a view desenha com React: nunca há `dangerouslySetInnerHTML`, e HTML no texto vira texto puro. | Segurança sem biblioteca nova. |
+| D13 | 15/11 | O Guia usa o requisito RF-26 do PRD. | Próximo RF livre no PRD. Se outra seção também pegar o RF-26, renumerar na hora do merge. |
 
 ## Revisão por seção
 
