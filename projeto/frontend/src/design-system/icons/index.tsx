@@ -43,8 +43,10 @@ import {
   Pointer,
   Printer,
   Satellite,
+  Search,
   Send,
   ShieldCheck,
+  Shovel,
   Snowflake,
   Sparkle,
   Sprout,
@@ -339,4 +341,15 @@ export function InfoIcon({ size = 18 }: IconProps) {
 /** Linha do tempo da tela 6: a próxima soja (o ciclo recomeça). */
 export function CycleIcon({ size = 16 }: IconProps) {
   return <RefreshCw size={size} {...decorative} />
+}
+
+// Guia (tela 8 do pacote 3, tarefa 0063)
+/** Lupa da busca do Guia. */
+export function SearchIcon({ size = 20 }: IconProps) {
+  return <Search size={size} {...decorative} />
+}
+
+/** Tema "Plantar" do Guia: a pá. */
+export function PlantingIcon({ size = 18 }: IconProps) {
+  return <Shovel size={size} {...decorative} />
 }

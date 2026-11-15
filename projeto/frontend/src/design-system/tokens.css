@@ -218,6 +218,16 @@
   --photo-fallback: linear-gradient(140deg, var(--color-primary), var(--color-primary-strong));
 
   /*
+   * Tela 8 "Guia" (pacote 3, tarefa 0063): a palavra marcada da busca, os destaques do "Comece por aqui" e a
+   * sombra dos cartões. O resto (verde, azul, texto, bordas e a caixa azul "Na sua lavoura") reaproveita os
+   * tokens existentes.
+   */
+  --color-search-mark: #fdeec2;
+  --color-featured-border: #cfe0d6;
+  --guide-featured-bg: linear-gradient(160deg, #f2f8f4, #fff);
+  --shadow-guide-card: 0 4px 14px rgb(21 32 28 / 6%);
+
+  /*
    * Tela 2 "Quando você colhe a soja" (pacote 2, tarefa 0057): o calendário do cartão "Dia da colheita" e a
    * caixa azul "Ainda não decidiu?". O resto (verde, azul, laranja, texto, bordas) reaproveita os tokens de cima.
    */
