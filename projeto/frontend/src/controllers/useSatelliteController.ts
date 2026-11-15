@@ -8,6 +8,7 @@ import type { CurrentChoice, SeasonAnswer, SeasonAnswers, SeasonRow } from '../m
 import type { ScreenStatus } from '../models/screenStatus'
 import type { Colheita, Textura } from '../models/talhao'
 import {
+  COMMUNITY_OPEN,
   communityService,
   plantingReport,
   reportErrorKind,
@@ -36,7 +37,14 @@ import { useAsync } from './useAsync'
 import { useListenSummary } from './useListenSummary'
 import { useReplaceFlow } from './useReplaceFlow'
 
-export type SatelliteDeps = { farm: FarmService; raioX: RaioXService; community?: CommunityService; speech?: SpeechService }
+export type SatelliteDeps = {
+  farm: FarmService
+  raioX: RaioXService
+  community?: CommunityService
+  /** A comunidade está aberta na interface (padrão: `COMMUNITY_OPEN`, "em breve" desde o pacote 3). */
+  communityOpen?: boolean
+  speech?: SpeechService
+}
 
 const EMPTY_SHARE: PlantingDraft = { crop: null, year: null, outcome: null, reason: null }
 
@@ -200,8 +208,10 @@ export function useSatelliteController(deps: SatelliteDeps = defaultDeps) {
     navigate(`/resposta${buildFlowQuery(params)}`)
   }, [params, answers, deps.farm, lang, navigate])
 
-  // Tarefa 0047: "Compartilhar com a comunidade" das safras respondidas (só na lavoura marcada).
+  // Tarefa 0047: "Compartilhar com a comunidade" das safras respondidas (só na lavoura marcada). Desde o pacote 3
+  // (tarefa 0061), a comunidade está "em breve": com ela fechada, a tela não oferece compartilhar.
   const community = deps.community ?? communityService
+  const communityOpen = deps.communityOpen ?? COMMUNITY_OPEN
   const [shareOpen, setShareOpen] = useState(false)
   const [shareDrafts, setShareDrafts] = useState<Partial<Record<number, PlantingDraft>>>({})
   const [shareStatus, setShareStatus] = useState<Partial<Record<number, ShareStatus>>>({})
@@ -222,7 +232,7 @@ export function useSatelliteController(deps: SatelliteDeps = defaultDeps) {
     [answers, shareDrafts, shareStatus, sharePoint],
   )
   const share: SeasonShare | null =
-    sharePoint && shareRows.length > 0 ? { open: shareOpen, showNotice: !noticeSeen, rows: shareRows } : null
+    communityOpen && sharePoint && shareRows.length > 0 ? { open: shareOpen, showNotice: !noticeSeen, rows: shareRows } : null
 
   const toggleShare = useCallback(() => setShareOpen((open) => !open), [])
   const changeShare = useCallback((year: number, change: Partial<PlantingDraft>) => {

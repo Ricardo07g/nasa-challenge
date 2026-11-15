@@ -1,8 +1,10 @@
 ---
 titulo: Heat at flowering
+resumo: The app looks at heat at flowering, with each day's maximum from NASA POWER.
 tema: clima
 slug: calor-35-graus
 rascunho: nao
+relacionados: deu-certo, prazo-de-plantio-zarc, clima-2041-2060
 ---
 
 ## In one sentence

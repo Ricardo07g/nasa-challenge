@@ -1,8 +1,10 @@
 ---
 titulo: Seeds: what to check before buying
+resumo: Good, legal seed: check who you buy from and what the package says.
 tema: plantar
 slug: sementes
 rascunho: nao
+relacionados: prazo-de-plantio-zarc, plantar-logo-depois-da-colheita, plantio-direto
 ---
 
 ## In one sentence

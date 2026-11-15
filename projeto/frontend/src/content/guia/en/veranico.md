@@ -1,8 +1,10 @@
 ---
 titulo: Dry spell
+resumo: A dry spell is a stretch of days in a row without rain in the middle of the rainy season.
 tema: clima
 slug: veranico
 rascunho: nao
+relacionados: conta-de-agua, quando-a-chuva-acaba, raio-x
 ---
 
 ## In one sentence

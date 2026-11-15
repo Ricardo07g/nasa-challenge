@@ -66,7 +66,7 @@
   gap: 22px;
 }
 
-.community,
+.guide,
 .alerts {
   display: flex;
   align-items: center;
@@ -79,32 +79,48 @@
   white-space: nowrap;
 }
 
-.community:hover,
+.guide:hover,
 .alerts:hover {
   color: var(--color-primary);
 }
 
-.community svg,
+.guide svg,
 .alerts svg {
   flex: none;
 }
 
-/* Comunidade: pílula verde-clara, com o nome escrito */
-.community {
+/* Guia (pacote 3): pílula verde-clara, com o livro e o nome escrito */
+.guide {
   height: 40px;
   padding: 0 14px;
   border-radius: var(--radius-pill);
   background: var(--color-tint-green);
 }
 
-.community:hover,
-.community[aria-current='page'] {
+.guide:hover {
   background: var(--color-tint-green-hover);
 }
 
-.alerts[aria-current='page'] .alertsLabel {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+/* Na página do Guia (e nos artigos), a pílula fica verde cheia. */
+.guide[aria-current='page'],
+.guide[aria-current='page']:hover {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/*
+ * Avisos: o fundo verde-claro só aparece na página dos Avisos. O respiro em volta do sino é compensado pela
+ * margem negativa, para o cabeçalho não mudar de lugar de uma página para outra.
+ */
+.alerts {
+  height: 40px;
+  margin: 0 -10px;
+  padding: 0 10px;
+  border-radius: var(--radius-xs);
+}
+
+.alerts[aria-current='page'] {
+  background: var(--color-tint-green);
 }
 
 /* Selo laranja com o número de avisos ativos */
@@ -157,7 +173,7 @@
 }
 
 .logo:focus-visible,
-.community:focus-visible,
+.guide:focus-visible,
 .alerts:focus-visible,
 .lang:focus-visible {
   outline: 3px solid var(--color-focus-ring);
@@ -165,8 +181,12 @@
   border-radius: 6px;
 }
 
-.community:focus-visible {
+.guide:focus-visible {
   border-radius: var(--radius-pill);
+}
+
+.alerts:focus-visible {
+  border-radius: var(--radius-xs);
 }
 
 /* Celular e tablet (até 900 px) */
@@ -192,8 +212,8 @@
     gap: 2px;
   }
 
-  /* A Comunidade continua com o nome escrito. */
-  .community {
+  /* O Guia continua com o nome escrito. */
+  .guide {
     height: 36px;
     margin-right: 2px;
     padding: 0 11px;
@@ -207,6 +227,7 @@
     justify-content: center;
     width: 40px;
     height: 40px;
+    margin: 0;
     padding: 0;
     border-radius: var(--radius-xs);
   }
@@ -249,7 +270,7 @@
 
 /*
  * Celular estreito (até 380 px, regra geral 8 do pacote 2): logo de 30 px, nome com 15,5 px e a pílula
- * "Comunidade" com 12,5 px, para o nome "Raiz Orbital" aparecer inteiro e a Comunidade continuar com o nome
+ * do Guia com 12,5 px, para o nome "Raiz Orbital" aparecer inteiro e o Guia continuar com o nome
  * escrito, sem nada estourar na horizontal a partir de 360 px.
  */
 @media (max-width: 380px) {
@@ -270,14 +291,14 @@
     font-size: 15.5px;
   }
 
-  .community {
+  .guide {
     margin-right: 0;
     padding: 0 9px;
     gap: 5px;
     font-size: 12.5px;
   }
 
-  .community svg {
+  .guide svg {
     width: 16px;
     height: 16px;
   }

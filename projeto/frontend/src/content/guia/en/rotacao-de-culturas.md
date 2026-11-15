@@ -1,8 +1,10 @@
 ---
 titulo: Crop rotation
+resumo: Rotation is changing what you plant, year after year, instead of repeating the same crop.
 tema: terra
 slug: rotacao-de-culturas
 rascunho: nao
+relacionados: crotalaria, nematoide, adubo-verde
 ---
 
 ## In one sentence

@@ -1,8 +1,10 @@
 ---
 titulo: Quando a chuva acaba
+resumo: Como a chuva se comportou nos últimos 20 anos depois da colheita da soja.
 tema: clima
 slug: quando-a-chuva-acaba
 rascunho: nao
+relacionados: veranico, conta-de-agua, plantar-logo-depois-da-colheita
 ---
 
 ## Em uma frase

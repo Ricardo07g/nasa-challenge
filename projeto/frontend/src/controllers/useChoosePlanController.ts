@@ -1,38 +1,13 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useI18n } from '../i18n/useI18n'
-import type { PlanoAvaliado } from '../models/plano'
-import type { CropId, Objetivo, Opcao } from '../models/recomendacao'
+import type { CropId, Objetivo } from '../models/recomendacao'
 import type { SeasonAnswer } from '../models/seasonAnswers'
-import {
-  availableCrops,
-  choiceFlow,
-  comparedCrops,
-  comparedFlow,
-  isLate,
-  objectiveFlow,
-  pickerItems,
-  planChoice,
-  rankAll,
-  suggestionOf,
-  toggleCompared as toggleList,
-} from '../services/choiceService'
+import { choiceFlow, comparedFlow, objectiveFlow, toggleCompared as toggleList } from '../services/choiceService'
 import { farmService, type FarmService } from '../services/farmService'
-import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
+import { buildFlowQuery, keepFlowQuery } from '../services/flowParams'
 import { pastSeasonService, type PastSeasonService } from '../services/pastSeasonService'
-import {
-  finalCrops,
-  planCards,
-  planEdits,
-  planService as defaultPlanService,
-  planSignal,
-  resetPlanFlow,
-  suggestionFixos,
-  todayState,
-  yearFlow,
-  type PlanService,
-} from '../services/planService'
-import { raioXService, type RaioXService } from '../services/raioXService'
+import { planService as defaultPlanService, resetPlanFlow, todayState, yearFlow, type PlanService } from '../services/planService'
 import {
   currentChoiceCrop,
   flowWithSeasonAnswers,
@@ -40,35 +15,28 @@ import {
   seasonRows,
   withSeasonAnswer,
 } from '../services/seasonAnswersService'
-import { CURRENT_SEASON } from '../services/seasonService'
 import { speechService, type SpeechService } from '../services/speechService'
 import { selectedYear } from '../services/suggestionService'
 import { useAsync } from './useAsync'
 import { useFlowTalhao } from './useFlowRain'
-import { useFlowRecomendacao } from './useFlowRecomendacao'
 import { useListenSummary } from './useListenSummary'
+import { usePlanFlow, type Evaluation } from './usePlanFlow'
 import { useReplaceFlow, useReplaceUrl } from './useReplaceFlow'
+
+export type { CompareColumn, Evaluation } from './usePlanFlow'
 
 type Deps = {
   farm: FarmService
   plan: PlanService
-  raioX: RaioXService
   pastSeason: PastSeasonService
   speech: SpeechService
-  /** "Imprimir relatório": a impressão do navegador. */
-  print: () => void
-  /** O dia de hoje (ISO), para o "Gerado em" do relatório. */
-  today: () => string
 }
 
 const defaultDeps: Deps = {
   farm: farmService,
   plan: defaultPlanService,
-  raioX: raioXService,
   pastSeason: pastSeasonService,
   speech: speechService,
-  print: () => window.print(),
-  today: () => new Date().toISOString().slice(0, 10),
 }
 
 export type AnswerTab = 'choose' | 'plan'
@@ -85,11 +53,6 @@ export const SCORE_KEYS: readonly ScoreKey[] = ['seguranca', 'solo', 'futuro']
 /** O alerta do plano depois de uma troca: o 1º ano mudou, o 2º mudou (o 3º foi refeito) ou o 3º mudou. */
 export type PlanAlert = 'year1' | 'year2' | 'year3'
 
-/** Uma coluna da comparação: a opção do motor, ou null no "Deixar parado" (sem conta). */
-export type CompareColumn = { id: CropId; option: Opcao | null }
-
-export type Evaluation = { data: PlanoAvaliado | null; status: 'loading' | 'ready' | 'error' }
-
 /** O ano aberto no explorador vem da URL (`ano`), para o link (ex.: dos avisos) levar direto ao detalhe. */
 function readYear(value: string | null): number | null {
   const year = Number(value)
@@ -97,25 +60,23 @@ function readYear(value: string | null): number | null {
 }
 
 /**
- * Tela 5 do pacote 2 (`/resposta`, `/opcoes` e `/plano`): as abas "1. Escolher" e "2. Plano de 3 anos" e o
- * relatório para imprimir. O estado fica na URL (`objetivo`, `comparar`, `escolha`, `ano2`, `ano3`, `safras`),
+ * Tela 5 do pacote 2 (`/resposta`, `/opcoes` e `/plano`): as abas "1. Escolher" e "2. Plano de 3 anos". Desde o
+ * pacote 3, o relatório para imprimir fica só na tela 6 (`/planejamento`). O estado fica na URL (`objetivo`, `comparar`, `escolha`, `ano2`, `ano3`, `safras`),
  * gravado sem rolar; os modais ficam aqui. A sugestão e a ordem vêm do `/recomendacao`; o plano, da sugestão em
  * cadeia (`/api/plano/sugestao`) e, com o 3º ano mudado, do `/api/plano`.
  */
 export function useChoosePlanController(deps: Deps = defaultDeps) {
   const { lang, messages: t } = useI18n()
-  const { redirectTo, recomendacao, status: flowStatus } = useFlowRecomendacao(deps.farm)
+  const flowPlan = usePlanFlow(deps)
+  const { redirectTo, recomendacao, flowStatus, params, data, objective, choose, place, evaluation, cards, edited } = flowPlan
   const talhao = useFlowTalhao(deps.farm)
   const [search] = useSearchParams()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const replaceFlow = useReplaceFlow()
   const replaceUrl = useReplaceUrl()
-  const params = useMemo(() => readFlowParams(search), [search])
   const query = keepFlowQuery(search.toString())
-  const data = recomendacao.data
   const tab: AnswerTab = pathname === '/plano' ? 'plan' : 'choose'
-  const objective: Objetivo | null = params?.objetivo ?? null
 
   const [alert, setAlert] = useState<PlanAlert | null>(null)
   const [cell, setCell] = useState<{ crop: CropId; row: CompareRow } | null>(null)
@@ -124,44 +85,6 @@ export function useChoosePlanController(deps: Deps = defaultDeps) {
   const year = readYear(search.get('ano'))
   const [whyOpen, setWhyOpen] = useState(year !== null)
 
-  const choose = useMemo(() => {
-    if (!data || !params) return null
-    const suggestion = suggestionOf(data, objective)
-    const choice = planChoice(data, objective, params)
-    if (!suggestion || !choice) return null
-    const ranked = rankAll(data, objective)
-    const compared = comparedCrops(data, objective, params)
-    const late = new Set(ranked.filter(isLate).map((option) => option.id))
-    return {
-      suggestion,
-      choice,
-      ranked,
-      compared,
-      columns: compared.map((id): CompareColumn => ({ id, option: ranked.find((option) => option.id === id) ?? null })),
-      picker: pickerItems(availableCrops(data, objective), compared, choice, suggestion.id, late),
-      late,
-    }
-  }, [data, params, objective])
-
-  // Plano de 3 anos: a sugestão em cadeia com o 1º ano (e o 2º, se mudou); com o 3º mudado, o plano inteiro.
-  const edits = useMemo(() => planEdits(params ?? {}), [params])
-  const choice = choose?.choice ?? null
-  const place = params && data ? { lat: params.lat, lon: params.lon, colheita: data.entrada.colheita, solo: params.solo } : null
-  const fixos = choice ? suggestionFixos(choice, edits) : null
-  const base = useAsync(
-    () => (place && fixos ? deps.plan.suggest({ ...place, fixos }, lang) : Promise.resolve(null)),
-    [place?.lat, place?.lon, place?.colheita, place?.solo, fixos?.join(','), lang, deps.plan],
-  )
-  const finalList = choice ? finalCrops(choice, edits, base.data ?? null) : null
-  const final = useAsync(
-    () => (place && finalList ? deps.plan.evaluate({ ...place, anos: finalList }, lang) : Promise.resolve(null)),
-    [place?.lat, place?.lon, place?.colheita, place?.solo, finalList?.join(','), lang, deps.plan],
-  )
-  const shown = edits.year3 ? final : base
-  const evaluation: Evaluation = { data: shown.data ?? null, status: shown.status }
-  const cards = choice ? planCards(choice, edits, base.data ?? null, final.data ?? null, CURRENT_SEASON) : null
-  const edited = Boolean(edits.year2 || edits.year3)
-
   // "Como é hoje": as 3 últimas safras do raio-X (sem elas, "não preenchido"; com "Não plantei", sem comparação).
   const answers = useMemo(() => seasonAnswersFromFlow(params), [params])
   const today = todayState(answers)
@@ -169,15 +92,6 @@ export function useChoosePlanController(deps: Deps = defaultDeps) {
   const todayEvaluation = useAsync(
     () => (place && todayList ? deps.plan.evaluate({ ...place, anos: todayList }, lang) : Promise.resolve(null)),
     [place?.lat, place?.lon, place?.colheita, place?.solo, todayList?.join(','), lang, deps.plan],
-  )
-
-  // Relatório: o resumo do raio-X ("Sua terra"); sem ele, a seção diz que não carregou.
-  const raio = useAsync(
-    () =>
-      params?.colheita
-        ? deps.raioX.get({ lat: params.lat, lon: params.lon, colheita: params.colheita, solo: params.solo }, lang)
-        : Promise.resolve(null),
-    [params?.lat, params?.lon, params?.colheita, params?.solo, lang, deps.raioX],
   )
 
   // "Por que essa sugestão?": o ano tocado no explorador e a safra dia a dia daquele ano.
@@ -262,7 +176,7 @@ export function useChoosePlanController(deps: Deps = defaultDeps) {
   const closeWhy = useCallback(() => {
     setWhyOpen(false)
     if (yearInUrl && plainUrl) replaceUrl(plainUrl)
-  }, [yearInUrl, plainUrl, replaceUrl])
+  }, [yearInUrl, plainUrl, replaceUrl, setWhyOpen])
 
   // Com a recomendação na mão, recarregar (ex.: respostas novas das safras) não apaga a tela nem mexe na rolagem.
   const status = data ? (choose ? 'ready' : 'error') : flowStatus
@@ -307,7 +221,7 @@ export function useChoosePlanController(deps: Deps = defaultDeps) {
       edited,
       chooseYear,
       reset: resetPlan,
-      signal: planSignal(evaluation.data, data ?? null, edited || choice !== choose?.suggestion.id),
+      signal: flowPlan.signal,
     },
     today: { state: today, evaluation: { data: todayEvaluation.data ?? null, status: todayEvaluation.status } as Evaluation },
     seasons: {
@@ -316,15 +230,6 @@ export function useChoosePlanController(deps: Deps = defaultDeps) {
       onClose: () => setSeasonsOpen(false),
       form: { seasons: seasonRows(talhao.data?.historico ?? null), answers, onAnswer: answerSeason },
     },
-    report: {
-      raio: raio.data ?? null,
-      answers,
-      idea: params?.pensa ?? null,
-      demo: params?.exemplo ?? false,
-      point: params ? { lat: params.lat, lon: params.lon } : null,
-      generatedOn: deps.today(),
-    },
-    print: deps.print,
   }
 }
 

@@ -6,32 +6,23 @@ import { providers } from '../test/providers'
 import { useShellController } from './useShellController'
 
 describe('useShellController', () => {
-  it('monta o cabeçalho com os textos do idioma atual: só Comunidade, Avisos e o idioma (sem "Ouvir")', () => {
+  it('monta o cabeçalho com os textos do idioma atual: só Guia, Avisos e o idioma (sem Comunidade e sem "Ouvir")', () => {
     const { result } = renderHook(() => useShellController(), { wrapper: providers('/', 'pt') })
 
     expect(result.current.header.slogan).toBe('Do espaço até a raiz.')
     expect(result.current.header.navLabel).toBe('Principal')
     expect(result.current.header.lang.current).toBe('pt')
     expect(Object.keys(result.current.header).sort()).toEqual(
-      ['alerts', 'community', 'homeLabel', 'lang', 'navLabel', 'slogan'].sort(),
+      ['alerts', 'guide', 'homeLabel', 'lang', 'navLabel', 'slogan'].sort(),
     )
   })
 
-  it('o link da Comunidade leva junto o ponto e a colheita que estão na URL', () => {
+  it('o Guia (pacote 3) leva a /guia, de qualquer tela', () => {
     const { result } = renderHook(() => useShellController(), {
       wrapper: providers('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio', 'pt'),
     })
 
-    expect(result.current.header.community).toEqual({
-      label: 'Comunidade',
-      to: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
-    })
-  })
-
-  it('sem ponto na URL, a Comunidade abre sem parâmetros', () => {
-    const { result } = renderHook(() => useShellController(), { wrapper: providers('/', 'pt') })
-
-    expect(result.current.header.community.to).toBe('/comunidade')
+    expect(result.current.header.guide).toEqual({ label: 'Guia', to: '/guia' })
   })
 
   it('na Início, o rodapé tem o aviso, os créditos e o projeto, sem o link do agrônomo (a faixa fica na tela)', () => {
@@ -75,7 +66,7 @@ describe('useShellController', () => {
     act(() => result.current.header.lang.onToggle())
 
     expect(result.current.header.lang.current).toBe('en')
-    expect(result.current.header.community.label).toBe('Community')
+    expect(result.current.header.guide.label).toBe('Guide')
     expect(result.current.footer.credits.label).toBe('Credits and use of AI')
     expect(result.current.credits.content.title).toBe('Credits and use of AI')
   })
@@ -110,7 +101,7 @@ describe('useShellController: botão "Avisos" (tarefa 0046)', () => {
     }
   }
 
-  it('o botão fica ao lado da Comunidade, leva o ponto e mostra o número de avisos ativos', async () => {
+  it('o botão fica ao lado do Guia, leva o ponto e mostra o número de avisos ativos', async () => {
     const avisos = alerts()
     const { result } = renderHook(() => useShellController('mock', avisos), {
       wrapper: providers('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio', 'pt'),

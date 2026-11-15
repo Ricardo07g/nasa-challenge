@@ -1,8 +1,10 @@
 ---
 titulo: Como evitar erosão
+resumo: Erosão é a chuva levando embora a camada boa da terra, maior com a terra descoberta.
 tema: terra
 slug: como-evitar-erosao
 rascunho: nao
+relacionados: palhada, plantio-direto, plantar-logo-depois-da-colheita
 ---
 
 ## Em uma frase

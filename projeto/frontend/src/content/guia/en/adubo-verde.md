@@ -1,8 +1,10 @@
 ---
 titulo: Green manure: nitrogen the plant leaves
+resumo: Green manure is a plant grown to leave nutrients in the soil, not to harvest.
 tema: terra
 slug: adubo-verde
 rascunho: nao
+relacionados: crotalaria, palhada, rotacao-de-culturas
 ---
 
 ## In one sentence

@@ -1,8 +1,10 @@
 ---
 titulo: How to read your land's X-ray
+resumo: One panel with what NASA satellites and the soil map know about your point.
 tema: clima
 slug: raio-x
 rascunho: nao
+relacionados: veranico, conta-de-agua, deu-certo
 ---
 
 ## In one sentence

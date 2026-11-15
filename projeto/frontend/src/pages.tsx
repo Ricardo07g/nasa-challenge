@@ -5,6 +5,7 @@ import { Navigate, Outlet, ScrollRestoration, useOutletContext, useParams, useSe
 import { useAvisosController } from './controllers/useAvisosController'
 import { useChoosePlanController } from './controllers/useChoosePlanController'
 import { useCommunityController } from './controllers/useCommunityController'
+import { useCommunitySoonController } from './controllers/useCommunitySoonController'
 import { useGuideArticleController, useGuideController } from './controllers/useGuideController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
 import { useMethodController } from './controllers/useMethodController'
@@ -21,10 +22,12 @@ import { useI18n } from './i18n/useI18n'
 import { keepFlowQuery } from './services/flowParams'
 import { AvisosView } from './views/AvisosView'
 import { ChoosePlanView } from './views/ChoosePlanView'
+import { CommunitySoonView } from './views/CommunitySoonView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { FlowLoading } from './views/FlowStates'
-import { GuideArticleView, GuideView } from './views/GuideView'
+import { GuideArticleView } from './views/GuideArticleView'
+import { GuideView } from './views/GuideView'
 import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
 import { PlanningView } from './views/PlanningView'
@@ -183,8 +186,8 @@ export function SatellitePage({ deps }: { deps?: SatelliteDeps } = {}) {
 }
 
 /**
- * Tela 5 do pacote 2 (`/resposta`, `/opcoes` e `/plano`): as abas "1. Escolher" e "2. Plano de 3 anos" e o
- * relatório para imprimir. `/plano` abre a aba do plano; as outras, a aba "Escolher".
+ * Tela 5 do pacote 2 (`/resposta`, `/opcoes` e `/plano`): as abas "1. Escolher" e "2. Plano de 3 anos". `/plano`
+ * abre a aba do plano; as outras, a aba "Escolher".
  */
 export function ChoosePlanPage() {
   const { lang, messages: t } = useI18n()
@@ -207,31 +210,29 @@ export function LegacyAnswerRedirect({ keepYear = false }: { keepYear?: boolean 
 }
 
 /**
- * Tela final "Seu planejamento" (`/planejamento`, tarefa 0058): por enquanto, os alertas, os 20 anos de chuva e o
- * clima 2041–2060 que saíram do raio-X. Será refeita no próximo pacote.
+ * Tela 6 "Seu planejamento" (`/planejamento`, pacote 3): a tela final do fluxo, com o mesmo plano da tela 5 e o
+ * único "Imprimir relatório" do app.
  */
 export function PlanningPage() {
   const { lang, messages: t } = useI18n()
   useDocumentTitle(t.planning.title)
   const state = usePlanningController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
-  return (
-    <PlanningView
-      t={t}
-      lang={lang}
-      backTo={state.backTo}
-      status={state.status}
-      onRetry={state.retry}
-      listen={state.listen}
-      alerts={state.alerts}
-      cards={state.cards}
-      rain={state.rain}
-      climate={state.climate}
-      answerTo={state.answerTo}
-    />
-  )
+  return <PlanningView t={t} lang={lang} state={state} />
 }
 
+/**
+ * Comunidade "em breve" (`/comunidade`, pacote 3, tarefa 0061): só o cartão "Em breve" com o "Abrir o Guia". A
+ * tela dos relatos (`CommunityPage`, abaixo) fica pronta para quando a comunidade voltar (`COMMUNITY_OPEN`).
+ */
+export function CommunitySoonPage() {
+  const { messages: t } = useI18n()
+  useDocumentTitle(t.comingSoon.title)
+  const state = useCommunitySoonController()
+  return <CommunitySoonView t={t} backTo={state.backTo} guideTo={state.guideTo} listen={state.listen} />
+}
+
+/** Relatos dos vizinhos ("Na sua região", tarefa 0047): fora da interface enquanto a comunidade está "em breve". */
 export function CommunityPage() {
   const { lang, messages: t } = useI18n()
   useDocumentTitle(t.community.title)
@@ -309,49 +310,60 @@ export function DesignSystemPage() {
   return <DesignSystemView t={t} lang={lang} {...state} />
 }
 
+/** Guia (tela 8 do pacote 3): busca, filtros por tema, "Comece por aqui" e os cartões. */
 export function GuidePage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.guide.title)
   const state = useGuideController()
   return (
     <GuideView
       t={t}
-      backTo="/comunidade"
-      groups={state.groups}
-      query={state.query}
+      lang={lang}
+      backTo={state.backTo}
+      onBack={state.onBack}
+      filters={state.filters}
       onQuery={state.setQuery}
-      count={state.count}
+      onClear={state.clearQuery}
+      onTheme={state.setTheme}
+      themes={state.themes}
+      searching={state.searching}
+      featured={state.featured}
+      groups={state.groups}
+      results={state.results}
+      linkQuery={state.linkQuery}
       listen={state.listen}
     />
   )
 }
 
+/** Um artigo do Guia (tela 8 do pacote 3), com a caixa "Na sua lavoura" quando há número do ponto. */
 export function GuideArticlePage() {
   const { messages: t, lang } = useI18n()
   const { artigo = '' } = useParams()
-  const { article, listen } = useGuideArticleController(artigo)
-  useDocumentTitle(article?.title ?? t.guide.title)
-  return <GuideArticleView t={t} lang={lang} article={article} listen={listen} />
+  const state = useGuideArticleController(artigo)
+  useDocumentTitle(state.article?.title ?? t.guide.title)
+  return (
+    <GuideArticleView
+      t={t}
+      lang={lang}
+      article={state.article}
+      layout={state.layout}
+      related={state.related}
+      field={state.field}
+      helpful={state.helpful}
+      onHelpful={state.setHelpful}
+      onJump={state.jumpTo}
+      backTo={state.backTo}
+      linkQuery={state.linkQuery}
+      listen={state.listen}
+    />
+  )
 }
 
-/** Tela "Avisos" (seção 6 da remodelagem, tarefa 0046): os avisos do ponto salvo no aparelho. */
+/** Tela "Avisos" (seção 6 da remodelagem, tarefa 0046; refeita no pacote 3, tarefa 0062). */
 export function AvisosPage() {
   const { lang, messages: t } = useI18n()
   useDocumentTitle(t.alerts.title)
   const state = useAvisosController()
-  return (
-    <AvisosView
-      t={t}
-      lang={lang}
-      status={state.status}
-      onRetry={state.retry}
-      avisos={state.avisos}
-      groups={state.groups}
-      place={state.place}
-      explorerTo={state.explorerTo}
-      markTo={state.markTo}
-      backTo={state.backTo}
-      listen={state.listen}
-    />
-  )
+  return <AvisosView t={t} lang={lang} state={state} />
 }

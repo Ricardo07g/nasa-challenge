@@ -1,8 +1,10 @@
 ---
 titulo: The planting deadline and ZARC
+resumo: The ZARC shows, for each municipality, the best planting time for each crop.
 tema: plantar
 slug: prazo-de-plantio-zarc
 rascunho: nao
+relacionados: plantar-logo-depois-da-colheita, sementes, milho-safrinha
 ---
 
 ## In one sentence

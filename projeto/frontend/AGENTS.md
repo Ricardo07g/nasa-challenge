@@ -123,6 +123,18 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `LAST_SEASONS` com o que o satélite viu (`seasonRows(historico)`). A tela 4 pede o `/talhao` e o `/raio-x`
   **sem** as respostas (o que o satélite viu) e aplica as respostas no front, para responder não recarregar nada.
   Tudo vai para a URL pelo `useReplaceFlow` (clicar não mexe na rolagem; teste em `pages.satellite.test.tsx`).
+- **Comunidade "em breve" (pacote 3, tarefa 0061, RF-44):** a interface **não mostra** a comunidade. A rota
+  `/comunidade` continua (links antigos, com ou sem o caminho da lavoura) e mostra só o cartão "Em breve ·
+  Comunidade da sua região" com "Abrir o Guia" (`CommunitySoonPage` → `useCommunitySoonController` →
+  `CommunitySoonView`, textos no bloco `comingSoon`), com o "← Voltar" e o "Ouvir resumo". A tela 4 não oferece
+  "Compartilhar com a comunidade" e a vitrine `/design-system` não mostra os vizinhos. Nenhuma tela leva a relatos de
+  vizinhos: não crie link, botão nem texto que chame para eles. **O código continua no repositório**, com os testes,
+  para voltar fácil: o backend inteiro e, no front, repository, service, models, `CommunityForms`, `ShareSeasons`,
+  `CommunityView`, `useCommunityController`, `CommunityPage` e os componentes dos vizinhos do design system. Quem
+  desliga é uma constante só, `COMMUNITY_OPEN` (`services/communityService.ts`, `false`): o `routes.tsx` escolhe a
+  tela de `/comunidade` por ela e o `useSatelliteController` só oferece compartilhar com ela ligada (`communityOpen`
+  nas dependências, para os testes). Não apague esse código. O que vem abaixo descreve a comunidade como funciona
+  quando ligada.
 - **Comunidade ("Na sua região", tarefa 0047 do backend, RF-27):** relatos sem cadastro, sem texto livre e
   sem dado pessoal. O contrato está em `models/community.ts` (`RelatoComunidade`, `RelatosVizinhos`,
   `NovoRelato` e as listas fechadas `CULTURAS_RELATO`, `RESULTADOS`, `MOTIVOS`, `EVENTOS`, iguais às do
@@ -151,28 +163,48 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   ficam em `views/CommunityForms.tsx`, usados pelas duas telas. Pacote 2: o ano do relato de plantio aparece pela
   safra (`seasonName`: "depois da soja 2025/26", "Em que safra?" com "2025/26", "Milheto, safra 2025/26"), e a
   região pelo satélite também ("Na safra 2024/25, …").
-- **Avisos (`/avisos`, tarefa 0046 do backend, RF-31):** o contrato está em `models/avisos.ts`; as regras (o que vira
-  aviso, o nível e o contador) ficam no backend (`GET /api/avisos`), e o front só escreve as frases (bloco `alerts`
-  das mensagens, montadas em `views/alertTexts.ts` com os `valores` de cada `tipo`). **Ponto salvo no aparelho, sem
-  cadastro:** `repositories/savedPointRepository.ts` guarda no `localStorage` (chave `raiz-orbital.avisos.ponto`,
-  toda leitura e escrita em try/catch; sem `localStorage`, vale só para a visita) o último ponto do fluxo com a
-  colheita, o solo e as safras confirmadas, **nunca a fazenda de exemplo** (`exemplo=1`). Quem guarda é o
-  `controllers/useAlertsBadge.ts`, usado pelo `useShellController` (toda tela com o ponto na URL). A tela vale para o
-  ponto da URL ou, sem ele, para o salvo; sem nenhum, pede "Marcar minha lavoura" (`/onde`). O `avisosService` faz um
-  pedido por ponto e idioma na visita (o botão do cabeçalho e a tela usam o mesmo). **Botão do cabeçalho:** "Avisos"
-  logo depois de "Comunidade", com o `contador` da API num selo e no nome acessível ("Avisos: 2 avisos ativos");
-  sem ponto, sem aviso ou com falha, sem número. **Tela:** grupos na ordem Agora, O que mudou na sua área, Fora do
-  comum e Perto de você (grupo `null` não aparece; grupo vazio = "Nada fora do normal." com a última leitura); cada
-  aviso com o nível escrito e um ícone (triângulo em "Atenção", olho em "Fique de olho"; a cor só reforça), o que o
-  dado mostra, "O que fazer:", a fonte e a data (no El Niño / La Niña, o "o que fazer" segue o `valores.sinal`, o
-  veredito do sinal do outono, para dar o mesmo conselho do Plano de 3 anos); os relatos com "Relato de vizinho, não confirmado". Fora da
-  safrinha, o link "Ver como teriam sido os avisos em <ano>" vai para `/resposta?<parâmetros do fluxo>&ano=<ano>`
-  (nunca para `/safra-passada`). O rodapé fixo "Alertas oficiais" aparece sempre (com ou sem ponto), com os botões
-  `sms:40199`, `https://wa.me/556120344611`, `tel:193` e `tel:199` e o link `/guia/alertas-defesa-civil`. Até 480 px,
-  o cabeçalho fica mais justo e, se não couber, os botões descem uma linha.
+- **Avisos (`/avisos`, tarefa 0046 do backend, RF-31; refeita no pacote 3, tarefa 0062, RF-45):** o contrato está em
+  `models/avisos.ts`; as regras do que vira aviso e do nível ficam no backend (`GET /api/avisos`). O front arruma a
+  tela no `services/avisosService.ts` e escreve as frases em `i18n/alertTexts.ts` (bloco `alerts` das mensagens, com os
+  `valores` de cada `tipo`; a view e o "Ouvir resumo" usam as mesmas). **Nenhum número inventado:** sem dado, o item
+  não aparece. **Ponto:** a tela e o sino valem para o ponto da URL (`viewPointFromFlow`, **inclusive a lavoura de
+  demonstração**, `exemplo=1`, que aparece como "Lavoura de demonstração, perto de Uberlândia (MG)") ou, sem ele, o
+  salvo no aparelho; sem nenhum, "Marcar minha lavoura" (`/onde`). **Ponto salvo, sem cadastro:**
+  `repositories/savedPointRepository.ts` (chave `raiz-orbital.avisos.ponto`, toda leitura e escrita em try/catch)
+  guarda o último ponto do fluxo com a colheita, o solo, as safras, a escolha atual e, desde o pacote 3, a `escolha` e
+  o `objetivo` da tela 5; **nunca a lavoura de demonstração** (`pointFromFlow`). Quem guarda é o
+  `controllers/useAlertsBadge.ts`, usado pelo `useShellController`. O `avisosService` faz um pedido por ponto e idioma
+  na visita (o sino e a tela usam o mesmo). **Número do sino = número do resumo** (`activeCount`, usado pelo
+  `headerCount` e pelo `alertsSummary`): só os avisos que a tela mostra, os cartões de "Agora". **O `contador` da API
+  ainda soma o "Perto de você"** (relatos de vizinhos), que saiu da tela: não use esse número. Sem aviso, sem número.
+  O botão do cabeçalho fica logo depois do Guia. **Tela** (protótipo `tela-7-avisos.html`): "← Voltar", "Avisos",
+  "{lugar} · atualizado em **{data}**", "Ouvir resumo" e "Como ler os avisos" (`GuideLink`); o **resumo** (verde sem
+  aviso, azul só com "Fique de olho", laranja com algum "Atenção"; `data-summary` com o tom) com a legenda dos níveis
+  (some sem aviso); a grade **"Agora" + "Alertas oficiais"** (uma coluna até 900 px): cartões-botão com "Atenção"
+  primeiro (`nowAlerts`; tipo desconhecido não aparece), cada um com o nível escrito e o ícone (a cor só reforça), o
+  título curto com o número, "O que fazer:" e a fonte com a data; sem aviso, a caixa verde; no fim, "Seu plano:
+  **{cultura}**, plantio até {prazo}" (`planCropOf` + `planLine`: a cultura da tela 5, `planChoice`, e o `data_limite`
+  da opção, do `farmService.recomendacao`; sem prazo, sem a parte do prazo) e "Ver exemplo: avisos de {ano}" (o
+  `safrinha.explorar_ano`, só fora da safrinha), que abre o modal com o replay daquele ano (`pastSeasonService`,
+  `/api/safra-passada` com a cultura do plano, pedido só com o modal aberto) e os recordes do mesmo ano
+  (`exampleRows`); nunca escreva os números do protótipo. "Alertas oficiais" (sempre visível, `id="alertas-oficiais"`,
+  a âncora do "Ver alertas oficiais" da tela 6; o controller rola até ela de novo quando os dados chegam): `sms:40199`,
+  `https://wa.me/556120344611?text=Oi` (nova aba), `tel:193`, `tel:199` e o Guia `alertas-defesa-civil`. **"Como a sua
+  área está mudando"** (`changeTiles`: até 4 quadros, veranico, fim das chuvas, falta de água, deu certo e o calor se
+  couber; os da cultura só quando a conta da API é da cultura do 1º ano do plano) e **"Já aconteceu aqui"**
+  (`recordTiles`, os 4 recordes): o valor antigo riscado, o novo em laranja quando piorou, "2005–19 → 2020–24".
+  Cada cartão e cada quadro abre o mesmo `Modal` (o controller guarda `detail = {kind, index}`): nível, título, número
+  grande, "O que significa", "O que fazer", fonte com a data ("leitura de" em "Agora", "dados até" nas séries) e o
+  "Saiba mais" em nova aba (`conta-de-agua`, `veranico`, `calor-35-graus`, `el-nino-la-nina`, `quando-a-chuva-acaba`,
+  `deu-certo`). No fim, a comunidade **"Em breve"** (sem botão). **O "Perto de você" saiu da tela** (a API ainda manda
+  `perto`; o backend da comunidade continua). "Ouvir resumo": `alertsListen` (quantos avisos e o "título: o que fazer"
+  de cada cartão; sem aviso, "Nada fora do normal agora…"). No El Niño / La Niña, o "o que fazer" do modal segue o
+  `valores.sinal` (o mesmo conselho do Plano de 3 anos). Cores novas no bloco "Pacote 3 · tela 7" do `tokens.css`.
 - **Pacote 2: regras gerais de todas as telas (tarefa 0054, RF-38).** Valem para toda tela nova ou refeita:
   - **Navegação:** nada de "Pergunta X de 2" nem barra de progresso. Toda tela interna tem o "← Voltar" de
     verdade acima do título: `BackButton` do design system (`to`, `children` = `t.nav.back`); não desenhe outro.
+    Para voltar à tela anterior de verdade, o `onClick` opcional chama `preventDefault` e `navigate(-1)` (o `to`
+    fica como reserva, ex.: o início do Guia).
   - **Clicar não rola:** escolha que vai para a URL usa `useReplaceFlow()` (mesma rota, recebe o `FlowParams`)
     ou `useReplaceUrl()` (endereço pronto), que trocam com `replace` e `preventScrollReset` (o `ScrollRestoration`
     do `ShellPage` sobe a tela em toda outra navegação). Listas com `key` estável e botão que muda de estado sem
@@ -205,14 +237,18 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   - A vitrine `/design-system` tem a seção "Pacote 2: peças compartilhadas" com tudo isso funcionando.
 - **Gráfico com dado real:** tudo o que é desenhado vem da API, com a fonte e o período na legenda (ex.:
   "Média de 2005 a 2024, NASA POWER"). O mock traz o mesmo campo, no formato do contrato.
-- **Guia (`/guia`, tarefa 0048, RF-26):** os artigos são arquivos Markdown em
+- **Guia (`/guia`, tarefas 0048 e 0063, RF-26 e RF-46):** os artigos são arquivos Markdown em
   `src/content/guia/pt/<slug>.md` e `.../en/<slug>.md` (mesmo slug nos dois idiomas, carregados no build
-  por `repositories/guideRepository.ts`). Cabeçalho simples entre `---`: `titulo`, `tema`
-  (`culturas`, `plantar`, `terra`, `clima` ou `seguranca`), `slug` (igual ao nome do arquivo), `rascunho`
-  (`sim` ou `nao`) e, nas culturas, `planta` (id do `culturas.yaml`, para a ilustração de
-  `design-system/plants/PlantImage`). Título de seção fixo: "Em uma frase", "Por que importa", "Na sua
-  lavoura", "Fontes" (cultura tem também "Conheça" e "Passo a passo"; em inglês "In one sentence", "Why it
-  matters", "In your field", "Sources", "Get to know it", "Step by step"). De 100 a 300 palavras, frases
+  por `repositories/guideRepository.ts`). Cabeçalho simples entre `---`: `titulo`, `resumo` (uma linha para o
+  cartão: **só o "Em uma frase" do próprio artigo, encurtado**, sem afirmação nem número novo), `tema` (`culturas`,
+  `plantar`, `terra`, `clima` ou `seguranca`), `slug` (igual ao nome do arquivo), `rascunho` (`sim` ou `nao`; desde
+  15/11/2026 **nenhuma tela mostra**: nada de "em revisão" nem de "a revisar pela agrônoma"), `relacionados` (até 3
+  slugs, o "Veja também"; sem eles, outros do mesmo tema) e, nas culturas, `planta` (id do `culturas.yaml`, para a
+  foto real do `PlantPhoto`, no cartão e no artigo). **O tempo de leitura não vai no cabeçalho:** `readingMinutes`
+  conta as palavras do texto (~200 por minuto, para cima, mínimo 1). `guideMeta.test.ts` confere o `resumo` e os
+  `relacionados`. Título de seção fixo: "Em uma frase", "Por que importa", "Na sua lavoura", "Fontes" (cultura tem
+  também "Conheça" e "Passo a passo"; em inglês "In one sentence", "Why it matters", "In your field", "Sources",
+  "Get to know it", "Step by step"). De 100 a 300 palavras, frases
   curtas. Desde 15/11/2026 nenhum artigo é rascunho (`rascunho: nao`) e nenhum texto cita revisão pendente
   da agrônoma (nem nas telas: o `messages.test.ts` barra "rascunho" e revisão pendente; o número que é hipótese do
   time aparece como "ainda não validado em campo"); em compensação, **o artigo só afirma o que uma fonte conferida confirma**: artigo científico
@@ -221,10 +257,38 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   limites do `regras.yaml`): esses ficam na tela "Como a conta é feita". Link externo só de publicação
   aberta e conferida, e ela entra antes em `src/content/guia/verifiedSources.ts` (url, `kind` = `article`,
   `book` ou `official`, `citation`, o que confirma, data); `guideContent.test.ts` barra link fora da lista, artigo fora do tamanho, sem a estrutura, sem par
-  em outro idioma ou com link interno quebrado. Para ligar uma tela a um artigo, use o `GuideLink`
-  (pacote 2: abre em nova aba; o `slug` só aceita os de `GUIDE_SLUGS`). O Markdown é lido por `services/markdownService.ts` (títulos, parágrafos, listas, negrito
-  e links; HTML vira texto puro e a view nunca usa `dangerouslySetInnerHTML`). Não adicione biblioteca de
-  Markdown.
+  em outro idioma ou com link interno quebrado. Para ligar uma tela a um artigo, use o `GuideLink` (pacote 2: abre em nova
+  aba; o `slug` só aceita os de `GUIDE_SLUGS`): não mude slug nem a rota `/guia/{slug}`. O Markdown é lido por
+  `services/markdownService.ts` (títulos, parágrafos, listas, negrito e links; HTML vira texto puro e a view nunca
+  usa `dangerouslySetInnerHTML`). Não adicione biblioteca de Markdown.
+  - **Início (`GuideView`, `useGuideController`, pacote 3):** "← Voltar" (com tela anterior no app, volta para ela
+    pelo `onClick` do `BackButton`; aberto direto, vai para a Início), título, "Ouvir resumo" e a busca grande à
+    direita (no celular, embaixo). Pílulas "Todos" e os 5 temas com ícone e contagem (`themeCounts`), `aria-pressed`
+    na escolhida; no celular, rolam para o lado dentro da própria fileira. "Comece por aqui" (`FEATURED_SLUGS`: raio-X,
+    "deu certo" e ZARC) só em "Todos". Seções por tema com "{n} artigos" e cartões (3, 2 ou 1 coluna): o título é o
+    link (`::after` cobre o cartão, que pode abrir em nova aba), com o resumo e "{n} min de leitura"; as culturas têm o
+    `PlantPhoto` (o crédito fica fora do link, por cima; no celular, a foto à esquerda com 96 px). A frase do MVP saiu.
+  - **Busca:** `searchGuides` no título e no resumo, sem acento e sem maiúscula; `highlight` devolve os trechos
+    para o `<mark>` (no texto original, mesmo com acento antes). Com busca, os temas somem e aparecem "**{n}**
+    resultados para "{busca}"" e os cartões com o nome do tema; sem resultado, 3 sugestões (`guide.suggestions`).
+    **A busca e o tema ficam no estado da tela e são copiados para a URL** (`q`, `tema` em português) com
+    `useReplaceUrl`: digitar ou trocar de filtro não rola nem cria entrada no histórico (teste em
+    `pages.guide.test.tsx`); a tela abre com o que vier na URL, e uma navegação que não é `replace` relê a URL.
+  - **Artigo (`GuideArticleView`, `useGuideArticleController`):** `articleLayout` separa o "Em uma frase" (caixa com
+    borda verde), as seções (com âncora, `sectionId`) e as "Fontes" (num `<details>` fechado, "Fontes conferidas");
+    lista de 2 a 4 itens "**Nome:** texto" vira cartões com ícone. Artigo de cultura mostra a foto real
+    (`PlantPhoto`, com o crédito) logo abaixo do título, no lugar do desenho. Coluna lateral fixa no computador com "Neste
+    artigo" (rolagem suave, ou direta com menos movimento) e "Veja também" (`relatedArticles`); no celular, o índice
+    some e o "Veja também" vai para o fim. "Este artigo ajudou? Sim / Não" só marca e diz "Obrigado!": **nenhuma
+    contagem guardada**. Os links internos (e o "Voltar ao Guia") levam o fluxo da URL (`keepFlowQuery`).
+  - **"Na sua lavoura" (`services/guideFieldService.ts`, frases em `i18n/guideTexts.ts`):** caixa azul com **um
+    número real do ponto**, do `GET /api/raio-x`, com o lugar (`nearestPlace`) e a fonte do dado. Vale o ponto da
+    URL ou o salvo no aparelho (`savedPointRepository`, o mesmo dos avisos), **nunca a fazenda de exemplo**; sem
+    ponto, sem dado ou com falha, a caixa não aparece. Só os artigos de `FIELD_SLUGS` pedem o raio-X: erosão (dias
+    de chuva forte), veranico (o maior), calor de 35 °C (anos com o dia), clima de 2041 a 2060 (média dos modelos) e
+    raio-X (argila e areia do SoilGrids, umidade do SMAP e chuva média). **Nada que dependa de hipótese do time**
+    (geada de 3 °C, fogo a 5 km, água por textura, fim das chuvas) e nenhuma frase de recomendação. O "Ouvir" do
+    artigo lê o título, o "Em uma frase" e o número da caixa.
 - **Endereço aproximado (serviço externo, tela "Onde fica a lavoura", tarefas 0041 e 0053, RF-01):** instância
   pública do **Photon** (komoot, `https://photon.komoot.io`, dados do OpenStreetMap), **sem chave e sem cadastro**:
   nada de token nem variável `VITE_*` para ela. Desde a tarefa 0053 só a busca **reversa** (`/reverse`, o "Perto
@@ -268,8 +332,7 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   dizem que esta primeira versão funciona na região de Uberlândia e Uberaba (MG) e que vamos ampliar para todo o
   Triângulo Mineiro: a legenda do mapa de `/onde` e o modal "Onde o app funciona" (`where.areaLegend`,
   `where.area.text`), os avisos de fora da área (`where.outsideNotice`, `outsideText`), "De onde vem cada dado"
-  (`method.sourcesArea`) e a página inicial do Guia (`guide.mvpArea`). A tela inicial não fala mais do MVP (tarefa
-  0052: o selo e a frase saíram). Mudou a área? Troque esses textos junto, em pt e en.
+  (`method.sourcesArea`). A tela inicial e o Guia não falam mais do MVP (tarefa 0052 e, no Guia, tarefa 0063). Mudou a área? Troque esses textos junto, em pt e en.
 - **Tela 3 "Quando você colhe" (`/quando`; tarefa 0042 do backend e, desde o pacote 2, tarefa 0057, RF-40):**
   na tela fica **só a pergunta**; o que ajuda a decidir vai para o modal grande. O satélite não vê o dia da
   colheita: a tela **abre sem data** e com o "Próximo passo" desligado (a `colheita_sugerida` do NDVI não
@@ -321,19 +384,43 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   Sem o raio-X (API antiga ou falha), o painel não aparece e a terra fica num cartão claro com a troca. O
   `MiniMap` mostra o crédito do Leaflet sem a bandeira. Bloco sem dado não aparece; aviso nunca leva o selo de
   "pronto" (✓).
-- **`/planejamento` (tela final, tarefa 0058, RF-41):** por enquanto, só os blocos que saíram do raio-X, como eram
-  ("Alertas da sua área", "20 anos de chuva" e "Clima 2041–2060"; sem o raio-X, os cartões de antes), com o
-  `BackButton` para `/resposta` e o "Ouvir resumo" (`planningSummary`). `PlanningView` + `usePlanningController`.
-  Será refeita no próximo pacote; o link para ela ("Ver meu planejamento →") é do Plano de 3 anos.
+- **Tela 6 "Seu planejamento" (`/planejamento`, pacote 3, tarefa 0060, RF-43):** a tela final do fluxo (`PlanningPage` →
+  `controllers/usePlanningController.ts` → `views/PlanningView.tsx`, com o `PlanReport`). **O plano é o mesmo da tela 5:**
+  as duas telas chamam o `controllers/usePlanFlow.ts` (recomendação, escolha do 1º ano, comparação, sugestão em cadeia do
+  `/api/plano/sugestao` e, com `ano3`, o `/api/plano`) com a mesma URL; não recalcule o plano em outro lugar. As regras da
+  tela ficam em `services/planningService.ts` (`harvestDay` = a `data` ou o dia da época no motor, `bandDate`;
+  `sowingDay` = a `data` ou a `entrada.semeadura`; `planTimeline`, `planningAlerts`, `pastFutureRows`, `planGain`,
+  `lastSeasons`) e as frases, usadas pela tela, pelo relatório e pelo "Ouvir resumo", em `i18n/planningTexts.ts`
+  (`stepText`, `planningAlertText`, `gainText`, `planningSummary`, `scenarioName`); os textos no bloco `planning` das
+  mensagens. Ordem dos blocos: topo ("← Voltar ao plano" para `/plano` com o fluxo, "✓ Seu planejamento está pronto", o
+  lugar: "Lavoura de demonstração, perto de Uberlândia (MG)" com `exemplo=1`, senão "Sua lavoura, perto de {lugar}" pelo
+  reverse do Photon com o uso justo, um pedido com o `useDebouncedRequest`, e o `nearestPlace` sem resposta; "colheita da
+  soja prevista em {data}" ou a época), resumo do plano (3 cartões com `PlantPhoto` e o cartão das ações: "Imprimir
+  relatório" e "Mudar o plano"), "O que fazer agora" (passos por regra: agora, fevereiro com a previsão da NOAA do
+  `sinal` e a etiqueta "Plano B: X" do `plano_ab`, que some sem Plano B ou com o 1º ano igual a ele; colheita; plantio
+  até o `data_limite`, em laranja com `fora_do_prazo`; a fase da água pelo `ciclo` e o `criterio` do `/recomendacao`;
+  o fim do ciclo pelo `renda.da_grao`; out–nov; **sem "Adicionar à agenda"**), alertas da área (até 3, cada um só com
+  dado: o `sinal`, `alertas.chuva_forte` e `alertas.fogo` do raio-X; "Saiba mais" pelo `GuideLink` com os slugs
+  `como-evitar-erosao` e `fogo-na-palha`; a faixa da Defesa Civil com "Ver alertas oficiais" para
+  `/avisos…#alertas-oficiais`, o id do bloco oficial da tela de Avisos), passado e futuro (`anos[].anos_bons` e
+  `futuro_anos_bons` do `/api/plano`; o `cartoes.clima_futuro` do raio-X, com `clima-2041-2060`), comunidade "em breve"
+  com "Abrir o Guia" (`/guia`; **nenhum link para `/comunidade`**) e o cartão do relatório (sem as 3 safras respondidas,
+  o `MissingSeasonsNotice`). **Relatório:** os dois "Imprimir relatório" chamam `window.print()` (injetado no controller);
+  o `PlanReport` fica num portal no `<body>`, `hidden` na tela, e o CSS de impressão esconde o resto (cabeçalho em
+  `<div>`: o `global.css` esconde todo `<header>`); 7 seções (Sua terra, Últimas safras, Opções comparadas, Plano de 3 anos
+  com Prós e Contras pelos `prosTexts`/`consTexts` da tela 5 e "Como o plano ajuda a ganhar", O que fazer e quando,
+  Alertas e clima, Fontes e aviso), 2 folhas A4 na lavoura de demonstração. Os cartões dos anos no celular: foto de 108 px
+  à esquerda; a 360 px as barras do "Deu certo" ficam com 56 px e o "X de 20" desce se não couber (sem rolagem lateral).
+  É a **única tela com "Imprimir relatório"**.
 - **Tela 5 "Escolher" + "Plano de 3 anos" (pacote 2, tarefa 0059, RF-42; motor na tarefa 0056 do backend):** as
   antigas abas Sugestão, Comparar e Plano (tarefas 0044 e 0045) viraram **uma tela com 2 abas** (`ChoosePlanPage` →
-  `controllers/useChoosePlanController.ts` → `views/ChoosePlanView.tsx`, com `ChooseTab`, `PlanTab`, `ChooseModals` e
-  `PlanReport`). `/resposta` e `/opcoes` abrem "1. Escolher"; `/plano`, "2. Plano de 3 anos". As abas são o `Tabs` do
+  `controllers/useChoosePlanController.ts` → `views/ChoosePlanView.tsx`, com `ChooseTab`, `PlanTab` e `ChooseModals`).
+  O plano vem do `usePlanFlow` (o mesmo da tela 6). `/resposta` e `/opcoes` abrem "1. Escolher"; `/plano`, "2. Plano de 3 anos". As abas são o `Tabs` do
   design system (`tablist`; setas, Home e End); trocar de aba é `useReplaceUrl` (sem rolar); o botão do fim da aba 1
   abre a aba 2 do topo. O "Voltar" vai para `/satelite`. **O que fica na URL** (`flowParams.ts`): `objetivo`,
   `comparar` (até 3, o pousio vale), `escolha` (o 1º ano do plano; sem ela, o `pensa` do raio-X e, com "Ainda não
   sei", a sugestão), `ano2` e `ano3` (os anos que o produtor mudou) e `ano` (o ano aberto no "Por que essa
-  sugestão?", que o link dos avisos usa). Escolher para o plano congela a comparação da tela com a cultura e solta
+  sugestão?", que os links antigos usam). Escolher para o plano congela a comparação da tela com a cultura e solta
   `ano2`/`ano3`; trocar o objetivo solta a comparação (e os anos, sem `escolha`). Regras: `services/choiceService.ts`
   (ordem com as fora do prazo no fim, `isLate` = `fora_do_prazo` ou, na API antiga, `!na_janela`; a sugestão é sempre
   a 1ª no prazo; comparação de partida, caixinhas, fluxos) e `services/planService.ts` (o que fixar no
@@ -350,23 +437,26 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   **Aba Plano:** 3 cartões em cadeia (o "Por quê:" é o `motivo` do motor), "O que plantar" nativo em cada ano,
   alerta (`role="status"`) com "Voltar ao plano sugerido", notas "Seu plano × Como é hoje" (cada nota abre a conta),
   chuva aproveitada, "E se o ano vier seco?" (o `sinal`, o SMAP, o Plano A e o **Plano B do motor**, nunca fixo;
-  "Não precisa" com `motivo` `pousio` ou `nunca_falhou`) e "Ver meu planejamento →" (`/planejamento`). **"Como é
+  "Não precisa" com `motivo` `pousio` ou `nunca_falhou`) e "Ver meu planejamento →" (`/planejamento` com o fluxo). **"Como é
   hoje"** = as 3 últimas safras do raio-X (`todayCrops`): sem resposta, "não preenchido" com o
   `MissingSeasonsNotice` (grava `safras` sem rolar); com "Não plantei" (`sem_soja`), "Sem soja em {safra}: não dá para
-  comparar", **sem** o aviso. **Relatório:** "Imprimir relatório" chama `window.print()` (injetado no controller);
-  `PlanReport` fica num portal direto no `<body>`, `hidden` na tela, e o CSS de impressão esconde o resto do `<body>`
-  (o cabeçalho do relatório é `<div>`: o `global.css` esconde todo `<header>` na impressão). Com a recomendação na
+  comparar", **sem** o aviso. **Sem relatório nem "Imprimir relatório"** desde o pacote 3
+  (tarefa 0060): as abas ficam sozinhas à esquerda e a frase antes de "Ver meu planejamento →" fala do relatório para
+  imprimir, que fica só na tela 6. Com a recomendação na
   mão, um novo pedido não apaga a tela (sem pisca nem rolagem). Fotos: `PlantPhoto` no cartão, nas colunas e nos
   anos. Links do Guia: `GuideLink` (nova aba), slugs em `CROP_GUIDE` (`views/choiceTexts.ts`) e `PLAN_ARTICLES`.
   **Não há mais relatório antigo nem a tela solta da safra passada:** `/relatorio` e `/safra-passada?…&ano=X` levam
   para `/resposta` (com o `ano`, que abre o "Por que essa sugestão?" naquele ano). Não crie link para elas.
 - **Cabeçalho e rodapé globais (remodelagem, tarefa 0052, RF-36):** valem para todas as telas (`ShellView`, estado no
   `useShellController`). **Cabeçalho** (`design-system/components/Header.tsx`): logo, "Raiz Orbital" (nunca quebra
-  linha) e o slogan (some no celular) à esquerda; à direita, **só três itens**: Comunidade (pílula verde-clara, com o
-  nome escrito também no celular), Avisos (sino, nome e o selo laranja com o `contador` de `/api/avisos`; sem aviso,
-  sem selo; no celular, só o sino com o selo) e o idioma ("PT | EN"; no celular, só o outro idioma). Não ponha outro
-  item nem botão grande no cabeçalho. Abaixo de 380 px (pacote 2): logo de 30 px, nome de 15,5 px e "Comunidade" de
-  12,5 px. **Rodapé** (`Footer.tsx`, uma linha só): escudo com "Ajuda a decidir. Não
+  linha) e o slogan (some no celular) à esquerda; à direita, **só três itens**: **Guia** (desde o pacote 3, tarefa
+  0061, no lugar da Comunidade: pílula verde-clara com o livro, `BookIcon`, e o nome escrito também no celular; leva a
+  `/guia`), Avisos (sino, nome e o selo laranja com o `contador` de `/api/avisos`; sem aviso, sem selo; no celular, só
+  o sino com o selo) e o idioma ("PT | EN"; no celular, só o outro idioma). A página atual fica marcada com
+  `aria-current="page"` (o `NavLink`): em `/guia` e nos artigos, a pílula fica verde cheia; em `/avisos`, o sino ganha
+  o fundo verde-claro (no computador, o respiro em volta do sino é compensado por margem negativa, para nada mudar de
+  lugar). Não ponha outro item nem botão grande no cabeçalho, nem a Comunidade (está "em breve"). Abaixo de 380 px
+  (pacote 2): logo de 30 px, nome de 15,5 px e a pílula do Guia de 12,5 px; cabe em 360 px sem rolar para o lado. **Rodapé** (`Footer.tsx`, uma linha só): escudo com "Ajuda a decidir. Não
   substitui o seu agrônomo." à esquerda; à direita, "Créditos e uso de IA" (abre o modal global) e "NASA Space Apps
   2026 · Field Shift". Tem **duas variantes**, escolhidas pela rota no `useShellController`: na Início (`/`), só isso
   (a faixa grande do agrônomo, logo acima, existe só lá); nas telas internas, também "Como a conta é feita ↗"
@@ -380,9 +470,9 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   0,95); enquanto fala, o link vira "Parar" com o quadrado e `aria-pressed="true"`; trocar o idioma ou sair da tela
   para a fala; sem voz no navegador, o link não aparece. **Desde o pacote 2, toda tela tem o seu**, montado com os números
   dela no controller (ex.: avisos = o lugar e quantos avisos ativos; comunidade = o raio e o plantio da safra mais
-  recente; artigo do Guia = o título e o "Em uma frase", `articleSummary`). O texto não deve mudar a cada segundo
-  (cada troca para a fala): na missão, nada de fase; no Guia, o total de artigos, não o da busca. Os da tela 4 e de
-  `/planejamento` ficam em `i18n/xrayTexts.ts`.
+  recente; artigo do Guia = o título, o "Em uma frase" (`articleSummary`) e o número de "Na sua lavoura"). O texto
+  não deve mudar a cada segundo (cada troca para a fala): na missão, nada de fase; no Guia, o total de artigos, não o
+  da busca. O da tela 4 fica em `i18n/xrayTexts.ts`; o da tela 6, em `i18n/planningTexts.ts` (`planningSummary`).
 - **Modal reutilizável (`design-system/components/Modal.tsx`, tarefa 0052):** o padrão de todo "ver detalhes".
   `<dialog>` nativo (`showModal`; sem ele, o atributo `open`): fecha com o X, com Esc e com clique fora (no fundo
   escurecido); o foco entra no modal, fica preso nele (Tab e Shift+Tab dão a volta) e volta a quem o abriu. Quem
@@ -403,7 +493,7 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   toda imagem ou vídeo gerado por IA leva a marca d'água visível "Imagem gerada por IA" (a foto da Início, do
   Lovable, leva), e o uso de IA em código e textos fica declarado nos créditos.
 - **Fotos das plantas (tarefa 0055):** toda foto de cultura nas telas novas é o `PlantPhoto` (a tela 5 usa no cartão
-  da sugestão, na comparação e no plano). Fotos reais do Wikimedia Commons, **baixadas** para `public/fotos/` (nunca
+  da sugestão, na comparação e no plano; a tela 6, nos cartões do resumo do plano). Fotos reais do Wikimedia Commons, **baixadas** para `public/fotos/` (nunca
   link direto), só CC BY, CC BY-SA ou domínio público, sem logo nem marca, com até 800 px de largura e 250 KB. Os dados
   de cada cultura (arquivo, autor, licença, link do Commons, `alt` e a legenda opcional, em pt e en) ficam só em
   `content/plantPhotos.ts`; a tela mostra com `<PlantPhoto {...plantPhotoProps(cultura, lang)} height={…} />`

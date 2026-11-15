@@ -1,9 +1,11 @@
 ---
 titulo: Crotalária
+resumo: Leguminosa de cobertura que fixa nitrogênio do ar e ajuda contra alguns nematoides.
 tema: culturas
 slug: crotalaria
 rascunho: nao
 planta: crotalaria
+relacionados: adubo-verde, nematoide, rotacao-de-culturas
 ---
 
 ## Em uma frase

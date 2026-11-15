@@ -1,9 +1,11 @@
 ---
 titulo: Deixar a terra parada
+resumo: Colher a soja e não plantar nada até a próxima soja. No app, "Deixar parado".
 tema: culturas
 slug: terra-parada
 rascunho: nao
 planta: pousio
+relacionados: palhada, como-evitar-erosao, rotacao-de-culturas
 ---
 
 ## Em uma frase

@@ -12,7 +12,7 @@ const header: AppHeaderProps = {
   homeLabel: 'Raiz Orbital, voltar ao início',
   slogan: 'Do espaço até a raiz.',
   navLabel: 'Principal',
-  community: { label: 'Comunidade', to: '/comunidade' },
+  guide: { label: 'Guia', to: '/guia' },
   alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null },
   lang: { current: 'pt', onToggle: vi.fn(), label: 'Trocar idioma: português ou inglês' },
 }

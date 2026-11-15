@@ -1,8 +1,10 @@
 ---
 titulo: Alertas oficiais da Defesa Civil
+resumo: A Defesa Civil manda alerta de desastre para o celular, e o cadastro é de graça.
 tema: seguranca
 slug: alertas-defesa-civil
 rascunho: nao
+relacionados: como-ler-os-avisos, fogo-na-palha, geada-na-safrinha
 ---
 
 ## Em uma frase

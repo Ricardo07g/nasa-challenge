@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { en } from './messages.en'
 import { pt } from './messages.pt'
 import type { RaioX } from '../models/raioX'
-import { buildRaioX } from '../repositories/mocks/raioXFixture'
-import { alertList, xRayBlocks, type XRayBlock } from '../services/raioXService'
+import { xRayBlocks, type XRayBlock } from '../services/raioXService'
 import type { SoilSummary } from '../services/satelliteService'
-import { planningSummary, xraySummary, xrayText } from './xrayTexts'
+import { xraySummary, xrayText } from './xrayTexts'
 
 /** Os números da lavoura de demonstração (`/api/raio-x`, 15/11/2026). */
 const RAIO = {
@@ -161,24 +160,5 @@ describe('resumo falado do raio-X', () => {
       'Sua terra é argilosa e guarda cerca de 60 milímetros de água. Num ano típico chovem 862 milímetros de janeiro a julho. Confirme abaixo o que você plantou nas últimas safras.',
     )
     expect(xraySummary(pt, 'pt', [])).toBe('Confirme abaixo o que você plantou nas últimas safras.')
-  })
-})
-
-describe('resumo falado do planejamento (/planejamento)', () => {
-  const raio = buildRaioX({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
-
-  it('os alertas da área, os 20 anos de chuva e o clima de 2041 a 2060', () => {
-    const alerts = alertList({ ...raio, alertas: { ...raio.alertas, fogo: { anos: [2019], total_anos: 10, raio_km: 5, fonte: 'MCD64A1' } } })
-
-    expect(planningSummary(pt, alerts, raio.cartoes)).toBe(
-      'Na sua área, há alertas de chuva forte e fogo. Com milho com braquiária, deu certo em 16 de 20 anos de chuva. Para 2041 a 2060: 2 de 3 modelos indicam menos chuva; 3 de 3, mais calor.',
-    )
-    expect(planningSummary(en, alerts, raio.cartoes)).toBe(
-      'In your area, there are alerts for heavy rain and fire. With corn with brachiaria, it worked in 16 of 20 years of rain. For 2041 to 2060: 2 of 3 models point to less rain; 3 of 3, to more heat.',
-    )
-  })
-
-  it('sem alerta e sem os cartões, só diz que não há alerta', () => {
-    expect(planningSummary(pt, [], null)).toBe('Nenhum alerta de geada, chuva forte ou fogo na sua área.')
   })
 })

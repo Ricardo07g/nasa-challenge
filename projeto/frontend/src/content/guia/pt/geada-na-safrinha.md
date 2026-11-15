@@ -1,8 +1,10 @@
 ---
 titulo: Geada na safrinha
+resumo: A geada perto da floração pode reduzir bastante a produção do milho safrinha.
 tema: seguranca
 slug: geada-na-safrinha
 rascunho: nao
+relacionados: prazo-de-plantio-zarc, milho-safrinha, alertas-defesa-civil
 ---
 
 ## Em uma frase

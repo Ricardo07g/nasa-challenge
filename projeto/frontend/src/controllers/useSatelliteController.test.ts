@@ -286,7 +286,8 @@ describe('useSatelliteController (tela 4, raio-X e últimas safras)', () => {
 })
 
 describe('"Compartilhar com a comunidade" das safras respondidas (tarefa 0047)', () => {
-  function withCommunity(send: CommunityService['send'] = vi.fn().mockResolvedValue({ id: 'r1' })) {
+  // Pacote 3 (tarefa 0061): a comunidade está "em breve"; estes testes ligam a comunidade de propósito.
+  function withCommunity(send: CommunityService['send'] = vi.fn().mockResolvedValue({ id: 'r1' }), communityOpen = true) {
     const community: CommunityService = {
       nearby: vi.fn(),
       send,
@@ -294,8 +295,18 @@ describe('"Compartilhar com a comunidade" das safras respondidas (tarefa 0047)',
       noticeSeen: vi.fn(() => false),
       region: vi.fn(),
     }
-    return { ...deps(), community }
+    return { ...deps(), community, communityOpen }
   }
+
+  it('com a comunidade "em breve" (o padrão, pacote 3), não oferece compartilhar, mesmo com safra respondida', async () => {
+    const d = withCommunity(undefined, false)
+    const { result } = await ready(`/satelite?${flow}&safras=2024:milheto,2025:pousio`, d)
+
+    expect(result.current.share).toBeNull()
+    const { communityOpen: _ignored, ...withoutFlag } = d
+    const byDefault = await ready(`/satelite?${flow}&safras=2024:milheto,2025:pousio`, withoutFlag)
+    expect(byDefault.result.current.share).toBeNull()
+  })
 
   it('sem safra respondida, não oferece compartilhar', async () => {
     const { result } = await ready(`/satelite?${flow}`, withCommunity())

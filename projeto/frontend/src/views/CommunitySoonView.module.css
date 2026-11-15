@@ -1,0 +1,119 @@
+/*
+ * Comunidade "em breve" (`/comunidade`, pacote 3, tarefa 0061): o cartão claro do protótipo dos Avisos (tela 7),
+ * com a coluna do "Abrir o Guia" da tela final (tela 6), no contêiner das telas novas.
+ */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--page-width-v4);
+  margin-inline: auto;
+  padding: var(--space-stack) var(--page-margin-v4) var(--space-6);
+}
+
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-5) var(--space-6);
+  align-items: center;
+  padding: var(--space-panel);
+  border: 1px solid var(--color-back-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-suggestion-wash);
+  color: var(--color-text-muted);
+}
+
+.about {
+  min-width: 0;
+}
+
+/* "Em breve": pílula verde cheia */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-bottom: var(--space-3);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.03em;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-section);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+}
+
+.text {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-small);
+  line-height: 1.5;
+}
+
+.listen {
+  margin-top: var(--space-2);
+}
+
+/* O que vai ter: só a lista, com bolinhas verdes */
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-stack);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-caption);
+}
+
+.list li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.list li::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+/* Enquanto isso, o Guia: a frase e o botão */
+.guide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 280px;
+}
+
+.guide p {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  line-height: 1.5;
+}
+
+/* Celular e tablet (até 900 px): uma coluna, botão na largura toda */
+@media (max-width: 900px) {
+  .page {
+    padding-top: var(--space-4);
+  }
+
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .guide {
+    max-width: none;
+  }
+}

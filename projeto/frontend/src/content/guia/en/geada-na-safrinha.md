@@ -1,8 +1,10 @@
 ---
 titulo: Frost in the second crop
+resumo: Frost near flowering can cut second-crop corn yield sharply.
 tema: seguranca
 slug: geada-na-safrinha
 rascunho: nao
+relacionados: prazo-de-plantio-zarc, milho-safrinha, alertas-defesa-civil
 ---
 
 ## In one sentence

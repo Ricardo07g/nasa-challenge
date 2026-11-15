@@ -1,9 +1,11 @@
 ---
 titulo: Leaving the land fallow
+resumo: Harvest the soybeans and plant nothing until the next soybeans.
 tema: culturas
 slug: terra-parada
 rascunho: nao
 planta: pousio
+relacionados: palhada, como-evitar-erosao, rotacao-de-culturas
 ---
 
 ## In one sentence

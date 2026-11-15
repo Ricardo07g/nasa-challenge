@@ -6,6 +6,7 @@
  * aviso traz o nível, o tipo, os números da frase, as fontes e a data da leitura; as frases ficam no
  * bloco `alerts` das mensagens (pt e en).
  */
+import type { CropId, Objetivo } from './recomendacao'
 import type { CurrentChoice } from './seasonAnswers'
 import type { Colheita, Ponto, Textura } from './talhao'
 
@@ -94,10 +95,11 @@ export type Avisos = {
   safrinha: SafrinhaAviso | null
 }
 
-/** O ponto dos avisos: o último marcado no fluxo, guardado no aparelho (sem cadastro). */
 /**
- * O ponto dos avisos, salvo no aparelho. Desde o pacote 2 (tarefa 0054), guarda junto a data da colheita
- * (`data`), as respostas das últimas safras (`safras`) e a escolha atual (`pensa`), no formato da URL.
+ * O ponto dos avisos: o último marcado no fluxo, guardado no aparelho (sem cadastro). Desde o pacote 2 (tarefa
+ * 0054), guarda junto a data da colheita (`data`), as respostas das últimas safras (`safras`) e a escolha atual
+ * (`pensa`), no formato da URL. Pacote 3 (tela 7, tarefa 0062): também a cultura do 1º ano do plano (`escolha`)
+ * e o objetivo da tela 5 (`objetivo`), para a linha "Seu plano" dos avisos.
  */
 export type PontoAvisos = Ponto & {
   colheita?: Colheita
@@ -106,6 +108,10 @@ export type PontoAvisos = Ponto & {
   data?: string
   safras?: string
   pensa?: CurrentChoice
+  escolha?: CropId
+  objetivo?: Objetivo
+  /** A lavoura de demonstração (`exemplo=1`): a tela de avisos mostra, mas o aparelho nunca guarda. */
+  exemplo?: boolean
 }
 
 export type GrupoAvisosChave = 'agora' | 'mudou' | 'recordes' | 'perto'

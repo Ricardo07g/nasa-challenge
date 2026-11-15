@@ -1,8 +1,10 @@
 ---
 titulo: When the rain ends
+resumo: How the rain behaved over the last 20 years after the soybean harvest.
 tema: clima
 slug: quando-a-chuva-acaba
 rascunho: nao
+relacionados: veranico, conta-de-agua, plantar-logo-depois-da-colheita
 ---
 
 ## In one sentence

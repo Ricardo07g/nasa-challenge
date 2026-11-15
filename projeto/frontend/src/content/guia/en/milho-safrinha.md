@@ -1,9 +1,11 @@
 ---
 titulo: Second-crop corn
+resumo: Corn planted right after soybeans, to harvest grain in autumn and winter.
 tema: culturas
 slug: milho-safrinha
 rascunho: nao
 planta: milho_safrinha
+relacionados: prazo-de-plantio-zarc, geada-na-safrinha, calor-35-graus
 ---
 
 ## In one sentence

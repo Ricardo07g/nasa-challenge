@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   BarChart3,
   Bell,
+  BookText,
   Calculator,
   CalendarDays,
   Check,
@@ -42,8 +43,10 @@ import {
   Pointer,
   Printer,
   Satellite,
+  Search,
   Send,
   ShieldCheck,
+  Shovel,
   Snowflake,
   Sparkle,
   Sprout,
@@ -57,6 +60,8 @@ import {
   Wheat,
   X,
 } from 'lucide-react'
+// Tela 6 "Seu planejamento" (pacote 3): a próxima safra na linha do tempo.
+import { RefreshCw } from 'lucide-react'
 
 type IconProps = { size?: number }
 
@@ -124,6 +129,11 @@ export function ChevronDownIcon({ size = 18 }: IconProps) {
 
 export function CommunityIcon({ size = 18 }: IconProps) {
   return <Users size={size} {...decorative} />
+}
+
+/** Livro com linhas: o Guia (pílula do cabeçalho e "Abrir o Guia", pacote 3). */
+export function BookIcon({ size = 18 }: IconProps) {
+  return <BookText size={size} {...decorative} />
 }
 
 export function CrosshairIcon({ size = 20 }: IconProps) {
@@ -326,4 +336,20 @@ export function ChartIcon({ size = 18 }: IconProps) {
 /** Alerta do plano ("Você mudou…"): informação, não perigo. */
 export function InfoIcon({ size = 18 }: IconProps) {
   return <Info size={size} {...decorative} />
+}
+
+/** Linha do tempo da tela 6: a próxima soja (o ciclo recomeça). */
+export function CycleIcon({ size = 16 }: IconProps) {
+  return <RefreshCw size={size} {...decorative} />
+}
+
+// Guia (tela 8 do pacote 3, tarefa 0063)
+/** Lupa da busca do Guia. */
+export function SearchIcon({ size = 20 }: IconProps) {
+  return <Search size={size} {...decorative} />
+}
+
+/** Tema "Plantar" do Guia: a pá. */
+export function PlantingIcon({ size = 18 }: IconProps) {
+  return <Shovel size={size} {...decorative} />
 }

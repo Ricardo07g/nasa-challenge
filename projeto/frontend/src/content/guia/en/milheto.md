@@ -1,9 +1,11 @@
 ---
 titulo: Pearl millet
+resumo: A cover plant that makes a lot of straw for no-till. In the app, it gives no grain.
 tema: culturas
 slug: milheto
 rascunho: nao
 planta: milheto
+relacionados: palhada, nematoide, sorgo
 ---
 
 ## In one sentence

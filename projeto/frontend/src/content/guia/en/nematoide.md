@@ -1,8 +1,10 @@
 ---
 titulo: Nematodes and why to switch crops
+resumo: A nematode is a tiny soil creature that attacks the roots of plants.
 tema: terra
 slug: nematoide
 rascunho: nao
+relacionados: crotalaria, milheto, rotacao-de-culturas
 ---
 
 ## In one sentence

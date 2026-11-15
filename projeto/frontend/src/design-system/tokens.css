@@ -96,7 +96,7 @@
    * existentes; aqui ficam só as novas.
    */
   --color-tint-green-soft: #f1f5f2; /* faixa do agrônomo, cartão dos passos no celular, botão Fechar */
-  --color-tint-green-hover: #d9e8df; /* pílula da Comunidade com o mouse em cima */
+  --color-tint-green-hover: #d9e8df; /* pílula do Guia com o mouse em cima */
   --color-info: #2c5a7d; /* azul do "Ouvir resumo" e dos ícones azuis */
   --color-text-soft: #5d6461; /* slogan, projeto, linhas de apoio */
   --color-link-underline: #b9bfbb; /* sublinhado do link cinza "Créditos e uso de IA" */
@@ -218,6 +218,16 @@
   --photo-fallback: linear-gradient(140deg, var(--color-primary), var(--color-primary-strong));
 
   /*
+   * Tela 8 "Guia" (pacote 3, tarefa 0063): a palavra marcada da busca, os destaques do "Comece por aqui" e a
+   * sombra dos cartões. O resto (verde, azul, texto, bordas e a caixa azul "Na sua lavoura") reaproveita os
+   * tokens existentes.
+   */
+  --color-search-mark: #fdeec2;
+  --color-featured-border: #cfe0d6;
+  --guide-featured-bg: linear-gradient(160deg, #f2f8f4, #fff);
+  --shadow-guide-card: 0 4px 14px rgb(21 32 28 / 6%);
+
+  /*
    * Tela 2 "Quando você colhe a soja" (pacote 2, tarefa 0057): o calendário do cartão "Dia da colheita" e a
    * caixa azul "Ainda não decidiu?". O resto (verde, azul, laranja, texto, bordas) reaproveita os tokens de cima.
    */
@@ -254,6 +264,17 @@
   --color-notice-text: #6b4a10;
   --shadow-demo: 0 4px 14px rgb(31 107 71 / 12%); /* botão da lavoura de demonstração em destaque */
   --modal-large-gap: 24px; /* borda em volta do modal grande (8 px no celular) */
+
+  /*
+   * Pacote 3 · tela 7 "Avisos" (tarefa 0062): o laranja dos "Alertas oficiais" e do "Atenção" reaproveita os tokens
+   * do "Fora da área"; o verde, o azul, o texto e as bordas, os de cima. Aqui ficam só as cores novas.
+   */
+  --color-watch-bg: #eaf0f6; /* "Fique de olho": etiqueta do nível e ícone do resumo */
+  --color-card-hover: #fafcfb; /* cartão de aviso e quadro com o mouse em cima */
+  --color-struck: #c3cbc6; /* risco do valor antigo nos quadros de "Como a sua área está mudando" */
+  --color-official-caption: #8a5a3a; /* linha de cima dos botões dos alertas oficiais */
+  --color-official-caption-strong: #fde6d4; /* a mesma linha nos botões laranja cheios (193 e 199) */
+  --soon-bg: linear-gradient(160deg, #f2f8f4, #fff); /* cartão "Em breve: Comunidade da sua região" */
 
   /*
    * Tela 4 "Raio-X da sua terra" (pacote 2, tarefa 0058): o painel escuro com os blocos enxutos e o gráfico
@@ -295,6 +316,20 @@
   --color-plan-alert-bg: #f3f7fb; /* alerta "Você mudou…" do plano */
   --color-plan-alert-border: #c7d8e8;
   --year-bad-stripes: repeating-linear-gradient(45deg, var(--color-risk) 0 3px, #f6dcc8 3px 6px); /* ano que falhou */
+
+  /*
+   * Tela 6 "Seu planejamento" (pacote 3, tarefa 0060): a linha do tempo, as barras do "Deu certo", o cartão das
+   * ações e o bloco verde-escuro da comunidade "em breve" com o Guia. O resto (verde, azul, laranja, texto,
+   * bordas) reaproveita os tokens de cima.
+   */
+  --color-timeline-line: #dbe5df; /* linha vertical que passa pelo centro dos marcadores */
+  --shadow-timeline-now: 0 0 0 5px rgb(31 107 71 / 15%); /* marcador cheio do "Agora" */
+  --color-bar-track: #e3ebe6; /* trilho das barras "X de 20" */
+  --color-bar-future: #2563a6; /* barra azul de 2041–2060 */
+  --plan-actions-bg: linear-gradient(160deg, #f2f8f4, #fff); /* cartão "Imprimir relatório" e "Mudar o plano" */
+  --community-bg: linear-gradient(140deg, #123b2a, #1f6b47); /* bloco "Comunidade (em breve) e Guia" */
+  --color-community-text: #cfe5da; /* texto sobre o verde-escuro (contraste 4,9:1 no ponto mais claro do degradê) */
+  --color-community-pill: rgb(255 255 255 / 12%);
 }
 
 /* Celular e tablet (até 900 px, protótipos da remodelagem v4): margem menor e cabeçalho mais baixo */

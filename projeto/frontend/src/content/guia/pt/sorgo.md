@@ -1,9 +1,11 @@
 ---
 titulo: Sorgo
+resumo: Cereal de grão que aguenta melhor a falta de água que o milho.
 tema: culturas
 slug: sorgo
 rascunho: nao
 planta: sorgo
+relacionados: conta-de-agua, milho-safrinha, milheto
 ---
 
 ## Em uma frase

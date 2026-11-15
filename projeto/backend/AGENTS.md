@@ -1085,7 +1085,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   previsão do ENSO (`sinal_enso`), o raio da comunidade (`comunidade.raio_km`) e a regra de avisos do replay
   (`CropAlertService`). Só números: as frases são do front.
   - **Resposta:** `ponto`, `celula_id`, `hoje` (dia de Uberlândia, UTC−3), `contador` (avisos de `agora` e de
-    `perto`: é o número do botão do cabeçalho), `agora`, `mudou`, `periodo` (`recente_inicio`, `recente_fim`,
+    `perto`; desde a tarefa 0062 o front não usa mais esse número: o sino e o resumo da tela contam só os cartões
+    de `agora`, porque o "Perto de você" saiu da tela), `agora`, `mudou`, `periodo` (`recente_inicio`, `recente_fim`,
     `antes_inicio`, `antes_fim`), `recordes`, `perto`, `raio_km`, `vizinhos_dias` e `safrinha` (`em_andamento`,
     `cultura`, `nome`, `semeadura`, `colheita`, `explorar_ano`). Cada grupo é `{avisos, ultima_leitura}`: `null` =
     sem dado (o front não desenha); `avisos: []` = "Nada fora do normal" com a `ultima_leitura`.
@@ -1111,7 +1112,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     que fazer" do front dar o mesmo conselho que a tela do Plano (tarefa 0049).
   - **Safrinha:** semeadura = o dia do motor para a faixa no ano de hoje; colheita = semeadura + ciclo da melhor
     opção; `em_andamento` com hoje entre as duas (o "hoje" é injetado no service). Fora dela, `explorar_ano` é o
-    último ano da série (o front liga `/resposta?…&ano=<ano>`).
+    último ano da série (desde a tarefa 0062, o front abre o modal "Ver exemplo: avisos de <ano>" com o replay
+    `/api/safra-passada` daquele ano e os recordes do mesmo ano).
   - **Falta de água** do grupo `mudou`: ETc − ETr no ciclo da melhor opção, com o balde do motor (SMAP do dia de
     plantar ou 50% da CAD; `cycle_deficits` em `avisos_mudanca_service.py`).
   - Sem banco, `perto` é `null` (a comunidade responde 503 por dentro). Erros como no `/recomendacao` (404

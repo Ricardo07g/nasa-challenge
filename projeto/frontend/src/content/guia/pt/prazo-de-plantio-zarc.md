@@ -1,8 +1,10 @@
 ---
 titulo: O prazo de plantio e o ZARC
+resumo: O ZARC mostra, para cada município, a melhor época de plantio de cada cultura.
 tema: plantar
 slug: prazo-de-plantio-zarc
 rascunho: nao
+relacionados: plantar-logo-depois-da-colheita, sementes, milho-safrinha
 ---
 
 ## Em uma frase

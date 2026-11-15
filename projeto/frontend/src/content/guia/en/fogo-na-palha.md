@@ -1,8 +1,10 @@
 ---
 titulo: Fire in the straw
+resumo: The app warns when there was burned area near your point, with NASA satellite data.
 tema: seguranca
 slug: fogo-na-palha
 rascunho: nao
+relacionados: alertas-defesa-civil, palhada, geada-na-safrinha
 ---
 
 ## In one sentence

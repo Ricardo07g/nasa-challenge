@@ -1,8 +1,10 @@
 ---
 titulo: Straw: why cover the soil
+resumo: Straw is the layer of plant residue that covers the soil after harvest.
 tema: terra
 slug: palhada
 rascunho: nao
+relacionados: milheto, milho-braquiaria, como-evitar-erosao
 ---
 
 ## In one sentence

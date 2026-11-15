@@ -19,7 +19,8 @@ export type CreditsState = {
 }
 
 /**
- * Controller da moldura comum a todas as telas (tarefa 0052): o cabeçalho (Comunidade, Avisos e PT | EN),
+ * Controller da moldura comum a todas as telas (tarefa 0052): o cabeçalho (Guia, Avisos e PT | EN; a Comunidade
+ * está "em breve" desde o pacote 3, tarefa 0061),
  * o rodapé (na Início sem o link "Como a conta é feita", que lá é a faixa do agrônomo), o modal global de
  * créditos e, com os dados de exemplo (VITE_API_MODE=mock), o aviso fixo de demonstração.
  */
@@ -46,7 +47,7 @@ export function useShellController(
       homeLabel: t.header.home,
       slogan: t.header.slogan,
       navLabel: t.header.navLabel,
-      community: { label: t.header.community, to: `/comunidade${keepFlowQuery(search)}` },
+      guide: { label: t.header.guide, to: '/guia' },
       alerts: {
         label: t.alerts.headerLabel,
         to: alerts.to,

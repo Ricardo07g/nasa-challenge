@@ -1,7 +1,6 @@
 import { BackButton } from '../design-system/components/BackButton'
 import { ListenSummary } from '../design-system/components/ListenSummary'
 import { Tabs } from '../design-system/components/Tabs'
-import { PrinterIcon } from '../design-system/icons'
 import type { AnswerTab, ChoosePlanState } from '../controllers/useChoosePlanController'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
@@ -10,7 +9,6 @@ import { CellModal, ScoreModal, WhyModal } from './ChooseModals'
 import { ChooseTab } from './ChooseTab'
 import { contextText } from './choiceTexts'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
-import { PlanReport } from './PlanReport'
 import { PlanTab } from './PlanTab'
 import styles from './ChoosePlanView.module.css'
 
@@ -20,7 +18,8 @@ const PANEL: Record<AnswerTab, string> = { choose: 'painel-escolher', plan: 'pai
 
 /**
  * Tela 5 do pacote 2 (`/resposta`, `/opcoes`, `/plano`): Voltar, título, a safra com a colheita prevista, "Ouvir
- * resumo", as abas "1. Escolher" e "2. Plano de 3 anos" e "Imprimir relatório" (nas duas abas).
+ * resumo" e as abas "1. Escolher" e "2. Plano de 3 anos", sozinhas à esquerda. O "Imprimir relatório" fica só na
+ * tela 6 (pacote 3).
  */
 export function ChoosePlanView({ t, lang, state }: ChoosePlanViewProps) {
   const c = t.choose
@@ -49,12 +48,6 @@ export function ChoosePlanView({ t, lang, state }: ChoosePlanViewProps) {
           selected={state.tab}
           onSelect={state.selectTab}
         />
-        {state.status === 'ready' && (
-          <button type="button" className={styles.print} onClick={state.print}>
-            <PrinterIcon size={17} />
-            {c.print}
-          </button>
-        )}
       </div>
       {state.status === 'loading' && <FlowLoading label={t.common.loading} />}
       {state.status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={state.retry} />}
@@ -71,7 +64,6 @@ export function ChoosePlanView({ t, lang, state }: ChoosePlanViewProps) {
           <WhyModal t={t} lang={lang} state={state} choose={choose} />
           <CellModal t={t} lang={lang} state={state} choose={choose} />
           <ScoreModal t={t} lang={lang} state={state} />
-          <PlanReport t={t} lang={lang} state={state} choose={choose} />
         </>
       )}
     </div>

@@ -1,8 +1,10 @@
 ---
 titulo: Sementes: o que olhar antes de comprar
+resumo: Semente boa e legal: confira de quem você compra e o que vem escrito na embalagem.
 tema: plantar
 slug: sementes
 rascunho: nao
+relacionados: prazo-de-plantio-zarc, plantar-logo-depois-da-colheita, plantio-direto
 ---
 
 ## Em uma frase

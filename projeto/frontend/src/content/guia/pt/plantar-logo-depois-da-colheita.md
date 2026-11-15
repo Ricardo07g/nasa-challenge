@@ -1,8 +1,10 @@
 ---
 titulo: Plantar logo depois da colheita
+resumo: Na safrinha, o tempo entre a colheita da soja e o plantio da próxima planta conta.
 tema: plantar
 slug: plantar-logo-depois-da-colheita
 rascunho: nao
+relacionados: prazo-de-plantio-zarc, quando-a-chuva-acaba, sementes
 ---
 
 ## Em uma frase

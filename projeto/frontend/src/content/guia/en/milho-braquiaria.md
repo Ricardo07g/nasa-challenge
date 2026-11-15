@@ -1,9 +1,11 @@
 ---
 titulo: Corn with brachiaria
+resumo: Corn and brachiaria sown together: the corn gives grain, the grass covers the soil.
 tema: culturas
 slug: milho-braquiaria
 rascunho: nao
 planta: milho_braquiaria
+relacionados: palhada, milho-safrinha, plantio-direto
 ---
 
 ## In one sentence

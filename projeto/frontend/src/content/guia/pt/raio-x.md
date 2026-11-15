@@ -1,8 +1,10 @@
 ---
 titulo: Como ler o raio-X da sua terra
+resumo: Um painel com o que os satélites da NASA e o mapa de solos sabem do seu ponto.
 tema: clima
 slug: raio-x
 rascunho: nao
+relacionados: veranico, conta-de-agua, deu-certo
 ---
 
 ## Em uma frase

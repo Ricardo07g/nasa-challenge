@@ -1,8 +1,10 @@
 ---
 titulo: Plantio direto: plantar sem revirar a terra
+resumo: A semente vai para a terra sem revirar o solo, por baixo da palha da cultura anterior.
 tema: plantar
 slug: plantio-direto
 rascunho: nao
+relacionados: palhada, como-evitar-erosao, rotacao-de-culturas
 ---
 
 ## Em uma frase

@@ -5,6 +5,7 @@ import { ApiError, NotConnectedError } from '../repositories/httpClient'
 import {
   addDays,
   cellMarkers,
+  COMMUNITY_OPEN,
   createCommunityService,
   dateBounds,
   eventReport,
@@ -20,6 +21,13 @@ import {
 
 const point = { lat: -18.9543, lon: -48.1993 }
 const TODAY = '2026-11-15'
+
+describe('comunidade "em breve" (pacote 3, tarefa 0061)', () => {
+  it('a interface não mostra a comunidade: /comunidade é só o "Em breve" e a tela 4 não oferece compartilhar', () => {
+    // O backend e as regras abaixo continuam prontos; para voltar, troque o COMMUNITY_OPEN.
+    expect(COMMUNITY_OPEN).toBe(false)
+  })
+})
 
 function relato(changes: Partial<RelatoComunidade>): RelatoComunidade {
   return {

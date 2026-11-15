@@ -1,8 +1,10 @@
 ---
 titulo: Nematoide e por que trocar de cultura
+resumo: Nematoide é um bichinho do solo, muito pequeno, que ataca as raízes das plantas.
 tema: terra
 slug: nematoide
 rascunho: nao
+relacionados: crotalaria, milheto, rotacao-de-culturas
 ---
 
 ## Em uma frase

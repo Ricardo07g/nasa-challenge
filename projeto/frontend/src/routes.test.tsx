@@ -147,15 +147,17 @@ describe('rotas', () => {
     expect(screen.queryByRole('heading', { name: 'Terra média' })).not.toBeInTheDocument()
   })
 
-  it('/planejamento abre os blocos que saíram do raio-X, com o Voltar para a resposta (tarefa 0058)', async () => {
+  it('/planejamento abre a tela final "Seu planejamento", com o "Voltar ao plano" para o Plano de 3 anos (pacote 3)', async () => {
     renderAt('/planejamento?lat=-18.9543&lon=-48.1993&colheita=meio&safras=2025:pousio')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Seu planejamento' })).toBeInTheDocument()
-    expect(await screen.findByRole('region', { name: 'Alertas da sua área' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Clima 2041–2060' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute(
+    expect(await screen.findByRole('region', { name: 'O que fazer agora' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Alertas da sua área' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Clima de 2041 a 2060' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Imprimir relatório' })).toHaveLength(2)
+    expect(screen.getByRole('link', { name: 'Voltar ao plano' })).toHaveAttribute(
       'href',
-      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&safras=2025:pousio',
+      '/plano?lat=-18.9543&lon=-48.1993&colheita=meio&safras=2025:pousio',
     )
     expect(document.title).toBe('Raiz Orbital – Seu planejamento')
   })
@@ -200,21 +202,47 @@ describe('rotas', () => {
     expect(await screen.findByRole('table', { name: 'Notas do seu plano ao lado de como é hoje' })).toBeInTheDocument()
   })
 
-  it('"Comunidade" no cabeçalho abre a tela 8 levando o caminho', async () => {
+  it('"Guia" no cabeçalho abre o Guia, e a pílula fica marcada lá (pacote 3)', async () => {
     renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
 
-    await userEvent.click(await screen.findByRole('link', { name: 'Comunidade' }))
+    const banner = screen.getByRole('banner')
+    expect(within(banner).getByRole('link', { name: 'Guia' })).not.toHaveAttribute('aria-current')
+    await userEvent.click(within(banner).getByRole('link', { name: 'Guia' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
-    // Modo de demonstração: os relatos de exemplo, cada um com o selo "Exemplo" (tarefa 0047).
-    const nearby = await screen.findByRole('region', { name: 'Perto de você' })
-    expect(within(nearby).getAllByText('Exemplo').length).toBeGreaterThan(0)
-    expect(screen.getByRole('region', { name: 'Conte o que aconteceu aí' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
+    expect(await screen.findByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Guia' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('/comunidade mostra só o "Em breve" com o "Abrir o Guia", sem relatos de vizinhos (pacote 3)', async () => {
+    renderAt('/comunidade')
+
+    const card = await screen.findByRole('region', { name: 'Comunidade da sua região' })
+    expect(within(card).getByText('Em breve')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Perto de você' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Conte o que aconteceu aí' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Relato de vizinho/)).not.toBeInTheDocument()
+    expect(document.title).toBe('Raiz Orbital – Comunidade da sua região')
+
+    await userEvent.click(within(card).getByRole('link', { name: 'Abrir o Guia' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
+  })
+
+  it('o link antigo da Comunidade com o caminho da lavoura continua abrindo, e o Voltar vai para a resposta', async () => {
+    renderAt('/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Comunidade da sua região' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute(
       'href',
       '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
     )
-    expect(document.title).toBe('Raiz Orbital – Na sua região')
+  })
+
+  it('em /avisos, o sino do cabeçalho fica marcado (pacote 3)', async () => {
+    renderAt('/avisos')
+
+    const banner = screen.getByRole('banner')
+    expect(within(banner).getByRole('link', { name: /^Avisos/ })).toHaveAttribute('aria-current', 'page')
+    expect(within(banner).getByRole('link', { name: 'Guia' })).not.toHaveAttribute('aria-current')
   })
 
   it('"Como a conta é feita" no rodapé das telas internas abre a tela 9 com as notas da lavoura', async () => {
@@ -272,14 +300,19 @@ describe('rotas', () => {
     expect(within(agro).getByRole('link', { name: 'Como a conta é feita' })).toHaveAttribute('href', '/como-funciona')
   })
 
-  it('o cabeçalho de toda tela tem só Comunidade, Avisos e o idioma, sem o botão grande "Ouvir"', async () => {
-    renderAt('/onde')
-
-    await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })
-    const banner = screen.getByRole('banner')
-    expect(within(banner).queryByRole('button', { name: /Ouvir/ })).not.toBeInTheDocument()
-    expect(within(banner).getByRole('link', { name: 'Comunidade' })).toBeInTheDocument()
-    expect(within(banner).getByRole('link', { name: /^Avisos/ })).toBeInTheDocument()
+  it('o cabeçalho de toda tela tem só Guia, Avisos e o idioma, sem Comunidade e sem o botão grande "Ouvir"', async () => {
+    for (const path of ['/', '/onde', '/guia', '/avisos', '/comunidade', '/satelite?lat=-18.9543&lon=-48.1993&colheita=tarde&exemplo=1']) {
+      renderAt(path)
+      const banner = await screen.findByRole('banner')
+      const nav = within(banner).getByRole('navigation', { name: 'Principal' })
+      const [guide, alerts, ...others] = within(nav).getAllByRole('link')
+      expect(guide).toHaveTextContent('Guia')
+      expect(alerts).toHaveTextContent(/^Avisos\d*$/)
+      expect(others).toEqual([])
+      expect(within(banner).queryByText(/Comunidade/)).not.toBeInTheDocument()
+      expect(within(banner).queryByRole('button', { name: /Ouvir/ })).not.toBeInTheDocument()
+      cleanup()
+    }
   })
 
   it('"Créditos e uso de IA" abre o mesmo modal global em qualquer tela, e Esc fecha e devolve o foco', async () => {
@@ -401,12 +434,26 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'How to read the alerts' })).toBeInTheDocument()
   })
 
-  it('/avisos com o ponto da lavoura mostra os grupos e o número no botão do cabeçalho', async () => {
+  it('/avisos com o ponto da lavoura (pacote 3): o resumo com o mesmo número do sino, sem o "Perto de você"', async () => {
     window.localStorage.clear()
     renderAt('/avisos?lat=-18.9543&lon=-48.1993&colheita=meio')
 
     expect(await screen.findByRole('region', { name: 'Agora' })).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Perto de você' })).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'Avisos: 2 avisos ativos' })).toBeInTheDocument()
+    expect(document.querySelector('[data-summary]')).toHaveTextContent('2 avisos agora')
+    expect(screen.queryByRole('region', { name: 'Perto de você' })).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Alertas oficiais' })).toHaveAttribute('id', 'alertas-oficiais')
+    expect(screen.getByRole('region', { name: 'Comunidade da sua região' })).toBeInTheDocument()
+  })
+
+  it('/avisos na lavoura de demonstração mostra os avisos dela, com o nome, em pt e en', async () => {
+    window.localStorage.clear()
+    renderAt('/avisos?lat=-18.9543&lon=-48.1993&colheita=tarde&exemplo=1')
+    expect(await screen.findByText(/Lavoura de demonstração, perto de Uberlândia \(MG\) · atualizado em/)).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/avisos?lat=-18.9543&lon=-48.1993&colheita=tarde&exemplo=1', 'en')
+    expect(await screen.findByText(/Demo field, near Uberlândia \(MG\) · updated on/)).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Now' })).toBeInTheDocument()
   })
 })

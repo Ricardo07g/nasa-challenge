@@ -6,7 +6,7 @@ import {
   InfoBanner,
   SourceCard,
 } from '../design-system/components/Card'
-import { NeighborDots, RainBarChart, RainReadingRow, RegionMap } from '../design-system/components/Charts'
+import { RainBarChart } from '../design-system/components/Charts'
 import { ChipGroup, DateField, RadioCard } from '../design-system/components/Choice'
 import {
   Disclaimer,
@@ -28,6 +28,7 @@ import {
   type CellState,
 } from '../design-system/components/Status'
 import {
+  BookIcon,
   CalendarIcon,
   CheckIcon,
   ClimateIcon,
@@ -283,7 +284,9 @@ export function DesignSystemView({ t, lang, apiMode, backend, cropOptions, cropO
             <Button variant="outline-blue" icon={<CrosshairIcon />}>
               {t.where.useLocation}
             </Button>
-            <Button variant="compact">{t.community.tellMine}</Button>
+            <Button variant="compact" icon={<BookIcon />}>
+              {t.comingSoon.guideButton}
+            </Button>
             <Button disabled>{t.where.confirm}</Button>
           </Card>
           <Card>
@@ -416,14 +419,6 @@ export function DesignSystemView({ t, lang, apiMode, backend, cropOptions, cropO
                 { label: t.when.months.may, value: 12, tone: 'soft' },
                 { label: t.when.months.jun, value: 5, tone: 'soft' },
               ]}
-            />
-          </Card>
-          <Card>
-            <NeighborDots liked={3} total={6} label={t.community.dotsLabel(3, 6)} />
-            <RainReadingRow place="6 km" reading={t.community.reading(32, 24)} />
-            <RegionMap
-              label={t.community.mapLabel}
-              legend={{ gauge: t.community.legendGauge, planted: t.community.legendPlanted, idle: t.community.legendIdle }}
             />
           </Card>
           <SourceCard

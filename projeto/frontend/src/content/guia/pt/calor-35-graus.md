@@ -1,8 +1,10 @@
 ---
 titulo: Calor na floração
+resumo: O app olha o calor na floração, com a temperatura máxima medida pelo NASA POWER.
 tema: clima
 slug: calor-35-graus
 rascunho: nao
+relacionados: deu-certo, prazo-de-plantio-zarc, clima-2041-2060
 ---
 
 ## Em uma frase

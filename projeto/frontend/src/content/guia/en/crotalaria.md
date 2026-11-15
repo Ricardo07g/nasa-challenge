@@ -1,9 +1,11 @@
 ---
 titulo: Crotalaria
+resumo: A cover legume that fixes nitrogen from the air and helps against some nematodes.
 tema: culturas
 slug: crotalaria
 rascunho: nao
 planta: crotalaria
+relacionados: adubo-verde, nematoide, rotacao-de-culturas
 ---
 
 ## In one sentence

@@ -1,8 +1,10 @@
 ---
 titulo: Fogo na palha
+resumo: O app avisa quando houve área queimada perto do seu ponto, com dados de satélite da NASA.
 tema: seguranca
 slug: fogo-na-palha
 rascunho: nao
+relacionados: alertas-defesa-civil, palhada, geada-na-safrinha
 ---
 
 ## Em uma frase

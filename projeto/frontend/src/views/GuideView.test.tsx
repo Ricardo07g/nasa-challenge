@@ -4,29 +4,52 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
-import type { GuideArticle } from '../models/guide'
-import { parseMarkdown } from '../services/markdownService'
-import { GuideArticleView, GuideView, type GuideViewProps } from './GuideView'
+import type { GuideSummary } from '../models/guide'
+import { GuideView, type GuideViewProps } from './GuideView'
 
-const groups: GuideViewProps['groups'] = [
-  {
-    theme: 'cultures',
-    articles: [{ slug: 'sorgo', title: 'Sorgo', theme: 'cultures', draft: true, plant: 'sorgo' }],
-  },
-  {
-    theme: 'climate',
-    articles: [{ slug: 'veranico', title: 'Veranico', theme: 'climate', draft: false, plant: null }],
-  },
-]
+const summary = (slug: string, title: string, theme: GuideSummary['theme'], extra: Partial<GuideSummary> = {}): GuideSummary => ({
+  slug,
+  title,
+  summary: `Resumo de ${title}.`,
+  theme,
+  draft: false,
+  plant: null,
+  minutes: 2,
+  related: [],
+  ...extra,
+})
 
-function setupIndex(overrides: Partial<GuideViewProps> = {}) {
+const sorgo = summary('sorgo', 'Sorgo', 'cultures', { draft: true, plant: 'sorgo', summary: 'Dá grão e aguenta mais seca que o milho.' })
+const veranico = summary('veranico', 'Veranico', 'climate', { minutes: 1 })
+const raioX = summary('raio-x', 'Como ler o raio-X da sua terra', 'climate')
+const erosao = summary('como-evitar-erosao', 'Como evitar erosão', 'soil', { draft: true })
+
+function setup(overrides: Partial<GuideViewProps> = {}) {
   const props: GuideViewProps = {
     t: pt,
-    groups,
-    query: '',
+    lang: 'pt',
+    backTo: '/',
+    onBack: vi.fn(),
+    filters: { theme: 'all', query: '' },
     onQuery: vi.fn(),
-    count: 2,
-    backTo: '/comunidade',
+    onClear: vi.fn(),
+    onTheme: vi.fn(),
+    themes: [
+      { key: 'all', count: 27 },
+      { key: 'cultures', count: 6 },
+      { key: 'planting', count: 4 },
+      { key: 'soil', count: 5 },
+      { key: 'climate', count: 9 },
+      { key: 'safety', count: 3 },
+    ],
+    searching: false,
+    featured: [raioX],
+    groups: [
+      { theme: 'cultures', articles: [sorgo] },
+      { theme: 'climate', articles: [veranico, raioX] },
+    ],
+    results: [],
+    linkQuery: '',
     listen: { supported: true, speaking: false, toggle: vi.fn() },
     ...overrides,
   }
@@ -38,118 +61,130 @@ function setupIndex(overrides: Partial<GuideViewProps> = {}) {
   return props
 }
 
-describe('GuideView (página inicial)', () => {
-  it('pacote 2: o "← Voltar" de verdade e o "Ouvir resumo" perto do título', async () => {
-    const props = setupIndex()
+describe('GuideView (início do Guia, tela 8)', () => {
+  it('o "← Voltar", o título, a linha de apoio e o "Ouvir resumo"', async () => {
+    const props = setup()
 
-    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('data-back-button')
+    const back = screen.getByRole('link', { name: /Voltar/ })
+    expect(back).toHaveAttribute('data-back-button')
+    expect(back).toHaveAttribute('href', '/')
+    await userEvent.click(back)
+    expect(props.onBack).toHaveBeenCalled()
+    expect(screen.getByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
+    expect(screen.getByText('Respostas curtas para as dúvidas da lavoura, com as fontes.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Ouvir resumo' }))
     expect(props.listen.toggle).toHaveBeenCalled()
   })
 
-  it('mostra os temas e os artigos com link, sem selo de rascunho (15/11/2026)', () => {
-    setupIndex()
-    expect(screen.getByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
-    const cultures = screen.getByRole('region', { name: 'Culturas' })
-    expect(within(cultures).getByRole('link', { name: /Sorgo/ })).toHaveAttribute('href', '/guia/sorgo')
-    expect(screen.queryByText(/Rascunho/)).toBeNull()
+  it('a frase do MVP saiu do Guia', () => {
+    setup()
+    expect(screen.queryByText(/Nesta primeira versão/)).not.toBeInTheDocument()
   })
 
-  it('diz a área do MVP logo abaixo do título, sem mexer nos artigos (tarefa 0051)', () => {
-    setupIndex()
-    expect(
-      screen.getByText(
-        'Nesta primeira versão (MVP), o app funciona na região de Uberlândia e Uberaba (MG). Vamos ampliar para todo o Triângulo Mineiro.',
-      ),
-    ).toBeInTheDocument()
-  })
+  it('a busca grande com a lupa, o texto de exemplo e o "×" só com busca', async () => {
+    const props = setup()
+    const box = screen.getByRole('searchbox', { name: 'Buscar no Guia' })
 
-  it('a área do MVP em inglês', () => {
-    setupIndex({ t: en })
-    expect(
-      screen.getByText(
-        'This first version (MVP) works in the Uberlândia and Uberaba region (Minas Gerais, Brazil). We will expand to the whole Triângulo Mineiro.',
-      ),
-    ).toBeInTheDocument()
-  })
-
-  it('a busca avisa o controller', async () => {
-    const props = setupIndex()
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar pelo título' }), 'v')
+    expect(box).toHaveAttribute('placeholder', 'Buscar: veranico, palhada…')
+    expect(screen.queryByRole('button', { name: 'Limpar busca' })).not.toBeInTheDocument()
+    await userEvent.type(box, 'v')
     expect(props.onQuery).toHaveBeenCalledWith('v')
   })
 
-  it('sem resultado, diz que não achou', () => {
-    setupIndex({ groups: [], count: 0, query: 'zzz' })
-    expect(screen.getByText('Nenhum artigo com esse título.')).toBeInTheDocument()
+  it('o "×" limpa a busca', async () => {
+    const props = setup({ searching: true, filters: { theme: 'all', query: 'chuva' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Limpar busca' }))
+    expect(props.onClear).toHaveBeenCalled()
   })
-})
 
-const body = parseMarkdown(
-  '## Em uma frase\n\nO sorgo aguenta seca. Veja [a rotação](/guia/rotacao) e [a Embrapa](https://www.embrapa.br).\n\n<script>x</script>',
-)
-const article: GuideArticle = { slug: 'sorgo', title: 'Sorgo', theme: 'cultures', draft: true, plant: 'sorgo', blocks: body }
+  it('as pílulas dos temas com a contagem e o aria-pressed na escolhida', async () => {
+    const props = setup()
+    const themes = screen.getByRole('group', { name: 'Temas' })
 
-describe('GuideArticleView', () => {
-  const listen = { supported: true, speaking: false, toggle: vi.fn() }
+    expect(within(themes).getByRole('button', { name: 'Todos 27' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(themes).getByRole('button', { name: 'Culturas 6' })).toHaveAttribute('aria-pressed', 'false')
+    expect(within(themes).getByRole('button', { name: 'Cuidar da terra 5' })).toBeInTheDocument()
+    await userEvent.click(within(themes).getByRole('button', { name: 'Clima, água e dados 9' }))
+    expect(props.onTheme).toHaveBeenCalledWith('climate')
+  })
 
-  function setup(a: GuideArticle | null, t = pt, lang: 'pt' | 'en' = 'pt') {
-    render(
-      <MemoryRouter>
-        <GuideArticleView t={t} lang={lang} article={a} listen={listen} />
-      </MemoryRouter>,
+  it('"Comece por aqui" com os destaques, cada um um link para o artigo', () => {
+    setup({ linkQuery: '?lat=-18.9&lon=-48.2' })
+    const start = screen.getByRole('region', { name: 'Comece por aqui' })
+    expect(within(start).getByRole('link', { name: /Como ler o raio-X da sua terra/ })).toHaveAttribute(
+      'href',
+      '/guia/raio-x?lat=-18.9&lon=-48.2',
     )
-  }
-
-  it('pacote 2: o "← Voltar ao Guia" de verdade e o "Ouvir resumo" do artigo', async () => {
-    setup(article)
-
-    expect(screen.getByRole('link', { name: 'Voltar ao Guia' })).toHaveAttribute('data-back-button')
-    await userEvent.click(screen.getByRole('button', { name: 'Ouvir resumo' }))
-    expect(listen.toggle).toHaveBeenCalled()
   })
 
-  it('título, foto real da planta com crédito e texto, sem aviso de rascunho mesmo marcado (15/11/2026)', () => {
-    setup(article)
-    expect(screen.getByRole('heading', { level: 1, name: 'Sorgo' })).toBeInTheDocument()
-    expect(screen.queryByText(/Rascunho|agrônoma/)).toBeNull()
-    expect(screen.getByRole('img', { name: /Lavoura de sorgo com os cachos de grão maduros/ })).toHaveAttribute('src', '/fotos/sorgo.jpg')
-    expect(screen.getByRole('link', { name: /Josue Marinho/ })).toHaveAttribute('href', expect.stringContaining('commons.wikimedia.org'))
-    expect(screen.getByText(/CC BY 3\.0/)).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Em uma frase' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Voltar ao Guia' })).toHaveAttribute('href', '/guia')
+  it('cada tema com o ícone, o nome e "{n} artigos"; cada cartão é um link com resumo e tempo de leitura', () => {
+    setup({ featured: [] })
+    const climate = screen.getByRole('region', { name: 'Clima, água e dados' })
+
+    expect(within(climate).getByText('2 artigos')).toBeInTheDocument()
+    const card = within(climate).getByRole('link', { name: 'Veranico' })
+    expect(card).toHaveAttribute('href', '/guia/veranico')
+    expect(within(climate).getByText('Resumo de Veranico.')).toBeInTheDocument()
+    expect(within(climate).getByText('1 min de leitura')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'Culturas' })).getByText('1 artigo')).toBeInTheDocument()
   })
 
-  it('links internos ficam no app e externos abrem em outra aba, sem HTML do texto', () => {
-    setup(article)
-    expect(screen.getByRole('link', { name: 'a rotação' })).toHaveAttribute('href', '/guia/rotacao')
-    const external = screen.getByRole('link', { name: 'a Embrapa' })
-    expect(external).toHaveAttribute('target', '_blank')
-    expect(external).toHaveAttribute('rel', expect.stringContaining('noopener'))
-    expect(screen.getByText('<script>x</script>')).toBeInTheDocument()
-    expect(document.querySelector('script')).toBeNull()
+  it('nada na tela fala de revisão, nem no artigo marcado como rascunho (regra de 15/11)', () => {
+    setup()
+    expect(screen.queryByText(/revisão|rascunho|agrônoma/i)).not.toBeInTheDocument()
   })
 
-  it('sem rascunho, sem aviso; em inglês, o aviso em inglês', () => {
-    setup({ ...article, draft: false, plant: null })
-    expect(screen.queryByText(/Rascunho/)).toBeNull()
-    expect(screen.queryByRole('img')).toBeNull()
+  it('o cartão de cultura tem a foto da tela 5, com o crédito', () => {
+    setup()
+    const cultures = screen.getByRole('region', { name: 'Culturas' })
+
+    expect(within(cultures).getByRole('img')).toHaveAttribute('src', '/fotos/sorgo.jpg')
+    expect(within(cultures).getByText(/Foto:/)).toBeInTheDocument()
+    expect(within(cultures).getByRole('link', { name: 'Sorgo' })).toHaveAttribute('href', '/guia/sorgo')
   })
 
-  it('em inglês, também sem aviso de rascunho', () => {
-    setup(article, en, 'en')
-    expect(screen.queryByText(/Draft|agronomist/)).toBeNull()
+  it('a busca esconde os temas e mostra quantos achou, o tema de cada cartão e a palavra marcada', () => {
+    setup({
+      searching: true,
+      filters: { theme: 'all', query: 'erosao' },
+      featured: [],
+      groups: [],
+      results: [
+        {
+          article: erosao,
+          title: [
+            { text: 'Como evitar ', mark: false },
+            { text: 'erosão', mark: true },
+          ],
+          summary: [{ text: 'Resumo.', mark: false }],
+        },
+      ],
+    })
+
+    expect(screen.queryByRole('group', { name: 'Temas' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('1 resultado para "erosao"')
+    expect(screen.getByRole('link', { name: 'Como evitar erosão' })).toHaveAttribute('href', '/guia/como-evitar-erosao')
+    expect(screen.getByText('erosão', { selector: 'mark' })).toBeInTheDocument()
+    expect(screen.getByText('Cuidar da terra')).toBeInTheDocument()
   })
 
-  it('em inglês, a foto vem com o texto alternativo e o crédito em inglês', () => {
-    setup({ ...article, draft: false }, en, 'en')
-    expect(screen.getByRole('img', { name: /Sorghum field with ripe grain heads/ })).toBeInTheDocument()
-    expect(screen.getByText(/Photo:/)).toBeInTheDocument()
+  it('sem resultado, diz que não achou e oferece 3 sugestões clicáveis', async () => {
+    const props = setup({ searching: true, filters: { theme: 'all', query: 'zzz' }, featured: [], groups: [], results: [] })
+
+    expect(screen.getByText('Nenhum artigo encontrado para "zzz"')).toBeInTheDocument()
+    expect(screen.getByText('Tente outra palavra ou veja um destes:')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^(veranico|palhada|sorgo)$/ })).toHaveLength(3)
+    await userEvent.click(screen.getByRole('button', { name: 'veranico' }))
+    expect(props.onQuery).toHaveBeenCalledWith('veranico')
   })
 
-  it('artigo inexistente mostra a mensagem e o caminho de volta', () => {
-    setup(null)
-    expect(screen.getByText('Não achamos esse artigo.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Voltar ao Guia' })).toHaveAttribute('href', '/guia')
+  it('em inglês', () => {
+    setup({ t: en, lang: 'en', searching: true, filters: { theme: 'all', query: 'zzz' }, featured: [], groups: [], results: [] })
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Guide' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search the Guide' })).toHaveAttribute('placeholder', 'Search: dry spell, straw…')
+    expect(screen.getByText('No article found for "zzz"')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'dry spell' })).toBeInTheDocument()
+    expect(screen.queryByText(/review|agronomist/i)).not.toBeInTheDocument()
   })
 })

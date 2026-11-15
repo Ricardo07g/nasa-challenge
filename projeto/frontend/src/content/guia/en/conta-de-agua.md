@@ -1,8 +1,10 @@
 ---
 titulo: The water math of your field
+resumo: The app treats the soil as a bucket: rain fills it and the plant empties it.
 tema: clima
 slug: conta-de-agua
 rascunho: nao
+relacionados: deu-certo, palhada, quando-a-chuva-acaba
 ---
 
 ## In one sentence

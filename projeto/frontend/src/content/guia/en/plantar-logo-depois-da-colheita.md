@@ -1,8 +1,10 @@
 ---
 titulo: Sowing right after harvest
+resumo: In the second crop, the time between soybean harvest and the next planting counts.
 tema: plantar
 slug: plantar-logo-depois-da-colheita
 rascunho: nao
+relacionados: prazo-de-plantio-zarc, quando-a-chuva-acaba, sementes
 ---
 
 ## In one sentence

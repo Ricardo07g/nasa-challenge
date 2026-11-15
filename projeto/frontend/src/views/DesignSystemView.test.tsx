@@ -32,6 +32,16 @@ describe('DesignSystemView (/design-system)', () => {
     expect(screen.getByText('Dá grão para vender')).toBeInTheDocument()
   })
 
+  it('não mostra nada da comunidade, que está "em breve" (pacote 3): nem relatos, nem vizinhos, nem "Contar"', () => {
+    setup()
+
+    expect(screen.queryByRole('button', { name: 'Contar como foi a minha' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/vizinhos gostaram/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: /cada vizinho plantou/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Pluviômetro|satélite 24 mm/)).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/vizinh|comunidade/i)
+  })
+
   it('mostra o aviso do modo de demonstração', () => {
     setup()
 

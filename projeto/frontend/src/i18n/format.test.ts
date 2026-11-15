@@ -65,4 +65,12 @@ describe('datas do cartão "Dia da colheita" (tela 2, tarefa 0057)', () => {
     expect(format.formatShortDayMonth('en', '2021-03-16')).toBe('Mar 16')
     expect(format.formatShortDayMonth('pt', '2027-02-01')).toBe('1 fev')
   })
+
+  it('mês curto e faixa de meses da linha do tempo ("abr–mai" / "Apr–May"; o mesmo mês, uma vez só)', () => {
+    expect(format.formatShortMonth('pt', '2027-02-15')).toBe('fev')
+    expect(format.formatShortMonth('en', '2027-02-15')).toBe('Feb')
+    expect(format.formatMonthRange('pt', '2027-04-22', '2027-05-22')).toBe('abr–mai')
+    expect(format.formatMonthRange('en', '2026-11-15', '2027-03-03')).toBe('Nov–Mar')
+    expect(format.formatMonthRange('pt', '2027-06-01', '2027-06-26')).toBe('jun')
+  })
 })
