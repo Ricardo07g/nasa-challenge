@@ -201,10 +201,12 @@ levar o `cmip6_delta`, o `ndvi_point` e o `smap_point`. Da pasta `projeto`:
 docker compose exec -T db pg_dump -U raiz -d raiz_orbital --data-only \
   -t grid_cell -t climate_season -t soil_point -t cmip6_delta -t ndvi_point -t smap_point -t data_run \
   > ../data/baixados/banco_local/dados_$(date +%Y%m%d).sql
-cd .. && zip -r dados_baixados.zip data/baixados -x "*.DS_Store"
+cd .. && zip -r data/dados_baixados.zip data/baixados -x "*.DS_Store" -x "*.part"
 ```
 
-O zip fica na raiz do repositório (também fora do git). Ele não leva `.env` nem token.
+O zip fica em `data/dados_baixados.zip`, dentro da pasta `data/`, que o git ignora (a raiz do repositório
+**não** é ignorada: um zip ali aparece no `git status`). Ele não leva `.env` nem token. Quem recebe
+descompacta na raiz do repositório (`unzip dados_baixados.zip` a partir dela), e os arquivos caem em `data/baixados/`.
 
 ## Como conferir
 
