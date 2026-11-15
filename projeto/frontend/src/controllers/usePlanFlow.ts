@@ -94,6 +94,12 @@ export function usePlanFlow(deps: PlanFlowDeps) {
     edited,
     /** O sinal do outono da tela: o da avaliação do plano (com o Plano A e o Plano B que a tela mostra). */
     signal: planSignal(evaluation.data, data ?? null, edited || choice !== choose?.suggestion.id),
+    /** "Tentar de novo": a recomendação e o plano. */
+    retry: () => {
+      recomendacao.retry()
+      base.retry()
+      final.retry()
+    },
   }
 }
 

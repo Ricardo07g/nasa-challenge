@@ -209,31 +209,15 @@ export function LegacyAnswerRedirect({ keepYear = false }: { keepYear?: boolean 
 }
 
 /**
- * Tela final "Seu planejamento" (`/planejamento`, tarefa 0058): por enquanto, os alertas, os 20 anos de chuva e o
- * clima 2041–2060 que saíram do raio-X. Será refeita no próximo pacote.
+ * Tela 6 "Seu planejamento" (`/planejamento`, pacote 3): a tela final do fluxo, com o mesmo plano da tela 5 e o
+ * único "Imprimir relatório" do app.
  */
 export function PlanningPage() {
   const { lang, messages: t } = useI18n()
   useDocumentTitle(t.planning.title)
   const state = usePlanningController()
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
-  return (
-    <PlanningView
-      t={t}
-      lang={lang}
-      backTo={state.backTo}
-      status={state.status}
-      onRetry={state.retry}
-      listen={state.listen}
-      alerts={state.alerts}
-      cards={state.cards}
-      rain={state.rain}
-      climate={state.climate}
-      answerTo={state.answerTo}
-      report={state.report}
-      onPrint={state.print}
-    />
-  )
+  return <PlanningView t={t} lang={lang} state={state} />
 }
 
 /**

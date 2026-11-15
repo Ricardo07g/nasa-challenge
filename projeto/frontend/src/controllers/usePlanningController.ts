@@ -1,27 +1,46 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { planningSummary } from '../i18n/planningTexts'
 import { useI18n } from '../i18n/useI18n'
-import { planningSummary } from '../i18n/xrayTexts'
+import type { CropId, Opcao } from '../models/recomendacao'
+import type { SeasonAnswer } from '../models/seasonAnswers'
 import type { ScreenStatus } from '../models/screenStatus'
-import { farmService, isOutsideArea, type FarmService } from '../services/farmService'
-import { keepFlowQuery, readFlowParams } from '../services/flowParams'
-import { planService, todayState, type PlanService } from '../services/planService'
-import { alertList, raioXService, type RaioXService } from '../services/raioXService'
-import { climateSummary, rainSummary } from '../services/satelliteService'
-import { seasonAnswersFromFlow } from '../services/seasonAnswersService'
+import { farmService, type FarmService } from '../services/farmService'
+import { keepFlowQuery } from '../services/flowParams'
+import { geocodingService, SEARCH_DELAY_MS, type GeocodingService } from '../services/geocodingService'
+import { nearestPlace } from '../services/locationService'
+import {
+  harvestDay,
+  lastSeasons,
+  pastFutureRows,
+  planGain,
+  planningAlerts,
+  planTimeline,
+  sowingDay,
+  type TimelineStep,
+} from '../services/planningService'
+import { planBState, planService, rainSourceName, type PlanService } from '../services/planService'
+import { raioXService, type RaioXService } from '../services/raioXService'
+import { answeredCount, flowWithSeasonAnswers, seasonAnswersFromFlow, seasonRows, withSeasonAnswer } from '../services/seasonAnswersService'
+import { CURRENT_SEASON, LAST_SEASONS } from '../services/seasonService'
 import { speechService, type SpeechService } from '../services/speechService'
 import { useAsync } from './useAsync'
+import { useDebouncedRequest } from './useDebouncedRequest'
+import { useFlowTalhao } from './useFlowRain'
 import { useListenSummary } from './useListenSummary'
-import { usePlanFlow, type Evaluation } from './usePlanFlow'
+import { usePlanFlow } from './usePlanFlow'
+import { useReplaceFlow } from './useReplaceFlow'
 
 export type PlanningDeps = {
   farm: FarmService
   plan: PlanService
   raioX: RaioXService
+  /** O nome do lugar da tela 1 ("Perto de …"), pela busca reversa do Photon (uso justo: um pedido, 400 ms). */
+  geocoding: Pick<GeocodingService, 'reverse'>
   speech?: SpeechService
   /** "Imprimir relatório": a impressão do navegador. */
   print: () => void
-  /** O dia de hoje (ISO), para o "Gerado em" do relatório. */
+  /** O dia de hoje (ISO): o "Agora" da linha do tempo e o "Gerado em" do relatório. */
   today: () => string
 }
 
@@ -29,105 +48,124 @@ const defaultDeps: PlanningDeps = {
   farm: farmService,
   plan: planService,
   raioX: raioXService,
+  geocoding: geocodingService,
   print: () => window.print(),
   today: () => new Date().toISOString().slice(0, 10),
 }
 
 /**
- * Tela final "Seu planejamento" (`/planejamento`, pacote 2, tarefa 0058). Por enquanto, guarda os blocos que
- * saíram do raio-X, como eram: "Alertas da sua área", "20 anos de chuva" e "Clima 2041–2060" (do `/raio-x`);
- * sem o raio-X, os cartões de antes (anos de chuva e clima, do talhão e da recomendação). Será refeita no
- * próximo pacote. O Voltar leva para a resposta, com o fluxo.
+ * Tela 6 "Seu planejamento" (`/planejamento`, pacote 3): a tela final do fluxo. O plano é **o mesmo da tela 5**
+ * (`usePlanFlow`, com a escolha e os anos da URL); a linha do tempo, os alertas, o passado e o futuro e o relatório
+ * saem das regras do `planningService` com o `/recomendacao`, o `/api/plano` e o `/raio-x`. Sem dado, o bloco não
+ * aparece. É a única tela com "Imprimir relatório".
  */
 export function usePlanningController(deps: PlanningDeps = defaultDeps) {
   const { lang, messages: t } = useI18n()
+  const flow = usePlanFlow(deps)
+  const { params, data, choose, cards, evaluation } = flow
+  const talhao = useFlowTalhao(deps.farm)
   const [search] = useSearchParams()
-  const params = useMemo(() => readFlowParams(search), [search])
-
-  const talhao = useAsync(
-    () =>
-      params
-        ? deps.farm.talhao({ lat: params.lat, lon: params.lon, exemplo: params.exemplo }, lang)
-        : Promise.reject(new Error('sem ponto na URL')),
-    [params?.lat, params?.lon, params?.exemplo, lang, deps.farm],
-  )
-  // Só para os anos de chuva do cartão de antes (sem o raio-X). Quase sempre já está no cache.
-  const recomendacao = useAsync(
-    () =>
-      params?.colheita
-        ? deps.farm.recomendacao(
-            { lat: params.lat, lon: params.lon, colheita: params.colheita, solo: params.solo, exemplo: params.exemplo },
-            lang,
-          )
-        : Promise.reject(new Error('sem colheita na URL')),
-    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, lang, deps.farm],
-  )
-  const raio = useAsync(
-    () =>
-      params?.colheita
-        ? deps.raioX.get(
-            { lat: params.lat, lon: params.lon, colheita: params.colheita, ...(params.solo ? { solo: params.solo } : {}) },
-            lang,
-          )
-        : Promise.reject(new Error('sem colheita na URL')),
-    [params?.lat, params?.lon, params?.colheita, params?.solo, lang, deps.raioX],
-  )
-
   const query = keepFlowQuery(search.toString())
-  const outside =
-    (talhao.status === 'ready' && talhao.data?.dentro_da_area === false) ||
-    (talhao.status === 'error' && isOutsideArea(talhao.error))
-  const xrayPending = raio.status === 'loading' && raio.data === undefined
-  const status: ScreenStatus = outside ? 'outside' : talhao.status === 'ready' && xrayPending ? 'loading' : talhao.status
-  const raioX = raio.status === 'error' ? undefined : raio.data
-  const alerts = alertList(raioX)
-  const cards = raioX?.cartoes ?? null
-  const listen = useListenSummary(planningSummary(t, alerts, cards), lang, deps.speech ?? speechService)
+  const replaceFlow = useReplaceFlow()
+  const [seasonsOpen, setSeasonsOpen] = useState(false)
 
-  // Relatório para imprimir (veio da tela 5 no pacote 3): o mesmo plano da tela 5 (`usePlanFlow`).
-  const flowPlan = usePlanFlow(deps)
-  const answers = useMemo(() => seasonAnswersFromFlow(params), [params])
-  const today = todayState(answers)
-  const todayList = today.kind === 'crops' ? today.crops : null
-  const place = flowPlan.place
-  const todayEvaluation = useAsync(
-    () => (place && todayList ? deps.plan.evaluate({ ...place, anos: todayList }, lang) : Promise.resolve(null)),
-    [place?.lat, place?.lon, place?.colheita, place?.solo, todayList?.join(','), lang, deps.plan],
+  const band = data?.entrada.colheita ?? params?.colheita ?? null
+  const raio = useAsync(
+    () => (params && band ? deps.raioX.get({ lat: params.lat, lon: params.lon, colheita: band, ...(params.solo ? { solo: params.solo } : {}) }, lang) : Promise.resolve(null)),
+    [params?.lat, params?.lon, band, params?.solo, lang, deps.raioX],
   )
-  const data = flowPlan.data
-  const report = flowPlan.choose
-    ? {
-        choose: flowPlan.choose,
-        harvest: { date: params?.data ?? null, band: data?.entrada.colheita ?? params?.colheita ?? null },
-        plan: { cards: flowPlan.cards, evaluation: flowPlan.evaluation, signal: flowPlan.signal },
-        today: { state: today, evaluation: { data: todayEvaluation.data ?? null, status: todayEvaluation.status } as Evaluation },
-        pousioText: data?.pousio.texto ?? '',
-        raio: raioX ?? null,
-        answers,
-        idea: params?.pensa ?? null,
-        demo: params?.exemplo ?? false,
-        point: params ? { lat: params.lat, lon: params.lon } : null,
-        generatedOn: deps.today(),
-      }
-    : null
+  const raioX = raio.status === 'error' ? null : (raio.data ?? null)
+
+  // O lugar: a lavoura de demonstração tem nome próprio; fora dela, o mesmo "Perto de …" da tela 1.
+  const demo = params?.exemplo ?? false
+  const point = useMemo(() => (params ? { lat: params.lat, lon: params.lon } : null), [params])
+  const reverse = useDebouncedRequest(
+    point && !demo ? `${lang}|${point.lat.toFixed(5)},${point.lon.toFixed(5)}` : null,
+    (signal) => deps.geocoding.reverse(point!, lang, { signal }),
+    SEARCH_DELAY_MS,
+  )
+  const placeName = demo || !point ? null : reverse.status === 'ready' && reverse.data ? reverse.data : nearestPlace(point)
+
+  const optionOf = useCallback((crop: CropId): Opcao | null => choose?.ranked.find((option) => option.id === crop) ?? null, [choose])
+  const generatedOn = deps.today()
+  const harvest = band ? harvestDay(params?.data, band) : null
+  const plan = evaluation.data
+  const timeline: TimelineStep[] | null =
+    cards && harvest && data
+      ? planTimeline({
+          today: generatedOn,
+          harvest,
+          sowing: sowingDay(params?.data, data.entrada.semeadura),
+          season: CURRENT_SEASON,
+          firstCrop: cards[0].crop,
+          first: optionOf(cards[0].crop),
+          secondCrop: cards[1]?.crop ?? null,
+          signal: flow.signal,
+          planAB: plan?.plano_ab ?? null,
+        })
+      : null
+  const gain = plan && choose ? planGain(plan, (crop) => optionOf(crop)?.renda.da_grao ?? null, CURRENT_SEASON) : null
+  const planB = plan?.plano_ab ? planBState(plan.plano_ab) : null
+
+  // Últimas safras do relatório: a resposta do produtor ou o que o satélite viu; faltou, "Preencher agora".
+  const answers = useMemo(() => seasonAnswersFromFlow(params), [params])
+  const rows = seasonRows(talhao.data?.historico ?? null)
+  const seasonList = lastSeasons(answers, rows)
+  const answerSeason = useCallback(
+    (season: number, answer: SeasonAnswer | null) => params && replaceFlow(flowWithSeasonAnswers(params, withSeasonAnswer(answers, season, answer))),
+    [params, answers, replaceFlow],
+  )
+
+  const plantStep = timeline?.find((step): step is Extract<TimelineStep, { kind: 'plant' }> => step.kind === 'plant') ?? null
+  const listen = useListenSummary(
+    cards && harvest ? planningSummary(t, lang, { crops: cards.map((card) => card.crop), harvest, plant: plantStep, planB: planB?.kind === 'b' ? planB.crop : null }) : '',
+    lang,
+    deps.speech ?? speechService,
+  )
+
+  // Com a recomendação na mão, a tela espera o plano (e o 1º raio-X, para não pular); depois, recarregar não apaga nada.
+  let status: ScreenStatus = data ? (!choose ? 'error' : cards ? 'ready' : evaluation.status === 'error' ? 'error' : 'loading') : flow.flowStatus
+  if (status === 'ready' && raio.status === 'loading' && raio.data === undefined) status = 'loading'
 
   return {
-    redirectTo: !params ? '/onde' : !params.colheita ? `/quando${query}` : null,
-    backTo: `/resposta${query}`,
-    answerTo: `/resposta${query}`,
+    redirectTo: flow.redirectTo,
     status,
-    retry: talhao.retry,
+    retry: flow.retry,
+    backTo: `/plano${query}`,
+    changeTo: `/plano${query}`,
+    avisosTo: `/avisos${query}`,
+    /** O bloco "Alertas oficiais" da tela de Avisos (o id `alertas-oficiais` é de lá). */
+    officialTo: `/avisos${query}#alertas-oficiais`,
+    guideTo: '/guia',
+    newPlanTo: '/onde',
     listen,
-    alerts,
-    cards,
-    rain: rainSummary(talhao.data?.dados ?? [], recomendacao.data?.opcoes ?? null),
-    climate: climateSummary(talhao.data?.dados ?? []),
-    report,
+    place: { demo, name: placeName, point },
+    /** A data da tela 2 (`data`), a época e o dia da colheita usado nas contas (a data ou o dia da época no motor). */
+    harvest: { date: params?.data ?? null, band, day: harvest },
+    plan: { cards, evaluation: plan, signal: flow.signal },
+    choose,
+    optionOf,
+    timeline,
+    alerts: planningAlerts(flow.signal, raioX),
+    pastFuture: plan ? pastFutureRows(plan, CURRENT_SEASON) : null,
+    rainSource: rainSourceName(plan?.chuva?.fonte ?? 'gpm_imerg'),
+    climate: raioX?.cartoes.clima_futuro ?? data?.clima_futuro ?? null,
+    raio: raioX,
+    seasons: {
+      list: seasonList,
+      idea: params?.pensa ?? null,
+      /** O produtor não respondeu as 3 últimas safras: o aviso com o "Preencher agora" (regra geral 6). */
+      missing: answeredCount(answers) < LAST_SEASONS.length,
+      open: seasonsOpen,
+      onOpen: () => setSeasonsOpen(true),
+      onClose: () => setSeasonsOpen(false),
+      form: { seasons: rows, answers, onAnswer: answerSeason },
+    },
+    gain,
+    pousioText: data?.pousio.texto ?? '',
     print: deps.print,
+    generatedOn,
   }
 }
 
 export type PlanningState = ReturnType<typeof usePlanningController>
-
-/** O que o relatório para imprimir usa (null enquanto o plano não chegou). */
-export type PlanReportData = NonNullable<PlanningState['report']>

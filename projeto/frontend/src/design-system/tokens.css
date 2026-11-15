@@ -295,6 +295,20 @@
   --color-plan-alert-bg: #f3f7fb; /* alerta "Você mudou…" do plano */
   --color-plan-alert-border: #c7d8e8;
   --year-bad-stripes: repeating-linear-gradient(45deg, var(--color-risk) 0 3px, #f6dcc8 3px 6px); /* ano que falhou */
+
+  /*
+   * Tela 6 "Seu planejamento" (pacote 3, tarefa 0060): a linha do tempo, as barras do "Deu certo", o cartão das
+   * ações e o bloco verde-escuro da comunidade "em breve" com o Guia. O resto (verde, azul, laranja, texto,
+   * bordas) reaproveita os tokens de cima.
+   */
+  --color-timeline-line: #dbe5df; /* linha vertical que passa pelo centro dos marcadores */
+  --shadow-timeline-now: 0 0 0 5px rgb(31 107 71 / 15%); /* marcador cheio do "Agora" */
+  --color-bar-track: #e3ebe6; /* trilho das barras "X de 20" */
+  --color-bar-future: #2563a6; /* barra azul de 2041–2060 */
+  --plan-actions-bg: linear-gradient(160deg, #f2f8f4, #fff); /* cartão "Imprimir relatório" e "Mudar o plano" */
+  --community-bg: linear-gradient(140deg, #123b2a, #1f6b47); /* bloco "Comunidade (em breve) e Guia" */
+  --color-community-text: #cfe5da; /* texto sobre o verde-escuro (contraste 4,9:1 no ponto mais claro do degradê) */
+  --color-community-pill: rgb(255 255 255 / 12%);
 }
 
 /* Celular e tablet (até 900 px, protótipos da remodelagem v4): margem menor e cabeçalho mais baixo */

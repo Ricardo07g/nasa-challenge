@@ -147,15 +147,17 @@ describe('rotas', () => {
     expect(screen.queryByRole('heading', { name: 'Terra média' })).not.toBeInTheDocument()
   })
 
-  it('/planejamento abre os blocos que saíram do raio-X, com o Voltar para a resposta (tarefa 0058)', async () => {
+  it('/planejamento abre a tela final "Seu planejamento", com o "Voltar ao plano" para o Plano de 3 anos (pacote 3)', async () => {
     renderAt('/planejamento?lat=-18.9543&lon=-48.1993&colheita=meio&safras=2025:pousio')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Seu planejamento' })).toBeInTheDocument()
-    expect(await screen.findByRole('region', { name: 'Alertas da sua área' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Clima 2041–2060' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute(
+    expect(await screen.findByRole('region', { name: 'O que fazer agora' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Alertas da sua área' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Clima de 2041 a 2060' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Imprimir relatório' })).toHaveLength(2)
+    expect(screen.getByRole('link', { name: 'Voltar ao plano' })).toHaveAttribute(
       'href',
-      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&safras=2025:pousio',
+      '/plano?lat=-18.9543&lon=-48.1993&colheita=meio&safras=2025:pousio',
     )
     expect(document.title).toBe('Raiz Orbital – Seu planejamento')
   })

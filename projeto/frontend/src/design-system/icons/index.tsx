@@ -58,6 +58,8 @@ import {
   Wheat,
   X,
 } from 'lucide-react'
+// Tela 6 "Seu planejamento" (pacote 3): a próxima safra na linha do tempo e o botão "Abrir o Guia".
+import { BookText, RefreshCw } from 'lucide-react'
 
 type IconProps = { size?: number }
 
@@ -332,4 +334,14 @@ export function ChartIcon({ size = 18 }: IconProps) {
 /** Alerta do plano ("Você mudou…"): informação, não perigo. */
 export function InfoIcon({ size = 18 }: IconProps) {
   return <Info size={size} {...decorative} />
+}
+
+/** Linha do tempo da tela 6: a próxima soja (o ciclo recomeça). */
+export function CycleIcon({ size = 16 }: IconProps) {
+  return <RefreshCw size={size} {...decorative} />
+}
+
+/** Guia (livro com texto): o "Abrir o Guia" da tela 6. */
+export function BookIcon({ size = 17 }: IconProps) {
+  return <BookText size={size} {...decorative} />
 }

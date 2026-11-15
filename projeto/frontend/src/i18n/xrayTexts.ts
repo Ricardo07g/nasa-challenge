@@ -7,8 +7,7 @@ import type { GuideSlug } from '../content/guia/slugs'
 import { formatDayMonth, formatDecimal, formatFullDate, formatMonth, formatNumber } from './format'
 import type { Lang } from './language'
 import type { Messages } from './messages.pt'
-import type { RaioX } from '../models/raioX'
-import { futureAgreement, regionSide, soilParts, type AreaAlert, type XRayBlock } from '../services/raioXService'
+import { regionSide, soilParts, type XRayBlock } from '../services/raioXService'
 import type { SoilSummary } from '../services/satelliteService'
 
 export type XRayBar = { kind: 'soil'; clay: number; silt: number; sand: number } | { kind: 'moisture'; pct: number }
@@ -270,37 +269,6 @@ export function xraySummary(t: Messages, lang: Lang, blocks: readonly XRayBlock[
           ? s.dryspell(spell.data.dias)
           : '',
     s.ask,
-  ]
-    .filter(Boolean)
-    .join(' ')
-}
-
-/**
- * "Ouvir resumo" de `/planejamento`: os alertas da área, em quantos anos a melhor opção deu certo e o que os
- * modelos dizem de 2041 a 2060. Frase sem o dado não entra.
- */
-export function planningSummary(t: Messages, alerts: readonly AreaAlert[], cards: RaioX['cartoes'] | null): string {
-  const p = t.planning.summary
-  const c = t.xray.cards
-  const names = alerts.map((alert) => p.names[alert.kind])
-  const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} ${p.and} ${names.at(-1)}` : names.join('')
-  const rain = cards?.chuva_20_anos
-  const future = cards?.clima_futuro
-  let agreement = ''
-  if (future) {
-    const { rain: direction, heat, models } = futureAgreement(future)
-    const rainText =
-      direction.direction === 'less'
-        ? c.agreeLess(direction.count, models)
-        : direction.direction === 'more'
-          ? c.agreeMore(direction.count, models)
-          : c.agreeSplit(models)
-    agreement = `${rainText}; ${c.agreeHeat(heat, models)}.`
-  }
-  return [
-    names.length > 0 ? p.alerts(list, names.length) : p.noAlerts,
-    rain ? p.rain(cropName(t, rain.cultura, rain.nome), rain.anos_bons, rain.total_anos) : '',
-    agreement ? p.future(agreement) : '',
   ]
     .filter(Boolean)
     .join(' ')
