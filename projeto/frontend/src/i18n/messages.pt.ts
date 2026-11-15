@@ -511,6 +511,8 @@ export const pt = {
       legendCurrent: 'safra atual (ainda sem leitura)',
       chartSource: 'MODIS NDVI · NASA · 250 m',
       confirmSub: 'O satélite vê que houve plantio, mas não qual planta. Sua resposta vale no lugar dele.',
+      /** Lavoura de demonstração (15/11/2026): as respostas vêm preenchidas com um exemplo. */
+      demoNote: 'Lavoura de demonstração: as últimas safras já vêm preenchidas com um exemplo. Troque à vontade.',
       confirmSubNoReading: 'Sem leitura do satélite neste ponto, o que vale é a sua resposta.',
       note: 'Usamos essas respostas para comparar o seu plano com “como é hoje”.',
       rotation: 'Saiba mais: rotação de culturas',

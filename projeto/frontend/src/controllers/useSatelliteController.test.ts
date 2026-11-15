@@ -1,4 +1,4 @@
-import { act, renderHook, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, renderHook, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { RaioX } from '../models/raioX'
 import type { Recomendacao } from '../models/recomendacao'
@@ -13,6 +13,8 @@ import { providers } from '../test/providers'
 import { useSatelliteController } from './useSatelliteController'
 
 const flow = 'lat=-18.9543&lon=-48.1993&colheita=meio'
+/** O exemplo da lavoura de demonstração: cultura depois da soja nas 3 safras, como o satélite viu ("plantou"). */
+const DEMO_SAFRAS = '2024:milho_safrinha,2025:milho_braquiaria,2026:sorgo'
 
 /** O que o satélite viu nas 3 últimas safras: 2024 e 2026 plantou, 2025 parada. */
 const talhao: Partial<Talhao> = {
@@ -59,6 +61,24 @@ async function ready(url = `/satelite?${flow}`, d = deps()) {
 const location = () => screen.getByTestId('location').textContent
 
 describe('useSatelliteController (tela 4, raio-X e últimas safras)', () => {
+  it('lavoura de demonstração sem respostas: as 3 últimas safras já vêm preenchidas com o exemplo, sem a escolha atual (15/11/2026)', async () => {
+    const { result } = await ready(`/satelite?${flow}&exemplo=1`)
+
+    await waitFor(() => expect(location()).toBe(`/satelite?${flow}&exemplo=1&safras=${DEMO_SAFRAS}`))
+    expect(result.current.seasons.answered).toBe(3)
+    expect(result.current.seasons.demo).toBe(true)
+    expect(location()).not.toContain('pensa=')
+  })
+
+  it('não preenche quando a demonstração já tem respostas na URL, nem fora da demonstração', async () => {
+    await ready(`/satelite?${flow}&exemplo=1&safras=2025:pousio`)
+    expect(location()).toBe(`/satelite?${flow}&exemplo=1&safras=2025:pousio`)
+    cleanup()
+    const own = await ready(`/satelite?${flow}`)
+    expect(location()).toBe(`/satelite?${flow}`)
+    expect(own.result.current.seasons.demo).toBe(false)
+  })
+
   it('pede o talhão sem as respostas (o que o satélite viu) e o raio-X com a colheita e a terra da URL', async () => {
     const { d } = await ready(`/satelite?${flow}&solo=arenoso&safras=2025:pousio`)
 

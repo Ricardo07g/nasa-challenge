@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useI18n } from '../i18n/useI18n'
 import { xraySummary } from '../i18n/xrayTexts'
@@ -25,6 +25,7 @@ import { soilSummary } from '../services/satelliteService'
 import {
   answeredCount,
   confirmadasFromAnswers,
+  DEMO_SEASON_ANSWERS,
   flowWithSeasonAnswers,
   seasonAnswersFromFlow,
   seasonRows,
@@ -77,6 +78,8 @@ export type SeasonsModel = {
   /** Quantas das 3 safras estão respondidas (nada é obrigatório). */
   answered: number
   seen: SoySeen
+  /** Lavoura de demonstração: as respostas vêm preenchidas com o exemplo (a tela avisa e deixa trocar). */
+  demo: boolean
 }
 
 const defaultDeps: SatelliteDeps = { farm: farmService, raioX: raioXService }
@@ -149,6 +152,14 @@ export function useSatelliteController(deps: SatelliteDeps = defaultDeps) {
   const blocks = useMemo(() => xRayBlocks(raioX), [raioX])
   const soil = soilSummary(talhao.data?.solo ?? null, params?.solo)
 
+  // Lavoura de demonstração sem respostas: as 3 últimas safras já vêm com o exemplo (uma vez, sem rolar a tela).
+  const demoFilled = useRef(false)
+  useEffect(() => {
+    if (!params?.exemplo || demoFilled.current) return
+    demoFilled.current = true
+    if (answeredCount(seasonAnswersFromFlow(params)) === 0) replaceFlow(flowWithSeasonAnswers(params, DEMO_SEASON_ANSWERS))
+  }, [params, replaceFlow])
+
   const rows = useMemo(() => seasonRows(historico), [historico])
   const seasons: SeasonsModel = {
     rows,
@@ -161,6 +172,7 @@ export function useSatelliteController(deps: SatelliteDeps = defaultDeps) {
     },
     answered: answeredCount(answers),
     seen: soySeen(rows),
+    demo: Boolean(params?.exemplo),
   }
   const chart = useMemo(
     () =>

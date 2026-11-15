@@ -116,6 +116,14 @@ export function seasonAnswersFromLegacy(confirmadas: string | null | undefined, 
   return result
 }
 
+/**
+ * Lavoura de demonstração (15/11/2026, pedido do usuário): as 3 últimas safras já vêm respondidas com este exemplo,
+ * para a demonstração não parar no formulário. Coerente com o que o satélite viu no ponto (cultura depois da soja nas 3
+ * safras, "plantou"); a tela avisa que são respostas de exemplo. Nunca vale para a lavoura do produtor nem para a escolha
+ * atual (`pensa`), que continua só do produtor.
+ */
+export const DEMO_SEASON_ANSWERS: SeasonAnswers = { 2024: 'milho_safrinha', 2025: 'milho_braquiaria', 2026: 'sorgo' }
+
 /** As respostas do fluxo: o `safras` da URL ou, sem ele, o `confirmadas` e o `hoje` dos links velhos. */
 export function seasonAnswersFromFlow(params: FlowParams | null | undefined): SeasonAnswers {
   if (!params) return {}
