@@ -136,7 +136,10 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
   const outside =
     (talhao.status === 'ready' && talhao.data?.dentro_da_area === false) ||
     (talhao.status === 'error' && isOutsideArea(talhao.error))
-  const status: ScreenStatus = outside ? 'outside' : talhao.status
+  // O raio-X demora mais que o talhão (roda o motor). Na primeira carga a tela espera por ele, para o
+  // painel não entrar por cima do que já apareceu. Se ele falhar, a tela abre sem o painel.
+  const xrayPending = raio.status === 'loading' && raio.data === undefined
+  const status: ScreenStatus = outside ? 'outside' : talhao.status === 'ready' && xrayPending ? 'loading' : talhao.status
   const redirectTo = !params ? '/onde' : !params.colheita ? `/quando${query}` : null
   const historico = talhao.data?.historico ?? null
   const anosConfirmaveis = talhao.data?.anos_confirmaveis

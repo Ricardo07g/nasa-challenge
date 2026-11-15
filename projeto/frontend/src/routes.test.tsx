@@ -96,7 +96,9 @@ describe('rotas', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Pronto. O satélite já viu o resto.' }),
     ).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'Terra média' })).toBeInTheDocument()
+    // A tela espera o raio-X: abre já com o painel, sem os cartões de antes passarem na frente.
+    expect(await screen.findByRole('heading', { name: 'Raio-X da sua terra' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Terra média' })).not.toBeInTheDocument()
   })
 
   it('a missão sem a colheita volta para a pergunta 2', async () => {

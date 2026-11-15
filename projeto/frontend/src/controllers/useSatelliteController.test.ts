@@ -256,6 +256,30 @@ describe('useSatelliteController (tela 4)', () => {
   })
 
   describe('raio-X da sua terra (tarefa 0043)', () => {
+    it('a tela só fica pronta quando o raio-X chega (o painel não entra por cima do que já apareceu)', async () => {
+      let resolveRaio: (raio: RaioX) => void = () => {}
+      const d = deps(undefined, undefined, () => new Promise<RaioX>((resolve) => (resolveRaio = resolve)))
+      const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+
+      await waitFor(() => expect(d.farm.talhao).toHaveBeenCalled())
+      await act(async () => {})
+      expect(result.current.status).toBe('loading')
+      expect(result.current.xray).toBeNull()
+
+      await act(async () => resolveRaio(RAIO))
+      await waitFor(() => expect(result.current.status).toBe('ready'))
+      expect(result.current.xray).not.toBeNull()
+    })
+
+    it('se o raio-X falhar, a tela abre sem o painel', async () => {
+      const d = deps(undefined, undefined, () => Promise.reject(new Error('raio-X fora do ar')))
+      const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+
+      await waitFor(() => expect(result.current.status).toBe('ready'))
+      expect(result.current.xray).toBeNull()
+      expect(result.current.history).not.toBeNull()
+    })
+
     it('pede o raio-X com a colheita e a terra da URL, sem as safras confirmadas', async () => {
       const d = deps()
       renderHook(() => useSatelliteController(d), {
