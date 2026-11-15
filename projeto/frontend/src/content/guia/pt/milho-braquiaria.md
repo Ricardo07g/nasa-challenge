@@ -20,6 +20,7 @@ Esse consórcio ficou conhecido como **Sistema Santa Fé**. No plantio direto, a
 
 - **Serve para:** grão e cobertura.
 - **Como funciona:** milho e braquiária semeados juntos.
+- **Qual braquiária:** na safrinha, a mais indicada é a ruziziensis, que cobre a terra mais rápido e é fácil de dessecar; a brizantha é para formar pasto.
 - **Quando plantar:** a data limite vem do ZARC do seu município. O consórcio de milho safrinha com braquiária foi incluído no ZARC.
 
 ## Passo a passo
@@ -38,3 +39,4 @@ O app compara o milho com braquiária com as outras opções e usa a palhada na 
 - [Borghi e Crusciol (2007), Pesquisa Agropecuária Brasileira: milho consorciado com Brachiaria brizantha no plantio direto](https://apct.sede.embrapa.br/pab/article/download/7551/4470/23900)
 - [Ceccon, Borghi e Crusciol, livro Consórcio Milho-Braquiária (Embrapa), capítulo 2](https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/982617/1/Cap2.pdf)
 - [Pacheco et al. (2011), Pesquisa Agropecuária Brasileira: palha e nutrientes de plantas de cobertura na safrinha](https://www.alice.cnptia.embrapa.br/handle/doc/882280)
+- [Ceccon (2014), Embrapa Agropecuária Oeste, Documentos 122: consórcio milho-braquiária e a escolha da braquiária](https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1005394/1/p.6670.pdf)

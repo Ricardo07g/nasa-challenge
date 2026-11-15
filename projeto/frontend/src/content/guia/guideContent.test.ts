@@ -91,6 +91,23 @@ describe('conteúdo do Guia', () => {
     }
   })
 
+  it('só o que a revisão com fontes sustenta (tarefa 0066 do backend)', () => {
+    const pt = bySlug('pt')
+    const en = bySlug('en')
+    // Não existe ZARC de crotalária (nem de plantas de cobertura): a data não "vem do ZARC"
+    expect(pt.get('crotalaria')).not.toMatch(/vem do ZARC|Confira o prazo\*\* do ZARC/)
+    expect(pt.get('crotalaria')).toMatch(/não há ZARC/i)
+    expect(en.get('crotalaria')).toMatch(/no ZARC/i)
+    // O milheto sozinho não reduziu o nematoide das lesões no campo (Debiasi et al. 2016)
+    for (const [slug, raw] of [...pt, ...en]) {
+      expect(raw.match(/milheto[^.\n]*(quebra|reduz|baixa)[^.\n]*nematoide|millet[^.\n]*(breaks|reduces|lowers)[^.\n]*nematode/i)?.[0] ?? null, slug).toBeNull()
+    }
+    expect(pt.get('nematoide')).toMatch(/Debiasi/)
+    // Desde 01/02/2026 o índice oficial da NOAA é o RONI
+    expect(pt.get('el-nino-la-nina')).toMatch(/RONI/)
+    expect(en.get('el-nino-la-nina')).toMatch(/RONI/)
+  })
+
   it('todo link interno aponta para uma tela ou artigo que existe, e o artigo volta a uma tela', () => {
     for (const [lang, map] of [['pt', bySlug('pt')], ['en', bySlug('en')]] as const) {
       for (const [slug, raw] of map) {
