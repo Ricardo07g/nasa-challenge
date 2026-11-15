@@ -56,11 +56,16 @@ export function PlantPhoto({ src, alt, name, credit, caption, height = 150, clas
           />
           <figcaption>
             {caption && <span className={styles.caption}>{caption}</span>}
-            <span className={styles.credit} data-credit>
+            <span
+              className={styles.credit}
+              data-credit
+              title={`${credit.label}: ${credit.author} · ${credit.license}`}
+            >
               {credit.label}:{' '}
               <a href={credit.href} target="_blank" rel="noopener">
-                {credit.author}{' '}
-                <span className="visually-hidden">{credit.newTabLabel}</span>
+                {credit.author}
+                {/* O espaço vai dentro do aviso escondido: o sublinhado para no nome. */}
+                <span className="visually-hidden">{` ${credit.newTabLabel}`}</span>
               </a>{' '}
               · {credit.license}
             </span>

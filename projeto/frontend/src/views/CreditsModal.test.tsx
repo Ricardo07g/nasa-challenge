@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { CREDITS } from '../content/credits'
 import { PLANT_PHOTOS } from '../content/plantPhotos'
+import { newTabName } from '../test/newTabName'
 import { CreditsModal } from './CreditsModal'
 
 describe('CreditsModal (global: o rodapé de todas as telas abre este modal)', () => {
@@ -48,15 +49,14 @@ describe('CreditsModal (global: o rodapé de todas as telas abre este modal)', (
     expect(items[0]).toHaveTextContent('Fotos reais do Wikimedia Commons, só reduzidas (até 800 px de largura)')
 
     const millet = PLANT_PHOTOS.milheto
-    const link = within(photos).getByRole('link', { name: `${millet.file} (abre em nova aba)` })
+    const link = within(photos).getByRole('link', { name: newTabName(millet.file) })
     expect(link).toHaveAttribute('href', millet.page)
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noopener')
     expect(items[1]).toHaveTextContent(`Milheto · ${millet.file} (abre em nova aba) · Shikoha Tautiko · CC BY-SA 4.0`)
     expect(within(photos).getAllByRole('link')).toHaveLength(6)
-    expect(within(photos).getByText('(abre em nova aba)', { selector: `a[href="${millet.page}"] span` })).toHaveClass(
-      'visually-hidden',
-    )
+    expect(link.textContent).toBe(`${millet.file} (abre em nova aba)`)
+    expect(link.querySelector('.visually-hidden')?.textContent).toBe(' (abre em nova aba)')
     expect(photos).toHaveTextContent('Milho com braquiária (na foto: a braquiária)')
     expect(photos).toHaveTextContent('NRCS Pacific Islands Area · Domínio público')
     expect(photos).not.toHaveTextContent('](')
@@ -67,7 +67,9 @@ describe('CreditsModal (global: o rodapé de todas as telas abre este modal)', (
 
     expect(screen.getByRole('dialog', { name: 'Credits and use of AI' })).toHaveTextContent('Use of AI')
     const photos = screen.getByRole('region', { name: 'Plant photos' })
-    expect(within(photos).getByRole('link', { name: `${PLANT_PHOTOS.crotalaria.file} (opens in a new tab)` })).toBeInTheDocument()
+    expect(
+      within(photos).getByRole('link', { name: newTabName(PLANT_PHOTOS.crotalaria.file, '(opens in a new tab)') }),
+    ).toBeInTheDocument()
     expect(photos).toHaveTextContent('NRCS Pacific Islands Area · Public domain')
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
   })

@@ -15,8 +15,9 @@ function CreditLine({ text, newTab }: { text: string; newTab: string }) {
         if (part.type === 'link' && part.external) {
           return (
             <a key={index} href={part.href} target="_blank" rel="noopener">
-              {part.text}{' '}
-              <span className="visually-hidden">{newTab}</span>
+              {part.text}
+              {/* O espaço vai dentro do aviso escondido: o sublinhado para no texto do link. */}
+              <span className="visually-hidden">{` ${newTab}`}</span>
             </a>
           )
         }

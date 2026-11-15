@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { PLANT_PHOTO_CROPS, PLANT_PHOTOS } from '../content/plantPhotos'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
+import { newTabName } from '../test/newTabName'
 import { DesignSystemView } from './DesignSystemView'
 
 function setup(lang: 'pt' | 'en' = 'pt') {
@@ -44,7 +45,7 @@ describe('DesignSystemView (/design-system)', () => {
     for (const crop of PLANT_PHOTO_CROPS) {
       const photo = PLANT_PHOTOS[crop]
       expect(within(section).getAllByRole('img', { name: photo.alt.pt })[0]).toHaveAttribute('src', photo.src)
-      expect(within(section).getAllByRole('link', { name: `${photo.author} (abre em nova aba)` })[0]).toHaveAttribute(
+      expect(within(section).getAllByRole('link', { name: newTabName(photo.author) })[0]).toHaveAttribute(
         'href',
         photo.page,
       )
