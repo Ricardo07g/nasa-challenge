@@ -130,6 +130,31 @@ historico_ndvi:
     valor: 2025
     fonte: "Decisão do time (roteiro §5, R3.2): entressafras de 2016 a 2025, 10 anos"
 
+regiao_ndvi:
+  # Região pelo satélite (P3, RF-23, tarefa 0036): dentro da máscara de lavoura (MCD12Q1 classe 12)
+  # de cada ano, um pixel só é "soja daquele ano" se mostrar a soja E a colheita. Pixel sem pico ou
+  # sem colheita (cana, café, pasto, solo exposto) fica fora dos percentuais. Os pixels que passam são
+  # classificados pela regra do talhão (historico_ndvi: qualidade 0/1, mínimo de observações, limites),
+  # só com as observações depois da colheita até entressafra_fim. Datas "MM-DD"; NDVI de -1 a 1.
+  pico_inicio:
+    valor: "01-01"
+    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Início da janela do pico da soja"
+  pico_fim:
+    valor: "03-15"
+    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Fim da janela do pico da soja"
+  pico_min_ndvi:
+    valor: 0.70
+    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Maior NDVI da janela do pico a partir do qual há soja"
+  colheita_fim:
+    valor: "05-15"
+    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Última data em que se procura a colheita depois do pico"
+  colheita_max_ndvi:
+    valor: 0.40
+    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. NDVI até o qual a observação depois do pico conta como colheita"
+  entressafra_fim:
+    valor: "07-31"
+    fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Fim da entressafra (o mesmo do historico_ndvi.janela_fim do talhão)"
+
 rotacao:
   # Plano de 3 anos (PRD 7.7)
   anos_secos:

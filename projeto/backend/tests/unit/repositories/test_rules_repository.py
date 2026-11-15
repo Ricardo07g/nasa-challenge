@@ -105,6 +105,25 @@ def test_should_load_shipped_field_history_rules_from_the_ndvi_guide() -> None:
     assert (historico.ano_inicio, historico.ano_fim) == (2016, 2025)
 
 
+def test_should_load_shipped_region_soy_rules() -> None:
+    # Região pelo satélite (tarefa 0036; hipótese do time, a revisar pela agrônoma): pico da soja
+    # de 1/jan a 15/mar >= 0,70; colheita (NDVI <= 0,40) depois do pico até 15/mai; entressafra
+    # da colheita até 31/jul
+    regiao = YamlRulesRepository(SHIPPED).get_rules().regiao_ndvi
+
+    assert (regiao.pico_inicio, regiao.pico_fim, regiao.pico_min_ndvi) == ("01-01", "03-15", 0.70)
+    assert (regiao.colheita_fim, regiao.colheita_max_ndvi) == ("05-15", 0.40)
+    assert regiao.entressafra_fim == "07-31"
+
+
+def test_should_refuse_a_region_soy_rule_without_source(tmp_path: Path) -> None:
+    raw = _shipped_raw()
+    del raw["regiao_ndvi"]["pico_min_ndvi"]["fonte"]
+
+    with pytest.raises(ValueError, match="regiao_ndvi.pico_min_ndvi"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
 def test_should_load_phrase_templates_in_portuguese_and_english() -> None:
     # Plano técnico §4.8: modelos de frase em regras.yaml, nas duas línguas
     regras = YamlRulesRepository(SHIPPED).get_rules()
