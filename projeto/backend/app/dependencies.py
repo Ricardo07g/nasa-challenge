@@ -68,6 +68,7 @@ from app.services.crop_alert_service import CropAlertService
 from app.services.crop_option_service import CropOptionService
 from app.services.field_history_service import FieldHistoryService
 from app.services.past_season_service import PastSeasonService
+from app.services.pilot_area_service import PilotAreaService
 from app.services.recommendation_service import RecommendationService
 from app.services.region_service import RegionService
 from app.services.rotation_plan_service import RotationPlanService
@@ -88,6 +89,10 @@ def get_crop_option_service(
     repository: Annotated[CropOptionRepository, Depends(get_crop_option_repository)],
 ) -> CropOptionService:
     return CropOptionService(repository)
+
+
+def get_pilot_area_service() -> PilotAreaService:
+    return PilotAreaService()
 
 
 @lru_cache
