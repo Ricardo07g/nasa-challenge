@@ -1,129 +1,456 @@
-.search {
+/*
+ * Início do Guia (tela 8 do pacote 3, protótipo tela-8-guia.html): busca grande à direita, pílulas dos temas,
+ * "Comece por aqui" e os cartões. Contêiner de 1280 px com margem de 52 px (20 px no celular). Nada rola para o
+ * lado entre 360 e 1440 px: só a fileira de pílulas, dentro dela mesma, no celular.
+ */
+.page {
   width: 100%;
-  max-width: 480px;
-  min-height: 48px;
-  padding: 0 var(--space-4);
-  font: inherit;
-  font-size: var(--font-size-body);
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 2px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
+  min-width: 0;
+  max-width: var(--page-width-v4);
+  margin-inline: auto;
+  padding: 22px var(--page-margin-v4) 48px;
+  color: var(--color-text-muted);
 }
 
-.search:focus-visible,
-.link:focus-visible,
-.prose a:focus-visible {
-  outline: 3px solid var(--color-secondary);
-  outline-offset: 2px;
-}
-
-.themes {
+/* ---------- Topo: título à esquerda, busca à direita ---------- */
+.top {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: var(--space-grid);
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 24px;
+  align-items: end;
 }
 
-.theme {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-panel);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+.title {
+  margin: 18px 0 0;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.item {
-  border-top: 1px solid var(--color-divider);
-}
-
-.link {
+.lead {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  min-height: 48px;
-  padding: var(--space-3) 0;
-  color: var(--color-secondary-strong);
-  font-size: var(--font-size-body);
-  text-decoration: underline;
+  gap: 6px 18px;
+  margin-top: 8px;
 }
 
-.badge {
-  font-size: var(--font-size-caption);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-fair-text);
-  background: var(--color-fair-bg);
-  border-radius: var(--radius-badge);
-  padding: 2px var(--space-3);
-}
-
-.article {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  max-width: 720px;
-}
-
-.draftNote {
+.lead p {
   margin: 0;
-  padding: var(--space-3) var(--space-4);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-fair-text);
-  background: var(--color-fair-bg);
-  border: 2px dashed var(--color-fair-text);
-  border-radius: var(--radius-xs);
+  font-size: 16.5px;
 }
 
-.prose {
+.search {
+  position: relative;
+  min-width: 0;
+}
+
+.search > svg {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  color: var(--color-text-soft);
+  pointer-events: none;
+}
+
+.search input {
+  width: 100%;
+  height: 54px;
+  padding: 0 44px 0 48px;
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+/* Sem o "x" nativo do campo de busca: o "x" é o botão de limpar, igual em todos os navegadores. */
+.search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search input:focus {
+  outline: 3px solid var(--color-input-focus);
+  border-color: var(--color-primary);
+}
+
+.clear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius-2xs);
+  background: transparent;
+  color: var(--color-text-soft);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.clear:hover {
+  background: var(--color-page);
+}
+
+.clear:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 0;
+}
+
+/* ---------- Pílulas dos temas ---------- */
+.themes {
+  display: flex;
+  gap: 8px;
+  margin-top: 22px;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.themes::-webkit-scrollbar {
+  display: none;
+}
+
+.themeButton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.themeButton:hover {
+  border-color: var(--color-back-border-hover);
+}
+
+.themeButton:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.themeButton[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.count {
+  font-weight: var(--font-weight-medium);
+  opacity: 0.75;
+}
+
+/* ---------- Seções ---------- */
+.block {
+  margin-top: 26px;
+}
+
+.blockTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.blockTop h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.blockIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-2xs);
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+}
+
+.blockCount {
+  color: var(--color-text-soft);
+  font-size: 13.5px;
+}
+
+/* ---------- Cartões (o título é o link; o ::after dele cobre o cartão inteiro) ---------- */
+.cards,
+.featured {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-body);
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.card:hover {
+  border-color: var(--color-back-border-hover);
+  box-shadow: var(--shadow-guide-card);
+}
+
+.cardText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px 16px 14px;
+}
+
+.cardLink {
+  color: var(--color-text);
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.cardLink::after,
+.featuredLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.card:has(.cardLink:focus-visible),
+.featuredCard:has(.featuredLink:focus-visible) {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.cardLink:focus-visible,
+.featuredLink:focus-visible {
+  outline: none;
+}
+
+.cardSummary {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cardFoot {
+  margin-top: auto;
+  padding-top: 6px;
+  color: var(--color-text-soft);
+  font-size: 12.5px;
+}
+
+.cardTheme {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Cultura com foto: a foto em cima (no celular, à esquerda, com 96 px) */
+.photoCard {
+  overflow: hidden;
+}
+
+.photoCard .cardText {
+  padding-top: 12px;
+}
+
+.photo {
+  flex: none;
+  border-radius: 0;
+}
+
+/* O link do crédito fica por cima do link do cartão */
+.photo a {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- "Comece por aqui" ---------- */
+.featuredCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--color-featured-border);
+  border-radius: var(--radius-md);
+  background: var(--guide-featured-bg);
+}
+
+.featuredCard:hover {
+  border-color: var(--color-primary);
+}
+
+.featuredIcon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-xs);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.featuredLink {
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 17.5px;
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+
+.featuredCard p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ---------- Busca ---------- */
+.resultsInfo {
+  margin: 18px 0 0;
+  font-size: 14.5px;
+}
+
+.resultsInfo strong {
   color: var(--color-text);
 }
 
-.prose h2 {
-  margin: var(--space-4) 0 0;
-  font-family: var(--font-display);
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  color: var(--color-primary-strong);
+.cards mark {
+  padding: 0 1px;
+  border-radius: 3px;
+  background: var(--color-search-mark);
+  color: inherit;
 }
 
-.prose h3 {
-  margin: 0;
-  font-size: var(--font-size-lead);
-  font-weight: var(--font-weight-semibold);
-}
-
-.prose p,
-.prose ul,
-.prose ol {
-  margin: 0;
-}
-
-.prose ul,
-.prose ol {
-  padding-left: 1.4em;
+.empty {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  align-items: center;
+  gap: 4px;
+  margin-top: 24px;
+  padding: 28px;
+  border: 1px dashed var(--color-border-control);
+  border-radius: var(--radius-md);
+  text-align: center;
 }
 
-.prose a {
-  color: var(--color-secondary-strong);
-  text-decoration: underline;
+.empty strong {
+  color: var(--color-text);
+  font-size: 17px;
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 1100px) {
+  .cards,
+  .featured {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 14px var(--page-margin-v4) 40px;
+  }
+
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .title {
+    margin-top: 8px;
+    font-size: 28px;
+  }
+
+  .lead p {
+    font-size: 15px;
+  }
+
+  /* As pílulas rolam para o lado dentro da própria fileira, até a borda da tela */
+  .themes {
+    margin: 16px calc(var(--page-margin-v4) * -1) 0;
+    padding: 0 var(--page-margin-v4) 4px;
+  }
+
+  .cards,
+  .featured {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .photoCard {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  /* A altura da foto vem no `style` do PlantPhoto: no celular, ela acompanha o cartão */
+  .photoCard .photo {
+    height: 100% !important;
+    min-height: 92px;
+  }
+
+  .photoCard .photo [data-credit] {
+    padding: 2px 5px;
+    font-size: 9px;
+  }
+
+  .photoCard .cardText {
+    padding: 12px 14px;
+  }
+
+  .featuredCard {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 2px 12px;
+    padding: 14px;
+  }
+
+  .featuredIcon {
+    grid-row: 1 / span 2;
+    margin: 0;
+  }
+
+  .featuredLink {
+    font-size: 16px;
+  }
 }

@@ -1667,22 +1667,65 @@ export const pt = {
     disclaimer: 'Apoio à decisão: confirme com o seu agrônomo antes de comprar a semente.',
   },
   guide: {
-    /** "Ouvir resumo" (regra geral 9 do pacote 2) da página inicial; o do artigo é o título e o "Em uma frase". */
+    /** "Ouvir resumo" (regra geral 9 do pacote 2) da página inicial: o total de artigos, não o da busca. */
     summary: (count: number) =>
-      `O Guia tem ${count} artigos curtos sobre culturas, plantio, terra, clima e segurança. Busque pelo título ou toque num artigo para ler. Os de cultura e de plantio ainda são rascunho, a revisar pela agrônoma.`,
+      `O Guia tem ${count} artigos curtos sobre culturas, plantio, terra, clima e segurança. Busque por uma palavra, como veranico ou palhada, ou escolha um tema.`,
     title: 'Guia',
-    subtitle: 'Respostas curtas para as dúvidas mais comuns da lavoura.',
-    /** Tarefa 0051 (RF-35): a área do MVP, na página inicial do Guia (os artigos não mudam). */
-    mvpArea:
-      'Nesta primeira versão (MVP), o app funciona na região de Uberlândia e Uberaba (MG). Vamos ampliar para todo o Triângulo Mineiro.',
+    subtitle: 'Respostas curtas para as dúvidas da lavoura, com as fontes.',
     communityLink: 'Guia: dúvidas e respostas curtas',
-    searchLabel: 'Buscar pelo título',
-    searchPlaceholder: 'Buscar artigo',
-    noResults: 'Nenhum artigo com esse título.',
+    // Tela 8 do pacote 3 (tarefa 0063): busca, filtros por tema, "Comece por aqui" e cartões.
+    searchLabel: 'Buscar no Guia',
+    searchPlaceholder: 'Buscar: veranico, palhada…',
+    clearSearch: 'Limpar busca',
+    themesLabel: 'Temas',
+    all: 'Todos',
+    start: 'Comece por aqui',
+    articles: (count: number) => (count === 1 ? '1 artigo' : `${count} artigos`),
+    minutes: (count: number) => `${count} min de leitura`,
+    /** "<b>3</b> resultados para "chuva"": o número vai em negrito na view. */
+    resultsWord: (count: number) => (count === 1 ? 'resultado' : 'resultados'),
+    resultsFor: (query: string) => `para "${query}"`,
+    noResults: (query: string) => `Nenhum artigo encontrado para "${query}"`,
+    noResultsHint: 'Tente outra palavra ou veja um destes:',
+    suggestions: ['veranico', 'palhada', 'sorgo'],
     back: 'Voltar ao Guia',
     notFound: 'Não achamos esse artigo.',
-    draft: 'Rascunho: a revisar pela agrônoma.',
-    draftBadge: 'Rascunho',
+    sentence: 'Em uma frase',
+    sources: 'Fontes conferidas',
+    toc: 'Neste artigo',
+    seeAlso: 'Veja também',
+    helpful: 'Este artigo ajudou?',
+    helpfulYes: 'Sim',
+    helpfulNo: 'Não',
+    helpfulThanks: 'Obrigado!',
+    /** "Na sua lavoura": a caixa azul com um número real do ponto marcado (`/api/raio-x`). */
+    field: {
+      place: (place: string) => `Sua lavoura, perto de ${place}`,
+      /** O que o "Ouvir resumo" do artigo acrescenta ao "Em uma frase". */
+      spoken: (place: string, text: string) => `Na sua lavoura, perto de ${place}: ${text}`,
+      source: (source: string) => `Fonte: ${source}`,
+      heavyRain: (total: number, days: number, limit: string, mean: string) =>
+        `Em ${total} anos, houve ${days} dias com ${limit} mm ou mais de chuva em fevereiro e março: em média, ${mean} dia por ano.`,
+      dryspell: (total: number, days: number, start: string, year: number) =>
+        `O maior veranico de março a maio em ${total} anos foi de ${days} dias seguidos sem chuva, a partir de ${start} de ${year}.`,
+      heatNone: (total: number, temp: string) => `Em ${total} anos, nenhum teve dia de ${temp} °C ou mais entre março e maio.`,
+      heatOne: (total: number, year: string, temp: string) =>
+        `Em ${total} anos, só 1 (${year}) teve dia de ${temp} °C ou mais entre março e maio.`,
+      heatMany: (total: number, count: number, years: string, temp: string) =>
+        `Em ${total} anos, ${count} (${years}) tiveram dia de ${temp} °C ou mais entre março e maio.`,
+      future: (models: number, rain: string, heat: string) =>
+        `Para 2041 a 2060, a média de ${models} modelos indica chuva de março a maio ${rain}% e máxima ${heat} °C.`,
+      xraySoil: (clay: string, sand: string) => `A terra tem ${clay}% de argila e ${sand}% de areia.`,
+      xrayMoisture: (pct: number) => `Agora está mais úmida que em ${pct}% dos anos nesta época.`,
+      xrayRain: (mm: string) => `De janeiro a julho, chove em média ${mm} mm.`,
+      and: 'e',
+      years: (total: number) => `${total} anos`,
+      sourceSoil: 'SoilGrids (ISRIC)',
+      sourceSmap: 'SMAP (NASA)',
+      sourcePower: 'NASA POWER',
+      sourceFuture: 'NEX-GDDP-CMIP6 (NASA), cenário intermediário',
+      rainSources: { gpm_imerg: 'GPM IMERG (NASA)', nasa_power: 'NASA POWER' } as Record<string, string>,
+    },
     plantAlt: (name: string) => `Desenho de ${name}`,
     themes: {
       cultures: 'Culturas',

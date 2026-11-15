@@ -26,7 +26,8 @@ import { CommunitySoonView } from './views/CommunitySoonView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { FlowLoading } from './views/FlowStates'
-import { GuideArticleView, GuideView } from './views/GuideView'
+import { GuideArticleView } from './views/GuideArticleView'
+import { GuideView } from './views/GuideView'
 import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
 import { PlanningView } from './views/PlanningView'
@@ -309,29 +310,53 @@ export function DesignSystemPage() {
   return <DesignSystemView t={t} lang={lang} {...state} />
 }
 
+/** Guia (tela 8 do pacote 3): busca, filtros por tema, "Comece por aqui" e os cartões. */
 export function GuidePage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.guide.title)
   const state = useGuideController()
   return (
     <GuideView
       t={t}
-      backTo="/comunidade"
-      groups={state.groups}
-      query={state.query}
+      lang={lang}
+      backTo={state.backTo}
+      onBack={state.onBack}
+      filters={state.filters}
       onQuery={state.setQuery}
-      count={state.count}
+      onClear={state.clearQuery}
+      onTheme={state.setTheme}
+      themes={state.themes}
+      searching={state.searching}
+      featured={state.featured}
+      groups={state.groups}
+      results={state.results}
+      linkQuery={state.linkQuery}
       listen={state.listen}
     />
   )
 }
 
+/** Um artigo do Guia (tela 8 do pacote 3), com a caixa "Na sua lavoura" quando há número do ponto. */
 export function GuideArticlePage() {
   const { messages: t } = useI18n()
   const { artigo = '' } = useParams()
-  const { article, listen } = useGuideArticleController(artigo)
-  useDocumentTitle(article?.title ?? t.guide.title)
-  return <GuideArticleView t={t} article={article} listen={listen} />
+  const state = useGuideArticleController(artigo)
+  useDocumentTitle(state.article?.title ?? t.guide.title)
+  return (
+    <GuideArticleView
+      t={t}
+      article={state.article}
+      layout={state.layout}
+      related={state.related}
+      field={state.field}
+      helpful={state.helpful}
+      onHelpful={state.setHelpful}
+      onJump={state.jumpTo}
+      backTo={state.backTo}
+      linkQuery={state.linkQuery}
+      listen={state.listen}
+    />
+  )
 }
 
 /** Tela "Avisos" (seção 6 da remodelagem, tarefa 0046; refeita no pacote 3, tarefa 0062). */

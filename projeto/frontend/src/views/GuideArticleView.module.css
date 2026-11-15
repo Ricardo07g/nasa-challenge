@@ -1,0 +1,478 @@
+/*
+ * Artigo do Guia (tela 8 do pacote 3, protótipo tela-8-guia.html): coluna do texto e, no computador, a coluna
+ * lateral fixa ao rolar (índice e "Veja também"). No celular, uma coluna só: o índice some e o "Veja também" vai
+ * para o fim. Nada rola para o lado entre 360 e 1440 px.
+ */
+.page {
+  width: 100%;
+  min-width: 0;
+  max-width: var(--page-width-v4);
+  margin-inline: auto;
+  padding: 22px var(--page-margin-v4) 48px;
+  color: var(--color-text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 40px;
+  align-items: start;
+  margin-top: 4px;
+}
+
+.article {
+  min-width: 0;
+}
+
+/* ---------- Topo ---------- */
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.head > div {
+  min-width: 0;
+}
+
+.plant {
+  flex: none;
+  margin-top: 10px;
+}
+
+.theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: var(--color-primary);
+  font-size: 12.5px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 8px 0 0;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin-top: 10px;
+  color: var(--color-text-soft);
+  font-size: 14px;
+}
+
+/* "Em uma frase": caixa branca com borda verde à esquerda e texto maior */
+.sentence {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border-left: 4px solid var(--color-primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--color-surface);
+}
+
+.sentenceLabel {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sentenceText {
+  margin: 6px 0 0;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.45;
+}
+
+/* ---------- Seções ---------- */
+.body h2 {
+  margin: 28px 0 8px;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: var(--font-weight-semibold);
+  scroll-margin-top: 16px;
+}
+
+.body h2:focus {
+  outline: none;
+}
+
+.body h2:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 4px;
+  border-radius: var(--radius-year);
+}
+
+.body h3 {
+  margin: 18px 0 6px;
+  color: var(--color-text);
+  font-size: 17px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.body p,
+.sources p {
+  margin: 0 0 12px;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+
+.body ul:not(.cards),
+.body ol {
+  margin: 0 0 12px;
+  padding-left: 1.4em;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.body a,
+.sources a {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.body a:focus-visible,
+.sources a:focus-visible,
+.toc a:focus-visible,
+.relatedItem:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Lista curta de cuidados em cartões com ícone ("Os três cuidados") */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 10px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.cardIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-2xs);
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+}
+
+.card strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--color-text);
+  font-size: 15px;
+}
+
+.card > span:last-child {
+  display: block;
+  margin-top: 4px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* "Na sua lavoura": caixa azul com o número real do ponto */
+.field {
+  margin: 14px 0;
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--color-tint-blue);
+}
+
+.field p {
+  margin: 0;
+}
+
+.body .fieldPlace {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-info);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.body .fieldText {
+  margin-top: 6px;
+  color: var(--color-text);
+  font-size: 16.5px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.45;
+}
+
+.body .fieldSource {
+  margin-top: 4px;
+  color: var(--color-text-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---------- Fontes conferidas (recolhidas) ---------- */
+.sources {
+  margin-top: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.sources summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  color: var(--color-text);
+  font-size: 15.5px;
+  font-weight: var(--font-weight-semibold);
+  list-style: none;
+  cursor: pointer;
+}
+
+.sources summary::-webkit-details-marker {
+  display: none;
+}
+
+.sources summary:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.sources summary svg {
+  transition: transform 0.2s;
+}
+
+.sources[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.sources ul {
+  margin: 0;
+  padding: 0 18px 16px 36px;
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+
+/* ---------- Este artigo ajudou? ---------- */
+.helpful {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 14px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 14.5px;
+}
+
+.helpfulButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.helpfulButtons button {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xs);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.helpfulButtons button:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.helpfulButtons button[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-tint-green);
+  color: var(--color-primary);
+}
+
+.thanks:empty {
+  display: none;
+}
+
+/* ---------- Coluna lateral ---------- */
+.side {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.sideBox {
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.sideTitle {
+  margin: 0 0 8px;
+  color: var(--color-text-soft);
+  font-size: 12.5px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toc a {
+  display: block;
+  padding: 7px 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 14.5px;
+  text-decoration: none;
+}
+
+.toc li:first-child a {
+  border-top: 0;
+}
+
+.toc a:hover {
+  color: var(--color-primary);
+}
+
+.related {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.relatedItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 14.5px;
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+
+.relatedItem svg {
+  flex: none;
+}
+
+.relatedItem:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.notFound {
+  margin: 24px 0 0;
+  font-size: 16px;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 14px var(--page-margin-v4) 40px;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .plant svg {
+    width: 72px;
+    height: 72px;
+  }
+
+  .sentenceText {
+    font-size: 18px;
+  }
+
+  .card {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 0 12px;
+    padding: 12px;
+  }
+
+  .cardIcon {
+    grid-row: 1 / span 2;
+  }
+
+  .card strong {
+    margin-top: 0;
+  }
+
+  .side {
+    position: static;
+  }
+
+  .toc {
+    display: none;
+  }
+}
