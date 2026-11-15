@@ -141,7 +141,18 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`,
   `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`, `ENSO_PREVISAO_PATH`). Nunca
   coloque caminho fixo (como `/workspace/...`) num repository.
-- `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
+- `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4). Sem preço, custo
+  nem produtividade (tarefa 0040): o `tipo` diz se a cultura dá grão para vender.
+- **Renda sem reais** (tarefa 0040, seção 1 da remodelagem): nenhum valor em reais na API. A nota de
+  renda é a segurança climática da própria opção para quem dá grão (`tipo` em `renda.tipos_com_grao`
+  do `regras.yaml`: `grao` e `consorcio`) e `renda.nota_sem_grao` (0) para cobertura e pousio; a nota
+  final continua com os mesmos eixos e pesos. Cada opção de `/recomendacao` e `/exemplo` traz o bloco
+  `renda` (no lugar do antigo `dinheiro`): `da_grao`, `anos_aperto` (anos com aperto do motor),
+  `rotulo` (limiares `rotulos.renda_bom` / `renda_medio`), `texto` ("Dá grão para vender" ou "Não dá
+  grão: é investimento na terra") e `risco` ("Risco de perder a lavoura: faltou água ou fez calor em N
+  de 20 anos."), com as frases `frases.<língua>.renda_*`. O motivo da alternativa é `mais_renda`. Não
+  há mais margem, custo, pior ano seco em reais nem perda de produtividade pelo ISNA: não traga de
+  volta (um teste de rota recusa `R$` no JSON).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
   negócio nova com número vai para lá, não para `app/constants.py`. Os services recebem as regras
