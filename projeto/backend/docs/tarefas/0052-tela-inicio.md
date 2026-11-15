@@ -72,7 +72,7 @@
 | --- | --- | --- |
 | Etiqueta | Para quem planta soja no Triângulo Mineiro | For soybean growers in Triângulo Mineiro, Brazil |
 | Título | O que plantar depois da soja? | What to plant after soybeans? |
-| Slogan (também no cabeçalho) | Do espaço até a raiz. | From space to the root. |
+| Slogan (também no cabeçalho) | Do espaço até a raiz. | Eyes on the sky, roots in the ground. |
 | Frase | O satélite da NASA olha a chuva de muitos anos na sua lavoura. Veja a melhor opção. | NASA satellites look at many years of rain on your field. See the best option. |
 | Link | Ouvir resumo / Parar | Listen to summary / Stop |
 | Botão | Começar → | Start → |
@@ -108,8 +108,9 @@ selo quando o de créditos fecha).
 | Rodapé, Início | aviso + "Sou agrônomo(a): como a conta é feita" + "NASA Space Apps Challenge 2026 · Field Shift" | aviso + "Créditos e uso de IA" + "NASA Space Apps 2026 · Field Shift" |
 | Rodapé, telas internas | igual ao de cima | aviso + "Como a conta é feita ↗" + "Créditos e uso de IA" + "NASA Space Apps 2026 · Field Shift" |
 
-Em inglês, o aviso passou a "Helps you decide. It does not replace your agronomist." e o slogan, a "From space to the
-root." (como no prompt).
+Em inglês, o aviso passou a "Helps you decide. It does not replace your agronomist." e o slogan, a "Eyes on the
+sky, roots in the ground." (trocado em 15/11/2026; o nome "Raiz Orbital" não se traduz, e só na Início em inglês a
+linha "Portuguese for “Orbital Root”" aparece logo abaixo do nome).
 
 ## 3. Testes (TDD)
 
