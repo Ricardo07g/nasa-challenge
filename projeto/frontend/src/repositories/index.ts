@@ -1,7 +1,9 @@
+import { createHttpAvisosRepository } from './avisosRepository'
 import { createHttpCommunityRepository } from './communityRepository'
 import { createHttpCustoAtrasoRepository } from './custoAtrasoRepository'
 import { createHttpExemploRepository } from './exemploRepository'
 import { createPhotonGeocodingRepository } from './geocodingRepository'
+import { createMockAvisosRepository } from './mocks/mockAvisos'
 import { createMockCommunityRepository } from './mocks/mockCommunity'
 import {
   createMockCustoAtrasoRepository,
@@ -42,3 +44,7 @@ export const pilotAreaRepository = useHttp ? createHttpPilotAreaRepository() : c
 export const geocodingRepository = useHttp ? createPhotonGeocodingRepository() : createMockGeocodingRepository()
 export const custoAtrasoRepository = useHttp ? createHttpCustoAtrasoRepository() : createMockCustoAtrasoRepository()
 export const raioXRepository = useHttp ? createHttpRaioXRepository() : createMockRaioXRepository()
+/** Tela "Avisos" (tarefa 0046 do backend): os exemplos só no modo mock. */
+export const avisosRepository = useHttp ? createHttpAvisosRepository() : createMockAvisosRepository()
+/** Ponto dos avisos no localStorage: o mesmo nos dois modos. */
+export { savedPointRepository } from './savedPointRepository'
