@@ -419,8 +419,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   design system (`tablist`; setas, Home e End); trocar de aba é `useReplaceUrl` (sem rolar); o botão do fim da aba 1
   abre a aba 2 do topo. O "Voltar" vai para `/satelite`. **O que fica na URL** (`flowParams.ts`): `objetivo`,
   `comparar` (até 3, o pousio vale), `escolha` (o 1º ano do plano; sem ela, o `pensa` do raio-X e, com "Ainda não
-  sei", a sugestão), `ano2` e `ano3` (os anos que o produtor mudou) e `ano` (o ano aberto no "Por que essa
-  sugestão?", que os links antigos usam). Escolher para o plano congela a comparação da tela com a cultura e solta
+  sei", a sugestão), `ano2` e `ano3` (os anos que o produtor mudou para outra cultura que não a sugestão do ano) e
+  `ano` (o ano aberto no "Por que essa sugestão?", que os links antigos usam). Escolher para o plano congela a comparação da tela com a cultura e solta
   `ano2`/`ano3`; trocar o objetivo solta a comparação (e os anos, sem `escolha`). Regras: `services/choiceService.ts`
   (ordem com as fora do prazo no fim, `isLate` = `fora_do_prazo` ou, na API antiga, `!na_janela`; a sugestão é sempre
   a 1ª no prazo; comparação de partida, caixinhas, fluxos) e `services/planService.ts` (o que fixar no
@@ -435,7 +435,21 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   ({data})"; "Deixar parado" não tem conta ("Sem lavoura: não entra na conta", a terra pelo `pousio.texto`).
   Nenhum corte novo no front: os rótulos Bom/Médio/Fraco são os da API e o clima 2041–2060 fica sem rótulo.
   **Aba Plano:** 3 cartões em cadeia (o "Por quê:" é o `motivo` do motor), "O que plantar" nativo em cada ano,
-  alerta (`role="status"`) com "Voltar ao plano sugerido", notas "Seu plano × Como é hoje" (cada nota abre a conta),
+  alerta (`role="status"`) com "Voltar ao plano sugerido". **A nossa sugestão de cada ano fica sempre à vista
+  (pacote 3, tarefa 0064, RF-47):** uma regra só, `suggestedFor(ano)` no `planService`: 1º ano = a sugestão da aba
+  Escolher (`suggestionOf`); 2º = o `anos[1]` do `/api/plano/sugestao?fixos=<1º>`; 3º = o `anos[2]` dessa resposta
+  com o 2º sugerido ou, com o 2º mudado, o do `fixos=<1º>,<2º>`; o porquê vem da mesma resposta, e resposta de um
+  pedido anterior não vale (a sugestão fica `null`). O `usePlanFlow` pede sempre a sugestão com o 1º ano (sem o 2º
+  mudado, o cache junta com o plano mostrado) e cada `PlanCard` traz o `suggested`. No select, a opção sugerida tem
+  " · nossa sugestão" (`choose.plan.option`, junto com " · passou do prazo"); quando a cultura não é a sugestão,
+  embaixo do select vem a linha "Nossa sugestão" (etiqueta verde) + cultura + "Usar a sugestão" (`useSuggestion`,
+  com a safra escondida no nome), que chama o mesmo `chooseYear`. Etiqueta: "Sua escolha" no 1º ano; nos outros,
+  **"Você mudou" só quando a cultura é diferente da sugestão daquele ano** (sem a sugestão carregada, vale a URL), e o
+  "Voltar ao plano sugerido" aparece quando algum cartão diz "Você mudou" (`planEdited`). Escolher de novo a sugestão
+  (`yearFlow` com a sugestão) tira o `ano2`/`ano3` da URL (o 2º continua soltando o 3º) e o alerta some; no 1º ano,
+  muda a `escolha` (como na aba 1). Depois de trocar, o foco volta ao select com `focus({ preventScroll: true })`.
+  Com o 3º ano mudado, enquanto o `/api/plano` carrega, ficam os cartões e as notas do sugerido (sem piscar); se ele
+  falhar, o erro. A tela 6 usa os mesmos cartões, sem etiqueta nem porquê. Notas "Seu plano × Como é hoje" (cada nota abre a conta),
   chuva aproveitada, "E se o ano vier seco?" (o `sinal`, o SMAP, o Plano A e o **Plano B do motor**, nunca fixo;
   "Não precisa" com `motivo` `pousio` ou `nunca_falhou`) e "Ver meu planejamento →" (`/planejamento` com o fluxo). **"Como é
   hoje"** = as 3 últimas safras do raio-X (`todayCrops`): sem resposta, "não preenchido" com o
@@ -493,16 +507,23 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   toda imagem ou vídeo gerado por IA leva a marca d'água visível "Imagem gerada por IA" (a foto da Início, do
   Lovable, leva), e o uso de IA em código e textos fica declarado nos créditos.
 - **Fotos das plantas (tarefa 0055):** toda foto de cultura nas telas novas é o `PlantPhoto` (a tela 5 usa no cartão
-  da sugestão, na comparação e no plano; a tela 6, nos cartões do resumo do plano). Fotos reais do Wikimedia Commons, **baixadas** para `public/fotos/` (nunca
+  da sugestão, na comparação e no plano; a tela 6, nos cartões do resumo do plano; o Guia, nos cartões das culturas).
+  Fotos reais do Wikimedia Commons, **baixadas** para `public/fotos/` (nunca
   link direto), só CC BY, CC BY-SA ou domínio público, sem logo nem marca, com até 800 px de largura e 250 KB. Os dados
-  de cada cultura (arquivo, autor, licença, link do Commons, `alt` e a legenda opcional, em pt e en) ficam só em
-  `content/plantPhotos.ts`; a tela mostra com `<PlantPhoto {...plantPhotoProps(cultura, lang)} height={…} />`
-  (`design-system/components/PlantPhoto.tsx`: crédito "Foto: autor · licença" em cima da imagem, autor ligando ao
-  Commons em nova aba com " (abre em nova aba)" escondido, legenda e, se a foto não carregar, o bloco verde com o
-  nome). O modal de créditos lista cada foto (grupo `photos` do `credits.ts`, montado do `plantPhotos.ts`); os links
+  de cada cultura (`images`: 1 imagem ou 2, cada uma com arquivo, autor, licença, link do Commons e `alt` em pt e en)
+  ficam só em `content/plantPhotos.ts`; a tela mostra com `<PlantPhoto {...plantPhotoProps(cultura, lang)} height={…} />`
+  (`design-system/components/PlantPhoto.tsx`: crédito "Foto: autor · licença" em cima da imagem, embaixo, o autor
+  ligando ao Commons em nova aba com " (abre em nova aba)" escondido e, se a foto não carregar, o bloco verde com o
+  nome). **Foto de 2 imagens (tarefa 0064):** sem foto aberta da cultura inteira, 2 imagens lado a lado (`display:
+  grid` de 2 colunas, `--photo-pair-gap` de 2 px) num bloco com `role="img"` e o nome da cultura (as metades com
+  `alt=""`) e um crédito só com os 2 autores ("Foto: A · licença | B · licença", cada um com o seu link). Hoje só o
+  milho com braquiária: o milho de "Milho sozinho" (o mesmo objeto, Christian Fischer) à esquerda e a braquiária à
+  direita; uma foto aberta do consórcio, se aparecer, substitui as duas. **Não há legenda** ("na foto: …"): o campo
+  saiu do tipo e do componente. O modal de créditos lista cada foto (grupo `photos` do `credits.ts`, montado do
+  `plantPhotos.ts`; a de 2 imagens numa linha só, separadas por " | "); os links
   `[texto](https://…)` das linhas dos créditos abrem em nova aba. Foto nova ou trocada: confira a licença na página
   do Commons, atualize o `plantPhotos.ts` e a tabela da tarefa 0055 (o `plantPhotos.test.ts` confere arquivo, tipo,
-  tamanho e licença). O `PlantImage` (SVG) continua onde já está.
+  tamanho, licença e alt de todas as imagens). O `PlantImage` (SVG) continua onde já está.
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front. Desde a tarefa 0052, o link não fica no
   cabeçalho nem na tela inicial: só na Sugestão e em "Como a conta é feita".
