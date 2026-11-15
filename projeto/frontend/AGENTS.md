@@ -84,17 +84,22 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   exemplo, não são da NASA". Só `repositories/index.ts` decide o modo e importa `repositories/mocks/`
   (um teste confere). Os testes rodam com `mock` (`test.env` do `vite.config.ts`), sem rede. A API só tem
   dados da área preparada: fora dela, as telas 4 a 7 mostram "Ainda não chegamos aí".
-- **Dado que a API ainda não manda:** com a API real, nenhuma tela mostra número de exemplo nem esconde o
-  bloco. Use o estado único "Ainda não conectado" (`t.common.notConnected`): `NotConnected` (em linha),
-  `NotConnectedCard` (bloco) ou `DataSourceCard status="unavailable"`. Um endpoint que ainda não existe
-  (404 sem `code`) ou um repository sem versão http (`NotConnectedError`) vira esse estado, não erro.
-  Exceção: na tela 8 (região pelo satélite), o 404 `OUTSIDE_AREA` não é "Ainda não conectado" (a
-  função existe, só não mediu aquele lugar): vira o estado `outside` (`RegionStatus`), e o bloco da
-  região **não aparece** (decisão de 15/11: fora das regiões medidas, o produto resolve com as
-  perguntas, sem aviso de "ainda não mediu").
+- **Dado que a API ainda não manda (decisão D2 da remodelagem, tarefa 0040 do backend):** com a API real,
+  nenhuma tela mostra número de exemplo nem o selo "Ainda não conectado": **o elemento sem dado
+  simplesmente não aparece** (cartão, linha, seção, fonte ou fase da missão). Um endpoint que ainda não
+  existe (404 sem `code`) ou um repository sem versão http (`NotConnectedError`) vira o estado
+  `not-connected` do controller (não é erro), e a view não desenha o bloco. Na tela 8, o 404
+  `OUTSIDE_AREA` vira o estado `outside` (`RegionStatus`) e o bloco da região também não aparece.
   Campo novo de uma resposta que já existe (ex.: `chuva_mensal` do talhão) entra **opcional** no model
-  (`campo?: X | null`): ausente (API antiga) ou `null` dá "Ainda não conectado". Enquanto o dado carrega,
-  a tela não mostra nem o dado nem esse estado (nada de "Ainda não conectado" piscando).
+  (`campo?: X | null`): ausente (API antiga) ou `null` = o elemento não aparece. Enquanto o dado carrega,
+  a tela não mostra nem o dado nem aviso. O design system não tem mais `NotConnected`, `NotConnectedCard`
+  nem `status="unavailable"`: não traga de volta.
+- **Nenhum valor em reais (seção 1 da remodelagem, tarefa 0040 do backend):** nenhuma tela, texto, mock ou
+  teste mostra R$. A dimensão é **Renda** (eixo `renda`, motivo `mais_renda`) e só mostra fatos: o bloco
+  `renda` de cada opção (`da_grao`, `anos_aperto`, `rotulo`, `texto` = "Dá grão para vender" ou "Não dá
+  grão: é investimento na terra", `risco` = "Risco de perder a lavoura: … em N de 20 anos."), com os
+  textos prontos da API. Reordenar por renda usa `notas.renda` (a nota do motor, sem preço nem custo). O
+  bloco "Comece por um pedaço" (hectares e totais em reais, RF-21) saiu.
 - **O que a URL guarda (RF-18):** `services/flowParams.ts` lê e monta `lat`, `lon`, `colheita`, `solo`,
   `exemplo` e `confirmadas` (as safras que o produtor confirmou na tela 4, `2024:plantou,2025:parado`,
   em ordem de ano e sem codificar `:` e `,`, para o link continuar legível). Toda tela que pede a

@@ -95,24 +95,25 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
     expect(screen.queryByText(/20 anos/)).not.toBeInTheDocument()
   })
 
-  it('sem chuva, histórico nem previsão do outono na API: "Ainda não conectado", igual às outras telas', () => {
+  it('sem chuva, histórico nem previsão do outono na API: a fase fica sem o dado, sem "Ainda não conectado" (D2)', () => {
     setup({ phase: 6, complete: true, facts: { ...facts, rainYears: null, historyYears: null, signal: null } })
 
     const phases = screen.getAllByRole('listitem')
-    expect(phases[2]).toHaveTextContent('Chuva e calor: Ainda não conectado')
-    expect(phases[3]).toHaveTextContent('Histórico do satélite: Ainda não conectado')
-    expect(phases[4]).toHaveTextContent('Previsão do outono: Ainda não conectado')
-    expect(phases[3].querySelector('[data-status="not-connected"]')).not.toBeNull()
+    expect(phases[2]).toHaveTextContent('Chuva e calor de cada ano')
+    expect(phases[2]).not.toHaveTextContent('anos lidos')
+    expect(phases[3].querySelector('strong')).toBeNull()
+    expect(phases[4]).not.toHaveTextContent('Previsão do outono')
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
   })
 
-  it('o clima que vem mostra o clima de 2041 a 2060 lido e, à parte, a previsão do outono que falta', () => {
+  it('o clima que vem mostra o clima de 2041 a 2060 lido; sem a previsão do outono, ela não aparece', () => {
     setup({ phase: 6, complete: true, facts: { ...facts, signal: null } })
 
     const phase = screen.getAllByRole('listitem')[4]
     expect(phase).toHaveTextContent('Clima de 2041 a 2060 lido')
     expect(phase.querySelector('strong')).toHaveTextContent('Clima de 2041 a 2060 lido')
-    expect(phase).toHaveTextContent('Previsão do outono: Ainda não conectado')
-    expect(phase.querySelectorAll('[data-status="not-connected"]')).toHaveLength(1)
+    expect(phase).not.toHaveTextContent('Previsão do outono')
+    expect(phase).not.toHaveTextContent('Ainda não conectado')
   })
 
   it('com o clima do futuro e o sinal do outono, a fase mostra os dois', () => {
@@ -121,16 +122,24 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
     const phase = screen.getAllByRole('listitem')[4]
     expect(phase).toHaveTextContent('Clima de 2041 a 2060 lido')
     expect(phase).toHaveTextContent('Previsão do outono: sinal de ano seco')
-    expect(phase.querySelector('[data-status="not-connected"]')).toBeNull()
+    expect(phase.querySelectorAll('strong')).toHaveLength(2)
   })
 
-  it('sem o CMIP6 no talhão, o clima do futuro também fica "Ainda não conectado"', () => {
+  it('sem o CMIP6 no talhão, a fase mostra só a previsão do outono, se houver', () => {
+    setup({ phase: 6, complete: true, facts: { ...facts, future: null } })
+
+    const phase = screen.getAllByRole('listitem')[4]
+    expect(phase).not.toHaveTextContent('Clima de 2041 a 2060 lido')
+    expect(phase).toHaveTextContent('Previsão do outono: sinal de ano seco')
+    expect(phase).not.toHaveTextContent('Ainda não conectado')
+  })
+
+  it('sem o CMIP6 e sem a previsão, a fase fica sem o dado', () => {
     setup({ phase: 6, complete: true, facts: { ...facts, future: null, signal: null } })
 
     const phase = screen.getAllByRole('listitem')[4]
-    expect(phase).toHaveTextContent('Clima do futuro: Ainda não conectado')
-    expect(phase).toHaveTextContent('Previsão do outono: Ainda não conectado')
-    expect(phase.querySelectorAll('[data-status="not-connected"]')).toHaveLength(2)
+    expect(phase.querySelector('strong')).toBeNull()
+    expect(phase).not.toHaveTextContent('Ainda não conectado')
   })
 
   it('em inglês, o clima que vem diz o período lido', () => {
@@ -138,7 +147,7 @@ describe('MissionView (tela de cálculo, RF-19)', () => {
 
     const phase = screen.getAllByRole('listitem')[4]
     expect(phase).toHaveTextContent('Climate for 2041–2060 read')
-    expect(phase).toHaveTextContent('Autumn outlook: Not connected yet')
+    expect(phase).not.toHaveTextContent('Not connected yet')
   })
 
   it('sinal fraco: deixa esperar mais ou ver a fazenda de exemplo', async () => {

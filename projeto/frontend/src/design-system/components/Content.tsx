@@ -105,7 +105,7 @@ export function YearTimeline({ label, items }: { label: string; items: readonly 
 
 type CompareRow = {
   label: string
-  /** Sem valor (dado que a API ainda não manda), o `extra` diz o que falta (ex.: "Ainda não conectado"). */
+  /** Sem valor, a linha mostra só o rótulo e o `extra` (ex.: uma frase embaixo). */
   value?: string
   /** Ícone do eixo (gota, nota, broto); azul para dado de satélite. */
   icon?: ReactNode

@@ -20,8 +20,8 @@ export type RainChart = {
 
 /**
  * Gráfico "Chuva de cada mês na região" (tela 3) a partir do `chuva_mensal` do talhão. Sem o campo
- * (API que ainda não manda), com null, sem meses de janeiro a junho ou sem anos: null, e a tela mostra
- * "Ainda não conectado".
+ * (API que ainda não manda), com null, sem meses de janeiro a junho ou sem anos: null, e o gráfico não
+ * aparece (decisão D2).
  */
 export function rainChart(talhao: Talhao | undefined): RainChart | null {
   const chuva = talhao?.chuva_mensal

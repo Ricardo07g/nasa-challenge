@@ -66,7 +66,7 @@ export function useWhenController(deps: Deps = defaultDeps) {
   }, [params, selected, deps.farm, lang, navigate])
 
   return {
-    /** Chuva de cada mês na região (`chuva_mensal` do talhão); null = "Ainda não conectado". */
+    /** Chuva de cada mês na região (`chuva_mensal` do talhão); null = sem gráfico (decisão D2). */
     rainChart: chart,
     missingPoint: params === null,
     backTo: `/onde${keepFlowQuery(search.toString())}`,

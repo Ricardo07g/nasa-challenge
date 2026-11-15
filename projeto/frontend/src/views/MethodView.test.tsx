@@ -61,21 +61,37 @@ describe('MethodView (tela 9)', () => {
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('href', '/')
   })
 
-  it('de onde vem cada dado: as 6 fontes, com as que ainda não estão conectadas marcadas', () => {
+  it('de onde vem cada dado: só as fontes ligadas de fato aparecem (decisão D2, sem "Ainda não conectado")', () => {
     setup()
 
     const sources = screen.getByRole('region', { name: 'De onde vem cada dado' })
-    expect(within(sources).getAllByRole('heading', { level: 3 })).toHaveLength(6)
-    const card = (what: string) => within(sources).getByRole('heading', { name: what }).closest('[data-status]')
-    expect(card('Chuva e calor, dia a dia')).toHaveAttribute('data-status', 'ready')
-    expect(card('Chuva e calor, dia a dia')).toHaveTextContent('NASA POWER')
-    expect(card('Tipo de terra')).toHaveAttribute('data-status', 'ready')
-    expect(card('Chuva mais detalhada')).toHaveTextContent('GPM IMERG (NASA)quadrados de 10 km, por diaAinda não conectado')
-    expect(card('Umidade da terra')).toHaveTextContent('Ainda não conectado')
-    expect(card('Histórico do talhão')).toHaveTextContent('Ainda não conectado')
-    expect(card('Clima de 2041 a 2060')).toHaveTextContent('NEX-GDDP-CMIP6 (NASA)')
-    expect(card('Clima de 2041 a 2060')).toHaveAttribute('data-status', 'unavailable')
-    expect(within(sources).getAllByText('Ainda não conectado')).toHaveLength(4)
+    expect(within(sources).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
+      'Chuva e calor, dia a dia',
+      'Tipo de terra',
+    ])
+    expect(sources).toHaveTextContent('NASA POWER')
+    expect(sources).not.toHaveTextContent('GPM IMERG')
+    expect(sources).not.toHaveTextContent('NEX-GDDP-CMIP6')
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
+  })
+
+  it('"Como a conta é feita" explica a renda sem reais: dá grão ou não, com a segurança (tarefa 0040)', () => {
+    setup()
+
+    const income = screen.getByRole('region', { name: 'Renda sem valores em reais' })
+    expect(income).toHaveTextContent('A renda não usa preço nem custo.')
+    expect(income).toHaveTextContent('Quem dá grão para vender ganha na renda a mesma nota da segurança')
+    expect(income).toHaveTextContent('Quem não dá grão (as plantas de cobertura e a terra parada) fica com nota fixa')
+    expect(income).toHaveTextContent('se dá grão para vender e em quantos anos faltou água ou fez calor')
+    expect(document.body).not.toHaveTextContent('R$')
+  })
+
+  it('a renda em inglês', () => {
+    setup({ t: en })
+
+    const income = screen.getByRole('region', { name: 'Income without money values' })
+    expect(income).toHaveTextContent('Income does not use prices or costs.')
+    expect(income).toHaveTextContent('get the same income score as their safety score')
   })
 
   it('o passo 1 diz o período da chuva que veio da API, e o que o satélite não enxerga diz o tamanho real do quadrado', () => {
@@ -107,14 +123,11 @@ describe('MethodView (tela 9)', () => {
     expect(props.onRetrySources).toHaveBeenCalled()
   })
 
-  it('sem o CMIP6, a nota Futuro fica "—" na tabela e a nota é marcada como "Ainda não conectado"', () => {
+  it('sem o CMIP6, a nota Futuro fica "—" na tabela, sem o selo "Ainda não conectado" (decisão D2)', () => {
     setup({ rows: rows.map((row) => ({ ...row, notas: { ...row.notas, futuro: null } })) })
 
-    const note = screen
-      .getAllByText('Ainda não conectado')
-      .map((text) => text.closest('[data-status="not-connected"]'))
-      .find((element) => element?.textContent?.startsWith('Futuro'))
-    expect(note).toHaveTextContent('Futuro: Ainda não conectado')
+    expect(screen.getByRole('table', { name: 'Notas de cada opção (0 a 100)' })).toHaveTextContent('—')
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
   })
 
   it('a tabela com as notas de 0 a 100 (só nesta tela) e de qual fazenda elas são', () => {
@@ -130,7 +143,7 @@ describe('MethodView (tela 9)', () => {
       'Renda',
       'Final',
     ])
-    expect(table).toHaveTextContent('Milho com braquiária7060507466')
+    expect(table).toHaveTextContent('Milho com braquiária7060507066')
     expect(screen.getByText('Fazenda de exemplo: área experimental da UFU, Uberlândia (MG).')).toBeInTheDocument()
   })
 

@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { Button } from '../design-system/components/Button'
 import { ProgressBar } from '../design-system/components/Feedback'
-import { NotConnected } from '../design-system/components/Status'
 import { BackLink } from '../design-system/components/Navigation'
 import {
   CheckIcon,
@@ -51,34 +50,26 @@ const PHASE_ICONS: ReactNode[] = [
 ]
 
 /**
- * Resultado de uma fase: o dado real, ou o que ainda não está conectado (`what`). `extra` é um
- * segundo dado da mesma fase, mostrado à parte (a previsão do outono no clima que vem).
+ * O dado real que cada fase mostra quando termina; `extra` é um segundo dado da mesma fase, mostrado à
+ * parte (a previsão do outono no clima que vem). Sem o dado na API, a fase fica sem resultado (null):
+ * nada de "Ainda não conectado" (decisão D2). A última não revela a melhor opção.
  */
-type PhaseResult = { text: string; what: string | null; extra?: PhaseResult }
+type PhaseResult = { text: string; extra?: string }
 
-/**
- * O dado real que cada fase mostra quando termina. Sem o dado na API, "Ainda não conectado" (o mesmo
- * aviso das outras telas). A última não revela a melhor opção.
- */
-function phaseResults(t: Messages, lang: Lang, facts: MissionFacts | null): PhaseResult[] {
+function phaseResults(t: Messages, lang: Lang, facts: MissionFacts | null): (PhaseResult | null)[] {
   const m = t.mission
   if (!facts) return []
-  const ready = (text: string): PhaseResult => ({ text, what: null })
-  const missing = (what: string): PhaseResult => ({ text: `${what}: ${t.common.notConnected}`, what })
   const period = facts.future?.period
-  const future = !facts.future
-    ? missing(m.futureWhat)
-    : ready(period ? m.future(period.start, period.end) : m.futureRead)
-  const forecast = facts.signal
-    ? ready(m.forecast(t.signal[facts.signal].toLocaleLowerCase(lang)))
-    : missing(m.forecastWhat)
+  const future = facts.future ? (period ? m.future(period.start, period.end) : m.futureRead) : null
+  const forecast = facts.signal ? m.forecast(t.signal[facts.signal].toLocaleLowerCase(lang)) : null
+  const nextClimate = future ? { text: future, extra: forecast ?? undefined } : forecast ? { text: forecast } : null
   return [
-    ready(m.found(formatDecimal(lang, facts.point.lat, 2), formatDecimal(lang, facts.point.lon, 2))),
-    ready(t.satellite.soilTitle(t.soil[facts.soil])),
-    facts.rainYears !== null ? ready(m.rain(facts.rainYears)) : missing(m.rainWhat),
-    facts.historyYears !== null ? ready(m.history(facts.historyYears)) : missing(m.historyWhat),
-    { ...future, extra: forecast },
-    ready(m.ready),
+    { text: m.found(formatDecimal(lang, facts.point.lat, 2), formatDecimal(lang, facts.point.lon, 2)) },
+    { text: t.satellite.soilTitle(t.soil[facts.soil]) },
+    facts.rainYears !== null ? { text: m.rain(facts.rainYears) } : null,
+    facts.historyYears !== null ? { text: m.history(facts.historyYears) } : null,
+    nextClimate,
+    { text: m.ready },
   ]
 }
 
@@ -122,7 +113,7 @@ export function MissionView(props: MissionViewProps) {
                   </span>
                   <span>
                     <span>{label}</span>
-                    {state === 'done' && results[index] && <PhaseResultLine t={t} result={results[index]} />}
+                    {state === 'done' && results[index] && <PhaseResultLine result={results[index]} />}
                   </span>
                 </li>
               )
@@ -167,30 +158,20 @@ export function MissionView(props: MissionViewProps) {
   )
 }
 
-/** O resultado de uma fase no diário: o dado em negrito, ou o aviso "Ainda não conectado". */
-function PhaseResultLine({ t, result }: { t: Messages; result: PhaseResult }) {
+/** O resultado de uma fase no diário: o dado em negrito (e o segundo dado da fase, se houver). */
+function PhaseResultLine({ result }: { result: PhaseResult }) {
   return (
     <>
-      <PhaseResultValue t={t} result={result} />
-      {result.extra && <PhaseResultValue t={t} result={result.extra} />}
+      <strong className={styles.logResult}>{result.text}</strong>
+      {result.extra && <strong className={styles.logResult}>{result.extra}</strong>}
     </>
   )
 }
 
-function PhaseResultValue({ t, result }: { t: Messages; result: PhaseResult }) {
-  if (result.what) {
-    return (
-      <span className={styles.logResult}>
-        <NotConnected label={t.common.notConnected} what={result.what} />
-      </span>
-    )
-  }
-  return <strong className={styles.logResult}>{result.text}</strong>
-}
-
 /** Cena animada (só CSS). Mostra o que cada fase está fazendo; tocar no satélite só faz ele girar. */
-function MissionScene({ t, phase, complete, spins, onSpin, status, results }: MissionViewProps & { results: PhaseResult[] }) {
+function MissionScene({ t, phase, complete, spins, onSpin, status, results }: MissionViewProps & { results: (PhaseResult | null)[] }) {
   const m = t.mission
+  const lastResult = phase > 0 && !complete ? results[phase - 1] : null
   return (
     <div className={styles.scene} data-phase={phase} data-error={status === 'error'}>
       <svg viewBox="0 0 800 620" className={styles.sceneSvg} aria-hidden="true" focusable="false">
@@ -247,10 +228,10 @@ function MissionScene({ t, phase, complete, spins, onSpin, status, results }: Mi
           <SatelliteIcon size={72} />
         </span>
       </button>
-      {phase > 0 && !complete && results[phase - 1] && (
+      {lastResult && (
         <p key={phase} className={styles.achievement} aria-hidden="true">
           <CheckIcon />
-          <strong>{results[phase - 1].text}</strong>
+          <strong>{lastResult.text}</strong>
         </p>
       )}
       <p className={styles.tip} aria-hidden="true">

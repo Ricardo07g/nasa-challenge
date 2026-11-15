@@ -13,8 +13,6 @@ export const pt = {
     demoMode: 'Modo de demonstração: dados de exemplo, não são da NASA',
     disclaimer: 'Ajuda a decidir. Não substitui o seu agrônomo.',
     ready: 'Pronto',
-    /** Dado que a API ainda não manda: o mesmo texto em todas as telas. */
-    notConnected: 'Ainda não conectado',
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',
@@ -51,7 +49,7 @@ export const pt = {
   },
   axes: {
     chuva: 'Chuva',
-    dinheiro: 'Dinheiro',
+    renda: 'Renda',
     terra: 'Terra',
   },
   harvest: {
@@ -66,7 +64,7 @@ export const pt = {
   },
   motives: {
     menos_risco: 'Menos risco de seca',
-    mais_dinheiro: 'Mais dinheiro em ano bom',
+    mais_renda: 'Mais renda',
     cuidar_da_terra: 'Cuidar da terra',
   },
   crops: {
@@ -149,8 +147,6 @@ export const pt = {
       `Chuva de cada mês na região, em mm. ${
         years === last - first + 1 ? `Média de ${first} a ${last}` : `Média de ${years} anos entre ${first} e ${last}`
       }, ${source}.`,
-    /** Sem o dado da API, o gráfico vira "Ainda não conectado". */
-    chartTitle: 'Chuva de cada mês na região',
     months: { jan: 'Jan', feb: 'Fev', mar: 'Mar', apr: 'Abr', may: 'Mai', jun: 'Jun' },
     /** RF-24: o satélite não viu soja no ponto marcado na última safra (aviso que deixa seguir). */
     soyWarning: (safra: string) =>
@@ -172,15 +168,11 @@ export const pt = {
     found: (lat: string, lon: string) => `Lavoura encontrada: ${lat} / ${lon}`,
     /** Os anos vêm da conta (anos de chuva usados de fato). */
     rain: (years: number) => `Chuva e calor de ${years} anos lidos, dia a dia`,
-    rainWhat: 'Chuva e calor',
     history: (years: number) => `${years} anos de histórico do satélite`,
-    historyWhat: 'Histórico do satélite',
     /** Clima de 2041–2060 (NEX-GDDP-CMIP6); a previsão do outono aparece à parte. */
     future: (start: string, end: string) => `Clima de ${start} a ${end} lido`,
     futureRead: 'Clima do futuro lido',
-    futureWhat: 'Clima do futuro',
     forecast: (signal: string) => `Previsão do outono: ${signal}`,
-    forecastWhat: 'Previsão do outono',
     ready: 'Resposta pronta',
     collected: (count: number) => `Dados coletados ${count}/6`,
     complete: 'Missão completa!',
@@ -202,8 +194,6 @@ export const pt = {
     historyTitle: (idle: number, known: number, uncertain: number) =>
       `Sua área ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
     historySubtitle: 'O que cresceu depois da soja, ano a ano:',
-    /** Título do cartão quando o histórico ainda não vem da API. */
-    historyUnavailableTitle: 'O que cresceu depois da soja',
     historyStripLabel: (planted: number, known: number, uncertain: number) =>
       `Plantou em ${planted} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
     historySource: (from: string, to: string) => `Visto pelo satélite MODIS (NASA), de ${from} a ${to} de cada ano`,
@@ -217,7 +207,6 @@ export const pt = {
         skipped > 0 ? ` ${skipped === 1 ? '1 ano ficou' : `${skipped} anos ficaram`} de fora por falta de dado.` : ''
       }`,
     rainDaily: 'Dia por dia.',
-    rainUnavailableTitle: 'Chuva daqui',
     soilTitle: (texture: string) => `Terra ${texture}`,
     soilFromMap: 'Do mapa de solos.',
     soilFromUser: 'Você escolheu.',
@@ -274,8 +263,6 @@ export const pt = {
     /** O total é o mesmo da chuva; sem faixa quando todos os modelos dão o mesmo número. */
     futureYears: (good: number, total: number, range: { min: number; max: number } | null) =>
       `Daria certo em ${good} de ${total} anos${range ? ` (de ${range.min} a ${range.max}, conforme o modelo)` : ''}`,
-    /** P1: o detalhe de cada ano da faixa (ainda não vem da API). */
-    yearDetail: 'O que aconteceu em cada ano',
     yearOpen: (year: number) => `Ver o ano ${year}`,
     ensoNino: 'El Niño',
     ensoNina: 'La Niña (NOAA)',
@@ -290,7 +277,7 @@ export const pt = {
     sortLabel: 'Colocar na frente quem é melhor em:',
     rank: (position: number) => `${position}º`,
     fallowRain: 'Não depende de chuva',
-    fallowMoney: 'Não rende nada',
+    fallowIncome: 'Não dá grão',
     fallowSoil: 'Fica descoberta',
     legend: (period: string) =>
       `Cada quadrinho é um ano (${period}). Cheio: choveu o bastante. Vazio: faltou chuva na hora que a planta mais precisa.`,
@@ -319,18 +306,6 @@ export const pt = {
     coveredAll: (total: number) => `Terra coberta nos ${total} anos`,
     coveredSome: (covered: number, total: number) => `Terra coberta em ${covered} de ${total} anos`,
     grainYears: (grain: number, total: number) => `Grão em ${grain} de ${total} anos`,
-    startSmall: 'Comece por um pedaço',
-    hectares: 'Quantos hectares quer testar?',
-    decreaseArea: 'Diminuir 10 hectares',
-    increaseArea: 'Aumentar 10 hectares',
-    areaMargin: (value: string) => `Deve sobrar perto de R$ ${value}`,
-    areaSeed: (value: string) => `A semente custa perto de R$ ${value}`,
-    seedCost: 'Custo da semente',
-    worstDry: 'Pior ano seco',
-    areaDryNegative: (value: string) => `No pior ano seco, faltaria perto de R$ ${value}`,
-    areaDryPositive: (value: string) => `No pior ano seco, sobraria perto de R$ ${value}`,
-    areaRest: 'O resto da fazenda fica como hoje, para você comparar.',
-    areaNote: 'Valores aproximados; confira com o seu agrônomo.',
     gainTitle: 'O ganho vem na soja seguinte',
     gainText:
       'Num estudo no Cerrado, a soja depois de grão com braquiária rendeu 11% a mais do que depois de terra parada.',
@@ -374,7 +349,7 @@ export const pt = {
       crop: 'Opção',
       years: 'Anos que deram certo',
       future: 'Clima 2041–2060',
-      margin: 'Sobra por hectare',
+      income: 'Renda',
       soil: 'Terra',
     },
     /** Anos bons de N: os dois números vêm da API (chuva.anos_bons e chuva.anos). */
@@ -390,7 +365,6 @@ export const pt = {
   },
   community: {
     title: 'Na sua região',
-    regionTitle: 'Área parada na região, pelo satélite',
     regionSubtitle: (km: number) => `Até ${km} km da sua lavoura · visto pelo satélite`,
     regionSubtitleAway: (km: number, distance: number) =>
       `Raio de ${km} km em volta de um ponto a ${String(distance).replace('.', ',')} km da sua lavoura · visto pelo satélite`,
@@ -411,7 +385,6 @@ export const pt = {
     subtitle: (km: number, place: string, count: number) =>
       `Até ${km} km de ${place} · ${count} produtores participando`,
     neighborsTitle: (year: number) => `O que os vizinhos plantaram depois da soja em ${year}`,
-    neighborsTitleGeneric: 'O que os vizinhos plantaram depois da soja',
     liked: (liked: number, total: number) =>
       total === 1 ? `${liked} de 1 gostou` : `${liked} de ${total} gostaram`,
     dotsLabel: (liked: number, total: number) => `${liked} de ${total} vizinhos gostaram`,
@@ -446,6 +419,12 @@ export const pt = {
     validationTitle: 'Bateu com o que aconteceu?',
     validationText:
       'Em breve: os anos de aperto calculados comparados com os anos de quebra do milho 2ª safra em Uberlândia (IBGE).',
+    /** Tarefa 0040: a nota de renda sem preço nem custo (regra no regras.yaml do backend, grupo `renda`). */
+    incomeTitle: 'Renda sem valores em reais',
+    incomeText:
+      'A renda não usa preço nem custo. Quem dá grão para vender ganha na renda a mesma nota da segurança: em quantos anos deu certo, de 0 a 100. Quem não dá grão (as plantas de cobertura e a terra parada) fica com nota fixa na renda, hoje zero: é investimento na terra, e isso conta na nota da terra.',
+    incomeShown:
+      'Na resposta, a renda mostra só fatos: se dá grão para vender e em quantos anos faltou água ou fez calor.',
     blindTitle: 'O que o satélite não enxerga',
     /** O tamanho vem da fonte de chuva conectada: IMERG (10 km) ou NASA POWER (~50 km). */
     blindRain: (km: number) =>
@@ -454,7 +433,7 @@ export const pt = {
     blindRest:
       'O clima de 2041 a 2060 é uma faixa entre modelos, não uma previsão. Os limites ainda serão ajustados com agrônomos da região.',
     sourcesTitle: 'De onde vem cada dado',
-    /** Uma por fonte do produto; a tela marca as que a API ainda não manda como "Ainda não conectado". */
+    /** Uma por fonte do produto; a tela mostra só as que a API manda de fato (decisão D2). */
     sources: {
       nasa_power: { what: 'Chuva e calor, dia a dia', source: 'NASA POWER', scale: 'cerca de 50 km, por dia' },
       gpm_imerg: { what: 'Chuva mais detalhada', source: 'GPM IMERG (NASA)', scale: 'quadrados de 10 km, por dia' },

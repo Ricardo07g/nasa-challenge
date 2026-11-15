@@ -18,8 +18,8 @@ export class ApiError extends Error {
 }
 
 /**
- * O dado ainda não existe na API (o repository não tem versão http). A tela mostra
- * "Ainda não conectado", nunca dado de exemplo.
+ * O dado ainda não existe na API (o repository não tem versão http). O bloco não aparece na tela
+ * (decisão D2), nunca dado de exemplo.
  */
 export class NotConnectedError extends Error {
   constructor(what: string) {
@@ -30,8 +30,8 @@ export class NotConnectedError extends Error {
 
 /**
  * Dado que a API ainda não manda: repository sem versão http, ou endpoint que o backend ainda não tem
- * (404 sem `code`; o 404 de fora da área vem com `OUTSIDE_AREA`). Não é falha: a tela mostra
- * "Ainda não conectado".
+ * (404 sem `code`; o 404 de fora da área vem com `OUTSIDE_AREA`). Não é falha: o bloco simplesmente
+ * não aparece (decisão D2).
  */
 export function isNotConnected(error: unknown): boolean {
   if (error instanceof NotConnectedError) return true

@@ -25,7 +25,7 @@ type MetricRowProps = {
   /** Azul para dado de satélite (chuva); verde para o resto. */
   iconTone?: 'green' | 'blue'
   label: string
-  /** Sem valor (dado que a API ainda não manda), fica só o eixo e o conteúdo (ex.: "Ainda não conectado"). */
+  /** Sem valor, fica só o eixo e o conteúdo (ex.: uma frase embaixo do eixo). */
   value?: string
   pill?: ReactNode
   children?: ReactNode
@@ -115,29 +115,6 @@ export function StripLegend({ items, markers = [], note }: StripLegendProps) {
       ))}
       {note && <li>{note}</li>}
     </ul>
-  )
-}
-
-type NotConnectedProps = {
-  /** O texto do estado, sempre o mesmo: "Ainda não conectado" / "Not connected yet". */
-  label: string
-  /** O que ainda não está conectado (ex.: "Custo da semente"), quando o contexto não diz. */
-  what?: string
-}
-
-/**
- * Dado que a API ainda não manda: um traço no lugar do número e o aviso, com borda tracejada (como o
- * ano sem certeza). Igual em todo lugar, para o time ver o que falta conectar. Nunca número de exemplo.
- */
-export function NotConnected({ label, what }: NotConnectedProps) {
-  return (
-    <span className={styles.notConnected} data-status="not-connected">
-      <MinusIcon size={16} />
-      <span>
-        {what && `${what}: `}
-        <strong>{label}</strong>
-      </span>
-    </span>
   )
 }
 

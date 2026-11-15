@@ -1,7 +1,8 @@
 /**
  * Dados de EXEMPLO no formato exato dos contratos do plano técnico (§3). Usados enquanto o motor do
  * backend não existe (VITE_API_MODE=mock). Os números são ilustrativos, coerentes com as regras de
- * rótulo do §4.4 (Chuva: Bom ≥ 17 anos, Médio 12–16; Dinheiro: Bom ≥ 70; Terra: Bom ≥ 50).
+ * rótulo do §4.4 (Chuva: Bom ≥ 17 anos, Médio 12–16; Renda: Bom ≥ 70; Terra: Bom ≥ 50). Nenhum valor em
+ * reais (tarefa 0040): a renda do grão é a segurança climática da opção; quem não dá grão fica com 0.
  */
 import type { Lang } from '../../i18n/language'
 import type { Community } from '../../models/community'
@@ -33,26 +34,28 @@ function rainLabel(goodYears: number): Rotulo {
   return 'fraco'
 }
 
-function moneyText(lang: Lang, margin: number): string {
-  const value = Math.abs(margin).toLocaleString(lang === 'pt' ? 'pt-BR' : 'en-US')
-  if (lang === 'pt') {
-    return margin >= 0 ? `Sobra perto de R$ ${value} por hectare` : `Custa perto de R$ ${value} por hectare`
-  }
-  return margin >= 0 ? `About R$ ${value} left per hectare` : `Costs about R$ ${value} per hectare`
+/** Renda só com fatos, com as mesmas frases do regras.yaml do backend (tarefa 0040). */
+function incomeText(lang: Lang, grain: boolean): string {
+  if (lang === 'pt') return grain ? 'Dá grão para vender' : 'Não dá grão: é investimento na terra'
+  return grain ? 'Gives grain to sell' : 'No grain: it is an investment in the soil'
+}
+
+function riskText(lang: Lang, badYears: number): string {
+  return lang === 'pt'
+    ? `Risco de perder a lavoura: faltou água ou fez calor em ${badYears} de 20 anos.`
+    : `Risk of losing the crop: water ran short or it was too hot in ${badYears} of 20 years.`
 }
 
 type CropSeed = {
   id: Exclude<CropId, 'pousio'>
   name: Text
   goodYears: number
-  margin: number
-  moneyLabel: Rotulo
+  /** Dá grão para vender (grão e consórcio). */
+  grain: boolean
+  incomeLabel: Rotulo
   soil: { nota: number; rotulo: Rotulo; texto: Text }
   notes: Opcao['notas']
   limit: string
-  /** Custo da semente e margem do pior ano seco por hectare (RF-21, ilustrativos). */
-  seedCost: number
-  worstDry: number
   why: TextList
   how: TextList
 }
@@ -62,13 +65,11 @@ const CROPS: CropSeed[] = [
     id: 'milho_braquiaria',
     name: { pt: 'Milho com braquiária', en: 'Corn with brachiaria' },
     goodYears: 14,
-    margin: 700,
-    moneyLabel: 'bom',
+    grain: true,
+    incomeLabel: 'bom',
     soil: { nota: 50, rotulo: 'bom', texto: { pt: 'Fica coberta na seca', en: 'Stays covered in the dry season' } },
-    notes: { seguranca: 70, futuro: 60, solo: 50, renda: 74, final: 66 },
+    notes: { seguranca: 70, futuro: 60, solo: 50, renda: 70, final: 66 },
     limit: '2027-02-28',
-    seedCost: 520,
-    worstDry: -180,
     why: {
       pt: [
         'Plantando no meio de fevereiro, o milho floresce em abril. Em 6 dos últimos 20 anos, faltou chuva bem nessa hora (GPM IMERG + NASA POWER).',
@@ -90,13 +91,11 @@ const CROPS: CropSeed[] = [
     id: 'sorgo',
     name: { pt: 'Sorgo', en: 'Sorghum' },
     goodYears: 17,
-    margin: 540,
-    moneyLabel: 'medio',
+    grain: true,
+    incomeLabel: 'bom',
     soil: { nota: 30, rotulo: 'medio', texto: { pt: 'Palhada média', en: 'Medium straw' } },
-    notes: { seguranca: 85, futuro: 75, solo: 30, renda: 57, final: 62 },
+    notes: { seguranca: 85, futuro: 75, solo: 30, renda: 85, final: 62 },
     limit: '2027-03-20',
-    seedCost: 160,
-    worstDry: 120,
     why: {
       pt: [
         'O sorgo aguenta mais a seca que o milho: faltou chuva na floração em só 3 dos últimos 20 anos (GPM IMERG + NASA POWER).',
@@ -116,20 +115,18 @@ const CROPS: CropSeed[] = [
     id: 'milho_safrinha',
     name: { pt: 'Milho sozinho', en: 'Corn alone' },
     goodYears: 14,
-    margin: 950,
-    moneyLabel: 'bom',
+    grain: true,
+    incomeLabel: 'bom',
     soil: { nota: 10, rotulo: 'fraco', texto: { pt: 'Pouca cobertura', en: 'Little soil cover' } },
-    notes: { seguranca: 70, futuro: 55, solo: 10, renda: 100, final: 58 },
+    notes: { seguranca: 70, futuro: 55, solo: 10, renda: 70, final: 58 },
     limit: '2027-02-28',
-    seedCost: 480,
-    worstDry: -420,
     why: {
       pt: [
-        'É a opção que mais rende em ano bom, mas faltou chuva na floração em 6 dos últimos 20 anos (GPM IMERG + NASA POWER).',
+        'Dá grão para vender, mas faltou chuva na floração em 6 dos últimos 20 anos (GPM IMERG + NASA POWER).',
         'Depois da colheita, a terra fica com pouca palha até a próxima soja.',
       ],
       en: [
-        'It pays the most in a good year, but rain was short at flowering in 6 of the last 20 years (GPM IMERG + NASA POWER).',
+        'It gives grain to sell, but rain was short at flowering in 6 of the last 20 years (GPM IMERG + NASA POWER).',
         'After harvest, the soil has little straw until the next soybeans.',
       ],
     },
@@ -142,8 +139,8 @@ const CROPS: CropSeed[] = [
     id: 'crotalaria',
     name: { pt: 'Crotalária', en: 'Crotalaria' },
     goodYears: 17,
-    margin: -250,
-    moneyLabel: 'fraco',
+    grain: false,
+    incomeLabel: 'fraco',
     soil: {
       nota: 80,
       rotulo: 'bom',
@@ -151,16 +148,14 @@ const CROPS: CropSeed[] = [
     },
     notes: { seguranca: 85, futuro: 80, solo: 80, renda: 0, final: 55 },
     limit: '2027-02-28',
-    seedCost: 250,
-    worstDry: -250,
     why: {
       pt: [
         'Deixa de 60 a 100 kg de nitrogênio por hectare para a próxima soja e é altamente resistente ao nematoide.',
-        'Não tem colheita: o custo é só a semente.',
+        'Não tem colheita: é investimento na terra.',
       ],
       en: [
         'It leaves 60 to 100 kg of nitrogen per hectare for the next soybeans and is highly resistant to nematodes.',
-        'There is no harvest: the cost is only the seed.',
+        'There is no harvest: it is an investment in the soil.',
       ],
     },
     how: {
@@ -172,13 +167,11 @@ const CROPS: CropSeed[] = [
     id: 'milheto',
     name: { pt: 'Milheto', en: 'Pearl millet' },
     goodYears: 16,
-    margin: -120,
-    moneyLabel: 'fraco',
+    grain: false,
+    incomeLabel: 'fraco',
     soil: { nota: 60, rotulo: 'bom', texto: { pt: 'Muita palhada', en: 'Lots of straw' } },
     notes: { seguranca: 80, futuro: 70, solo: 60, renda: 0, final: 52 },
     limit: '2027-03-31',
-    seedCost: 110,
-    worstDry: -110,
     why: {
       pt: [
         'Cresce rápido e forma muita palha, mesmo com pouca chuva no fim do verão.',
@@ -252,17 +245,17 @@ function buildOption(seed: CropSeed, lang: Lang): Opcao {
       modelos: 3,
       cenario: 'ssp245',
     },
-    dinheiro: {
-      margem_ha: seed.margin,
-      rotulo: seed.moneyLabel,
-      texto: moneyText(lang, seed.margin),
-      pior_ano_seco_ha: seed.worstDry,
+    renda: {
+      da_grao: seed.grain,
+      anos_aperto: 20 - seed.goodYears,
+      rotulo: seed.incomeLabel,
+      texto: incomeText(lang, seed.grain),
+      risco: riskText(lang, 20 - seed.goodYears),
     },
     terra: { nota: seed.soil.nota, rotulo: seed.soil.rotulo, texto: seed.soil.texto[lang] },
     notas: seed.notes,
     porque: seed.why[lang],
     como_fazer: seed.how[lang],
-    custo_semente_ha: seed.seedCost,
     anos_detalhe: yearDetails(rainStrip(seed.goodYears), lang),
   }
 }
@@ -366,8 +359,8 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
   const late = params.colheita === 'tarde'
   const opcoes = late ? all.filter((opcao) => opcao.id !== 'milho_safrinha') : all
   const alternativas: { motivo: Motivo; opcao: CropId }[] = [
-    { motivo: 'menos_risco', opcao: 'sorgo' },
-    { motivo: 'mais_dinheiro', opcao: 'milho_safrinha' },
+    { motivo: 'menos_risco', opcao: 'milheto' },
+    { motivo: 'mais_renda', opcao: 'sorgo' },
     { motivo: 'cuidar_da_terra', opcao: 'crotalaria' },
   ]
   return {

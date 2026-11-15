@@ -92,7 +92,7 @@ describe('rainChart (gráfico "Chuva de cada mês na região", tela 3)', () => {
     expect(chart?.bars.map((bar) => bar.heightPct)).toEqual([0, 0])
   })
 
-  it('sem o dado da API, não há gráfico ("Ainda não conectado")', () => {
+  it('sem o dado da API, não há gráfico (decisão D2)', () => {
     expect(rainChart(undefined)).toBeNull()
     expect(rainChart(talhao())).toBeNull() // API que ainda não manda o campo
     expect(rainChart(talhao(null))).toBeNull()

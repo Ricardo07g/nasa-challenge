@@ -4,9 +4,9 @@ import type { Colheita, Talhao, Textura } from './talhao'
 
 export type Rotulo = 'bom' | 'medio' | 'fraco'
 
-export type Eixo = 'chuva' | 'dinheiro' | 'terra'
+export type Eixo = 'chuva' | 'renda' | 'terra'
 
-export type Motivo = 'menos_risco' | 'mais_dinheiro' | 'cuidar_da_terra'
+export type Motivo = 'menos_risco' | 'mais_renda' | 'cuidar_da_terra'
 
 export type CropId = 'milho_braquiaria' | 'milho_safrinha' | 'sorgo' | 'milheto' | 'crotalaria' | 'pousio'
 
@@ -36,15 +36,17 @@ export type Opcao = {
     modelos: number
     cenario: string
   } | null
-  /** RF-21: `pior_ano_seco_ha` ainda não vem da API (contrato proposto). */
-  dinheiro: { margem_ha: number; rotulo: Rotulo; texto: string; pior_ano_seco_ha?: number }
+  /**
+   * Renda só com fatos (tarefa 0040 do backend, antes `dinheiro`): nenhum valor em reais.
+   * `texto`: "Dá grão para vender" ou "Não dá grão: é investimento na terra"; `risco`: "Risco de perder a
+   * lavoura: faltou água ou fez calor em N de 20 anos." (N = `anos_aperto`, os anos com aperto do motor).
+   */
+  renda: { da_grao: boolean; anos_aperto: number; rotulo: Rotulo; texto: string; risco: string }
   terra: { nota: number; rotulo: Rotulo; texto: string }
   /** Notas de 0 a 100 (só na tela 9). `futuro` é null sem o CMIP6. */
   notas: { seguranca: number; futuro: number | null; solo: number; renda: number; final: number }
   porque: string[]
   como_fazer: string[]
-  /** RF-21: custo da semente por hectare; ainda não vem da API (contrato proposto). */
-  custo_semente_ha?: number
   /** P1: um item por ano da faixa de chuva, para tocar e ver o que aconteceu. */
   anos_detalhe?: AnoDetalhe[]
 }
@@ -100,7 +102,7 @@ export type Recomendacao = {
   plano_3_anos: { normal: Plano; seco: Plano; hoje: Plano }
   versao_dados: string
   aviso: string
-  /** RF-20: null (ou ausente) sem a previsão do ENSO na API: a tela mostra "Ainda não conectado". */
+  /** RF-20: null (ou ausente) sem a previsão do ENSO na API: o bloco do sinal não aparece. */
   sinal?: SinalOutono | null
 }
 

@@ -10,7 +10,7 @@ type Deps = { farm: FarmService }
 
 const defaultDeps: Deps = { farm: farmService }
 
-/** Tela 6 "Todas as opções": reordenar por Chuva, Dinheiro ou Terra é no navegador (RF-05). */
+/** Tela 6 "Todas as opções": reordenar por Chuva, Renda ou Terra é no navegador (RF-05). */
 export function useOptionsController(deps: Deps = defaultDeps) {
   const { redirectTo, recomendacao, status } = useFlowRecomendacao(deps.farm)
   const nav = useAnswerNav()

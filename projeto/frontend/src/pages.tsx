@@ -210,11 +210,6 @@ export function PlanPage() {
       signal={state.signal}
       scenario={state.scenario}
       onScenario={state.chooseScenario}
-      areaInput={state.areaInput}
-      onAreaChange={state.changeArea}
-      onAreaCommit={state.commitArea}
-      onAreaStep={state.stepArea}
-      totals={state.totals}
       rule={state.rule}
       plan={state.plan}
       communityTo={state.communityTo}

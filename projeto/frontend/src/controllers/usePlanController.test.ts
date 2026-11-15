@@ -47,38 +47,12 @@ describe('usePlanController (tela 7)', () => {
     expect(result.current.scenario).toBe('seco')
   })
 
-  it('hectares: começa em 50 e os totais acompanham a opção do 1º ano do plano (RF-21)', async () => {
+  it('sem "Comece por um pedaço": nada de hectares nem de totais em reais (tarefa 0040)', async () => {
     const { result } = await ready()
 
-    expect(result.current.areaInput).toBe('50')
-    expect(result.current.totals).toEqual({ margin: 700 * 50, seed: 520 * 50, worstDry: -180 * 50 })
-
-    act(() => result.current.changeArea('120'))
-    expect(result.current.hectares).toBe(120)
-    act(() => result.current.stepArea(-10))
-    expect(result.current.hectares).toBe(110)
-    expect(result.current.totals.margin).toBe(700 * 110)
-
-    act(() => result.current.chooseScenario('seco'))
-    expect(result.current.totals.margin).toBe(540 * 110)
-  })
-
-  it('campo vazio conta como 50 ha e volta a mostrar 50 ao sair do campo', async () => {
-    const { result } = await ready()
-
-    act(() => result.current.changeArea(''))
-    expect(result.current.hectares).toBe(50)
-    expect(result.current.areaInput).toBe('')
-    act(() => result.current.commitArea())
-    expect(result.current.areaInput).toBe('50')
-  })
-
-  it('o botão de diminuir não passa de 1 ha', async () => {
-    const { result } = await ready()
-
-    act(() => result.current.changeArea('5'))
-    act(() => result.current.stepArea(-10))
-    expect(result.current.hectares).toBe(1)
+    for (const key of ['areaInput', 'hectares', 'changeArea', 'commitArea', 'stepArea', 'totals']) {
+      expect(result.current).not.toHaveProperty(key)
+    }
   })
 
   it('traz a regra do dia de plantar', async () => {

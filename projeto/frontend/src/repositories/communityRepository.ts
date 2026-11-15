@@ -8,7 +8,8 @@ export type CommunityRepository = {
 
 /**
  * Tela 8, comunidade (PRD RF-13 a RF-15): ainda não há endpoint no backend. Com a API real, a tela
- * mostra "Ainda não conectado" (nada de vizinho simulado); os dados de exemplo ficam em mocks/.
+ * não mostra os blocos da comunidade (nada de vizinho simulado, decisão D2); os dados de exemplo ficam em
+ * mocks/.
  */
 export function createHttpCommunityRepository(): CommunityRepository {
   return {

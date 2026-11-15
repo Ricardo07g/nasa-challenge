@@ -40,9 +40,11 @@ describe('useOptionsController (tela 6)', () => {
     const { result } = renderHook(() => useOptionsController(d), { wrapper: providers(`/opcoes?${flow}`) })
     await waitFor(() => expect(result.current.status).toBe('ready'))
 
-    act(() => result.current.chooseAxis('dinheiro'))
-    const margins = result.current.summary!.options.map((o) => o.dinheiro.margem_ha)
-    expect(margins).toEqual([...margins].sort((a, b) => b - a))
+    // Renda pela nota de renda do motor, sem reais (tarefa 0040)
+    act(() => result.current.chooseAxis('renda'))
+    const incomes = result.current.summary!.options.map((o) => o.notas.renda)
+    expect(incomes).toEqual([...incomes].sort((a, b) => b - a))
+    expect(result.current.summary?.options[0].id).toBe('sorgo')
 
     act(() => result.current.chooseAxis(null))
     expect(result.current.axis).toBeNull()

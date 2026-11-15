@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  Banknote,
   CalendarDays,
   Check,
   ChevronDown,
@@ -156,8 +155,9 @@ export function SproutIcon({ size = 24 }: IconProps) {
   return <Sprout size={size} {...decorative} />
 }
 
-export function MoneyIcon({ size = 24 }: IconProps) {
-  return <Banknote size={size} {...decorative} />
+/** Renda: dá grão para vender (tarefa 0040: nenhum valor em reais, por isso nada de nota de dinheiro). */
+export function GrainIcon({ size = 24 }: IconProps) {
+  return <Wheat size={size} {...decorative} />
 }
 
 export function LeafIcon({ size = 24 }: IconProps) {

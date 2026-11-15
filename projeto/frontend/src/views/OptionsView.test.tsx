@@ -58,7 +58,7 @@ describe('OptionsView (tela 6)', () => {
     const fallow = cards[cards.length - 1]
     expect(fallow).toHaveTextContent('Deixar parado')
     expect(fallow).toHaveTextContent('Não depende de chuva')
-    expect(fallow).toHaveTextContent('Não rende nada')
+    expect(fallow).toHaveTextContent('Não dá grão')
     expect(fallow).toHaveTextContent('Fica descoberta')
     expect(screen.getByText(/Cada quadrinho é um ano \(20 anos entre 2005 e 2024\)/)).toBeInTheDocument()
     expect(screen.queryByText(/de 2006 a 2025/)).not.toBeInTheDocument()
@@ -69,7 +69,7 @@ describe('OptionsView (tela 6)', () => {
 
     const [first, second] = screen.getAllByRole('article')
     expect(first).toHaveTextContent('Clima 2041–2060Daria certo em 12 de 20 anos (de 10 a 13, conforme o modelo)')
-    expect(first.textContent).toMatch(/Deu certo em 14 de 20 anos.*Clima 2041–2060.*Sobra perto de R\$ 700/)
+    expect(first.textContent).toMatch(/Deu certo em 14 de 20 anos.*Clima 2041–2060.*Dá grão para vender/)
     expect(second).toHaveTextContent('Sorgo')
     expect(second).toHaveTextContent('Clima 2041–2060Daria certo em 15 de 20 anos (de 13 a 16, conforme o modelo)')
   })
@@ -84,22 +84,34 @@ describe('OptionsView (tela 6)', () => {
     expect(sorgo).not.toHaveTextContent('conforme o modelo')
   })
 
-  it('sem o dado do CMIP6, a linha do futuro de cada opção fica com "Ainda não conectado" (não some)', () => {
+  it('cada opção mostra a renda só com fatos: dá grão ou não e o risco, sem reais (tarefa 0040)', () => {
+    setup()
+
+    const sorgo = screen.getByRole('article', { name: 'Sorgo' })
+    expect(sorgo).toHaveTextContent(
+      'RendaDá grão para venderRisco de perder a lavoura: faltou água ou fez calor em 3 de 20 anos.',
+    )
+    expect(screen.getByRole('article', { name: 'Crotalária' })).toHaveTextContent('Não dá grão: é investimento na terra')
+    expect(screen.getByRole('button', { name: 'Renda' })).toBeInTheDocument()
+    expect(screen.queryByText('Dinheiro')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('R$')
+  })
+
+  it('sem o dado do CMIP6, a linha do futuro de cada opção não aparece (decisão D2)', () => {
     const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
     setup({ summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, futuro: null })) }) })
 
     const sorgo = screen.getByRole('article', { name: 'Sorgo' })
-    expect(sorgo).toHaveTextContent('Clima 2041–2060Ainda não conectado')
-    expect(sorgo.querySelector('[data-status="not-connected"]')).not.toBeNull()
-    expect(sorgo).not.toHaveTextContent('Daria certo')
+    expect(sorgo).not.toHaveTextContent('Clima 2041–2060')
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
   })
 
-  it('sem os detalhes dos anos na API, a legenda marca o que falta como "Ainda não conectado"', () => {
+  it('sem os detalhes dos anos na API, nada avisa o que falta (decisão D2)', () => {
     const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
     setup({ summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, anos_detalhe: undefined })) }) })
 
-    const note = screen.getByText('Ainda não conectado').closest('[data-status="not-connected"]')
-    expect(note).toHaveTextContent('O que aconteceu em cada ano: Ainda não conectado')
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/O que aconteceu em cada ano/)).not.toBeInTheDocument()
   })
 
   it('"Colocar na frente quem é melhor em": tocar escolhe; tocar de novo volta à ordem padrão', async () => {
@@ -162,11 +174,13 @@ describe('OptionsView (tela 6)', () => {
     )
   })
 
-  it('em inglês, sem o dado do CMIP6', () => {
+  it('em inglês, sem o dado do CMIP6, a linha do futuro não aparece', () => {
     const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'en')
     setup({ t: en, summary: summary({ ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, futuro: null })) }) })
 
-    expect(screen.getAllByRole('article')[0]).toHaveTextContent('2041–2060 climateNot connected yet')
+    expect(screen.getAllByRole('article')[0]).not.toHaveTextContent('2041–2060 climate')
+    expect(screen.queryByText(/Not connected yet/)).not.toBeInTheDocument()
+    expect(screen.getAllByRole('article')[0]).toHaveTextContent('IncomeGives grain to sell')
   })
 
   it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {

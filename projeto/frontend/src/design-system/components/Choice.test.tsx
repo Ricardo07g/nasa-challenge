@@ -5,16 +5,16 @@ import { ChipGroup, DateField, NumberStepper, RadioCard } from './Choice'
 
 const options = [
   { value: 'chuva', label: 'Chuva' },
-  { value: 'dinheiro', label: 'Dinheiro' },
+  { value: 'renda', label: 'Renda' },
   { value: 'terra', label: 'Terra' },
 ] as const
 
 describe('ChipGroup', () => {
   it('marca a opção escolhida com aria-pressed', () => {
-    render(<ChipGroup label="Ordenar" options={options} value="dinheiro" onChange={vi.fn()} />)
+    render(<ChipGroup label="Ordenar" options={options} value="renda" onChange={vi.fn()} />)
 
     expect(screen.getByRole('group', { name: 'Ordenar' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Dinheiro' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Renda' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Chuva' })).toHaveAttribute('aria-pressed', 'false')
   })
 

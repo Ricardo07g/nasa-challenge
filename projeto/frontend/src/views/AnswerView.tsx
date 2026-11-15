@@ -3,8 +3,8 @@ import { Button } from '../design-system/components/Button'
 import { AlternativeCard, Card } from '../design-system/components/Card'
 import { Disclosure, NumberedSteps, RecommendationHero } from '../design-system/components/Content'
 import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
-import { MetricRow, NotConnected, StatusPill } from '../design-system/components/Status'
-import { ClimateIcon, DropIcon, LeafIcon, MoneyIcon, ReportIcon, ShieldIcon, SoilIcon, SproutIcon } from '../design-system/icons'
+import { MetricRow, StatusPill } from '../design-system/components/Status'
+import { ClimateIcon, DropIcon, GrainIcon, LeafIcon, ReportIcon, ShieldIcon, SoilIcon, SproutIcon } from '../design-system/icons'
 import { formatDayMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
@@ -35,7 +35,7 @@ export type AnswerViewProps = {
 
 const MOTIVE_ICON: Record<Motivo, ReactNode> = {
   menos_risco: <ShieldIcon />,
-  mais_dinheiro: <MoneyIcon />,
+  mais_renda: <GrainIcon />,
   cuidar_da_terra: <LeafIcon />,
 }
 
@@ -78,20 +78,23 @@ function Answer({ t, lang, answer, aviso, sampleData, reportTo, telegramHref, ra
               >
                 <RainYears t={t} option={best} />
               </MetricRow>
+              {/* Sem o CMIP6, a linha do futuro não aparece (decisão D2). */}
+              {future && (
+                <MetricRow
+                  icon={<ClimateIcon />}
+                  iconTone="blue"
+                  label={a.future}
+                  value={a.futureYears(future.good, future.total, future.range)}
+                />
+              )}
               <MetricRow
-                icon={<ClimateIcon />}
-                iconTone="blue"
-                label={a.future}
-                value={future ? a.futureYears(future.good, future.total, future.range) : undefined}
+                icon={<GrainIcon />}
+                label={t.axes.renda}
+                value={best.renda.texto}
+                pill={<StatusPill rotulo={best.renda.rotulo}>{t.labels[best.renda.rotulo]}</StatusPill>}
               >
-                {!future && <NotConnected label={t.common.notConnected} />}
+                <span className={layout.muted}>{best.renda.risco}</span>
               </MetricRow>
-              <MetricRow
-                icon={<MoneyIcon />}
-                label={t.axes.dinheiro}
-                value={best.dinheiro.texto}
-                pill={<StatusPill rotulo={best.dinheiro.rotulo}>{t.labels[best.dinheiro.rotulo]}</StatusPill>}
-              />
               <MetricRow
                 icon={<SoilIcon />}
                 label={t.axes.terra}

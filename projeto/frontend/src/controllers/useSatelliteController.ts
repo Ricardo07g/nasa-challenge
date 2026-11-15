@@ -23,7 +23,7 @@ const defaultDeps: Deps = { farm: farmService }
 /**
  * Tela 4 "Pronto. O satélite já viu o resto.": histórico do talhão, chuva, terra (com "Não é? Trocar")
  * e clima. A terra escolhida fica na URL (RF-18) e segue para a resposta. Histórico, chuva e clima só
- * aparecem prontos com o dado de verdade; sem ele, "Ainda não conectado".
+ * aparecem com o dado de verdade; sem ele, o cartão não aparece (decisão D2).
  *
  * Tarefa 0039: no cartão do histórico, o produtor confirma as últimas safras ("Plantei" / "Deixei
  * parado"). A escolha vai para a URL (`confirmadas`), vale no lugar do satélite na faixa e segue para

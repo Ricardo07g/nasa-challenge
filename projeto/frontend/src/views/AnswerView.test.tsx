@@ -54,11 +54,10 @@ describe('AnswerView (tela 5)', () => {
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('href', nav.backTo)
   })
 
-  it('mostra chuva, dinheiro e terra com o rótulo de cada um e os 20 anos de chuva', () => {
+  it('mostra chuva, renda e terra com o rótulo de cada um e os 20 anos de chuva', () => {
     setup()
 
     expect(screen.getByText('Deu certo em 14 de 20 anos')).toBeInTheDocument()
-    expect(screen.getByText('Sobra perto de R$ 700 por hectare')).toBeInTheDocument()
     expect(screen.getByText('Fica coberta na seca')).toBeInTheDocument()
     expect(screen.getByText('Médio')).toBeInTheDocument()
     expect(screen.getAllByText('Bom')).toHaveLength(2)
@@ -69,6 +68,25 @@ describe('AnswerView (tela 5)', () => {
     expect(screen.queryByText('2006–2025')).not.toBeInTheDocument()
   })
 
+  it('a renda só com fatos: dá grão ou não e o risco de perder a lavoura, sem valor em reais (tarefa 0040)', () => {
+    setup()
+
+    const row = screen.getByText('Renda').parentElement!
+    expect(row).toHaveTextContent(
+      'RendaDá grão para venderRisco de perder a lavoura: faltou água ou fez calor em 6 de 20 anos.',
+    )
+    expect(screen.queryByText('Dinheiro')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('R$')
+  })
+
+  it('opção que não dá grão: "é investimento na terra"', () => {
+    const answer = buildAnswer(buildRecomendacao(params, 'pt'))!
+    const crotalaria = buildRecomendacao(params, 'pt').opcoes.find((opcao) => opcao.id === 'crotalaria')!
+    setup({ answer: { ...answer, best: crotalaria } })
+
+    expect(screen.getByText('Renda').parentElement).toHaveTextContent('Não dá grão: é investimento na terra')
+  })
+
   it('mostra o clima de 2041–2060 no cartão, logo depois da chuva, sem precisar abrir o "Por quê?"', () => {
     setup()
 
@@ -76,7 +94,7 @@ describe('AnswerView (tela 5)', () => {
     expect(row).toHaveTextContent('Clima 2041–2060Daria certo em 12 de 20 anos (de 10 a 13, conforme o modelo)')
     expect(screen.getByRole('button', { name: 'Por quê?' })).toHaveAttribute('aria-expanded', 'false')
     const card = row.closest('[class*="card"]')!
-    expect(card.textContent).toMatch(/Deu certo em 14 de 20 anos.*Clima 2041–2060.*Sobra perto de R\$ 700/)
+    expect(card.textContent).toMatch(/Deu certo em 14 de 20 anos.*Clima 2041–2060.*Dá grão para vender/)
   })
 
   it('quando todos os modelos dão o mesmo número, a linha do futuro fica sem a faixa', () => {
@@ -88,13 +106,13 @@ describe('AnswerView (tela 5)', () => {
     expect(row).not.toHaveTextContent('conforme o modelo')
   })
 
-  it('sem o dado do CMIP6, a linha do futuro fica com "Ainda não conectado" (não some)', () => {
+  it('sem o dado do CMIP6, a linha do futuro não aparece (nada de "Ainda não conectado", decisão D2)', () => {
     const answer = buildAnswer(buildRecomendacao(params, 'pt'))!
     setup({ answer: { ...answer, future: null } })
 
-    const row = screen.getByText('Clima 2041–2060').parentElement!
-    expect(row.querySelector('[data-status="not-connected"]')).toHaveTextContent('Ainda não conectado')
-    expect(row).not.toHaveTextContent('Daria certo')
+    expect(screen.queryByText('Clima 2041–2060')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Daria certo/)).not.toBeInTheDocument()
   })
 
   describe('linha do futuro em inglês', () => {
@@ -114,10 +132,11 @@ describe('AnswerView (tela 5)', () => {
       expect(row()).not.toHaveTextContent('depending on the model')
     })
 
-    it('sem o dado do CMIP6', () => {
+    it('sem o dado do CMIP6, a linha não aparece', () => {
       setup({ t: en, lang: 'en', answer: { ...answer, future: null } })
 
-      expect(row()).toHaveTextContent('2041–2060 climateNot connected yet')
+      expect(screen.queryByText('2041–2060 climate')).not.toBeInTheDocument()
+      expect(screen.queryByText(/Not connected yet/)).not.toBeInTheDocument()
     })
   })
 
@@ -190,6 +209,9 @@ describe('AnswerView (tela 5)', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Corn with brachiaria' })).toBeInTheDocument()
     expect(screen.getByText('Plant right after the soybean harvest, by February 28.')).toBeInTheDocument()
+    expect(screen.getByText('Income').parentElement).toHaveTextContent(
+      'IncomeGives grain to sellRisk of losing the crop: water ran short or it was too hot in 6 of 20 years.',
+    )
   })
 
   it('fora da área com dados preparados: explica e oferece a fazenda de exemplo', () => {
@@ -225,8 +247,9 @@ describe('AnswerView (tela 5)', () => {
 
     expect(screen.getByRole('img', { name: '14 anos bons e 6 anos com falta de água' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Ver o ano/ })).not.toBeInTheDocument()
-    const note = screen.getByText('Ainda não conectado').closest('[data-status="not-connected"]')
-    expect(note).toHaveTextContent('O que aconteceu em cada ano: Ainda não conectado')
+    // Decisão D2: o que a API não manda simplesmente não aparece (nada de "Ainda não conectado")
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/O que aconteceu em cada ano/)).not.toBeInTheDocument()
   })
 
   it('com os detalhes dos anos, não há aviso de "Ainda não conectado"', () => {
