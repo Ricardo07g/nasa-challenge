@@ -329,14 +329,38 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   Sem o raio-X (API antiga ou falha), o painel não aparece e a terra fica num cartão claro com a troca. O
   `MiniMap` mostra o crédito do Leaflet sem a bandeira. Bloco sem dado não aparece; aviso nunca leva o selo de
   "pronto" (✓).
-- **`/planejamento` (tela final, tarefa 0058, RF-41):** por enquanto, só os blocos que saíram do raio-X, como eram
-  ("Alertas da sua área", "20 anos de chuva" e "Clima 2041–2060"; sem o raio-X, os cartões de antes), com o
-  `BackButton` para `/resposta` e o "Ouvir resumo" (`planningSummary`). `PlanningView` + `usePlanningController`.
-  Será refeita no próximo pacote; o link para ela ("Ver meu planejamento →") é do Plano de 3 anos.
+- **Tela 6 "Seu planejamento" (`/planejamento`, pacote 3, tarefa 0060, RF-43):** a tela final do fluxo (`PlanningPage` →
+  `controllers/usePlanningController.ts` → `views/PlanningView.tsx`, com o `PlanReport`). **O plano é o mesmo da tela 5:**
+  as duas telas chamam o `controllers/usePlanFlow.ts` (recomendação, escolha do 1º ano, comparação, sugestão em cadeia do
+  `/api/plano/sugestao` e, com `ano3`, o `/api/plano`) com a mesma URL; não recalcule o plano em outro lugar. As regras da
+  tela ficam em `services/planningService.ts` (`harvestDay` = a `data` ou o dia da época no motor, `bandDate`;
+  `sowingDay` = a `data` ou a `entrada.semeadura`; `planTimeline`, `planningAlerts`, `pastFutureRows`, `planGain`,
+  `lastSeasons`) e as frases, usadas pela tela, pelo relatório e pelo "Ouvir resumo", em `i18n/planningTexts.ts`
+  (`stepText`, `planningAlertText`, `gainText`, `planningSummary`, `scenarioName`); os textos no bloco `planning` das
+  mensagens. Ordem dos blocos: topo ("← Voltar ao plano" para `/plano` com o fluxo, "✓ Seu planejamento está pronto", o
+  lugar: "Lavoura de demonstração, perto de Uberlândia (MG)" com `exemplo=1`, senão "Sua lavoura, perto de {lugar}" pelo
+  reverse do Photon com o uso justo, um pedido com o `useDebouncedRequest`, e o `nearestPlace` sem resposta; "colheita da
+  soja prevista em {data}" ou a época), resumo do plano (3 cartões com `PlantPhoto` e o cartão das ações: "Imprimir
+  relatório" e "Mudar o plano"), "O que fazer agora" (passos por regra: agora, fevereiro com a previsão da NOAA do
+  `sinal` e a etiqueta "Plano B: X" do `plano_ab`, que some sem Plano B ou com o 1º ano igual a ele; colheita; plantio
+  até o `data_limite`, em laranja com `fora_do_prazo`; a fase da água pelo `ciclo` e o `criterio` do `/recomendacao`;
+  o fim do ciclo pelo `renda.da_grao`; out–nov; **sem "Adicionar à agenda"**), alertas da área (até 3, cada um só com
+  dado: o `sinal`, `alertas.chuva_forte` e `alertas.fogo` do raio-X; "Saiba mais" pelo `GuideLink` com os slugs
+  `como-evitar-erosao` e `fogo-na-palha`; a faixa da Defesa Civil com "Ver alertas oficiais" para
+  `/avisos…#alertas-oficiais`, o id do bloco oficial da tela de Avisos), passado e futuro (`anos[].anos_bons` e
+  `futuro_anos_bons` do `/api/plano`; o `cartoes.clima_futuro` do raio-X, com `clima-2041-2060`), comunidade "em breve"
+  com "Abrir o Guia" (`/guia`; **nenhum link para `/comunidade`**) e o cartão do relatório (sem as 3 safras respondidas,
+  o `MissingSeasonsNotice`). **Relatório:** os dois "Imprimir relatório" chamam `window.print()` (injetado no controller);
+  o `PlanReport` fica num portal no `<body>`, `hidden` na tela, e o CSS de impressão esconde o resto (cabeçalho em
+  `<div>`: o `global.css` esconde todo `<header>`); 7 seções (Sua terra, Últimas safras, Opções comparadas, Plano de 3 anos
+  com Prós e Contras pelos `prosTexts`/`consTexts` da tela 5 e "Como o plano ajuda a ganhar", O que fazer e quando,
+  Alertas e clima, Fontes e aviso), 2 folhas A4 na lavoura de demonstração. Os cartões dos anos no celular: foto de 108 px
+  à esquerda; a 360 px as barras do "Deu certo" ficam com 56 px e o "X de 20" desce se não couber (sem rolagem lateral).
+  É a **única tela com "Imprimir relatório"**.
 - **Tela 5 "Escolher" + "Plano de 3 anos" (pacote 2, tarefa 0059, RF-42; motor na tarefa 0056 do backend):** as
   antigas abas Sugestão, Comparar e Plano (tarefas 0044 e 0045) viraram **uma tela com 2 abas** (`ChoosePlanPage` →
-  `controllers/useChoosePlanController.ts` → `views/ChoosePlanView.tsx`, com `ChooseTab`, `PlanTab`, `ChooseModals` e
-  `PlanReport`). `/resposta` e `/opcoes` abrem "1. Escolher"; `/plano`, "2. Plano de 3 anos". As abas são o `Tabs` do
+  `controllers/useChoosePlanController.ts` → `views/ChoosePlanView.tsx`, com `ChooseTab`, `PlanTab` e `ChooseModals`).
+  O plano vem do `usePlanFlow` (o mesmo da tela 6). `/resposta` e `/opcoes` abrem "1. Escolher"; `/plano`, "2. Plano de 3 anos". As abas são o `Tabs` do
   design system (`tablist`; setas, Home e End); trocar de aba é `useReplaceUrl` (sem rolar); o botão do fim da aba 1
   abre a aba 2 do topo. O "Voltar" vai para `/satelite`. **O que fica na URL** (`flowParams.ts`): `objetivo`,
   `comparar` (até 3, o pousio vale), `escolha` (o 1º ano do plano; sem ela, o `pensa` do raio-X e, com "Ainda não
@@ -358,12 +382,12 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   **Aba Plano:** 3 cartões em cadeia (o "Por quê:" é o `motivo` do motor), "O que plantar" nativo em cada ano,
   alerta (`role="status"`) com "Voltar ao plano sugerido", notas "Seu plano × Como é hoje" (cada nota abre a conta),
   chuva aproveitada, "E se o ano vier seco?" (o `sinal`, o SMAP, o Plano A e o **Plano B do motor**, nunca fixo;
-  "Não precisa" com `motivo` `pousio` ou `nunca_falhou`) e "Ver meu planejamento →" (`/planejamento`). **"Como é
+  "Não precisa" com `motivo` `pousio` ou `nunca_falhou`) e "Ver meu planejamento →" (`/planejamento` com o fluxo). **"Como é
   hoje"** = as 3 últimas safras do raio-X (`todayCrops`): sem resposta, "não preenchido" com o
   `MissingSeasonsNotice` (grava `safras` sem rolar); com "Não plantei" (`sem_soja`), "Sem soja em {safra}: não dá para
-  comparar", **sem** o aviso. **Relatório:** "Imprimir relatório" chama `window.print()` (injetado no controller);
-  `PlanReport` fica num portal direto no `<body>`, `hidden` na tela, e o CSS de impressão esconde o resto do `<body>`
-  (o cabeçalho do relatório é `<div>`: o `global.css` esconde todo `<header>` na impressão). Com a recomendação na
+  comparar", **sem** o aviso. **Sem relatório nem "Imprimir relatório"** desde o pacote 3
+  (tarefa 0060): as abas ficam sozinhas à esquerda e a frase antes de "Ver meu planejamento →" fala do relatório para
+  imprimir, que fica só na tela 6. Com a recomendação na
   mão, um novo pedido não apaga a tela (sem pisca nem rolagem). Fotos: `PlantPhoto` no cartão, nas colunas e nos
   anos. Links do Guia: `GuideLink` (nova aba), slugs em `CROP_GUIDE` (`views/choiceTexts.ts`) e `PLAN_ARTICLES`.
   **Não há mais relatório antigo nem a tela solta da safra passada:** `/relatorio` e `/safra-passada?…&ano=X` levam
@@ -392,8 +416,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   para a fala; sem voz no navegador, o link não aparece. **Desde o pacote 2, toda tela tem o seu**, montado com os números
   dela no controller (ex.: avisos = o lugar e quantos avisos ativos; comunidade = o raio e o plantio da safra mais
   recente; artigo do Guia = o título e o "Em uma frase", `articleSummary`). O texto não deve mudar a cada segundo
-  (cada troca para a fala): na missão, nada de fase; no Guia, o total de artigos, não o da busca. Os da tela 4 e de
-  `/planejamento` ficam em `i18n/xrayTexts.ts`.
+  (cada troca para a fala): na missão, nada de fase; no Guia, o total de artigos, não o da busca. O da tela 4 fica em
+  `i18n/xrayTexts.ts`; o da tela 6, em `i18n/planningTexts.ts` (`planningSummary`).
 - **Modal reutilizável (`design-system/components/Modal.tsx`, tarefa 0052):** o padrão de todo "ver detalhes".
   `<dialog>` nativo (`showModal`; sem ele, o atributo `open`): fecha com o X, com Esc e com clique fora (no fundo
   escurecido); o foco entra no modal, fica preso nele (Tab e Shift+Tab dão a volta) e volta a quem o abriu. Quem
@@ -414,7 +438,7 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   toda imagem ou vídeo gerado por IA leva a marca d'água visível "Imagem gerada por IA" (a foto da Início, do
   Lovable, leva), e o uso de IA em código e textos fica declarado nos créditos.
 - **Fotos das plantas (tarefa 0055):** toda foto de cultura nas telas novas é o `PlantPhoto` (a tela 5 usa no cartão
-  da sugestão, na comparação e no plano). Fotos reais do Wikimedia Commons, **baixadas** para `public/fotos/` (nunca
+  da sugestão, na comparação e no plano; a tela 6, nos cartões do resumo do plano). Fotos reais do Wikimedia Commons, **baixadas** para `public/fotos/` (nunca
   link direto), só CC BY, CC BY-SA ou domínio público, sem logo nem marca, com até 800 px de largura e 250 KB. Os dados
   de cada cultura (arquivo, autor, licença, link do Commons, `alt` e a legenda opcional, em pt e en) ficam só em
   `content/plantPhotos.ts`; a tela mostra com `<PlantPhoto {...plantPhotoProps(cultura, lang)} height={…} />`
