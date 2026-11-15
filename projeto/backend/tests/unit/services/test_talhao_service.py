@@ -4,29 +4,36 @@ from datetime import date
 from typing import Any
 
 from app.models.climate import ClimateSeason, Cmip6Delta
-from app.models.talhao import FonteDado, HistoricoAno, NdviRecord, SoloInfo
+from app.models.talhao import ChuvaMes, FonteDado, HistoricoAno, NdviRecord, SoloInfo
 from app.services.field_history_service import FieldHistoryService
 from app.services.talhao_service import TalhaoService
 
+DAYS = 212  # 1/jan a 31/jul
+
 
 class FakeClimateRepository:
-    def __init__(self, deltas: list[Cmip6Delta] | None = None) -> None:
+    """Temporadas de teste de 2005 a 2024 com 2 mm de chuva todo dia (valores redondos)."""
+
+    def __init__(self, deltas: list[Cmip6Delta] | None = None, seasons: bool = True) -> None:
         self._deltas = deltas or []
+        self._seasons = seasons
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
         return "-190_-482" if -19.25 <= lat < -18.75 and -48.4375 <= lon < -47.8125 else None
 
     def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
+        if not self._seasons:
+            return []
         return [
             ClimateSeason(
                 cell_id=cell_id,
                 year=year,
                 start_date=date(year, 1, 1),
                 lat=-18.95,
-                rain_mm=(1.0,),
+                rain_mm=tuple([2.0] * DAYS),
                 rain_source="nasa_power",
-                tmax_c=(30.0,),
-                tmin_c=(18.0,),
+                tmax_c=tuple([30.0] * DAYS),
+                tmin_c=tuple([18.0] * DAYS),
             )
             for year in range(2005, 2025)
         ]
@@ -125,6 +132,27 @@ def test_should_return_outside_area_without_sources_when_point_has_no_data() -> 
     assert talhao.dentro_da_area is False
     assert talhao.celula_id is None
     assert talhao.dados_fontes == ()
+    assert talhao.chuva_mensal is None
+
+
+def test_should_return_monthly_rain_of_the_cell_from_its_seasons() -> None:
+    chuva = _service().inspect_talhao(lat=-18.9543, lon=-48.1993).chuva_mensal
+
+    assert chuva is not None
+    # 2 mm/dia: janeiro = 62; fevereiro = (15 anos x 56 + 5 bissextos x 58) / 20 = 56,5
+    assert chuva.meses[:2] == (ChuvaMes(mes=1, media_mm=62.0), ChuvaMes(mes=2, media_mm=56.5))
+    assert [m.mes for m in chuva.meses] == [1, 2, 3, 4, 5, 6]
+    assert chuva.anos == tuple(range(2005, 2025))
+    assert chuva.fonte == "nasa_power"
+
+
+def test_should_return_no_monthly_rain_when_the_cell_has_no_seasons() -> None:
+    climate = FakeClimateRepository(seasons=False)
+
+    talhao = _service(climate).inspect_talhao(lat=-18.9543, lon=-48.1993)
+
+    assert talhao.dentro_da_area is True
+    assert talhao.chuva_mensal is None
 
 
 def test_should_hide_history_and_use_default_harvest_when_no_ndvi() -> None:

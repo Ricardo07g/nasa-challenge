@@ -1,8 +1,11 @@
-"""JSON de GET /api/talhao (plano técnico §3.1; `historico` no formato do guia do NDVI)."""
+"""JSON de GET /api/talhao (plano técnico §3.1; `historico` no formato do guia do NDVI).
+
+`chuva_mensal` é o gráfico "Chuva de cada mês na região" da tela 3 (tarefa 0028).
+"""
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.talhao import HistoricoTalhao, SituacaoAno, Talhao
+from app.models.talhao import ChuvaMensal, HistoricoTalhao, SituacaoAno, Talhao
 
 
 class _Frozen(BaseModel):
@@ -60,6 +63,25 @@ class HistoricoSchema(_Frozen):
         )
 
 
+class ChuvaMesSchema(_Frozen):
+    mes: int  # 1 = janeiro
+    media_mm: float  # média, entre os anos, da chuva total do mês
+
+
+class ChuvaMensalSchema(_Frozen):
+    meses: list[ChuvaMesSchema]  # janeiro a junho
+    anos: list[int]  # anos que entraram na média, em ordem
+    fonte: str  # rain_source das temporadas (ex.: nasa_power); mais de uma, separadas por "+"
+
+    @classmethod
+    def from_model(cls, chuva: ChuvaMensal) -> "ChuvaMensalSchema":
+        return cls(
+            meses=[ChuvaMesSchema(mes=m.mes, media_mm=m.media_mm) for m in chuva.meses],
+            anos=list(chuva.anos),
+            fonte=chuva.fonte,
+        )
+
+
 class FonteDadoSchema(_Frozen):
     fonte: str
     periodo: str
@@ -77,6 +99,7 @@ class TalhaoResponse(_Frozen):
     colheita_sugerida: ColheitaSugeridaSchema
     historico: HistoricoSchema | None
     dados: list[FonteDadoSchema]
+    chuva_mensal: ChuvaMensalSchema | None  # null fora da área ou sem temporada completa
 
     @classmethod
     def from_model(cls, talhao: Talhao) -> "TalhaoResponse":
@@ -105,4 +128,9 @@ class TalhaoResponse(_Frozen):
                 )
                 for d in talhao.dados_fontes
             ],
+            chuva_mensal=(
+                ChuvaMensalSchema.from_model(talhao.chuva_mensal)
+                if talhao.chuva_mensal is not None
+                else None
+            ),
         )
