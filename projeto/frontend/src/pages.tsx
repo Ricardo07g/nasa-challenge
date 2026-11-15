@@ -2,8 +2,8 @@
  * Ligação de cada rota: controller (estado) → view (desenho). Sem lógica aqui.
  */
 import { Navigate, Outlet, ScrollRestoration, useOutletContext, useParams, useSearchParams } from 'react-router'
-import { useAnswerController } from './controllers/useAnswerController'
 import { useAvisosController } from './controllers/useAvisosController'
+import { useChoosePlanController } from './controllers/useChoosePlanController'
 import { useCommunityController } from './controllers/useCommunityController'
 import { useGuideArticleController, useGuideController } from './controllers/useGuideController'
 import { useDesignSystemController } from './controllers/useDesignSystemController'
@@ -11,8 +11,6 @@ import { useMethodController } from './controllers/useMethodController'
 import { useMissionController } from './controllers/useMissionController'
 import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useExampleController } from './controllers/useExampleController'
-import { useOptionsController } from './controllers/useOptionsController'
-import { usePlanController } from './controllers/usePlanController'
 import { usePlanningController } from './controllers/usePlanningController'
 import { useSatelliteController, type SatelliteDeps } from './controllers/useSatelliteController'
 import { useShellController } from './controllers/useShellController'
@@ -21,16 +19,14 @@ import { useWhenController } from './controllers/useWhenController'
 import { useWhereController } from './controllers/useWhereController'
 import { useI18n } from './i18n/useI18n'
 import { keepFlowQuery } from './services/flowParams'
-import { AnswerView } from './views/AnswerView'
 import { AvisosView } from './views/AvisosView'
+import { ChoosePlanView } from './views/ChoosePlanView'
 import { CommunityView } from './views/CommunityView'
 import { DesignSystemView } from './views/DesignSystemView'
 import { FlowLoading } from './views/FlowStates'
 import { GuideArticleView, GuideView } from './views/GuideView'
 import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
-import { OptionsView } from './views/OptionsView'
-import { PlanView } from './views/PlanView'
 import { PlanningView } from './views/PlanningView'
 import { SatelliteView } from './views/SatelliteView'
 import { ShellView } from './views/ShellView'
@@ -186,34 +182,21 @@ export function SatellitePage({ deps }: { deps?: SatelliteDeps } = {}) {
   )
 }
 
-export function AnswerPage() {
+/**
+ * Tela 5 do pacote 2 (`/resposta`, `/opcoes` e `/plano`): as abas "1. Escolher" e "2. Plano de 3 anos" e o
+ * relatório para imprimir. `/plano` abre a aba do plano; as outras, a aba "Escolher".
+ */
+export function ChoosePlanPage() {
   const { lang, messages: t } = useI18n()
-  useDocumentTitle(t.suggestion.tabs.suggestion)
-  const state = useAnswerController()
+  const state = useChoosePlanController()
+  useDocumentTitle(state.tab === 'plan' ? t.choose.tabPlan : t.choose.title)
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
-  return (
-    <AnswerView
-      t={t}
-      lang={lang}
-      nav={state.nav}
-      status={state.status}
-      onRetry={state.retry}
-      suggestion={state.suggestion}
-      colheita={state.colheita}
-      aviso={state.aviso}
-      sampleData={state.sampleData}
-      telegramHref={state.telegramHref}
-      rain={state.rain}
-      rainEnd={state.rainEnd}
-      planTo={state.planTo}
-      year={state.year}
-    />
-  )
+  return <ChoosePlanView t={t} lang={lang} state={state} />
 }
 
 /**
  * Endereços antigos (tarefa 0044): `/relatorio` saiu e `/safra-passada` virou o detalhe do ano no explorador
- * da Sugestão. Levam para a Sugestão com o mesmo caminho (e o `ano`, na safra passada).
+ * da Sugestão. Levam para a tela 5 com o mesmo caminho (e o `ano`, na safra passada: abre o "Por que essa sugestão?" naquele ano).
  */
 export function LegacyAnswerRedirect({ keepYear = false }: { keepYear?: boolean }) {
   const [search] = useSearchParams()
@@ -221,50 +204,6 @@ export function LegacyAnswerRedirect({ keepYear = false }: { keepYear?: boolean 
   const year = keepYear ? search.get('ano') : null
   const withYear = year && /^\d{4}$/.test(year) ? `${query}${query ? '&' : '?'}ano=${year}` : query
   return <Navigate to={`/resposta${withYear}`} replace />
-}
-
-export function OptionsPage() {
-  const { lang, messages: t } = useI18n()
-  useDocumentTitle(t.suggestion.compareTitle)
-  const state = useOptionsController()
-  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
-  return (
-    <OptionsView
-      t={t}
-      lang={lang}
-      nav={state.nav}
-      status={state.status}
-      onRetry={state.retry}
-      compare={state.compare}
-      onToggle={state.toggle}
-      onCompareWith={state.compareWith}
-      planLink={state.planLink}
-    />
-  )
-}
-
-export function PlanPage() {
-  const { lang, messages: t } = useI18n()
-  useDocumentTitle(t.plan.title)
-  const state = usePlanController()
-  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
-  return (
-    <PlanView
-      t={t}
-      lang={lang}
-      nav={state.nav}
-      status={state.status}
-      onRetry={state.retry}
-      signal={state.signal}
-      plan={state.plan}
-      evaluation={state.evaluation}
-      today={state.today}
-      onChooseCrop={state.chooseCrop}
-      onReset={state.reset}
-      onAnswerToday={state.answerToday}
-      communityTo={state.communityTo}
-    />
-  )
 }
 
 /**

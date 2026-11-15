@@ -1,0 +1,86 @@
+/*
+ * Relatório do planejamento (tela 5): escondido na tela (`hidden`); na impressão, o app some e só ele aparece.
+ * Fica direto no <body> (portal), então basta esconder os outros filhos do <body>.
+ */
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  :global(body) {
+    background: var(--color-surface);
+  }
+
+  :global(body) > :global(*:not([data-print-report])) {
+    display: none !important;
+  }
+
+  .report {
+    display: block !important;
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+}
+
+.report h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20pt;
+}
+
+.report h2 {
+  margin: 16pt 0 6pt;
+  padding-bottom: 3pt;
+  border-bottom: 1px solid var(--color-border-strong);
+  font-family: var(--font-display);
+  font-size: 13.5pt;
+  break-after: avoid;
+}
+
+.report section {
+  break-inside: avoid;
+}
+
+.report table {
+  width: 100%;
+  margin-top: 6pt;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+}
+
+.report th,
+.report td {
+  padding: 4pt 6pt;
+  border: 1px solid var(--color-border-control);
+  text-align: left;
+  vertical-align: top;
+}
+
+.report thead th {
+  background: var(--color-divider);
+}
+
+.report ul {
+  margin: 4pt 0;
+  padding-left: 16pt;
+}
+
+.report p {
+  margin: 4pt 0;
+}
+
+.head {
+  margin-bottom: 4pt;
+}
+
+.meta {
+  color: var(--color-text-muted);
+}
+
+.disclaimer {
+  margin-top: 14pt !important;
+  color: var(--color-text-muted);
+  font-size: 9.5pt;
+}

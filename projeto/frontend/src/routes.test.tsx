@@ -35,27 +35,28 @@ describe('rotas', () => {
     expect(screen.getByRole('main')).toBeInTheDocument()
   })
 
-  it('as telas da resposta têm as abas, com a atual marcada e o ponto mantido na URL', async () => {
+  it('a tela 5 tem as abas "Escolher" e "Plano de 3 anos"; /plano abre a aba do plano e o Voltar vai ao raio-X', async () => {
     renderAt('/plano?lat=-18.9543&lon=-48.1993&colheita=meio')
 
-    const nav = await screen.findByRole('navigation', { name: 'Telas da resposta' })
-    expect(nav).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Plano de 3 anos' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Sugestão' })).toHaveAttribute(
-      'href',
-      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
-    )
-    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
-      'href',
-      '/quando?lat=-18.9543&lon=-48.1993&colheita=meio',
-    )
+    const tabs = await screen.findByRole('tablist', { name: 'Etapas' })
+    expect(tabs).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Plano de 3 anos' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('href', '/satelite?lat=-18.9543&lon=-48.1993&colheita=meio')
+    expect(document.title).toBe('Raiz Orbital – Plano de 3 anos')
+  })
+
+  it('/opcoes abre a aba "Escolher" da tela 5', async () => {
+    renderAt('/opcoes?lat=-18.9543&lon=-48.1993&colheita=meio')
+
+    expect(await screen.findByRole('tab', { name: 'Escolher' })).toHaveAttribute('aria-selected', 'true')
+    expect(await screen.findByRole('group', { name: 'Comparar:' })).toBeInTheDocument()
   })
 
   it('as outras telas não têm as abas da resposta', async () => {
     renderAt('/onde')
 
     await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })
-    expect(screen.queryByRole('navigation', { name: 'Telas da resposta' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tablist', { name: 'Etapas' })).not.toBeInTheDocument()
   })
 
   it('a pergunta da colheita abre com o ponto da URL, o título da aba e sem data (tarefa 0057)', async () => {
@@ -171,14 +172,15 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
   })
 
-  it('"Ver o que plantar" na tela 4 abre a resposta com a melhor opção', async () => {
+  it('"Ver o que plantar" na tela 4 abre a tela 5 com a sugestão', async () => {
     renderAt('/satelite?lat=-18.9543&lon=-48.1993&colheita=meio')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Ver o que plantar' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Milho com braquiária' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Sugestão' })).toHaveAttribute('aria-current', 'page')
-    expect(document.title).toBe('Raiz Orbital – Sugestão')
+    expect(await screen.findByRole('heading', { level: 1, name: 'O que plantar depois da soja' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 2, name: 'Milho com braquiária' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Escolher' })).toHaveAttribute('aria-selected', 'true')
+    expect(document.title).toBe('Raiz Orbital – O que plantar depois da soja')
   })
 
   it('a resposta sem a colheita volta para a pergunta 2', async () => {
@@ -187,29 +189,15 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
   })
 
-  it('a aba "Comparar" abre a tela 6 mantendo o caminho e o objetivo', async () => {
+  it('na tela 5, o objetivo da URL vem marcado e a aba "Plano de 3 anos" abre o plano em cadeia', async () => {
     renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&objetivo=terra')
 
-    await userEvent.click(await screen.findByRole('link', { name: 'Comparar' }))
+    expect(await screen.findByRole('button', { name: 'Cuidar da terra' })).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(screen.getByRole('tab', { name: 'Plano de 3 anos' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Comparar' })).toBeInTheDocument()
-    // Tarefa 0045: as 3 melhores do objetivo lado a lado, numa tabela.
-    expect(await screen.findByRole('table', { name: /Lado a lado: Crotalária/ })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Comparar' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('button', { name: 'Cuidar da terra' })).toHaveAttribute('aria-pressed', 'true')
-    expect(document.title).toBe('Raiz Orbital – Comparar')
-  })
-
-  it('a aba "Plano de 3 anos" abre a linha do tempo do plano', async () => {
-    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
-
-    await userEvent.click(await screen.findByRole('link', { name: 'Plano de 3 anos' }))
-
-    // Tarefa 0045: o plano editável, ano a ano, com as notas ao lado do "Como é hoje" (GET /api/plano de exemplo).
-    expect(await screen.findByRole('list', { name: 'Seu plano ano a ano' })).toHaveTextContent('2027Milho com braquiária')
+    const years = await screen.findByRole('list', { name: 'Seu plano ano a ano' })
+    expect(years).toHaveTextContent('Depois da soja 2026/27')
     expect(await screen.findByRole('table', { name: 'Notas do seu plano ao lado de como é hoje' })).toBeInTheDocument()
-    expect(screen.queryByText(/Como teria sido em/)).not.toBeInTheDocument()
-    expect(document.title).toBe('Raiz Orbital – Plano de 3 anos')
   })
 
   it('"Comunidade" no cabeçalho abre a tela 8 levando o caminho', async () => {
@@ -251,7 +239,7 @@ describe('rotas', () => {
     expect(screen.queryByText(/Relatório/)).not.toBeInTheDocument()
   })
 
-  it('a safra passada virou o detalhe do ano no explorador: o endereço antigo abre a Sugestão com o ano', async () => {
+  it('a safra passada virou o detalhe do ano: o endereço antigo abre a tela 5 com o ano no "Por que essa sugestão?"', async () => {
     const router = renderAt('/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024')
 
     await vi.waitFor(() =>

@@ -1,7 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router'
 import {
-  AnswerPage,
   AvisosPage,
+  ChoosePlanPage,
   CommunityPage,
   DesignSystemPage,
   ExamplePage,
@@ -9,8 +9,6 @@ import {
   GuidePage,
   LegacyAnswerRedirect,
   MissionPage,
-  OptionsPage,
-  PlanPage,
   PlanningPage,
   MethodPage,
   SatellitePage,
@@ -30,9 +28,10 @@ export const routes: RouteObject[] = [
       { path: '/quando', element: <WhenPage /> },
       { path: '/calculando', element: <MissionPage /> },
       { path: '/satelite', element: <SatellitePage /> },
-      { path: '/resposta', element: <AnswerPage /> },
-      { path: '/opcoes', element: <OptionsPage /> },
-      { path: '/plano', element: <PlanPage /> },
+      // Tela 5 do pacote 2: "1. Escolher" e "2. Plano de 3 anos" na mesma tela; /plano abre a aba do plano.
+      { path: '/resposta', element: <ChoosePlanPage /> },
+      { path: '/opcoes', element: <ChoosePlanPage /> },
+      { path: '/plano', element: <ChoosePlanPage /> },
       // Tarefa 0058: a tela final; por enquanto, os blocos que saíram do raio-X.
       { path: '/planejamento', element: <PlanningPage /> },
       // Tarefa 0044: o relatório saiu e a safra passada virou o detalhe do ano na Sugestão; os
