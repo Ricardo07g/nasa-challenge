@@ -4,6 +4,10 @@ Cada fonte chega numa tarefa do roteiro: GEOS-S2S (A2.1), SMAP recente com perce
 dos últimos 30 dias pelo IMERG Late (A2.3). O SMAP recente vem do arquivo que o
 `pipeline/fetch_smap.py --recente` grava (`FileRecentSoilMoistureRepository`). As fontes que ainda
 não chegaram usam o `NoAutumnSignalDataRepository`, que não tem dado nenhum.
+
+Desde a tarefa 0038 (decisão de 15/11/2026), o sinal vem da previsão do ENSO
+(`enso_forecast_repository.py`) e daqui só usa o SMAP recente, para informar. O GEOS-S2S e a chuva
+recente do IMERG Late continuam aqui, sem uso no sinal.
 """
 
 import json

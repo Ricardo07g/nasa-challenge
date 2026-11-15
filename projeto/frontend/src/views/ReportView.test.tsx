@@ -92,8 +92,9 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
     const sheet = screen.getByRole('article')
     expect(sheet).toHaveTextContent('Sinal para o outono de 2027')
     expect(sheet).toHaveTextContent('Sem sinal claro')
+    expect(sheet).toHaveTextContent('Chance de El Niño e La Niña publicada por NOAA em 12 de novembro.')
     expect(sheet).toHaveTextContent('Ficou parada em 5 de 9 anos (1 sem certeza)')
-    expect(sheet).toHaveTextContent('GPM IMERG · NASA POWER · NEX-GDDP-CMIP6 · MODIS · SoilGrids · GEOS-S2S · SMAP')
+    expect(sheet).toHaveTextContent('GPM IMERG · NASA POWER · NEX-GDDP-CMIP6 · MODIS · SoilGrids · NOAA · SMAP')
     expect(sheet).toHaveTextContent('Não é laudo técnico, não substitui o ZARC oficial nem o agrônomo responsável.')
   })
 

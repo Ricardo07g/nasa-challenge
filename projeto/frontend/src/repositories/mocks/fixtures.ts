@@ -397,16 +397,25 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
       nivel: 'incerto',
       motivo:
         lang === 'pt'
-          ? 'A previsão da NASA para março a maio está perto do normal: 40% de chance de chover menos.'
-          : 'The NASA outlook for March to May is close to normal: a 40% chance of less rain.',
-      fonte: ['GEOS-S2S', 'SMAP'],
-      data: '2026-11-10',
+          ? 'Previsão para fevereiro a abril de 2027 (NOAA): nenhuma fase se destaca (La Niña 30%, neutro 40%, El Niño 30%).'
+          : 'Forecast for February to April 2027 (NOAA): no phase stands out (La Niña 30%, neutral 40%, El Niño 30%).',
+      fonte: ['NOAA', 'NASA POWER', 'SMAP'],
+      data: '2026-11-12',
       regra_dia_plantar: {
         data_limite: '2027-02-28',
         texto:
           lang === 'pt'
-            ? 'No dia de plantar (até 28/fev), se a terra estiver seca, use o plano B: sorgo no lugar do milho.'
-            : 'On sowing day (by 28 Feb), if the soil is dry, use plan B: sorghum instead of corn.',
+            ? 'Se nos 30 dias antes de 28/fev chover menos que 130 mm (60% da média de 216 mm), vá de plano B: sorgo no lugar de milho com braquiária.'
+            : 'If less than 130 mm of rain falls in the 30 days before Feb 28 (60% of the 216 mm average), go with plan B: sorghum instead of corn with brachiaria.',
+      },
+      regra_data: { data_limite: '2027-02-28', inicio: '2027-01-29', dias: 30, chuva_min_mm: 130, media_mm: 216 },
+      smap_agora: {
+        percentil: 59,
+        data: '2026-11-10',
+        texto:
+          lang === 'pt'
+            ? 'Sua terra está um pouco mais úmida que o normal agora (SMAP, percentil 59, 10/11/2026).'
+            : 'Your soil is a little wetter than normal right now (SMAP, percentile 59, Nov 10, 2026).',
       },
     },
     versao_dados: '2026-11-14T13:00Z',

@@ -21,6 +21,10 @@ from app.repositories.crop_params_repository import (
     CropParamsRepository,
     YamlCropParamsRepository,
 )
+from app.repositories.enso_forecast_repository import (
+    EnsoForecastRepository,
+    FileEnsoForecastRepository,
+)
 from app.repositories.enso_repository import EnsoRepository, FileEnsoRepository
 from app.repositories.external.nasa_power_client import (
     NasaPowerClient,
@@ -221,6 +225,9 @@ def get_rotation_plan_service(rules: Annotated[Regras, Depends(get_rules)]) -> R
 # do IMERG_LATE_PATH e o SMAP recente (A2.2) do SMAP_RECENTE_PATH; o GEOS-S2S (A2.1, tarefa 0032)
 # ainda não tem dado. O dado da terra só conta com SMAP e chuva juntos; sem dado nenhum, o `sinal`
 # de /recomendacao sai nulo.
+# Tarefa 0038 (decisão de 15/11/2026): o sinal agora usa a previsão do ENSO (ENSO_PREVISAO_PATH),
+# o ONI de cada ano (ONI_PATH) e o SMAP recente (só informa); o service fica depois do
+# get_enso_repository, abaixo. O GEOS-S2S e a chuva recente seguem aqui, sem uso no sinal.
 
 
 @lru_cache
@@ -236,17 +243,6 @@ def get_recent_soil_moisture_repository() -> RecentSoilMoistureRepository:
 @lru_cache
 def get_recent_rain_repository() -> RecentRainRepository:
     return FileRecentRainRepository(get_settings().imerg_late_path)
-
-
-def get_sinal_outono_service(
-    forecast_repo: Annotated[SeasonalForecastRepository, Depends(get_seasonal_forecast_repository)],
-    soil_moisture_repo: Annotated[
-        RecentSoilMoistureRepository, Depends(get_recent_soil_moisture_repository)
-    ],
-    rain_repo: Annotated[RecentRainRepository, Depends(get_recent_rain_repository)],
-    rules: Annotated[Regras, Depends(get_rules)],
-) -> SinalOutonoService:
-    return SinalOutonoService(forecast_repo, soil_moisture_repo, rain_repo, rules)
 
 
 def get_talhao_service(
@@ -275,6 +271,23 @@ def get_talhao_service(
 def get_enso_repository() -> EnsoRepository:
     """Fase do ENSO de cada safrinha (ONI da NOAA, P1). Sem ONI_PATH ou arquivo: `enso: null`."""
     return FileEnsoRepository(get_settings().oni_path)
+
+
+@lru_cache
+def get_enso_forecast_repository() -> EnsoForecastRepository:
+    """Previsão do ENSO da NOAA CPC (tarefa 0038). Sem ENSO_PREVISAO_PATH ou arquivo: sem sinal."""
+    return FileEnsoForecastRepository(get_settings().enso_previsao_path)
+
+
+def get_sinal_outono_service(
+    forecast_repo: Annotated[EnsoForecastRepository, Depends(get_enso_forecast_repository)],
+    enso_repo: Annotated[EnsoRepository, Depends(get_enso_repository)],
+    soil_moisture_repo: Annotated[
+        RecentSoilMoistureRepository, Depends(get_recent_soil_moisture_repository)
+    ],
+    rules: Annotated[Regras, Depends(get_rules)],
+) -> SinalOutonoService:
+    return SinalOutonoService(forecast_repo, enso_repo, soil_moisture_repo, rules)
 
 
 def get_year_detail_service(

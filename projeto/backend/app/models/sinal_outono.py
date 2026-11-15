@@ -1,9 +1,10 @@
 """Sinal para o outono (PRD 7.10, RF-20): os dados de agora e a resposta que vai para a tela 7.
 
-Entradas, uma por fonte (tarefas A2.1 a A2.3 do roteiro):
+Desde a tarefa 0038, o sinal vem da previsão do El Niño / La Niña (`app/models/enso_forecast.py`)
+e do histórico da opção nos anos daquela fase; o SMAP de agora (`RecentSoilMoisture`) só informa.
+Entradas que ficaram no repositório, sem uso no sinal (decisão de 15/11/2026):
 - `SeasonalForecast`: chance de chuva abaixo do normal de março a maio pelo GEOS-S2S (NASA GMAO);
-- `RecentSoilMoisture`: percentil da umidade na zona das raízes pelo SMAP L4 (`sm_rootzone_pctl`);
-- `RecentRain`: chuva dos últimos dias pelo GPM IMERG, com a média dos mesmos dias.
+- `RecentRain`: chuva dos últimos dias pelo GPM IMERG Late, com a média dos mesmos dias.
 """
 
 from dataclasses import dataclass
@@ -65,9 +66,33 @@ class RecentRain:
 
 @dataclass(frozen=True)
 class RegraDiaPlantar:
-    """Regra do dia de plantar: até `data_limite`, terra seca no dia -> Plano B."""
+    """Regra do dia de plantar: até `data_limite`, a frase diz quando ir de Plano B.
+
+    Com a série de chuva, a frase é a regra da data (`RegraData`, tarefa 0038).
+    """
 
     data_limite: date
+    texto: str
+
+
+@dataclass(frozen=True)
+class RegraData:
+    """Regra da data (tarefa 0038): chuva de `inicio` até a véspera de `data_limite` (`dias` dias)
+    abaixo de `chuva_min_mm` -> Plano B. `media_mm` é a média desses dias na série da célula."""
+
+    data_limite: date
+    inicio: date
+    dias: int
+    chuva_min_mm: int
+    media_mm: int
+
+
+@dataclass(frozen=True)
+class SmapAgora:
+    """A umidade da terra agora pelo SMAP, só para informar (não decide o plano)."""
+
+    percentil: int
+    data: date
     texto: str
 
 
@@ -77,6 +102,8 @@ class SinalOutono:
 
     nivel: NivelSinal
     motivo: str
-    fonte: tuple[str, ...]
-    data: date  # data do dado mais importante usado (a previsão, ou o dado da terra sem ela)
+    fonte: tuple[str, ...]  # a 1ª é a da previsão do ENSO
+    data: date  # dia em que a previsão do ENSO foi publicada
     regra_dia_plantar: RegraDiaPlantar
+    regra_data: RegraData | None = None  # None sem a série de chuva da célula
+    smap_agora: SmapAgora | None = None  # None sem o SMAP recente do ponto

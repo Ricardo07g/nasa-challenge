@@ -20,13 +20,14 @@ alguns cartões (clima futuro, histórico do talhão).
 | Região pelo satélite (soja do ano parada depois da colheita, num raio de 30 km) | MODIS (MOD13Q1, MYD13Q1 e o uso do solo MCD12Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` (sem tabela ainda) | "Na sua região": a área de soja parada depois da colheita, ano a ano | script `fetch_regiao_ndvi` |
 | Soja na safra mais recente (2025/26), pixel a pixel na caixa piloto | MODIS (MOD13Q1 e MYD13Q1) pela ORNL DAAC | arquivo `data/baixados/nasa_modis_soja_recente/soja_recente_2026.json` (só arquivo, sem tabela) | o aviso "Não vimos soja neste ponto na última safra" na pergunta 2, quando o ponto não parece lavoura | script `fetch_soja_recente` |
 | Chuva dos últimos 30 dias × média | GPM IMERG Late (`GPM_3IMERGDL`) + NASA POWER já no banco | arquivo `data/baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json` | "Sinal para o outono" (junto com o SMAP recente; só a chuva não acende o sinal) | script `fetch_imerg_late`, perto do plantio (fev/mar) |
+| Previsão do El Niño / La Niña (chance de cada fase, 9 estações) | NOAA CPC, "Official NOAA CPC ENSO Probabilities" (não é da NASA) | arquivo `data/baixados/noaa_enso_previsao/enso_previsao.json` (só arquivo, sem tabela) | "Sinal para o outono" na tela 7: Plano A ou Plano B, com o motivo e a regra da data (sem o arquivo: "Ainda não conectado") | script `fetch_enso_previsao`, todo mês depois da 2ª quinta-feira |
 | Umidade da terra no dia de plantar (2016–2025) | SMAP L4 (`SPL4SMGP` 008) pelo OPeNDAP da Earthdata | arquivo `data/baixados/nasa_smap/smap_semeadura.json` e, depois da carga, banco (`smap_point`) | ainda nada: o balde inicial pelo SMAP é o R3.3 (até lá, 50% da CAD) | script `fetch_smap` + carga no banco |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
 aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH`, `IMERG_LATE_PATH`, `SMAP_PATH`,
-`SMAP_RECENTE_PATH` e `SOJA_RECENTE_PATH` para os arquivos acima. Arquivo ausente = a API segue sem
-aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`; o `/api/talhao`, `soja_recente:
-null`).
+`SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH` e `ENSO_PREVISAO_PATH` para os arquivos acima. Arquivo
+ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`; o
+`/api/talhao`, `soja_recente: null`; o `/api/recomendacao`, `sinal: null`).
 
 ## Caminho rápido: receber o pacote de alguém do time (~5 min)
 
@@ -75,6 +76,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Umidade da terra nos dias de semeadura (SMAP) | `uv run python -m pipeline.fetch_smap --dry-run` e depois `uv run python -m pipeline.fetch_smap` | ~6 min (720 recortes de ~2 s, 4 em paralelo, mais 30 buscas no CMR); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` |
 | Carregar os arquivos no banco (`cmip6_delta`, `ndvi_point`, `smap_point` e a chuva do IMERG no `climate_season`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json --imerg ../../data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json --smap ../../data/baixados/nasa_smap/smap_semeadura.json` | segundos | nenhuma |
 | El Niño / La Niña de cada safrinha (ONI) | `uv run python -m pipeline.fetch_oni` | segundos (1 pedido de ~23 KB à NOAA) | nenhuma |
+| Previsão do El Niño / La Niña (sinal para o outono) | `uv run python -m pipeline.fetch_enso_previsao` | segundos (2 pedidos de ~28 KB e ~13 KB à NOAA CPC) | nenhuma |
 | Região pelo satélite (fazenda de exemplo, raio de 30 km) | `uv run python -m pipeline.fetch_regiao_ndvi` | ~40 min do zero (81 pedidos à ORNL de ~25 a 40 s); ~20 min com o cache de abril a julho da primeira versão (faltam os 40 de jan–mar; o `--dry-run` mostra quantos faltam). Num 502 ele espera e tenta de novo; se parar, rode de novo que continua do cache | nenhuma |
 | Soja na safra mais recente (caixa piloto inteira, safra 2025/26) | `uv run python -m pipeline.fetch_soja_recente --dry-run` e depois `uv run python -m pipeline.fetch_soja_recente` | ~30 min (48 pedidos à ORNL: 12 ladrilhos de 241 × 241 pixels × 4; de ~25 a 50 s cada, e num 502 ele espera e tenta de novo); se parar, rode de novo que continua do cache | nenhuma |
 | Chuva dos últimos 30 dias (sinal para o outono) | `uv run python -m pipeline.fetch_imerg_late` | ~2 min (1 a 2 pedidos ao CMR + 30 ao OPeNDAP, um por dia; estimativa, ainda não medido com token); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env` (com o *NASA GESDISC DATA ARCHIVE* autorizado) |
@@ -131,7 +133,16 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   pedido sem baixar nada: `uv run python -m pipeline.fetch_oni --dry-run`. Ele cobre as safrinhas
   de 2005 a 2024 (as da série do motor; `--ano-inicio` e `--ano-fim` mudam isso) e imprime quais
   anos ficaram de El Niño, de La Niña e neutros. A regra do ano está no `regras.yaml` (grupo `enso`).
-  Não precisa carregar no banco: a API lê o arquivo.
+  Não precisa carregar no banco: a API lê o arquivo. O sinal para o outono também usa o ONI (em
+  quantos anos de cada fase a opção deu certo): sem ele, o sinal fica "Sem sinal claro".
+- A **previsão do El Niño / La Niña** (tarefa 0038) grava
+  `data/baixados/noaa_enso_previsao/enso_previsao.json` a partir da raiz do repositório. Veja os 2
+  pedidos sem baixar nada: `uv run python -m pipeline.fetch_enso_previsao --dry-run`. A NOAA CPC
+  publica uma emissão por mês, na 2ª quinta-feira: rode depois disso (e reinicie o backend). O script
+  imprime o dia da emissão e as chances de FMA e MAM. Se a página da NOAA mudar de formato, ou a
+  tabela e a discussão ainda forem de meses diferentes (no dia da publicação), ele para com erro e
+  não mexe no arquivo que já existe: rode de novo mais tarde. Num worktree, passe
+  `--saida` com o caminho do `data/baixados` do checkout principal.
 - **Região pelo satélite** (tarefas 0034 e 0036): grava em `data/baixados/nasa_modis_ndvi_regiao/`
   o JSON e o cache `cache_ornl/` (uma resposta por pedido, em gzip; ~60 MB), a partir da raiz do
   repositório. Pede, para cada ano de 2016 a 2025, 1/jan a 31/mar (pico e colheita da soja) e abril
@@ -168,8 +179,8 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   cache. Um ano ou uma caixa só: `--anos=2024`, `--area="lat_min,lat_max,lon_min,lon_max"`.
 - O SMAP recente (`--recente`, tarefa 0031) grava `data/baixados/nasa_smap/smap_recente.json`, no
   mesmo cache. É dado **de agora**: rode de novo perto da data de plantio (fev/mar). A API lê pelo
-  `SMAP_RECENTE_PATH`, mas o sinal para o outono só usa o SMAP junto com a chuva recente (IMERG,
-  A2.3), que ainda não existe: até lá a tela segue sem o sinal.
+  `SMAP_RECENTE_PATH` e a tela 7 mostra uma linha com a umidade de agora junto do sinal para o
+  outono, só para informar: ela não muda o plano, e sem a previsão do ENSO o sinal não aparece.
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).
@@ -201,6 +212,9 @@ curl -s "localhost:8000/api/regiao?lat=-18.9543&lon=-48.1993" | python3 -m json.
 # soja na safra mais recente (com o arquivo do fetch_soja_recente): safra, vista e ndvi_pico
 curl -s "localhost:8000/api/talhao?lat=-18.9543&lon=-48.1993" | python3 -c \
   "import json, sys; print(json.load(sys.stdin)['soja_recente'])"
+# sinal para o outono (com o arquivo do fetch_enso_previsao): nivel, motivo, regra_data e smap_agora
+curl -s "localhost:8000/api/recomendacao?lat=-18.9543&lon=-48.1993&colheita=meio" \
+  | python3 -c "import json, sys; print(json.dumps(json.load(sys.stdin)['sinal'], ensure_ascii=False, indent=1))"
 
 # o que está no banco
 cd projeto && docker compose exec -T db psql -U raiz -d raiz_orbital -c \

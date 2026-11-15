@@ -287,8 +287,9 @@ export const pt = {
     subtitle: 'O que plantar depois da soja, um ano de cada vez.',
     timelineLabel: 'Plano ano a ano',
     signalTitle: (year: number) => `Sinal para o outono de ${year}`,
-    signalSource: (date: string) =>
-      `Previsão da NASA (GEOS-S2S) e umidade da terra (SMAP), atualizado em ${date}.`,
+    signalSource: (source: string, date: string) => `Chance de El Niño e La Niña publicada por ${source} em ${date}.`,
+    signalMarks: (plan: string) => `O sinal marca o ${plan}.`,
+    smapNote: 'A umidade de agora só informa: não muda o plano.',
     planChoice: 'Qual plano seguir',
     planA: 'Plano A',
     planB: 'Plano B, se secar',
@@ -297,6 +298,7 @@ export const pt = {
     plantingRule: (date: string, planA: string, planB: string) =>
       `No dia de plantar (até ${date}), se a terra estiver seca, use o plano B: ${planB} no lugar de ${planA}.`,
     rootWater: 'O satélite mede a água na raiz. Você não precisa adivinhar.',
+    rainRuleNote: 'Meça a chuva no seu pluviômetro. A média vem da série de chuva do satélite no seu ponto.',
     withPlan: 'Com plano',
     today: 'Como é hoje',
     coveredAll: (total: number) => `Terra coberta nos ${total} anos`,

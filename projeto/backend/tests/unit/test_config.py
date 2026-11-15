@@ -217,3 +217,14 @@ def test_oni_path_defaults_to_none_and_comes_from_env(
     monkeypatch.setenv("ONI_PATH", str(tmp_path / "oni.json"))
 
     assert Settings(_env_file=None).oni_path == tmp_path / "oni.json"
+
+
+def test_enso_previsao_path_defaults_to_none_and_comes_from_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Tarefa 0038: sem o arquivo da previsão do ENSO, o sinal para o outono sai nulo
+    assert Settings(_env_file=None).enso_previsao_path is None
+
+    monkeypatch.setenv("ENSO_PREVISAO_PATH", str(tmp_path / "enso_previsao.json"))
+
+    assert Settings(_env_file=None).enso_previsao_path == tmp_path / "enso_previsao.json"

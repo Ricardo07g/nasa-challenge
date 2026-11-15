@@ -226,6 +226,33 @@ sinal_outono:
   chuva_fracao_seco:
     valor: 0.60
     fonte: "PRD 7.10: terra seca com a chuva dos últimos 30 dias pelo IMERG abaixo de 60% da média (e o SMAP baixo)"
+  # Tarefa 0038 (decisão de 15/11/2026): o sinal agora vem da previsão do El Niño / La Niña (grupo
+  # sinal_enso, abaixo). O GEOS-S2S e o IMERG Late saíram do sinal: chance_seco_min e
+  # chance_normal_max ficam sem uso. O smap_percentil_seco é a 1ª faixa do SMAP de agora e o
+  # chuva_fracao_seco é o X da regra da data (fração da média da chuva dos 30 dias antes da data
+  # limite do Plano A).
+
+sinal_enso:
+  # Sinal para o outono pela previsão do ENSO da NOAA CPC + o histórico da opção do 1º ano do Plano A
+  # nos anos daquela fase (ONI de cada ano, grupo enso). Tarefa 0038; hipótese do time, a revisar.
+  estacao_previsao:
+    valor: FMA
+    fonte: "Hipótese do time, a revisar (tarefa 0038): fevereiro a abril, da semeadura à floração da safrinha. É a última estação da média do ONI dos anos da série (grupo enso: DJF, JFM e FMA), então a fase prevista e a dos anos passados medem a mesma época; e é prevista com 1 mês a menos de antecedência que MAM (mais acerto, antes da barreira de previsibilidade do outono)"
+  fase_chance_min_pct:
+    valor: 50
+    fonte: "Hipótese do time, a revisar (tarefa 0038): a fase mais provável precisa de 50% ou mais (mais provável que as outras duas juntas); abaixo disso, sem sinal claro"
+  anos_fase_min:
+    valor: 5
+    fonte: "Hipótese do time, a revisar (tarefa 0038): pelo menos 5 anos daquela fase na série (2005 a 2024) para contar como a opção se saiu; com menos, sem sinal claro"
+  fracao_anos_ruins_seco:
+    valor: 0.5
+    fonte: "Hipótese do time, a revisar (tarefa 0038): sinal de seco (Plano B) quando a opção do 1º ano do Plano A deu errado (aperto do motor, PRD 7.2) em metade ou mais dos anos daquela fase, e a do Plano B se saiu melhor neles"
+  dias_regra_data:
+    valor: 30
+    fonte: "Decisão do usuário (15/11/2026, tarefa 0038): regra da data com a chuva dos 30 dias antes da data limite do Plano A; o limite é chuva_fracao_seco (grupo sinal_outono) vezes a média desses dias na série guardada da célula"
+  smap_faixas_pct:
+    valor: [20.0, 45.0, 55.0, 80.0]
+    fonte: "Hipótese do time, a revisar (tarefa 0038): percentis do SMAP de agora que separam 5 faixas (mais seca, um pouco mais seca, perto do normal, um pouco mais úmida, mais úmida que o normal). O 20 é o da terra seca do PRD 7.10. Só informa: o SMAP não decide o plano"
 
 avisos:
   # Avisos da safra: replay de uma safra passada (P4) e acompanhamento diário (P6), plano de

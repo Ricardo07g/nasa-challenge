@@ -200,6 +200,24 @@ class RegraDiaPlantarSchema(_Frozen):
     texto: str
 
 
+class RegraDataSchema(_Frozen):
+    """Regra da data (0038): chuva de `inicio` à véspera de `data_limite` < `chuva_min_mm`."""
+
+    data_limite: date
+    inicio: date
+    dias: int
+    chuva_min_mm: int
+    media_mm: int
+
+
+class SmapAgoraSchema(_Frozen):
+    """O SMAP de agora (tarefa 0038): só informa, não decide o plano."""
+
+    percentil: int
+    data: date
+    texto: str
+
+
 class SinalSchema(_Frozen):
     """Sinal para o outono (RF-20): `SinalOutono` do front (`src/models/recomendacao.ts`)."""
 
@@ -208,9 +226,13 @@ class SinalSchema(_Frozen):
     fonte: list[str]
     data: date
     regra_dia_plantar: RegraDiaPlantarSchema
+    # Campos opcionais da tarefa 0038 (nulos sem a série de chuva ou sem o SMAP recente)
+    regra_data: RegraDataSchema | None = None
+    smap_agora: SmapAgoraSchema | None = None
 
     @classmethod
     def from_model(cls, sinal: SinalOutono) -> "SinalSchema":
+        regra, smap = sinal.regra_data, sinal.smap_agora
         return cls(
             nivel=sinal.nivel,
             motivo=sinal.motivo,
@@ -219,6 +241,22 @@ class SinalSchema(_Frozen):
             regra_dia_plantar=RegraDiaPlantarSchema(
                 data_limite=sinal.regra_dia_plantar.data_limite,
                 texto=sinal.regra_dia_plantar.texto,
+            ),
+            regra_data=(
+                RegraDataSchema(
+                    data_limite=regra.data_limite,
+                    inicio=regra.inicio,
+                    dias=regra.dias,
+                    chuva_min_mm=regra.chuva_min_mm,
+                    media_mm=regra.media_mm,
+                )
+                if regra is not None
+                else None
+            ),
+            smap_agora=(
+                SmapAgoraSchema(percentil=smap.percentil, data=smap.data, texto=smap.texto)
+                if smap is not None
+                else None
             ),
         )
 

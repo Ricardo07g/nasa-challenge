@@ -18,8 +18,11 @@ from app.repositories.climate_repository import (
     PostgisClimateRepository,
 )
 from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6Repository
+from app.repositories.enso_forecast_repository import FileEnsoForecastRepository
+from app.repositories.enso_repository import FileEnsoRepository
 from app.repositories.recent_rain_repository import FileRecentRainRepository
 from app.repositories.regiao_repository import FileRegionRepository
+from app.repositories.rules_repository import load_default_rules
 from app.repositories.sinal_outono_repository import (
     FileRecentSoilMoistureRepository,
     NoAutumnSignalDataRepository,
@@ -33,6 +36,7 @@ from app.repositories.soil_repository import CachedSoilGridsRepository, PostgisS
 from app.repositories.soja_recente_repository import FileSojaRecenteRepository
 from app.services.region_service import RegionService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
+from app.services.sinal_outono_service import SinalOutonoService
 from app.services.soja_recente_service import SojaRecenteService
 
 # Endereço que não resolve (.invalid) e sem credencial: nada aqui abre conexão.
@@ -207,6 +211,40 @@ def test_should_read_the_enso_phase_of_each_year_from_the_file_of_oni_path(
         dependencies.get_enso_repository.cache_clear()
 
     assert [(y.ano, y.fase) for y in years] == [(2016, "el_nino")]
+
+
+def test_should_build_the_autumn_signal_from_the_enso_forecast_of_enso_previsao_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Tarefa 0038: valores de teste no formato do contrato da previsão do ENSO (não são da NOAA)
+    path = tmp_path / "enso_previsao.json"
+    payload = {
+        "versao_dados": {"fonte": "noaa_cpc_enso", "parametros": {}, "fim": "2026-11-15T03:00:00Z",
+                         "versao": "teste"},
+        "fonte": "Fonte de teste",
+        "emitida_em": "2026-11-14",
+        "estacoes": [{"estacao": "FMA", "ano": 2027, "la_nina": 10, "neutro": 20, "el_nino": 70}],
+    }  # fmt: skip
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    settings = Settings(_env_file=None, enso_previsao_path=path)
+    monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
+    dependencies.get_enso_forecast_repository.cache_clear()
+
+    try:
+        repo = dependencies.get_enso_forecast_repository()
+        service = dependencies.get_sinal_outono_service(
+            forecast_repo=repo,
+            enso_repo=FileEnsoRepository(None),
+            soil_moisture_repo=NoAutumnSignalDataRepository(),
+            rules=load_default_rules(),
+        )
+    finally:
+        dependencies.get_enso_forecast_repository.cache_clear()
+
+    assert isinstance(repo, FileEnsoForecastRepository)
+    forecast = repo.get_enso_forecast()
+    assert forecast is not None and forecast.emitida_em.isoformat() == "2026-11-14"
+    assert isinstance(service, SinalOutonoService)
 
 
 def test_should_read_the_region_from_the_file_of_regiao_path(

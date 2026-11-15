@@ -8,9 +8,10 @@ import pytest
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.crop_option import CropParams
 from app.models.enso import OniYear
+from app.models.enso_forecast import EnsoForecast, EnsoSeasonForecast
 from app.models.recomendacao import Alternativa, NotasOpcao, Recomendacao, ResultadoOpcao
 from app.models.regras import Regras
-from app.models.sinal_outono import RecentRain, RecentSoilMoisture, SeasonalForecast
+from app.models.sinal_outono import RecentSoilMoisture
 from app.models.talhao import NdviRecord, SoloInfo
 from app.repositories.rules_repository import load_default_rules
 from app.services.climate_risk_service import ClimateRiskService
@@ -215,15 +216,23 @@ def _service(
 
 
 class FakeForecastOnly:
-    """Só a previsão do GEOS-S2S (60% de chance de chuva abaixo do normal); sem dado da terra."""
+    """Previsão de teste do ENSO (70% de El Niño em FMA de 2027) e anos de El Niño; sem SMAP.
 
-    def get_seasonal_forecast(self, lat: float, lon: float) -> SeasonalForecast | None:
-        return SeasonalForecast(chance_abaixo_normal=0.6, data=date(2027, 2, 1))
+    Valores de teste (não são da NOAA).
+    """
+
+    def get_enso_forecast(self) -> EnsoForecast | None:
+        season = EnsoSeasonForecast("FMA", 2027, la_nina=10, neutro=20, el_nino=70)
+        return EnsoForecast(
+            emitida_em=date(2026, 11, 14), fonte="Fonte de teste", estacoes=(season,)
+        )
+
+    def get_oni_years(self) -> list[OniYear]:
+        el_nino = range(2005, 2025, 3)
+        return [OniYear(y, 1.0 if y in el_nino else 0.0, "el_nino" if y in el_nino else None)
+                for y in range(2005, 2025)]  # fmt: skip
 
     def get_recent_soil_moisture(self, lat: float, lon: float) -> RecentSoilMoisture | None:
-        return None
-
-    def get_recent_rain(self, lat: float, lon: float) -> RecentRain | None:
         return None
 
 
@@ -568,19 +577,23 @@ def test_should_leave_autumn_signal_empty_without_signal_data() -> None:
 
 
 def test_should_add_autumn_signal_with_plan_a_and_plan_b_of_the_recommendation() -> None:
-    # PRD 7.10: o Plano A é o melhor plano do ano normal e o Plano B, o do ano seco
+    # PRD 7.10: o Plano A é o melhor plano do ano normal e o Plano B, o do ano seco. Tarefa 0038:
+    # o sinal usa o histórico das opções (anos_detalhe) e a série de chuva da célula do motor.
     data = FakeForecastOnly()
-    sinal_service = SinalOutonoService(data, data, data)
+    sinal_service = SinalOutonoService(data, data, data, today=lambda: date(2026, 11, 15))
 
     rec = _service(sinal=sinal_service).recommend(lat=-18.95, lon=-48.20, colheita="meio")
 
     assert rec.sinal is not None
-    assert rec.sinal.nivel == "seco"
-    assert rec.sinal.fonte == ("GEOS-S2S",)
+    assert rec.sinal.nivel == "normal"  # nenhum ano com aperto na série de teste
+    assert rec.sinal.fonte == ("Fonte de teste", "NASA POWER")
     primeira_a = _opcao(rec, rec.plano_normal.anos[0])
     assert rec.sinal.regra_dia_plantar.data_limite == date.fromisoformat(
         primeira_a.data_limite or ""
     )
+    # 8 mm por dia na série de teste: 240 mm em 30 dias; 60% = 144 mm
+    assert rec.sinal.regra_data is not None
+    assert (rec.sinal.regra_data.media_mm, rec.sinal.regra_data.chuva_min_mm) == (240, 144)
 
 
 def test_should_write_texts_in_english_when_language_is_en() -> None:
