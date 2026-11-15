@@ -226,6 +226,9 @@ export const en = {
     rainShort: 'Not enough rain',
     rainYears: (years: number, start: string, end: string) => `${years} years between ${start} and ${end}`,
     rainYearsCount: (years: number) => `${years} years`,
+    future: '2041–2060 climate',
+    futureYears: (good: number, total: number, range: { min: number; max: number } | null) =>
+      `Would work in ${good} of ${total} years${range ? ` (${range.min} to ${range.max}, depending on the model)` : ''}`,
     yearDetail: 'What happened each year',
     yearOpen: (year: number) => `See year ${year}`,
     ensoNino: 'El Niño',

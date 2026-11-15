@@ -236,6 +236,11 @@ export const pt = {
     /** O período vem do talhão (dados[]); o backend pode descartar ano com dia faltando. */
     rainYears: (years: number, start: string, end: string) => `${years} anos entre ${start} e ${end}`,
     rainYearsCount: (years: number) => `${years} anos`,
+    /** Clima de 2041–2060 (NEX-GDDP-CMIP6), no cartão da resposta e em cada opção. */
+    future: 'Clima 2041–2060',
+    /** O total é o mesmo da chuva; sem faixa quando todos os modelos dão o mesmo número. */
+    futureYears: (good: number, total: number, range: { min: number; max: number } | null) =>
+      `Daria certo em ${good} de ${total} anos${range ? ` (de ${range.min} a ${range.max}, conforme o modelo)` : ''}`,
     /** P1: o detalhe de cada ano da faixa (ainda não vem da API). */
     yearDetail: 'O que aconteceu em cada ano',
     yearOpen: (year: number) => `Ver o ano ${year}`,
