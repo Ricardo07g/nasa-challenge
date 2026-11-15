@@ -75,3 +75,20 @@ describe('sem revisão pendente da agrônoma (15/11/2026)', () => {
     expect(en.choose.cell.soilText).toContain('team hypothesis, not yet validated in the field')
   })
 })
+
+describe('"Como a conta é feita" sem os relatos de vizinhos (15/11/2026)', () => {
+  // A comunidade está "em breve" (COMMUNITY_OPEN = false): a regra dos avisos não fala dos relatos.
+  const texts = (obj: unknown): string[] =>
+    typeof obj === 'string'
+      ? [obj]
+      : typeof obj === 'function'
+        ? [String((obj as (...args: string[]) => unknown)('x', 'x', 'x', 'x', 'x', 'x', 'x'))]
+        : obj && typeof obj === 'object'
+          ? Object.values(obj).flatMap(texts)
+          : []
+
+  it('nenhum texto do bloco method fala de vizinhos nem de relatos, em pt e en', () => {
+    expect(texts(pt.method).filter((text) => /vizinh|relato/i.test(text))).toEqual([])
+    expect(texts(en.method).filter((text) => /neighbo|report/i.test(text))).toEqual([])
+  })
+})

@@ -32,7 +32,7 @@ Antes de pagar:
 
 A quantidade de semente por hectare, a variedade e o tratamento ficam com o seu agrônomo. O app não recomenda variedade nem dose.
 
-Escolha a cultura antes: veja a [Sugestão](/resposta), compare em [Comparar](/opcoes) e confira o prazo em [O prazo de plantio e o ZARC](/guia/prazo-de-plantio-zarc). Com a semente pronta, você planta logo: leia [Plantar logo depois da colheita](/guia/plantar-logo-depois-da-colheita).
+Escolha a cultura antes: veja a sugestão e compare na aba [Escolher](/resposta), e confira o prazo em [O prazo de plantio e o ZARC](/guia/prazo-de-plantio-zarc). Com a semente pronta, você planta logo: leia [Plantar logo depois da colheita](/guia/plantar-logo-depois-da-colheita).
 
 ## Fontes
 

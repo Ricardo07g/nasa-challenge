@@ -26,12 +26,12 @@ With no plant, no new straw forms. Erosion studies show that straw on the soil i
 ## Step by step
 
 1. **Harvest the soybeans** and leave the area unplanted.
-2. **Compare** with the other options in [Compare](/opcoes).
+2. **Compare** with the other options in the [Choose](/resposta) tab.
 3. **Talk to your agronomist** about managing the fallow area.
 
 ## In your field
 
-The app shows the history of fallow years in [What the satellite saw](/satelite) and compares fallow with the other options in [Compare](/opcoes). See what changes when the soil is covered in [straw](/guia/palhada).
+The app shows the history of fallow years in [Your land's X-ray](/satelite) and compares fallow with the other options in the [Choose](/resposta) tab. See what changes when the soil is covered in [straw](/guia/palhada).
 
 ## Sources
 

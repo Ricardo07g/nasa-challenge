@@ -21,7 +21,7 @@ Mas, sozinho, o plantio direto não basta para segurar a erosão quando a enxurr
 
 A entressafra depois da soja é a hora de produzir a palha da próxima safra. O [milheto](/guia/milheto) e o [milho com braquiária](/guia/milho-braquiaria) são opções de cobertura.
 
-O app mostra as opções em [Comparar](/opcoes) e na [Sugestão](/resposta). O [Plano de 3 anos](/plano) ajuda a montar a rotação. Leia também [Palhada: por que cobrir a terra](/guia/palhada), [Rotação de culturas](/guia/rotacao-de-culturas) e [Como evitar erosão](/guia/como-evitar-erosao).
+O app mostra as opções na aba [Escolher](/resposta). O [Plano de 3 anos](/plano) ajuda a montar a rotação. Leia também [Palhada: por que cobrir a terra](/guia/palhada), [Rotação de culturas](/guia/rotacao-de-culturas) e [Como evitar erosão](/guia/como-evitar-erosao).
 
 Como secar a cobertura antes de plantar e qual máquina usar ficam com o seu agrônomo.
 

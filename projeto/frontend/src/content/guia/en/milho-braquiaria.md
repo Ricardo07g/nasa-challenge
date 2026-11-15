@@ -31,7 +31,7 @@ This intercrop became known as the **Santa Fé System**. In no-till, brachiaria 
 
 ## In your field
 
-The app compares corn with brachiaria with the other options in [Compare](/opcoes) and uses the straw in the [Suggestion](/resposta). Understand [straw](/guia/palhada).
+The app compares corn with brachiaria with the other options and uses the straw in the [Choose](/resposta) tab. Understand [straw](/guia/palhada).
 
 ## Sources
 

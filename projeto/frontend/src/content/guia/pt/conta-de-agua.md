@@ -28,7 +28,7 @@ Quando o balde seca, falta água. Veja [O que significa "deu certo"](/guia/deu-c
 
 No plantio direto, a palha ajuda a conservar a umidade da terra. Veja a [palhada](/guia/palhada).
 
-No [Plano de 3 anos](/plano), a "chuva aproveitada" mostra isso para cada ano. A [Sugestão](/resposta) tem a linha Água.
+No [Plano de 3 anos](/plano), a "chuva aproveitada" mostra isso para cada ano. A aba [Escolher](/resposta) tem a linha Água.
 
 ## Fontes
 

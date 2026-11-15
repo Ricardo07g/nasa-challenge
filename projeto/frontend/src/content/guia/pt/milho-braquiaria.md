@@ -31,7 +31,7 @@ Esse consórcio ficou conhecido como **Sistema Santa Fé**. No plantio direto, a
 
 ## Na sua lavoura
 
-O app compara o milho com braquiária com as outras opções em [Comparar](/opcoes) e usa a palhada na [Sugestão](/resposta). Entenda a [palhada](/guia/palhada).
+O app compara o milho com braquiária com as outras opções e usa a palhada na aba [Escolher](/resposta). Entenda a [palhada](/guia/palhada).
 
 ## Fontes
 

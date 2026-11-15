@@ -51,7 +51,7 @@ const article: GuideArticle = {
 const palhada: GuideSummary = { ...article, slug: 'palhada', title: 'Palhada: por que cobrir a terra', related: [] }
 const field = {
   place: 'Sua lavoura, perto de Uberlândia (MG)',
-  text: 'Em 20 anos, houve 5 dias com 50 mm ou mais de chuva em fevereiro e março: em média, 0,25 dia por ano.',
+  text: 'Em 20 anos, houve 5 dias de chuva forte em fevereiro e março: em média, 0,25 dia por ano.',
   source: 'Fonte: GPM IMERG (NASA), 20 anos',
 }
 

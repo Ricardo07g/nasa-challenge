@@ -21,7 +21,7 @@ Among the app's options, crotalaria is the legume. In a study published in Revis
 
 How much nitrogen is left in the soil changes with the soil, the cultivar and the rain. That figure is up to your agronomist.
 
-See the Soil row in [Compare](/opcoes). Get to know [crotalaria](/guia/crotalaria) and [straw](/guia/palhada). Also check the crop's [planting deadline](/guia/prazo-de-plantio-zarc).
+See the Soil row in the [Choose](/resposta) tab. Get to know [crotalaria](/guia/crotalaria) and [straw](/guia/palhada). Also check the crop's [planting deadline](/guia/prazo-de-plantio-zarc).
 
 ## Sources
 

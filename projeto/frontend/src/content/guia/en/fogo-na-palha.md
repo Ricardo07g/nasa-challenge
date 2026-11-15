@@ -17,7 +17,7 @@ The data comes from the MCD64A1 product, made with the MODIS sensors on NASA's T
 
 ## In your field
 
-On the [What the satellite saw](/satelite) screen, the fire alert tells in how many of the last years there was burned area near your point.
+On the [Your land's X-ray](/satelite) screen, the fire alert tells in how many of the last years there was burned area near your point.
 
 Straw protects the soil, and soil that burns is left bare. See [Straw: why cover the soil](/guia/palhada).
 

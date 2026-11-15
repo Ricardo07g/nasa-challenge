@@ -25,7 +25,7 @@ How to read it:
 - You can swap an option and see the score right away.
 - With nematodes in the area, the plan takes that into account.
 
-See each crop in the [Suggestion](/resposta), for example [crotalaria](/guia/crotalaria).
+See each crop in the [Choose](/resposta) tab, for example [crotalaria](/guia/crotalaria).
 
 ## Sources
 

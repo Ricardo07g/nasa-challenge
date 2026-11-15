@@ -31,7 +31,7 @@ Uma revisão de pesquisadores da Universidade de Delaware e da Embrapa Milho e S
 
 ## Na sua lavoura
 
-O app mostra o sorgo na [Sugestão](/resposta) e em [Comparar](/opcoes). O selo de sede da cultura leva a este artigo. Veja [a conta de água](/guia/conta-de-agua).
+O app mostra o sorgo na aba [Escolher](/resposta). O selo de sede da cultura leva a este artigo. Veja [a conta de água](/guia/conta-de-agua).
 
 ## Fontes
 

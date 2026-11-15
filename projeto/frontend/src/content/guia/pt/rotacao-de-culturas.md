@@ -25,7 +25,7 @@ Como ler:
 - Você pode trocar uma opção e ver a nota na hora.
 - Com nematoide na área, o plano leva isso em conta.
 
-Veja cada cultura na [Sugestão](/resposta), por exemplo a [crotalária](/guia/crotalaria).
+Veja cada cultura na aba [Escolher](/resposta), por exemplo a [crotalária](/guia/crotalaria).
 
 ## Fontes
 

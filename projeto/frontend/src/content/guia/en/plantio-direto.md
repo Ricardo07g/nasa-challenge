@@ -21,7 +21,7 @@ But no-till alone is not enough to hold back erosion when runoff is heavy.
 
 The off-season after soybeans is the time to produce the straw for the next crop. [Pearl millet](/guia/milheto) and [corn with brachiaria](/guia/milho-braquiaria) are cover options.
 
-The app shows the options in [Compare](/opcoes) and in the [Suggestion](/resposta). The [3-year plan](/plano) helps build the rotation. Also read [Straw: why cover the soil](/guia/palhada), [Crop rotation](/guia/rotacao-de-culturas) and [How to prevent erosion](/guia/como-evitar-erosao).
+The app shows the options in the [Choose](/resposta) tab. The [3-year plan](/plano) helps build the rotation. Also read [Straw: why cover the soil](/guia/palhada), [Crop rotation](/guia/rotacao-de-culturas) and [How to prevent erosion](/guia/como-evitar-erosao).
 
 How to dry down the cover before planting and which machine to use are up to your agronomist.
 

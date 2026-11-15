@@ -31,7 +31,7 @@ No milho, a água limita a produção principalmente na germinação, na **flora
 
 ## Na sua lavoura
 
-Veja o milho safrinha na [Sugestão](/resposta) e em [Comparar](/opcoes). Leia também sobre [o prazo de plantio](/guia/prazo-de-plantio-zarc) e [a geada](/guia/geada-na-safrinha).
+Veja o milho safrinha na aba [Escolher](/resposta). Leia também sobre [o prazo de plantio](/guia/prazo-de-plantio-zarc) e [a geada](/guia/geada-na-safrinha).
 
 ## Fontes
 

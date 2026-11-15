@@ -1632,8 +1632,9 @@ export const pt = {
         `Chuva forte (raio-X): dias com ${mm} mm ou mais de ${from} a ${to} (GPM IMERG), quando a terra descoberta perde solo.`,
       fire: (km: string) =>
         `Fogo (raio-X): fogo a até ${km} km do ponto (MODIS MCD64A1, área queimada). Só aparece quando o arquivo da área queimada foi baixado.`,
-      alerts: (pct: string, dry: string, hot: string, temp: string, window: string, days: string, km: string) =>
-        `Avisos: terra seca com o SMAP no percentil ${pct} ou menos; ${dry} dias seguidos sem chuva ou ${hot} dias de ${temp} °C nos últimos ${window} (NASA POWER); relatos de vizinhos dos últimos ${days} dias, a até ${km} km, sempre como não confirmados.`,
+      /** Sem os relatos de vizinhos: a comunidade está "em breve" (15/11/2026). */
+      alerts: (pct: string, dry: string, hot: string, temp: string, window: string) =>
+        `Avisos: terra seca com o SMAP no percentil ${pct} ou menos; ${dry} dias seguidos sem chuva ou ${hot} dias de ${temp} °C nos últimos ${window} (NASA POWER).`,
       signal: (chance: string, years: string, bad: string) =>
         `Sinal do outono: previsão da NOAA de El Niño ou La Niña com ${chance}% ou mais e pelo menos ${years} anos daquela fase na série. Se a cultura do Plano A teve problema em ${bad}% ou mais desses anos e a do Plano B se saiu melhor, o sinal marca o Plano B.`,
       xray: 'Raio-X: cada bloco mostra a fonte e o tamanho do quadrado medido (ex.: SMAP 9 km, NASA POWER cerca de 50 km). Vale para a área em volta do ponto, não para o talhão exato.',
@@ -1707,15 +1708,15 @@ export const pt = {
       /** O que o "Ouvir resumo" do artigo acrescenta ao "Em uma frase". */
       spoken: (place: string, text: string) => `Na sua lavoura, perto de ${place}: ${text}`,
       source: (source: string) => `Fonte: ${source}`,
-      heavyRain: (total: number, days: number, limit: string, mean: string) =>
-        `Em ${total} anos, houve ${days} dias com ${limit} mm ou mais de chuva em fevereiro e março: em média, ${mean} dia por ano.`,
+      /** Sem o limite da conta na frase (mm, °C): quem escolhe o limite é a conta, não a frase. */
+      heavyRain: (total: number, days: number, mean: string) =>
+        `Em ${total} anos, houve ${days} dias de chuva forte em fevereiro e março: em média, ${mean} dia por ano.`,
       dryspell: (total: number, days: number, start: string, year: number) =>
         `O maior veranico de março a maio em ${total} anos foi de ${days} dias seguidos sem chuva, a partir de ${start} de ${year}.`,
-      heatNone: (total: number, temp: string) => `Em ${total} anos, nenhum teve dia de ${temp} °C ou mais entre março e maio.`,
-      heatOne: (total: number, year: string, temp: string) =>
-        `Em ${total} anos, só 1 (${year}) teve dia de ${temp} °C ou mais entre março e maio.`,
-      heatMany: (total: number, count: number, years: string, temp: string) =>
-        `Em ${total} anos, ${count} (${years}) tiveram dia de ${temp} °C ou mais entre março e maio.`,
+      heatNone: (total: number) => `Em ${total} anos, nenhum teve dia de calor forte entre março e maio.`,
+      heatOne: (total: number, year: string) => `Em ${total} anos, só 1 (${year}) teve dia de calor forte entre março e maio.`,
+      heatMany: (total: number, count: number, years: string) =>
+        `Em ${total} anos, ${count} (${years}) tiveram dia de calor forte entre março e maio.`,
       future: (models: number, rain: string, heat: string) =>
         `Para 2041 a 2060, a média de ${models} modelos indica chuva de março a maio ${rain}% e máxima ${heat} °C.`,
       xraySoil: (clay: string, sand: string) => `A terra tem ${clay}% de argila e ${sand}% de areia.`,

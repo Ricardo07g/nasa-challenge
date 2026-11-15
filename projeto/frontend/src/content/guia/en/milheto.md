@@ -31,7 +31,7 @@ In a study in Goiás, in the Cerrado, pearl millet was the cover plant that made
 
 ## In your field
 
-See pearl millet in [Compare](/opcoes) and inside the [3-year plan](/plano). Also read about [straw](/guia/palhada).
+See pearl millet in the [Choose](/resposta) tab and inside the [3-year plan](/plano). Also read about [straw](/guia/palhada).
 
 ## Sources
 

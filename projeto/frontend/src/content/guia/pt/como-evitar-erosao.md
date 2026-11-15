@@ -22,9 +22,9 @@ Só o plantio direto não basta quando a enxurrada é grande: a pesquisa recomen
 
 ## Na sua lavoura
 
-Logo depois da colheita da soja, a terra pode ficar descoberta. Na tela [O que o satélite viu](/satelite), o alerta de chuva forte mostra quantos dias por ano choveu muito, pelo satélite GPM IMERG da NASA.
+Logo depois da colheita da soja, a terra pode ficar descoberta. Na tela [Raio-X da sua terra](/satelite), o alerta de chuva forte mostra quantos dias por ano choveu muito, pelo satélite GPM IMERG da NASA.
 
-Veja na [Sugestão](/resposta) e em [Comparar](/opcoes) as opções de cobertura, e leia [Palhada: por que cobrir a terra](/guia/palhada).
+Veja na aba [Escolher](/resposta) as opções de cobertura, e leia [Palhada: por que cobrir a terra](/guia/palhada).
 
 Onde fazer terraço e a distância entre eles ficam com o seu agrônomo.
 

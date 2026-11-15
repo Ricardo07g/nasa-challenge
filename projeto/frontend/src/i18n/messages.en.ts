@@ -1544,8 +1544,8 @@ export const en = {
         `Heavy rain (soil X-ray): days with ${mm} mm or more from ${from} to ${to} (GPM IMERG), when bare soil loses earth.`,
       fire: (km: string) =>
         `Fire (soil X-ray): fire within ${km} km of the point (MODIS MCD64A1, burned area). It only shows when the burned area file was downloaded.`,
-      alerts: (pct: string, dry: string, hot: string, temp: string, window: string, days: string, km: string) =>
-        `Alerts: dry soil with SMAP at percentile ${pct} or lower; ${dry} days in a row without rain or ${hot} days at ${temp} °C in the last ${window} (NASA POWER); neighbor reports from the last ${days} days, within ${km} km, always as unconfirmed.`,
+      alerts: (pct: string, dry: string, hot: string, temp: string, window: string) =>
+        `Alerts: dry soil with SMAP at percentile ${pct} or lower; ${dry} days in a row without rain or ${hot} days at ${temp} °C in the last ${window} (NASA POWER).`,
       signal: (chance: string, years: string, bad: string) =>
         `Autumn signal: NOAA forecast of El Niño or La Niña at ${chance}% or more, with at least ${years} years of that phase in the series. If the plan A crop had trouble in ${bad}% or more of those years and the plan B crop did better, the signal marks plan B.`,
       xray: 'Soil X-ray: each block shows the source and the size of the measured square (e.g. SMAP 9 km, NASA POWER about 50 km). It applies to the area around the point, not to the exact field.',
@@ -1612,15 +1612,14 @@ export const en = {
       place: (place: string) => `Your field, near ${place}`,
       spoken: (place: string, text: string) => `On your field, near ${place}: ${text}`,
       source: (source: string) => `Source: ${source}`,
-      heavyRain: (total: number, days: number, limit: string, mean: string) =>
-        `In ${total} years, there were ${days} days with ${limit} mm or more of rain in February and March: on average, ${mean} days a year.`,
+      heavyRain: (total: number, days: number, mean: string) =>
+        `In ${total} years, there were ${days} days of heavy rain in February and March: on average, ${mean} days a year.`,
       dryspell: (total: number, days: number, start: string, year: number) =>
         `The longest dry spell from March to May in ${total} years was ${days} days in a row without rain, starting ${start}, ${year}.`,
-      heatNone: (total: number, temp: string) => `In ${total} years, none had a day of ${temp} °C or more between March and May.`,
-      heatOne: (total: number, year: string, temp: string) =>
-        `In ${total} years, only 1 (${year}) had a day of ${temp} °C or more between March and May.`,
-      heatMany: (total: number, count: number, years: string, temp: string) =>
-        `In ${total} years, ${count} (${years}) had a day of ${temp} °C or more between March and May.`,
+      heatNone: (total: number) => `In ${total} years, none had a day of strong heat between March and May.`,
+      heatOne: (total: number, year: string) => `In ${total} years, only 1 (${year}) had a day of strong heat between March and May.`,
+      heatMany: (total: number, count: number, years: string) =>
+        `In ${total} years, ${count} (${years}) had a day of strong heat between March and May.`,
       future: (models: number, rain: string, heat: string) =>
         `For 2041 to 2060, the average of ${models} models shows March to May rain ${rain}% and maximum temperature ${heat} °C.`,
       xraySoil: (clay: string, sand: string) => `The soil has ${clay}% clay and ${sand}% sand.`,

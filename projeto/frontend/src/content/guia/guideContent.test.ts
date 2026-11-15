@@ -3,6 +3,8 @@ import { guideRepository } from '../../repositories/guideRepository'
 import { createGuideService } from '../../services/guideService'
 import { parseFrontMatter } from '../../services/guideService'
 import { parseMarkdown, plainText, type Block, type Inline } from '../../services/markdownService'
+import { en } from '../../i18n/messages.en'
+import { pt } from '../../i18n/messages.pt'
 import { VERIFIED_SOURCES } from './verifiedSources'
 
 /** Os artigos que precisam existir (os prioritários da seção 8 do pedido). */
@@ -102,6 +104,55 @@ describe('conteúdo do Guia', () => {
           internal.some((l) => !l.href.startsWith('/guia/')),
           `${lang}/${slug} sem link de volta para uma tela`,
         ).toBe(true)
+      }
+    }
+  })
+
+  it('os links para a tela 5 levam às abas de hoje ("Escolher" e "Plano de 3 anos"), com o nome delas', () => {
+    // Desde o pacote 2, a tela 5 tem 2 abas: `/resposta` abre "Escolher" e `/plano`, "Plano de 3 anos".
+    // As antigas "Sugestão" e "Comparar" (`/opcoes`) viraram a aba "Escolher".
+    const tabs: Record<'pt' | 'en', Record<string, string>> = {
+      pt: { '/resposta': 'Escolher', '/plano': 'Plano de 3 anos' },
+      en: { '/resposta': 'Choose', '/plano': '3-year plan' },
+    }
+    for (const lang of ['pt', 'en'] as const) {
+      for (const [slug, raw] of bySlug(lang)) {
+        for (const l of links(parseMarkdown(parseFrontMatter(raw)!.body)).filter((x) => !x.external)) {
+          expect(l.href, `${lang}/${slug}: link para a tela antiga ${l.href}`).not.toBe('/opcoes')
+          if (l.href in tabs[lang]) expect(l.text, `${lang}/${slug}: ${l.href}`).toBe(tabs[lang][l.href])
+        }
+        expect(raw.match(/\[(Sugestão|Comparar|Suggestion|Compare)\]/)?.[0] ?? null, `${lang}/${slug}`).toBeNull()
+      }
+    }
+  })
+
+  it('"Como ler os avisos" chama os grupos da tela de Avisos pelos nomes de hoje (pacote 3)', () => {
+    for (const [lang, t] of [['pt', pt], ['en', en]] as const) {
+      const raw = bySlug(lang).get('como-ler-os-avisos')!
+      for (const group of [t.alerts.now.title, t.alerts.changed.title, t.alerts.records.title]) {
+        expect(raw, `${lang}: ${group}`).toContain(`**${group}**`)
+      }
+      expect(raw).not.toMatch(/O que mudou na sua área|Fora do comum|What changed in your area|Out of the ordinary/)
+    }
+  })
+
+  it('"Como ler os avisos" escreve os níveis como a tela mostra', () => {
+    for (const [lang, t] of [['pt', pt], ['en', en]] as const) {
+      const raw = bySlug(lang).get('como-ler-os-avisos')!
+      for (const level of [t.alerts.level.atencao, t.alerts.level.fique_de_olho]) {
+        expect(raw, `${lang}: ${level}`).toContain(`**${level}**`)
+      }
+      expect(raw).not.toMatch(/\*\*Warning\*\*|\*\*Keep an eye on it\*\*/)
+    }
+  })
+
+  it('os links para a tela 4 (`/satelite`) usam o nome de hoje, "Raio-X da sua terra"', () => {
+    for (const [lang, t] of [['pt', pt], ['en', en]] as const) {
+      for (const [slug, raw] of bySlug(lang)) {
+        for (const l of links(parseMarkdown(parseFrontMatter(raw)!.body)).filter((x) => x.href === '/satelite')) {
+          expect(l.text, `${lang}/${slug}`).toBe(t.xray.eyebrow)
+        }
+        expect(raw.match(/O que o satélite viu|What the satellite saw/i)?.[0] ?? null, `${lang}/${slug}`).toBeNull()
       }
     }
   })

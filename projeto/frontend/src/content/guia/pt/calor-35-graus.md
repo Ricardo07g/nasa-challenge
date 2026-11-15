@@ -19,7 +19,7 @@ O NASA POWER é uma base de dados de clima da NASA, feita com satélites e model
 
 O app conta os dias muito quentes na fase mais delicada da cultura, a floração, e usa isso para dizer se o ano "deu certo". Veja [O que significa "deu certo"](/guia/deu-certo).
 
-O calor aparece como bloco no painel de [O que o satélite viu](/satelite).
+O calor aparece como bloco no painel do [Raio-X da sua terra](/satelite).
 
 Semear dentro do prazo do ZARC ajuda a controlar em que época a floração cai. Veja [o prazo de plantio](/guia/prazo-de-plantio-zarc).
 

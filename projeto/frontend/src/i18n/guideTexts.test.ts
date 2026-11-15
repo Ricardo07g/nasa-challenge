@@ -37,13 +37,26 @@ const xray: FieldFact = {
 describe('fieldFactText (a frase e a fonte da caixa "Na sua lavoura")', () => {
   it('erosão: os dias de chuva forte em fevereiro e março', () => {
     expect(fieldFactText(pt, 'pt', heavyRain)).toEqual({
-      text: 'Em 20 anos, houve 5 dias com 50 mm ou mais de chuva em fevereiro e março: em média, 0,25 dia por ano.',
+      text: 'Em 20 anos, houve 5 dias de chuva forte em fevereiro e março: em média, 0,25 dia por ano.',
       source: 'GPM IMERG (NASA), 20 anos',
     })
     expect(fieldFactText(en, 'en', heavyRain)).toEqual({
-      text: 'In 20 years, there were 5 days with 50 mm or more of rain in February and March: on average, 0.25 days a year.',
+      text: 'In 20 years, there were 5 days of heavy rain in February and March: on average, 0.25 days a year.',
       source: 'GPM IMERG (NASA), 20 years',
     })
+  })
+
+  it('a frase não traz o limite da conta (quem escolhe o limite é a conta, não a frase)', () => {
+    const otherLimit: FieldFact = { kind: 'heavyRain', data: { media_dias_ano: 0.25, dias: 5, total_anos: 20, limite_mm: 40, fonte: 'gpm_imerg' } }
+    expect(fieldFactText(pt, 'pt', otherLimit).text).toBe(fieldFactText(pt, 'pt', heavyRain).text)
+    const hotter: FieldFact = { kind: 'heat', data: { anos_com_calor: 1, total_anos: 20, temp_c: 34, anos: [2024], fonte: 'nasa_power' } }
+    expect(fieldFactText(pt, 'pt', hotter).text).toBe(fieldFactText(pt, 'pt', heat([2024])).text)
+    for (const lang of ['pt', 'en'] as const) {
+      const t = lang === 'pt' ? pt : en
+      for (const fact of [heavyRain, heat([]), heat([2024]), heat([2019, 2024])]) {
+        expect(fieldFactText(t, lang, fact).text).not.toMatch(/\bmm\b|°C/)
+      }
+    }
   })
 
   it('veranico: o maior trecho seco de março a maio', () => {
@@ -55,13 +68,15 @@ describe('fieldFactText (a frase e a fonte da caixa "Na sua lavoura")', () => {
     )
   })
 
-  it('calor: nenhum, 1 ou vários anos com dia de 35 °C', () => {
-    expect(fieldFactText(pt, 'pt', heat([])).text).toBe('Em 20 anos, nenhum teve dia de 35 °C ou mais entre março e maio.')
-    expect(fieldFactText(pt, 'pt', heat([2024])).text).toBe('Em 20 anos, só 1 (2024) teve dia de 35 °C ou mais entre março e maio.')
+  it('calor: nenhum, 1 ou vários anos com dia de calor forte', () => {
+    expect(fieldFactText(pt, 'pt', heat([])).text).toBe('Em 20 anos, nenhum teve dia de calor forte entre março e maio.')
+    expect(fieldFactText(pt, 'pt', heat([2024])).text).toBe('Em 20 anos, só 1 (2024) teve dia de calor forte entre março e maio.')
     expect(fieldFactText(pt, 'pt', heat([2019, 2020, 2024])).text).toBe(
-      'Em 20 anos, 3 (2019, 2020 e 2024) tiveram dia de 35 °C ou mais entre março e maio.',
+      'Em 20 anos, 3 (2019, 2020 e 2024) tiveram dia de calor forte entre março e maio.',
     )
-    expect(fieldFactText(en, 'en', heat([2019, 2024])).text).toBe('In 20 years, 2 (2019 and 2024) had a day of 35 °C or more between March and May.')
+    expect(fieldFactText(en, 'en', heat([])).text).toBe('In 20 years, none had a day of strong heat between March and May.')
+    expect(fieldFactText(en, 'en', heat([2024])).text).toBe('In 20 years, only 1 (2024) had a day of strong heat between March and May.')
+    expect(fieldFactText(en, 'en', heat([2019, 2024])).text).toBe('In 20 years, 2 (2019 and 2024) had a day of strong heat between March and May.')
     expect(fieldFactText(pt, 'pt', heat([])).source).toBe('NASA POWER, 20 anos')
   })
 

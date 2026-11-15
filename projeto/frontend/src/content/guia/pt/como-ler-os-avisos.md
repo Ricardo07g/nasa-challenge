@@ -22,8 +22,8 @@ Cada aviso diz o nível (**Atenção** ou **Fique de olho**), o que o dado mostr
 Na tela [Avisos](/avisos), os avisos ficam em três grupos:
 
 - **Agora**: terra seca pelo satélite SMAP; dias seguidos sem chuva e calor nos últimos dias, pelo NASA POWER; e a previsão do El Niño ou da La Niña da NOAA, com o que aconteceu aqui em anos parecidos.
-- **O que mudou na sua área**: 2020 a 2024 comparado com 2005 a 2019. São poucos anos: mostra o que aconteceu, não uma previsão.
-- **Fora do comum**: os recordes dos 20 anos, como o maior veranico e o outono mais seco.
+- **Como a sua área está mudando**: 2020 a 2024 comparado com 2005 a 2019. São poucos anos: mostra o que aconteceu, não uma previsão.
+- **Já aconteceu aqui**: os recordes dos 20 anos, como o maior veranico e o outono mais seco.
 
 Para os alertas oficiais, veja [Alertas oficiais da Defesa Civil](/guia/alertas-defesa-civil). Veja também [Veranico](/guia/veranico) e [El Niño e La Niña](/guia/el-nino-la-nina).
 

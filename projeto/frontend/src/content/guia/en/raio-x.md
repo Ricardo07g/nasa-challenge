@@ -19,7 +19,7 @@ Each number has a tag with the source and the size of the measured area. The dat
 
 ## In your field
 
-On the [What the satellite saw](/satelite) screen, each block shows one thing:
+On the [Your land's X-ray](/satelite) screen, each block shows one thing:
 
 - **Soil**: how much clay and sand the soil has, from the SoilGrids soil map, in 250 m squares.
 - **Water the soil holds**: the water within reach of the roots. The app divides this water by what the crop uses at flowering and tells how many days it lasts without rain.

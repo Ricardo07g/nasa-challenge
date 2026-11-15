@@ -19,7 +19,7 @@ NASA POWER is a NASA climate database built from satellites and models. A study 
 
 The app counts very hot days in the crop's most delicate phase, flowering, and uses that to say whether the year "worked". See [What "it worked" means](/guia/deu-certo).
 
-Heat shows up as a block on the [What the satellite saw](/satelite) panel.
+Heat shows up as a block on the [Your land's X-ray](/satelite) panel.
 
 Sowing within the ZARC deadline helps control when flowering falls. See [the planting deadline](/guia/prazo-de-plantio-zarc).
 

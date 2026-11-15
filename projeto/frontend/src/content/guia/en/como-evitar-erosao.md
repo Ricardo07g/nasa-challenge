@@ -22,9 +22,9 @@ No-till alone is not enough when runoff is heavy: research recommends combining 
 
 ## In your field
 
-Right after the soybean harvest, the soil may be bare. On the [What the satellite saw](/satelite) screen, the heavy rain alert shows how many days a year it rained a lot, from NASA's GPM IMERG satellite.
+Right after the soybean harvest, the soil may be bare. On the [Your land's X-ray](/satelite) screen, the heavy rain alert shows how many days a year it rained a lot, from NASA's GPM IMERG satellite.
 
-See the cover options in the [Suggestion](/resposta) and in [Compare](/opcoes), and read [Straw: why cover the soil](/guia/palhada).
+See the cover options in the [Choose](/resposta) tab, and read [Straw: why cover the soil](/guia/palhada).
 
 Where to build terraces and how far apart they should be is up to your agronomist.
 
