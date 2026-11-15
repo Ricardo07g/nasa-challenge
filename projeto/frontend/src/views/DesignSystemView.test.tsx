@@ -85,7 +85,7 @@ describe('DesignSystemView: seção "Pacote 2" (peças compartilhadas)', () => {
     }
     render(
       <MemoryRouter>
-        <DesignSystemView t={pt} apiMode="http" backend="ok" cropOptions={[]} cropOptionsError={false} pacote2={pacote2} />
+        <DesignSystemView t={pt} lang="pt" apiMode="http" backend="ok" cropOptions={[]} cropOptionsError={false} pacote2={pacote2} />
       </MemoryRouter>,
     )
 
