@@ -1,13 +1,13 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
+import type { BandsModalState, DetailsModalState } from '../controllers/useWhenController'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
-import type { RainLeftState } from '../controllers/useWhenController'
-import type { DelayCost } from '../services/delayCostService'
+import type { HarvestBand } from '../services/harvestBandsService'
 import type { RainChart } from '../services/monthlyRainService'
-import type { RainEnd } from '../services/rainLeftService'
+import type { RainEnd, RainLeft, RainLeftCurve } from '../services/rainLeftService'
 import { WhenView, type WhenViewProps } from './WhenView'
 
 /** Valores redondos de teste (não são do GPM IMERG nem do NASA POWER). */
@@ -27,10 +27,7 @@ const CHART: RainChart = {
   eto: { source: 'nasa_power', deficitMonth: 'apr' },
 }
 
-const LEFT: Exclude<RainLeftState, null | 'loading'> = {
-  date: '2027-02-25',
-  medianMm: 367,
-  dryMm: 276,
+const CURVE: RainLeftCurve = {
   endDay: '06-30',
   percentile: 20,
   firstYear: 2005,
@@ -39,14 +36,15 @@ const LEFT: Exclude<RainLeftState, null | 'loading'> = {
   sources: ['gpm_imerg'],
   points: [
     { day: '01-15', median: 697, dry: 616 },
-    { day: '02-25', median: 367, dry: 276 },
+    { day: '02-01', median: 520, dry: 430 },
+    { day: '03-01', median: 300, dry: 220 },
+    { day: '03-03', median: 290, dry: 210 },
     { day: '03-31', median: 141, dry: 87 },
   ],
   maxMm: 697,
-  selectedIndex: 1,
-  exact: true,
-  band: 'tarde',
 }
+
+const LEFT: RainLeft = { ...CURVE, date: '2027-03-03', medianMm: 290, dryMm: 210, selectedIndex: 3 }
 
 const END: RainEnd = {
   median: '2023-04-21',
@@ -61,13 +59,18 @@ const END: RainEnd = {
   maxMm: 10,
 }
 
-const COST: DelayCost = {
-  bands: [
-    { band: 'cedo', crop: 'milho_braquiaria', good: 18, total: 20 },
-    { band: 'meio', crop: 'milho_braquiaria', good: 16, total: 20 },
-    { band: 'tarde', crop: 'milheto', good: 20, total: 20 },
-  ],
-  sameCrop: false,
+const BANDS: HarvestBand[] = [
+  { band: 'cedo', day: '2027-02-05', rainMm: 455, best: { crop: 'milho_braquiaria', good: 18, total: 20 }, yours: false },
+  { band: 'meio', day: '2027-02-15', rainMm: 405, best: { crop: 'milho_braquiaria', good: 16, total: 20 }, yours: false },
+  { band: 'tarde', day: '2027-03-03', rainMm: 290, best: { crop: 'milheto', good: 20, total: 20 }, yours: true },
+]
+
+function bandsModal(overrides: Partial<BandsModalState> = {}): BandsModalState {
+  return { open: false, draft: null, onOpen: vi.fn(), onClose: vi.fn(), onDraft: vi.fn(), onSubmit: vi.fn(), ...overrides }
+}
+
+function details(overrides: Partial<DetailsModalState> = {}): DetailsModalState {
+  return { open: false, onOpen: vi.fn(), onClose: vi.fn(), onUseBand: vi.fn(), ...overrides }
 }
 
 function setup(overrides: Partial<WhenViewProps> = {}) {
@@ -75,24 +78,22 @@ function setup(overrides: Partial<WhenViewProps> = {}) {
     t: pt,
     lang: 'pt',
     backTo: '/onde?lat=-18.9543&lon=-48.1993',
-    suggestion: { faixa: 'tarde', fromSatellite: true, date: '2027-02-25' },
-    suggestionApplied: true,
-    onUseSuggestion: vi.fn(),
-    selected: 'tarde',
-    date: '2027-02-25',
-    dateBand: 'tarde',
-    window: { min: '2027-01-15', max: '2027-03-31' },
-    onDateChange: vi.fn(),
-    bandsOpen: false,
-    onToggleBands: vi.fn(),
-    onSelect: vi.fn(),
+    listen: { supported: true, speaking: false, toggle: vi.fn() },
+    window: { min: '2027-01-01', max: '2027-04-30' },
+    choice: null,
+    onPickDate: vi.fn(),
+    canContinue: false,
     onConfirm: vi.fn(),
+    notSoy: false,
+    bands: BANDS.map((band) => ({ ...band, yours: false, day: band.band === 'tarde' ? '2027-02-28' : band.day })),
+    rainCurve: CURVE,
+    rainLeft: null,
     rainChart: CHART,
-    rainLeft: LEFT,
     rainEnd: END,
-    delayCost: COST,
-    soyWarning: null,
-    onDismissSoyWarning: vi.fn(),
+    heatC: 35,
+    loading: false,
+    bandsModal: bandsModal(),
+    details: details(),
     ...overrides,
   }
   render(
@@ -103,256 +104,261 @@ function setup(overrides: Partial<WhenViewProps> = {}) {
   return props
 }
 
-describe('WhenView (tela 3)', () => {
-  it('no topo, o dia da colheita já preenchido com o dia do satélite e a faixa em que ele cai', () => {
+const withDate: Partial<WhenViewProps> = {
+  choice: { band: 'tarde', date: '2027-03-03' },
+  canContinue: true,
+  rainLeft: LEFT,
+  bands: BANDS,
+}
+
+describe('WhenView (tela 2 "Quando você colhe a soja?", tarefa 0057)', () => {
+  it('no topo: o Voltar de verdade, o título, a frase e o "Ouvir resumo", sem "Pergunta 2 de 2"', () => {
     setup()
 
+    expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute('href', '/onde?lat=-18.9543&lon=-48.1993')
     expect(screen.getByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Pergunta 2 de 2' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('href', '/onde?lat=-18.9543&lon=-48.1993')
-    expect(screen.getByLabelText('Dia da colheita')).toHaveValue('2027-02-25')
-    expect(screen.getByRole('status')).toHaveTextContent('Dia 25 de fevereiro: conta como fim de fevereiro ou em março.')
-    expect(
-      screen.getByText(
-        'Pelo satélite (NDVI do MODIS), a soja daqui costuma secar por volta de 25 de fevereiro (fim de fevereiro ou em março).',
-        { exact: false },
-      ),
-    ).toHaveTextContent('Já deixamos esse dia no campo.')
-    expect(screen.queryByRole('button', { name: 'Usar o dia do satélite' })).not.toBeInTheDocument()
+    expect(screen.getByText('Escolha o dia em que a colheita costuma acontecer.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ouvir resumo' })).toBeInTheDocument()
+    expect(screen.queryByText(/Pergunta \d de \d/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
   })
 
-  it('a opção "Colocar a data exata" saiu; "Não sei o dia exato" abre as três faixas', async () => {
+  it('sem data: calendário vazio com "?", "Escolher data" e o Próximo passo desligado, com o motivo', () => {
+    setup()
+
+    const card = screen.getByRole('region', { name: 'Escolha o dia da colheita' })
+    expect(within(card).getByText('?')).toBeInTheDocument()
+    expect(within(card).getByText('Toque em “Escolher data”.')).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Escolher data' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Próximo passo/ })).toBeDisabled()
+    expect(screen.getByText('Escolha uma data ou toque em “Não sei o dia exato”.')).toBeInTheDocument()
+    expect(screen.getByText('Escolha o dia da colheita para continuar')).toBeInTheDocument()
+  })
+
+  it('o campo de data vai de 1/jan a 30/abr de 2027 e escolher o dia chama o controller', () => {
     const props = setup()
 
-    expect(screen.queryByText(/Colocar a data exata/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Meio de fevereiro/ })).not.toBeInTheDocument()
-    const toggle = screen.getByRole('button', { name: 'Não sei o dia exato' })
-    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    const input = screen.getByLabelText('Dia da colheita')
+    expect(input).toHaveAttribute('type', 'date')
+    expect(input).toHaveAttribute('min', '2027-01-01')
+    expect(input).toHaveAttribute('max', '2027-04-30')
+    fireEvent.change(input, { target: { value: '2027-03-03' } })
 
-    await userEvent.click(toggle)
-
-    expect(props.onToggleBands).toHaveBeenCalled()
+    expect(props.onPickDate).toHaveBeenCalledWith('2027-03-03')
   })
 
-  it('com as faixas abertas, a marcada é a do dia no campo (sugestão = seleção)', async () => {
-    const props = setup({ bandsOpen: true })
+  it('com a data: o calendário com mês e dia, a data por extenso, o dia da semana e o selo da época', () => {
+    setup(withDate)
 
-    expect(screen.getByRole('button', { name: 'Não sei o dia exato' })).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByRole('button', { name: /Fim de fevereiro ou março/ })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: /Meio de fevereiro/ })).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByRole('button', { name: /Começo de fevereiro/ })).toHaveAttribute('aria-pressed', 'false')
+    const card = screen.getByRole('region', { name: '3 de março de 2027' })
+    expect(within(card).getByText('MAR')).toBeInTheDocument()
+    expect(within(card).getByText('3')).toBeInTheDocument()
+    expect(within(card).getByText('Quarta-feira')).toBeInTheDocument()
+    expect(within(card).getByText('Fim de fevereiro ou março')).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Trocar data' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Próximo passo/ })).toBeEnabled()
+  })
 
-    await userEvent.click(screen.getByRole('button', { name: /Começo de fevereiro/ }))
+  it('com a época: o calendário mostra "FEV 11–20" e o botão vira "Escolher o dia"', () => {
+    setup({ choice: { band: 'meio', date: null }, canContinue: true })
+
+    const card = screen.getByRole('region', { name: 'Meio de fevereiro' })
+    expect(within(card).getByText('FEV')).toBeInTheDocument()
+    expect(within(card).getByText('11–20')).toBeInTheDocument()
+    expect(within(card).getByText('Época aproximada')).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Escolher o dia' })).toBeInTheDocument()
+  })
+
+  it('"Próximo passo · Ver a resposta" chama o controller', async () => {
+    const props = setup(withDate)
+
     await userEvent.click(screen.getByRole('button', { name: 'Próximo passo Ver a resposta' }))
 
-    expect(props.onSelect).toHaveBeenCalledWith('cedo')
     expect(props.onConfirm).toHaveBeenCalled()
   })
 
-  it('com outra faixa escolhida, a faixa azul não diz que já marcou e oferece o dia do satélite', async () => {
-    const props = setup({ suggestionApplied: false, date: '', dateBand: null, selected: 'meio', bandsOpen: true })
+  it('"Não sei o dia exato" abre o modal das épocas', async () => {
+    const props = setup()
 
-    const banner = screen.getByText(/costuma secar por volta de 25 de fevereiro/)
-    expect(banner).not.toHaveTextContent('Já deixamos')
-    expect(screen.getByRole('button', { name: /Meio de fevereiro/ })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('status')).toHaveTextContent('Coloque o dia ou toque em "Não sei o dia exato".')
+    await userEvent.click(screen.getByRole('button', { name: 'Não sei o dia exato' }))
 
-    await userEvent.click(screen.getByRole('button', { name: 'Usar o dia do satélite' }))
-
-    expect(props.onUseSuggestion).toHaveBeenCalled()
+    expect(props.bandsModal.onOpen).toHaveBeenCalled()
   })
 
-  it('enquanto o talhão carrega, o campo fica vazio sem pedir nada e sem faixa azul', () => {
-    setup({ suggestion: null, suggestionApplied: false, date: '', dateBand: null, selected: 'meio' })
+  it('o modal das épocas abre sem nenhuma marcada e "Usar esta época" fica desligado', async () => {
+    const modal = bandsModal({ open: true })
+    setup({ bandsModal: modal })
 
-    expect(screen.getByLabelText('Dia da colheita')).toHaveValue('')
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    expect(screen.queryByText(/Pelo satélite|Não deu para ver/)).not.toBeInTheDocument()
+    const dialog = screen.getByRole('dialog', { name: 'Quando costuma ser a sua colheita?' })
+    const radios = within(dialog).getAllByRole('radio')
+    expect(radios).toHaveLength(3)
+    radios.forEach((radio) => expect(radio).not.toBeChecked())
+    expect(within(dialog).getByText('Do dia 11 ao 20')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Usar esta época' })).toBeDisabled()
+
+    await userEvent.click(within(dialog).getByRole('radio', { name: /Meio de fevereiro/ }))
+    expect(modal.onDraft).toHaveBeenCalledWith('meio')
   })
 
-  it('mudar o dia chama o controller; dia fora da época pede outro', async () => {
-    const props = setup({ date: '2027-05-02', dateBand: null, suggestionApplied: false })
+  it('com uma época marcada no modal, "Usar esta época" liga e usa', async () => {
+    const modal = bandsModal({ open: true, draft: 'cedo' })
+    setup({ bandsModal: modal })
 
-    expect(screen.getByRole('status')).toHaveTextContent('Escolha um dia dentro da época de colheita.')
-    await userEvent.clear(screen.getByLabelText('Dia da colheita'))
+    const dialog = screen.getByRole('dialog', { name: 'Quando costuma ser a sua colheita?' })
+    expect(within(dialog).getByRole('radio', { name: /Começo de fevereiro/ })).toBeChecked()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Usar esta época' }))
 
-    expect(props.onDateChange).toHaveBeenCalled()
+    expect(modal.onSubmit).toHaveBeenCalled()
   })
 
-  it('sem dado do satélite, diz que deixou o meio de fevereiro só enquanto ele está marcado', () => {
-    setup({ suggestion: { faixa: 'meio', fromSatellite: false, date: null }, suggestionApplied: false, date: '', dateBand: null, selected: 'meio' })
+  it('aviso laranja quando o ponto não parece uma lavoura de soja, com "Conferir no mapa"', () => {
+    setup({ notSoy: true })
 
-    expect(
-      screen.getByText('Não deu para ver pelo satélite quando a soja daqui seca. Deixamos marcado o meio de fevereiro.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Pelo satélite, este ponto não parece uma lavoura de soja.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Conferir no mapa' })).toHaveAttribute('href', '/onde?lat=-18.9543&lon=-48.1993')
   })
 
-  it('sem dado do satélite e com outra faixa marcada, não diz que deixou o meio', () => {
-    setup({ suggestion: { faixa: 'meio', fromSatellite: false, date: null }, suggestionApplied: false, date: '', dateBand: null, selected: 'cedo' })
-
-    expect(screen.getByText('Não deu para ver pelo satélite quando a soja daqui seca.')).toBeInTheDocument()
-    expect(screen.queryByText(/Deixamos marcado/)).not.toBeInTheDocument()
-  })
-
-  it('API antiga (só a faixa do satélite): diz que marcou só se a faixa marcada é a dele', () => {
-    setup({ suggestion: { faixa: 'meio', fromSatellite: true, date: null }, suggestionApplied: false, date: '', dateBand: null, selected: 'cedo' })
-
-    const banner = screen.getByText(/Pelo satélite, a soja daqui costuma secar no/)
-    expect(banner).toHaveTextContent('Pelo satélite, a soja daqui costuma secar no meio de fevereiro.')
-    expect(banner).not.toHaveTextContent('Já deixamos marcado.')
-  })
-
-  it('chuva que sobra: a frase do dia escolhido, o gráfico, a fonte certa e o "Saiba mais"', () => {
+  it('sem o aviso quando o satélite viu soja (ou não sabe)', () => {
     setup()
 
-    const left = screen.getByRole('region', { name: 'Chuva que sobra depois da colheita' })
-    expect(left).toHaveTextContent('Colhendo em 25 de fevereiro, sobram em média 367 mm; num ano seco, 276 mm.')
-    expect(
-      within(left).getByRole('img', {
-        name: 'Gráfico: quanto mais tarde a colheita, menos chuva sobra. Colhendo em 25 de fevereiro, sobram 367 mm em média e 276 mm num ano seco.',
-      }),
-    ).toBeInTheDocument()
-    expect(left).toHaveTextContent('Chuva somada do dia da colheita até 30 de junho.')
-    expect(left).toHaveTextContent('só 20% dos anos tiveram menos chuva')
-    expect(left).toHaveTextContent('Chuva medida pelo GPM IMERG (NASA).')
-    expect(within(left).getByRole('link', { name: 'Saiba mais: Quando a chuva acaba' })).toHaveAttribute(
-      'href',
-      '/guia/quando-a-chuva-acaba',
-    )
+    expect(screen.queryByText('Pelo satélite, este ponto não parece uma lavoura de soja.')).not.toBeInTheDocument()
   })
 
-  it('só com a faixa, a frase usa a faixa e o dia de colheita dela', () => {
-    setup({ rainLeft: { ...LEFT, date: '2027-02-15', exact: false, band: 'meio' } })
+  it('caixa "Ainda não decidiu?": a prévia das 3 épocas (a sua em verde) e o botão que abre o modal grande', async () => {
+    const props = setup(withDate)
 
-    expect(
-      screen.getByText('Colhendo no meio de fevereiro (por volta de 15 de fevereiro), sobram em média 367 mm; num ano seco, 276 mm.'),
-    ).toBeInTheDocument()
+    const box = screen.getByRole('region', { name: 'Ainda não decidiu? Veja nossas sugestões' })
+    expect(within(box).getByText('Por que perguntamos isso?')).toBeInTheDocument()
+    expect(within(box).getByText('A data muda a chuva que sobra e a melhor opção para a sua terra.')).toBeInTheDocument()
+    expect(within(box).getByText('Chuva que sobra até junho, em média')).toBeInTheDocument()
+    expect(within(box).getByText('455 mm')).toBeInTheDocument()
+    expect(within(box).getByText('Fim de fev./março').closest('[data-yours]')).toHaveAttribute('data-yours', 'true')
+    expect(within(box).getByText('Começo de fev.').closest('[data-yours]')).toHaveAttribute('data-yours', 'false')
+    await userEvent.click(within(box).getByRole('button', { name: 'Ver sugestões e detalhes' }))
+
+    expect(props.details.onOpen).toHaveBeenCalled()
   })
 
-  it('fim das chuvas: a mediana, o mais cedo e o mais tarde, com a regra e a fonte', () => {
-    setup()
+  it('sem a chuva que sobra, a caixa fica sem a prévia (decisão D2)', () => {
+    setup({ rainCurve: null, bands: BANDS.map((band) => ({ ...band, rainMm: null })) })
 
-    const left = screen.getByRole('region', { name: 'Chuva que sobra depois da colheita' })
-    expect(left).toHaveTextContent(
-      'Em metade dos anos, a chuva acabou até 21 de abril; o mais cedo foi 16 de março de 2021 e o mais tarde 22 de junho de 2012.',
-    )
-    expect(left).toHaveTextContent(
-      'Fim da chuva: o primeiro dia, a partir de 1 de março, que começa 20 dias seguidos com menos de 10 mm somados. Chuva do GPM IMERG (NASA), de 2005 a 2024.',
-    )
+    const box = screen.getByRole('region', { name: 'Ainda não decidiu? Veja nossas sugestões' })
+    expect(within(box).queryByText('Chuva que sobra até junho, em média')).not.toBeInTheDocument()
   })
 
-  it('chuva e gasto da lavoura por mês: o mês em que a chuva fica abaixo, escrito, e as duas fontes', () => {
-    setup()
+  describe('modal grande "Nossas sugestões para a data da colheita"', () => {
+    it('tem os 4 blocos com os textos abertos', () => {
+      setup({ ...withDate, details: details({ open: true }) })
 
-    const eto = screen.getByRole('region', { name: 'Chuva e o que a lavoura gasta, mês a mês' })
-    expect(eto).toHaveTextContent('Em abril, a chuva média fica menor que o que a lavoura gasta.')
-    const chart = within(eto).getByRole('img', { name: /Chuva e gasto da lavoura em cada mês, em milímetros: Jan, chuva 289 e gasto 134/ })
-    expect(chart.querySelectorAll('[data-bar="rain"]')).toHaveLength(6)
-    expect(chart.querySelectorAll('[data-highlight="true"]')).toHaveLength(1)
-    expect(within(chart).getByText('chove menos')).toBeInTheDocument()
-    expect(eto).toHaveTextContent('Chuva medida pelo GPM IMERG (NASA).')
-    expect(eto).toHaveTextContent('calculada com o clima do NASA POWER.')
-    expect(within(eto).getByRole('link', { name: 'Saiba mais: A conta de água da lavoura' })).toHaveAttribute(
-      'href',
-      '/guia/conta-de-agua',
-    )
-  })
-
-  it('sem a ETo (API antiga), o bloco mês a mês não aparece', () => {
-    const { eto: _eto, ...withoutEto } = CHART
-    void _eto
-    setup({ rainChart: { ...withoutEto, bars: CHART.bars.map(({ month, mm, heightPct }) => ({ month, mm, heightPct })) } })
-
-    expect(screen.queryByRole('region', { name: 'Chuva e o que a lavoura gasta, mês a mês' })).not.toBeInTheDocument()
-  })
-
-  it('custo do atraso: os números do motor nas três faixas, dizendo a cultura quando ela muda', () => {
-    setup()
-
-    const cost = screen.getByRole('region', { name: 'Quanto custa colher mais tarde' })
-    expect(cost).toHaveTextContent(
-      'Colhendo cedo, milho com braquiária deu certo em 18 de 20 anos; no meio, milho com braquiária, 16 de 20; tarde, milheto, 20 de 20.',
-    )
-    expect(cost).toHaveTextContent('A melhor opção muda com a época da colheita.')
-    const yours = within(cost).getByText(/sua escolha/)
-    expect(yours.closest('li')).toHaveTextContent('Fim de fevereiro ou março: milheto, deu certo em 20 de 20 anos (sua escolha)')
-    expect(within(cost).getByRole('link', { name: 'Saiba mais: Plantar logo depois da colheita' })).toHaveAttribute(
-      'href',
-      '/guia/plantar-logo-depois-da-colheita',
-    )
-    expect(within(cost).getByRole('link', { name: 'Saiba mais: O que significa "deu certo"' })).toHaveAttribute(
-      'href',
-      '/guia/deu-certo',
-    )
-  })
-
-  it('custo do atraso com a mesma cultura nas três faixas', () => {
-    setup({
-      delayCost: {
-        bands: [
-          { band: 'cedo', crop: 'milheto', good: 19, total: 20 },
-          { band: 'meio', crop: 'milheto', good: 18, total: 20 },
-          { band: 'tarde', crop: 'milheto', good: 16, total: 20 },
-        ],
-        sameCrop: true,
-      },
+      const dialog = screen.getByRole('dialog', { name: 'Nossas sugestões para a data da colheita' })
+      expect(within(dialog).getByText(/A chuva vai acabando depois de março/)).toBeInTheDocument()
+      for (const name of ['Compare as épocas', 'Chuva que sobra para a próxima planta', 'Chuva e o que a lavoura gasta, mês a mês', 'Quando a chuva acaba']) {
+        expect(within(dialog).getByRole('heading', { name })).toBeInTheDocument()
+      }
+      expect(within(dialog).queryByRole('button', { name: /Como fazemos essa conta/ })).not.toBeInTheDocument()
+      expect(dialog.querySelector('details')).toBeNull()
     })
 
-    const cost = screen.getByRole('region', { name: 'Quanto custa colher mais tarde' })
-    expect(cost).toHaveTextContent('A melhor opção é milheto nas três épocas.')
-    expect(cost).toHaveTextContent('Colhendo cedo, deu certo em 19 de 20 anos; no meio, 18 de 20; tarde, 16 de 20.')
-  })
+    it('"Compare as épocas": chuva, melhor opção e "deu certo" de cada época, com a sua destacada e "Usar esta época" nas outras', async () => {
+      const modal = details({ open: true })
+      setup({ ...withDate, details: modal })
 
-  it('carregando ou sem dado, os blocos novos não aparecem (decisão D2)', () => {
-    setup({ rainLeft: 'loading', rainEnd: null, rainChart: null, delayCost: 'loading' })
+      const block = screen.getByRole('region', { name: 'Compare as épocas' })
+      const yours = within(block).getByText('sua época').closest('[data-band]') as HTMLElement
+      expect(yours).toHaveAttribute('data-band', 'tarde')
+      expect(within(yours).getByText('290 mm')).toBeInTheDocument()
+      expect(within(yours).getByText('Milheto · deu certo em 20 de 20 anos')).toBeInTheDocument()
+      expect(within(yours).queryByRole('button', { name: 'Usar esta época' })).not.toBeInTheDocument()
+      expect(within(block).getAllByText('Milho com braquiária · deu certo em 18 de 20 anos')).toHaveLength(1)
+      expect(within(block).getAllByRole('button', { name: 'Usar esta época' })).toHaveLength(2)
+      expect(
+        within(block).getByText(
+          '“Deu certo” quer dizer que não faltou água nem fez 35 °C ou mais na floração. Conta feita com a chuva do GPM IMERG (NASA) e o calor do NASA POWER de cada ano, de 2005 a 2024.',
+        ),
+      ).toBeInTheDocument()
 
-    expect(screen.queryByRole('region', { name: 'Chuva que sobra depois da colheita' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Chuva e o que a lavoura gasta, mês a mês' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Quanto custa colher mais tarde' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
-    // A pergunta continua: o porquê e o próximo passo
-    expect(screen.getByText(/A chuva vai acabando depois de março/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Próximo passo Ver a resposta' })).toBeEnabled()
-  })
+      await userEvent.click(within(block).getAllByRole('button', { name: 'Usar esta época' })[0])
+      expect(modal.onUseBand).toHaveBeenCalledWith('cedo')
+    })
 
-  it('sem soja vista no ponto na última safra (RF-24), avisa e deixa seguir', async () => {
-    const props = setup({ soyWarning: { safra: '2025/26' } })
+    it('sem o número do calor (API antiga), o "deu certo" fica sem o número', () => {
+      setup({ ...withDate, heatC: null, details: details({ open: true }) })
 
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Não vimos soja neste ponto na última safra (2025/26). Confira se marcou a lavoura certa.',
-    )
-    expect(screen.getByRole('link', { name: 'Ajustar no mapa' })).toHaveAttribute('href', '/onde?lat=-18.9543&lon=-48.1993')
-    await userEvent.click(screen.getByRole('button', { name: 'Seguir mesmo assim' }))
-    expect(props.onDismissSoyWarning).toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: 'Próximo passo Ver a resposta' })).toBeEnabled()
-  })
+      expect(screen.getByText(/não faltou água nem fez calor forte demais na floração/)).toBeInTheDocument()
+    })
 
-  it('sem o aviso da soja, nada muda', () => {
-    setup()
+    it('"Chuva que sobra": os números da data escolhida, o gráfico com a marca e o que cada linha significa', () => {
+      setup({ ...withDate, details: details({ open: true }) })
 
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Seguir mesmo assim' })).not.toBeInTheDocument()
+      const block = screen.getByRole('region', { name: 'Chuva que sobra para a próxima planta' })
+      expect(block).toHaveTextContent(
+        'Colhendo em 3 de março, a próxima planta ainda recebe 290 mm de chuva até 30 de junho num ano normal, e 210 mm num ano seco.',
+      )
+      expect(within(block).getByRole('img', { name: /Colhendo em 3 de março, sobram 290 mm/ })).toBeInTheDocument()
+      expect(block).toHaveTextContent('só 2 em cada 10 anos tiveram menos chuva que isso')
+      expect(within(block).getByText('Chuva medida pelo GPM IMERG (NASA), de 2005 a 2024, no ponto da sua lavoura.')).toBeInTheDocument()
+    })
+
+    it('"Chuva que sobra" sem data: a explicação pede para escolher a data e o gráfico fica sem marca', () => {
+      setup({ details: details({ open: true }) })
+
+      const block = screen.getByRole('region', { name: 'Chuva que sobra para a próxima planta' })
+      expect(block).toHaveTextContent('Escolha uma data para ver os números da sua colheita.')
+      expect(within(block).getByRole('img').querySelector('[data-marker]')).toBeNull()
+    })
+
+    it('"Chuva e o que a lavoura gasta": o gráfico e só abril em destaque, com a explicação', () => {
+      setup({ ...withDate, details: details({ open: true }) })
+
+      const block = screen.getByRole('region', { name: 'Chuva e o que a lavoura gasta, mês a mês' })
+      expect(within(block).getAllByText('chove menos')).toHaveLength(1)
+      expect(block).toHaveTextContent('De janeiro a março chove mais do que a lavoura gasta. Em abril isso vira')
+    })
+
+    it('"Quando a chuva acaba": a linha do tempo com o mais cedo, a metade dos anos e o mais tarde, e a regra', () => {
+      setup({ ...withDate, details: details({ open: true }) })
+
+      const block = screen.getByRole('region', { name: 'Quando a chuva acaba' })
+      expect(within(block).getByText('16 mar · 2021')).toBeInTheDocument()
+      expect(within(block).getByText('21 abr · metade dos anos')).toBeInTheDocument()
+      expect(within(block).getByText('22 jun · 2012')).toBeInTheDocument()
+      expect(block).toHaveTextContent('Em metade dos anos, a chuva acabou até 21 de abril.')
+      expect(block).toHaveTextContent('a partir de 1º de março, que começa 20 dias seguidos com menos de 10 mm somados')
+    })
+
+    it('cada "Saiba mais" abre o artigo do Guia em nova aba', () => {
+      setup({ ...withDate, details: details({ open: true }) })
+
+      const links = [
+        ['Saiba mais: o que significa “deu certo”', '/guia/deu-certo'],
+        ['Saiba mais: plantar logo depois da colheita', '/guia/plantar-logo-depois-da-colheita'],
+        ['Saiba mais: a conta de água da lavoura', '/guia/conta-de-agua'],
+        ['Saiba mais: quando a chuva acaba', '/guia/quando-a-chuva-acaba'],
+      ]
+      for (const [name, href] of links) {
+        const link = screen.getByRole('link', { name: new RegExp(name) })
+        expect(link).toHaveAttribute('href', href)
+        expect(link).toHaveAttribute('target', '_blank')
+      }
+    })
+
+    it('bloco sem dado não aparece (decisão D2)', () => {
+      setup({ rainCurve: null, rainChart: null, rainEnd: null, bands: [], details: details({ open: true }) })
+
+      const dialog = screen.getByRole('dialog', { name: 'Nossas sugestões para a data da colheita' })
+      expect(within(dialog).queryByRole('heading', { name: 'Chuva que sobra para a próxima planta' })).not.toBeInTheDocument()
+      expect(within(dialog).queryByRole('heading', { name: 'Chuva e o que a lavoura gasta, mês a mês' })).not.toBeInTheDocument()
+      expect(within(dialog).queryByRole('heading', { name: 'Quando a chuva acaba' })).not.toBeInTheDocument()
+      expect(within(dialog).queryByRole('heading', { name: 'Compare as épocas' })).not.toBeInTheDocument()
+    })
   })
 
   it('em inglês', () => {
-    setup({ t: en, lang: 'en' })
+    setup({ t: en, lang: 'en', ...withDate })
 
     expect(screen.getByRole('heading', { level: 1, name: 'When do you harvest your soybeans?' })).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('February 25 counts as late February or in March.')
-    expect(screen.getByRole('button', { name: 'I do not know the exact day' })).toBeInTheDocument()
-    expect(
-      screen.getByText('Harvesting on February 25, about 367 mm of rain is left on average; in a dry year, 276 mm.'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'In half of the years, the rain had ended by April 21; the earliest was March 16, 2021 and the latest June 22, 2012.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('In April, the average rain falls below what the crop uses.')).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'Harvesting early, corn with brachiaria worked in 18 of 20 years; in the middle, corn with brachiaria, 16 of 20; late, pearl millet, 20 of 20.',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'March 3, 2027' })).toBeInTheDocument()
+    expect(screen.getByText('Wednesday')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next step See the answer' })).toBeEnabled()
   })
 })

@@ -233,6 +233,27 @@
   --photo-fallback: linear-gradient(140deg, var(--color-primary), var(--color-primary-strong));
 
   /*
+   * Tela 2 "Quando você colhe a soja" (pacote 2, tarefa 0057): o calendário do cartão "Dia da colheita" e a
+   * caixa azul "Ainda não decidiu?". O resto (verde, azul, laranja, texto, bordas) reaproveita os tokens de cima.
+   */
+  --color-calendar-border: #cfe0d6;
+  --shadow-calendar: 0 4px 12px rgb(31 107 71 / 10%);
+  --color-calendar-empty-border: #c9d3cd; /* calendário vazio, tracejado, com "?" */
+  --color-calendar-empty-head: #dfe5e1;
+  --color-calendar-empty-head-text: #6b736f;
+  --color-calendar-empty-day: #a3aba6;
+  --shadow-card-soft: 0 1px 2px rgb(0 0 0 / 3%);
+  --color-radio-border: #b7c0bb; /* bolinha das épocas no modal "Não sei o dia exato" */
+  --color-help-border: #cddbe8; /* caixa "Ainda não decidiu?" */
+  --color-help-border-hover: #9fbad3;
+  --help-bg: linear-gradient(160deg, #f4f8fc 0%, #eaf1f8 100%);
+  --shadow-help-hover: 0 8px 24px rgb(44 90 125 / 12%);
+  --shadow-help-icon: 0 1px 3px rgb(0 0 0 / 8%);
+  --color-info-strong: #234a68; /* botão azul da caixa com o mouse em cima */
+  --color-preview-border: #dde7f0; /* prévia das 3 barrinhas */
+  --color-preview-track: #e3ebf3;
+
+  /*
    * Pacote 2 de telas (16/11/2026, tarefa 0054): Voltar, respostas das safras, aviso "não preenchido",
    * modal grande e o destaque da lavoura de demonstração.
    */

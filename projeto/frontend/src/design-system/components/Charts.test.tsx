@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   NeighborDots,
   NeighborRow,
   RainBarChart,
+  RainEndTimeline,
   RainEtoChart,
   RainLeftChart,
   RainReadingRow,
@@ -116,37 +117,114 @@ describe('RainBarChart com o valor em cima das barras', () => {
   })
 })
 
-describe('RainLeftChart (chuva que sobra, tela 3)', () => {
+/** ResizeObserver de teste: o espaço do gráfico mede `width` px (o jsdom não mede nada). */
+function stubWidth(width: number) {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      callback: ResizeObserverCallback
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback
+      }
+      observe(target: Element) {
+        this.callback([{ target, contentRect: { width } } as ResizeObserverEntry], this as unknown as ResizeObserver)
+      }
+      unobserve() {}
+      disconnect() {}
+    },
+  )
+}
+
+describe('RainLeftChart (chuva que sobra, tela 2)', () => {
   const points = [
     { median: 600, dry: 450 },
     { median: 400, dry: 300 },
     { median: 200, dry: 100 },
   ]
+  const base = {
+    label: 'Colhendo em 25 de fevereiro, sobram 400 mm',
+    points,
+    max: 600,
+    ticks: [
+      { index: 0, label: '15 jan' },
+      { index: 2, label: '31 mar' },
+    ],
+    unit: 'mm',
+    legend: { median: 'Em média', dry: 'Ano seco' },
+  }
 
-  it('desenha a mediana (linha cheia) e o ano seco (tracejada), com a marca no dia escolhido', () => {
-    render(
-      <RainLeftChart
-        label="Colhendo em 25 de fevereiro, sobram 400 mm"
-        caption="Mediana de 2005 a 2024"
-        points={points}
-        max={600}
-        selectedIndex={1}
-        ticks={[
-          { index: 0, label: '15 jan' },
-          { index: 2, label: '31 mar' },
-        ]}
-        legend={{ median: 'Em média', dry: 'Ano seco' }}
-      />,
-    )
+  it('desenha a mediana (linha cheia) e o ano seco (tracejada), com a marca e os números no dia escolhido', () => {
+    render(<RainLeftChart {...base} selectedIndex={1} selectedLabels={{ median: '400 mm', dry: '300 mm' }} />)
 
     const chart = screen.getByRole('img', { name: 'Colhendo em 25 de fevereiro, sobram 400 mm' })
     expect(chart.querySelector('[data-line="median"]')).not.toHaveAttribute('stroke-dasharray')
     expect(chart.querySelector('[data-line="dry"]')).toHaveAttribute('stroke-dasharray')
     expect(chart.querySelector('[data-marker]')).toBeInTheDocument()
+    expect(screen.getByText('400 mm')).toBeInTheDocument()
+    expect(screen.getByText('300 mm')).toBeInTheDocument()
     expect(screen.getByText('15 jan')).toBeInTheDocument()
     expect(screen.getByText('Em média')).toBeInTheDocument()
     expect(screen.getByText('Ano seco')).toBeInTheDocument()
-    expect(screen.getByText('Mediana de 2005 a 2024')).toBeInTheDocument()
+  })
+
+  it('o eixo dos milímetros vai de 200 em 200, com a unidade em cima', () => {
+    render(<RainLeftChart {...base} />)
+
+    const chart = screen.getByRole('img', { name: base.label })
+    const texts = Array.from(chart.querySelectorAll('[data-y-tick]')).map((text) => text.textContent)
+    expect(texts).toEqual(['0', '200', '400', '600'])
+    expect(chart.querySelector('[data-unit]')).toHaveTextContent('mm')
+  })
+
+  it('sem dia escolhido, só as curvas: nenhuma marca', () => {
+    render(<RainLeftChart {...base} selectedIndex={null} />)
+
+    expect(screen.getByRole('img', { name: base.label }).querySelector('[data-marker]')).toBeNull()
+  })
+
+  it('é desenhado na largura real do espaço, para o texto continuar legível no celular', () => {
+    stubWidth(338)
+    render(<RainLeftChart {...base} />)
+
+    const chart = screen.getByRole('img', { name: base.label })
+    expect(chart).toHaveAttribute('viewBox', '0 0 338 230')
+    expect(chart).toHaveAttribute('width', '338')
+  })
+})
+
+describe('RainEndTimeline (quando a chuva acaba)', () => {
+  const props = {
+    label: 'A chuva acabou entre 16 de março e 22 de junho',
+    start: '03-01',
+    end: '06-30',
+    ticks: [
+      { day: '03-01', label: '1 mar' },
+      { day: '04-01', label: '1 abr' },
+    ],
+    points: [
+      { day: '03-16', label: '16 mar · 2021', tone: 'early' as const },
+      { day: '04-21', label: '21 abr · metade dos anos', tone: 'median' as const },
+      { day: '06-22', label: '22 jun · 2012', tone: 'late' as const },
+    ],
+  }
+
+  it('marca o ano mais cedo, a metade dos anos e o mais tarde, com o texto de cada um', () => {
+    render(<RainEndTimeline {...props} />)
+
+    const chart = screen.getByRole('img', { name: props.label })
+    expect(chart.querySelectorAll('[data-point]')).toHaveLength(3)
+    expect(chart.querySelector('[data-point="median"]')).toBeInTheDocument()
+    expect(screen.getByText('16 mar · 2021')).toBeInTheDocument()
+    expect(screen.getByText('21 abr · metade dos anos')).toBeInTheDocument()
+    expect(screen.getByText('22 jun · 2012')).toBeInTheDocument()
+    expect(screen.getByText('1 abr')).toBeInTheDocument()
+  })
+
+  it('é desenhada na largura real do espaço', () => {
+    stubWidth(320)
+    render(<RainEndTimeline {...props} />)
+
+    expect(screen.getByRole('img', { name: props.label })).toHaveAttribute('viewBox', '0 0 320 100')
   })
 })
 
@@ -171,5 +249,17 @@ describe('RainEtoChart (chuva e gasto da lavoura, tela 3)', () => {
     expect(chart.querySelectorAll('[data-highlight="true"]')).toHaveLength(1)
     expect(screen.getByText('chove menos')).toBeInTheDocument()
     expect(screen.getByText('Gasto da lavoura')).toBeInTheDocument()
+  })
+
+  it('sem a legenda da fonte, a tela escreve a fonte por fora (modal grande da tela 2)', () => {
+    const { container } = render(
+      <RainEtoChart
+        label="Chuva e gasto por mês"
+        legend={{ rain: 'Chuva', eto: 'Gasto da lavoura' }}
+        bars={[{ label: 'Mar', rainPct: 100, etoPct: 60, rainDisplay: '207', etoDisplay: '122' }]}
+      />,
+    )
+
+    expect(container.querySelector('figcaption')).toBeNull()
   })
 })
