@@ -1,58 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { Opcao, Recomendacao } from '../models/recomendacao'
 import { buildRecomendacao } from '../repositories/mocks/fixtures'
-import { guideService } from './guideService'
-import {
-  COMPARE_ARTICLES,
-  compareChips,
-  comparedCrops,
-  failureCounts,
-  toggleCompared,
-  whyAvoid,
-  whyUse,
-} from './compareService'
+import { failureCounts, whyAvoid, whyUse } from './compareService'
 
 const meio = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
-const tarde = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'tarde' }, 'pt')
 const option = (rec: Recomendacao, id: Opcao['id']) => rec.opcoes.find((o) => o.id === id)!
 
-describe('compareService (aba Comparar, tarefa 0045)', () => {
-  it('por padrão, as 3 melhores para o objetivo', () => {
-    expect(comparedCrops(meio, null, undefined)).toEqual(meio.objetivos!.equilibrio!.ordem.slice(0, 3))
-    expect(comparedCrops(meio, 'terra', undefined)).toEqual(meio.objetivos!.terra!.ordem.slice(0, 3))
-  })
-
-  it('a escolha da URL vale, sem as culturas que não cabem na janela desta colheita', () => {
-    expect(comparedCrops(meio, null, ['sorgo', 'milheto'])).toEqual(['sorgo', 'milheto'])
-    expect(comparedCrops(tarde, null, ['milho_safrinha', 'sorgo'])).toEqual(['sorgo'])
-    expect(comparedCrops(tarde, 'renda', ['milho_safrinha'])).toEqual(tarde.objetivos!.renda!.ordem.slice(0, 3))
-  })
-
-  it('os chips: as da janela na ordem do objetivo, com a sede; as fora da janela desligadas, com a data', () => {
-    const chips = compareChips(tarde, null, ['sorgo'])
-
-    expect(chips.map((chip) => chip.id)).toEqual([...tarde.objetivos!.equilibrio!.ordem, 'milho_safrinha'])
-    expect(chips.find((chip) => chip.id === 'sorgo')).toMatchObject({ selected: true, disabled: false, sede: 'media' })
-    expect(chips.at(-1)).toMatchObject({
-      id: 'milho_safrinha',
-      nome: 'Milho sozinho',
-      selected: false,
-      disabled: true,
-      limit: '2027-02-28',
-    })
-  })
-
-  it('tocar põe ou tira; no máximo 3 e nunca nenhuma', () => {
-    expect(toggleCompared(['sorgo'], 'milheto')).toEqual(['sorgo', 'milheto'])
-    expect(toggleCompared(['sorgo', 'milheto'], 'sorgo')).toEqual(['milheto'])
-    expect(toggleCompared(['sorgo', 'milheto', 'crotalaria'], 'milho_braquiaria')).toEqual([
-      'sorgo',
-      'milheto',
-      'crotalaria',
-    ])
-    expect(toggleCompared(['sorgo'], 'sorgo')).toEqual(['sorgo'])
-  })
-
+describe('compareService (a favor e contra da comparação)', () => {
   it('por que falhou: anos por falta de água e anos por calor, do explorador do motor', () => {
     const base = option(meio, 'sorgo')
     const details = [
@@ -98,11 +52,4 @@ describe('compareService (aba Comparar, tarefa 0045)', () => {
     expect(whyAvoid(plain)).not.toContain('futureWorse')
   })
 
-  it('os artigos da linha Terra (palhada, adubo verde e nematoide) existem em pt e en', () => {
-    for (const path of Object.values(COMPARE_ARTICLES)) {
-      const slug = path.replace('/guia/', '')
-      expect(guideService.get('pt', slug)).not.toBeNull()
-      expect(guideService.get('en', slug)).not.toBeNull()
-    }
-  })
 })

@@ -1,4 +1,4 @@
-import type { CropId, Eixo, Motivo, Opcao, Recomendacao } from '../models/recomendacao'
+import type { CropId, Eixo, Opcao, Recomendacao } from '../models/recomendacao'
 
 const byFinal = (a: Opcao, b: Opcao) => b.notas.final - a.notas.final
 
@@ -18,47 +18,8 @@ export function sortOptions(options: readonly Opcao[], axis: Eixo | null): Opcao
   return sorted.sort((a, b) => byAxis[axis](a, b) || byFinal(a, b))
 }
 
-/** O que cada alternativa "Se você prefere…" destaca (tela 5). */
-export function alternativeSummary(motive: Motivo, option: Opcao): string[] {
-  switch (motive) {
-    case 'menos_risco':
-      return [option.chuva.texto, option.renda.texto]
-    case 'mais_renda':
-      return [option.renda.texto, option.renda.risco]
-    case 'cuidar_da_terra':
-      return [option.terra.texto]
-  }
-}
-
 export function findOption(options: readonly Opcao[], id: CropId): Opcao | undefined {
   return options.find((option) => option.id === id)
-}
-
-/** Ano da soja que vem antes da entressafra (a semeadura da opção é logo depois da colheita). */
-export function harvestYear(sowingDate: string): number {
-  return Number(sowingDate.slice(0, 4))
-}
-
-export type FutureSummary = {
-  /** Anos em que daria certo (média dos modelos). */
-  good: number
-  total: number
-  /** Faixa entre os modelos; null quando todos dão o mesmo número. */
-  range: { min: number; max: number } | null
-}
-
-/**
- * Clima de 2041–2060 (NEX-GDDP-CMIP6): em quantos anos a opção daria certo, com a faixa entre os
- * modelos. O total de anos é o mesmo da chuva de hoje. Sem o dado do CMIP6 na API, null.
- */
-export function futureSummary(option: Opcao): FutureSummary | null {
-  if (!option.futuro) return null
-  const { anos_bons_media, anos_bons_min, anos_bons_max } = option.futuro
-  return {
-    good: anos_bons_media,
-    total: option.chuva.anos,
-    range: anos_bons_min === anos_bons_max ? null : { min: anos_bons_min, max: anos_bons_max },
-  }
 }
 
 /**

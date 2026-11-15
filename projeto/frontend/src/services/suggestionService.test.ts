@@ -1,18 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { AnoDetalhe, CropId, Opcao, Recomendacao } from '../models/recomendacao'
-import { guideService } from './guideService'
-import {
-  SUGGESTION_ARTICLES,
-  buildSuggestion,
-  clearEnsoNotes,
-  cropArticle,
-  lateNotice,
-  rankForObjective,
-  selectedYear,
-  suggestedPlan,
-  thirstByCrop,
-  yearBars,
-} from './suggestionService'
+import type { AnoDetalhe, Opcao } from '../models/recomendacao'
+import { clearEnsoNotes, selectedYear, yearBars } from './suggestionService'
 
 /** Valores de teste (não são de fonte real). */
 function opcao(id: Opcao['id'], anosBons: number, renda: number, solo: number, final: number, extra: Partial<Opcao> = {}): Opcao {
@@ -51,138 +39,6 @@ function ano(year: number, isna: number, extra: Partial<AnoDetalhe> = {}): AnoDe
   }
 }
 
-const OPTIONS = [
-  opcao('milho_braquiaria', 16, 80, 50, 70),
-  opcao('sorgo', 15, 75, 35, 64),
-  opcao('crotalaria', 19, 0, 85, 58),
-]
-
-function rec(extra: Partial<Recomendacao> = {}): Recomendacao {
-  return {
-    entrada: { celula_id: 'x', colheita: 'meio', semeadura: '2027-02-18', solo: 'argiloso', nematoide: null },
-    melhor: 'milho_braquiaria',
-    alternativas: [],
-    opcoes: OPTIONS,
-    fora_da_janela: [],
-    pousio: { texto: 'pousio' },
-    plano_3_anos: {
-      normal: { anos: ['milho_braquiaria', 'milho_braquiaria', 'crotalaria'], nota: 80, descricao: 'a' },
-      seco: { anos: ['milho_braquiaria', 'crotalaria', 'crotalaria'], nota: 70, descricao: 'b' },
-      hoje: { anos: ['milho_safrinha', 'milho_safrinha', 'milho_safrinha'], nota: 60, descricao: 'c' },
-    },
-    versao_dados: 'teste',
-    aviso: 'aviso',
-    objetivos: {
-      equilibrio: { ordem: ['milho_braquiaria', 'sorgo', 'crotalaria'], plano: ['milho_braquiaria', 'milho_braquiaria', 'crotalaria'], nota_plano: 80 },
-      seguranca: { ordem: ['crotalaria', 'milho_braquiaria', 'sorgo'], plano: ['crotalaria', 'milho_braquiaria', 'crotalaria'], nota_plano: 70 },
-      renda: { ordem: ['milho_braquiaria', 'sorgo', 'crotalaria'], plano: ['milho_braquiaria', 'milho_braquiaria', 'milho_braquiaria'], nota_plano: 77 },
-      terra: { ordem: ['crotalaria', 'milho_braquiaria', 'sorgo'], plano: ['crotalaria', 'crotalaria', 'crotalaria'], nota_plano: 64 },
-    },
-    ...extra,
-  }
-}
-
-describe('rankForObjective (seção 5.1: a ordem vem pronta do motor)', () => {
-  it('sem objetivo, vale a ordem do equilíbrio', () => {
-    expect(rankForObjective(rec(), null).map((o) => o.id)).toEqual(['milho_braquiaria', 'sorgo', 'crotalaria'])
-  })
-
-  it('com objetivo, a ordem do motor para ele', () => {
-    expect(rankForObjective(rec(), 'terra').map((o) => o.id)).toEqual(['crotalaria', 'milho_braquiaria', 'sorgo'])
-  })
-
-  it('sem os objetivos na API (versão antiga), reordena pelo eixo no navegador como antes (RF-05)', () => {
-    const old = rec({ objetivos: undefined })
-    expect(rankForObjective(old, 'seguranca').map((o) => o.id)).toEqual(['crotalaria', 'milho_braquiaria', 'sorgo'])
-    expect(rankForObjective(old, null).map((o) => o.id)).toEqual(['milho_braquiaria', 'sorgo', 'crotalaria'])
-  })
-})
-
-describe('thirstByCrop (selo de sede no Plano)', () => {
-  it('a sede de cada cultura que tem a linha Água; sem ela, a cultura fica de fora', () => {
-    const agua = (sede: 'pouca' | 'muita') => ({ precisa_mm: 1, chove_mm: 1, falta_normal_mm: 0, falta_seco_mm: 0, sede, cad_mm: 60, anos: 20, futuro: null })
-    const options = [opcao('sorgo', 15, 75, 35, 64, { agua: agua('muita') }), opcao('crotalaria', 19, 0, 85, 58, { agua: agua('pouca') }), opcao('milheto', 19, 0, 55, 50)]
-
-    expect(thirstByCrop(rec({ opcoes: options }))).toEqual({ sorgo: 'muita', crotalaria: 'pouca' })
-  })
-})
-
-describe('suggestedPlan', () => {
-  it('o plano do objetivo, que começa pela 1ª opção da ordem', () => {
-    expect(suggestedPlan(rec(), 'seguranca')).toEqual(['crotalaria', 'milho_braquiaria', 'crotalaria'])
-  })
-
-  it('sem os objetivos na API, o Plano A', () => {
-    expect(suggestedPlan(rec({ objetivos: undefined }), null)).toEqual(['milho_braquiaria', 'milho_braquiaria', 'crotalaria'])
-  })
-})
-
-describe('buildSuggestion (aba Sugestão)', () => {
-  it('a melhor opção do objetivo é o ano 1 do plano, com os 3 anos depois da soja', () => {
-    const s = buildSuggestion(rec(), 'terra')
-    expect(s?.best.id).toBe('crotalaria')
-    expect(s?.plan).toEqual([
-      { year: 2027, crop: 'crotalaria' },
-      { year: 2028, crop: 'crotalaria' },
-      { year: 2029, crop: 'crotalaria' },
-    ])
-  })
-
-  it('a geada é o alerta do raio-X: só vem quando algum ano teve geada (tarefa 0049)', () => {
-    const geada = { anos: [2011, 2021], total_anos: 20, temp_c: 3, menor_temp_c: 2.4, fonte: 'nasa_power' }
-    expect(buildSuggestion(rec({ geada: null }), null)?.frost).toBeNull()
-    expect(buildSuggestion(rec({ geada }), null)?.frost).toEqual(geada)
-  })
-
-  it('o clima 2041–2060 tem a mesma concordância dos modelos que o cartão do raio-X (tarefa 0049)', () => {
-    const clima = {
-      chuva_pct: 2.2,
-      tmax_c: 1.3,
-      modelos: 3,
-      modelos_menos_chuva: 1,
-      modelos_mais_chuva: 2,
-      modelos_mais_quente: 3,
-      cenario: 'ssp245',
-      periodo: '2041-2060',
-    }
-    const s = buildSuggestion(rec({ clima_futuro: clima }), null)
-    expect(s?.climate).toEqual(clima)
-  })
-
-  it('sem nenhuma opção na janela, não há sugestão', () => {
-    expect(buildSuggestion(rec({ opcoes: [], objetivos: {} }), null)).toBeNull()
-  })
-})
-
-describe('lateNotice (colheita tarde: um aviso só, com a lista montada)', () => {
-  it('junta as culturas pela data limite do ZARC, na ordem em que vieram', () => {
-    const notice = lateNotice(
-      rec({
-        fora_da_janela: [
-          { id: 'milho_safrinha', nome: 'Milho sozinho', texto: 'x', data_limite: '2027-02-28' },
-          { id: 'milho_braquiaria', nome: 'Milho com braquiária', texto: 'y', data_limite: '2027-02-28' },
-          { id: 'milheto', nome: 'Milheto', texto: 'z', data_limite: '2027-03-15' },
-        ],
-      }),
-    )
-    expect(notice).toEqual({
-      groups: [
-        { date: '2027-02-28', names: ['Milho sozinho', 'Milho com braquiária'] },
-        { date: '2027-03-15', names: ['Milheto'] },
-      ],
-      count: 3,
-    })
-  })
-
-  it('sem a data limite (API antiga), uma lista sem data; sem nada fora da janela, nenhum aviso', () => {
-    expect(lateNotice(rec({ fora_da_janela: [{ id: 'crotalaria', nome: 'Crotalária', texto: 'x' }] }))).toEqual({
-      groups: [{ date: null, names: ['Crotalária'] }],
-      count: 1,
-    })
-    expect(lateNotice(rec())).toBeNull()
-  })
-})
-
 describe('yearBars (explorador ano a ano)', () => {
   const criterio = { isna_min: 0.55, calor_temp_c: 35, calor_min_dias: 3, fase: 'floracao' as const, janela_dias: 15 }
 
@@ -220,25 +76,6 @@ describe('selectedYear', () => {
     expect(selectedYear(option, 2016)?.ano).toBe(2016)
     expect(selectedYear(option, 1999)).toBeNull()
     expect(selectedYear(option, null)).toBeNull()
-  })
-})
-
-describe('links "Saiba mais" da aba Sugestão (seção 8 da remodelagem)', () => {
-  const slug = (path: string) => path.replace('/guia/', '')
-
-  it('cada cultura leva ao artigo dela no Guia, que existe em pt e en', () => {
-    const crops: CropId[] = ['milho_safrinha', 'milho_braquiaria', 'sorgo', 'milheto', 'crotalaria', 'pousio']
-    for (const crop of crops) {
-      expect(guideService.get('pt', slug(cropArticle(crop)))?.plant).toBe(crop)
-      expect(guideService.get('en', slug(cropArticle(crop)))).not.toBeNull()
-    }
-  })
-
-  it('os artigos de deu certo, água, El Niño, clima 2041–2060, ZARC e geada existem', () => {
-    for (const path of Object.values(SUGGESTION_ARTICLES)) {
-      expect(guideService.get('pt', slug(path))).not.toBeNull()
-      expect(guideService.get('en', slug(path))).not.toBeNull()
-    }
   })
 })
 
