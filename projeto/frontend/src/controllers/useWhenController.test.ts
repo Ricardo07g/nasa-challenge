@@ -1,9 +1,12 @@
 import { act, renderHook, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CustoAtraso } from '../models/custoAtraso'
+import type { MetodoRegras } from '../models/metodo'
 import type { ChuvaMensal, ChuvaQueSobra, FimDasChuvas, Talhao } from '../models/talhao'
 import type { DelayCostService } from '../services/delayCostService'
 import type { FarmService } from '../services/farmService'
+import type { MethodRulesService } from '../services/methodRulesService'
+import type { SpeechService } from '../services/speechService'
 import { providers } from '../test/providers'
 import { useWhenController } from './useWhenController'
 
@@ -19,28 +22,16 @@ const CUSTO: CustoAtraso = {
   mesma_cultura: false,
 }
 
-/** O satélite viu a soja secar em 25/fev (dado de teste). */
-const SATELLITE: Partial<Talhao> = {
-  colheita_sugerida: { faixa: 'tarde', fonte: 'ndvi_modis', anos_usados: 10, dia: '02-25' },
-}
-
-function deps(
-  talhao: Promise<Partial<Talhao>> = Promise.resolve(SATELLITE),
-  custo: Promise<CustoAtraso> = Promise.resolve(CUSTO),
-) {
-  const farm: FarmService = { talhao: vi.fn().mockReturnValue(talhao), recomendacao: vi.fn().mockResolvedValue({}) }
-  const delayCost: DelayCostService = { get: vi.fn().mockReturnValue(custo) }
-  return { farm, delayCost, today: () => new Date(2026, 10, 14) }
-}
-
 /** Valores redondos de teste (não são do GPM IMERG nem do NASA POWER). */
 const CHUVA: ChuvaMensal = {
   meses: [
-    { mes: 1, media_mm: 200 },
-    { mes: 2, media_mm: 100 },
+    { mes: 1, media_mm: 200, eto_media_mm: 120 },
+    { mes: 2, media_mm: 100, eto_media_mm: 110 },
   ],
   anos: [2005, 2006],
-  fonte: 'nasa_power',
+  fonte: 'gpm_imerg',
+  fonte_eto: 'nasa_power',
+  mes_chuva_abaixo_eto: 2,
 }
 
 const SOBRA: ChuvaQueSobra = {
@@ -49,7 +40,7 @@ const SOBRA: ChuvaQueSobra = {
   dias: [
     { dia: '02-05', mediana_mm: 500, seco_mm: 400 },
     { dia: '02-15', mediana_mm: 450, seco_mm: 350 },
-    { dia: '02-25', mediana_mm: 360, seco_mm: 270 },
+    { dia: '02-25', mediana_mm: 367, seco_mm: 276 },
     { dia: '02-28', mediana_mm: 340, seco_mm: 240 },
   ],
   anos: [2005, 2006],
@@ -67,234 +58,255 @@ const FIM: FimDasChuvas = {
   chuva_max_mm: 10,
 }
 
+/** O satélite viu a soja secar em 25/fev: não preenche mais a tela (tarefa 0057). */
+const TALHAO: Partial<Talhao> = {
+  colheita_sugerida: { faixa: 'tarde', fonte: 'ndvi_modis', anos_usados: 10, dia: '02-25' },
+  chuva_que_sobra: SOBRA,
+  chuva_mensal: CHUVA,
+  fim_das_chuvas: FIM,
+  soja_recente: { safra: '2025/26', vista: true, ndvi_pico: 0.86, fonte: 'MODIS' },
+}
+
+function deps(talhao: Promise<Partial<Talhao>> = Promise.resolve(TALHAO), custo: Promise<CustoAtraso> = Promise.resolve(CUSTO)) {
+  const farm: FarmService = { talhao: vi.fn().mockReturnValue(talhao), recomendacao: vi.fn().mockResolvedValue({}) }
+  const delayCost: DelayCostService = { get: vi.fn().mockReturnValue(custo) }
+  const rules: MethodRulesService = {
+    get: vi.fn().mockResolvedValue({ deu_certo: { calor_temp_c: 35 } } as MetodoRegras),
+  }
+  const speech: SpeechService = { isSupported: () => true, speak: vi.fn(), stop: vi.fn() }
+  return { farm, delayCost, rules, speech }
+}
+
 function render(d: ReturnType<typeof deps>, url = `/quando?${point}`) {
   return renderHook(() => useWhenController(d), { wrapper: providers(url) })
 }
 
-describe('useWhenController (tela 3)', () => {
-  it('já preenche o dia que o satélite viu e marca a faixa desse dia: sugestão = seleção', async () => {
-    // A API antiga chamava 21 a 22/fev de "meio"; o dia vem primeiro e a faixa sai dele.
-    const d = deps(Promise.resolve({ colheita_sugerida: { faixa: 'meio', fonte: 'ndvi_modis', anos_usados: 10, dia: '02-25' } }))
+const location = () => screen.getByTestId('location').textContent
+
+describe('useWhenController (tela 2 "Quando você colhe a soja?", tarefa 0057)', () => {
+  it('abre sem data, mesmo com o dia do satélite: o produtor sempre escolhe, e o Próximo passo fica desligado', async () => {
+    const d = deps()
     const { result } = render(d)
 
-    await waitFor(() => expect(result.current.suggestion).not.toBeNull())
-    expect(result.current.suggestion).toEqual({ faixa: 'tarde', fromSatellite: true, date: '2027-02-25' })
-    expect(result.current.date).toBe('2027-02-25')
-    expect(result.current.selected).toBe('tarde')
-    expect(result.current.selected).toBe(result.current.suggestion?.faixa)
-    expect(result.current.suggestionApplied).toBe(true)
-    expect(result.current.bandsOpen).toBe(false)
+    await waitFor(() => expect(result.current.rainCurve).not.toBeNull())
+    expect(result.current.choice).toBeNull()
+    expect(result.current.canContinue).toBe(false)
+    expect(result.current.rainLeft).toBeNull()
+    expect(result.current.window).toEqual({ min: '2027-01-01', max: '2027-04-30' })
     expect(d.farm.talhao).toHaveBeenCalledWith({ lat: -18.9543, lon: -48.1993, exemplo: false }, 'pt')
   })
 
-  it('a faixa da URL vale mais que a sugestão (voltar da tela 4), e a faixa azul não diz que já marcou', async () => {
+  it('escolher a data grava data e colheita na URL (a época sai da data) e mostra a chuva desse dia', async () => {
+    const { result } = render(deps())
+    await waitFor(() => expect(result.current.rainCurve).not.toBeNull())
+
+    act(() => result.current.pickDate('2027-02-25'))
+
+    expect(location()).toBe(`/quando?${point}&colheita=tarde&data=2027-02-25`)
+    expect(result.current.choice).toEqual({ band: 'tarde', date: '2027-02-25' })
+    expect(result.current.canContinue).toBe(true)
+    expect(result.current.rainLeft).toMatchObject({ date: '2027-02-25', medianMm: 367, dryMm: 276 })
+  })
+
+  it('data fora do campo (1/jan a 30/abr de 2027) não vale', async () => {
+    const { result } = render(deps())
+    await waitFor(() => expect(result.current.rainCurve).not.toBeNull())
+
+    act(() => result.current.pickDate('2027-05-02'))
+
+    expect(location()).toBe(`/quando?${point}`)
+    expect(result.current.choice).toBeNull()
+  })
+
+  it('"Não sei o dia exato": o modal abre sem nada marcado e "Usar esta época" só vale depois de escolher', async () => {
+    const { result } = render(deps())
+
+    act(() => result.current.bandsModal.onOpen())
+    expect(result.current.bandsModal.open).toBe(true)
+    expect(result.current.bandsModal.draft).toBeNull()
+    act(() => result.current.bandsModal.onSubmit())
+    expect(result.current.bandsModal.open).toBe(true)
+
+    act(() => result.current.bandsModal.onDraft('meio'))
+    act(() => result.current.bandsModal.onSubmit())
+
+    expect(result.current.bandsModal.open).toBe(false)
+    expect(location()).toBe(`/quando?${point}&colheita=meio`)
+    expect(result.current.choice).toEqual({ band: 'meio', date: null })
+    await waitFor(() => expect(result.current.rainLeft).toMatchObject({ date: '2027-02-15', medianMm: 450 }))
+  })
+
+  it('o modal de época abre de novo sem nada marcado, mesmo com uma época já escolhida', () => {
+    const { result } = render(deps(), `/quando?${point}&colheita=cedo`)
+
+    act(() => result.current.bandsModal.onOpen())
+    act(() => result.current.bandsModal.onDraft('tarde'))
+    act(() => result.current.bandsModal.onClose())
+    act(() => result.current.bandsModal.onOpen())
+
+    expect(result.current.bandsModal.draft).toBeNull()
+    expect(result.current.choice).toEqual({ band: 'cedo', date: null })
+  })
+
+  it('escolher a data depois da época tira a época da URL; e a época depois da data tira a data', async () => {
     const { result } = render(deps(), `/quando?${point}&colheita=meio`)
 
-    await waitFor(() => expect(result.current.suggestion).not.toBeNull())
-    expect(result.current.date).toBe('')
-    expect(result.current.selected).toBe('meio')
-    expect(result.current.suggestionApplied).toBe(false)
-    expect(result.current.bandsOpen).toBe(true)
+    act(() => result.current.pickDate('2027-01-20'))
+    expect(location()).toBe(`/quando?${point}&colheita=cedo&data=2027-01-20`)
+
+    act(() => result.current.details.onUseBand('tarde'))
+    expect(location()).toBe(`/quando?${point}&colheita=tarde`)
   })
 
-  it('com a faixa da URL igual à do satélite, o campo traz o dia do satélite', async () => {
-    const { result } = render(deps(), `/quando?${point}&colheita=tarde`)
+  it('voltando da tela seguinte, a escolha da URL continua (a data vale mais que a época)', () => {
+    const { result } = render(deps(), `/quando?${point}&data=2027-02-25&colheita=cedo`)
 
-    await waitFor(() => expect(result.current.date).toBe('2027-02-25'))
-    expect(result.current.suggestionApplied).toBe(true)
+    expect(result.current.choice).toEqual({ band: 'tarde', date: '2027-02-25' })
+    expect(result.current.canContinue).toBe(true)
   })
 
-  it('"Usar o dia do satélite" volta o campo para o dia sugerido', async () => {
-    const { result } = render(deps(), `/quando?${point}&colheita=cedo`)
-    await waitFor(() => expect(result.current.suggestion).not.toBeNull())
+  it('"Compare as épocas": a chuva de cada época e a melhor opção do motor, com a "sua época" marcada', async () => {
+    const { result } = render(deps(), `/quando?${point}&colheita=meio`)
 
-    act(() => result.current.applySuggestedDate())
-
-    expect(result.current.date).toBe('2027-02-25')
-    expect(result.current.selected).toBe('tarde')
-    expect(result.current.suggestionApplied).toBe(true)
+    await waitFor(() => expect(result.current.bands[2].best).not.toBeNull())
+    expect(result.current.bands).toEqual([
+      { band: 'cedo', day: '2027-02-05', rainMm: 500, best: { crop: 'milho_braquiaria', good: 18, total: 20 }, yours: false },
+      { band: 'meio', day: '2027-02-15', rainMm: 450, best: { crop: 'milho_braquiaria', good: 16, total: 20 }, yours: true },
+      { band: 'tarde', day: '2027-02-28', rainMm: 340, best: { crop: 'milheto', good: 20, total: 20 }, yours: false },
+    ])
   })
 
-  it('se o talhão não carregar, fica no meio de fevereiro, sem data e com as faixas abertas', async () => {
-    const { result } = render(deps(Promise.reject(new Error('rede'))))
-
-    await waitFor(() => expect(result.current.suggestion).toEqual({ faixa: 'meio', fromSatellite: false, date: null }))
-    expect(result.current.date).toBe('')
-    expect(result.current.selected).toBe('meio')
-    expect(result.current.bandsOpen).toBe(true)
-  })
-
-  it('"Não sei o dia exato" abre as faixas; escolher uma faixa limpa o dia', async () => {
+  it('traz os blocos do modal grande: a chuva mês a mês, o fim das chuvas e o calor do "deu certo" (/api/metodo)', async () => {
     const { result } = render(deps())
-    await waitFor(() => expect(result.current.date).toBe('2027-02-25'))
 
-    act(() => result.current.toggleBands())
-    expect(result.current.bandsOpen).toBe(true)
-    act(() => result.current.select('cedo'))
-
-    expect(result.current.selected).toBe('cedo')
-    expect(result.current.date).toBe('')
-    expect(result.current.suggestionApplied).toBe(false)
-    act(() => result.current.toggleBands())
-    expect(result.current.bandsOpen).toBe(false)
+    await waitFor(() => expect(result.current.heatC).toBe(35))
+    await waitFor(() => expect(result.current.rainChart?.eto?.deficitMonth).toBe('feb'))
+    expect(result.current.rainEnd?.median).toBe('2023-04-21')
   })
 
-  it('a data exata vira a faixa; data fora da época não conta', async () => {
+  it('o modal grande abre pela caixa e "Usar esta época" escolhe a época e fecha', () => {
     const { result } = render(deps())
-    await waitFor(() => expect(result.current.suggestion).not.toBeNull())
 
-    expect(result.current.window).toEqual({ min: '2027-01-15', max: '2027-03-31' })
-    act(() => result.current.changeDate('2027-02-18'))
-    expect(result.current.dateBand).toBe('meio')
-    expect(result.current.selected).toBe('meio')
+    act(() => result.current.details.onOpen())
+    expect(result.current.details.open).toBe(true)
+    act(() => result.current.details.onUseBand('cedo'))
 
-    act(() => result.current.changeDate('2027-05-02'))
-    expect(result.current.dateBand).toBeNull()
-    expect(result.current.selected).toBe('tarde')
+    expect(result.current.details.open).toBe(false)
+    expect(result.current.choice).toEqual({ band: 'cedo', date: null })
   })
 
-  it('"Próximo passo" leva a faixa na URL para a missão (RF-19) e já pede a recomendação', async () => {
+  it('avisa quando o satélite não vê soja no ponto (soja_recente.vista === false)', async () => {
+    const notSoy = deps(Promise.resolve({ ...TALHAO, soja_recente: { safra: '2025/26', vista: false, ndvi_pico: 0.4, fonte: 'MODIS' } }))
+    const { result } = render(notSoy)
+
+    expect(result.current.notSoy).toBe(false)
+    await waitFor(() => expect(result.current.notSoy).toBe(true))
+  })
+
+  it('sem o dado do satélite (vista null), nenhum aviso', async () => {
+    const { result } = render(deps(Promise.resolve({ ...TALHAO, soja_recente: { safra: '2025/26', vista: null, ndvi_pico: null, fonte: 'MODIS' } })))
+
+    await waitFor(() => expect(result.current.rainCurve).not.toBeNull())
+    expect(result.current.notSoy).toBe(false)
+  })
+
+  it('"Próximo passo" leva a data e a época para a missão, com o resto do fluxo, e já pede a recomendação', async () => {
+    const d = deps()
+    const { result } = render(d, `/quando?${point}&exemplo=1&solo=argiloso&data=2027-02-25&colheita=tarde`)
+
+    act(() => result.current.confirm())
+
+    expect(location()).toBe(`/calculando?${point}&colheita=tarde&data=2027-02-25&solo=argiloso&exemplo=1`)
+    expect(d.farm.recomendacao).toHaveBeenCalledWith(
+      { lat: -18.9543, lon: -48.1993, colheita: 'tarde', solo: 'argiloso', exemplo: true, confirmadas: undefined },
+      'pt',
+    )
+  })
+
+  it('só com a época, segue só a colheita', () => {
+    const { result } = render(deps(), `/quando?${point}&colheita=meio`)
+
+    act(() => result.current.confirm())
+
+    expect(location()).toBe(`/calculando?${point}&colheita=meio`)
+  })
+
+  it('sem data nem época, o Próximo passo não faz nada', () => {
     const d = deps()
     const { result } = render(d)
-    await waitFor(() => expect(result.current.date).toBe('2027-02-25'))
 
     act(() => result.current.confirm())
 
-    expect(screen.getByTestId('location')).toHaveTextContent(`/calculando?${point}&colheita=tarde`)
-    expect(d.farm.recomendacao).toHaveBeenCalledWith(
-      { lat: -18.9543, lon: -48.1993, colheita: 'tarde', solo: undefined, exemplo: false },
-      'pt',
-    )
+    expect(location()).toBe(`/quando?${point}`)
+    expect(d.farm.recomendacao).not.toHaveBeenCalled()
   })
 
-  it('voltando da tela 4 com safras confirmadas, elas seguem na URL e na recomendação (tarefa 0039)', async () => {
-    const d = deps()
-    const { result } = render(d, `/quando?${point}&confirmadas=2025:parado`)
-    await waitFor(() => expect(result.current.date).toBe('2027-02-25'))
+  it('o Voltar leva para "Onde fica a lavoura" com o ponto', () => {
+    const { result } = render(deps(), `/quando?${point}&exemplo=1&colheita=meio`)
 
-    act(() => result.current.confirm())
-
-    expect(screen.getByTestId('location')).toHaveTextContent(`/calculando?${point}&colheita=tarde&confirmadas=2025:parado`)
-    expect(d.farm.recomendacao).toHaveBeenCalledWith(
-      { lat: -18.9543, lon: -48.1993, colheita: 'tarde', solo: undefined, exemplo: false, confirmadas: '2025:parado' },
-      'pt',
-    )
+    expect(result.current.backTo).toBe(`/onde?${point}&colheita=meio&exemplo=1`)
   })
 
-  it('o Voltar leva para o mapa com o mesmo ponto', () => {
-    const { result } = render(deps())
-
-    expect(result.current.backTo).toBe(`/onde?${point}`)
-  })
-
-  it('sem ponto na URL, avisa para voltar ao mapa', () => {
+  it('sem ponto na URL, volta para o mapa', () => {
     const { result } = render(deps(), '/quando')
 
     expect(result.current.missingPoint).toBe(true)
   })
 
-  it('o gráfico da chuva de cada mês vem do talhão (dado da API, nos dois modos)', async () => {
-    const { result } = render(deps(Promise.resolve({ chuva_mensal: CHUVA })))
+  describe('"Ouvir resumo"', () => {
+    it('sem data: pede para escolher o dia ou a época', () => {
+      const d = deps()
+      const { result } = render(d)
 
-    await waitFor(() => expect(result.current.rainChart).not.toBe('loading'))
-    expect(result.current.rainChart).toEqual({
-      bars: [
-        { month: 'jan', mm: 200, heightPct: 100 },
-        { month: 'feb', mm: 100, heightPct: 50 },
-      ],
-      firstYear: 2005,
-      lastYear: 2006,
-      years: 2,
-      sources: ['nasa_power'],
+      act(() => result.current.listen.toggle())
+
+      expect(d.speech.speak).toHaveBeenCalledWith(
+        'Escolha o dia em que você colhe a soja. Se não souber o dia exato, escolha a época: começo, meio ou fim de fevereiro.',
+        'pt',
+        expect.any(Function),
+      )
     })
-  })
 
-  it('enquanto o talhão carrega, os blocos de chuva esperam (nada piscando)', () => {
-    const { result } = render(deps(new Promise(() => {})))
+    it('com a data: os números da chuva que sobra desse dia', async () => {
+      const d = deps()
+      const { result } = render(d, `/quando?${point}&data=2027-02-25&colheita=tarde`)
+      await waitFor(() => expect(result.current.rainLeft).not.toBeNull())
 
-    expect(result.current.rainChart).toBe('loading')
-    expect(result.current.rainLeft).toBe('loading')
-    expect(result.current.rainEnd).toBe('loading')
-  })
+      act(() => result.current.listen.toggle())
 
-  it('a chuva que sobra segue o dia do campo; só com a faixa, o dia de colheita da faixa', async () => {
-    const { result } = render(deps(Promise.resolve({ ...SATELLITE, chuva_que_sobra: SOBRA })))
-    await waitFor(() => expect(result.current.date).toBe('2027-02-25'))
-
-    expect(result.current.rainLeft).toMatchObject({ date: '2027-02-25', medianMm: 360, dryMm: 270, exact: true })
-
-    act(() => result.current.select('meio'))
-
-    expect(result.current.rainLeft).toMatchObject({ date: '2027-02-15', medianMm: 450, dryMm: 350, exact: false })
-  })
-
-  it('o fim das chuvas vem do talhão', async () => {
-    const { result } = render(deps(Promise.resolve({ fim_das_chuvas: FIM })))
-
-    await waitFor(() => expect(result.current.rainEnd).not.toBe('loading'))
-    expect(result.current.rainEnd).toMatchObject({ median: '2023-04-21', earliest: { year: 2021 }, latest: { year: 2012 } })
-  })
-
-  it('sem os campos novos (API antiga) ou se o talhão falhar, os blocos não aparecem (decisão D2)', async () => {
-    const without = render(deps(Promise.resolve({ chuva_mensal: null })))
-    const failed = render(deps(Promise.reject(new Error('rede'))))
-
-    await waitFor(() => expect(without.result.current.rainChart).toBeNull())
-    await waitFor(() => expect(failed.result.current.rainChart).toBeNull())
-    expect(without.result.current.rainLeft).toBeNull()
-    expect(without.result.current.rainEnd).toBeNull()
-    expect(failed.result.current.rainLeft).toBeNull()
-  })
-
-  it('o custo do atraso vem do motor (as 3 faixas), com o solo e as safras da URL', async () => {
-    const d = deps()
-    const { result } = render(d, `/quando?${point}&solo=arenoso&confirmadas=2025:parado`)
-
-    expect(result.current.delayCost).toBe('loading')
-    await waitFor(() => expect(result.current.delayCost).not.toBe('loading'))
-    expect(result.current.delayCost).toEqual({
-      bands: [
-        { band: 'cedo', crop: 'milho_braquiaria', good: 18, total: 20 },
-        { band: 'meio', crop: 'milho_braquiaria', good: 16, total: 20 },
-        { band: 'tarde', crop: 'milheto', good: 20, total: 20 },
-      ],
-      sameCrop: false,
+      expect(d.speech.speak).toHaveBeenCalledWith(
+        'Colhendo em 25 de fevereiro, sobram em média 367 milímetros de chuva até o fim de junho; num ano seco, 276. Quanto mais cedo a colheita, mais chuva sobra para a próxima planta.',
+        'pt',
+        expect.any(Function),
+      )
     })
-    expect(d.delayCost.get).toHaveBeenCalledWith(
-      { lat: -18.9543, lon: -48.1993, solo: 'arenoso', confirmadas: '2025:parado' },
-      'pt',
-    )
-  })
 
-  it('se o custo do atraso falhar, o bloco não aparece', async () => {
-    const { result } = render(deps(Promise.resolve(SATELLITE), Promise.reject(new Error('rede'))))
+    it('com a época: os números no dia de colheita da época no motor', async () => {
+      const d = deps()
+      const { result } = render(d, `/quando?${point}&colheita=meio`)
+      await waitFor(() => expect(result.current.rainLeft).not.toBeNull())
 
-    await waitFor(() => expect(result.current.delayCost).toBeNull())
-  })
+      act(() => result.current.listen.toggle())
 
-  it('avisa quando o satélite não viu soja no ponto na última safra (RF-24) e "Seguir mesmo assim" fecha o aviso', async () => {
-    const d = deps(Promise.resolve({ soja_recente: { safra: '2025/26', vista: false, ndvi_pico: 0.41, fonte: 'teste' } }))
-    const { result } = render(d)
+      expect(d.speech.speak).toHaveBeenCalledWith(
+        'Colhendo no meio de fevereiro, sobram em média 450 milímetros de chuva até o fim de junho; num ano seco, 350. Quanto mais cedo a colheita, mais chuva sobra para a próxima planta.',
+        'pt',
+        expect.any(Function),
+      )
+    })
 
-    await waitFor(() => expect(result.current.soyWarning).toEqual({ safra: '2025/26' }))
-    // "Ajustar no mapa" volta ao mapa com o mesmo ponto
-    expect(result.current.backTo).toBe(`/onde?${point}`)
+    it('com a data fora da conta da chuva (abril), sem os números', async () => {
+      const d = deps()
+      const { result } = render(d, `/quando?${point}&data=2027-04-10&colheita=tarde`)
+      await waitFor(() => expect(result.current.rainCurve).not.toBeNull())
 
-    act(() => result.current.dismissSoyWarning())
+      act(() => result.current.listen.toggle())
 
-    expect(result.current.soyWarning).toBeNull()
-  })
-
-  it('não avisa quando viu soja, sem o dado ou se o talhão falhar', async () => {
-    const a = render(deps(Promise.resolve({ soja_recente: { safra: '2025/26', vista: true, ndvi_pico: 0.86, fonte: 'teste' } })))
-    const b = render(deps(Promise.resolve({ soja_recente: null })))
-    const c = render(deps(Promise.reject(new Error('rede'))))
-
-    await waitFor(() => expect(a.result.current.suggestion).not.toBeNull())
-    await waitFor(() => expect(b.result.current.suggestion).not.toBeNull())
-    await waitFor(() => expect(c.result.current.suggestion).not.toBeNull())
-    expect(a.result.current.soyWarning).toBeNull()
-    expect(b.result.current.soyWarning).toBeNull()
-    expect(c.result.current.soyWarning).toBeNull()
+      expect(d.speech.speak).toHaveBeenCalledWith(
+        'Colhendo em 10 de abril. Quanto mais cedo a colheita, mais chuva sobra para a próxima planta.',
+        'pt',
+        expect.any(Function),
+      )
+    })
   })
 })

@@ -1,0 +1,714 @@
+/*
+ * Tela 2 "Quando você colhe a soja?" (protótipo de 15/11/2026, tarefa 0057). Contêiner de 1280 px com margem de
+ * 52 px (20 px no celular). Computador: cartão da data à esquerda e a caixa "Ainda não decidiu?" (até 400 px) à
+ * direita, com a mesma altura; o "Próximo passo" e o "Ver sugestões e detalhes" terminam na mesma linha.
+ * Celular: uma coluna e o "Próximo passo" numa barra fixa no fim da tela.
+ */
+.page {
+  width: 100%;
+  max-width: var(--page-width-v4);
+  margin-inline: auto;
+  padding: 22px var(--page-margin-v4) 36px;
+  color: var(--color-text-muted);
+  /* A entrelinha do protótipo (a do navegador); os textos longos definem a sua */
+  line-height: normal;
+}
+
+.top {
+  display: flex;
+}
+
+.title {
+  margin: 18px 0 0;
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+/* A frase e o "Ouvir resumo" na mesma linha no computador, empilhados no celular */
+.sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin-top: 8px;
+}
+
+.sub p {
+  margin: 0;
+  font-size: 16.5px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+  gap: 28px;
+  align-items: stretch;
+  margin-top: 24px;
+}
+
+/* 21 px embaixo = margem interna + borda da caixa ao lado: os dois botões terminam na mesma linha */
+.dateColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-bottom: 21px;
+}
+
+/* Cartão "Dia da colheita" */
+.card {
+  position: relative;
+  padding: 22px 24px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card-soft);
+}
+
+.cardLabel {
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.cardBody {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.calendar {
+  flex: none;
+  width: 84px;
+  overflow: hidden;
+  border: 1px solid var(--color-calendar-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-calendar);
+  text-align: center;
+}
+
+.calMonth {
+  display: block;
+  padding: 5px 0;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+}
+
+.calDay {
+  display: block;
+  padding: 6px 0 8px;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.05;
+  color: var(--color-text);
+}
+
+.calendar[data-state='band'] .calDay {
+  padding: 12px 0 13px;
+  font-size: 24px;
+  color: var(--color-primary);
+}
+
+.calendar[data-state='empty'] {
+  border-style: dashed;
+  border-color: var(--color-calendar-empty-border);
+  box-shadow: none;
+}
+
+.calendar[data-state='empty'] .calMonth {
+  background: var(--color-calendar-empty-head);
+  color: var(--color-calendar-empty-head-text);
+}
+
+.calendar[data-state='empty'] .calDay {
+  color: var(--color-calendar-empty-day);
+}
+
+.cardText {
+  min-width: 0;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.cardHint {
+  margin: 4px 0 0;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-soft);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--color-back-hover);
+  color: var(--color-primary);
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-semibold);
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.dateButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-2xs);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.dateButton:hover {
+  background: var(--color-back-hover);
+}
+
+.dateButton[data-filled='true'] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.dateButton[data-filled='true']:hover {
+  background: var(--color-primary-strong);
+}
+
+.dontKnow {
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+  text-decoration-color: var(--color-link-underline);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.dontKnow:hover {
+  color: var(--color-primary);
+}
+
+/* O campo do calendário do aparelho: invisível, perto do canto do cartão (o calendário abre ali) */
+.dateInput {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Aviso laranja "Não parece uma lavoura de soja" */
+.notSoy {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-outside-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-outside-bg);
+  font-size: var(--font-size-caption);
+  line-height: 1.5;
+  color: var(--color-outside-text);
+}
+
+.notSoy svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.notSoy a {
+  color: var(--color-outside-text);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* "Próximo passo": no fim da coluna, com o motivo embaixo quando está desligado */
+.confirmBlock {
+  position: relative;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  height: 64px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--radius-cta);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-cta);
+  color: var(--color-on-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.confirm:hover:not(:disabled) {
+  background: var(--color-primary-strong);
+}
+
+.confirm:disabled {
+  background: var(--color-primary-disabled);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.confirmText b {
+  display: block;
+  font-size: 17px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.confirmText small {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--font-size-tiny);
+  opacity: 0.85;
+}
+
+.reason {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin: 8px 0 0;
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-soft);
+}
+
+/* Linha da data escolhida na barra fixa: só no celular */
+.barLine {
+  display: none;
+}
+
+/* Caixa "Ainda não decidiu?": inteira clicável (o botão cobre a caixa toda) */
+.help {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--color-help-border);
+  border-radius: var(--radius-lg);
+  background: var(--help-bg);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s,
+    border-color 0.15s;
+}
+
+.help:hover {
+  border-color: var(--color-help-border-hover);
+  box-shadow: var(--shadow-help-hover);
+}
+
+.helpEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-info);
+}
+
+.helpIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-help-icon);
+  color: var(--color-info);
+}
+
+.helpTitle {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.25;
+  color: var(--color-text);
+}
+
+.helpText {
+  margin: 6px 0 0;
+  font-size: var(--font-size-caption);
+  line-height: 1.45;
+}
+
+.preview {
+  margin-top: 12px;
+  padding: 12px 14px 8px;
+  border: 1px solid var(--color-preview-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+}
+
+.previewTitle {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-soft);
+}
+
+.previewList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.previewRow {
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  font-size: var(--font-size-tiny);
+}
+
+.previewRow span:first-child {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.previewTrack {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--color-preview-track);
+}
+
+.previewTrack i {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--color-secondary);
+}
+
+.previewRow b {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.previewRow[data-yours='true'] span:first-child {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.previewRow[data-yours='true'] .previewTrack i {
+  background: var(--color-primary);
+}
+
+.helpSpacer {
+  flex: 1;
+  min-height: 14px;
+}
+
+.helpButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border: 0;
+  border-radius: var(--radius-cta);
+  background: var(--color-info);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+/* O botão cobre a caixa toda: tocar em qualquer lugar abre o modal */
+.helpButton::after {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  content: '';
+}
+
+.help:hover .helpButton {
+  background: var(--color-info-strong);
+}
+
+.dateButton:focus-visible,
+.dontKnow:focus-visible,
+.confirm:focus-visible,
+.notSoy a:focus-visible,
+.useBand:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.helpButton:focus-visible {
+  outline: none;
+}
+
+.helpButton:focus-visible::after {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Modal "Não sei o dia exato" */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  line-height: normal;
+  cursor: pointer;
+}
+
+.option:hover {
+  border-color: var(--color-border-green-hover);
+}
+
+.option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.optionDot {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--color-radio-border);
+  border-radius: 50%;
+}
+
+.optionText b {
+  display: block;
+  font-size: 15.5px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.optionText small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-soft);
+}
+
+.option:has(input:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-tint-green-soft);
+}
+
+.option:has(input:checked) .optionDot {
+  border-color: var(--color-primary);
+  background: radial-gradient(var(--color-primary) 0 5px, transparent 6px);
+}
+
+.option:has(input:focus-visible) {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.note {
+  margin: 14px 0 0;
+  font-size: var(--font-size-tiny);
+  line-height: 1.5;
+  color: var(--color-text-soft);
+}
+
+.useBand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  margin-top: 18px;
+  border: 0;
+  border-radius: var(--radius-cta);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.useBand:hover:not(:disabled) {
+  background: var(--color-primary-strong);
+}
+
+.useBand:disabled {
+  background: var(--color-primary-disabled);
+  cursor: not-allowed;
+}
+
+/* Celular e tablet (até 900 px): uma coluna e o "Próximo passo" preso embaixo da tela */
+@media (max-width: 900px) {
+  .page {
+    padding: 14px var(--page-margin-v4) 24px;
+  }
+
+  /* Espaço embaixo da página para a barra fixa não cobrir o rodapé */
+  :global(body):has(.confirmBlock) {
+    padding-bottom: calc(118px + env(safe-area-inset-bottom));
+  }
+
+  .title {
+    margin-top: 12px;
+    font-size: 28px;
+  }
+
+  .sub {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .sub p {
+    font-size: 15.5px;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    margin-top: 16px;
+  }
+
+  .dateColumn {
+    padding-bottom: 0;
+  }
+
+  .card {
+    padding: 18px 18px 16px;
+  }
+
+  .calendar {
+    width: 72px;
+  }
+
+  .calDay {
+    font-size: 30px;
+  }
+
+  .cardTitle {
+    font-size: 21px;
+  }
+
+  .cardActions {
+    flex-wrap: wrap;
+  }
+
+  .confirmBlock {
+    position: fixed;
+    z-index: 1000;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+    padding: 10px var(--page-margin-v4) calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-border);
+    background: var(--color-confirm-bar);
+    box-shadow: var(--shadow-confirm-bar);
+  }
+
+  .confirm {
+    height: 56px;
+  }
+
+  .reason {
+    display: none;
+  }
+
+  .barLine {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 9px;
+    overflow: hidden;
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+    white-space: nowrap;
+  }
+
+  .barLine span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .barLine svg {
+    flex: none;
+    color: var(--color-primary);
+  }
+
+  .barLine[data-empty='true'] {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-soft);
+  }
+}

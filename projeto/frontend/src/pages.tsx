@@ -97,24 +97,22 @@ export function WhenPage() {
       t={t}
       lang={lang}
       backTo={state.backTo}
-      suggestion={state.suggestion}
-      suggestionApplied={state.suggestionApplied}
-      onUseSuggestion={state.applySuggestedDate}
-      selected={state.selected}
-      date={state.date}
-      dateBand={state.dateBand}
+      listen={state.listen}
       window={state.window}
-      onDateChange={state.changeDate}
-      bandsOpen={state.bandsOpen}
-      onToggleBands={state.toggleBands}
-      onSelect={state.select}
+      choice={state.choice}
+      onPickDate={state.pickDate}
+      canContinue={state.canContinue}
       onConfirm={state.confirm}
-      rainChart={state.rainChart}
+      notSoy={state.notSoy}
+      bands={state.bands}
+      rainCurve={state.rainCurve}
       rainLeft={state.rainLeft}
+      rainChart={state.rainChart}
       rainEnd={state.rainEnd}
-      delayCost={state.delayCost}
-      soyWarning={state.soyWarning}
-      onDismissSoyWarning={state.dismissSoyWarning}
+      heatC={state.heatC}
+      loading={state.loading}
+      bandsModal={state.bandsModal}
+      details={state.details}
     />
   )
 }

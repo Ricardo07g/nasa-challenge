@@ -58,13 +58,35 @@ describe('rotas', () => {
     expect(screen.queryByRole('navigation', { name: 'Telas da resposta' })).not.toBeInTheDocument()
   })
 
-  it('a pergunta 2 (colheita) abre com o ponto da URL e o título da aba', async () => {
+  it('a pergunta da colheita abre com o ponto da URL, o título da aba e sem data (tarefa 0057)', async () => {
     renderAt('/quando?lat=-18.9543&lon=-48.1993')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
-    // Tarefa 0042: o dia do satélite (dados de exemplo: 15/fev) já vem no campo, com a faixa dele.
-    expect(await screen.findByText('Dia 15 de fevereiro: conta como meio de fevereiro.')).toBeInTheDocument()
+    // O satélite não vê o dia da colheita: o dia dos dados de exemplo (15/fev) não preenche mais a tela.
+    expect(await screen.findByRole('heading', { name: 'Escolha o dia da colheita' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Próximo passo Ver a resposta' })).toBeDisabled()
     expect(document.title).toBe('Raiz Orbital – Quando você colhe a soja?')
+  })
+
+  it('na pergunta da colheita, escolher a época não mexe na rolagem e vai para a URL (regra geral 2)', async () => {
+    let scrollY = 0
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scrollY)
+    vi.spyOn(window, 'scrollTo').mockImplementation(((x: number | ScrollToOptions, y?: number) => {
+      scrollY = typeof x === 'number' ? (y ?? 0) : (x.top ?? 0)
+    }) as typeof window.scrollTo)
+    const router = renderAt('/quando?lat=-18.9543&lon=-48.1993')
+    await screen.findByRole('heading', { name: 'Escolha o dia da colheita' })
+    window.scrollTo(0, 420)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Não sei o dia exato' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Quando costuma ser a sua colheita?' })
+    await userEvent.click(within(dialog).getByRole('radio', { name: /Meio de fevereiro/ }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Usar esta época' }))
+
+    await vi.waitFor(() => expect(router.state.location.search).toBe('?lat=-18.9543&lon=-48.1993&colheita=meio'))
+    expect(router.state.historyAction).toBe('REPLACE')
+    expect(window.scrollY).toBe(420)
+    expect(screen.getByRole('heading', { name: 'Meio de fevereiro' })).toBeInTheDocument()
   })
 
   it('a pergunta 2 sem ponto marcado volta para o mapa', async () => {
@@ -102,8 +124,8 @@ describe('rotas', () => {
     )
   })
 
-  it('"Próximo passo" na pergunta 2 abre a missão do satélite (RF-19)', async () => {
-    renderAt('/quando?lat=-18.9543&lon=-48.1993')
+  it('"Próximo passo" na pergunta da colheita abre a missão do satélite (RF-19)', async () => {
+    renderAt('/quando?lat=-18.9543&lon=-48.1993&data=2027-02-15&colheita=meio')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Próximo passo Ver a resposta' }))
 

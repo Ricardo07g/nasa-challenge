@@ -199,12 +199,75 @@
   border: 2px solid var(--color-risk);
 }
 
-/* Chuva que sobra depois da colheita (tela 3): mediana em linha cheia, ano seco tracejado */
+/* Chuva que sobra depois da colheita (tela 2): mediana em linha cheia, ano seco tracejado */
+
+/* O espaço medido: o desenho tem a largura real dele (o texto não encolhe no celular) */
+.measure {
+  width: 100%;
+  min-width: 0;
+}
+
 .leftSvg {
   display: block;
-  width: 100%;
+  max-width: 100%;
   height: auto;
   overflow: visible;
+}
+
+.tickText {
+  font-size: 11.5px;
+  fill: var(--color-text-soft);
+}
+
+/* Contorno branco atrás dos números, para não sumirem em cima das linhas */
+.markerMedian,
+.markerDry {
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  stroke: var(--color-surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+.markerMedian {
+  fill: var(--color-secondary);
+}
+
+.markerDry {
+  fill: var(--color-risk);
+}
+
+/* Quando a chuva acaba: linha do tempo de março a junho */
+.timelineBand {
+  fill: var(--color-border-blue-tint);
+}
+
+.timelineTick {
+  stroke: var(--color-border-control);
+  stroke-width: 1;
+}
+
+.timelineDot {
+  stroke: var(--color-surface);
+  stroke-width: 2.5;
+}
+
+.timelineText {
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+}
+
+.timeline_early {
+  fill: var(--color-risk);
+}
+
+.timeline_median {
+  fill: var(--color-primary);
+}
+
+.timeline_late {
+  fill: var(--color-info);
 }
 
 .gridLine {
@@ -258,7 +321,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-4);
-  font-size: var(--font-size-caption);
+  margin-top: var(--space-1);
+  font-size: var(--font-size-tiny);
+  line-height: 1.4;
   color: var(--color-text-secondary);
 }
 
@@ -322,6 +387,17 @@
 
 .etoRain {
   background: var(--color-secondary);
+}
+
+/* Os números em cima das barras na cor de cada barra: chuva em azul, gasto em terra (protótipo da tela 2) */
+.etoRain .barValue {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-secondary);
+}
+
+.etoUse .barValue {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-soil);
 }
 
 .etoUse {

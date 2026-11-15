@@ -1,0 +1,168 @@
+/*
+ * Modal grande "Nossas sugestões para a data da colheita" (tela 2, protótipo de 15/11/2026, tarefa 0057):
+ * 4 blocos brancos sobre o fundo da página, em 2 colunas no computador e 1 no celular.
+ */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.block {
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.heading {
+  margin: 6px 0 4px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.text {
+  margin: 8px 0 0;
+  font-size: 14.5px;
+  line-height: var(--line-height-body);
+  color: var(--color-text-muted);
+}
+
+.text strong {
+  color: var(--color-text);
+}
+
+.source {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-soft);
+}
+
+.learn {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 12px;
+}
+
+.chart {
+  margin-top: 14px;
+}
+
+.timeline {
+  margin-top: 14px;
+}
+
+/* Compare as épocas: um cartão por época, a do produtor em verde */
+.bands {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  line-height: normal;
+}
+
+.band {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+}
+
+.band[data-yours='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-tint-green-soft);
+}
+
+/* O nome quebra a linha; os milímetros ficam sempre à direita (como no protótipo) */
+.bandTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bandTop b {
+  min-width: 0;
+  font-size: 15.5px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.bandRain {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-secondary);
+  white-space: nowrap;
+}
+
+.bandRain small {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-soft);
+}
+
+.band p {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.yourTag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--color-back-hover);
+  color: var(--color-primary);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  vertical-align: 2px;
+}
+
+.useBand {
+  margin-top: 10px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.useBand:hover {
+  background: var(--color-back-hover);
+}
+
+.useBand:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Celular e tablet (até 900 px): uma coluna */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .block {
+    padding: 16px;
+  }
+}
