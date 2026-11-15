@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  BarChart3,
   Bell,
   Calculator,
   CalendarDays,
@@ -28,6 +29,7 @@ import {
   FileText,
   Flame,
   History,
+  Info,
   House,
   Layers,
   Leaf,
@@ -38,6 +40,7 @@ import {
   Minus,
   Plus,
   Pointer,
+  Printer,
   Satellite,
   Send,
   ShieldCheck,
@@ -307,4 +310,20 @@ export function ExpandIcon({ size = 14 }: IconProps) {
 /** Dica sobre o mapa: "Toque no mapa onde fica a lavoura". */
 export function TapIcon({ size = 15 }: IconProps) {
   return <Pointer size={size} {...decorative} />
+}
+
+// Tela 5 do pacote 2 ("Escolher" e "Plano de 3 anos")
+/** "Imprimir relatório". */
+export function PrinterIcon({ size = 17 }: IconProps) {
+  return <Printer size={size} {...decorative} />
+}
+
+/** "Notas do plano". */
+export function ChartIcon({ size = 18 }: IconProps) {
+  return <BarChart3 size={size} {...decorative} />
+}
+
+/** Alerta do plano ("Você mudou…"): informação, não perigo. */
+export function InfoIcon({ size = 18 }: IconProps) {
+  return <Info size={size} {...decorative} />
 }
