@@ -199,6 +199,20 @@ avisos:
     valor: 7
     fonte: "Plano de evolução 4.4: a semana do limite de avisos; hipótese do time: 7 dias corridos que terminam no dia do aviso (a revisar)"
 
+enso:
+  # Marca de El Niño / La Niña de cada safrinha no detalhe dos anos (P1, plano de evolução 4.1).
+  # Só informa: não entra na conta. É dado da NOAA, não da NASA. O pipeline/fetch_oni.py usa estes
+  # números ao gravar a fase de cada ano no arquivo do ONI (ONI_PATH); a API lê a fase pronta.
+  el_nino_oni_min:
+    valor: 0.5
+    fonte: "NOAA CPC (ONI_v5, https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php): El Niño com ONI de +0,5 °C ou mais. A NOAA pede 5 estações seguidas para chamar de episódio; aqui vale a média das estações abaixo (hipótese do time, a revisar)"
+  la_nina_oni_max:
+    valor: -0.5
+    fonte: "NOAA CPC (ONI_v5): La Niña com ONI de −0,5 °C ou menos (mesma ressalva das 5 estações seguidas)"
+  estacoes:
+    valor: [DJF, JFM, FMA]
+    fonte: "Hipótese do time (tarefa 0035, a revisar): média do ONI das estações DJF, JFM e FMA do ano da safrinha (dezembro do ano anterior a abril), o verão e o começo do outono, da colheita da soja até a fase crítica. É quando o ENSO costuma estar no auge (o El Niño de 2015/16 marca a safrinha de 2016)"
+
 # Modelos de frase do "Por quê?" (PRD 7.6, plano técnico §4.8), sem IA generativa.
 # Os campos entre chaves são preenchidos pela conta; o número da frase é o mesmo da conta.
 #   seguranca: {data} {anos_aperto} {total} {calor_c} {fase} {fonte_chuva}
@@ -253,3 +267,35 @@ frases_safra:
     colheita_grao: "Harvest: {opcao}."
     colheita_consorcio: "Corn harvest. The grass keeps covering the soil."
     colheita_cobertura: "End of the cycle: {opcao}. The straw keeps covering the soil."
+
+# Detalhe de cada ano da faixa de chuva (P1, plano de evolução 4.1), sem IA generativa.
+# RASCUNHO: agrônoma revisar. A frase junta, nesta ordem: a fase crítica com a seca, o resultado
+# (deu_certo, ou faltou_agua e/ou calor, a mesma conta do aperto) e a marca do ENSO, se houver.
+#   fase_grao: {ano} {semeadura} {data_fase} (floração estimada, por isso "por volta de") {seca}
+#   fase_cobertura: {ano} {semeadura} {janela} (clima.janela_cobertura_dias) {seca}
+#   {seca} = nenhum_dia_sem_chuva, um_dia_sem_chuva ou varios_dias_sem_chuva ({dias}): a maior
+#     sequência de dias secos na fase crítica, com o dia seco dos avisos (avisos.dia_seco_abaixo_mm)
+#   calor: {dias} (dias com calor na fase crítica) {temp_c} (clima.calor_temp_c)
+frases_ano:
+  pt:
+    fase_grao: "Em {ano}, plantando em {semeadura}, a planta chegou na fase que mais precisa de água por volta de {data_fase} e {seca}."
+    fase_cobertura: "Em {ano}, plantando em {semeadura}, nos primeiros {janela} dias, quando a planta mais precisa de água para pegar, a lavoura {seca}."
+    nenhum_dia_sem_chuva: "não ficou nenhum dia sem chuva"
+    um_dia_sem_chuva: "ficou 1 dia sem chuva"
+    varios_dias_sem_chuva: "ficou {dias} dias sem chuva"
+    deu_certo: "Deu certo."
+    faltou_agua: "Faltou água nessa fase."
+    calor: "Fez {dias} dias com {temp_c} °C ou mais nessa fase."
+    el_nino: "Ano de El Niño."
+    la_nina: "Ano de La Niña."
+  en:
+    fase_grao: "In {ano}, sowing on {semeadura}, the crop reached the stage that needs water most around {data_fase} and {seca}."
+    fase_cobertura: "In {ano}, sowing on {semeadura}, in the first {janela} days, when the plants need water most to establish, the crop {seca}."
+    nenhum_dia_sem_chuva: "did not go a single day without rain"
+    um_dia_sem_chuva: "went 1 day without rain"
+    varios_dias_sem_chuva: "went {dias} days without rain"
+    deu_certo: "It worked."
+    faltou_agua: "The crop ran short of water in this stage."
+    calor: "It had {dias} days at {temp_c} °C or more in this stage."
+    el_nino: "El Niño year."
+    la_nina: "La Niña year."

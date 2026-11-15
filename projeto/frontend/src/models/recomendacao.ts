@@ -10,7 +10,7 @@ export type Motivo = 'menos_risco' | 'mais_dinheiro' | 'cuidar_da_terra'
 
 export type CropId = 'milho_braquiaria' | 'milho_safrinha' | 'sorgo' | 'milheto' | 'crotalaria' | 'pousio'
 
-/** P1: o que aconteceu em cada ano da série (ainda não vem da API; contrato proposto). */
+/** P1 (RF-22): o que aconteceu em cada ano da série; vem de `/api/recomendacao` (tarefa 0035 do backend). */
 export type AnoDetalhe = {
   ano: number
   bom: boolean

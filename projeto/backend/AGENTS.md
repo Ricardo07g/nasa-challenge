@@ -137,8 +137,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 - **Preparar os dados na sua máquina** (pré-carga, CMIP6, NDVI, pacote do time e cópia do banco):
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
-  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`). Nunca coloque caminho fixo (como
-  `/workspace/...`) num repository.
+  `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`). Nunca coloque caminho
+  fixo (como `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
@@ -149,7 +149,48 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   cultura e a semeadura e devolve a linha do tempo. O replay `GET /api/safra-passada` (P4) usa esse
   service e o acompanhamento diário (P6) vai usar o mesmo: não repita a regra em outro lugar. A
   opção do replay é a `melhor` do `RecommendationService`. Ano sem dado num ponto que tem dados =
-  404 `NOT_FOUND`; ponto sem dados continua 404 `OUTSIDE_AREA`.
+  404 `NOT_FOUND`; ponto sem dados continua 404 `OUTSIDE_AREA`. O detalhe de cada ano (P1, abaixo)
+  conta os dias secos pelo `CropAlertService.longest_dry_spell`, com o mesmo dia seco.
+- **Detalhe de cada ano** (`opcoes[].anos_detalhe[]` de `/recomendacao` e `/exemplo`, P1, tarefa
+  0035): contrato do front (`AnoDetalhe` em `projeto/frontend/src/models/recomendacao.ts`; nomes
+  adotados, **a revisar**, roteiro §5). Um item por ano que o motor simulou, na ordem da faixa de
+  chuva (`chuva.faixa` = `anos_detalhe[].bom`), montado pelo `YearDetailService`:
+
+  ```json
+  {"ano": 2024, "bom": false, "fase_critica": "2024-04-18", "dias_sem_chuva": 14, "enso": "el_nino",
+   "texto": "Em 2024, plantando em 18 de fevereiro, a planta chegou na fase que mais precisa de água por volta de 18 de abril e ficou 14 dias sem chuva. Faltou água nessa fase. Ano de El Niño."}
+  ```
+
+  - `bom`: o ano sem aperto, o mesmo resultado do motor (`ResultadoAno.aperto`, PRD 7.2).
+  - `fase_critica`: semeadura do ano + floração estimada (`dias_florescer`); na cobertura, a própria
+    semeadura (começo dos 30 dias do pegamento). É o `critical_stage` do `CropAlertService`.
+  - `dias_sem_chuva`: a maior sequência de dias com chuva abaixo de `avisos.dia_seco_abaixo_mm` (1 mm)
+    **dentro** da fase crítica (a seca que começou antes conta do primeiro dia da fase).
+  - `enso`: `el_nino`, `la_nina` ou `null`, do arquivo do ONI (`ONI_PATH`, `FileEnsoRepository`). Sem
+    arquivo, ou ano fora dele: `null`. Só informa: não entra na conta.
+  - `texto`: modelos do grupo `frases_ano` do `regras.yaml` (pt/en), nesta ordem: fase crítica com a
+    seca; o resultado (`deu_certo`, ou `faltou_agua` e/ou `calor`, pelos critérios
+    `ResultadoAno.falta_agua` e `ResultadoAno.calor` do `ClimateRiskService`); a marca do ENSO.
+  - O campo é opcional no schema (padrão `[]`); com o service ligado, sempre vem. São ~27 KB a mais
+    sem compressão (5 opções × 20 anos).
+- **ONI da NOAA** (P1, tarefa 0035): `pipeline/fetch_oni.py` baixa a tabela pública do ONI
+  (`https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt`, um pedido de ~23 KB, **sem
+  credencial**) e grava o arquivo do contrato ONI (abaixo) em `data/baixados/noaa_oni/oni.json`, a
+  partir da raiz do repositório (fora do git). Regra do ano da safrinha (grupo `enso` do
+  `regras.yaml`, hipótese do time, **a revisar**): média do ONI das estações DJF, JFM e FMA do ano
+  (dezembro do ano anterior a abril: o verão e o começo do outono, da colheita da soja até a fase
+  crítica), arredondada em 2 casas; +0,5 ou mais = `el_nino`, −0,5 ou menos = `la_nina` (limiares da
+  NOAA CPC, sem a exigência de 5 estações seguidas do "episódio"). Ano com estação faltando fica de
+  fora. É dado da NOAA, não da NASA.
+
+  ```bash
+  uv run python -m pipeline.fetch_oni --dry-run   # mostra o pedido e os anos, sem rede
+  uv run python -m pipeline.fetch_oni             # safrinhas de 2005 a 2024
+  ```
+
+  Para ligar o arquivo: **com uv**, `ONI_PATH=../../data/baixados/noaa_oni/oni.json` no `.env` desta
+  pasta; **no compose**, já ligado (`ONI_PATH=/dados_baixados/noaa_oni/oni.json`). O arquivo é lido
+  uma vez por processo: depois de baixar, reinicie o backend.
 - **Com banco** (`DATABASE_URL` preenchida; `DATABASE_URL=` vazia vale como sem banco), o
   `dependencies.py` liga o PostGIS e a **busca sob demanda** (tarefas 0001 e 0003):
   - clima e solo vêm de `PostgisClimateRepository` e `PostgisSoilRepository`, com a fixture de clima
@@ -458,7 +499,8 @@ Regras gerais:
 - Coordenadas WGS 84 em graus decimais. O ponto vira chave de cache com `point_key` (0,0025°,
   `app/repositories/point_cache.py`); na tabela, `key` + `geom`.
 - Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1`, `smap` e
-  `gpm_imerg` (a que o front já procura; decisão adotada na tarefa 0026, **a revisar**).
+  `gpm_imerg` (a que o front já procura; decidida em 14/11, tarefa 0027). Fora da NASA:
+  `noaa_oni` (ONI da NOAA, só em arquivo).
 - Todo arquivo traz `versao_dados`, a execução que o gerou.
 - Sem valor: campo ausente ou `null`. Nunca `-999`, zero ou número inventado, e nunca dado
   sintético com uma dessas chaves de fonte.
@@ -616,6 +658,28 @@ pixel. O arquivo é a saída do `pipeline/fetch_imerg.py` (R2.4).
 - Não há tabela própria: a carga (`load_files_to_db.py --imerg`, tarefa 0027) leva os anos completos
   para o `rain_mm` do `climate_season`, com `rain_source = gpm_imerg`. O `FileImergRepository`
   (`app/repositories/imerg_repository.py`) lê o arquivo nos models.
+
+### ONI: `OniYear` (`app/models/enso.py`)
+
+Um registro por ano de safrinha: a média do ONI nas estações do `regras.yaml` (grupo `enso`) e a fase
+do ENSO. O `FileEnsoRepository` lê este arquivo (`ONI_PATH`). Os limiares e as estações usados vão
+em `versao_dados.parametros`. Não tem tabela no banco.
+
+```json
+{
+  "versao_dados": {"fonte": "noaa_oni", "parametros": {"url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt", "estacoes": ["DJF", "JFM", "FMA"], "el_nino_oni_min": 0.5, "la_nina_oni_max": -0.5, "anos": [2005, 2024]}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-noaa-oni"},
+  "anos": [
+    {"ano": 2016, "oni": 2.13, "fase": "el_nino"},
+    {"ano": 2023, "oni": -0.33, "fase": null}
+  ]
+}
+```
+
+| JSON | Model | Regra |
+| --- | --- | --- |
+| `ano` | `ano` | ano da safrinha (o DJF de 2016 é dez/2015 a fev/2016); 1950 ou depois |
+| `oni` | `oni` | média das estações, em °C, com 2 casas; finito e entre −5 e +5 (recusa marcas como −99,9) |
+| `fase` | `fase` | `el_nino`, `la_nina` ou `null` (neutro); ausente vale `null` |
 
 ## Configuração e segredos
 

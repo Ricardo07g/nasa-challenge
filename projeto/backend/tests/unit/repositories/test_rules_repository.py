@@ -139,6 +139,39 @@ def test_should_load_season_event_texts_in_portuguese_and_english() -> None:
     assert "{opcao}" in frases["en"].semeadura
 
 
+def test_should_load_enso_rules_used_to_mark_each_off_season() -> None:
+    # P1 (plano de evolução 4.1): El Niño com ONI de +0,5 ou mais e La Niña com −0,5 ou menos
+    # (NOAA CPC), pela média das estações DJF, JFM e FMA do ano da safrinha (hipótese do time)
+    enso = YamlRulesRepository(SHIPPED).get_rules().enso
+
+    assert (enso.el_nino_oni_min, enso.la_nina_oni_max) == (0.5, -0.5)
+    assert enso.estacoes == ("DJF", "JFM", "FMA")
+
+
+def test_should_refuse_an_enso_number_without_source(tmp_path: Path) -> None:
+    raw = _shipped_raw()
+    del raw["enso"]["el_nino_oni_min"]["fonte"]
+
+    with pytest.raises(ValueError, match="enso.el_nino_oni_min"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
+def test_should_load_year_detail_texts_in_portuguese_and_english() -> None:
+    # P1: a frase de cada ano sai de um modelo do regras.yaml, sem IA generativa (RF-06)
+    frases = YamlRulesRepository(SHIPPED).get_rules().frases_ano
+
+    assert set(frases) == {"pt", "en"}
+    for lang in ("pt", "en"):
+        for campo in ("{ano}", "{semeadura}", "{data_fase}", "{seca}"):
+            assert campo in frases[lang].fase_grao
+        assert "{janela}" in frases[lang].fase_cobertura
+        assert "{dias}" in frases[lang].varios_dias_sem_chuva
+        assert "{temp_c}" in frases[lang].calor
+    assert frases["pt"].varios_dias_sem_chuva == "ficou {dias} dias sem chuva"
+    assert frases["pt"].el_nino == "Ano de El Niño."
+    assert frases["en"].la_nina == "La Niña year."
+
+
 def test_should_refuse_an_alert_number_without_source(tmp_path: Path) -> None:
     raw = _shipped_raw()
     del raw["avisos"]["veranico_min_dias"]["fonte"]

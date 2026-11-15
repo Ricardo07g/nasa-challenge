@@ -43,7 +43,7 @@
 
 | Área | O que os docs pedem | Como está no código | O que falta |
 | --- | --- | --- | --- |
-| Endpoints | `/health`, `/crop-options`, `/talhao`, `/recomendacao`, `/exemplo` (plano técnico §3) | Todos existem e batem com o contrato que o front usa | <ul><li>`Cache-Control` em `/recomendacao` (§8)</li><li>422 em problem+json</li><li>RF-10</li><li>Campos que o front já propôs: A1, A2, P1 e `/api/regiao` (P3); ver Fases 6 e 7</li></ul> |
+| Endpoints | `/health`, `/crop-options`, `/talhao`, `/recomendacao`, `/exemplo` (plano técnico §3) | Todos existem e batem com o contrato que o front usa | <ul><li>`Cache-Control` em `/recomendacao` (§8)</li><li>422 em problem+json</li><li>RF-10</li><li>Campos que o front já propôs: A1, A2 e `/api/regiao` (P3); ver Fases 6 e 7</li><li>~~P1 (`anos_detalhe`)~~ ✅ (tarefa 0035)</li></ul> |
 | Área com dados | Caixa piloto: lat −19,9 a −18,4, lon −49,0 a −47,5 (ADR-0003; `PILOT_*` em `app/constants.py`). Busca sob demanda fora dela (tarefa 0001) | Fixture de uma célula do POWER | <ul><li>Ligar a busca sob demanda (R1.1)</li><li>Um único id de célula (R1.2)</li><li>Pré-carregar a caixa (R1.5)</li></ul> |
 | Clima histórico | POWER, 20 anos, com ETo FAO-56 Penman-Monteith. IMERG como refinamento (ADR-0003) | <ul><li>Fixture POWER sem `eto_mm` (o motor usa Hargreaves-Samani)</li><li>`NasaPowerClient` calcula uma ETo própria, mistura de Hargreaves com radiação de superfície, dentro do cliente</li><li>Dia sem dado vira 30 °C / 18 °C / 0 mm</li></ul> | <ul><li>ETo Penman-Monteith no service (R1.3)</li><li>Não inventar dado (R1.4)</li><li>IMERG (R2.4)</li></ul> |
 | Clima futuro | Deltas mensais NEX-GDDP-CMIP6, 3 modelos, SSP2-4.5 (PRD 7.3) | <ul><li>Motor pronto (`ClimateRiskService.simulate_future_cmip6`)</li><li>A fixture não tem `cmip6[]`, então `futuro: null`</li><li>`PostgisClimateRepository.get_cmip6_deltas` só repassa à fixture</li></ul> | <ul><li>Gerar os deltas (R2.1)</li><li>Tabela mensal e leitura (R1.6, R3.1)</li></ul> |
@@ -153,7 +153,8 @@ Cada linha diz quem decide e qual tarefa fica parada até lá.
 | Valores de custo (A1) | `custo_padrao_ha` e `custo_semente_ha` por cultura, com fonte | agrônoma | A1.1 |
 | Pecuária (`gado`) | completar (plano técnico §3.2) ou retirar (o plano de evolução §7 tirou a pergunta "Tem gado?") | produto | R4.7 |
 | Chave da fonte de chuva ✅ | **Decidido em 14/11: `gpm_imerg`** nos dois lados (o front já usava; o back deixou o `imerg_final` na [0027](tarefas/0027-imerg-na-conta.md)) | back + front | R3.4 |
-| Nomes do detalhe por ano (P1) | o contrato do front (`fase_critica`, `dias_sem_chuva`) ou o do plano de evolução §4.1 (`floracao`, `dias_secos`, `isna`, `dias_calor`) | back + front | P1 |
+| Nomes do detalhe por ano (P1) (padrão adotado, **a revisar**) | Adotado na [tarefa 0035](tarefas/0035-detalhe-de-cada-ano.md): o contrato do front (`fase_critica`, `dias_sem_chuva`), que a tela já usa, no lugar do plano de evolução §4.1 (`floracao`, `dias_secos`, `isna`, `dias_calor`); a frase cita o calor quando ele causou o aperto. Dia seco de 1 mm (o dos avisos, tarefa 0019), não os 5 mm do §4.1 | back + front | P1 |
+| Fase do ENSO de cada safrinha (padrão adotado, **a revisar**) | Adotado na tarefa 0035: média do ONI da NOAA nas estações DJF, JFM e FMA do ano; +0,5 ou mais = El Niño, −0,5 ou menos = La Niña (grupo `enso` do `regras.yaml`). Outras opções: só o DJF, ou as 5 estações seguidas do "episódio" da NOAA | produto + agrônoma | — |
 
 ---
 
@@ -252,7 +253,7 @@ plantio (fev/mar), por cron ou à mão.
 
 | Item | O que pede ao backend | Dado | Cred. | Depende de |
 | --- | --- | --- | --- | --- |
-| P1 | `opcoes[].anos_detalhe[]` no contrato do front: `{ano, bom, fase_critica, dias_sem_chuva, enso, texto}`. A `faixa` sai de `anos_detalhe[].bom` | Fases 1 e 3 + ONI da NOAA (tabela pública) | não | R4.1, decisão dos nomes |
+| [P1](tarefas/0035-detalhe-de-cada-ano.md) ✅ | `opcoes[].anos_detalhe[]` no contrato do front: `{ano, bom, fase_critica, dias_sem_chuva, enso, texto}`. A `faixa` sai de `anos_detalhe[].bom` | Fases 1 e 3 + ONI da NOAA (tabela pública) | não | R4.1, decisão dos nomes |
 | P2 | Nada no backend no MVP (o relatório lê `/recomendacao`) | — | — | — |
 | P3 | `GET /api/regiao?lat&lon` no contrato do front (`projeto/frontend/src/models/region.ts`): `{raio_km, anos[{ano, pct_parado, pct_plantou, pct_incerto}], fonte}` | NDVI da área pelo AppEEARS + máscara: MCD12Q1 pelo AppEEARS, ou MapBiomas pelo Earth Engine (o único uso possível do GEE) | **token** (GEE opcional) | R3.2, R1.6 |
 | [P4](tarefas/0019-safra-passada.md) ✅ | `/api/safra-passada` + service de regras de aviso | Fase 1 | não | R4.1 |

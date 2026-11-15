@@ -16,10 +16,11 @@ alguns cartões (clima futuro, histórico do talhão).
 | Clima futuro (2041–2060 × 1995–2014) | NEX-GDDP-CMIP6 | arquivo `data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json` e, depois da carga, banco (`cmip6_delta`) | "Clima dos próximos anos" e a nota de futuro | script `fetch_cmip6_deltas` + carga no banco |
 | Histórico do talhão (NDVI) | MODIS (MOD13Q1 + MYD13Q1) pelo AppEEARS ou pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` (o mesmo nome para as duas fontes) e, depois da carga, banco (`ndvi_point`) | "Sua área ficou parada em X de Y anos" e a colheita sugerida | script `fetch_ndvi` + carga no banco |
 | Chuva diária em 0,1° (refinamento da chuva do POWER) | GPM IMERG Final (`GPM_3IMERGDF` v07) pelo OPeNDAP do GES DISC | arquivo `data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` e, depois da carga, a chuva dos anos completos no banco (`climate_season`, `rain_source = gpm_imerg`) | "Chuva mais detalhada" conectada (10 km) e "(GPM IMERG + NASA POWER)" no "Por quê?" | script `fetch_imerg` + carga no banco (`--imerg`) |
+| El Niño / La Niña de cada safrinha | ONI da NOAA (não é da NASA) | arquivo `data/baixados/noaa_oni/oni.json` (só arquivo, sem tabela) | a marca de El Niño / La Niña nos quadrinhos de chuva e na frase de cada ano | script `fetch_oni` |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
-aponta `CMIP6_PATH` e `NDVI_CACHE_PATH` para os arquivos acima. Arquivo ausente = a API segue sem
-aquele dado, sem erro.
+aponta `CMIP6_PATH`, `NDVI_CACHE_PATH` e `ONI_PATH` para os arquivos acima. Arquivo ausente = a API
+segue sem aquele dado, sem erro.
 
 ## Caminho rápido: receber o pacote de alguém do time (~5 min)
 
@@ -65,6 +66,7 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Histórico do talhão (NDVI) pela ORNL | `uv run python -m pipeline.fetch_ndvi --fonte ornl --pontos="-18.9543,-48.1993"` | ~1,6 h por ponto (64 pedidos, sem fila; vários dão 502 e são repetidos); se parar, rode de novo que continua do cache | nenhuma |
 | Chuva do IMERG da caixa piloto (2005–2024) | `uv run python -m pipeline.fetch_imerg` (antes: `--dry-run`; para conferir: `--anos 2024`) | até ~2,2 h (4.240 recortes, um por dia, 6 em paralelo); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env`, com o aplicativo *NASA GESDISC DATA ARCHIVE* autorizado e a EULA do GES DISC aceita |
 | Carregar os arquivos no banco (`cmip6_delta`, `ndvi_point` e a chuva do IMERG no `climate_season`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json --imerg ../../data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` | segundos | nenhuma |
+| El Niño / La Niña de cada safrinha (ONI) | `uv run python -m pipeline.fetch_oni` | segundos (1 pedido de ~23 KB à NOAA) | nenhuma |
 
 - A pré-carga é idempotente: rodar de novo só completa o que faltou (por exemplo, solos em que o
   SoilGrids não respondeu). Solo sem dado no mapa (área urbana) nunca é gravado.
@@ -114,6 +116,11 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   ou EULA), o script para ali, sem insistir. Dia que falhou depois das retentativas: nada é
   gravado e o script pede para rodar de novo. Dia sem arquivo no GES DISC ou pixel vazio vira
   `null` no arquivo (nunca 0).
+- O ONI grava em `data/baixados/noaa_oni/oni.json` a partir da raiz do repositório. Antes, veja o
+  pedido sem baixar nada: `uv run python -m pipeline.fetch_oni --dry-run`. Ele cobre as safrinhas
+  de 2005 a 2024 (as da série do motor; `--ano-inicio` e `--ano-fim` mudam isso) e imprime quais
+  anos ficaram de El Niño, de La Niña e neutros. A regra do ano está no `regras.yaml` (grupo `enso`).
+  Não precisa carregar no banco: a API lê o arquivo.
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).
@@ -152,6 +159,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | Solo | "Terra … · Do mapa de solos" | "Não achamos no mapa de solos; usamos terra média" |
 | Clima dos próximos anos | ✓ pronto (só onde há deltas: a caixa piloto inteira com `--area`; só a região da fazenda de exemplo com `--pontos`) | "Ainda não disponível para esta área" |
 | Histórico do talhão | faixa de 2016 a 2025 | não aparece (ou "Ainda não conectado") |
+| Anos de chuva (tocar num ano) | ponto de El Niño / La Niña em cima dos anos e "Ano de El Niño." na frase | a frase de cada ano aparece igual, sem a marca |
 
 ## Problemas comuns
 

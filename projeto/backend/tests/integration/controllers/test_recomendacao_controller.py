@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from app.constants import PROBLEM_BASE_URI, PROBLEM_JSON_MEDIA_TYPE
 from app.dependencies import (
+    get_enso_repository,
     get_ndvi_repository,
     get_rules_repository,
     get_seasonal_forecast_repository,
@@ -19,6 +20,7 @@ from app.main import app
 from app.models.regras import Regras
 from app.models.sinal_outono import SeasonalForecast
 from app.models.talhao import NdviRecord, SoloInfo
+from app.repositories.enso_repository import FileEnsoRepository
 from app.repositories.rules_repository import load_default_rules
 from app.repositories.soil_repository import DEFAULT_SOIL
 
@@ -380,3 +382,74 @@ def test_should_use_rules_from_the_injected_rules_repository(client: TestClient)
     assert milho["chuva"]["anos_bons"] == 0  # máxima de 30 °C já é calor com o limiar de 29 °C
     assert milho["dinheiro"]["rotulo"] == "medio"  # renda 100 abaixo do "bom" de 101
     assert "(2007, 2014)" in body["plano_3_anos"]["seco"]["descricao"]
+
+
+# --- detalhe de cada ano (P1) ------------------------------------------------------------------
+
+
+def _milho(body: dict) -> dict:
+    return next(o for o in body["opcoes"] if o["id"] == "milho_safrinha")
+
+
+def test_should_detail_each_year_of_the_rain_strip_in_every_option(client: TestClient) -> None:
+    # Contrato do front: `opcoes[].anos_detalhe[]` com {ano, bom, fase_critica, dias_sem_chuva,
+    # enso, texto}. A faixa sai de anos_detalhe[].bom: um item por ano, na mesma ordem.
+    response = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"})
+
+    assert response.status_code == 200
+    body = response.json()
+    for opcao in body["opcoes"]:
+        assert [d["ano"] for d in opcao["anos_detalhe"]] == list(range(2005, 2025))
+        assert [d["bom"] for d in opcao["anos_detalhe"]] == opcao["chuva"]["faixa"]
+    detalhes = {d["ano"]: d for d in _milho(body)["anos_detalhe"]}
+    # 2007 fica sem chuva de fevereiro a junho; floração no dia 60 (18/fev + 60 = 19/abr)
+    assert detalhes[2007] == {
+        "ano": 2007,
+        "bom": False,
+        "fase_critica": "2007-04-19",
+        "dias_sem_chuva": 30,
+        "enso": "el_nino",
+        "texto": (
+            "Em 2007, plantando em 18 de fevereiro, a planta chegou na fase que mais precisa de "
+            "água por volta de 19 de abril e ficou 30 dias sem chuva. Faltou água nessa fase. "
+            "Ano de El Niño."
+        ),
+    }
+    assert detalhes[2010] == {
+        "ano": 2010,
+        "bom": True,
+        "fase_critica": "2010-04-19",
+        "dias_sem_chuva": 0,
+        "enso": None,
+        "texto": (
+            "Em 2010, plantando em 18 de fevereiro, a planta chegou na fase que mais precisa de "
+            "água por volta de 19 de abril e não ficou nenhum dia sem chuva. Deu certo."
+        ),
+    }
+
+
+def test_should_write_the_year_detail_in_english(client: TestClient) -> None:
+    response = client.get(
+        "/api/recomendacao",
+        params={**UFU, "colheita": "meio"},
+        headers={"Accept-Language": "en"},
+    )
+
+    detalhe = next(d for d in _milho(response.json())["anos_detalhe"] if d["ano"] == 2014)
+    assert (detalhe["enso"], detalhe["dias_sem_chuva"]) == ("la_nina", 30)
+    assert detalhe["texto"] == (
+        "In 2014, sowing on February 18, the crop reached the stage that needs water most around "
+        "April 19 and went 30 days without rain. The crop ran short of water in this stage. "
+        "La Niña year."
+    )
+
+
+def test_should_send_the_year_detail_without_enso_when_there_is_no_oni_file(
+    client: TestClient,
+) -> None:
+    app.dependency_overrides[get_enso_repository] = lambda: FileEnsoRepository(None)
+
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"}).json()
+
+    assert {d["enso"] for o in body["opcoes"] for d in o["anos_detalhe"]} == {None}
+    assert all("Niño" not in d["texto"] for d in _milho(body)["anos_detalhe"])

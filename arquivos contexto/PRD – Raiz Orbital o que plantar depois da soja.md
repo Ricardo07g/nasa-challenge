@@ -161,6 +161,7 @@ A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: co
 | RF-19 | Tela de cálculo (missão) | Rota `/calculando`: chama `/api/talhao` e `/api/recomendacao`, mostra 6 fases com os dados reais que chegam, cada fase com no mínimo 1,2 s; avança sozinha para a tela 4; depois de 20 s oferece a fazenda de exemplo; erro com mensagem calma; versão simples com `prefers-reduced-motion` | US-14 |
 | RF-20 | Sinal para o outono e Plano A / Plano B | Nível `normal`, `seco` ou `incerto` com o motivo em uma frase (regra da seção 7.10); botões "Plano A" e "Plano B, se secar" marcados pelo sinal; regra do dia de plantar com data limite; mostra chance, nunca certeza | US-09 |
 | RF-21 | Hectares para testar | Campo numérico (padrão 50 ha) na tela 7; mostra quanto deve sobrar, o custo da semente e o pior caso num ano seco, em reais, para a opção do 1º ano do plano marcado; conta no front-end com os valores por hectare da API | US-15 |
+| RF-22 | Tocar num ano (P1) | Cada opção traz `anos_detalhe[]` em `/api/recomendacao`: para cada ano da série, se deu certo, a data da fase crítica, os dias sem chuva nela, a fase do El Niño / La Niña (ONI da NOAA, média de DJF a FMA; ±0,5) e uma frase pronta em pt e en. Os quadradinhos de chuva ficam tocáveis e mostram a frase; sem o arquivo do ONI, a frase sai sem a marca do ENSO | Plano de evolução §4.1 (tarefa 0035) |
 
 ### Exemplo de saída (números ilustrativos, serão trocados pelos calculados)
 

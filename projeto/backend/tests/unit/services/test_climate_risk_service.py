@@ -115,6 +115,45 @@ def test_should_detect_stress_when_three_hot_days_even_with_enough_water() -> No
     assert result.aperto is True
 
 
+def test_should_tell_whether_the_stress_came_from_water_or_from_heat() -> None:
+    # P1: o detalhe de cada ano diz por que o ano apertou, sem repetir a regra do aperto
+    service = ClimateRiskService(WaterBalanceCalculator())
+    seasons = [
+        _make_season(2020, daily_rain=8.0),
+        _make_season(2021, daily_rain=0.0),
+        _make_season(2022, daily_rain=10.0, daily_tmax=36.0),
+        _make_season(2023, daily_rain=0.0, daily_tmax=36.0),
+    ]
+
+    results = service.simulate_historical(
+        crop=_make_crop(), seasons=seasons, semeadura=date(2027, 2, 18), cad_mm=60.0
+    )
+
+    assert [(r.falta_agua, r.calor) for r in results] == [
+        (False, False),
+        (True, False),
+        (False, True),
+        (True, True),
+    ]
+    assert [r.aperto for r in results] == [False, True, True, True]
+
+
+def test_should_judge_water_shortage_of_cover_crops_by_their_own_isna_threshold() -> None:
+    # PRD 7.2 item 4: a cobertura falha com ISNA abaixo de 0,50 (o grão, abaixo de 0,55)
+    rules = _rules_with_clima(isna_cobertura=0.0)
+    service = ClimateRiskService(WaterBalanceCalculator(), rules)
+    dry_season = _make_season(2021, daily_rain=0.0)
+
+    [result] = service.simulate_historical(
+        crop=_make_crop(tipo="cobertura"),
+        seasons=[dry_season],
+        semeadura=date(2027, 2, 18),
+        cad_mm=60.0,
+    )
+
+    assert (result.falta_agua, result.calor, result.aperto) == (False, False, False)
+
+
 @pytest.mark.parametrize(
     ("isna", "expected"),
     [(0.80, 0.0), (0.65, 0.0), (0.64, 0.30), (0.55, 0.30), (0.54, 0.60), (0.10, 0.60)],

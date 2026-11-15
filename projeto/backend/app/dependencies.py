@@ -21,6 +21,7 @@ from app.repositories.crop_params_repository import (
     CropParamsRepository,
     YamlCropParamsRepository,
 )
+from app.repositories.enso_repository import EnsoRepository, FileEnsoRepository
 from app.repositories.external.nasa_power_client import (
     NasaPowerClient,
     NasaPowerClientProtocol,
@@ -56,6 +57,7 @@ from app.services.satellite_ingestion_service import SatelliteIngestionService
 from app.services.sinal_outono_service import SinalOutonoService
 from app.services.talhao_service import TalhaoService
 from app.services.water_balance_calculator import WaterBalanceCalculator
+from app.services.year_detail_service import YearDetailService
 
 
 @lru_cache
@@ -212,6 +214,21 @@ def get_talhao_service(
     )
 
 
+@lru_cache
+def get_enso_repository() -> EnsoRepository:
+    """Fase do ENSO de cada safrinha (ONI da NOAA, P1). Sem ONI_PATH ou arquivo: `enso: null`."""
+    return FileEnsoRepository(get_settings().oni_path)
+
+
+def get_year_detail_service(
+    enso_repo: Annotated[EnsoRepository, Depends(get_enso_repository)],
+    rules: Annotated[Regras, Depends(get_rules)],
+) -> YearDetailService:
+    return YearDetailService(
+        alert_service=CropAlertService(rules), enso_repo=enso_repo, rules=rules
+    )
+
+
 def get_recommendation_service(
     crop_repo: Annotated[CropParamsRepository, Depends(get_crop_params_repository)],
     climate_repo: Annotated[ClimateRepository, Depends(get_climate_repository)],
@@ -225,6 +242,7 @@ def get_recommendation_service(
     sinal_service: Annotated[SinalOutonoService, Depends(get_sinal_outono_service)],
     ndvi_repo: Annotated[NdviRepository, Depends(get_ndvi_repository)],
     history_service: Annotated[FieldHistoryService, Depends(get_field_history_service)],
+    year_detail_service: Annotated[YearDetailService, Depends(get_year_detail_service)],
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=crop_repo,
@@ -237,6 +255,7 @@ def get_recommendation_service(
         sinal_service=sinal_service,
         ndvi_repo=ndvi_repo,
         history_service=history_service,
+        year_detail_service=year_detail_service,
     )
 
 

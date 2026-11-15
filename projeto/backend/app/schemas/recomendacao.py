@@ -3,9 +3,16 @@
 from datetime import date
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, SerializerFunctionWrapHandler, model_serializer
+from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer
 
-from app.models.recomendacao import NotasOpcao, PlanoRotacao, Recomendacao, ResultadoOpcao
+from app.models.enso import FaseEnso
+from app.models.recomendacao import (
+    AnoDetalhe,
+    NotasOpcao,
+    PlanoRotacao,
+    Recomendacao,
+    ResultadoOpcao,
+)
 from app.models.sinal_outono import NivelSinal, SinalOutono
 from app.schemas.talhao import TalhaoResponse
 
@@ -81,6 +88,28 @@ class NotasSchema(_Frozen):
         )
 
 
+class AnoDetalheSchema(_Frozen):
+    """O que aconteceu num ano da faixa de chuva (P1): `AnoDetalhe` do front."""
+
+    ano: int
+    bom: bool
+    fase_critica: date
+    dias_sem_chuva: int
+    enso: FaseEnso | None
+    texto: str
+
+    @classmethod
+    def from_model(cls, detalhe: AnoDetalhe) -> "AnoDetalheSchema":
+        return cls(
+            ano=detalhe.ano,
+            bom=detalhe.bom,
+            fase_critica=detalhe.fase_critica,
+            dias_sem_chuva=detalhe.dias_sem_chuva,
+            enso=detalhe.enso,
+            texto=detalhe.texto,
+        )
+
+
 class OpcaoSchema(_Frozen):
     id: str
     nome: str
@@ -93,6 +122,8 @@ class OpcaoSchema(_Frozen):
     notas: NotasSchema
     porque: list[str]
     como_fazer: list[str]
+    # P1: um item por ano da faixa de chuva, na mesma ordem (opcional no contrato do front)
+    anos_detalhe: list[AnoDetalheSchema] = Field(default_factory=list)
 
     @classmethod
     def from_model(cls, o: ResultadoOpcao) -> "OpcaoSchema":
@@ -129,6 +160,7 @@ class OpcaoSchema(_Frozen):
             notas=NotasSchema.from_model(o.notas),
             porque=list(o.porque),
             como_fazer=list(o.como_fazer),
+            anos_detalhe=[AnoDetalheSchema.from_model(d) for d in o.anos_detalhe],
         )
 
 

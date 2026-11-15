@@ -13,6 +13,7 @@ from app.config import Settings
 from app.dependencies import (
     get_climate_repository,
     get_crop_params_repository,
+    get_enso_repository,
     get_ndvi_repository,
     get_satellite_ingestion_service,
     get_soil_repository,
@@ -20,6 +21,7 @@ from app.dependencies import (
 from app.main import app
 from app.repositories.climate_repository import FixtureClimateRepository
 from app.repositories.crop_params_repository import YamlCropParamsRepository
+from app.repositories.enso_repository import FileEnsoRepository
 from app.repositories.ndvi_repository import CachedNdviRepository
 from app.repositories.soil_repository import CachedSoilGridsRepository
 
@@ -35,6 +37,7 @@ def real_data_client() -> Iterator[TestClient]:
     app.dependency_overrides[get_climate_repository] = lambda: FixtureClimateRepository(clima)
     app.dependency_overrides[get_soil_repository] = lambda: CachedSoilGridsRepository(None)
     app.dependency_overrides[get_ndvi_repository] = lambda: CachedNdviRepository(None)
+    app.dependency_overrides[get_enso_repository] = lambda: FileEnsoRepository(None)
     app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)
     app.dependency_overrides.clear()
@@ -156,3 +159,31 @@ def test_should_show_the_rain_of_each_month_of_the_example_farm(
         (5, 31.3),
         (6, 12.6),
     ]
+
+
+def test_should_detail_each_year_of_the_example_farm_like_the_replay(
+    real_data_client: TestClient,
+) -> None:
+    # P1 com a chuva real do NASA POWER: o detalhe de 2024 bate com o replay acima (sem chuva
+    # desde 19/abr, logo depois da floração em 18/abr). A fase crítica vai de 3/abr a 2/mai, então
+    # a seca conta 14 dias nela. Sem o arquivo do ONI, nenhum ano tem marca de El Niño/La Niña.
+    rec = real_data_client.get("/api/exemplo").json()["recomendacao"]
+
+    for opcao in rec["opcoes"]:
+        assert [d["ano"] for d in opcao["anos_detalhe"]] == list(range(2005, 2025))
+        assert [d["bom"] for d in opcao["anos_detalhe"]] == opcao["chuva"]["faixa"]
+        assert {d["enso"] for d in opcao["anos_detalhe"]} == {None}
+    milho = next(o for o in rec["opcoes"] if o["id"] == "milho_safrinha")
+    detalhes = {d["ano"]: d for d in milho["anos_detalhe"]}
+    assert detalhes[2024] == {
+        "ano": 2024,
+        "bom": False,
+        "fase_critica": "2024-04-18",
+        "dias_sem_chuva": 14,
+        "enso": None,
+        "texto": (
+            "Em 2024, plantando em 18 de fevereiro, a planta chegou na fase que mais precisa de "
+            "água por volta de 18 de abril e ficou 14 dias sem chuva. Faltou água nessa fase."
+        ),
+    }
+    assert detalhes[2023]["bom"] is True

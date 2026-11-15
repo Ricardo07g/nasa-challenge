@@ -11,6 +11,7 @@ DATA_ENV_VARS = (
     "SOLO_CACHE_PATH",
     "NDVI_CACHE_PATH",
     "CMIP6_PATH",
+    "ONI_PATH",
 )
 CREDENTIAL_ENV_VARS = (
     "EARTHDATA_TOKEN",
@@ -138,3 +139,14 @@ def test_appeears_token_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = Settings(_env_file=None)
 
     assert settings.appeears_token == "token-de-teste"
+
+
+def test_oni_path_defaults_to_none_and_comes_from_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # P1: sem o arquivo do ONI da NOAA, o detalhe de cada ano sai com `enso: null`
+    assert Settings(_env_file=None).oni_path is None
+
+    monkeypatch.setenv("ONI_PATH", str(tmp_path / "oni.json"))
+
+    assert Settings(_env_file=None).oni_path == tmp_path / "oni.json"

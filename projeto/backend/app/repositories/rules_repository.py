@@ -9,11 +9,13 @@ import yaml
 
 from app.config import DEFAULT_REGRAS_PATH
 from app.models.regras import (
+    FrasesAno,
     FrasesPorque,
     FrasesSafra,
     Regras,
     RegrasAvisos,
     RegrasClima,
+    RegrasEnso,
     RegrasHistoricoNdvi,
     RegrasNdvi,
     RegrasNotaFinal,
@@ -87,6 +89,8 @@ class YamlRulesRepository:
             frases=_texts(raw, "frases", FrasesPorque),
             avisos=_group(raw, "avisos", RegrasAvisos),
             frases_safra=_texts(raw, "frases_safra", FrasesSafra),
+            enso=_group(raw, "enso", RegrasEnso),
+            frases_ano=_texts(raw, "frases_ano", FrasesAno),
         )
         return self._cache
 
