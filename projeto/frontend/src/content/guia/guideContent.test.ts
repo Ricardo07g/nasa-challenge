@@ -3,6 +3,8 @@ import { guideRepository } from '../../repositories/guideRepository'
 import { createGuideService } from '../../services/guideService'
 import { parseFrontMatter } from '../../services/guideService'
 import { parseMarkdown, plainText, type Block, type Inline } from '../../services/markdownService'
+import { en } from '../../i18n/messages.en'
+import { pt } from '../../i18n/messages.pt'
 import { VERIFIED_SOURCES } from './verifiedSources'
 
 /** Os artigos que precisam existir (os prioritários da seção 8 do pedido). */
@@ -121,6 +123,16 @@ describe('conteúdo do Guia', () => {
         }
         expect(raw.match(/\[(Sugestão|Comparar|Suggestion|Compare)\]/)?.[0] ?? null, `${lang}/${slug}`).toBeNull()
       }
+    }
+  })
+
+  it('"Como ler os avisos" chama os grupos da tela de Avisos pelos nomes de hoje (pacote 3)', () => {
+    for (const [lang, t] of [['pt', pt], ['en', en]] as const) {
+      const raw = bySlug(lang).get('como-ler-os-avisos')!
+      for (const group of [t.alerts.now.title, t.alerts.changed.title, t.alerts.records.title]) {
+        expect(raw, `${lang}: ${group}`).toContain(`**${group}**`)
+      }
+      expect(raw).not.toMatch(/O que mudou na sua área|Fora do comum|What changed in your area|Out of the ordinary/)
     }
   })
 
