@@ -9,11 +9,13 @@ import type { TipoEvento } from '../../models/pastSeason'
 import type { CustoAtrasoRepository } from '../custoAtrasoRepository'
 import type { ExemploRepository } from '../exemploRepository'
 import type { PastSeasonRepository } from '../pastSeasonRepository'
+import type { RaioXRepository } from '../raioXRepository'
 import type { RecomendacaoRepository } from '../recomendacaoRepository'
 import type { RegionRepository } from '../regionRepository'
 import type { TalhaoRepository } from '../talhaoRepository'
 import { delay } from './delay'
 import { buildCustoAtraso, buildRecomendacao, buildTalhao } from './fixtures'
+import { buildRaioX } from './raioXFixture'
 
 /** Talhão com dados de exemplo. */
 export function createMockTalhaoRepository(delayMs = 500): TalhaoRepository {
@@ -136,6 +138,16 @@ export function createMockPastSeasonRepository(delayMs = 300): PastSeasonReposit
         opcao: 'milho_braquiaria',
         eventos: events.map((event) => ({ data: event.data, tipo: event.tipo, texto: event.texto[lang] })),
       }
+    },
+  }
+}
+
+/** Raio-X da sua terra (tela 4, tarefa 0043): os 8 blocos, a faixa do NDVI e um alerta, de exemplo. */
+export function createMockRaioXRepository(delayMs = 400): RaioXRepository {
+  return {
+    async get(params, lang) {
+      await delay(delayMs)
+      return buildRaioX(params, lang)
     },
   }
 }

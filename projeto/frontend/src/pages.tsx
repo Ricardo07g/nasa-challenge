@@ -172,6 +172,11 @@ export function SatellitePage() {
       onToggleSoil={state.toggleSoil}
       onChooseSoil={state.chooseSoil}
       onConfirm={state.confirm}
+      xray={state.xray}
+      heatmap={state.heatmap}
+      alerts={state.alerts}
+      cards={state.cards}
+      answerTo={state.answerTo}
     />
   )
 }
