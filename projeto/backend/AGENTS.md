@@ -167,7 +167,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `frases_safra` do `regras.yaml`) ficam só no `CropAlertService`, que recebe a série diária, a
   cultura e a semeadura e devolve a linha do tempo. O replay `GET /api/safra-passada` (P4) usa esse
   service e o acompanhamento diário (P6) vai usar o mesmo: não repita a regra em outro lugar. A
-  opção do replay é a `melhor` do `RecommendationService`. Ano sem dado num ponto que tem dados =
+  opção do replay é a `melhor` do `RecommendationService` ou a `opcao` pedida (tarefa 0044: o
+  replay é o detalhe de cada ano do explorador da aba Sugestão). Ano sem dado num ponto que tem dados =
   404 `NOT_FOUND`; ponto sem dados continua 404 `OUTSIDE_AREA`. O detalhe de cada ano (P1, abaixo)
   conta os dias secos pelo `CropAlertService.longest_dry_spell`, com o mesmo dia seco.
 - **Detalhe de cada ano** (`opcoes[].anos_detalhe[]` de `/recomendacao` e `/exemplo`, P1, tarefa
@@ -788,6 +789,38 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   Para ligar o arquivo: **com uv**,
   `AREA_QUEIMADA_PATH=../../data/baixados/nasa_modis_mcd64a1/area_queimada_mcd64a1.json` no `.env`
   desta pasta; **no compose**, já ligado. Lido uma vez por processo: reinicie o backend.
+- **Aba Sugestão** (remodelagem S5a, tarefa 0044, RF-30): campos novos do `/recomendacao` e do
+  `/exemplo`, todos opcionais no front (contrato em `docs/tarefas/0044-sugestao.md`). Regras nos
+  services, números no `regras.yaml`:
+  - **Linha "Água" e sede** (`opcoes[].agua`, `WaterNeedService`, grupo `agua`): o
+    `simulate_historical` guarda em cada `ResultadoAno` as somas do ciclo (`etc_mm`, `etr_mm`,
+    `chuva_mm`); `precisa_mm` = mediana do ETc (ETo × Kc), `chove_mm` = mediana da chuva,
+    `falta_normal_mm` = mediana de ETc − ETr, `falta_seco_mm` = percentil 100 − `percentil_seco`
+    (80) da falta, `sede` pelos cortes `sede_pouca_ate_mm` / `sede_muita_desde_mm` (hipótese do
+    time). O `futuro` usa os anos de cada modelo do CMIP6 (`simulate_future_by_model`; a nota de
+    futuro sai do mesmo conjunto, `summarize_future`). Não há número para palhada, enxurrada nem a
+    água da próxima safra: não temos dado;
+  - **critério e ciclo** (`criterio`, `ciclo`): os números de "deu certo" do grupo `clima` (ISNA,
+    35 °C, `calor_min_dias` = 3, janela) e o ciclo e a floração do `culturas.yaml`, para a tela não
+    repetir número;
+  - **explorador ano a ano** (`anos_detalhe[]`): mais `isna`, `dias_calor`, `falta_agua`, `calor`,
+    `semeadura` e `umidade_inicial` (o SMAP do balde daquele ano; `null` antes de 2016);
+  - **o que observar e El Niño / La Niña** (`observar`, `enso_acerto`; `SuggestionFactsService`,
+    grupo `enso_acerto`): veranico típico (mediana, para baixo) e anos de calor da fase crítica; a
+    taxa de acerto nos anos de cada fase contra os outros, com `clara` (5 anos ou mais da fase e
+    25 pontos de diferença). Só informa;
+  - **objetivos do produtor** (`objetivos`: `equilibrio`, `seguranca`, `renda`, `terra`; cada um
+    com `ordem`, `plano` e `nota_plano`): a ordem é a nota do eixo com desempate pela final; o plano
+    é o melhor do PRD 7.7 que começa pela 1ª da ordem (`RotationPlanService.best_plan_starting_with`;
+    nos objetivos, sem o pousio). **O Plano A (`plano_3_anos.normal`) é o plano do equilíbrio: começa
+    pela melhor opção**; o Plano B continua livre. A reordenação é no motor; o navegador só escolhe;
+  - **na célula** (`clima_futuro`, `geada`; `CellClimateFactsService`, grupos
+    `clima_futuro_sugestao` e `geada_sugestao`): variação de chuva e máxima de março a maio em
+    2041–2060 com a concordância dos modelos, e anos com mínima de 3 °C ou menos de maio a julho.
+    Cálculo pequeno da S5a: a seção 4 faz o mesmo no raio-X; unificar na S9;
+  - `fora_da_janela[].data_limite` (o aviso único da colheita tarde junta as culturas por data) e
+    `GET /api/safra-passada?…&opcao=<id>` (o detalhe de qualquer ano do explorador, para a opção
+    que a aba mostra; fora da janela, 404 `NOT_FOUND`).
 - **Região pelo satélite** (P3, tarefas 0034 e 0036): `GET /api/regiao?lat&lon`, no contrato do
   front (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem
   banco).
