@@ -3,7 +3,8 @@
 # Em todo pull request e em todo push no main: segredos (gitleaks) e pre-commit, backend (ruff, pytest com
 # o PostGIS, migrações sobe e desce), frontend (lint, testes, build) e as imagens Docker de produção.
 # No push no main, com tudo verde, publica na Railway só o serviço que mudou desde o último deploy dele
-# (.github/scripts/railway-deploy.sh) e confere o site no ar. "Run workflow" no main publica à mão.
+# (.github/scripts/railway-deploy.sh) e confere que o site e a API estão no commit do merge
+# (/versao.json e /api/health). "Run workflow" no main publica à mão.
 #
 # Repositório PÚBLICO: o único segredo é o RAILWAY_TOKEN (token do projeto na Railway), guardado no
 # ambiente "production" do GitHub, que só libera para o main. PR (inclusive de fork) nunca recebe o
@@ -286,3 +287,26 @@ jobs:
               --max-time 60 --output /dev/null --write-out "%{http_code} %{time_total}s $caminho\n" \
               "$SITE_URL$caminho"
           done
+
+      - name: O site e a API estão no commit deste merge
+        env:
+          BACKEND_PUBLICOU: ${{ needs.deploy-backend.outputs.publicou }}
+          FRONTEND_PUBLICOU: ${{ needs.deploy-frontend.outputs.publicou }}
+        run: |
+          # O deploy grava COMMIT_SHA em cada serviço: o /api/health e o /versao.json dizem o commit no ar.
+          confere_commit() {
+            local url="$1" visto=""
+            for _ in $(seq 1 18); do
+              visto="$(curl --silent --max-time 30 -H 'Cache-Control: no-cache' "$url?t=$(date +%s)" | jq -r '.commit // empty' 2>/dev/null || true)"
+              if [ "$visto" = "$GITHUB_SHA" ]; then
+                echo "ok: $url está no ${GITHUB_SHA:0:7}"
+                return 0
+              fi
+              echo "  $url ainda em ${visto:-?}"
+              sleep 10
+            done
+            echo "::error::$url não está no commit ${GITHUB_SHA:0:7} (está em ${visto:-?})"
+            return 1
+          }
+          if [ "$BACKEND_PUBLICOU" = "true" ]; then confere_commit "$SITE_URL/api/health"; fi
+          if [ "$FRONTEND_PUBLICOU" = "true" ]; then confere_commit "$SITE_URL/versao.json"; fi

@@ -1609,6 +1609,8 @@ ilustrativos (e só 2 × 4 dos 721 × 880):
   - `APPEEARS_TOKEN`: token próprio do AppEEARS, de `POST /api/login` (vale cerca de 48 h). Sem ele, o
     script faz o login com `EARTHDATA_USERNAME` e `EARTHDATA_PASSWORD`.
   - `EE_PROJECT` é legado (Earth Engine fora do MVP) e sai quando a ADR-0005 for aceita.
+- `COMMIT_SHA` (a API usa no `/api/health`, campo `commit`): o commit que está no ar. Não é segredo e ninguém
+  preenche: o deploy do CI grava na Railway (`.github/scripts/railway-deploy.sh`). Sem valor, `local`.
 - `COMMUNITY_DEVICE_SALT` (a API usa, tarefa 0047): sal do hash do identificador do aparelho nos
   relatos da comunidade. Segredo, só no ambiente (gere um valor longo e aleatório). Vazio: um sal
   aleatório por processo (os relatos continuam anônimos, mas o limite por dia e o "apagar o meu"

@@ -31,6 +31,7 @@ case "$1 $2" in
     echo '{"deploymentId":"dep-novo","logsUrl":"x"}'
     ;;
   "logs --deployment") echo "log do deploy" ;;
+  "variable set") echo "ok" ;;
   *) echo "chamada inesperada: $*" >&2; exit 9 ;;
 esac
 STUB
@@ -98,6 +99,10 @@ confere "backend mudou: sai com 0" '[[ $r -eq 0 ]]'
 confere "backend mudou: chama o up com a pasta e a mensagem" \
   'grep -q "^up projeto/backend --path-as-root --service backend --detach --json --message commit $c_frontend$" "$tmp/chamadas"'
 confere "backend mudou: publicou=true" 'grep -qx "publicou=true" "$tmp/gh_output"'
+confere "backend mudou: grava COMMIT_SHA no serviço sem disparar deploy" \
+  'grep -qx "variable set COMMIT_SHA=$c_frontend --service backend --skip-deploys" "$tmp/chamadas"'
+confere "backend mudou: grava o COMMIT_SHA antes do up" \
+  '[[ $(grep -n "^variable set" "$tmp/chamadas" | cut -d: -f1) -lt $(grep -n "^up " "$tmp/chamadas" | cut -d: -f1) ]]'
 
 # 5. Frontend mudou: publica.
 roda frontend "$c_frontend" STUB_ULTIMA_MSG="commit $c_docs" && r=0 || r=$?
