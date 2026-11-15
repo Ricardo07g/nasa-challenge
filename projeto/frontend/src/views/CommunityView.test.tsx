@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -93,6 +93,21 @@ describe('CommunityView (tela 8)', () => {
 
     expect(screen.queryByRole('region', { name: 'Idle cropland in the region, by satellite' })).not.toBeInTheDocument()
     expect(screen.queryByText(/has not measured/i)).not.toBeInTheDocument()
+  })
+
+  it('porcentagens com casa decimal saem com vírgula em português e com ponto em inglês', () => {
+    const decimal = { last: { ano: 2025, pct: 0.8 }, average: 1.5, uncertain: 2.3, bars: [{ ano: 2025, pct: 0.8 }] }
+    setup({ region: decimal, history: null })
+
+    expect(screen.getByText('Em 2025, 0,8% da área de soja ficou parada depois da colheita.')).toBeInTheDocument()
+    expect(screen.getByText(/Na região, em média 1,5% da área fica parada/)).toBeInTheDocument()
+    expect(screen.getByText(/Em 2,3% da área o satélite não conseguiu dizer/)).toBeInTheDocument()
+    expect(screen.getByText('0,8%')).toBeInTheDocument()
+    expect(screen.queryByText(/0\.8%/)).not.toBeInTheDocument()
+    cleanup()
+
+    setup({ t: en, community: buildCommunity('en'), region: decimal, history: null })
+    expect(screen.getByText('In 2025, 0.8% of the soybean area was left idle after harvest.')).toBeInTheDocument()
   })
 
   it('a comunidade vem embaixo, marcada como ilustrativa, com quantos participam', () => {

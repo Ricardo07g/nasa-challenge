@@ -300,7 +300,9 @@ class RecommendationService:
             if not self._risk_service.is_within_window(crop, semeadura):
                 fora_da_janela.append(
                     ForaDaJanelaOpcao(
-                        id=crop.id, nome=nome, texto=self._out_of_window_text(crop, colheita, is_en)
+                        id=crop.id,
+                        nome=nome,
+                        texto=self._out_of_window_text(crop, nome, colheita, is_en),
                     )
                 )
                 continue
@@ -667,12 +669,17 @@ class RecommendationService:
             ano_fim=janela.ano_fim,
         )
 
-    @staticmethod
-    def _out_of_window_text(crop: CropParams, colheita: str, is_en: bool) -> str:
-        limite = crop.semeadura_limite_mes_dia or ""
-        mes, _, dia = limite.partition("-")
-        if is_en:
-            return (
-                f"Outside the sowing window for the '{colheita}' harvest (ZARC deadline {limite})."
-            )
-        return f"Fora da janela de plantio para a colheita '{colheita}' (limite ZARC {dia}/{mes})."
+    def _out_of_window_text(self, crop: CropParams, nome: str, colheita: str, is_en: bool) -> str:
+        """Uma frase por cultura fora da janela: o nome, o limite do ZARC e a faixa por extenso."""
+        frases = self._rules.frases["en" if is_en else "pt"]
+        mes, _, dia = (crop.semeadura_limite_mes_dia or "").partition("-")
+        if is_en and mes.isdigit():
+            limite = f"{MONTHS_EN[int(mes) - 1]} {int(dia)}"
+        else:
+            limite = f"{dia}/{mes}"
+        faixa = {
+            "cedo": frases.colheita_cedo,
+            "meio": frases.colheita_meio,
+            "tarde": frases.colheita_tarde,
+        }.get(colheita, colheita)
+        return frases.fora_da_janela.format(cultura=nome, limite=limite, faixa=faixa)

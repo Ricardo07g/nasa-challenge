@@ -117,7 +117,7 @@ function SatelliteRegion({ t, region, history }: CommunityViewProps & { region: 
               label: String(bar.ano).slice(2),
               value: bar.pct,
               tone: 'earth',
-              display: `${bar.pct}%`,
+              display: c.regionPct(bar.pct),
             }))}
           />
         </Card>
