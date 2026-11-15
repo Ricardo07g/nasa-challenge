@@ -1,4 +1,4 @@
-"""Região pelo satélite (P3): a lavoura em volta de um ponto na entressafra, ano a ano, pelo MODIS.
+"""Região pelo satélite (P3): a soja em volta de um ponto na entressafra, ano a ano, pelo MODIS.
 
 Contrato do arquivo que o `pipeline/fetch_regiao_ndvi.py` grava e o `FileRegionRepository` lê
 (`AGENTS.md` do backend, "Contrato dos dados das fontes" → "Região pelo satélite").
@@ -16,12 +16,15 @@ PCT_SUM_TOLERANCE: Final[float] = 0.2
 
 @dataclass(frozen=True)
 class RegiaoAno:
-    """A entressafra de um ano na região (guia NDVI, "Região pelo satélite").
+    """A entressafra de um ano na região (guia NDVI, "Região pelo satélite"; tarefa 0036).
 
-    `n_pixels` = pixels de lavoura (máscara de uso do solo) dentro do raio. `pct_parado`,
-    `pct_plantou` e `pct_incerto` contam só os pixels classificados (o "sem dado" fica fora da
-    conta) e somam 100; os três ficam `None` quando nenhum pixel foi classificado.
-    `pct_sem_dado` é a parte de `n_pixels` sem observações boas suficientes; `None` sem pixel.
+    `n_pixels_lavoura` = pixels da máscara de lavoura (uso do solo) dentro do raio; `n_pixels` =
+    os que mostraram a soja do ano (pico e colheita, grupo `regiao_ndvi` do `regras.yaml`).
+    `pct_parado`, `pct_plantou` e `pct_incerto` contam só os pixels de soja classificados (o
+    "sem dado" fica fora da conta) e somam 100; os três ficam `None` quando nenhum foi
+    classificado. `pct_sem_dado` é a parte de `n_pixels` sem observações boas suficientes depois
+    da colheita; `None` sem pixel. Arquivo de antes da tarefa 0036 (máscara de lavoura, sem a soja
+    do ano): `n_pixels_lavoura` ausente (`None`) e `n_pixels` são os pixels da máscara.
     """
 
     ano: int
@@ -30,10 +33,16 @@ class RegiaoAno:
     pct_plantou: float | None
     pct_incerto: float | None
     pct_sem_dado: float | None
+    n_pixels_lavoura: int | None = None
 
     def __post_init__(self) -> None:
         if self.n_pixels < 0:
             raise ValueError(f"n_pixels não pode ser negativo, veio {self.n_pixels!r}")
+        if self.n_pixels_lavoura is not None and self.n_pixels_lavoura < self.n_pixels:
+            raise ValueError(
+                f"n_pixels_lavoura ({self.n_pixels_lavoura}) não pode ser menor que n_pixels "
+                f"({self.n_pixels}): a soja do ano sai da máscara de lavoura"
+            )
         classes = {
             "pct_parado": self.pct_parado,
             "pct_plantou": self.pct_plantou,
@@ -46,10 +55,10 @@ class RegiaoAno:
         empty = [name for name, value in classes.items() if value is None]
         if self.n_pixels == 0:
             if len(empty) < len(classes) or self.pct_sem_dado is not None:
-                raise ValueError("ano sem pixel de lavoura não tem percentual")
+                raise ValueError("ano sem pixel de soja não tem percentual")
             return
         if self.pct_sem_dado is None:
-            raise ValueError("pct_sem_dado é obrigatório quando há pixel de lavoura")
+            raise ValueError("pct_sem_dado é obrigatório quando há pixel de soja")
         if empty and len(empty) < len(classes):
             raise ValueError("pct_parado, pct_plantou e pct_incerto vêm juntos (ou nenhum)")
         if empty:
@@ -87,3 +96,20 @@ class RegiaoSatelite:
         repetidos = sorted({ano for ano in anos if anos.count(ano) > 1})
         if repetidos:
             raise ValueError(f"ano repetido na região: {repetidos}")
+
+
+@dataclass(frozen=True)
+class RegiaoDoPonto:
+    """A região que vale para um ponto e a distância do ponto até o centro dela (km, 1 casa).
+
+    A região é um círculo em volta de um centro calculado pelo pipeline: um ponto a 25 km da
+    fazenda vê o círculo centrado na fazenda. A tela diz isso ao produtor pela distância.
+    """
+
+    regiao: RegiaoSatelite
+    distancia_km: float
+
+    def __post_init__(self) -> None:
+        require_finite("distancia_km", self.distancia_km)
+        if self.distancia_km < 0:
+            raise ValueError(f"distancia_km não pode ser negativa, veio {self.distancia_km!r}")

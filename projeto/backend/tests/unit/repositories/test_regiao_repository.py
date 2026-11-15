@@ -91,6 +91,26 @@ def test_should_read_empty_percentages_as_none(tmp_path: Path) -> None:
     assert region.anos == (RegiaoAno(2018, 0, None, None, None, None),)
 
 
+def test_should_read_the_cropland_pixel_count_of_each_year(tmp_path: Path) -> None:
+    # Tarefa 0036: n_pixels = soja do ano; n_pixels_lavoura = toda a máscara no raio.
+    path = _write(
+        tmp_path / "regiao.json",
+        [_region(-18.9543, -48.1993, [_year(2016, n_pixels_lavoura=5000)])],
+    )
+
+    (region,) = FileRegionRepository(path).list_regions()
+
+    assert region.anos == (RegiaoAno(2016, 1372, 60.5, 30.6, 8.9, 2.2, n_pixels_lavoura=5000),)
+
+
+def test_should_still_read_an_old_file_without_the_cropland_pixel_count(tmp_path: Path) -> None:
+    path = _write(tmp_path / "regiao.json", [_region(-18.9543, -48.1993, [_year(2016)])])
+
+    (region,) = FileRegionRepository(path).list_regions()
+
+    assert region.anos[0].n_pixels_lavoura is None
+
+
 def test_should_return_no_region_without_path_or_without_file(tmp_path: Path) -> None:
     assert FileRegionRepository(None).list_regions() == []
     assert FileRegionRepository(tmp_path / "nao_existe.json").list_regions() == []

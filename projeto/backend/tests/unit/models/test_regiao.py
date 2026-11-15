@@ -1,4 +1,4 @@
-"""Contrato da região pelo satélite (P3): percentuais da lavoura na entressafra, por ano.
+"""Contrato da região pelo satélite (P3): percentuais da soja do ano na entressafra, por ano.
 
 Os números aqui são valores de teste, não dados do MODIS.
 """
@@ -7,7 +7,7 @@ from dataclasses import fields
 
 import pytest
 
-from app.models.regiao import RegiaoAno, RegiaoSatelite
+from app.models.regiao import RegiaoAno, RegiaoDoPonto, RegiaoSatelite
 
 
 def _ano(**overrides: object) -> RegiaoAno:
@@ -44,6 +44,7 @@ def test_should_carry_the_fields_of_the_file_contract() -> None:
         "pct_plantou",
         "pct_incerto",
         "pct_sem_dado",
+        "n_pixels_lavoura",
     ]
     assert [f.name for f in fields(RegiaoSatelite)] == [
         "lat",
@@ -53,6 +54,37 @@ def test_should_carry_the_fields_of_the_file_contract() -> None:
         "mascara",
         "anos",
     ]
+
+
+def test_should_leave_the_cropland_pixel_count_empty_in_an_old_file() -> None:
+    # Arquivo de antes da tarefa 0036 (máscara de lavoura, sem a soja do ano): sem o campo.
+    assert _ano().n_pixels_lavoura is None
+
+
+def test_should_accept_more_cropland_pixels_than_soy_pixels() -> None:
+    # n_pixels = soja do ano (pico e colheita); n_pixels_lavoura = toda a máscara no raio.
+    ano = _ano(n_pixels_lavoura=5000)
+
+    assert (ano.n_pixels, ano.n_pixels_lavoura) == (1372, 5000)
+
+
+def test_should_accept_cropland_without_any_soy_pixel() -> None:
+    ano = _ano(
+        n_pixels=0,
+        n_pixels_lavoura=800,
+        pct_parado=None,
+        pct_plantou=None,
+        pct_incerto=None,
+        pct_sem_dado=None,
+    )
+
+    assert ano.n_pixels_lavoura == 800
+
+
+@pytest.mark.parametrize("valor", [-1, 1371])
+def test_should_reject_cropland_count_negative_or_below_the_soy_pixels(valor: int) -> None:
+    with pytest.raises(ValueError, match="n_pixels_lavoura"):
+        _ano(n_pixels_lavoura=valor)
 
 
 def test_should_accept_percentages_of_the_classified_pixels() -> None:
@@ -148,3 +180,15 @@ def test_should_reject_blank_source_or_mask(campo: str) -> None:
 def test_should_reject_repeated_year() -> None:
     with pytest.raises(ValueError, match="repetido"):
         _regiao(anos=(_ano(ano=2024), _ano(ano=2024)))
+
+
+def test_should_carry_the_region_and_the_distance_from_the_point_to_its_center() -> None:
+    consulta = RegiaoDoPonto(regiao=_regiao(), distancia_km=12.3)
+
+    assert (consulta.regiao.lat, consulta.distancia_km) == (-18.9543, 12.3)
+
+
+@pytest.mark.parametrize("valor", [-0.1, float("nan"), float("inf")])
+def test_should_reject_a_distance_that_is_negative_or_not_finite(valor: float) -> None:
+    with pytest.raises(ValueError, match="distancia_km"):
+        RegiaoDoPonto(regiao=_regiao(), distancia_km=valor)
