@@ -4,7 +4,7 @@
 - **Título:** As 3 abas da resposta (Sugestão, Comparar, Plano) viram 2 abas numa tela só ("1. Escolher" e "2. Plano
   de 3 anos"), com o plano em cadeia do motor, culturas fora do prazo comparáveis e escolhíveis e o relatório para
   imprimir em pt e en
-- **Status:** Em Progresso (branch `feat/tela-escolher-plano`, sem merge)
+- **Status:** Concluída
 - **Prioridade:** Alta (pacote 2 de telas, tela 5)
 - **PRD:** RF-42 (nova)
 - **Módulos Afetados:** só o front (`projeto/frontend/src`): `controllers/useChoosePlanController.ts` (novo),
