@@ -354,7 +354,7 @@ export const pt = {
     },
     close: 'Fechar',
     loading: 'Buscando dados do satélite…',
-    error: 'Não conseguimos buscar os dados agora. Tente de novo ou veja a fazenda de exemplo.',
+    error: 'Não conseguimos buscar os dados agora. Tente de novo ou veja a lavoura de demonstração.',
     climateTitle: 'Clima dos próximos anos',
     /** O período vem do NEX-GDDP-CMIP6 em dados[] (2041–2060). */
     climateSubtitle: (start: string, end: string) => `Como a chuva e o calor devem mudar de ${start} a ${end}.`,
@@ -1078,7 +1078,7 @@ export const pt = {
       income: 'Renda',
       final: 'Final',
     },
-    exampleFarm: 'Fazenda de exemplo: área experimental da UFU, Uberlândia (MG).',
+    exampleFarm: 'Lavoura de demonstração, perto de Uberlândia (MG).',
     disclaimer: 'Apoio à decisão: confirme com o seu agrônomo antes de comprar a semente.',
   },
   guide: {

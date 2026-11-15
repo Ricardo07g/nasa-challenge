@@ -222,7 +222,7 @@ describe('MethodView (tela 9)', () => {
       'Final',
     ])
     expect(table).toHaveTextContent('Milho com braquiária7060507066')
-    expect(screen.getByText('Fazenda de exemplo: área experimental da UFU, Uberlândia (MG).')).toBeInTheDocument()
+    expect(screen.getByText('Lavoura de demonstração, perto de Uberlândia (MG).')).toBeInTheDocument()
   })
 
   it('com a lavoura da pessoa, não diz que é a fazenda de exemplo', () => {

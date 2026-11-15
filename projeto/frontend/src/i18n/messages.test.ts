@@ -31,3 +31,20 @@ describe('dicionários', () => {
     expect(values(en).filter((text) => text.trim() === '')).toEqual([])
   })
 })
+
+describe('lavoura de demonstração (tarefa 0053)', () => {
+  const texts = (obj: unknown): string[] =>
+    typeof obj === 'string'
+      ? [obj]
+      : typeof obj === 'function'
+        ? [String((obj as (...args: string[]) => unknown)('x', 'x'))]
+        : obj && typeof obj === 'object'
+          ? Object.values(obj).flatMap(texts)
+          : []
+
+  it('o ponto de exemplo não é chamado de fazenda da UFU nem de fazenda de exemplo, em pt e en', () => {
+    const wrong = /UFU|Gl[oó]ria|fazenda de exemplo|example farm/i
+    expect(texts(pt).filter((text) => wrong.test(text))).toEqual([])
+    expect(texts(en).filter((text) => wrong.test(text))).toEqual([])
+  })
+})
