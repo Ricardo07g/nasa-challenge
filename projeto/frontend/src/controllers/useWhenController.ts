@@ -6,6 +6,7 @@ import { farmService, type FarmService } from '../services/farmService'
 import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { harvestFromDate, harvestSuggestion, harvestWindow } from '../services/harvestService'
 import { rainChart, type RainChart } from '../services/monthlyRainService'
+import { recentSoyWarning } from '../services/recentSoyService'
 import { useAsync } from './useAsync'
 
 type Deps = { farm: FarmService; today: () => Date }
@@ -14,7 +15,8 @@ const defaultDeps: Deps = { farm: farmService, today: () => new Date() }
 
 /**
  * Tela 3 "Quando você colhe a soja?" (pergunta 2 de 2): a faixa sugerida pelo satélite já vem marcada;
- * "Colocar a data exata" é só um atalho que vira uma das 3 faixas.
+ * "Colocar a data exata" é só um atalho que vira uma das 3 faixas. Logo depois de escolher o ponto, se o
+ * satélite não viu soja nele na última safra (RF-24), avisa no topo e deixa seguir.
  */
 export function useWhenController(deps: Deps = defaultDeps) {
   const { lang } = useI18n()
@@ -32,6 +34,11 @@ export function useWhenController(deps: Deps = defaultDeps) {
   )
   const suggestion = talhao.status === 'loading' ? null : harvestSuggestion(talhao.data)
   const chart: RainChart | null | 'loading' = talhao.status === 'loading' ? 'loading' : rainChart(talhao.data)
+
+  // RF-24: "Ajustar no mapa" é o mesmo caminho do Voltar; "Seguir mesmo assim" só fecha o aviso.
+  const [soyDismissed, setSoyDismissed] = useState(false)
+  const soyWarning = soyDismissed || talhao.status !== 'ready' ? null : recentSoyWarning(talhao.data)
+  const dismissSoyWarning = useCallback(() => setSoyDismissed(true), [])
 
   const window = useMemo(() => harvestWindow(deps.today()), [deps])
   const [band, setBand] = useState<Colheita | null>(params?.colheita ?? null)
@@ -64,6 +71,9 @@ export function useWhenController(deps: Deps = defaultDeps) {
     rainChart: chart,
     missingPoint: params === null,
     backTo: `/onde${keepFlowQuery(search.toString())}`,
+    /** Aviso "Não vimos soja neste ponto na última safra" (RF-24); null = nenhum aviso. */
+    soyWarning,
+    dismissSoyWarning,
     suggestion,
     selected,
     dateOpen,

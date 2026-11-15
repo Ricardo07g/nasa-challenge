@@ -86,6 +86,12 @@ describe('repositories mock (dados de exemplo no formato do contrato)', () => {
     expect(chuva_mensal?.fonte).toBe('nasa_power')
   })
 
+  it('talhão traz a soja da última safra como vista: no modo de demonstração, nenhum aviso (RF-24)', async () => {
+    const { soja_recente } = await createMockTalhaoRepository(0).get(UBERLANDIA, 'pt')
+
+    expect(soja_recente).toEqual({ safra: '2025/26', vista: true, ndvi_pico: 0.86, fonte: 'MODIS MOD13Q1 + MYD13Q1' })
+  })
+
   it('talhão fora da área preparada vem sem dados (HTTP 200, não é erro)', async () => {
     const talhao = await createMockTalhaoRepository(0).get({ lat: -15.8, lon: -47.9 }, 'pt')
 
@@ -93,6 +99,7 @@ describe('repositories mock (dados de exemplo no formato do contrato)', () => {
     expect(talhao.solo).toBeNull()
     expect(talhao.historico).toBeNull()
     expect(talhao.chuva_mensal).toBeNull()
+    expect(talhao.soja_recente).toBeNull()
   })
 
   it('recomendação traz 5 opções, a melhor e as alternativas, coerentes entre si', async () => {

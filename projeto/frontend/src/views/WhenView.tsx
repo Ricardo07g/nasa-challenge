@@ -30,6 +30,10 @@ export type WhenViewProps = {
   onConfirm: () => void
   /** Chuva de cada mês na região (`chuva_mensal` do talhão): null = "Ainda não conectado"; 'loading' = carregando. */
   rainChart: RainChart | null | 'loading'
+  /** RF-24: o satélite não viu soja no ponto na última safra; null = nenhum aviso. */
+  soyWarning: { safra: string } | null
+  /** "Seguir mesmo assim": fecha o aviso ("Ajustar no mapa" é um link para `backTo`). */
+  onDismissSoyWarning: () => void
 }
 
 /** Nome da fonte como a tela "Como a conta é feita" escreve; chave desconhecida sai como veio. */
@@ -54,6 +58,8 @@ export function WhenView({
   onDateChange,
   onConfirm,
   rainChart,
+  soyWarning,
+  onDismissSoyWarning,
 }: WhenViewProps) {
   const w = t.when
   return (
@@ -63,6 +69,19 @@ export function WhenView({
         <QuestionStepper current={2} total={2} label={t.stepper.label(2, 2)} />
       </div>
       <PageHeading title={w.title} />
+      {soyWarning && (
+        <Card tone="orange">
+          <p role="alert">{w.soyWarning(soyWarning.safra)}</p>
+          <div className={layout.stack}>
+            <Button to={backTo} variant="outline">
+              {w.soyAdjust}
+            </Button>
+            <Button onClick={onDismissSoyWarning} variant="outline">
+              {w.soyContinue}
+            </Button>
+          </div>
+        </Card>
+      )}
       {suggestion && (
         <InfoBanner>
           {suggestion.fromSatellite ? (

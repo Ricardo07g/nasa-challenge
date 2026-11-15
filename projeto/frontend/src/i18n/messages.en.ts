@@ -145,6 +145,10 @@ export const en = {
       }, ${source}.`,
     chartTitle: 'Rain in each month in the region',
     months: { jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun' },
+    soyWarning: (safra: string) =>
+      `We did not see soybeans at this point in the last season (${safra}). Check that you marked the right field.`,
+    soyAdjust: 'Adjust on the map',
+    soyContinue: 'Continue anyway',
   },
   mission: {
     title: 'Mission: your field',

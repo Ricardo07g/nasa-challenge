@@ -49,6 +49,18 @@ export type ChuvaMensal = {
   fonte: string
 }
 
+/**
+ * Soja vista no ponto na safra mais recente (RF-24): o maior NDVI do MODIS de 1/jan a 15/mar no pixel
+ * de 250 m. `vista` e `ndvi_pico` são null quando o pixel não teve imagens boas suficientes.
+ */
+export type SojaRecente = {
+  /** Ex.: "2025/26" (soja colhida em fevereiro de 2026). */
+  safra: string
+  vista: boolean | null
+  ndvi_pico: number | null
+  fonte: string
+}
+
 export type Talhao = {
   ponto: Ponto
   celula_id: string | null
@@ -59,4 +71,6 @@ export type Talhao = {
   dados: { fonte: string; periodo: string; cenario?: string; modelos?: number }[]
   /** null fora da área ou sem dado; ausente na API que ainda não manda o campo. */
   chuva_mensal?: ChuvaMensal | null
+  /** null sem o dado ou fora da área medida; ausente na API que ainda não manda o campo. */
+  soja_recente?: SojaRecente | null
 }

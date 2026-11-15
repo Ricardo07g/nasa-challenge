@@ -134,6 +134,37 @@ describe('useWhenController (tela 3)', () => {
     expect(result.current.rainChart).toBe('loading')
   })
 
+  it('avisa quando o satélite não viu soja no ponto na última safra (RF-24) e "Seguir mesmo assim" fecha o aviso', async () => {
+    const d = deps(
+      Promise.resolve({ soja_recente: { safra: '2025/26', vista: false, ndvi_pico: 0.41, fonte: 'teste' } }),
+    )
+    const { result } = renderHook(() => useWhenController(d), { wrapper: providers(`/quando?${point}`) })
+
+    await waitFor(() => expect(result.current.soyWarning).toEqual({ safra: '2025/26' }))
+    // "Ajustar no mapa" volta ao mapa com o mesmo ponto
+    expect(result.current.backTo).toBe(`/onde?${point}`)
+
+    act(() => result.current.dismissSoyWarning())
+
+    expect(result.current.soyWarning).toBeNull()
+  })
+
+  it('não avisa quando viu soja, sem o dado ou se o talhão falhar', async () => {
+    const seen = deps(Promise.resolve({ soja_recente: { safra: '2025/26', vista: true, ndvi_pico: 0.86, fonte: 'teste' } }))
+    const noData = deps(Promise.resolve({ soja_recente: null }))
+    const failed = deps(Promise.reject(new Error('rede')))
+    const a = renderHook(() => useWhenController(seen), { wrapper: providers(`/quando?${point}`) })
+    const b = renderHook(() => useWhenController(noData), { wrapper: providers(`/quando?${point}`) })
+    const c = renderHook(() => useWhenController(failed), { wrapper: providers(`/quando?${point}`) })
+
+    await waitFor(() => expect(a.result.current.suggestion).not.toBeNull())
+    await waitFor(() => expect(b.result.current.suggestion).not.toBeNull())
+    await waitFor(() => expect(c.result.current.suggestion).not.toBeNull())
+    expect(a.result.current.soyWarning).toBeNull()
+    expect(b.result.current.soyWarning).toBeNull()
+    expect(c.result.current.soyWarning).toBeNull()
+  })
+
   it('sem chuva_mensal na resposta ou se o talhão falhar, não há gráfico ("Ainda não conectado")', async () => {
     const without = deps(Promise.resolve({ chuva_mensal: null }))
     const failed = deps(Promise.reject(new Error('rede')))

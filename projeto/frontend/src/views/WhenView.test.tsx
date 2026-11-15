@@ -39,6 +39,8 @@ function setup(overrides: Partial<WhenViewProps> = {}) {
     onDateChange: vi.fn(),
     onConfirm: vi.fn(),
     rainChart: CHART,
+    soyWarning: null,
+    onDismissSoyWarning: vi.fn(),
     ...overrides,
   }
   render(
@@ -144,6 +146,41 @@ describe('WhenView (tela 3)', () => {
     expect(why).toHaveTextContent('A chuva vai acabando depois de março.')
     expect(why).not.toHaveTextContent('Ainda não conectado')
     expect(screen.queryByRole('img', { name: /Chuva média por mês/ })).not.toBeInTheDocument()
+  })
+
+  it('sem soja vista no ponto na última safra (RF-24), avisa e deixa seguir', async () => {
+    const props = setup({ soyWarning: { safra: '2025/26' } })
+
+    const warning = screen.getByRole('alert')
+    expect(warning).toHaveTextContent(
+      'Não vimos soja neste ponto na última safra (2025/26). Confira se marcou a lavoura certa.',
+    )
+    expect(screen.getByRole('link', { name: 'Ajustar no mapa' })).toHaveAttribute(
+      'href',
+      '/onde?lat=-18.9543&lon=-48.1993',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Seguir mesmo assim' }))
+    expect(props.onDismissSoyWarning).toHaveBeenCalled()
+    // O fluxo normal continua lá: as faixas e o próximo passo
+    expect(screen.getByRole('button', { name: 'Próximo passo Ver a resposta' })).toBeEnabled()
+  })
+
+  it('sem o aviso da soja, nada muda', () => {
+    setup()
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Não vimos soja/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Seguir mesmo assim' })).not.toBeInTheDocument()
+  })
+
+  it('o aviso da soja em inglês', () => {
+    setup({ t: en, lang: 'en', soyWarning: { safra: '2025/26' } })
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'We did not see soybeans at this point in the last season (2025/26). Check that you marked the right field.',
+    )
+    expect(screen.getByRole('link', { name: 'Adjust on the map' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeInTheDocument()
   })
 
   it('em inglês', () => {
