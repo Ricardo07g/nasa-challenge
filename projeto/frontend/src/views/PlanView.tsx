@@ -222,7 +222,9 @@ function Rain({ t, lang, plan, today, data }: PlanViewProps & { plan: PlanState;
   const mm = (value: number) => formatNumber(lang, value)
   const lower = (name: string) => name.toLocaleLowerCase(lang)
   const anyCrop = data.anos.some((ano) => ano.cultura !== 'pousio')
-  const todayUse = today?.evaluation.data?.chuva?.usa_media_mm
+  const todayData = today?.evaluation.data
+  // Hoje só com a terra parada: não há lavoura para dizer quanto ela usa (a frase do pousio já está em cima).
+  const todayUse = todayData?.anos.some((ano) => ano.cultura !== 'pousio') ? todayData.chuva?.usa_media_mm : null
   return (
     <Card as="section" aria-label={r.rainTitle} tone="blue">
       <h2 className={layout.iconTitle}>
@@ -321,7 +323,7 @@ function PlanAB({ t, lang, ab, source }: { t: Messages; lang: Lang; ab: PlanoAB;
       )}
       {ab.motivo === 'nunca_falhou' && <p>{r.planBNever(a, ab.total)}</p>}
       {ab.motivo === 'nenhuma_melhor' && <p>{r.planBNone(a)}</p>}
-      {source && <p className={layout.muted}>{r.planBSource(rainSourceName(source))}</p>}
+      {source && ab.cultura_b && <p className={layout.muted}>{r.planBSource(rainSourceName(source))}</p>}
       <LearnMore t={t} to={PLAN_ARTICLES.dry} title={r.articleDry} />
     </Card>
   )
@@ -341,7 +343,7 @@ function Today({ t, lang, today, onAnswerToday }: PlanViewProps & { today: Today
         <TodayQuestion key={row.year} t={t} lang={lang} row={row} onAnswer={onAnswerToday} />
       ))}
       <p className={layout.muted}>{today.reference ? r.todayReference(today.referenceText) : r.todayYours}</p>
-      <p>{r.todayCrops(joinList(names, r.and))}</p>
+      <p>{new Set(names).size === 1 ? r.todayCropsSame(names[0], names.length) : r.todayCrops(joinList(names, r.and))}</p>
     </Card>
   )
 }

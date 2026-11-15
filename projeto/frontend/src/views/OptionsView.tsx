@@ -244,14 +244,14 @@ function rows({ t, lang, compare, planLink }: OptionsViewProps & { compare: Comp
     {
       label: c.rows.more,
       cells: options.map((option) => (
-        <>
+        <div key={option.id} className={styles.more}>
           <Link to={cropArticle(option.id)} className={layout.iconLink}>
             {t.suggestion.learnMore(option.nome)}
           </Link>
           <Link to={planLink(option.id)} className={styles.use} aria-label={c.usePlanLabel(option.nome)}>
             {c.usePlan}
           </Link>
-        </>
+        </div>
       )),
     },
   ]

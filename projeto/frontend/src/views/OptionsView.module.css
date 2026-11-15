@@ -20,6 +20,14 @@
   background: var(--color-tint-green);
 }
 
+/* Última linha: "Saiba mais" em cima e "Usar no meu plano" embaixo */
+.more {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
 /* "Usar no meu plano": link com cara de botão, dentro da célula */
 .use {
   display: inline-flex;

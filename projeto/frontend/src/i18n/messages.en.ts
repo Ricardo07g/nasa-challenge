@@ -696,7 +696,7 @@ export const en = {
     waterNeed: (mm: string) => `Needs ${mm} mm`,
     waterRain: (mm: string) => `Rain ${mm} mm`,
     waterShort: (normal: string, dry: string) => `Short ${normal} mm (dry year: ${dry} mm)`,
-    future: (good: number, total: number) => `Would work in ${good} of ${total} years (depending on the model)`,
+    future: (good: number, total: number) => `Would work in ${good} of ${total} years (average of the models)`,
     futureRange: (min: number, max: number) => `From ${min} to ${max}, depending on the model.`,
     deadline: (date: string) => `By ${date}`,
     deadlineNone: 'Right after the harvest',
@@ -798,6 +798,7 @@ export const en = {
     todayReference: (text: string) => `Until you tell us the 3 seasons, "How it is today" is a reference. ${text}`,
     todayYours: 'How it is today = what you planted in the last 3 off-seasons, with the climate of your harvest band.',
     todayCrops: (crops: string) => `Today: ${crops}.`,
+    todayCropsSame: (crop: string, years: number) => `Today: ${crop} in all ${years} years.`,
     and: 'and',
   },
   telegram: {

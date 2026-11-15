@@ -721,7 +721,7 @@ export const pt = {
     waterNeed: (mm: string) => `Precisa de ${mm} mm`,
     waterRain: (mm: string) => `Chove ${mm} mm`,
     waterShort: (normal: string, dry: string) => `Falta ${normal} mm (ano seco: ${dry} mm)`,
-    future: (good: number, total: number) => `Daria certo em ${good} de ${total} anos (conforme o modelo)`,
+    future: (good: number, total: number) => `Daria certo em ${good} de ${total} anos (média dos modelos)`,
     futureRange: (min: number, max: number) => `De ${min} a ${max}, conforme o modelo.`,
     deadline: (date: string) => `Até ${date}`,
     deadlineNone: 'Logo depois da colheita',
@@ -826,6 +826,7 @@ export const pt = {
     todayReference: (text: string) => `Enquanto você não conta as 3 safras, "Como é hoje" é uma referência. ${text}`,
     todayYours: 'Como é hoje = o que você plantou nas últimas 3 entressafras, com o clima da sua faixa de colheita.',
     todayCrops: (crops: string) => `Hoje: ${crops}.`,
+    todayCropsSame: (crop: string, years: number) => `Hoje: ${crop} nos ${years} anos.`,
     and: 'e',
   },
   telegram: {

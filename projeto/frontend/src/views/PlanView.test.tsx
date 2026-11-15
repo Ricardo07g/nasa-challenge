@@ -177,6 +177,27 @@ describe('PlanView (aba Plano de 3 anos, tarefa 0045)', () => {
     expect(within(rain).getByRole('link', { name: 'Saiba mais: A conta de água da lavoura' })).toHaveAttribute('href', '/guia/conta-de-agua')
   })
 
+  it('com a terra parada nos 3 anos de hoje, a chuva aproveitada não diz que a lavoura usa 0 mm', () => {
+    const fallow: CropId[] = ['pousio', 'pousio', 'pousio']
+    setup({ today: { ...setupToday(), crops: fallow, evaluation: { data: evaluation(fallow), status: 'ready' } } })
+
+    expect(screen.getByRole('region', { name: 'Chuva aproveitada' })).not.toHaveTextContent('Como é hoje, a lavoura usa')
+  })
+
+  it('sem Plano B (a cultura nunca falhou), sem a linha da fonte do limite', () => {
+    const base = evaluation(PLAN)
+    setup({
+      evaluation: {
+        data: { ...base, plano_ab: { ...base.plano_ab!, cultura_b: null, nome_b: null, b_bons_nas_falhas: null, limite: null, falhas_a: 0, motivo: 'nunca_falhou' } },
+        status: 'ready',
+      },
+    })
+
+    const ab = screen.getByRole('region', { name: 'Plano A e Plano B' })
+    expect(ab).toHaveTextContent('Não precisou de Plano B: milho com braquiária deu certo nos 20 anos.')
+    expect(ab).not.toHaveTextContent('no seu ponto')
+  })
+
   it('Plano A e Plano B numa frase cada; sem limite que separe, o Plano B vem sem número', () => {
     setup()
 
@@ -220,6 +241,13 @@ describe('PlanView (aba Plano de 3 anos, tarefa 0045)', () => {
     const question = within(today).getByRole('group', { name: 'O que foi em 2026?' })
     await userEvent.click(within(question).getByRole('button', { name: 'Sorgo' }))
     expect(props.onAnswerToday).toHaveBeenCalledWith(2026, 'sorgo')
+  })
+
+  it('"Como é hoje" com a mesma cultura nos 3 anos diz "nos 3 anos"', () => {
+    const crops: CropId[] = ['milho_safrinha', 'milho_safrinha', 'milho_safrinha']
+    setup({ today: { ...setupToday(), crops } })
+
+    expect(screen.getByRole('region', { name: 'Como é hoje' })).toHaveTextContent('Hoje: milho sozinho nos 3 anos.')
   })
 
   it('sem NDVI para o ponto, pergunta direto', () => {
@@ -268,5 +296,16 @@ function setupPlan(crops: CropId[] = PLAN): PlanViewProps['plan'] & object {
     edited: false,
     thirst: thirstByCrop(rec),
     options: rec.opcoes,
+  }
+}
+
+function setupToday(): NonNullable<PlanViewProps['today']> {
+  return {
+    rows: todayRows(field.historico, field.anos_confirmaveis, {}, {}),
+    hasSatellite: true,
+    crops: TODAY,
+    reference: true,
+    referenceText: 'Referência de teste.',
+    evaluation: { data: evaluation(TODAY), status: 'ready' },
   }
 }
