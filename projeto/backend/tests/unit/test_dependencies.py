@@ -18,7 +18,9 @@ from app.repositories.climate_repository import (
     PostgisClimateRepository,
 )
 from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6Repository
+from app.repositories.regiao_repository import FileRegionRepository
 from app.repositories.soil_repository import CachedSoilGridsRepository, PostgisSoilRepository
+from app.services.region_service import RegionService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
 
 # Endereço que não resolve (.invalid) e sem credencial: nada aqui abre conexão.
@@ -40,12 +42,20 @@ class FakeSoilGridsClient:
 def _clear_caches() -> None:
     dependencies.get_climate_repository.cache_clear()
     dependencies.get_soil_repository.cache_clear()
+    dependencies.get_region_repository.cache_clear()
 
 
 @pytest.fixture
 def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None]]:
-    def _apply(database_url: str | None, cmip6_path: Path | None = None) -> None:
-        settings = Settings(_env_file=None, database_url=database_url, cmip6_path=cmip6_path)
+    def _apply(
+        database_url: str | None, cmip6_path: Path | None = None, regiao_path: Path | None = None
+    ) -> None:
+        settings = Settings(
+            _env_file=None,
+            database_url=database_url,
+            cmip6_path=cmip6_path,
+            regiao_path=regiao_path,
+        )
         monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
         _clear_caches()
 
@@ -171,3 +181,17 @@ def test_should_read_the_enso_phase_of_each_year_from_the_file_of_oni_path(
         dependencies.get_enso_repository.cache_clear()
 
     assert [(y.ano, y.fase) for y in years] == [(2016, "el_nino")]
+
+
+def test_should_read_the_region_from_the_file_of_regiao_path(
+    use_settings: Callable[..., None], tmp_path: Path
+) -> None:
+    # Com ou sem banco, a região pelo satélite (P3) vem do arquivo do REGIAO_PATH.
+    use_settings(DATABASE_URL, regiao_path=tmp_path / "regiao.json")
+
+    repository = dependencies.get_region_repository()
+    service = dependencies.get_region_service(repository)
+
+    assert isinstance(repository, FileRegionRepository)
+    assert repository._path == tmp_path / "regiao.json"
+    assert isinstance(service, RegionService)

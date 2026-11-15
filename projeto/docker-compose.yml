@@ -61,6 +61,7 @@ services:
       CMIP6_PATH: ${CMIP6_PATH:-/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json}
       NDVI_CACHE_PATH: ${NDVI_CACHE_PATH:-/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json}
       ONI_PATH: ${ONI_PATH:-/dados_baixados/noaa_oni/oni.json}
+      REGIAO_PATH: ${REGIAO_PATH:-/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json}
     volumes:
       - ./backend/app:/app/app
       - ./backend/tests:/app/tests

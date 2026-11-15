@@ -34,6 +34,7 @@ from app.repositories.ndvi_repository import (
     CachedNdviRepository,
     NdviRepository,
 )
+from app.repositories.regiao_repository import FileRegionRepository, RegionRepository
 from app.repositories.rules_repository import RulesRepository, YamlRulesRepository
 from app.repositories.sinal_outono_repository import (
     NoAutumnSignalDataRepository,
@@ -52,6 +53,7 @@ from app.services.crop_option_service import CropOptionService
 from app.services.field_history_service import FieldHistoryService
 from app.services.past_season_service import PastSeasonService
 from app.services.recommendation_service import RecommendationService
+from app.services.region_service import RegionService
 from app.services.rotation_plan_service import RotationPlanService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
 from app.services.sinal_outono_service import SinalOutonoService
@@ -116,6 +118,18 @@ def get_soil_repository() -> SoilRepository:
 @lru_cache
 def get_ndvi_repository() -> NdviRepository:
     return CachedNdviRepository(get_settings().ndvi_cache_path)
+
+
+# Região pelo satélite (P3): com ou sem banco, vem do arquivo do REGIAO_PATH.
+@lru_cache
+def get_region_repository() -> RegionRepository:
+    return FileRegionRepository(get_settings().regiao_path)
+
+
+def get_region_service(
+    repository: Annotated[RegionRepository, Depends(get_region_repository)],
+) -> RegionService:
+    return RegionService(repository)
 
 
 def get_nasa_power_client() -> NasaPowerClientProtocol:

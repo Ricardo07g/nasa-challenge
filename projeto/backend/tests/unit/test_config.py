@@ -12,6 +12,7 @@ DATA_ENV_VARS = (
     "NDVI_CACHE_PATH",
     "CMIP6_PATH",
     "ONI_PATH",
+    "REGIAO_PATH",
 )
 CREDENTIAL_ENV_VARS = (
     "EARTHDATA_TOKEN",
@@ -93,6 +94,21 @@ def test_cmip6_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     settings = Settings(_env_file=None)
 
     assert settings.cmip6_path == tmp_path / "cmip6.json"
+
+
+def test_regiao_path_defaults_to_none_so_there_is_no_region_without_the_file() -> None:
+    # Sem o arquivo da região pelo satélite (P3), /api/regiao responde 404 OUTSIDE_AREA.
+    settings = Settings(_env_file=None)
+
+    assert settings.regiao_path is None
+
+
+def test_regiao_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("REGIAO_PATH", str(tmp_path / "regiao.json"))
+
+    settings = Settings(_env_file=None)
+
+    assert settings.regiao_path == tmp_path / "regiao.json"
 
 
 def test_rules_path_defaults_to_file_shipped_with_the_app() -> None:
