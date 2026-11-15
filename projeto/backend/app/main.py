@@ -13,6 +13,7 @@ from app.constants import PROBLEM_BASE_URI, PROBLEM_JSON_MEDIA_TYPE
 from app.controllers import (
     crop_option_controller,
     health_controller,
+    pilot_area_controller,
     recomendacao_controller,
     regiao_controller,
     safra_passada_controller,
@@ -100,3 +101,4 @@ app.include_router(talhao_controller.router, prefix="/api")
 app.include_router(recomendacao_controller.router, prefix="/api")
 app.include_router(safra_passada_controller.router, prefix="/api")
 app.include_router(regiao_controller.router, prefix="/api")
+app.include_router(pilot_area_controller.router, prefix="/api")

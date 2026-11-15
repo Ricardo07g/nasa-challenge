@@ -24,7 +24,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | --- | --- | --- | --- | --- | --- |
 | S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | ✅ na branch (15/11 ~03:20), revisada |
 | S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | feito na branch `feat/remodelagem-s8-guia` (19 artigos em pt e en; faltam 7 do tema, ver a tarefa 0048) |
-| S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | a fazer |
+| S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | feita na branch `feat/remodelagem-s2-onde` (falta o merge em `feat/remodelagem` e a revisão); `GET /api/area-piloto` novo |
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | a fazer |
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | a fazer |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | a fazer |
@@ -62,6 +62,16 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D18 | 15/11 | "Ainda não conectado" saiu do design system (`NotConnected`, `NotConnectedCard` e o `status="unavailable"`), não só das telas; o estado interno `not-connected` dos controllers ficou. | Garante que nenhuma tela volte a mostrar o selo; o estado interno ainda separa "endpoint que não existe" de erro. |
 | D19 | 15/11 | D2 elemento a elemento: sem histórico do satélite, a tela 4 mostra só "Confirme as últimas safras"; na missão, a fase sem dado fica sem resultado; no relatório, as seções sem dado somem e a célula do clima futuro vira "—"; em "Como a conta é feita", só as fontes ligadas; na comunidade com a API real, os blocos dos vizinhos não aparecem. | "O elemento sem dado não aparece" (D2); a 5.6 do pedido manda perguntar direto quando não há NDVI. A comunidade é refeita na S7. |
 | D20 | 15/11 | O bloco "Comece por um pedaço" saiu inteiro já na S1 (a S5b também previa). | É todo em reais (hectares × sobra, semente e pior ano seco). |
+| D21 | 15/11 | Limites da área piloto numa fonte só (S2): `GET /api/area-piloto` devolve os `PILOT_*` do `app/constants.py` e o front lê a rota, sem repetir os números (só o mock, que imita a API). Nenhum RF novo: o RF-01 foi reescrito. | Não acopla o build do front aos arquivos do backend (o container do front só monta `projeto/frontend`); mudar a caixa é mudar só as constantes. |
+| D22 | 15/11 | Enquanto a área piloto carrega, o "Confirmar local" espera; se ela não carregar (API fora do ar), a tela deixa seguir. | O backend continua respondendo `OUTSIDE_AREA` nas telas seguintes; travar o fluxo por uma rota auxiliar não protege nada a mais. |
+| D23 | 15/11 | Photon em pt com `lang=default` (nomes locais); em en, `lang=en`. | O Photon não aceita `pt` (400, conferido em 15/11) e, no Brasil, os nomes locais já são em português. |
+| D24 | 15/11 | A preferência da busca é o centro da área piloto (`lat`/`lon`), não o `bbox`. | O `bbox` corta os lugares de fora, e a pessoa precisa achar o lugar dela mesmo fora da área para ver o aviso. |
+| D25 | 15/11 | Coordenadas e link colados viram uma opção da lista ("Ir para as coordenadas" / "Ir para o ponto do link"), escolhida com Enter ou toque, e não um salto automático do mapa. | Enquanto a pessoa digita, "-18.95, -4" já é um par válido: pular a cada tecla levaria o mapa para o lugar errado e dispararia o endereço aproximado à toa. |
+| D26 | 15/11 | No link do Google Maps, o pino do lugar (`!3d`/`!4d`) vale mais que `q`/`query`/`ll`, que valem mais que o caminho `/maps/search/` e o centro do mapa (`@`). Link curto não é aberto: a tela pede o link completo ou as coordenadas. | O `@` é o centro da tela de quem copiou, não o lugar marcado; o link curto só abre com um redirecionamento que o navegador não pode seguir. |
+| D27 | 15/11 | Endereço aproximado: enquanto o *reverse* não chega, ou se falhar, aparece a cidade de referência mais perto (lista que já existia no front). | O "Perto de…" nunca some, mesmo sem rede ou com o Photon fora do ar. |
+| D28 | 15/11 | Botão "Ver a área inteira" na legenda do mapa: afasta o mapa até a área caber, sem tirar o alfinete do ponto. | No zoom de marcar a lavoura (12), a caixa de 1,5° fica fora da tela: sem o botão, o limite desenhado quase nunca seria visto. |
+| D29 | 15/11 | O aviso "Por enquanto só temos dados da região de Uberlândia e Uberaba." entrou numa chave nova (`where.outsideNotice`); o `where.outsideText`, usado pelas telas 4 a 7 (`FlowStates`), ficou igual. | Mudar o texto antigo mexeria em telas e testes da S1 e da S4. |
+| D30 | 15/11 | No modo `mock` (e nos testes), a busca e o endereço aproximado são de exemplo (6 cidades, sem rede), escolhidos em `repositories/index.ts` como os outros dados. | Nenhum teste pode chamar o Photon de verdade, e as telas abertas nos testes de rota usam os repositories padrão. |
 
 ## Revisão por seção
 
@@ -101,4 +111,8 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 
 ## O que não foi possível e por quê
 
-(preenchido ao longo do trabalho)
+- **S2, link curto do Google Maps** (`maps.app.goo.gl`, `goo.gl/maps`): não dá para abrir sem rede, e o
+  navegador não pode seguir o redirecionamento do Google. A tela explica: abrir o link no Google Maps e
+  colar o link completo, ou colar as coordenadas.
+- **S2, graus, minutos e segundos** colados como texto (`18°57'15.6"S 48°11'57.4"W`) não são lidos (o
+  pedido só cita o formato decimal). O link do Google com esse nome funciona, pelo pino `!3d`/`!4d`.

@@ -6,5 +6,8 @@ import type { Ponto } from './talhao'
  */
 export const EXAMPLE_FARM: Ponto = { lat: -18.9543, lon: -48.1993 }
 
-/** Caixa com dados preparados no hackathon (plano técnico §6): Uberlândia e Uberaba. */
-export const PREPARED_AREA = { minLat: -19.9, maxLat: -18.4, minLon: -49.0, maxLon: -47.5 } as const
+/**
+ * Área piloto, com dados preparados (Uberlândia e Uberaba), como vem de `GET /api/area-piloto`. Os
+ * números ficam só no backend (`PILOT_*` do `app/constants.py`): o front não os repete (tarefa 0041).
+ */
+export type PilotArea = { min_lat: number; max_lat: number; min_lon: number; max_lon: number }

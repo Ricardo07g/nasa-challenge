@@ -133,6 +133,26 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `/guia/<slug>`. O Markdown é lido por `services/markdownService.ts` (títulos, parágrafos, listas, negrito
   e links; HTML vira texto puro e a view nunca usa `dangerouslySetInnerHTML`). Não adicione biblioteca de
   Markdown.
+- **Busca de endereço (serviço externo, tela "Onde fica a lavoura", tarefa 0041, RF-01):** instância pública
+  do **Photon** (komoot, `https://photon.komoot.io`, dados do OpenStreetMap), **sem chave e sem cadastro**:
+  nada de token nem variável `VITE_*` para ela. É compartilhada e corta quem abusa, então o uso justo é
+  regra: espera de 400 ms depois da última tecla (e depois de o mapa parar, no endereço aproximado do
+  *reverse*), **um pedido por vez** com o anterior cancelado (`controllers/useDebouncedRequest.ts`, com
+  `AbortController`), mínimo de 3 letras, `limit=5`, nenhuma busca ao abrir a tela nem em laço
+  (`SEARCH_DELAY_MS` e `MIN_SEARCH_LENGTH` em `services/geocodingService.ts`). O Photon não tem português:
+  em pt vai `lang=default` (nomes locais), em en `lang=en`. **Atribuição** "Endereços: © OpenStreetMap"
+  sempre visível junto da busca, com link para `https://www.openstreetmap.org/copyright` (o mapa tem a
+  dele). O `fetch` fica no `httpClient.ts` (`getExternalJson`, URL completa e `signal`; continua sendo o
+  único lugar com `fetch`), o pedido em `repositories/geocodingRepository.ts` e as regras (rótulos, 3
+  letras) no service. No modo `mock` e nos testes, `repositories/mocks/mockLocation.ts` busca em cidades de
+  exemplo, sem rede; teste de repository usa `vi.stubGlobal('fetch', ...)`. Coordenadas e link do Google
+  Maps colados são lidos por `services/locationInputService.ts` (puro; formatos na tarefa 0041). Serviço
+  externo novo segue o mesmo molde; se precisar de chave ou de uso em escala, a chamada vai para o backend.
+- **Área piloto:** os limites vêm só de `GET /api/area-piloto` (`services/pilotAreaService.ts`, um pedido por
+  visita). O front não repete os números (só o mock, que imita a API). Na tela "Onde fica a lavoura", o
+  limite aparece tracejado com legenda em texto, e o ponto fora dele desliga o "Confirmar local"; enquanto a
+  área carrega, o botão espera; se ela não carregar, a tela deixa seguir (o backend ainda responde
+  `OUTSIDE_AREA` nas telas seguintes).
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front.
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).

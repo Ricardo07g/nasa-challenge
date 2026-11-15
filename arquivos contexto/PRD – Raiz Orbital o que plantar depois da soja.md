@@ -129,7 +129,7 @@ Princípios: **site responsivo** (cada tela é uma página só, que se ajusta do
 **Caminho principal (5 telas):**
 
 1. **Início:** "O que plantar depois da soja?", três passos com ícone e o botão "Começar" ("2 perguntas · 1 minuto · grátis"). Segundo botão: "Ver um exemplo pronto".
-2. **Onde fica a lavoura (pergunta 1 de 2):** mapa com alfinete e "Usar onde estou agora".
+2. **Onde fica a lavoura (pergunta 1 de 2):** busca "Buscar cidade, estrada ou endereço" (que também aceita coordenadas e link do Google Maps colados), mapa com alfinete, endereço aproximado e o limite da área piloto, "Usar onde estou agora" e o botão "Confirmar local" (RF-01).
 3. **Quando você colhe a soja (pergunta 2 de 2):** três botões (começo, meio, fim de fevereiro ou março), com a faixa sugerida pelo satélite já marcada.
    - **Calculando (entre as telas 3 e 4, novo na v3.1):** "Missão: sua lavoura". Enquanto a API busca os dados, o satélite entra em órbita, trava a mira na lavoura e passa por 6 fases (lavoura, terra, 20 anos de chuva e calor, histórico, clima que vem e sinal do outono, conta das 6 opções). Cada fase mostra o dado real que chegou e termina com uma conquista; no fim, "Missão completa" e o botão "Ver o que o satélite viu". Não revela a melhor opção. Tocar no satélite é só brincadeira e não acelera nada. Com `prefers-reduced-motion`, vira uma lista simples com ✓.
 4. **O satélite já viu o resto:** cartões de chuva (20 anos), histórico do talhão (plantou ou ficou parado, 10 anos), terra (do mapa de solos, com "Não é? Trocar") e clima até 2050.
@@ -143,7 +143,7 @@ A tela "Mandar para o agrônomo" (mensagem pronta para WhatsApp) saiu do MVP: co
 
 | ID | Requisito | Detalhe | História |
 | --- | --- | --- | --- |
-| RF-01 | Marcar talhão | Ponto (lat/long) pelo mapa ou GPS, dentro da caixa preparada; fora dela, o app oferece a fazenda de exemplo | US-01 |
+| RF-01 | Marcar talhão | Ponto (lat/long) pelo mapa (arrastar), pelo GPS ("Usar onde estou agora"), pela busca "Buscar cidade, estrada ou endereço" com autocompletar (Photon, dados do OpenStreetMap, sem chave: espera de 400 ms entre teclas, uma busca por vez com a anterior cancelada, mínimo de 3 letras, até 5 lugares, preferência pelo centro da área piloto e "© OpenStreetMap" visível) ou colando no mesmo campo coordenadas (`-18.9543, -48.1993`, `-18,9543; -48,1993`) ou um link do Google Maps (`!3d…!4d…`, `q=`, `query=`, `ll=`, `/maps/search/` e `@lat,lon`; link curto `maps.app.goo.gl` não abre sem rede, então a tela pede o link completo ou as coordenadas). Perto do alfinete, o endereço aproximado pelo *reverse* do Photon (com a mesma espera e o cancelamento; sem resposta, a cidade de referência mais perto). O botão "Confirmar local" (ícone de alfinete) substitui o "É aqui". O limite da área piloto (lat −19,90 a −18,40; lon −49,00 a −47,50) aparece tracejado no mapa, com legenda em texto e "Ver a área inteira"; os números vêm de `GET /api/area-piloto` (fonte única: `PILOT_*` do backend). Ponto fora da área não avança: "Por enquanto só temos dados da região de Uberlândia e Uberaba." (pt e en) e a fazenda de exemplo | US-01 (tarefa 0041) |
 | RF-02 | Dados do talhão | Só a faixa de colheita (cedo, meio, tarde), pré-marcada pela RF-16. Textura do solo vem do SoilGrids (editável); nematoide é opcional; sem cadastro | US-02, US-08 |
 | RF-03 | Buscar dados da NASA | Séries 2006–2025 pré-carregadas por célula de 0,1° no PostGIS; NDVI do ponto sob demanda com cache; resposta da recomendação em menos de 1 s | US-03 |
 | RF-04 | Notas por opção | Calcular segurança, futuro, solo e renda para as 6 opções com a regra da seção 7 | US-03 |
@@ -444,7 +444,7 @@ Saiu na tarefa 0040 (seção 1 da remodelagem): nenhum valor em reais no produto
 | RNF-04 | Responsivo e leitura | mesmo site no celular (a partir de 360 px) e no computador (até 1440 px, conteúdo limitado a 1120 px); uma pergunta por tela; texto a partir de 15 px; botões de 48 px ou mais; botão "Ouvir"; resposta da API pequena (gzip) para sinal fraco |
 | RNF-05 | Transparência | toda nota com fórmula, fonte e incerteza visíveis; aviso "apoio à decisão, não substitui o agrônomo" |
 | RNF-06 | Privacidade | sem cadastro e sem dado pessoal; o talhão fica só na sessão |
-| RNF-07 | Atribuição | citar NASA POWER, GPM IMERG, SMAP, MODIS, NEX-GDDP-CMIP6 e SoilGrids na tela "Sobre os dados"; não usar logotipo da NASA |
+| RNF-07 | Atribuição | citar NASA POWER, GPM IMERG, SMAP, MODIS, NEX-GDDP-CMIP6 e SoilGrids na tela "Sobre os dados"; não usar logotipo da NASA; mapa e busca de endereço com "© OpenStreetMap" visível (tarefa 0041) |
 | RNF-08 | Segredos | credenciais do Earthdata e do Earth Engine fora do repositório |
 | RNF-09 | Custo | tudo no plano grátis durante o hackathon |
 

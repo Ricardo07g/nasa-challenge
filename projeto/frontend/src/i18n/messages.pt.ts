@@ -109,15 +109,36 @@ export const pt = {
     title: 'Onde fica a lavoura?',
     mapLabel: 'Mapa para marcar a lavoura. Arraste o mapa ou o alfinete até a lavoura.',
     near: (place: string) => `Perto de ${place}`,
+    searchLabel: 'Buscar cidade, estrada ou endereço',
+    searchHint: 'Também dá para colar as coordenadas, como -18.9543, -48.1993, ou um link do Google Maps.',
+    searchList: 'Lugares encontrados',
+    searching: 'Procurando…',
+    searchFound: (count: number) =>
+      count === 1
+        ? 'Achamos 1 lugar. Toque nele, ou use as setas e o Enter.'
+        : `Achamos ${count} lugares. Toque num deles, ou use as setas e o Enter.`,
+    searchEmpty: 'Não achamos esse lugar. Tente outro nome ou arraste o mapa.',
+    searchError: 'A busca não respondeu agora. Arraste o mapa ou cole as coordenadas.',
+    goToCoordinates: 'Ir para as coordenadas',
+    goToLink: 'Ir para o ponto do link',
+    shortLink:
+      'Esse é um link curto, e daqui não dá para ver o ponto dele. Abra o link no Google Maps, copie o endereço completo da barra do navegador e cole aqui. Ou cole as coordenadas do ponto.',
+    linkWithoutPoint:
+      'Não achamos as coordenadas nesse link. Cole o link completo do Google Maps ou as coordenadas, como -18.9543, -48.1993.',
+    invalidCoordinates: 'Essas coordenadas não existem. A latitude vai de -90 a 90, e a longitude, de -180 a 180.',
+    attribution: 'Endereços: © OpenStreetMap',
+    areaLegend: 'Linha tracejada: área com dados',
+    showArea: 'Ver a área inteira',
     useLocation: 'Usar onde estou agora',
     locating: 'Procurando onde você está…',
     locationError: 'Não conseguimos achar onde você está. Arraste o mapa até a lavoura.',
     help: 'Ou arraste o mapa até o alfinete ficar em cima da lavoura.',
     selected: (coordinates: string) => `Local escolhido: ${coordinates}`,
-    confirm: 'É aqui',
+    confirm: 'Confirmar local',
     outsideTitle: 'Ainda não chegamos aí',
     outsideText:
       'Por enquanto, os dados estão prontos só para a região de Uberlândia e Uberaba. Veja como funciona na fazenda de exemplo.',
+    outsideNotice: 'Por enquanto só temos dados da região de Uberlândia e Uberaba.',
     seeExample: 'Ver a fazenda de exemplo',
   },
   when: {

@@ -27,6 +27,7 @@ import {
   Minus,
   Plus,
   Satellite,
+  Search,
   Send,
   ShieldCheck,
   Sprout,
@@ -217,4 +218,9 @@ export function HeatIcon({ size = 16 }: IconProps) {
 
 export function SendIcon({ size = 18 }: IconProps) {
   return <Send size={size} {...decorative} />
+}
+
+// Busca de endereço (tela "Onde fica a lavoura")
+export function SearchIcon({ size = 20 }: IconProps) {
+  return <Search size={size} {...decorative} />
 }

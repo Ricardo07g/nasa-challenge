@@ -7,14 +7,12 @@
 import type { Lang } from '../../i18n/language'
 import type { Community } from '../../models/community'
 import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo } from '../../models/recomendacao'
-import { PREPARED_AREA } from '../../models/area'
+import { MOCK_PILOT_AREA as AREA } from './mockLocation'
 import type { ChuvaMensal, Colheita, Ponto, SituacaoAno, Talhao } from '../../models/talhao'
 
 /** O backend responde `dentro_da_area: false` fora da caixa preparada; o mock imita isso. */
 function insideBox({ lat, lon }: Ponto): boolean {
-  return (
-    lat >= PREPARED_AREA.minLat && lat <= PREPARED_AREA.maxLat && lon >= PREPARED_AREA.minLon && lon <= PREPARED_AREA.maxLon
-  )
+  return lat >= AREA.min_lat && lat <= AREA.max_lat && lon >= AREA.min_lon && lon <= AREA.max_lon
 }
 
 type Text = Record<Lang, string>
