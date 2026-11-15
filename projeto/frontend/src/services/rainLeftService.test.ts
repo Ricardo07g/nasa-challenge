@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ChuvaQueSobra, FimDasChuvas, Talhao } from '../models/talhao'
-import { rainEnd, rainLeft } from './rainLeftService'
+import { rainEnd, rainLeft, rainLeftCurve } from './rainLeftService'
 
 const YEARS = Array.from({ length: 20 }, (_, index) => 2005 + index)
 
@@ -83,6 +83,31 @@ describe('rainLeft ("Chuva que sobra depois da colheita", tela 3)', () => {
     expect(rainLeft(talhao({ chuva_que_sobra: SOBRA }), '2027-04-10')).toBeNull()
     expect(rainLeft(talhao({ chuva_que_sobra: SOBRA }), '')).toBeNull()
     expect(rainLeft(undefined, '2027-02-27')).toBeNull()
+  })
+})
+
+describe('rainLeftCurve (a curva sem dia escolhido, tela 2 do pacote 2)', () => {
+  it('a curva inteira, a maior mediana, a fonte e o período, para o gráfico abrir sem data', () => {
+    expect(rainLeftCurve(talhao({ chuva_que_sobra: SOBRA }))).toEqual({
+      endDay: '06-30',
+      percentile: 20,
+      firstYear: 2005,
+      lastYear: 2024,
+      years: 20,
+      sources: ['gpm_imerg'],
+      points: [
+        { day: '02-27', median: 400.4, dry: 300.6 },
+        { day: '02-28', median: 380, dry: 290 },
+        { day: '03-01', median: 360, dry: 250 },
+      ],
+      maxMm: 400.4,
+    })
+  })
+
+  it('sem o campo ou sem anos, nada aparece (decisão D2)', () => {
+    expect(rainLeftCurve(talhao())).toBeNull()
+    expect(rainLeftCurve(talhao({ chuva_que_sobra: { ...SOBRA, anos: [] } }))).toBeNull()
+    expect(rainLeftCurve(undefined)).toBeNull()
   })
 })
 
