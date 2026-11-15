@@ -338,6 +338,23 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   uv run python -m pipeline.fetch_ndvi                    # fazenda de exemplo
   uv run python -m pipeline.fetch_ndvi --pontos "-18.9543,-48.1993;-17.5,-47.25"
   ```
+- **Chuva de cada mês** (`chuva_mensal` de `/talhao` e do talhão do `/exemplo`, gráfico da tela 3,
+  tarefa 0028): o `MonthlyRainService` soma a chuva de cada mês, de janeiro a junho, em cada
+  temporada da célula (as que o `get_seasons` já devolve) e tira a média entre os anos, com uma
+  casa decimal. Só entra o ano cuja série cobre de 1/jan a 30/jun. `fonte` = a `rain_source` das
+  temporadas (`nasa_power` hoje; com mais de uma, as chaves em ordem separadas por `+`, ex.:
+  `gpm_imerg+nasa_power`). Fora da área ou sem nenhum ano completo: `null` (o front mostra "Ainda
+  não conectado"). Na fazenda de exemplo (NASA POWER):
+
+  ```json
+  "chuva_mensal": {
+    "meses": [{"mes": 1, "media_mm": 212.7}, {"mes": 2, "media_mm": 161.0}, {"mes": 3, "media_mm": 156.8},
+              {"mes": 4, "media_mm": 74.7}, {"mes": 5, "media_mm": 31.3}, {"mes": 6, "media_mm": 12.6}],
+    "anos": [2005, 2006, "...", 2024],
+    "fonte": "nasa_power"
+  }
+  ```
+
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
   ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre
