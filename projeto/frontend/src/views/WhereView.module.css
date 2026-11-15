@@ -13,7 +13,8 @@
 
 /* "← Voltar": discreto como no protótipo, com a área de toque maior por fora */
 .back {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
@@ -22,7 +23,7 @@
   color: var(--color-primary);
   font-size: var(--font-size-small);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.4;
+  line-height: 1.25;
   text-decoration: none;
 }
 
