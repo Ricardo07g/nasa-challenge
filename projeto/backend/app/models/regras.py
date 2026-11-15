@@ -98,6 +98,21 @@ class RegrasRegiaoNdvi:
 
 
 @dataclass(frozen=True)
+class RegrasSojaRecente:
+    """Soja vista no ponto na safra mais recente (RF-24, tarefa 0037).
+
+    No pixel de 250 m do MODIS, a soja foi vista quando o maior NDVI das observações boas
+    (qualidade 0 ou 1, Terra e Aqua) de `janela_inicio` a `janela_fim` ("MM-DD") é `ndvi_minimo`
+    ou mais. Com menos de `min_observacoes` observações boas na janela, o pixel fica sem dado.
+    """
+
+    janela_inicio: str
+    janela_fim: str
+    ndvi_minimo: float
+    min_observacoes: int
+
+
+@dataclass(frozen=True)
 class RegrasRotacao:
     """Plano de 3 anos (PRD 7.7)."""
 
@@ -212,3 +227,4 @@ class Regras:
     frases_safra: dict[str, FrasesSafra]  # "pt" e "en"
     enso: RegrasEnso
     frases_ano: dict[str, FrasesAno]  # "pt" e "en"
+    soja_recente: RegrasSojaRecente

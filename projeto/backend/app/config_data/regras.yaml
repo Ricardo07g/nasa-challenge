@@ -155,6 +155,29 @@ regiao_ndvi:
     valor: "07-31"
     fonte: "Hipótese do time, a revisar pela agrônoma; substitui a máscara de soja do MapBiomas do guia NDVI. Fim da entressafra (o mesmo do historico_ndvi.janela_fim do talhão)"
 
+soja_recente:
+  # Soja na safra mais recente no ponto marcado (RF-24, tarefa 0037): no começo do fluxo, o app
+  # confere se o satélite viu soja no pixel de 250 m do MODIS, para saber que o ponto é lavoura (e
+  # não cidade, cana ou pasto). Pixel: maior NDVI das observações boas (qualidade 0 ou 1, MOD13Q1 e
+  # MYD13Q1) da janela; menos de `min_observacoes` = sem dado (nenhum aviso). O
+  # pipeline/fetch_soja_recente.py usa a janela e o mínimo ao gravar o pico de cada pixel; a API
+  # compara o pico com `ndvi_minimo`.
+  # INTEGRAÇÃO: o `ndvi_minimo` e a janela são os mesmos números do pico da soja da região
+  # calibrada (tarefa 0036: `regiao_ndvi.pico_min_ndvi`, `pico_inicio` e `pico_fim`). Os dois grupos
+  # devem virar um só.
+  janela_inicio:
+    valor: "01-01"
+    fonte: "Hipótese do time, a revisar pela agrônoma (decisão do usuário de 15/11/2026): a soja do Triângulo fica verde em janeiro e é colhida em fevereiro e março"
+  janela_fim:
+    valor: "03-15"
+    fonte: "Hipótese do time, a revisar pela agrônoma (decisão do usuário de 15/11/2026): janela de 1º de janeiro a 15 de março"
+  ndvi_minimo:
+    valor: 0.70
+    fonte: "Hipótese do time, a revisar pela agrônoma (decisão do usuário de 15/11/2026): soja vista com o maior NDVI da janela de 0,70 ou mais; o mesmo limite do pico da soja da região (regiao_ndvi.pico_min_ndvi, tarefa 0036)"
+  min_observacoes:
+    valor: 2
+    fonte: "Hipótese do time, a revisar pela agrônoma (decisão do usuário de 15/11/2026): com menos de 2 observações boas na janela (verão com nuvem), o pixel fica sem dado e o app não avisa"
+
 rotacao:
   # Plano de 3 anos (PRD 7.7)
   anos_secos:

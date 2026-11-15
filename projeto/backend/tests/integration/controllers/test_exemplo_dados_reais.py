@@ -19,6 +19,7 @@ from app.dependencies import (
     get_satellite_ingestion_service,
     get_smap_repository,
     get_soil_repository,
+    get_soja_recente_repository,
 )
 from app.main import app
 from app.repositories.climate_repository import FixtureClimateRepository
@@ -28,6 +29,7 @@ from app.repositories.ndvi_repository import CachedNdviRepository
 from app.repositories.sinal_outono_repository import NoAutumnSignalDataRepository
 from app.repositories.smap_repository import FileSmapRepository
 from app.repositories.soil_repository import CachedSoilGridsRepository
+from app.repositories.soja_recente_repository import FileSojaRecenteRepository
 
 
 @pytest.fixture
@@ -44,6 +46,7 @@ def real_data_client() -> Iterator[TestClient]:
     app.dependency_overrides[get_enso_repository] = lambda: FileEnsoRepository(None)
     app.dependency_overrides[get_smap_repository] = lambda: FileSmapRepository(None)
     app.dependency_overrides[get_recent_soil_moisture_repository] = NoAutumnSignalDataRepository
+    app.dependency_overrides[get_soja_recente_repository] = lambda: FileSojaRecenteRepository(None)
     app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)
     app.dependency_overrides.clear()

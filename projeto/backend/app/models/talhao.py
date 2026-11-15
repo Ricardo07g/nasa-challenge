@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Final, Literal
 
+from app.models.soja_recente import SojaRecente
 from app.models.validation import require_between
 
 # Contrato do NDVI (projeto/backend/AGENTS.md, "Contrato dos dados das fontes").
@@ -142,3 +143,5 @@ class Talhao:
     dados_fontes: tuple[FonteDado, ...]
     # None fora da área ou sem temporada de 1/jan a 30/jun (o front mostra "Ainda não conectado").
     chuva_mensal: ChuvaMensal | None = None
+    # Soja vista no ponto na safra mais recente (RF-24); None sem o arquivo ou fora da grade.
+    soja_recente: SojaRecente | None = None

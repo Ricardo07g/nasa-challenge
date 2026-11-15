@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     # SMAP recente com o percentil na climatologia (saída do pipeline/fetch_smap.py --recente),
     # para o sinal para o outono (A2.2). Sem arquivo: sem o dado da terra agora.
     smap_recente_path: Path | None = None
+    # Pico do NDVI do MODIS de cada pixel de 250 m na safra mais recente (saída do
+    # pipeline/fetch_soja_recente.py, RF-24): a checagem da soja no começo do fluxo. Sem arquivo:
+    # o /talhao responde soja_recente: null e o front não avisa.
+    soja_recente_path: Path | None = None
 
     # Credenciais dos dados da NASA. Só via ambiente, nunca no código. Só os scripts de dados
     # usam; a API não precisa de nenhuma (ADR-0005).

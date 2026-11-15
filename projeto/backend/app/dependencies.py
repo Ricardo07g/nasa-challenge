@@ -55,6 +55,10 @@ from app.repositories.soil_repository import (
     PostgisSoilRepository,
     SoilRepository,
 )
+from app.repositories.soja_recente_repository import (
+    FileSojaRecenteRepository,
+    SojaRecenteRepository,
+)
 from app.services.climate_risk_service import ClimateRiskService
 from app.services.crop_alert_service import CropAlertService
 from app.services.crop_option_service import CropOptionService
@@ -65,6 +69,7 @@ from app.services.region_service import RegionService
 from app.services.rotation_plan_service import RotationPlanService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
 from app.services.sinal_outono_service import SinalOutonoService
+from app.services.soja_recente_service import SojaRecenteService
 from app.services.talhao_service import TalhaoService
 from app.services.water_balance_calculator import WaterBalanceCalculator
 from app.services.year_detail_service import YearDetailService
@@ -139,6 +144,19 @@ def get_region_service(
     repository: Annotated[RegionRepository, Depends(get_region_repository)],
 ) -> RegionService:
     return RegionService(repository)
+
+
+# Soja na safra mais recente (RF-24): com ou sem banco, vem do arquivo do SOJA_RECENTE_PATH.
+@lru_cache
+def get_soja_recente_repository() -> SojaRecenteRepository:
+    return FileSojaRecenteRepository(get_settings().soja_recente_path)
+
+
+def get_soja_recente_service(
+    repository: Annotated[SojaRecenteRepository, Depends(get_soja_recente_repository)],
+    rules: Annotated[Regras, Depends(get_rules)],
+) -> SojaRecenteService:
+    return SojaRecenteService(repository, rules)
 
 
 @lru_cache
@@ -240,6 +258,7 @@ def get_talhao_service(
         SatelliteIngestionService | None, Depends(get_satellite_ingestion_service)
     ],
     smap_repo: Annotated[CellSmapRepository, Depends(get_smap_repository)],
+    soja_recente_service: Annotated[SojaRecenteService, Depends(get_soja_recente_service)],
 ) -> TalhaoService:
     return TalhaoService(
         climate_repo=climate_repo,
@@ -248,6 +267,7 @@ def get_talhao_service(
         history_service=history_service,
         ingestion_service=ingestion_service,
         smap_repo=smap_repo,
+        soja_recente_service=soja_recente_service,
     )
 
 

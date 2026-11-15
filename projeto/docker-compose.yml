@@ -65,6 +65,7 @@ services:
       IMERG_LATE_PATH: ${IMERG_LATE_PATH:-/dados_baixados/nasa_gpm_imerg_late/chuva_30d_imerg_late.json}
       SMAP_PATH: ${SMAP_PATH:-/dados_baixados/nasa_smap/smap_semeadura.json}
       SMAP_RECENTE_PATH: ${SMAP_RECENTE_PATH:-/dados_baixados/nasa_smap/smap_recente.json}
+      SOJA_RECENTE_PATH: ${SOJA_RECENTE_PATH:-/dados_baixados/nasa_modis_soja_recente/soja_recente_2026.json}
     volumes:
       - ./backend/app:/app/app
       - ./backend/tests:/app/tests

@@ -16,6 +16,7 @@ from app.dependencies import (
     get_satellite_ingestion_service,
     get_smap_repository,
     get_soil_repository,
+    get_soja_recente_repository,
 )
 from app.main import app
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
@@ -24,6 +25,7 @@ from app.models.enso import OniYear
 from app.models.talhao import NdviRecord, SoloInfo
 from app.repositories.climate_repository import cell_id_for
 from app.repositories.sinal_outono_repository import NoAutumnSignalDataRepository
+from app.repositories.soja_recente_repository import FileSojaRecenteRepository
 
 DAYS = 212
 
@@ -194,6 +196,8 @@ def client() -> Iterator[TestClient]:
     app.dependency_overrides[get_recent_rain_repository] = NoAutumnSignalDataRepository
     app.dependency_overrides[get_smap_repository] = FakeSmapRepository
     app.dependency_overrides[get_recent_soil_moisture_repository] = NoAutumnSignalDataRepository
+    # Sem a soja recente do SOJA_RECENTE_PATH da máquina: soja_recente: null.
+    app.dependency_overrides[get_soja_recente_repository] = lambda: FileSojaRecenteRepository(None)
     # Sem busca sob demanda: ponto sem dados fica fora da área (nada de rede real nos testes).
     app.dependency_overrides[get_satellite_ingestion_service] = lambda: None
     yield TestClient(app)

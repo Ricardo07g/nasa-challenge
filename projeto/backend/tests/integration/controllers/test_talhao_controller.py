@@ -7,11 +7,13 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_ndvi_repository, get_rules_repository
+from app.dependencies import get_ndvi_repository, get_rules_repository, get_soja_recente_repository
 from app.main import app
 from app.models.regras import Regras
+from app.models.soja_recente import MODIS_250M_PIXEL_M
 from app.repositories.ndvi_repository import CachedNdviRepository
 from app.repositories.rules_repository import load_default_rules
+from app.repositories.soja_recente_repository import FileSojaRecenteRepository
 
 UFU = {"lat": -18.9543, "lon": -48.1993}
 SITUACOES = {"plantou", "parado", "incerto", "sem_dado"}
@@ -175,3 +177,76 @@ def test_should_return_null_history_when_the_ndvi_file_has_no_point_near_the_fie
     assert body["dentro_da_area"] is True
     assert body["historico"] is None
     assert body["colheita_sugerida"] == {"faixa": "meio", "fonte": "padrao", "anos_usados": 0}
+
+
+# --- soja na safra mais recente (RF-24, tarefa 0037) ------------------------------------------
+
+
+def _soja_file(tmp_path: Path, centro: int | None = 86, name: str = "soja_recente.json") -> Path:
+    """Arquivo da soja recente com picos de teste (não são do MODIS) numa grade de 9 × 9 pixels
+    em volta da fazenda de exemplo (posição de um recorte real da ORNL; o ponto é o do meio)."""
+    picos: list[list[int | None]] = [[41] * 9 for _ in range(9)]
+    picos[4][4] = centro
+    payload = {
+        "versao_dados": TEST_RUN,
+        "safra": "2025/26",
+        "fonte": "teste",
+        "grade": {"projecao": "sinusoidal_modis", "raio_m": 6371007.181,
+                  "x_oeste_m": -5070031.09, "y_norte_m": -2108767.79 + 9 * MODIS_250M_PIXEL_M,
+                  "pixel_m": MODIS_250M_PIXEL_M, "linhas": 9, "colunas": 9},
+        "pico_centesimos": picos,
+    }  # fmt: skip
+    path = tmp_path / name
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def _use_soja_file(path: Path) -> None:
+    app.dependency_overrides[get_soja_recente_repository] = lambda: FileSojaRecenteRepository(path)
+
+
+def test_should_have_no_recent_soybean_without_the_file(client: TestClient) -> None:
+    assert client.get("/api/talhao", params=UFU).json()["soja_recente"] is None
+
+
+def test_should_say_whether_the_satellite_saw_soybean_at_the_point(
+    client: TestClient, tmp_path: Path
+) -> None:
+    _use_soja_file(_soja_file(tmp_path))
+
+    body = client.get("/api/talhao", params=UFU).json()
+
+    assert body["soja_recente"] == {"safra": "2025/26", "vista": True, "ndvi_pico": 0.86,
+                                    "fonte": "teste"}  # fmt: skip
+
+
+def test_should_say_soybean_was_not_seen_below_the_limit_and_nothing_without_data(
+    client: TestClient, tmp_path: Path
+) -> None:
+    _use_soja_file(_soja_file(tmp_path, centro=41, name="nao_vista.json"))
+    not_seen = client.get("/api/talhao", params=UFU).json()["soja_recente"]
+    _use_soja_file(_soja_file(tmp_path, centro=None, name="sem_dado.json"))
+    no_data = client.get("/api/talhao", params=UFU).json()["soja_recente"]
+
+    assert not_seen == {"safra": "2025/26", "vista": False, "ndvi_pico": 0.41, "fonte": "teste"}
+    assert no_data == {"safra": "2025/26", "vista": None, "ndvi_pico": None, "fonte": "teste"}
+
+
+def test_should_have_no_recent_soybean_outside_the_grid(client: TestClient, tmp_path: Path) -> None:
+    _use_soja_file(_soja_file(tmp_path))
+
+    # ~2,9 km ao sul: ainda tem clima, mas fica fora da grade de 9 × 9 pixels.
+    body = client.get("/api/talhao", params={"lat": -18.98, "lon": -48.1993}).json()
+
+    assert body["dentro_da_area"] is True
+    assert body["soja_recente"] is None
+
+
+def test_should_send_the_recent_soybean_in_the_example_farm_too(
+    client: TestClient, tmp_path: Path
+) -> None:
+    _use_soja_file(_soja_file(tmp_path))
+
+    talhao = client.get("/api/exemplo").json()["talhao"]
+
+    assert talhao["soja_recente"]["vista"] is True

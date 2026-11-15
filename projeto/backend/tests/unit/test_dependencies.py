@@ -30,8 +30,10 @@ from app.repositories.smap_repository import (
     PostgisSmapRepository,
 )
 from app.repositories.soil_repository import CachedSoilGridsRepository, PostgisSoilRepository
+from app.repositories.soja_recente_repository import FileSojaRecenteRepository
 from app.services.region_service import RegionService
 from app.services.satellite_ingestion_service import SatelliteIngestionService
+from app.services.soja_recente_service import SojaRecenteService
 
 # Endereço que não resolve (.invalid) e sem credencial: nada aqui abre conexão.
 DATABASE_URL = "postgresql://db.invalid/raiz_orbital"
@@ -56,6 +58,7 @@ def _clear_caches() -> None:
     dependencies.get_recent_rain_repository.cache_clear()
     dependencies.get_smap_repository.cache_clear()
     dependencies.get_recent_soil_moisture_repository.cache_clear()
+    dependencies.get_soja_recente_repository.cache_clear()
 
 
 @pytest.fixture
@@ -67,6 +70,7 @@ def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None
         imerg_late_path: Path | None = None,
         smap_path: Path | None = None,
         smap_recente_path: Path | None = None,
+        soja_recente_path: Path | None = None,
     ) -> None:
         settings = Settings(
             _env_file=None,
@@ -76,6 +80,7 @@ def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None
             imerg_late_path=imerg_late_path,
             smap_path=smap_path,
             smap_recente_path=smap_recente_path,
+            soja_recente_path=soja_recente_path,
         )
         monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
         _clear_caches()
@@ -294,3 +299,21 @@ def test_should_read_the_recent_smap_from_smap_recente_path_and_keep_the_forecas
     assert soil._path == tmp_path / "smap_recente.json"
     # O GEOS-S2S (A2.1) ainda não chegou; a chuva recente (A2.3) tem o próprio teste, acima
     assert isinstance(dependencies.get_seasonal_forecast_repository(), NoAutumnSignalDataRepository)
+
+
+def test_should_read_the_recent_soybean_from_the_file_of_soja_recente_path(
+    use_settings: Callable[..., None], tmp_path: Path
+) -> None:
+    # Com ou sem banco, a soja recente (RF-24) vem do arquivo do SOJA_RECENTE_PATH.
+    use_settings(DATABASE_URL, soja_recente_path=tmp_path / "soja_recente_2026.json")
+
+    repository = dependencies.get_soja_recente_repository()
+    service = dependencies.get_soja_recente_service(
+        repository, dependencies.get_rules(dependencies.get_rules_repository())
+    )
+
+    assert isinstance(repository, FileSojaRecenteRepository)
+    assert repository._path == tmp_path / "soja_recente_2026.json"
+    assert isinstance(service, SojaRecenteService)
+    # Sem o arquivo: nenhuma checagem (o /talhao responde soja_recente: null)
+    assert service.check(-18.9543, -48.1993) is None

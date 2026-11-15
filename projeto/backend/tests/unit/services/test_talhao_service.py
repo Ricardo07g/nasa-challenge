@@ -4,8 +4,10 @@ from datetime import date
 from typing import Any
 
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
+from app.models.soja_recente import PicoSojaRecente, SojaRecente
 from app.models.talhao import ChuvaMes, FonteDado, HistoricoAno, NdviRecord, SoloInfo
 from app.services.field_history_service import FieldHistoryService
+from app.services.soja_recente_service import SojaRecenteService
 from app.services.talhao_service import TalhaoService
 
 DAYS = 212  # 1/jan a 31/jul
@@ -102,11 +104,24 @@ class FakeSmapRepository:
         ]
 
 
+class FakeSojaRecenteRepository:
+    """Pico de teste (não do MODIS) só perto da fazenda de exemplo; fora dela, fora da grade."""
+
+    def __init__(self, ndvi_pico: float | None) -> None:
+        self._ndvi_pico = ndvi_pico
+
+    def get_pico(self, lat: float, lon: float) -> PicoSojaRecente | None:
+        if not (-19.0 <= lat <= -18.9 and -48.25 <= lon <= -48.15):
+            return None
+        return PicoSojaRecente(safra="2025/26", fonte="teste", ndvi_pico=self._ndvi_pico)
+
+
 def _service(
     climate: FakeClimateRepository | None = None,
     ndvi: FakeNdviRepository | None = None,
     ingestion_service: Any = None,
     smap: FakeSmapRepository | None = None,
+    soja: SojaRecenteService | None = None,
 ) -> TalhaoService:
     return TalhaoService(
         climate_repo=climate or FakeClimateRepository(),
@@ -115,6 +130,7 @@ def _service(
         history_service=FieldHistoryService(),
         ingestion_service=ingestion_service,
         smap_repo=smap,
+        soja_recente_service=soja,
     )
 
 
@@ -205,6 +221,30 @@ def test_should_return_no_monthly_rain_when_the_cell_has_no_seasons() -> None:
 
     assert talhao.dentro_da_area is True
     assert talhao.chuva_mensal is None
+
+
+def test_should_tell_whether_the_satellite_saw_soybean_in_the_last_season() -> None:
+    # RF-24 (tarefa 0037): o limite da soja (0,70) vem do regras.yaml, pelo service.
+    seen = _service(soja=SojaRecenteService(FakeSojaRecenteRepository(0.86)))
+    not_seen = _service(soja=SojaRecenteService(FakeSojaRecenteRepository(0.41)))
+    no_data = _service(soja=SojaRecenteService(FakeSojaRecenteRepository(None)))
+
+    assert seen.inspect_talhao(-18.9543, -48.1993).soja_recente == SojaRecente(
+        safra="2025/26", vista=True, ndvi_pico=0.86, fonte="teste"
+    )
+    assert not_seen.inspect_talhao(-18.9543, -48.1993).soja_recente == SojaRecente(
+        safra="2025/26", vista=False, ndvi_pico=0.41, fonte="teste"
+    )
+    assert no_data.inspect_talhao(-18.9543, -48.1993).soja_recente == SojaRecente(
+        safra="2025/26", vista=None, ndvi_pico=None, fonte="teste"
+    )
+
+
+def test_should_have_no_recent_soybean_outside_the_grid_or_without_the_service() -> None:
+    soja = SojaRecenteService(FakeSojaRecenteRepository(0.86))
+
+    assert _service(soja=soja).inspect_talhao(-18.6, -47.9).soja_recente is None
+    assert _service().inspect_talhao(-18.9543, -48.1993).soja_recente is None
 
 
 def test_should_hide_history_and_use_default_harvest_when_no_ndvi() -> None:
