@@ -923,12 +923,11 @@ export const en = {
     noAiTitle: 'No artificial intelligence, open math',
     noAiText:
       'Each score is a rule that fits in one sentence. Water-shortage and heat limits come from Embrapa and ZARC, the agricultural zoning used for crop insurance and rural credit.',
-    validationTitle: 'Did it match what happened?',
-    validationText:
-      'Coming soon: calculated stress years compared with second-crop corn losses in Uberlândia (IBGE).',
     incomeTitle: 'Income without money values',
     incomeText:
-      'Income does not use prices or costs. Options that give grain to sell get the same income score as their safety score: in how many years it worked, from 0 to 100. Options with no grain (cover crops and fallow land) get a fixed income score, zero for now: they are an investment in the soil, and that counts in the soil score.',
+      'Income does not use prices or costs. Options that give grain to sell get the same income score as their safety score: in how many years it worked, from 0 to 100. Options with no grain (cover crops and fallow land) get a fixed income score: they are an investment in the soil, and that counts in the soil score.',
+    incomeTextScore: (score: string) =>
+      `Income does not use prices or costs. Options that give grain to sell get the same income score as their safety score: in how many years it worked, from 0 to 100. Options with no grain (cover crops and fallow land) get an income score of ${score}: they are an investment in the soil, and that counts in the soil score.`,
     incomeShown:
       'In the answer, income shows only facts: whether it gives grain to sell and in how many years water ran short or it was too hot.',
     blindTitle: "What the satellite can't see",
@@ -936,6 +935,36 @@ export const en = {
     blindRainGeneric: 'Rain comes in squares several kilometers wide, not from your field: your rain gauge is worth more.',
     blindRest:
       'The 2041–2060 climate is a range across models, not a forecast. Limits will still be tuned with local agronomists.',
+    rules: {
+      title: 'The rules of the calculation',
+      intro: 'Every number below comes from the engine rules file (regras.yaml). Those marked as a team hypothesis will still be reviewed by the agronomist.',
+      worked: (grain: string, days: string, cover: string, coverDays: string, temp: string, heatDays: string) =>
+        `It worked: the plant had at least ${grain}% of the water it needed in the stage that needs it most (flowering, ${days} days before and after; for cover crops, ${cover}% in the first ${coverDays} days) and it did not reach ${temp} °C on ${heatDays} days or more in that stage.`,
+      weights: (safety: string, future: string, soil: string, income: string) =>
+        `Final score: safety ${safety}%, 2041–2060 climate ${future}%, soil ${soil}% and income ${income}%.`,
+      income: (score: string) =>
+        `Income: options that give grain to sell get their safety score as income; options with no grain get ${score}. No price, cost or money value goes into the calculation.`,
+      water: (pct: string) =>
+        `Water: the engine adds up, day by day, what the plant uses (NASA POWER ETo × Kc) and the rain (GPM IMERG), with what the soil holds. A normal year is the middle one; a dry year is one where only ${pct}% of the years had a bigger shortage.`,
+      thirst: (low: string, high: string) =>
+        `Crop thirst: little water below ${low} mm in the cycle; a lot from ${high} mm up (team hypothesis).`,
+      rotation: (two: string, three: string, crops: string) =>
+        `Rotation score: the average of the 3 years, with +${two} points for 2 different roles and +${three} for 3 (grain, grass cover, legume). Crops that break the nematode cycle: ${crops}.`,
+      planB: (days: string, fails: string, catches: string, precision: string, chance: string) =>
+        `Plan B: the crop that worked most often in the years when the plan A crop failed. "Dry" becomes a rain gauge number (rain in the ${days} days before planting) only with ${fails} failed years or more, catching ${catches}% of the failures, with ${precision}% of the flagged years being failures and a chance of luck of up to ${chance}%. Otherwise, plan B shows without a number.`,
+      frost: (temp: string, from: string, to: string) =>
+        `Frost (soil X-ray): any year with a low of ${temp} °C or less from ${from} to ${to} (NASA POWER).`,
+      heavyRain: (mm: string, from: string, to: string) =>
+        `Heavy rain (soil X-ray): days with ${mm} mm or more from ${from} to ${to} (GPM IMERG), when bare soil loses earth.`,
+      fire: (km: string) =>
+        `Fire (soil X-ray): fire within ${km} km of the point (MODIS MCD64A1, burned area). It only shows when the burned area file was downloaded.`,
+      alerts: (pct: string, dry: string, hot: string, temp: string, window: string, days: string, km: string) =>
+        `Alerts: dry soil with SMAP at percentile ${pct} or lower; ${dry} days in a row without rain or ${hot} days at ${temp} °C in the last ${window} (NASA POWER); neighbor reports from the last ${days} days, within ${km} km, always as unconfirmed.`,
+      signal: (chance: string, years: string, bad: string) =>
+        `Autumn signal: NOAA forecast of El Niño or La Niña at ${chance}% or more, with at least ${years} years of that phase in the series. If the plan A crop had trouble in ${bad}% or more of those years and the plan B crop did better, the signal marks plan B.`,
+      xray: 'Soil X-ray: each block shows the source and the size of the measured square (e.g. SMAP 9 km, NASA POWER about 50 km). It applies to the area around the point, not to the exact field.',
+      and: 'and',
+    },
     sourcesTitle: 'Where each piece of data comes from',
     sources: {
       nasa_power: { what: 'Rain and heat, day by day', source: 'NASA POWER', scale: 'about 50 km, daily' },

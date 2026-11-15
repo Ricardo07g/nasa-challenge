@@ -960,13 +960,13 @@ export const pt = {
     noAiTitle: 'Sem inteligência artificial, conta aberta',
     noAiText:
       'Cada nota é uma regra que cabe numa frase. Os limites de falta de água e de calor vêm da Embrapa e do ZARC, o zoneamento usado no seguro e no crédito rural.',
-    validationTitle: 'Bateu com o que aconteceu?',
-    validationText:
-      'Em breve: os anos de aperto calculados comparados com os anos de quebra do milho 2ª safra em Uberlândia (IBGE).',
     /** Tarefa 0040: a nota de renda sem preço nem custo (regra no regras.yaml do backend, grupo `renda`). */
     incomeTitle: 'Renda sem valores em reais',
     incomeText:
-      'A renda não usa preço nem custo. Quem dá grão para vender ganha na renda a mesma nota da segurança: em quantos anos deu certo, de 0 a 100. Quem não dá grão (as plantas de cobertura e a terra parada) fica com nota fixa na renda, hoje zero: é investimento na terra, e isso conta na nota da terra.',
+      'A renda não usa preço nem custo. Quem dá grão para vender ganha na renda a mesma nota da segurança: em quantos anos deu certo, de 0 a 100. Quem não dá grão (as plantas de cobertura e a terra parada) fica com uma nota fixa na renda: é investimento na terra, e isso conta na nota da terra.',
+    /** Tarefa 0049: a nota de quem não dá grão vem do regras.yaml (`renda.nota_sem_grao`). */
+    incomeTextScore: (score: string) =>
+      `A renda não usa preço nem custo. Quem dá grão para vender ganha na renda a mesma nota da segurança: em quantos anos deu certo, de 0 a 100. Quem não dá grão (as plantas de cobertura e a terra parada) fica com nota ${score} na renda: é investimento na terra, e isso conta na nota da terra.`,
     incomeShown:
       'Na resposta, a renda mostra só fatos: se dá grão para vender e em quantos anos faltou água ou fez calor.',
     blindTitle: 'O que o satélite não enxerga',
@@ -976,6 +976,37 @@ export const pt = {
     blindRainGeneric: 'A chuva vem de quadrados de vários quilômetros, não do seu talhão: seu pluviômetro vale mais.',
     blindRest:
       'O clima de 2041 a 2060 é uma faixa entre modelos, não uma previsão. Os limites ainda serão ajustados com agrônomos da região.',
+    /** Tarefa 0049: as regras novas, com os números do regras.yaml (`GET /api/metodo`), nunca fixos aqui. */
+    rules: {
+      title: 'As regras da conta',
+      intro: 'Cada número abaixo vem do arquivo de regras do motor (regras.yaml). Os marcados como hipótese do time ainda serão revistos pela agrônoma.',
+      worked: (grain: string, days: string, cover: string, coverDays: string, temp: string, heatDays: string) =>
+        `Deu certo: a planta teve pelo menos ${grain}% da água que precisava na fase em que mais precisa (a floração, ${days} dias antes e depois; nas plantas de cobertura, ${cover}% nos primeiros ${coverDays} dias) e não fez ${temp} °C em ${heatDays} dias ou mais nessa fase.`,
+      weights: (safety: string, future: string, soil: string, income: string) =>
+        `Nota final: segurança ${safety}%, clima 2041–2060 ${future}%, terra ${soil}% e renda ${income}%.`,
+      income: (score: string) =>
+        `Renda: quem dá grão para vender tem na renda a nota da segurança; quem não dá grão fica com ${score}. Nenhum preço, custo ou valor em reais entra na conta.`,
+      water: (pct: string) =>
+        `Água: o motor soma, dia a dia, o que a planta gasta (ETo do NASA POWER × Kc) e o que chove (GPM IMERG), com o que a terra guarda. Ano normal é o do meio; ano seco é aquele em que só ${pct}% dos anos tiveram falta maior.`,
+      thirst: (low: string, high: string) =>
+        `Sede da cultura: pouca água abaixo de ${low} mm no ciclo; muita, a partir de ${high} mm (hipótese do time).`,
+      rotation: (two: string, three: string, crops: string) =>
+        `Nota da rotação: a média das notas dos 3 anos, com +${two} pontos para 2 funções diferentes e +${three} para 3 (grão, capim de cobertura, leguminosa). Quebram o ciclo do nematoide: ${crops}.`,
+      planB: (days: string, fails: string, catches: string, precision: string, chance: string) =>
+        `Plano B: a cultura que mais deu certo nos anos em que a do Plano A falhou. "Secar" vira um número do pluviômetro (a chuva dos ${days} dias antes de plantar) só com ${fails} anos de falha ou mais, pegando ${catches}% das falhas, com ${precision}% dos anos marcados sendo de falha e chance de acaso de até ${chance}%. Senão, o Plano B aparece sem número.`,
+      frost: (temp: string, from: string, to: string) =>
+        `Geada (raio-X): algum ano com mínima de ${temp} °C ou menos de ${from} a ${to} (NASA POWER).`,
+      heavyRain: (mm: string, from: string, to: string) =>
+        `Chuva forte (raio-X): dias com ${mm} mm ou mais de ${from} a ${to} (GPM IMERG), quando a terra descoberta perde solo.`,
+      fire: (km: string) =>
+        `Fogo (raio-X): fogo a até ${km} km do ponto (MODIS MCD64A1, área queimada). Só aparece quando o arquivo da área queimada foi baixado.`,
+      alerts: (pct: string, dry: string, hot: string, temp: string, window: string, days: string, km: string) =>
+        `Avisos: terra seca com o SMAP no percentil ${pct} ou menos; ${dry} dias seguidos sem chuva ou ${hot} dias de ${temp} °C nos últimos ${window} (NASA POWER); relatos de vizinhos dos últimos ${days} dias, a até ${km} km, sempre como não confirmados.`,
+      signal: (chance: string, years: string, bad: string) =>
+        `Sinal do outono: previsão da NOAA de El Niño ou La Niña com ${chance}% ou mais e pelo menos ${years} anos daquela fase na série. Se a cultura do Plano A teve problema em ${bad}% ou mais desses anos e a do Plano B se saiu melhor, o sinal marca o Plano B.`,
+      xray: 'Raio-X: cada bloco mostra a fonte e o tamanho do quadrado medido (ex.: SMAP 9 km, NASA POWER cerca de 50 km). Vale para a área em volta do ponto, não para o talhão exato.',
+      and: 'e',
+    },
     sourcesTitle: 'De onde vem cada dado',
     /** Uma por fonte do produto; a tela mostra só as que a API manda de fato (decisão D2). */
     sources: {

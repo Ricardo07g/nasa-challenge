@@ -87,6 +87,7 @@ from app.services.crop_alert_service import CropAlertService
 from app.services.crop_option_service import CropOptionService
 from app.services.field_history_service import FieldHistoryService
 from app.services.harvest_delay_service import HarvestDelayService
+from app.services.method_service import MethodService
 from app.services.monthly_rain_service import MonthlyRainService
 from app.services.past_season_service import PastSeasonService
 from app.services.pilot_area_service import PilotAreaService
@@ -140,6 +141,11 @@ def get_rules_repository() -> RulesRepository:
 
 def get_rules(repository: Annotated[RulesRepository, Depends(get_rules_repository)]) -> Regras:
     return repository.get_rules()
+
+
+def get_method_service(rules: Annotated[Regras, Depends(get_rules)]) -> MethodService:
+    """Tela "Como a conta é feita" (tarefa 0049): os números das regras do regras.yaml."""
+    return MethodService(rules)
 
 
 @lru_cache

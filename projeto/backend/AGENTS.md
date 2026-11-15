@@ -999,6 +999,11 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   com o `COMMUNITY_DEVICE_SALT` (o `CHECK` exige 64 dígitos hexadecimais) e nunca volta na
   resposta; a listagem não traz o hash, a hora do envio nem o ponto exato. Não grave nem registre
   em log o ponto ou o identificador do aparelho. Detalhes: `docs/tarefas/0047-comunidade.md`.
+- **Regras da tela "Como a conta é feita"** (`GET /api/metodo`, tarefa 0049): `MethodService` escolhe no
+  `regras.yaml` os números que a tela explica (`deu_certo` com o ISNA em %, `pesos` em %, `renda`, `agua` com a
+  sede, `rotacao` com o bônus e as supressoras do nematoide, `plano_b`, `alertas` de geada, chuva forte e fogo,
+  `avisos` e `sinal`). Só números (as frases são do front), sem banco e sem cache HTTP. Os schemas têm o prefixo
+  `Metodo` para não colidir no OpenAPI com os do `/recomendacao`.
 - **Avisos do ponto marcado** (`GET /api/avisos?lat&lon[&colheita][&solo][&confirmadas]`, tela "Avisos",
   remodelagem S6, tarefa 0046, RF-31). Roda o motor uma vez (`RecommendationService.recommend`, com a mesma
   colheita, solo e safras confirmadas do `/recomendacao`) e junta quatro grupos. O `AvisosService` só busca e

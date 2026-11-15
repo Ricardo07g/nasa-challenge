@@ -298,12 +298,13 @@ export function CommunityPage() {
 }
 
 export function MethodPage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.method.title)
   const state = useMethodController()
   return (
     <MethodView
       t={t}
+      lang={lang}
       backTo={state.backTo}
       status={state.status}
       onRetry={state.retry}
@@ -313,6 +314,7 @@ export function MethodPage() {
       sources={state.sources}
       onRetrySources={state.retrySources}
       rain={state.rain}
+      rules={state.rules}
     />
   )
 }

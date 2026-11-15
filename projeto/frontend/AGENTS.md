@@ -196,6 +196,11 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   exemplo, sem rede; teste de repository usa `vi.stubGlobal('fetch', ...)`. Coordenadas e link do Google
   Maps colados são lidos por `services/locationInputService.ts` (puro; formatos na tarefa 0041). Serviço
   externo novo segue o mesmo molde; se precisar de chave ou de uso em escala, a chamada vai para o backend.
+- **"Como a conta é feita" (tela 9, tarefa 0049 do backend):** as regras novas (deu certo, pesos da nota, renda sem
+  preço, água, sede da cultura, nota da rotação, Plano B, geada, chuva forte, fogo, avisos, sinal do outono e raio-X)
+  aparecem no bloco "As regras da conta", com os números de `GET /api/metodo` (`repositories/metodoRepository.ts`,
+  lidos do `regras.yaml`; o mock em `repositories/mocks/mockMetodo.ts`). A tela nunca repete número de regra: sem a
+  rota (API antiga) ou com falha, o bloco não aparece e o texto da renda fica sem o número.
 - **Área piloto:** os limites vêm só de `GET /api/area-piloto` (`services/pilotAreaService.ts`, um pedido por
   visita). O front não repete os números (só o mock, que imita a API). Na tela "Onde fica a lavoura", o
   limite aparece tracejado com legenda em texto, e o ponto fora dele desliga o "Confirmar local"; enquanto a

@@ -9,11 +9,14 @@ import { rainSummary } from '../services/satelliteService'
 import { rainResolutionKm, sourceStatuses } from '../services/sourceService'
 import type { TelegramService } from '../services/telegramService'
 import { useAsync } from './useAsync'
+import type { MetodoRegras } from '../models/metodo'
+import { metodoRepository } from '../repositories'
+import type { MetodoRepository } from '../repositories/metodoRepository'
 import { useTelegramLink } from './useTelegramLink'
 
-type Deps = { farm: FarmService; telegram?: TelegramService }
+type Deps = { farm: FarmService; method?: MetodoRepository; telegram?: TelegramService }
 
-const defaultDeps: Deps = { farm: farmService }
+const defaultDeps: Deps = { farm: farmService, method: metodoRepository }
 
 /**
  * Tela 9 "Como a conta é feita" (para agrônomos e jurados): o método, as fontes (quais estão
@@ -52,6 +55,11 @@ export function useMethodController(deps: Deps = defaultDeps) {
     [params?.lat, params?.lon, params?.colheita, params?.exemplo, lang, deps.farm],
   )
 
+  // Tarefa 0049: os números das regras vêm do regras.yaml (`GET /api/metodo`). Sem a rota (API antiga) ou
+  // com falha, o bloco das regras não aparece (o resto da tela continua).
+  const method = deps.method ?? metodoRepository
+  const rulesAsync = useAsync((): Promise<MetodoRegras | null> => method.get().catch(() => null), [method])
+
   const sources = talhao.data
     ? { status: talhao.status, rows: sourceStatuses(talhao.data), rainKm: rainResolutionKm(talhao.data) }
     : { status: talhao.status, rows: [], rainKm: null }
@@ -66,5 +74,6 @@ export function useMethodController(deps: Deps = defaultDeps) {
     sources,
     retrySources: talhao.retry,
     rain: talhao.data ? rainSummary(talhao.data.dados, recomendacao.data?.opcoes ?? null) : null,
+    rules: rulesAsync.data ?? null,
   }
 }
