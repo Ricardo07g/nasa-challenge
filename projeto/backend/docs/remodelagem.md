@@ -31,7 +31,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | ✅ na branch (15/11 ~05:05), revisada; Plano B sem número (nenhum limite separou bem) |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | ✅ na branch (15/11 ~04:50), revisada |
 | S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~03:10), revisada |
-| S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | ✅ na branch `feat/remodelagem-s9-consistencia` (15/11 ~06:40), revisada; falta só o merge em `feat/remodelagem` |
+| S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | ✅ na branch (15/11 ~06:50, merge d565192), revisada |
 
 Ordem de merge: S1 → S8 → S2 → S3 → S4 → S5a → S5b → S6 → S7 → S9. Se a janela de uso acabar, a
 retomada automática continua da primeira seção não terminada (arquivo de retomada do orquestrador).
@@ -197,6 +197,30 @@ Conferida com dado real (API 8005 no banco `raiz_orbital_remodelagem`, só leitu
 - ✅ Em 390 px, os botões do objetivo não quebram o texto.
 - ✅ Guia com os 3 artigos que faltavam (27 artigos em pt e en) e os "Saiba mais" de chuva forte, erosão e fogo.
 - ⚠️ O mapa da comunidade ainda não mostra a área queimada (o arquivo ficou pronto durante a S9; ver a lista final).
+
+### S9 — Consistência e revisão final (revisada em 15/11 ~07:00)
+
+Revisão final de todas as telas na branch inteira (API 8001 com o banco `raiz_orbital_remodelagem` e o arquivo do
+MCD64A1; front 5174), em 1280 px (pt e en) e 390 px. Pontos: fazenda de exemplo (colheitas cedo, meio e tarde), a
+cidade de Uberlândia e o ponto da terra seca perto de Prata.
+
+- ✅ As contradições da lista foram corrigidas e conferidas na tela:
+  - clima 2041–2060 "+2,2%, 2 de 3 modelos indicam mais chuva" na Sugestão e no raio-X;
+  - o aviso de El Niño segue o sinal do outono ("marca o Plano A");
+  - falta de água com "na média" × "em metade dos anos";
+  - só crotalária e milheto "quebram o nematoide", nas duas telas;
+  - "maior verde" no ponto da cidade;
+  - o exemplo abre na faixa do satélite.
+- ✅ Missão com as fontes usadas e o número de opções da conta; "Como a conta é feita" com 13 regras lidas do
+  `regras.yaml` (`GET /api/metodo`).
+- ✅ Nenhum link para `/relatorio` ou `/safra-passada` (os endereços antigos só redirecionam), nenhum R$ e nenhum
+  "Ainda não conectado", com testes no front e no backend que barram a volta.
+- ✅ Alerta de fogo com o MCD64A1 na fazenda: "Houve fogo a até 5 km do seu ponto em 5 de 10 anos (MODIS, NASA)",
+  com "Saiba mais: Fogo na palha". Na cidade e em Prata, nenhum ano.
+- ✅ Guia com os 3 artigos que faltavam (erosão, plantio direto e sementes, em rascunho). O "Saiba mais" da chuva
+  forte e os relatos de erosão e fogo da comunidade estão ligados.
+- ⚠️ O que ficou de fora está na "Lista final do pedido" abaixo: irrigação opcional, área queimada no mapa da
+  comunidade, número do Plano B e o resto, cada item com o motivo.
 
 ### S5b — Comparar e Plano de 3 anos (revisada em 15/11 ~05:15)
 
