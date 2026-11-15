@@ -5,6 +5,7 @@ from typing import Annotated, Final, Literal
 from fastapi import APIRouter, Depends, Header, Query, Response
 
 from app.constants import EXAMPLE_FARM_LAT, EXAMPLE_FARM_LON
+from app.controllers.confirmadas_param import ConfirmadasQuery, parse_confirmadas
 from app.controllers.http_cache import revalidated_json_response
 from app.dependencies import get_recommendation_service, get_talhao_service
 from app.schemas.recomendacao import ExemploResponse, RecomendacaoResponse
@@ -41,6 +42,7 @@ def get_recomendacao(
     solo: Annotated[Textura | None, Query()] = None,
     nematoide: Annotated[SimNao | None, Query()] = None,
     gado: Annotated[SimNao | None, Query()] = None,
+    confirmadas: ConfirmadasQuery = None,
     accept_language: Annotated[str, Header(alias="Accept-Language")] = "pt-BR",
     if_none_match: Annotated[str | None, Header(alias="If-None-Match")] = None,
 ) -> Response:
@@ -52,6 +54,7 @@ def get_recomendacao(
         nematoide=_sim_nao(nematoide),
         gado=_sim_nao(gado),
         lang=accept_language,
+        confirmadas=parse_confirmadas(confirmadas),
     )
     # Só chega aqui com sucesso: erro de domínio ou de validação sai sem cache nem ETag.
     body = RecomendacaoResponse.from_model(rec).model_dump_json(by_alias=True).encode()

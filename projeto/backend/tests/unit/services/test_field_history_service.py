@@ -7,6 +7,7 @@ import pytest
 
 from app.models.talhao import HistoricoAno, HistoricoTalhao, NdviRecord
 from app.repositories.rules_repository import load_default_rules
+from app.services.errors import ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
 
 
@@ -316,3 +317,78 @@ def test_should_find_the_soy_harvest_date_after_the_peak() -> None:
 
     assert service.soy_harvest_date(2022, observations) == date(2022, 3, 6)
     assert service.soy_harvest_date(2022, [(date(2022, 1, 17), 0.65)]) is None
+
+
+# --- safras confirmadas pelo produtor (decisão de 15/11/2026) ------------------------------
+
+
+def test_should_let_the_producer_confirm_the_last_three_off_seasons() -> None:
+    assert FieldHistoryService().confirmable_years() == (2024, 2025, 2026)
+
+
+def test_should_take_the_confirmable_years_from_injected_rules() -> None:
+    base = load_default_rules()
+    historico_ndvi = replace(base.historico_ndvi, ano_fim=2027, anos_confirmaveis=2)
+
+    service = FieldHistoryService(rules=replace(base, historico_ndvi=historico_ndvi))
+
+    assert service.confirmable_years() == (2026, 2027)
+
+
+def test_should_check_the_confirmations_and_keep_them_by_year() -> None:
+    confirmadas = FieldHistoryService().check_confirmations([(2026, "plantou"), (2024, "parado")])
+
+    assert confirmadas == {2024: "parado", 2026: "plantou"}
+
+
+@pytest.mark.parametrize(
+    ("pairs", "message"),
+    [
+        ([(2023, "plantou")], "2023"),
+        ([(2027, "parado")], "2027"),
+        ([(2025, "incerto")], "incerto"),
+        ([(2025, "plantou"), (2025, "parado")], "repetido"),
+    ],
+    ids=["antes-da-janela", "depois-da-janela", "valor-invalido", "ano-repetido"],
+)
+def test_should_refuse_confirmations_outside_the_last_three_years_or_with_other_values(
+    pairs: list[tuple[int, str]], message: str
+) -> None:
+    with pytest.raises(ValidationDomainError, match=message):
+        FieldHistoryService().check_confirmations(pairs)
+
+
+def test_should_replace_the_satellite_with_the_producer_answer() -> None:
+    # 2025: o satélite viu "plantou" (0,72); o produtor diz que deixou parado. Vale o produtor.
+    records = _offseason(2024, 0.30) + _offseason(2025, 0.72)
+
+    history = FieldHistoryService().classify_entressafra(records, {2025: "parado"})
+
+    assert _year(history, 2025) == HistoricoAno(
+        ano=2025, situacao="parado", ndvi_max=0.72, n_obs=3, fonte_ano="produtor"
+    )
+    assert _year(history, 2024).fonte_ano == "satelite"
+    assert (history.parado, history.plantou, history.sem_certeza) == (2, 0, 8)
+
+
+def test_should_let_the_producer_answer_a_year_the_satellite_did_not_see() -> None:
+    # 2026 ainda sem dado do satélite (ou sem soja): o produtor responde e o ano passa a contar.
+    records = _offseason(2024, 0.30) + _offseason(2025, 0.72)
+
+    history = FieldHistoryService().classify_entressafra(records, {2026: "plantou"})
+
+    assert _year(history, 2026) == HistoricoAno(
+        ano=2026, situacao="plantou", ndvi_max=None, n_obs=0, fonte_ano="produtor"
+    )
+    assert (history.parado, history.plantou, history.sem_certeza, history.total) == (1, 2, 7, 10)
+
+
+def test_should_build_the_history_from_the_producer_without_a_satellite_series() -> None:
+    history = FieldHistoryService().classify_entressafra([], {2024: "parado", 2025: "plantou"})
+
+    assert history.fonte == "produtor"
+    assert (history.parado, history.plantou, history.sem_certeza, history.total) == (1, 1, 8, 10)
+    assert _year(history, 2024).fonte_ano == "produtor"
+    assert _year(history, 2017) == HistoricoAno(
+        ano=2017, situacao="sem_dado", ndvi_max=None, n_obs=0
+    )

@@ -102,6 +102,33 @@ def test_should_explain_the_field_history_from_the_ndvi_repository(client: TestC
     }
 
 
+def test_should_explain_the_history_with_the_seasons_the_producer_confirmed(
+    client: TestClient,
+) -> None:
+    # Tarefa 0039: no NDVI de teste, 2025 é "plantou"; o produtor diz que deixou parado.
+    params = {**UFU, "colheita": "meio", "confirmadas": "2025:parado"}
+
+    body = client.get("/api/recomendacao", params=params).json()
+
+    assert {o["porque"][-1] for o in body["opcoes"]} == {
+        "Seu talhão ficou em pousio em 4 de 8 entressafras de 2017 a 2026 "
+        "(você confirmou 1; o satélite viu 7, pelo NDVI do MODIS)."
+    }
+
+
+@pytest.mark.parametrize("confirmadas", ["2023:parado", "2025:talvez", "2025:parado,2025:plantou"])
+def test_should_refuse_confirmed_seasons_out_of_the_last_three_years_or_values(
+    client: TestClient, confirmadas: str
+) -> None:
+    params = {**UFU, "colheita": "meio", "confirmadas": confirmadas}
+
+    response = client.get("/api/recomendacao", params=params)
+
+    assert response.status_code == 422
+    assert response.headers["content-type"] == PROBLEM_JSON_MEDIA_TYPE
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
 def test_should_move_crops_out_of_window_and_parse_nematoide_when_harvest_is_tarde(
     client: TestClient,
 ) -> None:
@@ -148,6 +175,7 @@ def test_should_return_422_instead_of_ignoring_invalid_nematoide(client: TestCli
         ({**UFU, "colheita": "invalida"}, "colheita"),
         ({"lat": -91.0, "lon": UFU["lon"]}, "lat"),
         ({**UFU, "nematoide": "talvez"}, "nematoide"),
+        ({**UFU, "confirmadas": "2025-parado"}, "confirmadas"),
     ],
 )
 def test_should_answer_invalid_request_as_problem_json_with_the_invalid_field(

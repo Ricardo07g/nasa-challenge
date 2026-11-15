@@ -61,19 +61,30 @@ class NdviRecord:
 # da soja e não conta como parado, plantou nem sem certeza.
 SituacaoAno = Literal["plantou", "parado", "incerto", "sem_dado", "sem_soja"]
 
+# O que o produtor confirma numa das últimas entressafras (tarefa 0039): "Plantei" ou "Deixei
+# parado". A resposta dele vale no lugar do satélite naquele ano.
+Confirmacao = Literal["plantou", "parado"]
+CONFIRMACOES: Final[tuple[Confirmacao, ...]] = ("plantou", "parado")
+# De onde veio a situação de cada ano do histórico.
+FonteAno = Literal["satelite", "produtor"]
+PRODUCER_SOURCE: Final[str] = "produtor"
+
 
 @dataclass(frozen=True)
 class HistoricoAno:
     """Uso da entressafra de um ano pelo NDVI do MODIS (PRD 7.8).
 
     `n_obs` = observações boas da entressafra (depois da colheita da soja até 31/jul);
-    `ndvi_max` é None quando o ano fica `sem_dado` ou `sem_soja` (aí `n_obs` é 0).
+    `ndvi_max` é None quando o ano fica `sem_dado` ou `sem_soja` (aí `n_obs` é 0). No ano que o
+    produtor confirmou, `situacao` é a dele e `fonte_ano` é "produtor"; `ndvi_max` e `n_obs`
+    continuam os do satélite.
     """
 
     ano: int
     situacao: SituacaoAno
     ndvi_max: float | None
     n_obs: int
+    fonte_ano: FonteAno = "satelite"
 
 
 @dataclass(frozen=True)
@@ -81,7 +92,8 @@ class HistoricoTalhao:
     """Resumo das entressafras da janela de anos (guia do histórico NDVI, "Contrato da API").
 
     `sem_certeza` = incerto + sem_dado; `sem_soja` = anos sem a soja no verão; `total` = anos da
-    janela (parado + plantou + sem_certeza + sem_soja); `janela` = "MM-DD a MM-DD".
+    janela (parado + plantou + sem_certeza + sem_soja); `janela` = "MM-DD a MM-DD". `fonte` lista
+    os produtos do MODIS da série; sem série, só com as safras confirmadas, é "produtor".
     """
 
     anos: tuple[HistoricoAno, ...]
@@ -150,3 +162,5 @@ class Talhao:
     chuva_mensal: ChuvaMensal | None = None
     # Soja vista no ponto na safra mais recente (RF-24); None sem o arquivo ou fora da grade.
     soja_recente: SojaRecente | None = None
+    # Entressafras que o produtor pode confirmar (as últimas da janela, tarefa 0039).
+    anos_confirmaveis: tuple[int, ...] = ()

@@ -67,7 +67,8 @@ class RegrasHistoricoNdvi:
     """Histórico do talhão pelo NDVI do MODIS (PRD 7.8 e guia do histórico NDVI).
 
     `janela_inicio` e `janela_fim` são "MM-DD" (a entressafra de cada ano); os anos vão de
-    `ano_inicio` a `ano_fim`, inclusive.
+    `ano_inicio` a `ano_fim`, inclusive. O produtor pode confirmar as `anos_confirmaveis` últimas
+    entressafras (tarefa 0039): a resposta dele vale no lugar do satélite naquele ano.
     """
 
     janela_inicio: str
@@ -77,6 +78,7 @@ class RegrasHistoricoNdvi:
     min_observacoes: int
     ano_inicio: int
     ano_fim: int
+    anos_confirmaveis: int
 
 
 @dataclass(frozen=True)
@@ -225,6 +227,8 @@ class FrasesPorque:
     colheita_cedo: str
     colheita_meio: str
     colheita_tarde: str
+    # Histórico com safras confirmadas pelo produtor (tarefa 0039): {confirmadas} {vistas}
+    historico_confirmado: str
 
 
 @dataclass(frozen=True)

@@ -768,6 +768,41 @@ def test_should_not_count_years_without_soybean_in_the_history_phrase() -> None:
     )
 
 
+def test_should_use_the_producer_confirmations_in_the_history_phrase() -> None:
+    # Tarefa 0039: 2024 (satélite: plantou) e 2025 (satélite: parado) confirmados como parado e
+    # plantou, 2026 (satélite: plantou) confirmado como parado. Fica parado em 4 de 8 anos certos:
+    # 3 do produtor e 5 do satélite.
+    rec = _service(ndvi=FakeNdviRepository(PEAKS)).recommend(
+        lat=-18.95,
+        lon=-48.20,
+        colheita="meio",
+        confirmadas=[(2024, "parado"), (2025, "plantou"), (2026, "parado")],
+    )
+
+    assert _opcao(rec, "sorgo").porque[-1] == (
+        "Seu talhão ficou em pousio em 4 de 8 entressafras de 2017 a 2026 "
+        "(você confirmou 3; o satélite viu 5, pelo NDVI do MODIS)."
+    )
+
+
+def test_should_explain_the_history_from_the_confirmations_alone_without_ndvi() -> None:
+    rec = _service(ndvi=FakeNdviRepository({})).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio", lang="en", confirmadas=[(2025, "parado")]
+    )
+
+    assert _opcao(rec, "sorgo").porque[-1] == (
+        "Your field was left fallow in 1 of 1 off-seasons from 2017 to 2026 "
+        "(you confirmed 1; the satellite saw 0, with MODIS NDVI)."
+    )
+
+
+def test_should_refuse_confirmations_outside_the_last_three_off_seasons() -> None:
+    with pytest.raises(ValidationDomainError, match="2019"):
+        _service().recommend(
+            lat=-18.95, lon=-48.20, colheita="meio", confirmadas=[(2019, "plantou")]
+        )
+
+
 def test_should_write_history_with_phrase_template_from_injected_rules() -> None:
     base = load_default_rules()
     modelo = "{parado}/{anos_certos} ({sem_certeza} sem certeza de {total}; {ano_inicio}-{ano_fim})"

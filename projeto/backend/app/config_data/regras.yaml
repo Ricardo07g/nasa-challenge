@@ -129,6 +129,9 @@ historico_ndvi:
   ano_fim:
     valor: 2026
     fonte: "Decisão de 15/11/2026: a entressafra de 2026 (abril a julho) já aconteceu e entra no histórico; 10 anos, de 2017 a 2026"
+  anos_confirmaveis:
+    valor: 3
+    fonte: "Decisão de 15/11/2026: o produtor confirma o que plantou depois da soja nas 3 últimas entressafras (2024, 2025 e 2026), e a resposta dele vale no lugar do satélite naquele ano"
 
 regiao_ndvi:
   # Região pelo satélite (P3, RF-23, tarefa 0036): dentro da máscara de lavoura (MCD12Q1 classe 12)
@@ -299,6 +302,9 @@ enso:
 #   balde_smap: {anos_smap} {total} {ano_inicio} {ano_fim} {padrao_pct}
 #     (anos da série com o SMAP do dia de plantar, PRD 7.2; nos outros, o balde começa em
 #     padrao_pct% da CAD)
+#   historico_confirmado: os campos do historico mais {confirmadas} {vistas}
+#     (quando o produtor confirmou alguma das últimas safras, tarefa 0039: confirmadas = anos
+#     que ele respondeu; vistas = anos certos que vieram do satélite)
 frases:
   pt:
     seguranca: "Semeando em {data}, em {anos_aperto} dos últimos {total} anos faltou água ou fez calor de {calor_c} °C {fase} ({fonte_chuva})."
@@ -312,6 +318,7 @@ frases:
     colheita_cedo: "no começo de fevereiro"
     colheita_meio: "no meio de fevereiro"
     colheita_tarde: "no fim de fevereiro ou em março"
+    historico_confirmado: "Seu talhão ficou em pousio em {parado} de {anos_certos} entressafras de {ano_inicio} a {ano_fim} (você confirmou {confirmadas}; o satélite viu {vistas}, pelo NDVI do MODIS)."
   en:
     seguranca: "Sowing on {data}, in {anos_aperto} of the last {total} years the crop ran short of water or had {calor_c} °C heat {fase} ({fonte_chuva})."
     fase_grao: "around flowering"
@@ -324,6 +331,7 @@ frases:
     colheita_cedo: "in early February"
     colheita_meio: "in mid-February"
     colheita_tarde: "in late February or March"
+    historico_confirmado: "Your field was left fallow in {parado} of {anos_certos} off-seasons from {ano_inicio} to {ano_fim} (you confirmed {confirmadas}; the satellite saw {vistas}, with MODIS NDVI)."
 
 # Textos da linha do tempo da safra (P4 e P6), sem IA generativa. RASCUNHO: agrônoma revisar.
 #   semeadura, colheita_grao, colheita_cobertura: {opcao} (nome da opção)

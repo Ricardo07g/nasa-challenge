@@ -5,9 +5,11 @@ o talhão e cada pixel da região pelo satélite (`RegionClassifier`) usam a mes
 """
 
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import replace
 from datetime import date
 from statistics import median
+from typing import cast
 
 from app.constants import (
     EARLY_HARVEST_DOY_LIMIT,
@@ -18,13 +20,17 @@ from app.constants import (
 )
 from app.models.regras import Regras
 from app.models.talhao import (
+    CONFIRMACOES,
+    PRODUCER_SOURCE,
     ColheitaSugerida,
+    Confirmacao,
     HistoricoAno,
     HistoricoTalhao,
     NdviRecord,
     SituacaoAno,
 )
 from app.repositories.rules_repository import load_default_rules
+from app.services.errors import ValidationDomainError
 
 
 def scaled_ndvi(value: float) -> float:
@@ -58,20 +64,27 @@ class FieldHistoryService:
         self._historico = regras.historico_ndvi
         self._soja = regras.regiao_ndvi
 
-    def classify_entressafra(self, ndvi_records: Sequence[NdviRecord]) -> HistoricoTalhao:
+    def classify_entressafra(
+        self,
+        ndvi_records: Sequence[NdviRecord],
+        confirmadas: Mapping[int, Confirmacao] | None = None,
+    ) -> HistoricoTalhao:
         """Cada ano da janela: a soja do ano e a entressafra depois da colheita (tarefa 0039).
 
         As observações já chegam com qualidade 0 ou 1 (o repository descarta neve e nuvem).
         Os anos, os limites e o mínimo de observações vêm do `historico_ndvi` do `regras.yaml`;
         o pico, a colheita e o fim da entressafra, do `regiao_ndvi` (`classify_soy_year`).
+        Nos anos de `confirmadas` (já conferidas por `check_confirmations`), vale a resposta do
+        produtor, com `fonte_ano` "produtor".
         """
         regra = self._historico
+        confirmadas = confirmadas or {}
         by_year: dict[int, list[Observation]] = defaultdict(list)
         for rec in ndvi_records:
             by_year[rec.data.year].append((rec.data, rec.ndvi))
 
         anos = tuple(
-            self.classify_soy_year(ano, by_year.get(ano, []))
+            self._confirmed(self.classify_soy_year(ano, by_year.get(ano, [])), confirmadas)
             for ano in range(regra.ano_inicio, regra.ano_fim + 1)
         )
         return HistoricoTalhao(
@@ -80,10 +93,43 @@ class FieldHistoryService:
             plantou=sum(1 for a in anos if a.situacao == "plantou"),
             sem_certeza=sum(1 for a in anos if a.situacao in ("incerto", "sem_dado")),
             total=len(anos),
-            fonte=_source_label(ndvi_records),
+            fonte=_source_label(ndvi_records) if ndvi_records else PRODUCER_SOURCE,
             janela=f"{regra.janela_inicio} a {regra.janela_fim}",
             sem_soja=sum(1 for a in anos if a.situacao == "sem_soja"),
         )
+
+    def confirmable_years(self) -> tuple[int, ...]:
+        """As últimas `anos_confirmaveis` entressafras da janela (2024, 2025 e 2026)."""
+        regra = self._historico
+        return tuple(range(regra.ano_fim - regra.anos_confirmaveis + 1, regra.ano_fim + 1))
+
+    def check_confirmations(self, pairs: Iterable[tuple[int, str]]) -> dict[int, Confirmacao]:
+        """Confere as safras que o produtor confirmou: só os anos de `confirmable_years`, só
+        "plantou" ou "parado" e sem ano repetido. Fora disso, `ValidationDomainError` (422).
+        """
+        anos = self.confirmable_years()
+        confirmadas: dict[int, Confirmacao] = {}
+        for ano, valor in pairs:
+            if ano not in anos:
+                raise ValidationDomainError(
+                    f"Ano confirmado fora das últimas safras: {ano}. "
+                    f"Use {', '.join(str(a) for a in anos)}."
+                )
+            if valor not in CONFIRMACOES:
+                raise ValidationDomainError(
+                    f"Confirmação inválida para {ano}: '{valor}'. Use 'plantou' ou 'parado'."
+                )
+            if ano in confirmadas:
+                raise ValidationDomainError(f"Ano confirmado repetido: {ano}.")
+            confirmadas[ano] = cast(Confirmacao, valor)
+        return dict(sorted(confirmadas.items()))
+
+    @staticmethod
+    def _confirmed(ano: HistoricoAno, confirmadas: Mapping[int, Confirmacao]) -> HistoricoAno:
+        """O ano com a resposta do produtor no lugar do satélite, se ele confirmou."""
+        if ano.ano not in confirmadas:
+            return ano
+        return replace(ano, situacao=confirmadas[ano.ano], fonte_ano="produtor")
 
     def classify_soy_year(self, ano: int, observations: Iterable[Observation]) -> HistoricoAno:
         """Um ano do talhão: só conta como entressafra depois da soja se o pixel mostrou a soja.

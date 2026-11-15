@@ -1,6 +1,6 @@
 """Motor de recomendação: notas, rótulos, ranking, alternativas, frases e planos (PRD 7)."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
 from datetime import date
 from operator import attrgetter
@@ -30,6 +30,7 @@ from app.models.recomendacao import (
     ResultadoOpcao,
 )
 from app.models.regras import Regras, RegrasNotaFinal, RegrasRotulos, RegrasSolo
+from app.models.talhao import Confirmacao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.crop_params_repository import CropParamsRepository
 from app.repositories.ndvi_repository import NdviRepository
@@ -252,8 +253,13 @@ class RecommendationService:
         nematoide: bool | None = None,
         gado: bool | None = None,
         lang: str = "pt-BR",
+        confirmadas: Iterable[tuple[int, str]] = (),
     ) -> Recomendacao:
-        """Recomendação completa para o ponto e a faixa de colheita (PRD 7.1 a 7.7)."""
+        """Recomendação completa para o ponto e a faixa de colheita (PRD 7.1 a 7.7).
+
+        `confirmadas`: as últimas safras que o produtor confirmou (ano, "plantou" ou "parado");
+        valem no lugar do satélite em tudo o que lê o histórico do talhão (tarefa 0039).
+        """
         if colheita not in SOWING_MONTH_DAY_BY_HARVEST:
             raise ValidationDomainError(
                 f"Faixa de colheita inválida: '{colheita}'. Use 'cedo', 'meio' ou 'tarde'."
@@ -263,6 +269,7 @@ class RecommendationService:
                 f"Textura de solo inválida: '{solo_override}'. "
                 "Use 'arenoso', 'medio' ou 'argiloso'."
             )
+        confirmadas_por_ano = self._history_service.check_confirmations(confirmadas)
 
         cell_id = find_or_ingest_cell(self._climate_repo, self._ingestion_service, lat, lon)
         seasons = self._climate_repo.get_seasons(cell_id) if cell_id is not None else []
@@ -343,7 +350,7 @@ class RecommendationService:
         if frase_balde:
             # Logo depois da frase da chuva: as duas falam da mesma conta de água.
             opcoes = [replace(o, porque=(o.porque[0], frase_balde, *o.porque[1:])) for o in opcoes]
-        frase_historico = self._history_phrase(lat, lon, is_en)
+        frase_historico = self._history_phrase(lat, lon, is_en, confirmadas_por_ano)
         if frase_historico:
             opcoes = [replace(o, porque=(*o.porque, frase_historico)) for o in opcoes]
         opcoes.sort(key=lambda o: o.notas.final, reverse=True)
@@ -646,21 +653,28 @@ class RecommendationService:
             padrao_pct=f"{DEFAULT_INITIAL_ARM_FRACTION * PERCENT_DIVISOR:.0f}",
         )
 
-    def _history_phrase(self, lat: float, lon: float, is_en: bool) -> str | None:
+    def _history_phrase(
+        self, lat: float, lon: float, is_en: bool, confirmadas: Mapping[int, Confirmacao]
+    ) -> str | None:
         """Frase do histórico do talhão (PRD 7.6), a mesma em todas as opções.
 
-        Conta só os anos que o satélite viu com certeza (parado + plantou), como o cartão da
-        tela. Sem série de NDVI do ponto, ou sem nenhum ano certo, não há frase.
+        Conta só os anos certos (parado + plantou), como o cartão da tela: sem soja, incerto e
+        sem dado ficam de fora. As safras que o produtor confirmou valem no lugar do satélite e a
+        frase diz quantas foram (`historico_confirmado`). Sem série de NDVI do ponto e sem
+        confirmação, ou sem nenhum ano certo, não há frase.
         """
         serie = self._ndvi_repo.get_ndvi_history(lat, lon) if self._ndvi_repo is not None else []
-        if not serie:
+        if not serie and not confirmadas:
             return None
-        historico = self._history_service.classify_entressafra(serie)
+        historico = self._history_service.classify_entressafra(serie, confirmadas)
         anos_certos = historico.parado + historico.plantou
         if anos_certos == 0:
             return None
         janela = self._rules.historico_ndvi
-        return self._rules.frases["en" if is_en else "pt"].historico.format(
+        frases = self._rules.frases["en" if is_en else "pt"]
+        do_produtor = sum(1 for a in historico.anos if a.fonte_ano == "produtor")
+        modelo = frases.historico_confirmado if do_produtor else frases.historico
+        return modelo.format(
             parado=historico.parado,
             plantou=historico.plantou,
             anos_certos=anos_certos,
@@ -668,6 +682,8 @@ class RecommendationService:
             total=historico.total,
             ano_inicio=janela.ano_inicio,
             ano_fim=janela.ano_fim,
+            confirmadas=do_produtor,
+            vistas=anos_certos - do_produtor,
         )
 
     def _out_of_window_text(self, crop: CropParams, nome: str, colheita: str, is_en: bool) -> str:

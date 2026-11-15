@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
+from app.constants import PROBLEM_JSON_MEDIA_TYPE
 from app.dependencies import get_ndvi_repository, get_rules_repository, get_soja_recente_repository
 from app.main import app
 from app.models.regras import Regras
@@ -48,15 +49,62 @@ def test_should_return_the_full_ndvi_history_contract(client: TestClient) -> Non
         "janela": "04-01 a 07-31",
     }
     assert len(historico["anos"]) == 10
-    assert all(set(a) == {"ano", "situacao", "ndvi_max", "n_obs"} for a in historico["anos"])
+    keys = {"ano", "situacao", "ndvi_max", "n_obs", "fonte_ano"}
+    assert all(set(a) == keys for a in historico["anos"])
     assert all(a["situacao"] in SITUACOES for a in historico["anos"])
+    satelite = {"fonte_ano": "satelite"}
     assert historico["anos"][:5] == [
-        {"ano": 2017, "situacao": "plantou", "ndvi_max": 0.71, "n_obs": 3},
-        {"ano": 2018, "situacao": "sem_dado", "ndvi_max": None, "n_obs": 1},
-        {"ano": 2019, "situacao": "plantou", "ndvi_max": 0.71, "n_obs": 3},
-        {"ano": 2020, "situacao": "incerto", "ndvi_max": 0.52, "n_obs": 3},
-        {"ano": 2021, "situacao": "plantou", "ndvi_max": 0.71, "n_obs": 3},
+        {"ano": 2017, "situacao": "plantou", "ndvi_max": 0.71, "n_obs": 3, **satelite},
+        {"ano": 2018, "situacao": "sem_dado", "ndvi_max": None, "n_obs": 1, **satelite},
+        {"ano": 2019, "situacao": "plantou", "ndvi_max": 0.71, "n_obs": 3, **satelite},
+        {"ano": 2020, "situacao": "incerto", "ndvi_max": 0.52, "n_obs": 3, **satelite},
+        {"ano": 2021, "situacao": "plantou", "ndvi_max": 0.71, "n_obs": 3, **satelite},
     ]
+
+
+def test_should_apply_the_seasons_the_producer_confirmed_to_the_history(
+    client: TestClient,
+) -> None:
+    # Tarefa 0039: no NDVI de teste, 2024 é "parado" e 2025 "plantou"; o produtor diz o contrário.
+    params = {**UFU, "confirmadas": "2024:plantou,2025:parado"}
+
+    body = client.get("/api/talhao", params=params).json()
+
+    anos = {a["ano"]: a for a in body["historico"]["anos"]}
+    assert anos[2024] == {
+        "ano": 2024,
+        "situacao": "plantou",
+        "ndvi_max": 0.3,
+        "n_obs": 3,
+        "fonte_ano": "produtor",
+    }
+    assert (anos[2025]["situacao"], anos[2025]["fonte_ano"]) == ("parado", "produtor")
+    assert anos[2023]["fonte_ano"] == "satelite"
+    assert body["anos_confirmaveis"] == [2024, 2025, 2026]
+
+
+def test_should_list_the_confirmable_seasons_without_confirmations(client: TestClient) -> None:
+    body = client.get("/api/talhao", params=UFU).json()
+
+    assert body["anos_confirmaveis"] == [2024, 2025, 2026]
+    assert {a["fonte_ano"] for a in body["historico"]["anos"]} == {"satelite"}
+
+
+def test_should_refuse_a_confirmed_season_out_of_the_last_three_years(client: TestClient) -> None:
+    response = client.get("/api/talhao", params={**UFU, "confirmadas": "2020:plantou"})
+
+    assert response.status_code == 422
+    assert response.headers["content-type"] == PROBLEM_JSON_MEDIA_TYPE
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_should_refuse_confirmed_seasons_in_another_format(client: TestClient) -> None:
+    response = client.get("/api/talhao", params={**UFU, "confirmadas": "2024=plantou"})
+
+    assert response.status_code == 422
+    body = response.json()
+    assert body["code"] == "INVALID_REQUEST"
+    assert [p["name"] for p in body["invalid_params"]] == ["confirmadas"]
 
 
 def test_should_return_dentro_da_area_false_when_point_has_no_data(client: TestClient) -> None:
@@ -159,8 +207,8 @@ def test_should_read_history_and_harvest_band_from_the_ndvi_file(
     assert historico["total"] == 10
     assert historico["fonte"] == "MODIS MOD13Q1 + MYD13Q1"
     assert historico["anos"][:2] == [
-        {"ano": 2017, "situacao": "plantou", "ndvi_max": 0.74, "n_obs": 3},
-        {"ano": 2018, "situacao": "parado", "ndvi_max": 0.31, "n_obs": 3},
+        {"ano": 2017, "situacao": "plantou", "ndvi_max": 0.74, "n_obs": 3, "fonte_ano": "satelite"},
+        {"ano": 2018, "situacao": "parado", "ndvi_max": 0.31, "n_obs": 3, "fonte_ano": "satelite"},
     ]
     # Mesma série, de janeiro a março: a soja seca no dia 41 (10/fev) -> colheita "cedo"
     assert body["colheita_sugerida"] == {"faixa": "cedo", "fonte": "ndvi_modis", "anos_usados": 10}
@@ -196,6 +244,7 @@ def test_should_say_sem_soja_when_the_point_never_shows_soybean(
         "situacao": "sem_soja",
         "ndvi_max": None,
         "n_obs": 0,
+        "fonte_ano": "satelite",
     }
 
 
