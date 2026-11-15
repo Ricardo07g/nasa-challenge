@@ -77,6 +77,13 @@ describe('AnswerView (aba Sugestão, tarefa 0044)', () => {
     expect(screen.getByRole('link', { name: 'Saiba mais: Milho com braquiária' })).toHaveAttribute('href', '/guia/milho-braquiaria')
   })
 
+  it('"Se você prefere…" saiu da Sugestão: virou o ponto de partida do Comparar (tarefa 0045)', () => {
+    setup()
+
+    expect(screen.queryByRole('region', { name: 'Se você prefere…' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Se você prefere…')).not.toBeInTheDocument()
+  })
+
   it('mostra os 3 anos do plano em miniatura e o link "Explorar o plano"', () => {
     setup()
 

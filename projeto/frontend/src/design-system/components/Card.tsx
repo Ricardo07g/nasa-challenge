@@ -87,9 +87,11 @@ type AlternativeCardProps = {
   icon?: ReactNode
   /** Imagem da planta no canto (tarefa 0044). */
   media?: ReactNode
+  /** Ação no pé do cartão (ex.: "Comparar com a sugestão", aba Comparar, tarefa 0045). */
+  action?: ReactNode
 }
 
-export function AlternativeCard({ label, title, text, icon, media }: AlternativeCardProps) {
+export function AlternativeCard({ label, title, text, icon, media, action }: AlternativeCardProps) {
   return (
     <div className={styles.alternative}>
       <span className={styles.alternativeHead}>
@@ -101,6 +103,7 @@ export function AlternativeCard({ label, title, text, icon, media }: Alternative
       </span>
       <h3 className={styles.alternativeTitle}>{title}</h3>
       <p className={styles.alternativeText}>{text}</p>
+      {action}
     </div>
   )
 }

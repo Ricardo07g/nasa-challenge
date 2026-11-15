@@ -36,8 +36,10 @@ export function useAnswerNav(): AnswerNav {
     (value: Objetivo | null) => {
       const current = readFlowParams(new URLSearchParams(search))
       if (!current) return
-      // Só os parâmetros do caminho (o ano aberto no explorador fecha ao trocar o objetivo).
-      navigate(`${pathname}${buildFlowQuery({ ...current, objetivo: value ?? undefined })}`, { replace: true })
+      // Só os parâmetros do caminho (o ano aberto no explorador fecha ao trocar o objetivo). Tarefa 0045: as
+      // culturas comparadas e o plano editado saem, para o objetivo novo valer no Comparar e no Plano.
+      const next = { ...current, objetivo: value ?? undefined, comparar: undefined, plano: undefined }
+      navigate(`${pathname}${buildFlowQuery(next)}`, { replace: true })
     },
     [navigate, pathname, search],
   )

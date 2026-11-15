@@ -1,17 +1,16 @@
-import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { AlternativeCard, Card } from '../design-system/components/Card'
+import { Card } from '../design-system/components/Card'
 import { Disclosure, MiniPlan, NumberedSteps, RecommendationHero } from '../design-system/components/Content'
 import { MetricRow, StatusPill, ThirstBadge } from '../design-system/components/Status'
 import { WaterBar, YearBarsChart } from '../design-system/components/SuggestionCharts'
-import { ClimateIcon, CloseIcon, DropIcon, GrainIcon, LeafIcon, ShieldIcon, SoilIcon, SproutIcon, WarningIcon } from '../design-system/icons'
+import { ClimateIcon, CloseIcon, DropIcon, GrainIcon, SoilIcon, SproutIcon, WarningIcon } from '../design-system/icons'
 import { PlantImage } from '../design-system/plants/PlantImage'
 import type { AnswerNav } from '../controllers/useAnswerNav'
 import { formatDayMonth, formatDecimal, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { SafraPassada } from '../models/pastSeason'
-import type { AnoDetalhe, CropId, Motivo, Opcao } from '../models/recomendacao'
+import type { AnoDetalhe, CropId, Opcao } from '../models/recomendacao'
 import type { ScreenStatus } from '../models/screenStatus'
 import type { Colheita } from '../models/talhao'
 import type { RainEnd } from '../services/rainLeftService'
@@ -59,12 +58,6 @@ export type AnswerViewProps = {
   rainEnd: RainEnd | null
   planTo: string
   year: YearState
-}
-
-const MOTIVE_ICON: Record<Motivo, ReactNode> = {
-  menos_risco: <ShieldIcon />,
-  mais_renda: <GrainIcon />,
-  cuidar_da_terra: <LeafIcon />,
 }
 
 const PERCENT = 100
@@ -148,23 +141,7 @@ function Ready(props: AnswerViewProps & { suggestion: Suggestion }) {
         </div>
       </div>
       {telegramHref && <TelegramCard t={t} href={telegramHref} />}
-      {suggestion.alternatives.length > 0 && (
-        <section aria-label={t.answer.prefer} className={layout.stack}>
-          <h2 className={layout.sectionTitle}>{t.answer.prefer}</h2>
-          <div className={layout.grid}>
-            {suggestion.alternatives.map(({ motivo, option, text }) => (
-              <AlternativeCard
-                key={motivo}
-                icon={MOTIVE_ICON[motivo]}
-                label={t.motives[motivo]}
-                title={option.nome}
-                text={text}
-                media={<Plant t={t} crop={option.id} size={52} />}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Tarefa 0045: "Se você prefere…" virou o ponto de partida da aba Comparar. */}
       <p className={layout.muted}>{sampleData ? `${t.common.sampleValues} ${aviso}` : aviso}</p>
     </>
   )

@@ -133,7 +133,8 @@ describe('rotas', () => {
     await userEvent.click(await screen.findByRole('link', { name: 'Comparar' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Comparar' })).toBeInTheDocument()
-    expect(await screen.findByRole('article', { name: 'Milho com braquiária' })).toBeInTheDocument()
+    // Tarefa 0045: as 3 melhores do objetivo lado a lado, numa tabela.
+    expect(await screen.findByRole('table', { name: /Lado a lado: Crotalária/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Comparar' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('button', { name: 'Cuidar da terra' })).toHaveAttribute('aria-pressed', 'true')
     expect(document.title).toBe('Raiz Orbital – Comparar')
