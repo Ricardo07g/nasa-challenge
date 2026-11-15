@@ -24,7 +24,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | --- | --- | --- | --- | --- | --- |
 | S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | ✅ na branch (15/11 ~03:20), revisada |
 | S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | feito na branch `feat/remodelagem-s8-guia` (19 artigos em pt e en; faltam 7 do tema, ver a tarefa 0048) |
-| S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | feita na branch `feat/remodelagem-s2-onde` (falta o merge em `feat/remodelagem` e a revisão); `GET /api/area-piloto` novo |
+| S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | ✅ na branch (15/11 ~04:00), revisada |
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | a fazer |
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | a fazer |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | a fazer |
@@ -74,6 +74,15 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D30 | 15/11 | No modo `mock` (e nos testes), a busca e o endereço aproximado são de exemplo (6 cidades, sem rede), escolhidos em `repositories/index.ts` como os outros dados. | Nenhum teste pode chamar o Photon de verdade, e as telas abertas nos testes de rota usam os repositories padrão. |
 
 ## Revisão por seção
+
+### S2 — Onde fica a lavoura (revisada em 15/11 ~04:05)
+
+- ✅ Busca "Buscar cidade, estrada ou endereço" com autocompletar pelo Photon (espera de 400 ms, uma busca por vez, mínimo de 3 letras), lista acessível e "© OpenStreetMap" visível.
+- ✅ Coordenadas e link do Google Maps colados (31 casos testados: `!3d!4d`, `q=`, `ll=`, `/search/`, `@lat,lon`); link curto pede o link completo.
+- ✅ "Usar onde estou agora" e o arrastar do mapa continuam; "Confirmar local" com ícone de pin; endereço aproximado perto do pin (no ambiente de revisão, com o Photon de verdade: "Perto de Fazenda Maria Dória, Uberlândia, Minas Gerais").
+- ✅ Limite da área piloto tracejado no mapa, vindo de `GET /api/area-piloto` (fonte única: `PILOT_*` do backend); ponto fora (Rio Verde) bloqueia o botão com "Por enquanto só temos dados da região de Uberlândia e Uberaba."
+- ✅ Conferido em 1280 e 390 px.
+- ⚠️ Privacidade: o texto buscado e o ponto do pin vão para o Photon (komoot). Está no RNF-07 do PRD.
 
 ### S1 — Renda sem reais e sem "Ainda não conectado" (revisada em 15/11 ~03:25)
 
