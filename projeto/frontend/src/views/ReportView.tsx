@@ -139,7 +139,7 @@ function Sheet({ t, lang, talhao, recomendacao: rec, example, place, today }: Re
           {t.signal[signal.nivel]}
         </ToneBadge>
         <p>{signal.motivo}</p>
-        <p>{t.plan.signalSource(formatDayMonth(lang, signal.data))}</p>
+        <p>{t.plan.signalSource(signal.fonte[0] ?? '', formatDayMonth(lang, signal.data))}</p>
       </>
     ) : (
       notConnected

@@ -173,7 +173,7 @@ export function scoreRows(recomendacao: Recomendacao): { id: CropId; nome: strin
 }
 
 /** RF-20: o sinal de ano seco já marca o Plano B; normal, incerto ou sem sinal marcam o Plano A. */
-export function initialScenario(sinal: SinalOutono | undefined): PlanScenario {
+export function initialScenario(sinal: SinalOutono | null | undefined): PlanScenario {
   return sinal?.nivel === 'seco' ? 'seco' : 'normal'
 }
 

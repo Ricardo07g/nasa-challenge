@@ -99,7 +99,21 @@ function Ready(props: PlanViewProps & { plan: Plan }) {
                 {t.signal[signal.nivel]}
               </ToneBadge>
               <p>{signal.motivo}</p>
-              <p className={layout.muted}>{p.signalSource(formatDayMonth(lang, signal.data))}</p>
+              {signal.nivel !== 'incerto' && (
+                <p>
+                  <strong>{p.signalMarks(signal.nivel === 'seco' ? p.planB : p.planA)}</strong>
+                </p>
+              )}
+              <p className={layout.muted}>{p.signalSource(signal.fonte[0] ?? '', formatDayMonth(lang, signal.data))}</p>
+              {signal.smap_agora && (
+                <>
+                  <p className={layout.iconLine}>
+                    <DropIcon />
+                    {signal.smap_agora.texto}
+                  </p>
+                  <p className={layout.muted}>{p.smapNote}</p>
+                </>
+              )}
             </>
           ) : (
             <NotConnected label={t.common.notConnected} />
@@ -171,7 +185,8 @@ function Ready(props: PlanViewProps & { plan: Plan }) {
             <CalendarIcon />
             <strong>{ruleText}</strong>
           </p>
-          <p className={layout.muted}>{p.rootWater}</p>
+          {/* A regra da data (tarefa 0038) é pela chuva; sem ela, a regra do dia de plantar é pela terra. */}
+          <p className={layout.muted}>{signal?.regra_data ? p.rainRuleNote : p.rootWater}</p>
         </Card>
       )}
       <div className={layout.cta}>

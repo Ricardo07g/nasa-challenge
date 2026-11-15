@@ -53,14 +53,34 @@ export type Plano = { anos: CropId[]; nota: number; descricao: string }
 
 export type NivelSinal = 'normal' | 'seco' | 'incerto'
 
-/** Sinal para o outono (RF-20, PRD §7.10): GEOS-S2S + SMAP + IMERG. Chance, nunca certeza. */
+/** Regra da data (tarefa 0038): chuva de `inicio` à véspera de `data_limite` abaixo de `chuva_min_mm` → Plano B. */
+export type RegraData = {
+  data_limite: string
+  inicio: string
+  dias: number
+  chuva_min_mm: number
+  /** Média desses dias na série de chuva guardada da célula. */
+  media_mm: number
+}
+
+/** A umidade da terra agora pelo SMAP (tarefa 0038): só informa, não decide o plano. */
+export type SmapAgora = { percentil: number; data: string; texto: string }
+
+/**
+ * Sinal para o outono (RF-20, tarefa 0038): previsão do El Niño / La Niña da NOAA + como a opção do 1º ano do
+ * Plano A se saiu nos anos daquela fase. Chance, nunca certeza.
+ */
 export type SinalOutono = {
   nivel: NivelSinal
   motivo: string
+  /** Fontes usadas; a 1ª é a da previsão do ENSO (ex.: "NOAA"). */
   fonte: string[]
-  /** Data da previsão usada (ISO). */
+  /** Dia em que a previsão do ENSO foi publicada (ISO). */
   data: string
+  /** Com a série de chuva, o texto é a regra da data. */
   regra_dia_plantar: { data_limite: string; texto: string }
+  regra_data?: RegraData | null
+  smap_agora?: SmapAgora | null
 }
 
 export type Recomendacao = {
@@ -80,8 +100,8 @@ export type Recomendacao = {
   plano_3_anos: { normal: Plano; seco: Plano; hoje: Plano }
   versao_dados: string
   aviso: string
-  /** RF-20: ainda não vem da API (contrato proposto); só os dados de exemplo trazem. */
-  sinal?: SinalOutono
+  /** RF-20: null (ou ausente) sem a previsão do ENSO na API: a tela mostra "Ainda não conectado". */
+  sinal?: SinalOutono | null
 }
 
 export type RecomendacaoParams = {

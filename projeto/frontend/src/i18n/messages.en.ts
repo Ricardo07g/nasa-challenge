@@ -270,7 +270,9 @@ export const en = {
     subtitle: 'What to plant after soybeans, one year at a time.',
     timelineLabel: 'Plan year by year',
     signalTitle: (year: number) => `Signal for autumn ${year}`,
-    signalSource: (date: string) => `NASA outlook (GEOS-S2S) and soil moisture (SMAP), updated on ${date}.`,
+    signalSource: (source: string, date: string) => `El Niño and La Niña chances published by ${source} on ${date}.`,
+    signalMarks: (plan: string) => `The signal marks ${plan}.`,
+    smapNote: 'Current soil moisture is for information only: it does not change the plan.',
     planChoice: 'Which plan to follow',
     planA: 'Plan A',
     planB: 'Plan B, if it dries',
@@ -279,6 +281,7 @@ export const en = {
     plantingRule: (date: string, planA: string, planB: string) =>
       `On sowing day (by ${date}), if the soil is dry, use plan B: ${planB} instead of ${planA}.`,
     rootWater: 'The satellite measures water around the roots. You do not need to guess.',
+    rainRuleNote: 'Measure the rain with your rain gauge. The average comes from the satellite rain series at your point.',
     withPlan: 'With the plan',
     today: 'How it is today',
     coveredAll: (total: number) => `Soil covered in all ${total} years`,
