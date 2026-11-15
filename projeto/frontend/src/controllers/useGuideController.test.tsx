@@ -197,7 +197,7 @@ describe('useGuideArticleController (artigo, tela 8)', () => {
     expect(field.fact).toHaveBeenCalledWith('como-evitar-erosao', { lat: -18.9543, lon: -48.1993 }, 'pt')
     expect(result.current.field).toEqual({
       place: 'Sua lavoura, perto de Uberlândia (MG)',
-      text: 'Em 20 anos, houve 5 dias com 50 mm ou mais de chuva em fevereiro e março: em média, 0,25 dia por ano.',
+      text: 'Em 20 anos, houve 5 dias de chuva forte em fevereiro e março: em média, 0,25 dia por ano.',
       source: 'Fonte: GPM IMERG (NASA), 20 anos',
     })
   })
@@ -256,7 +256,7 @@ describe('useGuideArticleController (artigo, tela 8)', () => {
     await waitFor(() => expect(result.current.field).not.toBeNull())
     act(() => result.current.listen.toggle())
     expect(s.speak).toHaveBeenCalledWith(
-      'Como evitar erosão. Erosão é a chuva levando a terra. Na sua lavoura, perto de Uberlândia (MG): Em 20 anos, houve 5 dias com 50 mm ou mais de chuva em fevereiro e março: em média, 0,25 dia por ano.',
+      'Como evitar erosão. Erosão é a chuva levando a terra. Na sua lavoura, perto de Uberlândia (MG): Em 20 anos, houve 5 dias de chuva forte em fevereiro e março: em média, 0,25 dia por ano.',
       'pt',
       expect.any(Function),
     )

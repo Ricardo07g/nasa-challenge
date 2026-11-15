@@ -124,7 +124,7 @@ describe('Guia (tela 8): artigo', () => {
 
     const box = await screen.findByRole('note')
     expect(box).toHaveTextContent('Sua lavoura, perto de Uberlândia (MG)')
-    expect(box).toHaveTextContent('Em 20 anos, houve 6 dias com 50 mm ou mais de chuva em fevereiro e março')
+    expect(box).toHaveTextContent('Em 20 anos, houve 6 dias de chuva forte em fevereiro e março')
     expect(screen.getByRole('link', { name: 'Voltar ao Guia' })).toHaveAttribute('href', '/guia?lat=-18.9543&lon=-48.1993')
   })
 

@@ -287,8 +287,10 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
     ponto, sem dado ou com falha, a caixa não aparece. Só os artigos de `FIELD_SLUGS` pedem o raio-X: erosão (dias
     de chuva forte), veranico (o maior), calor de 35 °C (anos com o dia), clima de 2041 a 2060 (média dos modelos) e
     raio-X (argila e areia do SoilGrids, umidade do SMAP e chuva média). **Nada que dependa de hipótese do time**
-    (geada de 3 °C, fogo a 5 km, água por textura, fim das chuvas) e nenhuma frase de recomendação. O "Ouvir" do
-    artigo lê o título, o "Em uma frase" e o número da caixa.
+    (geada de 3 °C, fogo a 5 km, água por textura, fim das chuvas) e nenhuma frase de recomendação. **A frase não traz
+    o limite da conta** (os mm da chuva forte, os °C do calor): "13 dias de chuva forte em fevereiro e março", "dia de
+    calor forte entre março e maio" (em inglês, "heavy rain" e "strong heat"). O número do ponto (dias, anos) continua;
+    quem escolhe o limite é a conta, não a frase. O "Ouvir" do artigo lê o título, o "Em uma frase" e o número da caixa.
 - **Endereço aproximado (serviço externo, tela "Onde fica a lavoura", tarefas 0041 e 0053, RF-01):** instância
   pública do **Photon** (komoot, `https://photon.komoot.io`, dados do OpenStreetMap), **sem chave e sem cadastro**:
   nada de token nem variável `VITE_*` para ela. Desde a tarefa 0053 só a busca **reversa** (`/reverse`, o "Perto

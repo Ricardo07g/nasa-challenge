@@ -1707,15 +1707,15 @@ export const pt = {
       /** O que o "Ouvir resumo" do artigo acrescenta ao "Em uma frase". */
       spoken: (place: string, text: string) => `Na sua lavoura, perto de ${place}: ${text}`,
       source: (source: string) => `Fonte: ${source}`,
-      heavyRain: (total: number, days: number, limit: string, mean: string) =>
-        `Em ${total} anos, houve ${days} dias com ${limit} mm ou mais de chuva em fevereiro e março: em média, ${mean} dia por ano.`,
+      /** Sem o limite da conta na frase (mm, °C): quem escolhe o limite é a conta, não a frase. */
+      heavyRain: (total: number, days: number, mean: string) =>
+        `Em ${total} anos, houve ${days} dias de chuva forte em fevereiro e março: em média, ${mean} dia por ano.`,
       dryspell: (total: number, days: number, start: string, year: number) =>
         `O maior veranico de março a maio em ${total} anos foi de ${days} dias seguidos sem chuva, a partir de ${start} de ${year}.`,
-      heatNone: (total: number, temp: string) => `Em ${total} anos, nenhum teve dia de ${temp} °C ou mais entre março e maio.`,
-      heatOne: (total: number, year: string, temp: string) =>
-        `Em ${total} anos, só 1 (${year}) teve dia de ${temp} °C ou mais entre março e maio.`,
-      heatMany: (total: number, count: number, years: string, temp: string) =>
-        `Em ${total} anos, ${count} (${years}) tiveram dia de ${temp} °C ou mais entre março e maio.`,
+      heatNone: (total: number) => `Em ${total} anos, nenhum teve dia de calor forte entre março e maio.`,
+      heatOne: (total: number, year: string) => `Em ${total} anos, só 1 (${year}) teve dia de calor forte entre março e maio.`,
+      heatMany: (total: number, count: number, years: string) =>
+        `Em ${total} anos, ${count} (${years}) tiveram dia de calor forte entre março e maio.`,
       future: (models: number, rain: string, heat: string) =>
         `Para 2041 a 2060, a média de ${models} modelos indica chuva de março a maio ${rain}% e máxima ${heat} °C.`,
       xraySoil: (clay: string, sand: string) => `A terra tem ${clay}% de argila e ${sand}% de areia.`,
