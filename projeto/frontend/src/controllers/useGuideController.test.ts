@@ -34,7 +34,7 @@ describe('Guia: "Ouvir resumo" (regra geral 9 do pacote 2)', () => {
     act(() => result.current.setQuery('vera'))
     act(() => result.current.listen.toggle())
     expect(s.speak).toHaveBeenCalledWith(
-      'O Guia tem 2 artigos curtos sobre culturas, plantio, terra, clima e segurança. Busque pelo título ou toque num artigo para ler. Os de cultura e de plantio ainda são rascunho, a revisar pela agrônoma.',
+      'O Guia tem 2 artigos curtos sobre culturas, plantio, terra, clima e segurança. Busque pelo título ou toque num artigo para ler.',
       'pt',
       expect.any(Function),
     )

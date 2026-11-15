@@ -7,24 +7,21 @@ rascunho: nao
 
 ## Em uma frase
 
-Veranico é um período de dias seguidos sem chuva no meio da época das chuvas.
+Veranico é um período de **dias seguidos sem chuva** no meio da época das chuvas.
 
 ## Por que importa
 
-O total de chuva do ano pode ser bom e, mesmo assim, uma pausa na hora errada faz a planta sofrer. O veranico prejudica a lavoura.
+No Cerrado, um estudo com 100 estações de chuva, cada uma com 20 anos ou mais de dados, mapeou veranicos de 10, 15 e 20 dias e os tratou como um limite climático crítico para a lavoura sem irrigação. O total de chuva do ano pode ser bom e, mesmo assim, uma pausa na hora errada faz a planta sofrer.
 
 ## Na sua lavoura
 
-O app conta como dia seco o dia com menos de 1 mm de chuva. Ele avisa de veranico quando acha 10 dias secos ou mais na fase crítica da cultura.
+O app conta os dias secos seguidos, com a chuva do satélite GPM IMERG, e avisa de veranico quando acha muitos deles na fase mais delicada da cultura.
 
-A chuva vem do satélite GPM IMERG. Dia sem chuva não é falta de água na hora: a terra guarda água, e o app faz essa conta no balde. Veja [A conta de água da lavoura](/guia/conta-de-agua).
+Dia sem chuva não é falta de água na hora: a terra guarda água, e o app faz essa conta no balde. Veja [A conta de água da lavoura](/guia/conta-de-agua).
 
 O que fazer? O [Plano de 3 anos](/plano) traz o Plano B, uma alternativa se o outono vier seco. Em [Avisos](/avisos), você vê os alertas da sua área.
 
-O limite de 10 dias é do plano de evolução do produto. O de 1 mm é hipótese do time, a revisar pela agrônoma.
-
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
-- [Embrapa: veranicos são curtos períodos de estiagem na época de chuvas](https://www.embrapa.br/en/busca-de-noticias/-/noticia/43736399/soja-tolerante-a-veranicos-e-lancada-na-bahia)
-- [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)
+- [Assad et al. (1993), Pesquisa Agropecuária Brasileira: veranicos no Cerrado](https://doi.org/10.1590/S1678-3921.pab1993.v28.3962)
+- [Huffman et al. (2020), livro Satellite Precipitation Measurement (Springer): capítulo do IMERG](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)

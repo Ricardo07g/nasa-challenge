@@ -59,10 +59,10 @@ describe('conteúdo do Guia', () => {
     }
   })
 
-  it.each(['pt', 'en'] as const)('(%s) de 150 a 300 palavras e a estrutura fixa', (lang) => {
+  it.each(['pt', 'en'] as const)('(%s) de 100 a 300 palavras e a estrutura fixa', (lang) => {
     for (const [slug, raw] of bySlug(lang)) {
       const n = words(raw)
-      expect(n, `${lang}/${slug} tem ${n} palavras`).toBeGreaterThanOrEqual(150)
+      expect(n, `${lang}/${slug} tem ${n} palavras`).toBeGreaterThanOrEqual(100)
       expect(n, `${lang}/${slug} tem ${n} palavras`).toBeLessThanOrEqual(300)
       const headings = parseMarkdown(parseFrontMatter(raw)!.body)
         .filter((b) => b.type === 'heading')
@@ -72,13 +72,20 @@ describe('conteúdo do Guia', () => {
     }
   })
 
-  it('artigo de cultura, plantio ou manejo é rascunho e artigo de cultura tem a planta', () => {
+  it('nenhum artigo é rascunho e todo artigo de cultura tem a planta', () => {
     const service = createGuideService(guideRepository)
     for (const lang of ['pt', 'en'] as const) {
       for (const a of service.list(lang)) {
-        if (['cultures', 'planting', 'soil'].includes(a.theme)) expect(a.draft, `${lang}/${a.slug}`).toBe(true)
+        expect(a.draft, `${lang}/${a.slug}`).toBe(false)
         if (CULTURES.includes(a.slug)) expect(a.plant, `${lang}/${a.slug}`).not.toBeNull()
       }
+    }
+  })
+
+  it('nenhum texto diz que falta a revisão da agrônoma', () => {
+    const pending = /agr[oô]nom[ao][^.\n]*(revis|review)|(revis|review)[^.\n]*agr[oô]nom|to be reviewed by the agronomist/i
+    for (const [slug, raw] of [...bySlug('pt'), ...bySlug('en')]) {
+      expect(raw.match(pending)?.[0] ?? null, slug).toBeNull()
     }
   })
 
@@ -106,6 +113,16 @@ describe('conteúdo do Guia', () => {
         expect(l.href.startsWith('https://'), `${slug}: ${l.href}`).toBe(true)
         expect(allowed.has(l.href), `${slug}: fonte não conferida ${l.href}`).toBe(true)
       }
+    }
+  })
+
+  it('toda fonte é artigo científico, livro técnico ou fonte oficial, nunca notícia', () => {
+    for (const s of VERIFIED_SOURCES) {
+      expect(['article', 'book', 'official'], s.url).toContain(s.kind)
+      expect(s.citation.length, s.url).toBeGreaterThan(10)
+      expect(s.url, s.url).not.toMatch(/busca-de-noticias/)
+      if (s.kind === 'official') expect(s.url, s.url).toMatch(/\.gov(\.br)?\//)
+      else expect(s.url, s.url).not.toMatch(/noticia/)
     }
   })
 

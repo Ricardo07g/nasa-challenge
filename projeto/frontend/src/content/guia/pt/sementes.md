@@ -2,12 +2,12 @@
 titulo: Sementes: o que olhar antes de comprar
 tema: plantar
 slug: sementes
-rascunho: sim
+rascunho: nao
 ---
 
 ## Em uma frase
 
-Semente boa e legal é o começo da lavoura: confira de quem você compra e o que vem escrito na embalagem.
+Semente boa e legal é o começo da lavoura: confira **de quem você compra** e o que vem escrito na embalagem.
 
 ## Por que importa
 
@@ -22,7 +22,11 @@ A lei de sementes do Brasil (Lei 10.711, de 2003) dá algumas regras que ajudam 
 
 ## Na sua lavoura
 
-Antes de pagar, leia o rótulo e pergunte ao vendedor a germinação e o vigor do lote. Pergunte também se a semente vem tratada e com o quê.
+Antes de pagar:
+
+- **Leia o rótulo.**
+- **Pergunte** ao vendedor a germinação e o vigor do lote.
+- **Pergunte** se a semente vem tratada e com o quê.
 
 A quantidade de semente por hectare, a variedade e o tratamento ficam com o seu agrônomo. O app não recomenda variedade nem dose.
 

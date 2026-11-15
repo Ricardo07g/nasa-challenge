@@ -68,7 +68,7 @@ export function WhyModal({ t, lang, state, choose }: ModalProps) {
             <h3 id="por-que-como" className={styles.blockTitle}>
               {c.why.how}
             </h3>
-            <p className={styles.draft}>{t.suggestion.how.draft}</p>
+            <p className={styles.howNote}>{t.suggestion.how.note}</p>
             <NumberedSteps steps={option.como_fazer} />
           </section>
         )}

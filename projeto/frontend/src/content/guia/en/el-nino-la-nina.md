@@ -7,23 +7,23 @@ rascunho: nao
 
 ## In one sentence
 
-El Niño and La Niña are phases when the Pacific Ocean is warmer or colder than normal.
+El Niño and La Niña are phases when the **Pacific Ocean** is warmer or colder than normal.
 
 ## Why it matters
 
-These phases can change the rain in many regions. The app only reports each year's phase. It does not enter the score math.
+The app only reports each year's phase. It does not enter the score math and is not treated as a drought forecast.
 
 ## In your field
 
-The phase is measured by NOAA, in the United States, not by NASA. The measure is the ONI: sea temperature in a region of the Pacific, as a 3-month average. The app uses +0.5 °C or more for El Niño and -0.5 °C or less for La Niña.
+The phase is measured by NOAA, in the United States, not by NASA. The measure is the ONI: the sea temperature anomaly in the Niño 3.4 region, as a 3-month average. NOAA uses:
 
-For each second crop, the app averages the ONI from December to April (DJF, JFM and FMA) and puts a mark on the year, in the [Suggestion](/resposta).
+- **El Niño:** **+0.5 °C** or more.
+- **La Niña:** **-0.5 °C** or less.
 
-The autumn signal uses NOAA's forecast and looks at how the first-year option did in years of the same phase. That is a team hypothesis. See the signal in the [3-year plan](/plano).
+For a phase to count, it must last at least 5 seasons in a row.
 
-There is no simple "El Niño equals drought" rule. That is why the mark is only a heads-up.
+The app puts a mark on each second-crop year, in the [Suggestion](/resposta), and shows NOAA's forecast as an autumn signal in the [3-year plan](/plano).
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
-- [NOAA: ONI index of El Niño and La Niña](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)
+- [NOAA: El Niño and La Niña ONI index (official definition)](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)

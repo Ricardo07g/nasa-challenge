@@ -3,7 +3,9 @@ import type { ListenSummaryState } from '../controllers/useListenSummary'
 import { BackButton } from '../design-system/components/BackButton'
 import { ListenSummary } from '../design-system/components/ListenSummary'
 import { PageHeading } from '../design-system/components/Content'
-import { PlantImage } from '../design-system/plants/PlantImage'
+import { PlantPhoto } from '../design-system/components/PlantPhoto'
+import { plantPhotoProps } from '../content/plantPhotos'
+import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { GuideArticle } from '../models/guide'
 import type { GuideGroup } from '../services/guideService'
@@ -56,7 +58,6 @@ export function GuideView({ t, backTo, groups, query, onQuery, count, listen }: 
                 <li key={article.slug} className={styles.item}>
                   <Link to={`/guia/${article.slug}`} className={styles.link}>
                     {article.title}
-                    {article.draft && <span className={styles.badge}>{g.draftBadge}</span>}
                   </Link>
                 </li>
               ))}
@@ -126,15 +127,24 @@ function Blocks({ blocks }: { blocks: Block[] }) {
 }
 
 /** Um artigo: texto puro no DOM (o "Ouvir" lê o que está no main). */
-export function GuideArticleView({ t, article, listen }: { t: Messages; article: GuideArticle | null; listen: ListenSummaryState }) {
+export function GuideArticleView({
+  t,
+  lang,
+  article,
+  listen,
+}: {
+  t: Messages
+  lang: Lang
+  article: GuideArticle | null
+  listen: ListenSummaryState
+}) {
   const g = t.guide
   return (
     <div className={layout.page}>
       <BackButton to="/guia">{g.back}</BackButton>
       {article ? (
         <article className={styles.article}>
-          {article.draft && <p className={styles.draftNote}>{g.draft}</p>}
-          {article.plant && <PlantImage plant={article.plant} label={g.plantAlt(g.plants[article.plant])} />}
+          {article.plant && <PlantPhoto {...plantPhotoProps(article.plant, lang)} height={200} />}
           <h1 className={layout.sectionTitle}>{article.title}</h1>
           <ListenSummary
             supported={listen.supported}

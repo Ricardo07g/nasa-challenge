@@ -529,7 +529,7 @@ export const pt = {
       xray: 'como ler o raio-X da sua terra',
       rain: 'quando a chuva acaba',
       dryspell: 'veranico',
-      heat: 'calor de 35 °C na floração',
+      heat: 'calor na floração',
     },
     textures: { arenoso: 'arenosa', medio: 'média', argiloso: 'argilosa' },
     eyebrow: 'Raio-X da sua terra',
@@ -848,7 +848,7 @@ export const pt = {
         `Calor: em nenhum dos ${total} anos fez ${temp} °C em ${days} dias ou mais nessa fase.`,
       watchRainEnd: (date: string) => `Fim das chuvas: em metade dos anos, a chuva acabou até ${date}.`,
       manage: 'Manejo',
-      draft: 'Rascunho: a revisar pela agrônoma.',
+      note: 'Passos gerais: dose de semente e manejo, combine com o seu agrônomo.',
       fullGuide: 'Passo a passo completo',
     },
     late: {
@@ -1109,7 +1109,7 @@ export const pt = {
       futureSource: 'NEX-GDDP-CMIP6 (NASA), cenário SSP2-4.5, média dos modelos.',
       incomeText:
         '"Dá grão" quer dizer que há o que vender. O risco é em quantos dos 20 anos faltou água ou fez calor na fase que mais precisa. Sem valores em reais.',
-      soilText: 'Palhada, nitrogênio e o ciclo do nematoide. Rascunho: a revisar pela agrônoma.',
+      soilText: 'Palhada, nitrogênio e o ciclo do nematoide. Os pontos da nota são hipótese do time, ainda não validada em campo.',
       deadlineOk: (limit: string, harvest: string) =>
         `Pelo ZARC (Ministério da Agricultura), o plantio vai até ${limit}. Plantando em ${harvest}, logo depois de colher a soja, dá tempo.`,
       deadlineLate: (limit: string, harvest: string) =>
@@ -1423,11 +1423,11 @@ export const pt = {
       `A chuva vem em quadrados de cerca de ${km} km, não do seu talhão: seu pluviômetro vale mais.`,
     blindRainGeneric: 'A chuva vem de quadrados de vários quilômetros, não do seu talhão: seu pluviômetro vale mais.',
     blindRest:
-      'O clima de 2041 a 2060 é uma faixa entre modelos, não uma previsão. Os limites ainda serão ajustados com agrônomos da região.',
+      'O clima de 2041 a 2060 é uma faixa entre modelos, não uma previsão. Os limites usados na conta são hipótese do time e ainda não foram validados em campo.',
     /** Tarefa 0049: as regras novas, com os números do regras.yaml (`GET /api/metodo`), nunca fixos aqui. */
     rules: {
       title: 'As regras da conta',
-      intro: 'Cada número abaixo vem do arquivo de regras do motor (regras.yaml). Os marcados como hipótese do time ainda serão revistos pela agrônoma.',
+      intro: 'Cada número abaixo vem do arquivo de regras do motor (regras.yaml). Os marcados como hipótese do time ainda não foram validados em campo.',
       worked: (grain: string, days: string, cover: string, coverDays: string, temp: string, heatDays: string) =>
         `Deu certo: a planta teve pelo menos ${grain}% da água que precisava na fase em que mais precisa (a floração, ${days} dias antes e depois; nas plantas de cobertura, ${cover}% nos primeiros ${coverDays} dias) e não fez ${temp} °C em ${heatDays} dias ou mais nessa fase.`,
       weights: (safety: string, future: string, soil: string, income: string) =>
@@ -1488,7 +1488,7 @@ export const pt = {
   guide: {
     /** "Ouvir resumo" (regra geral 9 do pacote 2) da página inicial; o do artigo é o título e o "Em uma frase". */
     summary: (count: number) =>
-      `O Guia tem ${count} artigos curtos sobre culturas, plantio, terra, clima e segurança. Busque pelo título ou toque num artigo para ler. Os de cultura e de plantio ainda são rascunho, a revisar pela agrônoma.`,
+      `O Guia tem ${count} artigos curtos sobre culturas, plantio, terra, clima e segurança. Busque pelo título ou toque num artigo para ler.`,
     title: 'Guia',
     subtitle: 'Respostas curtas para as dúvidas mais comuns da lavoura.',
     /** Tarefa 0051 (RF-35): a área do MVP, na página inicial do Guia (os artigos não mudam). */
@@ -1500,8 +1500,6 @@ export const pt = {
     noResults: 'Nenhum artigo com esse título.',
     back: 'Voltar ao Guia',
     notFound: 'Não achamos esse artigo.',
-    draft: 'Rascunho: a revisar pela agrônoma.',
-    draftBadge: 'Rascunho',
     plantAlt: (name: string) => `Desenho de ${name}`,
     themes: {
       cultures: 'Culturas',

@@ -2,31 +2,28 @@
 titulo: Frost in the second crop
 tema: seguranca
 slug: geada-na-safrinha
-rascunho: sim
+rascunho: nao
 ---
 
 ## In one sentence
 
-A June frost can hurt second-crop corn that is still filling grain.
+**Frost** can cut second-crop corn yield sharply when it hits the plant near flowering or early in grain filling.
 
 ## Why it matters
 
-The later you plant, the later the sensitive phase arrives. Corn sown late meets the winter cold while still forming.
+According to Embrapa's question-and-answer book on corn, frost risk grows toward the south of the country from late May. The damage depends on the plant's phase, the cold and how long it lasts: frost does little harm to plants with up to about five leaves, or near maturity. In some high areas of Paraná, frost risk even rules out the second crop.
 
 ## In your field
 
-According to Embrapa, in June corn is in a sensitive phase and frost can hurt grain filling. Super-early hybrids had already formed the grain and tend to lose less.
-
 What helps:
 
-- Sowing within the deadline. See [the planting deadline and ZARC](/guia/prazo-de-plantio-zarc).
-- Staggering the sowing, as the soybean harvest advances. That way frost does not catch everything at once.
+- **Sowing within the deadline.** Sowing late raises the chance of losses. See [the planting deadline and ZARC](/guia/prazo-de-plantio-zarc).
 
-In the app, the [Suggestion](/resposta) shows until when to sow. The [What the satellite saw](/satelite) screen shows the alerts for your area.
+In the app, the [Suggestion](/resposta) warns when a crop is past its deadline. The [What the satellite saw](/satelite) screen shows the alerts for your area.
 
 Which cultivar to choose for your cold is up to your agronomist.
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
-- [Embrapa: frost in second-crop corn and staggered sowing](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
+- [Embrapa Milho e Sorgo (2011), book O produtor pergunta, a Embrapa responde: second-crop corn chapter](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/927317/1/Milhosafrinha.pdf)
+- [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
