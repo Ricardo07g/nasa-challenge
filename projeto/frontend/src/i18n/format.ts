@@ -44,6 +44,17 @@ function shortMonth(lang: Lang, isoDate: string): string {
     .replace('.', '')
 }
 
+/** Mês curto, sem o ponto do português: "fev" / "Feb". */
+export function formatShortMonth(lang: Lang, isoDate: string): string {
+  return shortMonth(lang, isoDate)
+}
+
+/** Faixa de meses da linha do tempo (tela 6): "abr–mai" / "Apr–May"; no mesmo mês e ano, só "jun". */
+export function formatMonthRange(lang: Lang, from: string, to: string): string {
+  const start = shortMonth(lang, from)
+  return from.slice(0, 7) === to.slice(0, 7) ? start : `${start}–${shortMonth(lang, to)}`
+}
+
 /** Mês do calendário do cartão "Dia da colheita" (tela 2): "MAR" / "FEB", sem depender do fuso. */
 export function formatCalendarMonth(lang: Lang, isoDate: string): string {
   return shortMonth(lang, isoDate).toUpperCase()
