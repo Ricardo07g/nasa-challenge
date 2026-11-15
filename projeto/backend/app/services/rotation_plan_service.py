@@ -93,24 +93,6 @@ class RotationPlanService:
             filter_nematode and not suppressors & set(seq)
         )
 
-    def best_plan_starting_with(
-        self,
-        first: str,
-        opcoes: list[ResultadoOpcao],
-        pousio: NotasOpcao,
-        axis: Callable[[NotasOpcao], float] | None = None,
-        nematoide: bool | None = None,
-        allow_fallow: bool = True,
-    ) -> Sequence:
-        """Melhor plano de 3 anos cujo 1º ano é `first` (tarefa 0044: a sugestão é o ano 1).
-
-        É o `best_plan_with_prefix` com só o 1º ano fixo e sem as regras da cadeia (o plano de cada
-        objetivo e o Plano A do `/recomendacao` continuam os da tarefa 0044).
-        """
-        return self.best_plan_with_prefix(
-            (first,), opcoes, pousio, axis=axis, nematoide=nematoide, allow_fallow=allow_fallow
-        )
-
     def best_plan_with_prefix(
         self,
         prefix: Seq[str],
@@ -119,22 +101,22 @@ class RotationPlanService:
         axis: Callable[[NotasOpcao], float] | None = None,
         nematoide: bool | None = None,
         allow_fallow: bool = True,
-        chain: bool = False,
     ) -> Sequence:
-        """Melhor plano de 3 anos que começa pelos anos fixos de `prefix` (tarefas 0044 e 0056).
+        """Melhor plano de 3 anos que começa pelos anos fixos de `prefix` (tarefas 0044 a 0065).
 
-        Os anos seguintes saem só de `opcoes` (as culturas no prazo) e do pousio; o prefixo pode ter
-        qualquer cultura (o produtor pode fixar uma fora do prazo do ZARC). Mesmas restrições do
-        PRD 7.7 (`_allowed`) na sequência inteira. A nota de cada sequência é a média da nota de
-        cada ano mais o bônus de diversidade, sem o teto de 100 (o teto empataria planos
-        diferentes): a nota do eixo do objetivo (`axis`: segurança, renda ou solo) ou, sem
-        objetivo, a nota final. Ano fixo sem nota nas opções conta 0 (é igual em todas as
-        sequências). No empate, vale a mesma conta com a nota final; depois, a primeira sequência
-        na ordem das opções.
+        A regra única do plano sugerido (tarefa 0065): o Plano A do `/recomendacao`, o plano de
+        cada objetivo e o `/api/plano/sugestao` saem daqui. Os anos seguintes saem só de `opcoes`
+        (as culturas no prazo) e do pousio; o prefixo pode ter qualquer cultura (o produtor pode
+        fixar uma fora do prazo do ZARC). Mesmas restrições do PRD 7.7 (`_allowed`) na sequência
+        inteira. A nota de cada sequência é a média da nota de cada ano mais o bônus de
+        diversidade, sem o teto de 100 (o teto empataria planos diferentes), mais os pontos das
+        regras da cadeia em cada ano sugerido (`transition_bonus`, grupo `plano_cadeia`): a nota do
+        eixo do objetivo (`axis`: segurança, renda ou solo) ou, sem objetivo, a nota final. Ano
+        fixo sem nota nas opções conta 0 (é igual em todas as sequências). No empate, vale a mesma
+        conta com a nota final; depois, a primeira sequência na ordem das opções.
 
         `allow_fallow=False` tira o pousio das combinações (plano de um objetivo do produtor: com
         segurança 100, o pousio ganharia o "mais segurança" sem ter lavoura para proteger).
-        `chain=True` soma os pontos das regras da cadeia (`transition_bonus`) em cada ano sugerido.
         """
         fixed = tuple(prefix)
         crop_ids = [o.id for o in opcoes if o.id != FALLOW_ID]
@@ -154,7 +136,7 @@ class RotationPlanService:
             return fixed + (fixed[-1],) * rest
 
         def bonus(seq: Sequence) -> float:
-            return self.transition_bonus(seq, start=len(fixed)) if chain else 0.0
+            return self.transition_bonus(seq, start=len(fixed))
 
         return max(
             sequences,

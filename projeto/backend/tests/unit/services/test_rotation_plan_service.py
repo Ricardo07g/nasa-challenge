@@ -255,29 +255,46 @@ OBJECTIVE_OPTIONS = [
 ]
 
 
+def _without_chain_points() -> RotationPlanService:
+    """Só a conta do PRD 7.7: as regras da cadeia (grupo `plano_cadeia`) valendo 0 ponto."""
+    base = load_default_rules()
+    sem_pontos = replace(
+        base.plano_cadeia,
+        bonus_cobrir_depois_do_parado=0.0,
+        bonus_quebrar_nematoide_depois_do_milho=0.0,
+        bonus_variar_funcao=0.0,
+    )
+    return RotationPlanService(rules=replace(base, plano_cadeia=sem_pontos))
+
+
 def test_should_start_the_suggested_plan_with_the_given_crop() -> None:
-    # Tarefa 0044: a sugestão é o ano 1 da rotação. Com a melhor nota final no ano 1 (milho com
-    # braquiária), os anos 2 e 3 seguem a regra do PRD 7.7 (média das notas finais + diversidade).
+    # Tarefa 0044: a sugestão é o ano 1 da rotação; os anos 2 e 3 seguem a regra do PRD 7.7 (média
+    # das notas finais + diversidade) mais as regras da cadeia (tarefa 0065: uma regra só).
     service = RotationPlanService()
 
-    plano = service.best_plan_starting_with("sorgo", OBJECTIVE_OPTIONS, POUSIO)
+    plano = service.best_plan_with_prefix(("sorgo",), OBJECTIVE_OPTIONS, POUSIO)
 
-    assert plano[0] == "sorgo"
-    # sorgo (grão) + milho com braquiária (grão, gramínea) + crotalária (leguminosa): +10
-    assert set(plano) == {"sorgo", "milho_braquiaria", "crotalaria"}
+    # sorgo (grão) + milho com braquiária (grão, gramínea) + crotalária (leguminosa): +10, e a
+    # crotalária quebra o nematoide depois do milho
+    assert plano == ("sorgo", "milho_braquiaria", "crotalaria")
 
 
 def test_should_score_the_plan_by_the_objective_axis_when_one_is_given() -> None:
-    # "Cuidar da terra": a nota do eixo do solo decide, com o mesmo bônus de diversidade. A
-    # crotalária nos 3 anos (85) passa crotalária + milho com braquiária + crotalária (73,3 + 10):
-    # o PRD 7.7 não pune a repetição (a S5b mostra a repetição como fato).
-    service = RotationPlanService()
+    # "Cuidar da terra": a nota do eixo do solo decide, com o mesmo bônus de diversidade. Só pelo
+    # PRD 7.7, a crotalária nos 3 anos (85) passa crotalária + milho com braquiária + crotalária
+    # (73,3 + 10): o PRD 7.7 não pune a repetição. Com a cadeia (tarefa 0065), a troca de função
+    # (+3 duas vezes) e o nematoide depois do milho (+5) dão 94,3 e a rotação ganha.
+    eixo = lambda notas: notas.solo  # noqa: E731
 
-    plano = service.best_plan_starting_with(
-        "crotalaria", OBJECTIVE_OPTIONS, POUSIO, axis=lambda notas: notas.solo
+    so_prd = _without_chain_points().best_plan_with_prefix(
+        ("crotalaria",), OBJECTIVE_OPTIONS, POUSIO, axis=eixo
+    )
+    plano = RotationPlanService().best_plan_with_prefix(
+        ("crotalaria",), OBJECTIVE_OPTIONS, POUSIO, axis=eixo
     )
 
-    assert plano == ("crotalaria", "crotalaria", "crotalaria")
+    assert so_prd == ("crotalaria", "crotalaria", "crotalaria")
+    assert plano == ("crotalaria", "milho_braquiaria", "crotalaria")
 
 
 def test_should_prefer_crops_over_fallow_when_safety_ties_by_breaking_on_the_final_score() -> None:
@@ -286,8 +303,8 @@ def test_should_prefer_crops_over_fallow_when_safety_ties_by_breaking_on_the_fin
     # a nota final.
     service = RotationPlanService()
 
-    plano = service.best_plan_starting_with(
-        "milheto", OBJECTIVE_OPTIONS, POUSIO, axis=lambda notas: notas.seguranca
+    plano = service.best_plan_with_prefix(
+        ("milheto",), OBJECTIVE_OPTIONS, POUSIO, axis=lambda notas: notas.seguranca
     )
 
     assert plano[0] == "milheto"
@@ -295,28 +312,28 @@ def test_should_prefer_crops_over_fallow_when_safety_ties_by_breaking_on_the_fin
 
 
 def test_should_leave_fallow_out_of_a_plan_by_objective_when_asked() -> None:
-    # Com segurança 100, o pousio ganharia: crotalária (95) + milho com braquiária (80) + pousio
-    # (100) = 91,7 + 10 contra 90 + 10 com a crotalária de novo. No plano de um objetivo, o pousio
-    # não entra (tarefa 0044): "mais segurança" é menos risco de perder a lavoura, e o pousio não
-    # tem lavoura. O Plano A e o B (PRD 7.7) continuam com o pousio nas combinações.
+    # Com segurança 100, o pousio ganharia: sorgo (90) + pousio + pousio = 96,7 contra 90 com o
+    # sorgo nos 3 anos. No plano de um objetivo, o pousio não entra (tarefa 0044): "mais
+    # segurança" é menos risco de perder a lavoura, e o pousio não tem lavoura. O Plano A e o B
+    # (PRD 7.7) continuam com o pousio nas combinações.
     service = RotationPlanService()
-    opcoes = [OBJECTIVE_OPTIONS[0], OBJECTIVE_OPTIONS[3]]  # milho com braquiária e crotalária
+    opcoes = [OBJECTIVE_OPTIONS[1]]  # sorgo
     safety = lambda notas: notas.seguranca  # noqa: E731
 
-    com_pousio = service.best_plan_starting_with("crotalaria", opcoes, POUSIO, axis=safety)
-    sem_pousio = service.best_plan_starting_with(
-        "crotalaria", opcoes, POUSIO, axis=safety, allow_fallow=False
+    com_pousio = service.best_plan_with_prefix(("sorgo",), opcoes, POUSIO, axis=safety)
+    sem_pousio = service.best_plan_with_prefix(
+        ("sorgo",), opcoes, POUSIO, axis=safety, allow_fallow=False
     )
 
     assert "pousio" in com_pousio
-    assert sem_pousio == ("crotalaria", "milho_braquiaria", "crotalaria")
+    assert sem_pousio == ("sorgo", "sorgo", "sorgo")
 
 
 def test_should_keep_the_nematode_rule_in_the_objective_plan() -> None:
     service = RotationPlanService()
 
-    plano = service.best_plan_starting_with(
-        "sorgo", OBJECTIVE_OPTIONS, POUSIO, axis=lambda notas: notas.renda, nematoide=True
+    plano = service.best_plan_with_prefix(
+        ("sorgo",), OBJECTIVE_OPTIONS, POUSIO, axis=lambda notas: notas.renda, nematoide=True
     )
 
     assert plano[0] == "sorgo"
@@ -333,23 +350,6 @@ MEIO = [
     _make_option("milheto", 56.5),
 ]
 POUSIO_MEIO = NotasOpcao(seguranca=100.0, futuro=100.0, solo=0.0, renda=0.0, final=45.0)
-
-
-@pytest.mark.parametrize("first", ["milho_braquiaria", "sorgo", "milheto", "crotalaria"])
-@pytest.mark.parametrize("allow_fallow", [True, False])
-def test_should_give_the_same_plan_as_before_with_a_one_year_prefix_and_no_chain(
-    first: str, allow_fallow: bool
-) -> None:
-    # Tarefa 0056: a generalização para um prefixo fixo não muda o plano de antes (tarefa 0044).
-    service = RotationPlanService()
-    for axis in (None, lambda notas: notas.solo, lambda notas: notas.seguranca):
-        antes = service.best_plan_starting_with(
-            first, OBJECTIVE_OPTIONS, POUSIO, axis=axis, allow_fallow=allow_fallow
-        )
-        depois = service.best_plan_with_prefix(
-            (first,), OBJECTIVE_OPTIONS, POUSIO, axis=axis, allow_fallow=allow_fallow
-        )
-        assert depois == antes
 
 
 def test_should_keep_both_fixed_years_and_choose_only_the_third() -> None:
@@ -377,7 +377,7 @@ def test_should_keep_a_fixed_crop_that_is_not_an_option_without_suggesting_it_ag
 def test_should_never_suggest_a_third_fallow_in_a_row() -> None:
     service = RotationPlanService()
 
-    plano = service.best_plan_with_prefix(("pousio", "pousio"), MEIO, POUSIO_MEIO, chain=True)
+    plano = service.best_plan_with_prefix(("pousio", "pousio"), MEIO, POUSIO_MEIO)
 
     assert plano[2] != "pousio"
 
@@ -416,21 +416,20 @@ def test_should_tell_which_chain_rules_weigh_from_one_year_to_the_next(
 def test_should_cover_the_soil_fast_after_leaving_it_fallow() -> None:
     # Tela 5: "Você mudou 2027/28 para Deixar parado. Para 2028/29 agora sugerimos Milheto". Só
     # pela conta do PRD 7.7, a crotalária ganharia (+5 a mais de diversidade).
-    service = RotationPlanService()
     prefixo = ("milho_braquiaria", "pousio")
 
-    sem_cadeia = service.best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO)
-    com_cadeia = service.best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO, chain=True)
+    sem_cadeia = _without_chain_points().best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO)
+    com_cadeia = RotationPlanService().best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO)
 
     assert sem_cadeia[2] == "crotalaria"
     assert com_cadeia[2] == "milheto"
 
 
 def test_should_break_the_nematode_cycle_right_after_corn() -> None:
-    service = RotationPlanService()
+    prefixo = ("milho_safrinha",)
 
-    sem_cadeia = service.best_plan_with_prefix(("milho_safrinha",), MEIO, POUSIO_MEIO)
-    com_cadeia = service.best_plan_with_prefix(("milho_safrinha",), MEIO, POUSIO_MEIO, chain=True)
+    sem_cadeia = _without_chain_points().best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO)
+    com_cadeia = RotationPlanService().best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO)
 
     assert sem_cadeia == ("milho_safrinha", "milho_braquiaria", "crotalaria")
     assert com_cadeia == ("milho_safrinha", "crotalaria", "milho_braquiaria")
@@ -443,25 +442,19 @@ def test_should_not_suggest_leaving_the_soil_fallow_just_to_cover_it_the_year_af
     service = RotationPlanService()
     tarde = [_make_option("milheto", 58.8), _make_option("sorgo", 50.0)]
 
-    plano = service.best_plan_with_prefix(("sorgo",), tarde, POUSIO_MEIO, chain=True)
+    plano = service.best_plan_with_prefix(("sorgo",), tarde, POUSIO_MEIO)
 
     assert plano == ("sorgo", "milheto", "sorgo")
 
 
 def test_should_take_the_chain_points_from_injected_rules() -> None:
-    base = load_default_rules()
-    sem_pontos = replace(
-        base.plano_cadeia,
-        bonus_cobrir_depois_do_parado=0.0,
-        bonus_quebrar_nematoide_depois_do_milho=0.0,
-        bonus_variar_funcao=0.0,
-    )
-    service = RotationPlanService(rules=replace(base, plano_cadeia=sem_pontos))
+    # Com as regras da cadeia valendo 0 ponto, fica só a conta do PRD 7.7: depois da terra parada,
+    # a crotalária (+5 a mais de diversidade) em vez do milheto que cobre rápido.
     prefixo = ("milho_braquiaria", "pousio")
 
-    plano = service.best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO, chain=True)
+    plano = _without_chain_points().best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO)
 
-    assert plano == service.best_plan_with_prefix(prefixo, MEIO, POUSIO_MEIO)
+    assert plano == ("milho_braquiaria", "pousio", "crotalaria")
 
 
 def test_should_take_number_of_dry_years_from_injected_rules() -> None:

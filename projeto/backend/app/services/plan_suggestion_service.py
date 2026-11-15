@@ -83,7 +83,6 @@ class PlanSuggestionService:
             axis=axis,
             nematoide=nematoide,
             allow_fallow=allow_fallow,
-            chain=True,
         )
         # A mesma conta sem o prazo do ZARC, para saber se ele pesou em algum ano
         free = (
@@ -94,7 +93,6 @@ class PlanSuggestionService:
                 axis=axis,
                 nematoide=nematoide,
                 allow_fallow=allow_fallow,
-                chain=True,
             )
             if fora_do_prazo
             else seq

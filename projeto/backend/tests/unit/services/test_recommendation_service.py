@@ -1180,7 +1180,6 @@ def test_should_build_plan_a_and_the_objective_plans_with_the_chain_rules(colhei
             rec.notas_pousio,  # type: ignore[arg-type]
             axis=eixo,
             allow_fallow=eixo is None,
-            chain=True,
         )
         assert objetivo.motivos[0] is None
         assert all(isinstance(m, str) and m for m in objetivo.motivos[1:])

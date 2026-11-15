@@ -204,7 +204,7 @@ def test_should_choose_the_years_by_the_objective_axis_with_the_same_chain() -> 
 
     assert [a.cultura for a in anos] == ["crotalaria", "milho_braquiaria", "crotalaria"]
     assert tuple(a.cultura for a in anos) == RotationPlanService().best_plan_with_prefix(
-        ("crotalaria",), opcoes, POUSIO, axis=eixo, allow_fallow=False, chain=True
+        ("crotalaria",), opcoes, POUSIO, axis=eixo, allow_fallow=False
     )
     assert [a.motivo for a in anos] == [
         None,
