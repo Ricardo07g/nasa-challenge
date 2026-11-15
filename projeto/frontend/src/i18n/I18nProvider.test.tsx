@@ -8,7 +8,7 @@ function Probe() {
   const { lang, messages, toggleLang } = useI18n()
   return (
     <button type="button" onClick={toggleLang}>
-      {lang}:{messages.header.community}
+      {lang}:{messages.header.guide}
     </button>
   )
 }
@@ -27,7 +27,7 @@ describe('I18nProvider', () => {
       </I18nProvider>,
     )
 
-    expect(screen.getByRole('button')).toHaveTextContent('pt:Comunidade')
+    expect(screen.getByRole('button')).toHaveTextContent('pt:Guia')
     expect(document.documentElement.lang).toBe('pt-BR')
   })
 
@@ -41,7 +41,7 @@ describe('I18nProvider', () => {
 
     await act(() => userEvent.click(screen.getByRole('button')))
 
-    expect(screen.getByRole('button')).toHaveTextContent('en:Community')
+    expect(screen.getByRole('button')).toHaveTextContent('en:Guide')
     expect(document.documentElement.lang).toBe('en')
     expect(localStorage.getItem('raiz-orbital:lang')).toBe('en')
   })
@@ -56,6 +56,6 @@ describe('I18nProvider', () => {
       </I18nProvider>,
     )
 
-    expect(screen.getByRole('button')).toHaveTextContent('en:Community')
+    expect(screen.getByRole('button')).toHaveTextContent('en:Guide')
   })
 })

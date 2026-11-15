@@ -58,7 +58,7 @@ export const en = {
     home: 'Raiz Orbital, back to start',
     slogan: 'From space to the root.',
     navLabel: 'Main',
-    community: 'Community',
+    guide: 'Guide',
     langToggleLabel: 'Switch language: Portuguese or English',
   },
   listen: {

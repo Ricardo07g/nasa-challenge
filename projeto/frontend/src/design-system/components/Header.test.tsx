@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -9,7 +9,7 @@ function setup(overrides: Partial<AppHeaderProps> = {}, path = '/') {
     homeLabel: 'Raiz Orbital, voltar ao início',
     slogan: 'Do espaço até a raiz.',
     navLabel: 'Principal',
-    community: { label: 'Comunidade', to: '/comunidade?lat=-18.95&lon=-48.2' },
+    guide: { label: 'Guia', to: '/guia' },
     alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null },
     lang: { current: 'pt', onToggle: vi.fn(), label: 'Trocar idioma: português ou inglês' },
     ...overrides,
@@ -22,7 +22,7 @@ function setup(overrides: Partial<AppHeaderProps> = {}, path = '/') {
   return props
 }
 
-describe('AppHeader (cabeçalho global, tarefa 0052)', () => {
+describe('AppHeader (cabeçalho global, tarefas 0052 e 0061)', () => {
   it('tem o logo e o nome que levam ao início, com o slogan', () => {
     setup()
 
@@ -32,29 +32,51 @@ describe('AppHeader (cabeçalho global, tarefa 0052)', () => {
     expect(screen.getByText('Do espaço até a raiz.')).toBeInTheDocument()
   })
 
-  it('à direita, só três itens: Comunidade, Avisos e o idioma (sem o botão grande "Ouvir")', () => {
+  it('à direita, só três itens: Guia, Avisos e o idioma (sem "Comunidade" e sem o botão grande "Ouvir")', () => {
     setup()
 
     const nav = screen.getByRole('navigation', { name: 'Principal' })
-    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Comunidade', 'Avisos'])
+    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Guia', 'Avisos'])
     expect(within(nav).getAllByRole('button')).toHaveLength(1)
+    expect(screen.queryByRole('link', { name: /Comunidade/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Ouvir/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Telegram/ })).not.toBeInTheDocument()
   })
 
-  it('a Comunidade é uma pílula com o nome escrito (também no celular) e leva junto o ponto', () => {
+  it('o Guia é uma pílula com o ícone de livro e o nome escrito (também no celular), e leva a /guia', () => {
     setup()
 
-    const link = screen.getByRole('link', { name: 'Comunidade' })
-    expect(link).toHaveAttribute('href', '/comunidade?lat=-18.95&lon=-48.2')
+    const link = screen.getByRole('link', { name: 'Guia' })
+    expect(link).toHaveAttribute('href', '/guia')
     expect(link).not.toHaveAttribute('aria-label')
     expect(link).toHaveAttribute('data-variant', 'pill')
+    const icon = link.querySelector('svg')
+    expect(icon).toHaveClass('lucide-book-text')
+    expect(icon).toHaveAttribute('aria-hidden', 'true')
   })
 
-  it('marca a Comunidade quando a pessoa está nela', () => {
-    setup({ community: { label: 'Comunidade', to: '/comunidade' } }, '/comunidade')
+  it('fora do Guia e dos Avisos, nenhum dos dois fica marcado', () => {
+    setup({}, '/resposta')
 
-    expect(screen.getByRole('link', { name: 'Comunidade' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Guia' })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: 'Avisos' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('em /guia (e nos artigos), a pílula do Guia fica marcada com aria-current="page"', () => {
+    setup({}, '/guia')
+    expect(screen.getByRole('link', { name: 'Guia' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Avisos' })).not.toHaveAttribute('aria-current')
+    cleanup()
+
+    setup({}, '/guia/veranico')
+    expect(screen.getByRole('link', { name: 'Guia' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('em /avisos, o sino fica marcado com aria-current="page" (com o ponto na URL também)', () => {
+    setup({ alerts: { label: 'Avisos', to: '/avisos?lat=1&lon=2', count: null, countLabel: null } }, '/avisos?lat=1&lon=2')
+
+    expect(screen.getByRole('link', { name: 'Avisos' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Guia' })).not.toHaveAttribute('aria-current')
   })
 
   it('Avisos mostra o selo com o número de avisos ativos, também no nome acessível', () => {
@@ -88,14 +110,14 @@ describe('AppHeader (cabeçalho global, tarefa 0052)', () => {
     setup({
       slogan: 'From space to the root.',
       navLabel: 'Main',
-      community: { label: 'Community', to: '/comunidade' },
+      guide: { label: 'Guide', to: '/guia' },
       alerts: { label: 'Alerts', to: '/avisos', count: null, countLabel: null },
       lang: { current: 'en', onToggle: vi.fn(), label: 'Switch language: Portuguese or English' },
     })
 
     expect(screen.getByText('From space to the root.')).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Community' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Guide' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Alerts' })).toBeInTheDocument()
     const toggle = screen.getByRole('button', { name: 'Switch language: Portuguese or English' })
     expect(toggle.querySelector('[data-active="true"]')).toHaveTextContent('EN')

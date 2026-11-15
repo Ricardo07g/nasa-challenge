@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   BarChart3,
   Bell,
+  BookText,
   Calculator,
   CalendarDays,
   Check,
@@ -124,6 +125,11 @@ export function ChevronDownIcon({ size = 18 }: IconProps) {
 
 export function CommunityIcon({ size = 18 }: IconProps) {
   return <Users size={size} {...decorative} />
+}
+
+/** Livro com linhas: o Guia (pílula do cabeçalho e "Abrir o Guia", pacote 3). */
+export function BookIcon({ size = 18 }: IconProps) {
+  return <BookText size={size} {...decorative} />
 }
 
 export function CrosshairIcon({ size = 20 }: IconProps) {

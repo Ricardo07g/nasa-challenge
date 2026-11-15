@@ -200,21 +200,23 @@ describe('rotas', () => {
     expect(await screen.findByRole('table', { name: 'Notas do seu plano ao lado de como é hoje' })).toBeInTheDocument()
   })
 
-  it('"Comunidade" no cabeçalho abre a tela 8 levando o caminho', async () => {
+  it('"Guia" no cabeçalho abre o Guia, e a pílula fica marcada lá (pacote 3)', async () => {
     renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
 
-    await userEvent.click(await screen.findByRole('link', { name: 'Comunidade' }))
+    const banner = screen.getByRole('banner')
+    expect(within(banner).getByRole('link', { name: 'Guia' })).not.toHaveAttribute('aria-current')
+    await userEvent.click(within(banner).getByRole('link', { name: 'Guia' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
-    // Modo de demonstração: os relatos de exemplo, cada um com o selo "Exemplo" (tarefa 0047).
-    const nearby = await screen.findByRole('region', { name: 'Perto de você' })
-    expect(within(nearby).getAllByText('Exemplo').length).toBeGreaterThan(0)
-    expect(screen.getByRole('region', { name: 'Conte o que aconteceu aí' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
-      'href',
-      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
-    )
-    expect(document.title).toBe('Raiz Orbital – Na sua região')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Guia' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('em /avisos, o sino do cabeçalho fica marcado (pacote 3)', async () => {
+    renderAt('/avisos')
+
+    const banner = screen.getByRole('banner')
+    expect(within(banner).getByRole('link', { name: /^Avisos/ })).toHaveAttribute('aria-current', 'page')
+    expect(within(banner).getByRole('link', { name: 'Guia' })).not.toHaveAttribute('aria-current')
   })
 
   it('"Como a conta é feita" no rodapé das telas internas abre a tela 9 com as notas da lavoura', async () => {
@@ -272,14 +274,19 @@ describe('rotas', () => {
     expect(within(agro).getByRole('link', { name: 'Como a conta é feita' })).toHaveAttribute('href', '/como-funciona')
   })
 
-  it('o cabeçalho de toda tela tem só Comunidade, Avisos e o idioma, sem o botão grande "Ouvir"', async () => {
-    renderAt('/onde')
-
-    await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })
-    const banner = screen.getByRole('banner')
-    expect(within(banner).queryByRole('button', { name: /Ouvir/ })).not.toBeInTheDocument()
-    expect(within(banner).getByRole('link', { name: 'Comunidade' })).toBeInTheDocument()
-    expect(within(banner).getByRole('link', { name: /^Avisos/ })).toBeInTheDocument()
+  it('o cabeçalho de toda tela tem só Guia, Avisos e o idioma, sem Comunidade e sem o botão grande "Ouvir"', async () => {
+    for (const path of ['/', '/onde', '/guia', '/avisos', '/comunidade', '/satelite?lat=-18.9543&lon=-48.1993&colheita=tarde&exemplo=1']) {
+      renderAt(path)
+      const banner = await screen.findByRole('banner')
+      const nav = within(banner).getByRole('navigation', { name: 'Principal' })
+      const [guide, alerts, ...others] = within(nav).getAllByRole('link')
+      expect(guide).toHaveTextContent('Guia')
+      expect(alerts).toHaveTextContent(/^Avisos\d*$/)
+      expect(others).toEqual([])
+      expect(within(banner).queryByText(/Comunidade/)).not.toBeInTheDocument()
+      expect(within(banner).queryByRole('button', { name: /Ouvir/ })).not.toBeInTheDocument()
+      cleanup()
+    }
   })
 
   it('"Créditos e uso de IA" abre o mesmo modal global em qualquer tela, e Esc fecha e devolve o foco', async () => {

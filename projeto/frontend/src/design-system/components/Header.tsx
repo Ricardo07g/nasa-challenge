@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router'
-import { AlertsIcon, CommunityIcon, LogoMark } from '../icons'
+import { AlertsIcon, BookIcon, LogoMark } from '../icons'
 import styles from './Header.module.css'
 
 export type AppHeaderProps = {
@@ -7,12 +7,16 @@ export type AppHeaderProps = {
   slogan: string
   /** Nome da navegação ("Principal" / "Main"). */
   navLabel: string
-  /** Comunidade: pílula verde-clara com o nome escrito, também no celular (leva junto o ponto da lavoura). */
-  community: { label: string; to: string }
+  /**
+   * Guia (pacote 3, tarefa 0061): pílula verde-clara com o livro e o nome escrito, também no celular. Em `/guia`
+   * e nos artigos, fica marcada (`aria-current="page"`) e verde cheia.
+   */
+  guide: { label: string; to: string }
   /**
    * Avisos (tarefa 0046): sino, o nome e o selo laranja com o número de avisos ativos do último ponto
    * (`/api/avisos`); `countLabel` vira o nome acessível. Sem ponto ou sem aviso, `count` é null e o selo
-   * não aparece. No celular, só o sino com o selo.
+   * não aparece. No celular, só o sino com o selo. Em `/avisos`, fica marcado (`aria-current="page"`) com o
+   * fundo verde-claro.
    */
   alerts: { label: string; to: string; count: number | null; countLabel: string | null }
   /** "PT | EN" no computador; no celular, só o outro idioma. */
@@ -24,10 +28,11 @@ export type AppHeaderProps = {
 }
 
 /**
- * Cabeçalho global (remodelagem, tarefa 0052): logo, nome e slogan à esquerda; à direita, só Comunidade,
- * Avisos e o idioma. O "Ouvir" não fica mais aqui: cada tela tem o seu "Ouvir resumo" perto do título.
+ * Cabeçalho global (remodelagem, tarefa 0052; pacote 3, tarefa 0061): logo, nome e slogan à esquerda; à direita,
+ * só Guia, Avisos e o idioma. A Comunidade saiu (está "em breve"). O "Ouvir" não fica aqui: cada tela tem o seu
+ * "Ouvir resumo" perto do título.
  */
-export function AppHeader({ homeLabel, slogan, navLabel, community, alerts, lang }: AppHeaderProps) {
+export function AppHeader({ homeLabel, slogan, navLabel, guide, alerts, lang }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
@@ -39,9 +44,9 @@ export function AppHeader({ homeLabel, slogan, navLabel, community, alerts, lang
           </span>
         </Link>
         <nav className={styles.nav} aria-label={navLabel}>
-          <NavLink to={community.to} className={styles.community} data-variant="pill">
-            <CommunityIcon size={18} />
-            <span>{community.label}</span>
+          <NavLink to={guide.to} className={styles.guide} data-variant="pill">
+            <BookIcon size={18} />
+            <span>{guide.label}</span>
           </NavLink>
           <NavLink
             to={alerts.to}

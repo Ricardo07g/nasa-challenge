@@ -71,7 +71,8 @@ export const pt = {
     home: 'Raiz Orbital, voltar ao início',
     slogan: 'Do espaço até a raiz.',
     navLabel: 'Principal',
-    community: 'Comunidade',
+    /** Pílula do cabeçalho (pacote 3, tarefa 0061): o Guia no lugar da Comunidade, que está "em breve". */
+    guide: 'Guia',
     langToggleLabel: 'Trocar idioma: português ou inglês',
   },
   /** "Ouvir resumo" (tarefa 0052): cada tela fala só o seu resumo; o texto falado fica no bloco da tela. */
