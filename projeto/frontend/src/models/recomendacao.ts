@@ -109,6 +109,8 @@ export type RecomendacaoParams = {
   lon: number
   colheita: Colheita
   solo?: Textura
+  /** Safras confirmadas pelo produtor na tela 4, no formato da URL (ex.: "2024:plantou,2025:parado"). */
+  confirmadas?: string
 }
 
 /** `GET /api/exemplo`: talhão + recomendação da fazenda de exemplo (§3.3). Formato a confirmar no PR. */

@@ -162,6 +162,83 @@ describe('useSatelliteController (tela 4)', () => {
     expect(noHarvest.result.current.redirectTo).toBe('/quando?lat=-18.9543&lon=-48.1993')
   })
 
+  describe('confirmação das últimas safras (tarefa 0039)', () => {
+    const confirmable: Partial<Talhao> = { ...talhao, anos_confirmaveis: [2024, 2025, 2026] }
+
+    it('lista as 3 últimas safras, com o que o satélite viu (sem dado começa vazio)', async () => {
+      const d = deps(() => Promise.resolve(confirmable))
+      const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+
+      await waitFor(() => expect(result.current.status).toBe('ready'))
+      expect(result.current.confirmations).toEqual([
+        { year: 2024, satellite: 'parado', choice: null },
+        { year: 2025, satellite: 'plantou', choice: null },
+        { year: 2026, satellite: null, choice: null },
+      ])
+    })
+
+    it('marcar uma safra grava na URL e a resposta vale no lugar do satélite', async () => {
+      const d = deps(() => Promise.resolve(confirmable))
+      const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+      await waitFor(() => expect(result.current.status).toBe('ready'))
+
+      act(() => result.current.confirmSeason(2025, 'parado'))
+
+      expect(screen.getByTestId('location')).toHaveTextContent(`/satelite?${flow}&confirmadas=2025:parado`)
+      await waitFor(() => expect(result.current.history).toMatchObject({ idle: 2, planted: 0, known: 2, confirmed: 1 }))
+      expect(result.current.confirmations[1]).toEqual({ year: 2025, satellite: 'plantou', choice: 'parado' })
+    })
+
+    it('tocar de novo na resposta marcada tira a confirmação da URL', async () => {
+      const d = deps(() => Promise.resolve(confirmable))
+      const { result } = renderHook(() => useSatelliteController(d), {
+        wrapper: providers(`/satelite?${flow}&confirmadas=2024:plantou,2025:parado`),
+      })
+      await waitFor(() => expect(result.current.status).toBe('ready'))
+
+      act(() => result.current.confirmSeason(2025, null))
+
+      expect(screen.getByTestId('location')).toHaveTextContent(`/satelite?${flow}&confirmadas=2024:plantou`)
+    })
+
+    it('"Ver o que plantar" leva as safras confirmadas para a resposta e para a recomendação', async () => {
+      const d = deps(() => Promise.resolve(confirmable))
+      const { result } = renderHook(() => useSatelliteController(d), {
+        wrapper: providers(`/satelite?${flow}&confirmadas=2026:plantou`),
+      })
+      await waitFor(() => expect(result.current.status).toBe('ready'))
+
+      act(() => result.current.confirm())
+
+      expect(screen.getByTestId('location')).toHaveTextContent(`/resposta?${flow}&confirmadas=2026:plantou`)
+      expect(d.farm.recomendacao).toHaveBeenLastCalledWith(
+        { lat: -18.9543, lon: -48.1993, colheita: 'meio', solo: undefined, exemplo: false, confirmadas: '2026:plantou' },
+        'pt',
+      )
+    })
+
+    it('nenhum ano com soja no ponto: avisa e oferece ajustar no mapa', async () => {
+      const semSoja = {
+        ...confirmable,
+        historico: {
+          ...talhao.historico!,
+          anos: talhao.historico!.anos.map((a) => ({ ...a, situacao: 'sem_soja' as const, ndvi_max: null, n_obs: 0 })),
+          parado: 0,
+          plantou: 0,
+          sem_certeza: 0,
+          sem_soja: 3,
+        },
+      }
+      const d = deps(() => Promise.resolve(semSoja))
+      const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+
+      await waitFor(() => expect(result.current.status).toBe('ready'))
+      expect(result.current.noSoy).toBe(true)
+      expect(result.current.history).toBeNull()
+      expect(result.current.adjustTo).toBe(`/onde?${flow}`)
+    })
+  })
+
   it('talhão fora da área com dados preparados vira o estado "fora da área"', async () => {
     const d = deps(() => Promise.resolve({ ...talhao, dentro_da_area: false }))
     const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })

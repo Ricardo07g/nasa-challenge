@@ -1,6 +1,7 @@
+import { useId } from 'react'
 import { Button, TextButton } from '../design-system/components/Button'
 import { DataSourceCard } from '../design-system/components/Card'
-import { RadioCard } from '../design-system/components/Choice'
+import { ChipGroup, RadioCard } from '../design-system/components/Choice'
 import { PageHeading } from '../design-system/components/Content'
 import { BackLink } from '../design-system/components/Navigation'
 import { StripLegend, YearStrip, type CellState } from '../design-system/components/Status'
@@ -8,11 +9,13 @@ import { ClimateIcon, DropIcon, HistoryIcon, SoilIcon } from '../design-system/i
 import { formatMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
-import { TEXTURAS, type SituacaoAno, type Textura } from '../models/talhao'
+import { TEXTURAS, type Confirmacao, type SituacaoAno, type Textura } from '../models/talhao'
+import type { ConfirmRow } from '../services/confirmedSeasonsService'
 import type { ClimateSummary, HistorySummary, RainSummary, SoilSummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
+import styles from './SatelliteView.module.css'
 
 export type SatelliteViewProps = {
   t: Messages
@@ -21,6 +24,14 @@ export type SatelliteViewProps = {
   status: ScreenStatus
   onRetry: () => void
   history: HistorySummary | null
+  /** As últimas safras para o produtor confirmar (tarefa 0039); vazio = sem o bloco. */
+  confirmations: ConfirmRow[]
+  /** "Plantei" / "Deixei parado"; `null` = tocou de novo na resposta marcada (volta para o satélite). */
+  onConfirmSeason: (year: number, value: Confirmacao | null) => void
+  /** O satélite não viu soja no ponto em nenhum ano: "Não parece uma lavoura de soja". */
+  noSoy: boolean
+  /** "Ajustar no mapa": volta ao mapa com o ponto. */
+  adjustTo: string
   /** Anos de chuva usados de fato; null sem dado de chuva. */
   rain: RainSummary | null
   /** NEX-GDDP-CMIP6 no talhão; null sem ele (o clima dos próximos anos fica "Ainda não conectado"). */
@@ -32,8 +43,17 @@ export type SatelliteViewProps = {
   onConfirm: () => void
 }
 
-/** Cheio = plantou; contorno laranja = ficou parado; cinza com "?" = o satélite não teve certeza. */
-const CELL: Record<SituacaoAno, CellState> = { plantou: 'good', parado: 'bad', incerto: 'unknown', sem_dado: 'unknown' }
+/**
+ * Cheio = plantou; contorno laranja = ficou parado; cinza com "?" = o satélite não teve certeza;
+ * pontilhado com "–" = sem soja naquele ano.
+ */
+const CELL: Record<SituacaoAno, CellState> = {
+  plantou: 'good',
+  parado: 'bad',
+  incerto: 'unknown',
+  sem_dado: 'unknown',
+  sem_soja: 'none',
+}
 
 /** Tela 4 "Pronto. O satélite já viu o resto.": histórico e chuva à esquerda; terra, clima e botão à direita. */
 export function SatelliteView(props: SatelliteViewProps) {
@@ -51,46 +71,118 @@ export function SatelliteView(props: SatelliteViewProps) {
   )
 }
 
-function Cards({ t, lang, history, rain, climate, soil, soilOpen, onToggleSoil, onChooseSoil, onConfirm }: SatelliteViewProps) {
+/** Cartão 1: o histórico do satélite (com as safras confirmadas) e o bloco de confirmação. */
+function HistoryCard({ t, lang, history, confirmations, onConfirmSeason, noSoy, adjustTo }: SatelliteViewProps) {
+  const s = t.satellite
+  const confirm = confirmations.length > 0 && <ConfirmSeasons t={t} rows={confirmations} onConfirm={onConfirmSeason} />
+  if (history) {
+    return (
+      <DataSourceCard
+        icon={<HistoryIcon />}
+        title={s.historyTitle(history.idle, history.known, history.uncertain)}
+        subtitle={s.historySubtitle}
+        readyLabel={t.common.ready}
+      >
+        {noSoy && <p className={styles.noSoyNote}>{s.noSoyTitle}</p>}
+        <YearStrip
+          size="lg"
+          label={s.historyStripLabel(history.planted, history.known, history.uncertain)}
+          cells={history.situations.map((situation) => CELL[situation])}
+          years={history.years}
+        />
+        <StripLegend
+          items={[
+            { state: 'good', label: s.planted },
+            { state: 'bad', label: s.idle },
+            ...(history.uncertain > 0 ? [{ state: 'unknown' as const, label: s.uncertain }] : []),
+            ...(history.noSoy > 0 ? [{ state: 'none' as const, label: s.noSoy }] : []),
+          ]}
+          note={history.confirmed > 0 ? s.historyConfirmed(history.confirmed) : undefined}
+        />
+        <p className={layout.muted}>
+          {s.historySource(formatMonth(lang, history.window.from), formatMonth(lang, history.window.to))}
+        </p>
+        {confirm}
+      </DataSourceCard>
+    )
+  }
+  if (noSoy) {
+    return (
+      <DataSourceCard icon={<HistoryIcon />} title={s.noSoyTitle} subtitle={s.noSoyDetail} readyLabel={t.common.ready}>
+        <div className={layout.cta}>
+          <Button to={adjustTo} variant="outline">
+            {s.adjustMap}
+          </Button>
+        </div>
+        {confirm}
+      </DataSourceCard>
+    )
+  }
+  return (
+    <DataSourceCard
+      icon={<HistoryIcon />}
+      title={s.historyUnavailableTitle}
+      subtitle={null}
+      readyLabel={t.common.ready}
+      status="unavailable"
+      unavailableLabel={t.common.notConnected}
+    >
+      {confirm}
+    </DataSourceCard>
+  )
+}
+
+/** "Confirme as últimas safras": um grupo de botões por ano, com o que o satélite viu ao lado. */
+function ConfirmSeasons({
+  t,
+  rows,
+  onConfirm,
+}: {
+  t: Messages
+  rows: ConfirmRow[]
+  onConfirm: SatelliteViewProps['onConfirmSeason']
+}) {
+  const s = t.satellite
+  const titleId = useId()
+  const options = [
+    { value: 'plantou' as const, label: s.confirmPlanted },
+    { value: 'parado' as const, label: s.confirmIdle },
+  ]
+  return (
+    <section className={styles.confirm} aria-labelledby={titleId}>
+      <h3 id={titleId} className={styles.confirmTitle}>
+        {s.confirmTitle}
+      </h3>
+      <p className={layout.muted}>{s.confirmHint}</p>
+      {rows.map((row) => (
+        <div key={row.year} className={styles.confirmRow}>
+          <span className={styles.confirmYear}>
+            <strong>{row.year}</strong>
+            {row.satellite && (
+              <span className={layout.muted}>{s.satelliteSaw(s.satelliteSawLabels[row.satellite])}</span>
+            )}
+          </span>
+          <ChipGroup
+            label={s.confirmYear(row.year)}
+            options={options}
+            value={row.choice}
+            onChange={(value) => onConfirm(row.year, value)}
+            allowDeselect
+          />
+        </div>
+      ))}
+    </section>
+  )
+}
+
+function Cards(props: SatelliteViewProps) {
+  const { t, rain, climate, soil, soilOpen, onToggleSoil, onChooseSoil, onConfirm } = props
   const s = t.satellite
   const soilSource = { map: s.soilFromMap, user: s.soilFromUser, default: s.soilDefault }[soil.source]
   return (
     <div className={layout.pageGrid}>
       <div className={layout.stack}>
-        {history ? (
-          <DataSourceCard
-            icon={<HistoryIcon />}
-            title={s.historyTitle(history.idle, history.known, history.uncertain)}
-            subtitle={s.historySubtitle}
-            readyLabel={t.common.ready}
-          >
-            <YearStrip
-              size="lg"
-              label={s.historyStripLabel(history.planted, history.known, history.uncertain)}
-              cells={history.situations.map((situation) => CELL[situation])}
-              years={history.years}
-            />
-            <StripLegend
-              items={[
-                { state: 'good', label: s.planted },
-                { state: 'bad', label: s.idle },
-                ...(history.uncertain > 0 ? [{ state: 'unknown' as const, label: s.uncertain }] : []),
-              ]}
-            />
-            <p className={layout.muted}>
-              {s.historySource(formatMonth(lang, history.window.from), formatMonth(lang, history.window.to))}
-            </p>
-          </DataSourceCard>
-        ) : (
-          <DataSourceCard
-            icon={<HistoryIcon />}
-            title={s.historyUnavailableTitle}
-            subtitle={null}
-            readyLabel={t.common.ready}
-            status="unavailable"
-            unavailableLabel={t.common.notConnected}
-          />
-        )}
+        <HistoryCard {...props} />
         <DataSourceCard
           icon={<DropIcon />}
           iconTone="blue"

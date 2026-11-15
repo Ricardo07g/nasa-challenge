@@ -60,9 +60,8 @@ export function useWhenController(deps: Deps = defaultDeps) {
   const confirm = useCallback(() => {
     if (!params) return
     // Dispara já: a recomendação carrega enquanto a missão (RF-19) mostra o satélite trabalhando.
-    deps.farm
-      .recomendacao({ lat: params.lat, lon: params.lon, colheita: selected, solo: params.solo, exemplo: params.exemplo }, lang)
-      .catch(() => {})
+    const { lat, lon, solo, exemplo, confirmadas } = params
+    deps.farm.recomendacao({ lat, lon, colheita: selected, solo, exemplo, confirmadas }, lang).catch(() => {})
     navigate(`/calculando${buildFlowQuery({ ...params, colheita: selected })}`)
   }, [params, selected, deps.farm, lang, navigate])
 

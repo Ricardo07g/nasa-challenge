@@ -54,10 +54,12 @@ export function createFarmService({
       )
     },
     recomendacao(params, lang) {
-      if (params.exemplo) return exemplo(lang).then((data) => data.recomendacao)
-      const { lat, lon, colheita, solo } = params
-      return cached(`recomendacao:${lat},${lon},${colheita},${solo ?? ''}:${lang}`, () =>
-        recomendacaoRepository.get({ lat, lon, colheita, solo }, lang),
+      const { lat, lon, colheita, solo, confirmadas } = params
+      // Na fazenda de exemplo, a resposta pronta do /exemplo; com safra confirmada pelo produtor
+      // (tela 4), a conta muda e vem do /recomendacao do ponto do exemplo.
+      if (params.exemplo && !confirmadas) return exemplo(lang).then((data) => data.recomendacao)
+      return cached(`recomendacao:${lat},${lon},${colheita},${solo ?? ''},${confirmadas ?? ''}:${lang}`, () =>
+        recomendacaoRepository.get({ lat, lon, colheita, solo, confirmadas }, lang),
       )
     },
   }

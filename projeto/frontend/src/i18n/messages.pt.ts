@@ -237,6 +237,21 @@ export const pt = {
     climateSubtitle: (start: string, end: string) => `Como a chuva e o calor devem mudar de ${start} a ${end}.`,
     climateSubtitleGeneric: 'Como a chuva e o calor devem mudar nos próximos anos.',
     cta: 'Ver o que plantar',
+    /** Tarefa 0039: ano em que o satélite não viu a soja e a colheita (legenda da faixa). */
+    noSoy: 'Sem soja',
+    noSoyTitle: 'Não parece uma lavoura de soja. Confira o ponto no mapa.',
+    noSoyDetail: 'O satélite não viu a soja crescer e ser colhida aqui nos anos que conseguiu olhar.',
+    adjustMap: 'Ajustar no mapa',
+    /** Legenda da faixa: anos em que vale a resposta do produtor. */
+    historyConfirmed: (count: number) => (count === 1 ? '1 ano confirmado por você' : `${count} anos confirmados por você`),
+    confirmTitle: 'Confirme as últimas safras',
+    confirmHint: 'O que você fez depois da soja? Sua resposta vale no lugar do satélite.',
+    /** Rótulo do grupo de botões de cada ano (leitor de tela). */
+    confirmYear: (year: number) => `Depois da soja de ${year}`,
+    confirmPlanted: 'Plantei',
+    confirmIdle: 'Deixei parado',
+    satelliteSaw: (what: string) => `O satélite viu: ${what}`,
+    satelliteSawLabels: { plantou: 'plantou', parado: 'ficou parado', incerto: 'sem certeza', sem_soja: 'sem soja' },
   },
   answer: {
     lead: (year: number) => `Depois da soja de ${year}, na sua lavoura:`,

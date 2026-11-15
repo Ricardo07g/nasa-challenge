@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -17,12 +17,18 @@ function setup(overrides: Partial<SatelliteViewProps> = {}) {
       idle: 1,
       planted: 1,
       uncertain: 0,
+      noSoy: 0,
+      confirmed: 0,
       known: 2,
       total: 2,
       situations: ['parado', 'plantou'],
       years: ['2024', '2025'],
       window: { from: 4, to: 7 },
     },
+    confirmations: [],
+    onConfirmSeason: vi.fn(),
+    noSoy: false,
+    adjustTo: '/onde?lat=-18.9543&lon=-48.1993&colheita=meio',
     rain: { years: 20, period: { start: '2005', end: '2024' }, skipped: 0 },
     climate: { period: { start: '2041', end: '2060' } },
     soil: { textura: 'argiloso', source: 'map' },
@@ -65,6 +71,8 @@ describe('SatelliteView (tela 4)', () => {
     idle: 5,
     planted: 4,
     uncertain: 1,
+    noSoy: 0,
+    confirmed: 0,
     known: 9,
     total: 10,
     situations: ['parado', 'plantou', 'parado', 'plantou', 'parado', 'incerto', 'plantou', 'parado', 'parado', 'plantou'],
@@ -173,6 +181,120 @@ describe('SatelliteView (tela 4)', () => {
     expect(card).toHaveTextContent('Ainda não conectado')
     expect(screen.queryByRole('img', { name: /Plantou em/ })).not.toBeInTheDocument()
     expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
+  })
+
+  describe('confirmação das últimas safras (tarefa 0039)', () => {
+    const rows: SatelliteViewProps['confirmations'] = [
+      { year: 2024, satellite: 'parado', choice: null },
+      { year: 2025, satellite: 'plantou', choice: 'parado' },
+      { year: 2026, satellite: null, choice: null },
+    ]
+
+    it('um grupo por ano, com o que o satélite viu e "Plantei" / "Deixei parado"', () => {
+      setup({ confirmations: rows })
+
+      expect(screen.getByRole('heading', { name: 'Confirme as últimas safras' })).toBeInTheDocument()
+      for (const year of [2024, 2025, 2026]) {
+        const group = screen.getByRole('group', { name: `Depois da soja de ${year}` })
+        expect(within(group).getByRole('button', { name: 'Plantei' })).toBeInTheDocument()
+        expect(within(group).getByRole('button', { name: 'Deixei parado' })).toBeInTheDocument()
+      }
+      expect(screen.getByText('O satélite viu: ficou parado')).toBeInTheDocument()
+      expect(screen.getByText('O satélite viu: plantou')).toBeInTheDocument()
+      // 2026 sem dado do satélite: começa vazio
+      expect(screen.getAllByText(/O satélite viu/)).toHaveLength(2)
+      const marked = within(screen.getByRole('group', { name: 'Depois da soja de 2025' }))
+      expect(marked.getByRole('button', { name: 'Deixei parado' })).toHaveAttribute('aria-pressed', 'true')
+      expect(marked.getByRole('button', { name: 'Plantei' })).toHaveAttribute('aria-pressed', 'false')
+    })
+
+    it('marcar chama o controller; tocar de novo na resposta marcada tira a confirmação', async () => {
+      const props = setup({ confirmations: rows })
+
+      await userEvent.click(within(screen.getByRole('group', { name: 'Depois da soja de 2024' })).getByRole('button', { name: 'Plantei' }))
+      await userEvent.click(
+        within(screen.getByRole('group', { name: 'Depois da soja de 2025' })).getByRole('button', { name: 'Deixei parado' }),
+      )
+
+      expect(props.onConfirmSeason).toHaveBeenNthCalledWith(1, 2024, 'plantou')
+      expect(props.onConfirmSeason).toHaveBeenNthCalledWith(2, 2025, null)
+    })
+
+    it('sem histórico do satélite, o bloco fica no cartão "Ainda não conectado"', () => {
+      setup({ history: null, confirmations: rows.map((row) => ({ ...row, satellite: null })) })
+
+      const card = screen.getByRole('heading', { name: 'O que cresceu depois da soja' }).closest('[data-status]')
+      expect(card).toHaveAttribute('data-status', 'unavailable')
+      expect(within(card as HTMLElement).getByRole('group', { name: 'Depois da soja de 2026' })).toBeInTheDocument()
+      expect(screen.queryByText(/O satélite viu/)).not.toBeInTheDocument()
+    })
+
+    it('sem anos para confirmar (API antiga), o bloco não aparece', () => {
+      setup()
+
+      expect(screen.queryByRole('heading', { name: 'Confirme as últimas safras' })).not.toBeInTheDocument()
+    })
+
+    it('com anos confirmados, a legenda diz quantos foram', () => {
+      setup({ history: { ...withUncertain!, confirmed: 2 } })
+
+      expect(screen.getByText('2 anos confirmados por você')).toBeInTheDocument()
+    })
+  })
+
+  describe('soja de cada ano (tarefa 0039)', () => {
+    it('ano sem soja: traço na faixa e legenda própria "Sem soja"', () => {
+      const situations = [...withUncertain!.situations]
+      situations[2] = 'sem_soja'
+      setup({ history: { ...withUncertain!, idle: 4, known: 8, noSoy: 1, situations } })
+
+      const strip = screen.getByRole('img', { name: 'Plantou em 4 de 8 anos (1 sem certeza)' })
+      expect(strip.querySelector('[data-state="none"]')).toHaveTextContent('–')
+      expect(screen.getByText('Sem soja')).toBeInTheDocument()
+    })
+
+    it('sem ano sem soja, a legenda não fala de soja', () => {
+      setup()
+
+      expect(screen.queryByText('Sem soja')).not.toBeInTheDocument()
+    })
+
+    it('nenhum ano com soja: o cartão diz que não parece lavoura de soja e oferece ajustar no mapa', () => {
+      setup({ history: null, noSoy: true })
+
+      expect(
+        screen.getByRole('heading', { name: 'Não parece uma lavoura de soja. Confira o ponto no mapa.' }),
+      ).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Ajustar no mapa' })).toHaveAttribute(
+        'href',
+        '/onde?lat=-18.9543&lon=-48.1993&colheita=meio',
+      )
+      expect(screen.queryByText('Ainda não conectado')).not.toBeInTheDocument()
+    })
+
+    it('com safras confirmadas num ponto sem soja, o aviso continua no cartão', () => {
+      setup({ noSoy: true })
+
+      expect(screen.getByRole('heading', { name: 'Sua área ficou parada em 1 de 2 anos' })).toBeInTheDocument()
+      expect(screen.getByText('Não parece uma lavoura de soja. Confira o ponto no mapa.')).toBeInTheDocument()
+    })
+  })
+
+  it('confirmação e soja em inglês', () => {
+    setup({
+      t: en,
+      lang: 'en',
+      history: null,
+      noSoy: true,
+      confirmations: [{ year: 2024, satellite: 'sem_soja', choice: null }],
+    })
+
+    expect(screen.getByRole('heading', { name: "This doesn't look like a soybean field. Check the point on the map." })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Confirm your last seasons' })).toBeInTheDocument()
+    const group = screen.getByRole('group', { name: 'After the 2024 soybeans' })
+    expect(within(group).getByRole('button', { name: 'I planted' })).toBeInTheDocument()
+    expect(within(group).getByRole('button', { name: 'I left it idle' })).toBeInTheDocument()
+    expect(screen.getByText('Satellite saw: no soybeans')).toBeInTheDocument()
   })
 
   it('"Não é? Trocar" chama o controller', async () => {

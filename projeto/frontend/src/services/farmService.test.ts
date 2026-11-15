@@ -48,6 +48,35 @@ describe('farmService', () => {
     expect(deps.recomendacaoRepository.get).toHaveBeenCalledTimes(2)
   })
 
+  it('as safras confirmadas mudam a recomendação: cada combinação tem a sua (tarefa 0039)', async () => {
+    const deps = fakes()
+    const service = createFarmService(deps)
+    const params = { lat: -18.92, lon: -48.28, colheita: 'meio' as const }
+
+    await service.recomendacao(params, 'pt')
+    await service.recomendacao({ ...params, confirmadas: '2025:parado' }, 'pt')
+    await service.recomendacao({ ...params, confirmadas: '2025:parado' }, 'pt')
+
+    expect(deps.recomendacaoRepository.get).toHaveBeenCalledTimes(2)
+    expect(deps.recomendacaoRepository.get).toHaveBeenLastCalledWith({ ...params, confirmadas: '2025:parado' }, 'pt')
+  })
+
+  it('na fazenda de exemplo com safra confirmada, a recomendação vem da API com a confirmação', async () => {
+    const deps = fakes()
+    const service = createFarmService(deps)
+
+    const r = await service.recomendacao(
+      { lat: -18.9543, lon: -48.1993, colheita: 'meio', exemplo: true, confirmadas: '2026:plantou' },
+      'pt',
+    )
+
+    expect(r).toBe(recomendacao)
+    expect(deps.recomendacaoRepository.get).toHaveBeenCalledWith(
+      { lat: -18.9543, lon: -48.1993, colheita: 'meio', confirmadas: '2026:plantou' },
+      'pt',
+    )
+  })
+
   it('na fazenda de exemplo usa /exemplo, não o talhão nem a recomendação', async () => {
     const deps = fakes()
     const service = createFarmService(deps)

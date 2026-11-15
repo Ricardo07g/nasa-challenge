@@ -19,11 +19,18 @@ export function useFlowRecomendacao(farm: FarmService) {
     () =>
       params?.colheita
         ? farm.recomendacao(
-            { lat: params.lat, lon: params.lon, colheita: params.colheita, solo: params.solo, exemplo: params.exemplo },
+            {
+              lat: params.lat,
+              lon: params.lon,
+              colheita: params.colheita,
+              solo: params.solo,
+              exemplo: params.exemplo,
+              confirmadas: params.confirmadas,
+            },
             lang,
           )
         : Promise.reject(new Error('sem ponto ou colheita na URL')),
-    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, lang, farm],
+    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, params?.confirmadas, lang, farm],
   )
 
   const query = keepFlowQuery(search.toString())

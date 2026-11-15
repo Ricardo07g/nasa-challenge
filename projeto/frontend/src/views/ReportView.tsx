@@ -37,11 +37,12 @@ const SIGNAL_LOOK: Record<NivelSinal, { tone: 'orange' | 'green' | 'blue'; icon:
   incerto: { tone: 'blue', icon: <UncertainIcon /> },
 }
 
-const CELL: Record<SituacaoAno, 'good' | 'bad' | 'unknown'> = {
+const CELL: Record<SituacaoAno, 'good' | 'bad' | 'unknown' | 'none'> = {
   plantou: 'good',
   parado: 'bad',
   incerto: 'unknown',
   sem_dado: 'unknown',
+  sem_soja: 'none',
 }
 
 /** Relatório para banco e seguro (P2): folha A4 para imprimir ou salvar em PDF. */

@@ -137,6 +137,10 @@ export function SatellitePage() {
       status={state.status}
       onRetry={state.retry}
       history={state.history}
+      confirmations={state.confirmations}
+      onConfirmSeason={state.confirmSeason}
+      noSoy={state.noSoy}
+      adjustTo={state.adjustTo}
       rain={state.rain}
       climate={state.climate}
       soil={state.soil}

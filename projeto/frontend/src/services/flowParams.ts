@@ -1,4 +1,5 @@
 import { COLHEITAS, TEXTURAS, type Colheita, type Textura } from '../models/talhao'
+import { formatConfirmadas, parseConfirmadas } from './confirmedSeasonsService'
 
 /** O que a URL guarda entre as telas (RF-18): dá para recarregar ou compartilhar a mesma resposta. */
 export type FlowParams = {
@@ -7,6 +8,8 @@ export type FlowParams = {
   colheita?: Colheita
   solo?: Textura
   exemplo?: boolean
+  /** Safras confirmadas na tela 4, já no formato da URL e em ordem de ano ("2024:plantou,2025:parado"). */
+  confirmadas?: string
 }
 
 function readNumber(value: string | null): number | null {
@@ -27,6 +30,7 @@ export function readFlowParams(search: URLSearchParams): (FlowParams & { exemplo
     colheita: COLHEITAS.includes(colheita as Colheita) ? (colheita as Colheita) : undefined,
     solo: TEXTURAS.includes(solo as Textura) ? (solo as Textura) : undefined,
     exemplo: search.get('exemplo') === '1',
+    confirmadas: formatConfirmadas(parseConfirmadas(search.get('confirmadas'))),
   }
 }
 
@@ -39,7 +43,9 @@ export function buildFlowQuery(params: FlowParams): string {
   if (params.colheita) query.set('colheita', params.colheita)
   if (params.solo) query.set('solo', params.solo)
   if (params.exemplo) query.set('exemplo', '1')
-  return `?${query.toString()}`
+  // No fim e sem codificar ":" e ",": o link fica legível para compartilhar (só dígitos, letras, ":" e ",").
+  const confirmadas = params.confirmadas ? `&confirmadas=${params.confirmadas}` : ''
+  return `?${query.toString()}${confirmadas}`
 }
 
 /** Query da URL atual que segue para o próximo link ("" se ainda não tem ponto marcado). */
