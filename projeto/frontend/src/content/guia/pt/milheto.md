@@ -2,37 +2,36 @@
 titulo: Milheto
 tema: culturas
 slug: milheto
-rascunho: sim
+rascunho: nao
 planta: milheto
 ---
 
 ## Em uma frase
 
-Uma planta de cobertura que cresce rápido e faz muita palha, sem dar grão no app.
+Planta de cobertura que faz **muita palha** para o plantio direto. No app, não dá grão.
 
 ## Por que importa
 
-A palha cobre a terra, segura a umidade e deixa o plantio direto da soja mais fácil.
+Num estudo em Goiás, no Cerrado, o milheto foi a planta de cobertura que mais fez palha seca no começo da entressafra, comparado com braquiárias e com a terra parada. A palha cobre a terra e prepara o plantio direto da soja.
 
 ## Conheça
 
-- Serve para: cobertura.
-- Água: pede pouca (coeficiente 1,00 no pico). Nos primeiros 30 dias, o app olha se a chuva deu conta.
-- Deixa na terra: palha boa (35 de 40 pontos) e ajuda contra pragas (20 de 30).
-- Tem medo de: falta de água logo depois de nascer.
+- **Serve para:** cobertura.
+- **Palha:** foi a que mais fez palha no começo da entressafra, no estudo em Goiás.
+- **Quando plantar:** a data limite vem do ZARC do seu município.
 
 ## Passo a passo
 
-1. Semeie logo depois da soja. O limite do ZARC no app é 15 de março.
-2. A floração vem com cerca de 50 dias. O ciclo todo leva cerca de 90.
-3. Deixe crescer e formar palha.
-4. Plante a soja direto sobre a palha.
+1. **Confira o prazo** do ZARC no seu município.
+2. **Semeie** logo depois da soja.
+3. **Deixe crescer** e formar palha.
+4. **Plante a soja** direto sobre a palha.
 
 ## Na sua lavoura
 
-O app mostra o milheto em [Comparar](/opcoes) e dentro do [Plano de 3 anos](/plano). Veja também [a palhada](/guia/palhada).
+Veja o milheto em [Comparar](/opcoes) e dentro do [Plano de 3 anos](/plano). Leia também sobre [a palhada](/guia/palhada).
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
-- [Embrapa: milheto é cultura alternativa para cobertura de solo](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)
+- [Pacheco et al. (2011), Pesquisa Agropecuária Brasileira: palha e nutrientes de plantas de cobertura na safrinha](https://www.alice.cnptia.embrapa.br/handle/doc/882280)
+- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

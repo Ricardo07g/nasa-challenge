@@ -2,38 +2,38 @@
 titulo: Crotalária
 tema: culturas
 slug: crotalaria
-rascunho: sim
+rascunho: nao
 planta: crotalaria
 ---
 
 ## Em uma frase
 
-Uma leguminosa de cobertura que deixa nitrogênio na terra e atrapalha o nematoide.
+Leguminosa de cobertura que **fixa nitrogênio do ar** e ajuda contra alguns nematoides.
 
 ## Por que importa
 
-Ela aduba a terra e quebra o ciclo de pragas do solo. É a cobertura que mais ajuda a terra no app.
+A crotalária é muito usada em rotação por ter grande potencial de fixar nitrogênio do ar. Num estudo publicado na Revista Caatinga, *Crotalaria juncea* e *C. spectabilis* multiplicaram pouco dois nematoides das lesões radiculares e foram indicadas como opções de rotação ou sucessão contra eles.
 
 ## Conheça
 
-- Serve para: cobertura e nitrogênio.
-- Água: pede pouca (coeficiente 1,00 no pico).
-- Deixa na terra: 80 kg/ha de nitrogênio no app, nota máxima de nitrogênio (30 de 30), pragas 30 de 30 e palha 25 de 40.
-- Tem medo de: falta de água nos primeiros 30 dias.
+- **Serve para:** cobertura e nitrogênio.
+- **Nitrogênio:** grande potencial de fixação biológica.
+- **Nematoides:** opção contra os nematoides das lesões radiculares, segundo o estudo.
+- **Quando plantar:** a data limite vem do ZARC do seu município.
 
 ## Passo a passo
 
-1. Semeie a crotalária a lanço ou em linha. O limite do ZARC no app é 28 de fevereiro.
-2. Deixe crescer até florescer, com cerca de 60 dias. O ciclo todo leva cerca de 100.
-3. Roce.
-4. Plante a soja em cima da palhada.
+1. **Confira o prazo** do ZARC no seu município.
+2. **Semeie** logo depois da soja.
+3. **Deixe crescer** e cobrir a terra.
+4. **Plante a soja** em cima da cobertura.
 
 ## Na sua lavoura
 
-O app mostra a crotalária em [Comparar](/opcoes). Com nematoide na área, o [Plano de 3 anos](/plano) procura crotalária ou milheto. Veja [adubo verde](/guia/adubo-verde) e [nematoide](/guia/nematoide).
+O app mostra a crotalária em [Comparar](/opcoes) e no [Plano de 3 anos](/plano). Veja [adubo verde](/guia/adubo-verde) e [nematoide](/guia/nematoide).
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
-- [Embrapa: crotalária, nitrogênio e nematoides](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2380275/crotalaria-e-uma-boa-alternativa-para-a-renovacao-de-canaviais)
-- [Embrapa: nematoides no milho e rotação](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
+- [Costa et al. (2006), Ciência e Agrotecnologia: crescimento e nutrição da Crotalaria juncea](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/203830/1/CAv30n5costa.pdf)
+- [Santana-Gomes et al. (2019), Revista Caatinga: nematoides das lesões radiculares em plantas de cobertura](https://doi.org/10.1590/1983-21252019v32n201rc)
+- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

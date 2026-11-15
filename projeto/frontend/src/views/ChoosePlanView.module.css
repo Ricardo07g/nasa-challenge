@@ -996,7 +996,7 @@
   text-transform: uppercase;
 }
 
-.draft {
+.howNote {
   display: inline-block;
   padding: 2px 8px;
   border-radius: var(--radius-pill);

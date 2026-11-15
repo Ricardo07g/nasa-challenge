@@ -2,31 +2,30 @@
 titulo: Sorgo
 tema: culturas
 slug: sorgo
-rascunho: sim
+rascunho: nao
 planta: sorgo
 ---
 
 ## Em uma frase
 
-Um cereal de grão que aguenta a falta de água melhor que o milho.
+Cereal de grão que **aguenta melhor a falta de água** que o milho.
 
 ## Por que importa
 
-Na entressafra a chuva falha. O sorgo é uma opção para quando o risco de seca assusta.
+Uma revisão de pesquisadores da Universidade de Delaware e da Embrapa Milho e Sorgo mostra que o sorgo tolera melhor estresses como a seca do que o milho. Raízes mais fundas ajudam a planta a buscar a água que fica no fundo da terra.
 
 ## Conheça
 
-- Serve para: grão.
-- Água: pede menos que o milho (coeficiente 1,05 no pico).
-- Deixa na terra: palha média (20 de 40 pontos) e alguma ajuda contra pragas (15 de 30).
-- Tem medo de: seca e calor de 35 °C ou mais na floração, mas aguenta mais que o milho.
+- **Serve para:** grão.
+- **Água:** tolera a seca melhor que o milho.
+- **Raiz:** raízes fundas ajudam na seca.
+- **Quando plantar:** a data limite vem do ZARC do seu município.
 
 ## Passo a passo
 
-1. Semeie logo depois de colher a soja. O limite do ZARC no app é 20 de março.
-2. A floração vem com cerca de 65 dias. O ciclo todo leva cerca de 115.
-3. Observe a chuva na floração.
-4. Colha o grão em junho ou julho. Deixe a palhada para a próxima soja.
+1. **Confira o prazo** do ZARC no seu município.
+2. **Semeie** logo depois de colher a soja.
+3. **Observe a chuva** na floração.
 
 ## Na sua lavoura
 
@@ -34,5 +33,5 @@ O app mostra o sorgo na [Sugestão](/resposta) e em [Comparar](/opcoes). O selo 
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
-- [Embrapa: sorgo é recomendado para a safrinha](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18856249/sorgo-e-recomendado-para-a-safrinha)
+- [Hostetler, Tinoco e Sparks (2024), Journal of Experimental Botany: raízes do milho e do sorgo sob estresse](https://doi.org/10.1093/jxb/erad390)
+- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

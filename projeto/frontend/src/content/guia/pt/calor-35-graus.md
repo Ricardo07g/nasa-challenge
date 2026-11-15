@@ -1,5 +1,5 @@
 ---
-titulo: Calor de 35 °C na floração
+titulo: Calor na floração
 tema: clima
 slug: calor-35-graus
 rascunho: nao
@@ -7,25 +7,22 @@ rascunho: nao
 
 ## Em uma frase
 
-Calor de 35 °C ou mais na floração pode derrubar flores e reduzir o grão.
+O app olha o **calor na floração**, com a temperatura máxima de cada dia medida pelo NASA POWER.
 
 ## Por que importa
 
-A floração é a fase mais delicada. Se ela cai em dias muito quentes, o ano conta como ano de aperto, mesmo com chuva boa.
+O NASA POWER é uma base de dados de clima da NASA, feita com satélites e modelos. Um estudo da USP/ESALQ comparou o NASA POWER com as estações do INMET em todo o Brasil e achou bom desempenho para a temperatura média, a mínima e a máxima. A conclusão foi que dá para usá-lo na agricultura com confiança razoável em escala regional.
 
 ## Na sua lavoura
 
-O app olha a temperatura máxima de cada dia, do NASA POWER. Há aperto por calor quando a máxima chega a 35 °C ou mais em 3 dias ou mais na fase crítica, que vai de 15 dias antes a 15 dias depois da floração.
+O app conta os dias muito quentes na fase mais delicada da cultura, a floração, e usa isso para dizer se o ano "deu certo". Veja [O que significa "deu certo"](/guia/deu-certo).
 
-No acompanhamento da safra, o aviso de calor sai com 2 dias seguidos de máxima de 35 °C ou mais.
+O calor aparece como bloco no painel de [O que o satélite viu](/satelite).
 
-Nos anos com calor na floração, o ano não "deu certo". Veja [O que significa "deu certo"](/guia/deu-certo).
+Semear dentro do prazo do ZARC ajuda a controlar em que época a floração cai. Veja [o prazo de plantio](/guia/prazo-de-plantio-zarc).
 
-O calor aparece como bloco no painel de [O que o satélite viu](/satelite). Semear no prazo ajuda a floração a cair em dias mais amenos. Veja [o prazo de plantio](/guia/prazo-de-plantio-zarc).
-
-O limite de 35 °C é do PRD. A ligação com aborto de flores é a regra que o time adotou.
+Quanto calor a sua cultura aguenta na floração fica com o seu agrônomo.
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
-- [NASA: o projeto POWER, temperatura diária](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
+- [Monteiro, Sentelhas e Pedra (2018), International Journal of Climatology: o NASA POWER no Brasil](https://doi.org/10.1002/joc.5282)
