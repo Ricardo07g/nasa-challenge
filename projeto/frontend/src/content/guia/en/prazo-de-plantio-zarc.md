@@ -1,36 +1,29 @@
 ---
 titulo: The planting deadline and ZARC
-resumo: ZARC says, for each municipality, until when you can plant with the lowest climate risk.
+resumo: The ZARC shows, for each municipality, the best planting time for each crop.
 tema: plantar
 slug: prazo-de-plantio-zarc
-rascunho: sim
+rascunho: nao
 relacionados: plantar-logo-depois-da-colheita, sementes, milho-safrinha
 ---
 
 ## In one sentence
 
-ZARC says, for each municipality, until when you can plant with the lowest climate risk.
+The ZARC shows, for each municipality, **the best planting time** for each crop.
 
 ## Why it matters
 
-Planting after the deadline pushes flowering into the end of the rains. Then the chance of water shortage goes up.
+The ZARC is the Agricultural Climate Risk Zoning, an agricultural policy and risk-management tool. It analyzes climate, soil and the cultivar's cycle, and the result is published in orders from the Ministry of Agriculture.
+
+In the corn zoning for Minas Gerais and the Center-West, researchers ran the crop's water balance for each soil type. Sowing after the best time raised the risk of water shortage during grain filling, especially in soils that hold little water.
 
 ## In your field
 
-ZARC is the Agricultural Climate Risk Zoning. It studies climate, soil and cultivar cycle, and is published in ordinances by the Ministry of Agriculture.
+Each municipality has its own dates. Check the Ministry of Agriculture's order for your crop and your municipality.
 
-The app uses these limits, which are a team hypothesis:
-
-- Second-crop corn, corn with brachiaria and crotalaria: February 28.
-- Pearl millet: March 15.
-- Sorghum: March 20.
-
-On the [When you harvest](/quando) screen, you say when you harvest the soybeans: early February, mid-February, or late February and March. If there is no time to sow in time, the [Suggestion](/resposta) warns: "sowing only until this date (ZARC), and with a late harvest there is no time".
-
-Harvesting soybeans earlier opens room. Sowing on staggered dates, as the harvest advances, avoids losing everything at once.
+On the [When you harvest](/quando) screen, you say when you harvest the soybeans: early February, mid-February or late February and March. If a crop is past its deadline, the [Suggestion](/resposta) warns you.
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
-- [Ministry of Agriculture: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
-- [Embrapa: staggered sowing in second-crop corn](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
+- [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
+- [Sans et al. (2001), Revista Brasileira de Agrometeorologia: climate risk zoning for maize in Minas Gerais and the Center-West](https://www.alice.cnptia.embrapa.br/handle/doc/485595)

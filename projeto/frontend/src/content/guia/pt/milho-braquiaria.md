@@ -3,32 +3,31 @@ titulo: Milho com braquiária
 resumo: Milho e capim braquiária semeados juntos: o milho dá grão e o capim cobre a terra.
 tema: culturas
 slug: milho-braquiaria
-rascunho: sim
+rascunho: nao
 planta: milho_braquiaria
 relacionados: palhada, milho-safrinha, plantio-direto
 ---
 
 ## Em uma frase
 
-Milho e capim braquiária semeados juntos: o milho dá grão e o capim cobre a terra.
+**Milho e capim braquiária** semeados juntos: o milho dá grão e o capim cobre a terra.
 
 ## Por que importa
 
-Depois da colheita, o capim fica e forma uma palhada grossa. Ela protege a terra e ajuda a próxima soja.
+Esse consórcio ficou conhecido como **Sistema Santa Fé**. No plantio direto, a braquiária semeada com o milho serve de pasto do fim do verão ao começo da primavera e, depois, forma a palha da próxima safra. Num estudo no Cerrado, as braquiárias acumularam palha e nutrientes até o fim da entressafra.
 
 ## Conheça
 
-- Serve para: grão e cobertura.
-- Água: pede tanto quanto o milho (coeficiente 1,20 no pico).
-- Deixa na terra: a maior palhada do app, 40 de 40 pontos, e 10 de 30 em quebra de pragas.
-- Tem medo de: seca e calor de 35 °C ou mais na floração.
+- **Serve para:** grão e cobertura.
+- **Como funciona:** milho e braquiária semeados juntos.
+- **Quando plantar:** a data limite vem do ZARC do seu município. O consórcio de milho safrinha com braquiária foi incluído no ZARC.
 
 ## Passo a passo
 
-1. Semeie o capim junto com o milho. O limite do ZARC no app é 28 de fevereiro.
-2. A floração vem com cerca de 60 dias. O ciclo todo leva cerca de 120.
-3. Colha o milho. O capim fica cobrindo a terra.
-4. Plante a próxima soja em cima da palhada.
+1. **Confira o prazo** do ZARC no seu município.
+2. **Semeie o capim junto com o milho.**
+3. **Colha o milho.** O capim fica cobrindo a terra.
+4. **Plante a próxima soja** em cima da palha, no plantio direto.
 
 ## Na sua lavoura
 
@@ -36,6 +35,6 @@ O app compara o milho com braquiária com as outras opções em [Comparar](/opco
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
-- [Embrapa: Sistema Santa Fé](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)
-- [Embrapa: braquiária além da alimentação animal](https://www.embrapa.br/en/tema-integracao-lavoura-pecuaria-floresta-ilpf/busca-de-noticias/-/noticia/31795514/braquiaria-muito-alem-da-alimentacao-animal)
+- [Borghi e Crusciol (2007), Pesquisa Agropecuária Brasileira: milho consorciado com Brachiaria brizantha no plantio direto](https://apct.sede.embrapa.br/pab/article/download/7551/4470/23900)
+- [Ceccon, Borghi e Crusciol, livro Consórcio Milho-Braquiária (Embrapa), capítulo 2](https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/982617/1/Cap2.pdf)
+- [Pacheco et al. (2011), Pesquisa Agropecuária Brasileira: palha e nutrientes de plantas de cobertura na safrinha](https://www.alice.cnptia.embrapa.br/handle/doc/882280)

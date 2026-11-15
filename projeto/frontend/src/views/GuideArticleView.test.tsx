@@ -59,6 +59,7 @@ function setup(overrides: Partial<GuideArticleViewProps> = {}) {
   const a = overrides.article === undefined ? article : overrides.article
   const props: GuideArticleViewProps = {
     t: pt,
+    lang: 'pt',
     article: a,
     layout: a ? articleLayout(a.blocks) : null,
     related: [palhada],
@@ -178,9 +179,17 @@ describe('GuideArticleView (artigo, tela 8)', () => {
     )
   })
 
-  it('artigo de cultura continua com o desenho da planta', () => {
+  it('artigo de cultura mostra a foto real com o crédito, no lugar do desenho (15/11/2026)', () => {
     setup({ article: { ...article, plant: 'sorgo', theme: 'cultures' } })
-    expect(screen.getByRole('img', { name: 'Desenho de sorgo' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Lavoura de sorgo com os cachos de grão maduros/ })).toHaveAttribute('src', '/fotos/sorgo.jpg')
+    expect(screen.getByRole('link', { name: /Josue Marinho/ })).toHaveAttribute('href', expect.stringContaining('commons.wikimedia.org'))
+    expect(screen.queryByRole('img', { name: 'Desenho de sorgo' })).not.toBeInTheDocument()
+  })
+
+  it('em inglês, a foto vem com o texto alternativo e o crédito em inglês', () => {
+    setup({ t: en, lang: 'en', article: { ...article, plant: 'sorgo', theme: 'cultures' } })
+    expect(screen.getByRole('img', { name: /Sorghum field with ripe grain heads/ })).toBeInTheDocument()
+    expect(screen.getByText(/Photo:/)).toBeInTheDocument()
   })
 
   it('em inglês', () => {

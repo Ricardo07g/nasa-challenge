@@ -1,6 +1,6 @@
 ---
 titulo: When the rain ends
-resumo: Knowing when the rain usually ends helps you choose what to plant.
+resumo: How the rain behaved over the last 20 years after the soybean harvest.
 tema: clima
 slug: quando-a-chuva-acaba
 rascunho: nao
@@ -9,28 +9,23 @@ relacionados: veranico, conta-de-agua, plantar-logo-depois-da-colheita
 
 ## In one sentence
 
-After the soybean harvest, the rain fades until it stops, and knowing when it usually ends helps you choose what to plant.
+After the soybean harvest, the app shows **how the rain behaved** over the last 20 years, to help you choose what to plant.
 
 ## Why it matters
 
-The crop that follows soybeans lives on the rain still to come and on the water the soil holds. If the rain ends before the stage when the plant needs water most, water runs short right then.
-
-Each day of delay in the harvest is one day less of rain for the next crop.
+The plant that comes after soybeans lives on the rain that is still to fall and the water the soil stores. Knowing how the rain usually behaves after harvest helps compare the harvest times.
 
 ## In your field
 
-On the [When you harvest](/quando) screen, the app shows three things, with the rain measured by the GPM IMERG satellite over the last 20 years:
+On the [When you harvest](/quando) screen, the app shows three things, with rain measured by the GPM IMERG satellite over the last 20 years:
 
-1. The rain left from the harvest day to June 30. One number is for a normal year (the median). The other is for a dry year: only 20% of the years had less rain than that.
-2. When the rain ends. The app calls the end of the rain the first day, from March 1 on, that starts 20 days in a row with less than 10 mm added up. It shows the day this happened in half of the years, the earliest year and the latest.
-3. Month by month, the rain and what the crop uses. The use is the evapotranspiration, computed with the NASA POWER weather. The month when the rain falls below the use is written out and highlighted.
+1. **The rain that is left** from harvest day to the end of June, in a normal year and in a dry year.
+2. **When the rain ends**: the day it usually stops, in half of the years, in the earliest year and in the latest.
+3. **Month by month**, the rain and what the crop uses. What it uses is evapotranspiration, calculated with NASA POWER climate. The month when rain falls below use is shown in highlight.
 
-The numbers March 1, 20 days, 10 mm and 20% are a team hypothesis, to be reviewed by the agronomist.
-
-See also [Dry spell](/guia/veranico) and [The water balance of your field](/guia/conta-de-agua).
+See also [Dry spell](/guia/veranico) and [The water math of your field](/guia/conta-de-agua).
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (regras.yaml), to be reviewed by the agronomist.
-- [NASA: GPM IMERG rainfall](https://gpm.nasa.gov/data/imerg)
-- [NASA: the POWER project](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
+- [Huffman et al. (2020), book Satellite Precipitation Measurement (Springer): IMERG chapter](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)
+- [Monteiro, Sentelhas and Pedra (2018), International Journal of Climatology: NASA POWER in Brazil](https://doi.org/10.1002/joc.5282)

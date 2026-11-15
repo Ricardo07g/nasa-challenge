@@ -1,41 +1,41 @@
 ---
 titulo: Crotalaria
-resumo: A cover legume that leaves nitrogen in the soil and gets in the way of nematodes.
+resumo: A cover legume that fixes nitrogen from the air and helps against some nematodes.
 tema: culturas
 slug: crotalaria
-rascunho: sim
+rascunho: nao
 planta: crotalaria
 relacionados: adubo-verde, nematoide, rotacao-de-culturas
 ---
 
 ## In one sentence
 
-A cover legume that leaves nitrogen in the soil and gets in the way of nematodes.
+A cover legume that **fixes nitrogen from the air** and helps against some nematodes.
 
 ## Why it matters
 
-It fertilizes the soil and breaks the cycle of soil pests. It is the cover that helps the soil most in the app.
+Crotalaria is widely used in rotation because of its great potential to fix nitrogen from the air. In a study published in Revista Caatinga, *Crotalaria juncea* and *C. spectabilis* let two root lesion nematodes multiply little and were recommended as rotation or succession options against them.
 
 ## Get to know it
 
-- Use: cover and nitrogen.
-- Water: it asks for little (coefficient 1.00 at the peak).
-- Leaves in the soil: 80 kg/ha of nitrogen in the app, top nitrogen score (30 of 30), pests 30 of 30 and straw 25 of 40.
-- Fears: lack of water in the first 30 days.
+- **Use:** cover and nitrogen.
+- **Nitrogen:** great potential for biological fixation.
+- **Nematodes:** an option against root lesion nematodes, according to the study.
+- **When to plant:** the deadline comes from the ZARC for your municipality.
 
 ## Step by step
 
-1. Sow the crotalaria broadcast or in rows. The app's ZARC limit is February 28.
-2. Let it grow until it flowers, at about 60 days. The whole cycle takes about 100.
-3. Mow it.
-4. Plant the soybeans on top of the straw.
+1. **Check the deadline** in the ZARC for your municipality.
+2. **Sow** right after the soybeans.
+3. **Let it grow** and cover the soil.
+4. **Plant the soybeans** on the cover.
 
 ## In your field
 
-The app shows crotalaria in [Compare](/opcoes). With nematodes in the field, the [3-year plan](/plano) looks for crotalaria or millet. See [green manure](/guia/adubo-verde) and [nematodes](/guia/nematoide).
+The app shows crotalaria in [Compare](/opcoes) and in the [3-year plan](/plano). See [green manure](/guia/adubo-verde) and [nematodes](/guia/nematoide).
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
-- [Embrapa: crotalaria, nitrogen and nematodes](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2380275/crotalaria-e-uma-boa-alternativa-para-a-renovacao-de-canaviais)
-- [Embrapa: nematodes in corn and rotation](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
+- [Costa et al. (2006), Ciência e Agrotecnologia: growth and nutrition of Crotalaria juncea](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/203830/1/CAv30n5costa.pdf)
+- [Santana-Gomes et al. (2019), Revista Caatinga: root lesion nematodes in cover crops](https://doi.org/10.1590/1983-21252019v32n201rc)
+- [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

@@ -244,15 +244,20 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `plantar`, `terra`, `clima` ou `seguranca`), `slug` (igual ao nome do arquivo), `rascunho` (`sim` ou `nao`; desde
   15/11/2026 **nenhuma tela mostra**: nada de "em revisão" nem de "a revisar pela agrônoma"), `relacionados` (até 3
   slugs, o "Veja também"; sem eles, outros do mesmo tema) e, nas culturas, `planta` (id do `culturas.yaml`, para a
-  ilustração de `design-system/plants/PlantImage`). **O tempo de leitura não vai no cabeçalho:** `readingMinutes`
+  foto real do `PlantPhoto`, no cartão e no artigo). **O tempo de leitura não vai no cabeçalho:** `readingMinutes`
   conta as palavras do texto (~200 por minuto, para cima, mínimo 1). `guideMeta.test.ts` confere o `resumo` e os
   `relacionados`. Título de seção fixo: "Em uma frase", "Por que importa", "Na sua lavoura", "Fontes" (cultura tem
   também "Conheça" e "Passo a passo"; em inglês "In one sentence", "Why it matters", "In your field", "Sources",
-  "Get to know it", "Step by step"). De 150 a 300 palavras, frases curtas. Números só de `culturas.yaml`,
-  `regras.yaml` e do PRD. Link externo só de
-  página aberta e conferida, e a página entra antes em `src/content/guia/verifiedSources.ts` (url, o que confirma,
-  data); `guideContent.test.ts` barra link fora da lista, artigo fora do tamanho, sem a estrutura, sem par em outro
-  idioma ou com link interno quebrado. Para ligar uma tela a um artigo, use o `GuideLink` (pacote 2: abre em nova
+  "Get to know it", "Step by step"). De 100 a 300 palavras, frases
+  curtas. Desde 15/11/2026 nenhum artigo é rascunho (`rascunho: nao`) e nenhum texto cita revisão pendente
+  da agrônoma (nem nas telas: o `messages.test.ts` barra "rascunho" e revisão pendente; o número que é hipótese do
+  time aparece como "ainda não validado em campo"); em compensação, **o artigo só afirma o que uma fonte conferida confirma**: artigo científico
+  revisado por pares, livro técnico ou fonte oficial do governo (lei, ZARC, Defesa Civil, NOAA). Nada de
+  notícia nem de número que seja hipótese do time (prazos do ZARC por cultura, coeficientes, pontos da nota,
+  limites do `regras.yaml`): esses ficam na tela "Como a conta é feita". Link externo só de publicação
+  aberta e conferida, e ela entra antes em `src/content/guia/verifiedSources.ts` (url, `kind` = `article`,
+  `book` ou `official`, `citation`, o que confirma, data); `guideContent.test.ts` barra link fora da lista, artigo fora do tamanho, sem a estrutura, sem par
+  em outro idioma ou com link interno quebrado. Para ligar uma tela a um artigo, use o `GuideLink` (pacote 2: abre em nova
   aba; o `slug` só aceita os de `GUIDE_SLUGS`): não mude slug nem a rota `/guia/{slug}`. O Markdown é lido por
   `services/markdownService.ts` (títulos, parágrafos, listas, negrito e links; HTML vira texto puro e a view nunca
   usa `dangerouslySetInnerHTML`). Não adicione biblioteca de Markdown.
@@ -271,7 +276,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
     `pages.guide.test.tsx`); a tela abre com o que vier na URL, e uma navegação que não é `replace` relê a URL.
   - **Artigo (`GuideArticleView`, `useGuideArticleController`):** `articleLayout` separa o "Em uma frase" (caixa com
     borda verde), as seções (com âncora, `sectionId`) e as "Fontes" (num `<details>` fechado, "Fontes conferidas");
-    lista de 2 a 4 itens "**Nome:** texto" vira cartões com ícone. Coluna lateral fixa no computador com "Neste
+    lista de 2 a 4 itens "**Nome:** texto" vira cartões com ícone. Artigo de cultura mostra a foto real
+    (`PlantPhoto`, com o crédito) logo abaixo do título, no lugar do desenho. Coluna lateral fixa no computador com "Neste
     artigo" (rolagem suave, ou direta com menos movimento) e "Veja também" (`relatedArticles`); no celular, o índice
     some e o "Veja também" vai para o fim. "Este artigo ajudou? Sim / Não" só marca e diz "Obrigado!": **nenhuma
     contagem guardada**. Os links internos (e o "Voltar ao Guia") levam o fluxo da URL (`keepFlowQuery`).

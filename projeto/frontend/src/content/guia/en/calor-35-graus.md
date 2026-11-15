@@ -1,6 +1,6 @@
 ---
-titulo: 35 °C heat at flowering
-resumo: Heat of 35 °C or more at flowering can drop flowers and cut the grain.
+titulo: Heat at flowering
+resumo: The app looks at heat at flowering, with each day's maximum from NASA POWER.
 tema: clima
 slug: calor-35-graus
 rascunho: nao
@@ -9,25 +9,22 @@ relacionados: deu-certo, prazo-de-plantio-zarc, clima-2041-2060
 
 ## In one sentence
 
-Heat of 35 °C or more at flowering can drop flowers and cut the grain.
+The app looks at **heat at flowering**, using each day's maximum temperature measured by NASA POWER.
 
 ## Why it matters
 
-Flowering is the most delicate phase. If it falls on very hot days, the year counts as a stress year, even with good rain.
+NASA POWER is a NASA climate database built from satellites and models. A study from USP/ESALQ compared NASA POWER with INMET weather stations across Brazil and found good performance for average, minimum and maximum temperature. It concluded that it can be used in agriculture with reasonable confidence at a regional scale.
 
 ## In your field
 
-The app looks at each day's maximum temperature, from NASA POWER. There is heat stress when the maximum reaches 35 °C or more on 3 days or more in the critical phase, which runs from 15 days before to 15 days after flowering.
+The app counts very hot days in the crop's most delicate phase, flowering, and uses that to say whether the year "worked". See [What "it worked" means](/guia/deu-certo).
 
-In the season tracking, the heat warning goes out with 2 days in a row of a maximum of 35 °C or more.
+Heat shows up as a block on the [What the satellite saw](/satelite) panel.
 
-In years with heat at flowering, the year did not "work". See [What "it worked" means](/guia/deu-certo).
+Sowing within the ZARC deadline helps control when flowering falls. See [the planting deadline](/guia/prazo-de-plantio-zarc).
 
-Heat shows up as a block in the [What the satellite saw](/satelite) panel. Sowing on time helps flowering fall on milder days. See [the planting deadline](/guia/prazo-de-plantio-zarc).
-
-The 35 °C limit comes from the PRD. The link to flower loss is the rule the team adopted.
+How much heat your crop tolerates at flowering is up to your agronomist.
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
-- [NASA: the POWER project, daily temperature](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
+- [Monteiro, Sentelhas and Pedra (2018), International Journal of Climatology: NASA POWER in Brazil](https://doi.org/10.1002/joc.5282)

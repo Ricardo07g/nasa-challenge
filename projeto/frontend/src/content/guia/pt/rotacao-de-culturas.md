@@ -3,33 +3,32 @@ titulo: Rotação de culturas
 resumo: Rotação é trocar o que se planta, ano após ano, em vez de repetir a mesma cultura.
 tema: terra
 slug: rotacao-de-culturas
-rascunho: sim
+rascunho: nao
 relacionados: crotalaria, nematoide, adubo-verde
 ---
 
 ## Em uma frase
 
-Rotação é trocar o que se planta, ano após ano, em vez de repetir a mesma cultura.
+Rotação é **trocar o que se planta**, ano após ano, em vez de repetir a mesma cultura.
 
 ## Por que importa
 
-Cada planta deixa algo diferente na terra. Trocar ajuda a cobrir o solo, a quebrar pragas e nematoides e a segurar a umidade.
+A rotação ajuda a controlar doenças: sem a planta hospedeira, muitos fungos que vivem nos restos da cultura ficam sem alimento e perdem força, e a terra pode ganhar microrganismos que competem com eles. Ela também é um dos pilares do plantio direto. E plantas como a crotalária ajudam contra alguns nematoides.
 
 ## Na sua lavoura
 
-O [Plano de 3 anos](/plano) testa todas as combinações de 6 opções em 3 safras, 216 no total, e mostra as melhores.
+O [Plano de 3 anos](/plano) testa todas as combinações de 6 opções em 3 safras, **216** no total, e mostra as melhores.
 
 Como ler:
 
 - Cada coluna é um ano, com a opção da entressafra.
-- O app dá bônus à variedade: +5 pontos com 2 funções diferentes e +10 com 3 (grão, cobertura de gramínea e cobertura de leguminosa).
-- Não aparece plano com mais de 2 pousios seguidos.
-- Com nematoide na área, o plano precisa de crotalária ou milheto.
+- Você pode trocar uma opção e ver a nota na hora.
+- Com nematoide na área, o plano leva isso em conta.
 
-Você pode trocar uma opção e ver a nota na hora. Veja cada cultura na [Sugestão](/resposta), por exemplo a [crotalária](/guia/crotalaria).
+Veja cada cultura na [Sugestão](/resposta), por exemplo a [crotalária](/guia/crotalaria).
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
-- [Embrapa: rotação de culturas e plantas de cobertura](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)
-- [Embrapa: nematoides e rotação](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
+- [Reis, Casa e Bianchin (2011), Summa Phytopathologica: controle de doenças pela rotação de culturas](https://scielo.br/j/sp/i/2011.v37n3/)
+- [Oliveira et al. (2013), Pesquisa Agropecuária Tropical: milho conforme a cultura anterior, no plantio direto](https://www.redalyc.org/pdf/2530/253028469004.pdf)
+- [Santana-Gomes et al. (2019), Revista Caatinga: nematoides das lesões radiculares em plantas de cobertura](https://doi.org/10.1590/1983-21252019v32n201rc)

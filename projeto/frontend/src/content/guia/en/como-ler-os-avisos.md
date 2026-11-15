@@ -21,7 +21,7 @@ Each alert gives the level (**Warning** or **Keep an eye on it**), what the data
 
 On the [Alerts](/avisos) screen, the alerts come in three groups:
 
-- **Now**: dry soil from the SMAP satellite; days in a row without rain and 35 °C heat in the last days, from NASA POWER; and the NOAA El Niño or La Niña forecast, with what happened here in similar years.
+- **Now**: dry soil from the SMAP satellite; days in a row without rain and heat in the last days, from NASA POWER; and the NOAA El Niño or La Niña forecast, with what happened here in similar years.
 - **What changed in your area**: 2020 to 2024 compared with 2005 to 2019. These are few years: it shows what happened, not a forecast.
 - **Out of the ordinary**: the records of the 20 years, such as the longest dry spell and the driest autumn.
 
@@ -29,8 +29,7 @@ For the official alerts, see [Official Civil Defense alerts](/guia/alertas-defes
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (regras.yaml), to be reviewed by the agronomist.
-- [NSIDC: SMAP L4 soil moisture](https://nsidc.org/data/spl4smgp/versions/8)
-- [NASA: NASA POWER data](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
-- [NASA: GPM IMERG rain](https://gpm.nasa.gov/data/imerg)
-- [NOAA: ONI index of El Niño and La Niña](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)
+- [Reichle et al. (2019), Journal of Advances in Modeling Earth Systems: SMAP Level-4 soil moisture](https://doi.org/10.1029/2019MS001729)
+- [Monteiro, Sentelhas and Pedra (2018), International Journal of Climatology: NASA POWER in Brazil](https://doi.org/10.1002/joc.5282)
+- [Huffman et al. (2020), book Satellite Precipitation Measurement (Springer): IMERG chapter](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)
+- [NOAA: El Niño and La Niña ONI index (official definition)](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)

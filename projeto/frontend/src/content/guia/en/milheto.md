@@ -1,40 +1,39 @@
 ---
 titulo: Pearl millet
-resumo: A cover plant that grows fast and makes a lot of straw, with no grain in the app.
+resumo: A cover plant that makes a lot of straw for no-till. In the app, it gives no grain.
 tema: culturas
 slug: milheto
-rascunho: sim
+rascunho: nao
 planta: milheto
 relacionados: palhada, nematoide, sorgo
 ---
 
 ## In one sentence
 
-A cover plant that grows fast and makes a lot of straw, with no grain in the app.
+A cover plant that makes **a lot of straw** for no-till. In the app, it gives no grain.
 
 ## Why it matters
 
-The straw covers the soil, holds moisture and makes direct planting of soybeans easier.
+In a study in Goiás, in the Cerrado, pearl millet was the cover plant that made the most dry straw at the start of the off-season, compared with brachiaria grasses and fallow land. The straw covers the soil and prepares no-till planting of soybeans.
 
 ## Get to know it
 
-- Use: cover.
-- Water: it asks for little (coefficient 1.00 at the peak). In the first 30 days, the app checks whether the rain was enough.
-- Leaves in the soil: good straw (35 of 40 points) and help against pests (20 of 30).
-- Fears: lack of water right after emerging.
+- **Use:** cover.
+- **Straw:** it made the most straw at the start of the off-season in the Goiás study.
+- **When to plant:** the deadline comes from the ZARC for your municipality.
 
 ## Step by step
 
-1. Sow right after the soybeans. The app's ZARC limit is March 15.
-2. Flowering comes at about 50 days. The whole cycle takes about 90.
-3. Let it grow and form straw.
-4. Plant the soybeans directly on the straw.
+1. **Check the deadline** in the ZARC for your municipality.
+2. **Sow** right after the soybeans.
+3. **Let it grow** and form straw.
+4. **Plant the soybeans** directly on the straw.
 
 ## In your field
 
-The app shows pearl millet in [Compare](/opcoes) and inside the [3-year plan](/plano). See also [straw](/guia/palhada).
+See pearl millet in [Compare](/opcoes) and inside the [3-year plan](/plano). Also read about [straw](/guia/palhada).
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml), to be reviewed by the agronomist.
-- [Embrapa: pearl millet as an alternative soil cover](https://www.embrapa.br/en/busca-de-noticias/-/noticia/1461750/milheto-e-cultura-alternativa-para-cobertura-de-solo)
+- [Pacheco et al. (2011), Pesquisa Agropecuária Brasileira: phytomass and nutrients of second-season cover crops](https://www.alice.cnptia.embrapa.br/handle/doc/882280)
+- [Ministry of Agriculture: ZARC (official source)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)

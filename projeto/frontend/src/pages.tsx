@@ -338,13 +338,14 @@ export function GuidePage() {
 
 /** Um artigo do Guia (tela 8 do pacote 3), com a caixa "Na sua lavoura" quando há número do ponto. */
 export function GuideArticlePage() {
-  const { messages: t } = useI18n()
+  const { messages: t, lang } = useI18n()
   const { artigo = '' } = useParams()
   const state = useGuideArticleController(artigo)
   useDocumentTitle(state.article?.title ?? t.guide.title)
   return (
     <GuideArticleView
       t={t}
+      lang={lang}
       article={state.article}
       layout={state.layout}
       related={state.related}

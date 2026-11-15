@@ -497,7 +497,7 @@ export const en = {
       xray: "how to read your land's X-ray",
       rain: 'when the rain ends',
       dryspell: 'dry spells',
-      heat: '35 °C heat at flowering',
+      heat: 'heat at flowering',
     },
     textures: { arenoso: 'sandy', medio: 'medium', argiloso: 'clay' },
     eyebrow: "Your land's X-ray",
@@ -991,7 +991,7 @@ export const en = {
         `Heat: in none of the ${total} years did it reach ${temp} °C on ${days} days or more in that stage.`,
       watchRainEnd: (date: string) => `End of the rains: in half of the years, the rain ended by ${date}.`,
       manage: 'Management',
-      draft: 'Draft: to be reviewed by the agronomist.',
+      note: 'General steps: seed rate and management, agree on them with your agronomist.',
       fullGuide: 'Full step by step',
     },
     late: {
@@ -1246,7 +1246,7 @@ export const en = {
       futureSource: 'NEX-GDDP-CMIP6 (NASA), SSP2-4.5 scenario, mean of the models.',
       incomeText:
         '"Grain" means there is something to sell. The risk is in how many of the 20 years water ran short or it was hot at the stage it needs water most. No money values.',
-      soilText: 'Straw, nitrogen and the nematode cycle. Draft: to be reviewed by the agronomist.',
+      soilText: 'Straw, nitrogen and the nematode cycle. The score points are a team hypothesis, not yet validated in the field.',
       deadlineOk: (limit: string, harvest: string) =>
         `By ZARC (Ministry of Agriculture), sowing goes until ${limit}. Sowing on ${harvest}, right after the soybean harvest, there is time.`,
       deadlineLate: (limit: string, harvest: string) =>
@@ -1518,10 +1518,10 @@ export const en = {
     blindRain: (km: number) => `Rain comes in squares of about ${km} km, not from your field: your rain gauge is worth more.`,
     blindRainGeneric: 'Rain comes in squares several kilometers wide, not from your field: your rain gauge is worth more.',
     blindRest:
-      'The 2041–2060 climate is a range across models, not a forecast. Limits will still be tuned with local agronomists.',
+      'The 2041–2060 climate is a range across models, not a forecast. The limits used in the calculation are a team hypothesis and have not been validated in the field yet.',
     rules: {
       title: 'The rules of the calculation',
-      intro: 'Every number below comes from the engine rules file (regras.yaml). Those marked as a team hypothesis will still be reviewed by the agronomist.',
+      intro: 'Every number below comes from the engine rules file (regras.yaml). Those marked as a team hypothesis have not been validated in the field yet.',
       worked: (grain: string, days: string, cover: string, coverDays: string, temp: string, heatDays: string) =>
         `It worked: the plant had at least ${grain}% of the water it needed in the stage that needs it most (flowering, ${days} days before and after; for cover crops, ${cover}% in the first ${coverDays} days) and it did not reach ${temp} °C on ${heatDays} days or more in that stage.`,
       weights: (safety: string, future: string, soil: string, income: string) =>

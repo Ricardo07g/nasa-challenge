@@ -4,7 +4,9 @@ import type { ListenSummaryState } from '../controllers/useListenSummary'
 import { BackButton } from '../design-system/components/BackButton'
 import { ListenSummary } from '../design-system/components/ListenSummary'
 import { CheckIcon, ChevronDownIcon, ChevronRightIcon, PinIcon } from '../design-system/icons'
-import { PlantImage } from '../design-system/plants/PlantImage'
+import { plantPhotoProps } from '../content/plantPhotos'
+import { PlantPhoto } from '../design-system/components/PlantPhoto'
+import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
 import type { ArticleBlock, ArticleLayout, GuideArticle, GuideSummary } from '../models/guide'
 import type { Inline } from '../services/markdownService'
@@ -13,6 +15,8 @@ import { GuideThemeIcon } from './GuideThemeIcon'
 
 export type GuideArticleViewProps = {
   t: Messages
+  /** Idioma do texto alternativo e do crédito da foto da cultura. */
+  lang: Lang
   article: GuideArticle | null
   layout: ArticleLayout | null
   related: GuideSummary[]
@@ -125,6 +129,7 @@ function FieldBox({ field }: { field: NonNullable<GuideArticleViewProps['field']
  */
 export function GuideArticleView({
   t,
+  lang,
   article,
   layout,
   related,
@@ -161,12 +166,9 @@ export function GuideArticleView({
                   />
                 </div>
               </div>
-              {article.plant && (
-                <span className={styles.plant}>
-                  <PlantImage plant={article.plant} label={g.plantAlt(g.plants[article.plant])} size={96} />
-                </span>
-              )}
             </div>
+
+            {article.plant && <PlantPhoto {...plantPhotoProps(article.plant, lang)} height={200} className={styles.photo} />}
 
             {layout.sentence && (
               <section className={styles.sentence} aria-labelledby="guia-frase">

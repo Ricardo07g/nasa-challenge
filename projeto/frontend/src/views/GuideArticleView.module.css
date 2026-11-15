@@ -36,9 +36,8 @@
   min-width: 0;
 }
 
-.plant {
-  flex: none;
-  margin-top: 10px;
+.photo {
+  margin: 0;
 }
 
 .theme {

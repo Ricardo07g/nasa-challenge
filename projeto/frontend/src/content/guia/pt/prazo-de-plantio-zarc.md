@@ -1,36 +1,29 @@
 ---
 titulo: O prazo de plantio e o ZARC
-resumo: O ZARC diz, para cada município, até quando plantar com o risco de clima mais baixo.
+resumo: O ZARC mostra, para cada município, a melhor época de plantio de cada cultura.
 tema: plantar
 slug: prazo-de-plantio-zarc
-rascunho: sim
+rascunho: nao
 relacionados: plantar-logo-depois-da-colheita, sementes, milho-safrinha
 ---
 
 ## Em uma frase
 
-O ZARC diz, para cada município, até quando plantar com o risco de clima mais baixo.
+O ZARC mostra, para cada município, **a melhor época de plantio** de cada cultura.
 
 ## Por que importa
 
-Plantar depois da data limite empurra a floração para o fim da chuva. Aí a chance de faltar água sobe.
+O ZARC é o Zoneamento Agrícola de Risco Climático, uma ferramenta de política agrícola e de gestão de risco. Ele analisa clima, solo e ciclo das cultivares, e o resultado sai em portarias do Ministério da Agricultura.
+
+No zoneamento do milho para Minas Gerais e o Centro-Oeste, os pesquisadores fizeram a conta de água da cultura para cada tipo de solo. Semear depois da melhor época aumentou o risco de faltar água no enchimento dos grãos, ainda mais nos solos que guardam pouca água.
 
 ## Na sua lavoura
 
-O ZARC é o Zoneamento Agrícola de Risco Climático. Estuda clima, solo e ciclo da cultivar, e é publicado em portarias do Ministério da Agricultura.
+Cada município tem as suas datas. Confira a portaria do Ministério da Agricultura para a sua cultura e o seu município.
 
-O app usa estes limites, que são hipótese do time:
-
-- Milho safrinha, milho com braquiária e crotalária: 28 de fevereiro.
-- Milheto: 15 de março.
-- Sorgo: 20 de março.
-
-Na tela [Quando você colhe](/quando), você diz quando colhe a soja: começo de fevereiro, meio ou fim de fevereiro e março. Se não dá tempo de semear a tempo, a [Sugestão](/resposta) avisa: "o plantio vai só até tal data (ZARC), e com a colheita tarde não dá tempo".
-
-Colher a soja mais cedo abre espaço. Semear em datas escalonadas, conforme a colheita avança, evita perder tudo de uma vez.
+Na tela [Quando você colhe](/quando), você diz quando colhe a soja: começo de fevereiro, meio ou fim de fevereiro e março. Se uma cultura passou do prazo, a [Sugestão](/resposta) avisa.
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
-- [Ministério da Agricultura: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
-- [Embrapa: semeadura escalonada no milho safrinha](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
+- [Ministério da Agricultura: ZARC (fonte oficial)](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
+- [Sans et al. (2001), Revista Brasileira de Agrometeorologia: zoneamento de riscos climáticos do milho em Minas Gerais e no Centro-Oeste](https://www.alice.cnptia.embrapa.br/handle/doc/485595)

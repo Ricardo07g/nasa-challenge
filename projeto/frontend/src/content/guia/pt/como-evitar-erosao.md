@@ -1,39 +1,36 @@
 ---
 titulo: Como evitar erosão
-resumo: A chuva leva a camada boa da terra, e mais quando a terra fica descoberta.
+resumo: Erosão é a chuva levando embora a camada boa da terra, maior com a terra descoberta.
 tema: terra
 slug: como-evitar-erosao
-rascunho: sim
+rascunho: nao
 relacionados: palhada, plantio-direto, plantar-logo-depois-da-colheita
 ---
 
 ## Em uma frase
 
-Erosão é a chuva levando embora a camada boa da terra, e ela é maior quando a terra fica descoberta.
+Erosão é a chuva **levando embora a camada boa da terra**, e ela é maior quando a terra fica descoberta.
 
 ## Por que importa
 
-A gota de chuva que bate na terra nua solta os grãos de solo. A água que escorre leva esses grãos ladeira abaixo e abre valas. Com a terra vai junto o adubo e a matéria orgânica.
+A gota de chuva que bate na terra nua solta os grãos de solo, e a enxurrada leva esses grãos embora. Dois cuidados trabalham juntos:
 
-Três cuidados trabalham juntos:
+- **Cobertura:** a palha sobre a terra é o fator mais importante para amortecer o impacto das gotas e evita que o solo se solte.
+- **Terraços:** num estudo no Sul do Brasil, em lavoura de plantio direto, os terraços reduziram em **58,7%** a terra perdida, principalmente por segurar a enxurrada. Outro estudo viu mais água para as plantas na área com terraço nos períodos sem chuva.
 
-- **Cobertura:** a palhada protege a terra do impacto das gotas e ajuda a água a entrar no solo.
-- **Plantio direto:** plantar sem arar nem gradear mantém a palha em cima da terra.
-- **Curvas de nível e terraços:** plantar e preparar a terra atravessando a ladeira, e não morro abaixo, segura a água. O terraço guarda a água da chuva forte dentro da lavoura.
-
-Só o plantio direto não basta. Com pouca palha, sem rotação e com a terra compactada, a erosão volta. Por isso o terraço continua sendo útil junto com ele.
+Só o plantio direto não basta quando a enxurrada é grande: a pesquisa recomenda juntar terraços e muita palha.
 
 ## Na sua lavoura
 
-Logo depois da colheita da soja, em fevereiro e março, a terra pode ficar descoberta na época das chuvas fortes. Na tela [O que o satélite viu](/satelite), o alerta de chuva forte diz quantos dias por ano choveu muito nessa época, pelo satélite GPM IMERG da NASA.
+Logo depois da colheita da soja, a terra pode ficar descoberta. Na tela [O que o satélite viu](/satelite), o alerta de chuva forte mostra quantos dias por ano choveu muito, pelo satélite GPM IMERG da NASA.
 
-Plantar logo depois da colheita deixa a terra coberta mais cedo. Veja na [Sugestão](/resposta) e no [Comparar](/opcoes) quanta palha cada opção deixa, e leia [Palhada: por que cobrir a terra](/guia/palhada).
+Veja na [Sugestão](/resposta) e em [Comparar](/opcoes) as opções de cobertura, e leia [Palhada: por que cobrir a terra](/guia/palhada).
 
 Onde fazer terraço e a distância entre eles ficam com o seu agrônomo.
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (regras.yaml), a revisar pela agrônoma.
-- [Embrapa: terraços para controlar a erosão, junto com o plantio direto](https://www.embrapa.br/en/busca-de-noticias/-/noticia/46926155/terracos-para-controlar-a-erosao-em-santa-catarina)
-- [Embrapa: plantio direto, palhada e curvas de nível](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2098787/dia-de-campo-aborda-manejo-e-conservacao-do-solo-e-plantio-direto)
-- [Embrapa: Sistema Santa Fé, palhada e erosão](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)
+- [Panachuki et al. (2011), Revista Brasileira de Ciência do Solo: perdas de solo e de água em sistemas de manejo](https://www.redalyc.org/pdf/1802/180221126032.pdf)
+- [Londero et al. (2021), Hydrological Processes: plantio direto, terraços e perda de solo no Sul do Brasil](https://doi.org/10.1002/hyp.14286)
+- [Freitas et al. (2021), Revista Brasileira de Ciência do Solo: terraços aumentam a água disponível às plantas](https://doi.org/10.36783/18069657rbcs20210046)
+- [Huffman et al. (2020), livro Satellite Precipitation Measurement (Springer): capítulo do IMERG](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)

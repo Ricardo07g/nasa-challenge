@@ -118,7 +118,8 @@ describe('textos dos blocos do raio-X (tela 4, pacote 2)', () => {
     expect(text.text).toBe(
       'Em 20 anos, só **1 ano (2024)** teve pelo menos um dia de 35 °C ou mais entre março e maio. Calor assim na floração faz a planta perder flor e produção.',
     )
-    expect(text.guide).toEqual({ slug: 'calor-35-graus', label: 'Saiba mais: calor de 35 °C na floração' })
+    expect(text.guide).toEqual({ slug: 'calor-35-graus', label: 'Saiba mais: calor na floração' })
+    expect(xrayText(en, 'en', block('heat'), MAP).guide).toEqual({ slug: 'calor-35-graus', label: 'Learn more: heat at flowering' })
     const many = { ...block('heat'), data: { ...block('heat').data, anos_com_calor: 3, anos: [2015, 2019, 2024] } }
     expect(xrayText(pt, 'pt', many, MAP).text).toContain('**3 anos (2015, 2019 e 2024)** tiveram pelo menos um dia')
     const none = { ...block('heat'), data: { ...block('heat').data, anos_com_calor: 0, anos: [] } }

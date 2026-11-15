@@ -1,6 +1,6 @@
 ---
 titulo: O que significa "deu certo"
-resumo: Um ano em que a planta não passou aperto de água nem de calor na fase mais delicada.
+resumo: Ano sem aperto de água nem de calor na fase mais delicada da planta, a floração.
 tema: clima
 slug: deu-certo
 rascunho: nao
@@ -9,27 +9,25 @@ relacionados: conta-de-agua, calor-35-graus, raio-x
 
 ## Em uma frase
 
-"Deu certo" é um ano em que a planta não passou aperto de água nem de calor na fase mais delicada.
+**"Deu certo"** é um ano em que a planta não passou aperto de água nem de calor na fase mais delicada, a floração.
 
 ## Por que importa
 
-O app olha 20 anos de clima, de 2005 a 2024, e conta em quantos deles a opção teria dado certo. Essa conta vira o rótulo de chuva: Bom, Médio ou Fraco.
+No milho, a água limita a produção principalmente na floração e no enchimento dos grãos. O app olha **20 anos** de clima, de 2005 a 2024, e conta em quantos deles a opção teria dado certo. Essa conta vira o rótulo de chuva: Bom, Médio ou Fraco, conforme o número de anos.
 
 ## Na sua lavoura
 
-Um ano é de aperto quando acontece uma destas coisas:
+A chuva vem do satélite GPM IMERG e o calor, do NASA POWER. Para cada ano, o app confere dois pontos:
 
-- O índice de água (de 0 a 1, quanto a planta recebeu da água que precisava) fica abaixo de 0,55 na fase crítica.
-- Faz 35 °C ou mais em 3 dias ou mais na fase crítica.
+- Se faltou **água** para a planta na fase mais delicada.
+- Se fez **calor demais** nessa fase.
 
-A fase crítica do grão vai de 15 dias antes a 15 dias depois da floração. Na cobertura, o aperto é índice abaixo de 0,50 nos primeiros 30 dias.
-
-O rótulo Bom pede 17 ou mais anos sem aperto, entre 20. O Médio vai de 12 a 16. Abaixo disso, Fraco.
+Se algum dos dois aconteceu, o ano não conta como "deu certo".
 
 Veja o número na [Sugestão](/resposta) e a conta aberta em [Como a conta é feita](/como-funciona). Entenda também [a conta de água](/guia/conta-de-agua).
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml), a revisar pela agrônoma.
-- [NASA: o projeto POWER, dados diários de clima](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
-- [NASA: chuva do GPM IMERG](https://gpm.nasa.gov/data/imerg)
+- [Sans et al. (2001), Revista Brasileira de Agrometeorologia: zoneamento de riscos climáticos do milho em Minas Gerais e no Centro-Oeste](https://www.alice.cnptia.embrapa.br/handle/doc/485595)
+- [Huffman et al. (2020), livro Satellite Precipitation Measurement (Springer): capítulo do IMERG](https://ntrs.nasa.gov/api/citations/20205003356/downloads/2.2.1_Springer_Book_Precip_IMERG_rev2.pdf)
+- [Monteiro, Sentelhas e Pedra (2018), International Journal of Climatology: o NASA POWER no Brasil](https://doi.org/10.1002/joc.5282)

@@ -160,7 +160,7 @@ describe('ChoosePlanView: aba "1. Escolher"', () => {
     expect(within(dialog).getByRole('heading', { name: 'Clima de 2041 a 2060' })).toBeInTheDocument()
     expect(within(dialog).getByRole('heading', { name: 'Renda e terra' })).toBeInTheDocument()
     expect(within(dialog).getByRole('heading', { name: 'Como fazer' })).toBeInTheDocument()
-    expect(within(dialog).getByText('Rascunho: a revisar pela agrônoma.')).toBeInTheDocument()
+    expect(within(dialog).getByText('Passos gerais: dose de semente e manejo, combine com o seu agrônomo.')).toBeInTheDocument()
     const learn = within(dialog).getByRole('link', { name: newTabName('Saiba mais: O que significa "deu certo"') })
     expect(learn).toHaveAttribute('href', '/guia/deu-certo')
     expect(learn).toHaveAttribute('target', '_blank')
