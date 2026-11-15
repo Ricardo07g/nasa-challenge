@@ -135,6 +135,35 @@ class FrasesSafra:
 
 
 @dataclass(frozen=True)
+class RegrasEnso:
+    """Marca de El Niño / La Niña de cada safrinha pelo ONI da NOAA (P1, plano de evolução 4.1).
+
+    Só informa: não entra na conta. O `pipeline/fetch_oni.py` usa estes números ao gravar a fase
+    de cada ano no arquivo do ONI; a API lê a fase pronta.
+    """
+
+    el_nino_oni_min: float  # média do ONI nas estações a partir da qual o ano é de El Niño
+    la_nina_oni_max: float  # média do ONI nas estações até a qual o ano é de La Niña
+    estacoes: tuple[str, ...]  # estações do ONI (ex.: DJF) do ano da safrinha que entram na média
+
+
+@dataclass(frozen=True)
+class FrasesAno:
+    """Textos do detalhe de cada ano da faixa de chuva em uma língua (P1)."""
+
+    fase_grao: str
+    fase_cobertura: str
+    nenhum_dia_sem_chuva: str
+    um_dia_sem_chuva: str
+    varios_dias_sem_chuva: str
+    deu_certo: str
+    faltou_agua: str
+    calor: str
+    el_nino: str
+    la_nina: str
+
+
+@dataclass(frozen=True)
 class FrasesPorque:
     """Modelos de frase do "Por quê?" em uma língua (PRD 7.6, plano técnico §4.8)."""
 
@@ -161,3 +190,5 @@ class Regras:
     frases: dict[str, FrasesPorque]  # "pt" e "en"
     avisos: RegrasAvisos
     frases_safra: dict[str, FrasesSafra]  # "pt" e "en"
+    enso: RegrasEnso
+    frases_ano: dict[str, FrasesAno]  # "pt" e "en"
