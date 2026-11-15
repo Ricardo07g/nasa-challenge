@@ -719,6 +719,8 @@ export const en = {
         title: (crop: string) => `Next soybeans; after them, ${crop}`,
         titleAlone: 'Next soybeans',
         text: (year: number) => `Open the app again after the ${year} harvest to check the plan with that year's rain.`,
+        deadline: (date: string) => `Plant by ${date} (ZARC deadline).`,
+        late: (date: string) => `Past the ZARC deadline (${date}): crop insurance does not cover it.`,
       },
     },
     alerts: {

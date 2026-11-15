@@ -17,11 +17,19 @@ const RAIN_MM = 413
 const mean = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : null)
 const round1 = (value: number) => Math.round(value * 10) / 10
 
-function year(crop: CropId, option: Opcao | undefined, lang: Lang): AnoPlano {
+/** O prazo do ZARC no ano daquele ano do plano (tarefa 0065): o 1º é o da opção; os outros, um ano depois cada. */
+function deadlineIn(option: Opcao | undefined, index: number): string | null {
+  if (!option?.data_limite) return null
+  return `${Number(option.data_limite.slice(0, 4)) + index}${option.data_limite.slice(4)}`
+}
+
+function year(crop: CropId, option: Opcao | undefined, lang: Lang, index: number): AnoPlano {
   const facts = {
     cobre_terra: crop !== 'pousio',
     deixa_nitrogenio: crop === 'crotalaria',
     quebra_nematoide: NEMATODE.has(crop),
+    data_limite: deadlineIn(option, index),
+    ciclo: option?.ciclo ? { dias_florescer: option.ciclo.floracao_dias, ciclo_dias: option.ciclo.dias } : null,
   }
   if (!option) {
     return {
@@ -54,7 +62,7 @@ function year(crop: CropId, option: Opcao | undefined, lang: Lang): AnoPlano {
 export function buildPlano(params: PlanoParams, lang: Lang): PlanoAvaliado {
   const rec = buildRecomendacao({ lat: params.lat, lon: params.lon, colheita: params.colheita }, lang)
   const byId = new Map(rec.opcoes.map((option) => [option.id, option]))
-  const anos = params.anos.map((crop) => ({ ...year(crop, byId.get(crop), lang), fixo: true, motivo: null }))
+  const anos = params.anos.map((crop, index) => ({ ...year(crop, byId.get(crop), lang, index), fixo: true, motivo: null }))
   const options = params.anos.flatMap((crop) => byId.get(crop) ?? [])
   const distinct = new Set(params.anos.filter((crop) => crop !== 'pousio')).size
   const bonus = distinct >= 3 ? 10 : distinct === 2 ? 5 : 0

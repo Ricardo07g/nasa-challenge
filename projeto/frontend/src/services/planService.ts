@@ -122,6 +122,8 @@ export type PlanCard = {
   motivo: string | null
   /** A cultura passou do prazo do ZARC. */
   late: boolean
+  /** O prazo do ZARC do ano (`data_limite` do /api/plano, tarefa 0065); null no pousio ou na API antiga. */
+  deadline: string | null
 }
 
 /**
@@ -154,6 +156,7 @@ export function planCards(sources: PlanSources, firstSeason: number): PlanCard[]
       sede: ano.sede,
       motivo: tag === 'suggested' ? (suggested?.motivo ?? ano.motivo ?? null) : null,
       late: ano.fora_do_prazo ?? !ano.na_janela,
+      deadline: ano.data_limite ?? null,
     }
   })
 }

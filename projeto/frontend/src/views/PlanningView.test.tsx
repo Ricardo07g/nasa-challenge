@@ -260,15 +260,23 @@ describe('PlanningView: relatório para imprimir (7 seções)', () => {
 
     const plan = within(r).getAllByRole('table', { hidden: true })[2]
     const header = within(plan).getAllByRole('columnheader', { hidden: true }).map((cell) => cell.textContent)
-    expect(header).toEqual(['Safra', '2005–2024', '2041–2060', 'Prós', 'Contras'])
+    // Tarefa 0065: o prazo do ZARC de cada ano (o `data_limite` do /api/plano)
+    expect(header).toEqual(['Safra', '2005–2024', '2041–2060', 'Prazo', 'Prós', 'Contras'])
     const years = within(plan).getAllByRole('row', { hidden: true }).slice(1)
     expect(years).toHaveLength(3)
+    expect(years.map((row) => within(row).getAllByRole('cell', { hidden: true })[3].textContent)).toEqual([
+      'Até 20 de março',
+      'Até 31 de março',
+      'Até 20 de março',
+    ])
     expect(years[1]).toHaveTextContent('Milheto')
     expect(years[1]).toHaveTextContent('Não dá grão para vender')
     expect(r).toHaveTextContent('Como o plano ajuda a ganhar:')
     expect(r).toHaveTextContent('Sorgo dá grão para vender em 2026/27 e 2028/29.')
     expect(r).toHaveTextContent('Plano B: se o outono vier seco, trocar sorgo por crotalária.')
     expect(r).toHaveTextContent('Plante sorgo')
+    // A próxima soja com o prazo do 2º ano (milheto) na linha do tempo
+    expect(r).toHaveTextContent('Próxima soja; depois dela, milhetoPlante até 31 de março (prazo do ZARC).')
     expect(r).toHaveTextContent('Em 20 anos, houve 6 dias com 50 mm ou mais de chuva em fevereiro e março.')
     expect(r).toHaveTextContent('Ajuda a decidir. Não substitui o seu agrônomo nem os alertas da Defesa Civil.')
   })
