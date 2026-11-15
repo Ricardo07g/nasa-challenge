@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router'
 import { AlertsIcon, BookIcon, LogoMark } from '../icons'
+import { FlagBR, FlagUS } from '../flags/Flag'
 import styles from './Header.module.css'
 
 export type AppHeaderProps = {
@@ -19,7 +20,7 @@ export type AppHeaderProps = {
    * fundo verde-claro.
    */
   alerts: { label: string; to: string; count: number | null; countLabel: string | null }
-  /** "PT | EN" no computador; no celular, só o outro idioma. */
+  /** "EN | PT" em destaque, cada um com a bandeirinha; no celular, só o outro idioma. */
   lang: {
     current: 'pt' | 'en'
     onToggle: () => void
@@ -61,12 +62,18 @@ export function AppHeader({ homeLabel, slogan, navLabel, guide, alerts, lang }: 
               </span>
             )}
           </NavLink>
-          <button type="button" className={styles.lang} aria-label={lang.label} onClick={lang.onToggle}>
-            <span data-active={lang.current === 'pt'}>PT</span>
+          <button type="button" className={styles.lang} data-highlight aria-label={lang.label} onClick={lang.onToggle}>
+            <span data-lang="en" data-active={lang.current === 'en'}>
+              <FlagUS width={18} />
+              EN
+            </span>
             <span className={styles.divider} aria-hidden="true">
               |
             </span>
-            <span data-active={lang.current === 'en'}>EN</span>
+            <span data-lang="pt" data-active={lang.current === 'pt'}>
+              <FlagBR width={18} />
+              PT
+            </span>
           </button>
         </nav>
       </div>
