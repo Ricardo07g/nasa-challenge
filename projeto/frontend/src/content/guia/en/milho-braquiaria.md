@@ -12,21 +12,20 @@ planta: milho_braquiaria
 
 ## Why it matters
 
-After harvest, the grass stays and forms a thick straw cover. It protects the soil and helps the next soybeans.
+This intercrop is Embrapa's Santa Fé System. The thick straw from the grass prevents erosion and controls weeds, and, as it decomposes, gives back part of the nutrients. Brachiaria entered farming systems because of no-till.
 
 ## Get to know it
 
 - **Use:** grain and cover.
-- **Water:** asks as much as corn (coefficient **1.20** at the peak).
-- **Leaves in the soil:** the most straw in the app (**40 of 40** points) and **10 of 30** for breaking the pest cycle.
-- **Fears:** drought and heat of **35 °C or more** at flowering.
+- **How it works:** intercropping grain with grass, mainly brachiaria.
+- **When to plant:** the deadline comes from the ZARC for your municipality.
 
 ## Step by step
 
-1. **Sow the grass together with the corn.** The app's ZARC limit is **February 28**.
-2. **Wait for flowering**, at about 60 days. The whole cycle takes about 120.
+1. **Check the deadline** in the ZARC for your municipality.
+2. **Sow the grass together with the corn.**
 3. **Harvest the corn.** The grass stays and covers the soil.
-4. **Plant the next soybeans** on the straw.
+4. **Plant the next soybeans** on the straw, in no-till.
 
 ## In your field
 
@@ -34,6 +33,5 @@ The app compares corn with brachiaria with the other options in [Compare](/opcoe
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: Santa Fé system](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)
 - [Embrapa: brachiaria beyond animal feed](https://www.embrapa.br/en/tema-integracao-lavoura-pecuaria-floresta-ilpf/busca-de-noticias/-/noticia/31795514/braquiaria-muito-alem-da-alimentacao-animal)

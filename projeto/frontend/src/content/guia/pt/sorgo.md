@@ -8,25 +8,23 @@ planta: sorgo
 
 ## Em uma frase
 
-Cereal de grão que **aguenta a falta de água** melhor que o milho.
+Cereal de grão **mais tolerante à falta de água** que outros cereais.
 
 ## Por que importa
 
-Na entressafra a chuva falha. O sorgo é uma opção para quando o risco de seca assusta.
+A Embrapa recomenda o sorgo para a safrinha: ele aguenta melhor o estresse hídrico. A recomendação de plantio vem do zoneamento climático e considera o solo.
 
 ## Conheça
 
 - **Serve para:** grão.
-- **Água:** pede menos que o milho (coeficiente **1,05** no pico).
-- **Deixa na terra:** palha média (**20 de 40** pontos) e alguma ajuda contra pragas (**15 de 30**).
-- **Tem medo de:** seca e calor de **35 °C ou mais** na floração, mas aguenta mais que o milho.
+- **Água:** é mais tolerante ao estresse hídrico que outros cereais.
+- **Quando plantar:** a data limite vem do ZARC do seu município.
 
 ## Passo a passo
 
-1. **Semeie** logo depois de colher a soja. O limite do ZARC no app é **20 de março**.
-2. **Espere a floração**, com cerca de 65 dias. O ciclo todo leva cerca de 115.
-3. **Observe a chuva** na floração.
-4. **Colha o grão** em junho ou julho. Deixe a palhada para a próxima soja.
+1. **Confira o prazo** do ZARC no seu município.
+2. **Semeie** logo depois de colher a soja.
+3. **Deixe a palhada** para a próxima soja.
 
 ## Na sua lavoura
 
@@ -34,5 +32,4 @@ O app mostra o sorgo na [Sugestão](/resposta) e em [Comparar](/opcoes). O selo 
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: sorgo é recomendado para a safrinha](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18856249/sorgo-e-recomendado-para-a-safrinha)

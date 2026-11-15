@@ -19,18 +19,17 @@ Cada número tem um selo com a fonte e o tamanho da área medida. O dado vale pa
 
 Na tela [O que o satélite viu](/satelite), cada bloco mostra uma coisa:
 
-- **Solo**: quanto de argila e de areia a terra tem, pelo mapa de solos SoilGrids, em quadrados de 250 m. Terra argilosa guarda mais água que terra arenosa.
+- **Solo**: quanto de argila e de areia a terra tem, pelo mapa de solos SoilGrids, em quadrados de 250 m.
 - **Água que a terra guarda**: a água que fica ao alcance das raízes. O app divide essa água pelo gasto da planta na floração e diz quantos dias ela aguenta sem chuva.
 - **Umidade da terra agora**: a leitura mais recente do satélite SMAP, comparada com outros anos na mesma época.
 - **Verde da lavoura**: o NDVI do satélite MODIS. Perto de zero é terra nua; perto de 1, verde forte.
-- **Chuva, veranico e região**: a chuva medida pelo satélite GPM IMERG em 20 anos, a maior sequência de dias com menos de 1 mm entre março e maio, e a sua área comparada com a região.
-- **Calor**: em quantos anos fez 35 °C ou mais entre março e maio, pelo NASA POWER.
+- **Chuva, veranico e região**: a chuva medida pelo satélite GPM IMERG em 20 anos, a maior sequência de dias secos entre março e maio, e a sua área comparada com a região.
+- **Calor**: a temperatura máxima dos 20 anos, pelo NASA POWER.
 
 Veja também [Veranico](/guia/veranico) e [A conta de água da lavoura](/guia/conta-de-agua).
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (regras.yaml).
 - [ISRIC: SoilGrids, mapa mundial de solos](https://www.isric.org/explore/soilgrids)
 - [NSIDC: SMAP L4, umidade da terra](https://nsidc.org/data/spl4smgp/versions/8)
 - [NASA: o que é o NDVI](https://science.nasa.gov/earth/earth-observatory/measuring-vegetation-ndvi-evi)

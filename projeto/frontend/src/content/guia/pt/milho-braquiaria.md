@@ -12,21 +12,20 @@ planta: milho_braquiaria
 
 ## Por que importa
 
-Depois da colheita, o capim fica e forma uma palhada grossa. Ela protege a terra e ajuda a próxima soja.
+Esse consórcio é o Sistema Santa Fé, da Embrapa. A palhada espessa do capim evita erosão e controla o mato, e, ao se decompor, devolve parte dos nutrientes. A braquiária entrou nos sistemas agrícolas por causa do plantio direto.
 
 ## Conheça
 
 - **Serve para:** grão e cobertura.
-- **Água:** pede tanto quanto o milho (coeficiente **1,20** no pico).
-- **Deixa na terra:** a maior palhada do app (**40 de 40** pontos) e **10 de 30** em quebra de pragas.
-- **Tem medo de:** seca e calor de **35 °C ou mais** na floração.
+- **Como funciona:** consórcio de grão com capim, principalmente braquiária.
+- **Quando plantar:** a data limite vem do ZARC do seu município.
 
 ## Passo a passo
 
-1. **Semeie o capim junto com o milho.** O limite do ZARC no app é **28 de fevereiro**.
-2. **Espere a floração**, com cerca de 60 dias. O ciclo todo leva cerca de 120.
+1. **Confira o prazo** do ZARC no seu município.
+2. **Semeie o capim junto com o milho.**
 3. **Colha o milho.** O capim fica cobrindo a terra.
-4. **Plante a próxima soja** em cima da palhada.
+4. **Plante a próxima soja** em cima da palhada, no plantio direto.
 
 ## Na sua lavoura
 
@@ -34,6 +33,5 @@ O app compara o milho com braquiária com as outras opções em [Comparar](/opco
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [Embrapa: Sistema Santa Fé](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)
 - [Embrapa: braquiária além da alimentação animal](https://www.embrapa.br/en/tema-integracao-lavoura-pecuaria-floresta-ilpf/busca-de-noticias/-/noticia/31795514/braquiaria-muito-alem-da-alimentacao-animal)

@@ -8,25 +8,23 @@ planta: sorgo
 
 ## In one sentence
 
-A grain cereal that **handles water shortage** better than corn.
+A grain cereal that is **more tolerant of water shortage** than other cereals.
 
 ## Why it matters
 
-In the off-season the rain fails. Sorghum is an option for when the risk of drought is scary.
+Embrapa recommends sorghum for the second crop: it handles water stress better. The planting recommendation comes from the climate zoning and takes the soil into account.
 
 ## Get to know it
 
 - **Use:** grain.
-- **Water:** asks for less than corn (coefficient **1.05** at the peak).
-- **Leaves in the soil:** medium straw (**20 of 40** points) and some help against pests (**15 of 30**).
-- **Fears:** drought and heat of **35 °C or more** at flowering, but it handles them better than corn.
+- **Water:** it is more tolerant of water stress than other cereals.
+- **When to plant:** the deadline comes from the ZARC for your municipality.
 
 ## Step by step
 
-1. **Sow** right after harvesting the soybeans. The app's ZARC limit is **March 20**.
-2. **Wait for flowering**, at about 65 days. The whole cycle takes about 115.
-3. **Watch the rain** at flowering.
-4. **Harvest the grain** in June or July. Leave the straw for the next soybeans.
+1. **Check the deadline** in the ZARC for your municipality.
+2. **Sow** right after harvesting the soybeans.
+3. **Leave the straw** for the next soybeans.
 
 ## In your field
 
@@ -34,5 +32,4 @@ The app shows sorghum in the [Suggestion](/resposta) and in [Compare](/opcoes). 
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: sorghum is recommended for the second crop](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18856249/sorgo-e-recomendado-para-a-safrinha)

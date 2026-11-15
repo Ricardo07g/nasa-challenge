@@ -23,15 +23,14 @@ Só o plantio direto não basta. Com pouca palha, sem rotação e com a terra co
 
 ## Na sua lavoura
 
-Logo depois da colheita da soja, em fevereiro e março, a terra pode ficar descoberta na época das chuvas fortes. Na tela [O que o satélite viu](/satelite), o alerta de chuva forte diz quantos dias por ano choveu muito nessa época, pelo satélite GPM IMERG da NASA.
+Logo depois da colheita da soja, a terra pode ficar descoberta. Na tela [O que o satélite viu](/satelite), o alerta de chuva forte mostra quantos dias por ano choveu muito, pelo satélite GPM IMERG da NASA.
 
-Plantar logo depois da colheita deixa a terra coberta mais cedo. Veja na [Sugestão](/resposta) e em [Comparar](/opcoes) quanta palha cada opção deixa, e leia [Palhada: por que cobrir a terra](/guia/palhada).
+Veja na [Sugestão](/resposta) e em [Comparar](/opcoes) as opções de cobertura, e leia [Palhada: por que cobrir a terra](/guia/palhada).
 
 Onde fazer terraço e a distância entre eles ficam com o seu agrônomo.
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (regras.yaml).
 - [Embrapa: terraços para controlar a erosão, junto com o plantio direto](https://www.embrapa.br/en/busca-de-noticias/-/noticia/46926155/terracos-para-controlar-a-erosao-em-santa-catarina)
 - [Embrapa: plantio direto, palhada e curvas de nível](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2098787/dia-de-campo-aborda-manejo-e-conservacao-do-solo-e-plantio-direto)
 - [Embrapa: Sistema Santa Fé, palhada e erosão](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)

@@ -19,7 +19,7 @@ Each alert gives the level (**Warning** or **Keep an eye on it**), what the data
 
 On the [Alerts](/avisos) screen, the alerts come in four groups:
 
-- **Now**: dry soil from the SMAP satellite; days in a row without rain and 35 °C heat in the last days, from NASA POWER; and the NOAA El Niño or La Niña forecast, with what happened here in similar years.
+- **Now**: dry soil from the SMAP satellite; days in a row without rain and heat in the last days, from NASA POWER; and the NOAA El Niño or La Niña forecast, with what happened here in similar years.
 - **What changed in your area**: 2020 to 2024 compared with 2005 to 2019. These are few years: it shows what happened, not a forecast.
 - **Out of the ordinary**: the records of the 20 years, such as the longest dry spell and the driest autumn.
 - **Near you**: what neighbors reported in the last 7 days. It is a report, not confirmed.
@@ -28,7 +28,6 @@ For the official alerts, see [Official Civil Defense alerts](/guia/alertas-defes
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (regras.yaml).
 - [NSIDC: SMAP L4 soil moisture](https://nsidc.org/data/spl4smgp/versions/8)
 - [NASA: NASA POWER data](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
 - [NASA: GPM IMERG rain](https://gpm.nasa.gov/data/imerg)

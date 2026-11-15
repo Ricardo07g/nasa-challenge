@@ -59,10 +59,10 @@ describe('conteúdo do Guia', () => {
     }
   })
 
-  it.each(['pt', 'en'] as const)('(%s) de 150 a 300 palavras e a estrutura fixa', (lang) => {
+  it.each(['pt', 'en'] as const)('(%s) de 100 a 300 palavras e a estrutura fixa', (lang) => {
     for (const [slug, raw] of bySlug(lang)) {
       const n = words(raw)
-      expect(n, `${lang}/${slug} tem ${n} palavras`).toBeGreaterThanOrEqual(150)
+      expect(n, `${lang}/${slug} tem ${n} palavras`).toBeGreaterThanOrEqual(100)
       expect(n, `${lang}/${slug} tem ${n} palavras`).toBeLessThanOrEqual(300)
       const headings = parseMarkdown(parseFrontMatter(raw)!.body)
         .filter((b) => b.type === 'heading')

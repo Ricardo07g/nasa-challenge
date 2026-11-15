@@ -7,31 +7,24 @@ rascunho: nao
 
 ## In one sentence
 
-**"It worked"** is a year when the plant had no water or heat stress in its most delicate phase.
+**"It worked"** is a year when the plant had no water or heat stress in its most delicate phase, flowering.
 
 ## Why it matters
 
-The app looks at **20 years** of climate, from 2005 to 2024, and counts in how many of them the option would have worked. That count becomes the rain label: Good, Fair or Weak.
+The app looks at **20 years** of climate, from 2005 to 2024, and counts in how many of them the option would have worked. That count becomes the rain label: Good, Fair or Weak, depending on the number of years.
 
 ## In your field
 
-A year is a stress year when one of these happens:
+The rain comes from the GPM IMERG satellite and the heat from NASA POWER. For each year, the app checks two things:
 
-- The water index (from 0 to 1, how much of the water it needed the plant got) falls below **0.55** in the critical phase.
-- It is **35 °C or more** on **3 days or more** in the critical phase.
+- Whether the plant ran short of **water** in the most delicate phase.
+- Whether it was **too hot** in that phase.
 
-The grain's critical phase runs from 15 days before to 15 days after flowering. For cover crops, stress is an index below **0.50** in the first 30 days.
-
-The labels:
-
-- **Good:** 17 or more stress-free years out of 20.
-- **Fair:** from 12 to 16 years.
-- **Weak:** below that.
+If either happened, the year does not count as "worked".
 
 See the number in the [Suggestion](/resposta) and the open math in [How the math works](/como-funciona). Also understand [the water math](/guia/conta-de-agua).
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [NASA: the POWER project, daily climate data](https://www.earthdata.nasa.gov/news/feature-articles/power-earth-science-data)
 - [NASA: GPM IMERG rainfall](https://gpm.nasa.gov/data/imerg)

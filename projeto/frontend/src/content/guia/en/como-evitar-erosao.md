@@ -23,15 +23,14 @@ No-till alone is not enough. With little straw, no rotation and compacted soil, 
 
 ## In your field
 
-Right after the soybean harvest, in February and March, the soil may be bare in the season of heavy rains. On the [What the satellite saw](/satelite) screen, the heavy rain alert says how many days a year it rained a lot in that season, from NASA's GPM IMERG satellite.
+Right after the soybean harvest, the soil may be bare. On the [What the satellite saw](/satelite) screen, the heavy rain alert shows how many days a year it rained a lot, from NASA's GPM IMERG satellite.
 
-Planting right after the harvest covers the soil sooner. See in the [Suggestion](/resposta) and in [Compare](/opcoes) how much straw each option leaves, and read [Straw: why cover the soil](/guia/palhada).
+See the cover options in the [Suggestion](/resposta) and in [Compare](/opcoes), and read [Straw: why cover the soil](/guia/palhada).
 
 Where to build terraces and how far apart they should be is up to your agronomist.
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (regras.yaml).
 - [Embrapa: terraces to control erosion, together with no-till](https://www.embrapa.br/en/busca-de-noticias/-/noticia/46926155/terracos-para-controlar-a-erosao-em-santa-catarina)
 - [Embrapa: no-till, straw and contour lines](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2098787/dia-de-campo-aborda-manejo-e-conservacao-do-solo-e-plantio-direto)
 - [Embrapa: Santa Fé system, straw and erosion](https://www.embrapa.br/en/web/portal/busca-de-noticias/-/noticia/17942460/santa-fe-integra-agropecuaria-e-aumenta-a-sustentabilidade-do-agronegocio)

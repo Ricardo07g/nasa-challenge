@@ -11,22 +11,19 @@ El Niño e La Niña são fases em que o **Oceano Pacífico** fica mais quente ou
 
 ## Por que importa
 
-Essas fases podem mudar a chuva em muitas regiões. O app só informa a fase de cada ano. Ela não entra na conta da nota.
+O app só informa a fase de cada ano. Ela não entra na conta da nota e não é tratada como previsão de seca.
 
 ## Na sua lavoura
 
-Quem mede a fase é a NOAA, dos Estados Unidos, e não a NASA. A medida é o ONI: a temperatura do mar numa região do Pacífico, em média de 3 meses. O app usa:
+Quem mede a fase é a NOAA, dos Estados Unidos, e não a NASA. A medida é o ONI: a anomalia da temperatura do mar na região Niño 3.4, em média de 3 meses. A NOAA usa:
 
 - **El Niño:** **+0,5 °C** ou mais.
 - **La Niña:** **-0,5 °C** ou menos.
 
-Para cada safrinha, o app faz a média do ONI de dezembro a abril (DJF, JFM e FMA) e põe uma marca no ano, na [Sugestão](/resposta).
+Para uma fase valer, ela precisa durar pelo menos 5 estações seguidas.
 
-O sinal do outono usa a previsão da NOAA e vê como a opção do primeiro ano se saiu em anos da mesma fase. Isso é hipótese do time. Veja o sinal em [Plano de 3 anos](/plano).
-
-Não existe regra simples de "El Niño igual seca". Por isso a marca é só um aviso.
+O app põe uma marca no ano de cada safrinha, na [Sugestão](/resposta), e mostra a previsão da NOAA como um sinal para o outono no [Plano de 3 anos](/plano).
 
 ## Fontes
 
-- Números do app: parâmetros do Raiz Orbital (culturas.yaml e regras.yaml).
 - [NOAA: índice ONI do El Niño e La Niña](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v5/)

@@ -7,27 +7,21 @@ rascunho: nao
 
 ## In one sentence
 
-A nematode is a tiny soil creature that **attacks the roots** and takes strength from the plant.
+A nematode is a tiny soil creature that **attacks the roots** of plants.
 
 ## Why it matters
 
-Some nematodes spend the off-season as eggs in root residue. That is why the next crop is the one hit hardest. Planting the same plant again feeds the problem.
+According to Embrapa, one control measure is **rotation** with a species the nematode cannot use, like crotalaria. Crop rotation explains part of the smaller nematode problems in southern Brazil.
 
 ## In your field
 
-The way to reduce it is to rotate with a species the nematode cannot use, like crotalaria. You can tell the app whether there are nematodes in the area.
+You can tell the app whether there are nematodes in the area. If you say yes, the app changes the math: pest control counts more in the soil score, and the [3-year plan](/plano) takes that into account.
 
-If you say yes, the app changes the math:
-
-- The pest column counts **1.5 times** more in the soil score.
-- The [3-year plan](/plano) only shows plans with crotalaria or pearl millet, when one of them fits the window.
-
-See [crotalaria](/guia/crotalaria) and [pearl millet](/guia/milheto), the two options the app uses against nematodes.
+See [crotalaria](/guia/crotalaria), the species Embrapa cites for control.
 
 Which nematode species you have and which resistant variety to use are up to your agronomist.
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: nematodes in corn and rotation with crotalaria](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)
 - [Embrapa: crop rotation and nematodes](https://www.embrapa.br/en/busca-de-noticias/-/noticia/114595766/artigo---rotacao-de-culturas-e-plantas-de-cobertura--fundamentais-para-o-sistema-plantio-direto)

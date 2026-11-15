@@ -8,32 +8,31 @@ planta: crotalaria
 
 ## In one sentence
 
-A cover legume that **leaves nitrogen in the soil** and gets in the nematode's way.
+A cover legume that **fixes nitrogen** and helps control nematodes.
 
 ## Why it matters
 
-It feeds the soil and breaks the cycle of soil pests. It is the cover crop that helps the soil most in the app.
+According to Embrapa, crotalaria fixes nitrogen from the air, which reduces the need for nitrogen fertilizer, controls soil nematodes and covers the soil well.
 
 ## Get to know it
 
 - **Use:** cover and nitrogen.
-- **Water:** asks for little (coefficient **1.00** at the peak).
-- **Leaves in the soil:** **80 kg/ha** of nitrogen in the app, the top nitrogen score (**30 of 30**), pests **30 of 30** and straw **25 of 40**.
-- **Fears:** lack of water in the first 30 days.
+- **Soil:** good soil cover.
+- **Pests:** helps control nematodes.
+- **When to plant:** the deadline comes from the ZARC for your municipality.
 
 ## Step by step
 
-1. **Sow** by broadcasting or in rows. The app's ZARC limit is **February 28**.
-2. **Let it grow** until it flowers, at about 60 days. The whole cycle takes about 100.
-3. **Mow it.**
-4. **Plant the soybeans** on the straw.
+1. **Check the deadline** in the ZARC for your municipality.
+2. **Sow** right after the soybeans.
+3. **Let it grow** and cover the soil.
+4. **Plant the soybeans** on the cover.
 
 ## In your field
 
-The app shows crotalaria in [Compare](/opcoes). With nematodes in the area, the [3-year plan](/plano) looks for crotalaria or pearl millet. See [green manure](/guia/adubo-verde) and [nematodes](/guia/nematoide).
+The app shows crotalaria in [Compare](/opcoes) and in the [3-year plan](/plano). See [green manure](/guia/adubo-verde) and [nematodes](/guia/nematoide).
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: crotalaria, nitrogen and nematodes](https://www.embrapa.br/en/busca-de-noticias/-/noticia/2380275/crotalaria-e-uma-boa-alternativa-para-a-renovacao-de-canaviais)
 - [Embrapa: nematodes in corn and rotation](https://www.embrapa.br/en/busca-de-noticias/-/noticia/18156046/problemas-com-nematoides-na-cultura-do-milho-se-agravam-no-centro-oeste)

@@ -12,21 +12,19 @@ Corn planted right after soybeans, to harvest grain in winter. In the app it app
 
 ## Why it matters
 
-It is the best-known grain option. But if sowing is late, flowering falls at the end of the rains and water runs short just when the plant needs it most.
+In June, second-crop corn is in a sensitive phase, and **frost** can hurt grain filling. Sowing little by little, as the soybeans are harvested, avoids losing everything at once.
 
 ## Get to know it
 
 - **Use:** grain.
-- **Water:** asks for a lot. At the peak, the app uses coefficient **1.20**, the highest of all.
-- **Leaves in the soil:** little straw (**20 of 40** points) and no nitrogen.
-- **Fears:** drought and heat of **35 °C or more** at flowering.
+- **When to plant:** the deadline comes from the ZARC, published by the Ministry of Agriculture for each municipality.
+- **Fears:** frost in June.
 
 ## Step by step
 
-1. **Sow** right after harvesting the soybeans. The app's ZARC limit is **February 28**.
-2. **Wait for flowering**, at about 60 days. The whole cycle takes about 120.
-3. **Watch the rain and the heat** at flowering.
-4. **Harvest** in winter. If you can, cover the soil before the next soybeans.
+1. **Check the deadline** in the ZARC for your municipality.
+2. **Sow** right after harvesting the soybeans, little by little if the harvest advances.
+3. **Keep an eye** on June frost.
 
 ## In your field
 
@@ -34,6 +32,5 @@ See corn alone in the [Suggestion](/resposta) and in [Compare](/opcoes). Also re
 
 ## Sources
 
-- App numbers: Raiz Orbital parameters (culturas.yaml and regras.yaml).
 - [Embrapa: frost and staggered sowing in second-crop corn](https://www.embrapa.br/en/busca-de-noticias/-/noticia/42464503/novo-metodo-e-capaz-de-prever-a-ocorrencia-de-geada-em-mato-grosso-do-sul)
 - [Ministry of Agriculture: ZARC](https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/zoneamento-agricola)
