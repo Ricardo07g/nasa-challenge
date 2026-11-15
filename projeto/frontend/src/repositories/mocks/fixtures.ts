@@ -292,6 +292,7 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
       historico: null,
       dados: [],
       chuva_mensal: null,
+      soja_recente: null,
     }
   }
   // Exemplo do guia do NDVI: 5 anos parados, 4 plantados e 1 em que o satélite não teve certeza.
@@ -336,6 +337,8 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
       { fonte: 'nex_gddp_cmip6', periodo: '2041-2060', cenario: 'ssp245', modelos: 3 },
     ],
     chuva_mensal: MONTHLY_RAIN,
+    // Soja vista na última safra: no modo de demonstração, a tela 3 não avisa (RF-24).
+    soja_recente: { safra: '2025/26', vista: true, ndvi_pico: 0.86, fonte: 'MODIS MOD13Q1 + MYD13Q1' },
   }
 }
 

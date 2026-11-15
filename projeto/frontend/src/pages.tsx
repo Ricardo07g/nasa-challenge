@@ -92,6 +92,8 @@ export function WhenPage() {
       onDateChange={state.changeDate}
       onConfirm={state.confirm}
       rainChart={state.rainChart}
+      soyWarning={state.soyWarning}
+      onDismissSoyWarning={state.dismissSoyWarning}
     />
   )
 }

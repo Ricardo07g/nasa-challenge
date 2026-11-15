@@ -1,6 +1,7 @@
-"""Olhar o talhão: área com dados, solo, histórico pelo NDVI, chuva de cada mês e fontes.
+"""Olhar o talhão: área com dados, solo, histórico pelo NDVI, chuva de cada mês, soja e fontes.
 
-Plano técnico §3.1; a chuva de cada mês é o gráfico da tela 3 (tarefa 0028).
+Plano técnico §3.1; a chuva de cada mês é o gráfico da tela 3 (tarefa 0028); a soja da safra
+mais recente é a checagem do começo do fluxo (RF-24, tarefa 0037).
 """
 
 from typing import Any
@@ -14,6 +15,7 @@ from app.repositories.soil_repository import SoilRepository
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.field_history_service import FieldHistoryService
 from app.services.monthly_rain_service import MonthlyRainService
+from app.services.soja_recente_service import SojaRecenteService
 
 CMIP6_PERIOD = "2041-2060"
 CLIMATE_PERIOD = "2005-2024"  # janela das temporadas de chuva (ADR-0003), POWER ou IMERG
@@ -31,6 +33,7 @@ class TalhaoService:
         ingestion_service: IngestionServiceProtocol | None = None,
         monthly_rain_service: MonthlyRainService | None = None,
         smap_repo: CellSmapRepository | None = None,
+        soja_recente_service: SojaRecenteService | None = None,
     ) -> None:
         self._climate_repo = climate_repo
         self._soil_repo = soil_repo
@@ -39,6 +42,7 @@ class TalhaoService:
         self._ingestion_service = ingestion_service
         self._monthly_rain_service = monthly_rain_service or MonthlyRainService()
         self._smap_repo = smap_repo
+        self._soja_recente_service = soja_recente_service
 
     def inspect_talhao(self, lat: float, lon: float) -> Talhao:
         """Returns complete field metadata for the given coordinates (US-01, US-02, US-07)."""
@@ -57,6 +61,11 @@ class TalhaoService:
             self._monthly_rain_service.summarize(self._climate_repo.get_seasons(cell_id))
             if cell_id is not None
             else None
+        )
+
+        # Independe da célula do clima: é o pixel de 250 m do ponto no arquivo da soja recente.
+        soja_recente = (
+            self._soja_recente_service.check(lat, lon) if self._soja_recente_service else None
         )
 
         dados_fontes: list[FonteDado] = []
@@ -101,6 +110,7 @@ class TalhaoService:
             historico=historico,
             dados_fontes=tuple(dados_fontes),
             chuva_mensal=chuva_mensal,
+            soja_recente=soja_recente,
         )
 
     def obter_talhao(self, lat: float, lon: float) -> Talhao:

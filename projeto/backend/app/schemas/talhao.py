@@ -1,10 +1,12 @@
 """JSON de GET /api/talhao (plano técnico §3.1; `historico` no formato do guia do NDVI).
 
-`chuva_mensal` é o gráfico "Chuva de cada mês na região" da tela 3 (tarefa 0028).
+`chuva_mensal` é o gráfico "Chuva de cada mês na região" da tela 3 (tarefa 0028);
+`soja_recente` é a checagem da soja no começo do fluxo (RF-24, tarefa 0037).
 """
 
 from pydantic import BaseModel, ConfigDict
 
+from app.models.soja_recente import SojaRecente
 from app.models.talhao import ChuvaMensal, HistoricoTalhao, SituacaoAno, Talhao
 
 
@@ -82,6 +84,17 @@ class ChuvaMensalSchema(_Frozen):
         )
 
 
+class SojaRecenteSchema(_Frozen):
+    safra: str  # ex.: "2025/26" (soja colhida em fevereiro de 2026)
+    vista: bool | None  # null = pixel sem observações boas suficientes (o front não avisa)
+    ndvi_pico: float | None  # maior NDVI da janela, em centésimos; null junto com vista
+    fonte: str  # produtos do MODIS (ex.: "MODIS MOD13Q1 + MYD13Q1")
+
+    @classmethod
+    def from_model(cls, soja: SojaRecente) -> "SojaRecenteSchema":
+        return cls(safra=soja.safra, vista=soja.vista, ndvi_pico=soja.ndvi_pico, fonte=soja.fonte)
+
+
 class FonteDadoSchema(_Frozen):
     fonte: str
     periodo: str
@@ -100,6 +113,7 @@ class TalhaoResponse(_Frozen):
     historico: HistoricoSchema | None
     dados: list[FonteDadoSchema]
     chuva_mensal: ChuvaMensalSchema | None  # null fora da área ou sem temporada completa
+    soja_recente: SojaRecenteSchema | None  # null sem o arquivo ou com o ponto fora da grade
 
     @classmethod
     def from_model(cls, talhao: Talhao) -> "TalhaoResponse":
@@ -131,6 +145,11 @@ class TalhaoResponse(_Frozen):
             chuva_mensal=(
                 ChuvaMensalSchema.from_model(talhao.chuva_mensal)
                 if talhao.chuva_mensal is not None
+                else None
+            ),
+            soja_recente=(
+                SojaRecenteSchema.from_model(talhao.soja_recente)
+                if talhao.soja_recente is not None
                 else None
             ),
         )

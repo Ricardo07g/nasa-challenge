@@ -23,6 +23,7 @@ from app.models.regras import (
     RegrasRotacao,
     RegrasRotulos,
     RegrasSinalOutono,
+    RegrasSojaRecente,
     RegrasSolo,
 )
 
@@ -93,6 +94,7 @@ class YamlRulesRepository:
             frases_safra=_texts(raw, "frases_safra", FrasesSafra),
             enso=_group(raw, "enso", RegrasEnso),
             frases_ano=_texts(raw, "frases_ano", FrasesAno),
+            soja_recente=_group(raw, "soja_recente", RegrasSojaRecente),
         )
         return self._cache
 

@@ -152,6 +152,11 @@ export const pt = {
     /** Sem o dado da API, o gráfico vira "Ainda não conectado". */
     chartTitle: 'Chuva de cada mês na região',
     months: { jan: 'Jan', feb: 'Fev', mar: 'Mar', apr: 'Abr', may: 'Mai', jun: 'Jun' },
+    /** RF-24: o satélite não viu soja no ponto marcado na última safra (aviso que deixa seguir). */
+    soyWarning: (safra: string) =>
+      `Não vimos soja neste ponto na última safra (${safra}). Confira se marcou a lavoura certa.`,
+    soyAdjust: 'Ajustar no mapa',
+    soyContinue: 'Seguir mesmo assim',
   },
   mission: {
     title: 'Missão: sua lavoura',

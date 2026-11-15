@@ -45,6 +45,7 @@ Cada tarefa possui um identificador numérico sequencial (`0001`, `0002`, etc.) 
 | [**0034**](0034-regiao-pelo-satelite.md) | **Região pelo satélite (P3): `GET /api/regiao` com a lavoura parada num raio de 30 km, NDVI do MODIS por área na ORNL e máscara do MCD12Q1** | **Concluída** | **Média** | `pipeline/fetch_regiao_ndvi.py`, `app/services/region_service.py`, `app/controllers/regiao_controller.py` |
 | [**0035**](0035-detalhe-de-cada-ano.md) | **Detalhe de cada ano em /recomendacao (`opcoes[].anos_detalhe[]`, P1) e fase do El Niño / La Niña pelo ONI da NOAA** | **Concluída** | **Alta** | `pipeline/fetch_oni.py`, `app/services/year_detail_service.py`, `app/repositories/enso_repository.py` |
 | [**0036**](0036-regiao-calibrada.md) | **Região pelo satélite calibrada (P3, RF-23): só a soja do ano (pico e colheita), entressafra depois da colheita, `centro` e `distancia_km` na API e textos da tela "Na sua região"** | **Concluída** | **Média** | `pipeline/fetch_regiao_ndvi.py`, `app/services/region_service.py`, `app/config_data/regras.yaml`, `projeto/frontend/src/views/CommunityView.tsx` |
+| [**0037**](0037-soja-recente.md) | **Soja na safra mais recente no começo do fluxo (RF-24): `soja_recente` no `/talhao`, pico do NDVI do MODIS por pixel na caixa piloto pela ORNL em ladrilhos (48 pedidos) e o aviso na tela 3** | **Concluída** | **Média** | `pipeline/fetch_soja_recente.py`, `app/services/soja_recente_service.py`, `app/repositories/soja_recente_repository.py` |
 
 ---
 

@@ -175,6 +175,34 @@ def test_should_refuse_an_enso_number_without_source(tmp_path: Path) -> None:
         YamlRulesRepository(_write(tmp_path, raw)).get_rules()
 
 
+def test_should_load_the_recent_soybean_rule_checked_at_the_start_of_the_flow() -> None:
+    # RF-24 (tarefa 0037): soja vista no pixel com o maior NDVI de 1/jan a 15/mar de 0,70 ou mais,
+    # com pelo menos 2 observações boas (hipótese do time, a revisar pela agrônoma)
+    soja = YamlRulesRepository(SHIPPED).get_rules().soja_recente
+
+    assert (soja.janela_inicio, soja.janela_fim) == ("01-01", "03-15")
+    assert soja.ndvi_minimo == 0.70
+    assert soja.min_observacoes == 2
+
+
+def test_should_keep_the_recent_soybean_rule_equal_to_the_region_soybean_peak() -> None:
+    # Integração (tarefas 0036 e 0037): a soja do ponto e a soja do ano da região usam o mesmo
+    # limite e a mesma janela do pico, até os dois grupos do regras.yaml virarem um só.
+    regras = YamlRulesRepository(SHIPPED).get_rules()
+    soja, regiao = regras.soja_recente, regras.regiao_ndvi
+
+    assert soja.ndvi_minimo == regiao.pico_min_ndvi
+    assert (soja.janela_inicio, soja.janela_fim) == (regiao.pico_inicio, regiao.pico_fim)
+
+
+def test_should_refuse_a_recent_soybean_number_without_source(tmp_path: Path) -> None:
+    raw = _shipped_raw()
+    del raw["soja_recente"]["ndvi_minimo"]["fonte"]
+
+    with pytest.raises(ValueError, match="soja_recente.ndvi_minimo"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
 def test_should_load_year_detail_texts_in_portuguese_and_english() -> None:
     # P1: a frase de cada ano sai de um modelo do regras.yaml, sem IA generativa (RF-06)
     frases = YamlRulesRepository(SHIPPED).get_rules().frases_ano

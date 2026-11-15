@@ -16,6 +16,7 @@ DATA_ENV_VARS = (
     "IMERG_LATE_PATH",
     "SMAP_PATH",
     "SMAP_RECENTE_PATH",
+    "SOJA_RECENTE_PATH",
 )
 CREDENTIAL_ENV_VARS = (
     "EARTHDATA_TOKEN",
@@ -148,6 +149,17 @@ def test_smap_recente_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: P
     monkeypatch.setenv("SMAP_RECENTE_PATH", str(tmp_path / "smap_recente.json"))
 
     assert Settings(_env_file=None).smap_recente_path == tmp_path / "smap_recente.json"
+
+
+def test_soja_recente_path_defaults_to_none_so_there_is_no_soybean_check_without_the_file() -> None:
+    # Sem o arquivo da soja recente (RF-24), o /talhao responde soja_recente: null (nenhum aviso).
+    assert Settings(_env_file=None).soja_recente_path is None
+
+
+def test_soja_recente_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("SOJA_RECENTE_PATH", str(tmp_path / "soja_recente_2026.json"))
+
+    assert Settings(_env_file=None).soja_recente_path == tmp_path / "soja_recente_2026.json"
 
 
 def test_rules_path_defaults_to_file_shipped_with_the_app() -> None:
