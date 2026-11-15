@@ -102,6 +102,7 @@ const ARTICLE = {
   heat: '/guia/calor-35-graus',
   frost: '/guia/geada-na-safrinha',
   fire: '/guia/fogo-na-palha',
+  erosion: '/guia/como-evitar-erosao',
 }
 
 /**
@@ -568,7 +569,7 @@ function AreaAlerts({ t, lang, alerts }: SatelliteViewProps) {
             alert.data.dias,
             alert.data.total_anos,
           ),
-          link: null,
+          link: { to: ARTICLE.erosion, title: t.xray.articles.erosion },
         }
       case 'fire':
         return {

@@ -323,6 +323,7 @@ export const en = {
       heat: '35 °C heat at flowering',
       frost: 'Frost in the second crop',
       fire: 'Fire in the straw',
+      erosion: 'How to prevent erosion',
     },
     badges: {
       soil: 'SoilGrids · ISRIC · 250 m',
@@ -852,6 +853,8 @@ export const en = {
     mmHint: 'From 0 to 300 mm, as your rain gauge showed.',
     dateLabel: 'Which day?',
     dateHint: 'Today or up to 30 days ago.',
+    eventArticles: { fogo: 'Fire in the straw', enxurrada_erosao: 'How to prevent erosion' },
+    learnMore: (title: string) => `Learn more: ${title}`,
     eventLabel: 'What happened?',
     events: {
       fogo: 'Fire',

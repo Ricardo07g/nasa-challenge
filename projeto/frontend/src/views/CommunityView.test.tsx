@@ -184,6 +184,13 @@ describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
     expect(date).toHaveAttribute('max', TODAY)
   })
 
+  it('relato de enxurrada ou erosão liga para o artigo "Como evitar erosão" (tarefa 0049)', () => {
+    setup({}, { open: 'evento', event: { event: 'enxurrada_erosao', date: TODAY } })
+
+    expect(screen.getByRole('link', { name: 'Saiba mais: Como evitar erosão' })).toHaveAttribute('href', '/guia/como-evitar-erosao')
+    expect(screen.queryByRole('link', { name: 'Saiba mais: Fogo na palha' })).not.toBeInTheDocument()
+  })
+
   it('"Aconteceu aqui": a lista fechada e, com fogo, o 193 dos Bombeiros', async () => {
     const props = setup({}, { open: 'evento', event: { event: 'fogo', date: TODAY }, fireCall: true })
 
@@ -198,6 +205,7 @@ describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
     ])
     expect(screen.getByRole('alert')).toHaveTextContent('Em caso de fogo, ligue 193 (Bombeiros).')
     expect(screen.getByRole('link', { name: 'Ligar 193' })).toHaveAttribute('href', 'tel:193')
+    expect(screen.getByRole('link', { name: 'Saiba mais: Fogo na palha' })).toHaveAttribute('href', '/guia/fogo-na-palha')
     await userEvent.click(within(events).getByRole('button', { name: 'Geada' }))
     expect(props.onEvent).toHaveBeenCalledWith({ event: 'geada' })
   })

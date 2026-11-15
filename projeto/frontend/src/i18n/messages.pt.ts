@@ -343,6 +343,7 @@ export const pt = {
       heat: 'Calor de 35 °C na floração',
       frost: 'Geada na safrinha',
       fire: 'Fogo na palha',
+      erosion: 'Como evitar erosão',
     },
     badges: {
       soil: 'SoilGrids · ISRIC · 250 m',
@@ -887,6 +888,9 @@ export const pt = {
     mmHint: 'De 0 a 300 mm, como marcou o pluviômetro.',
     dateLabel: 'Que dia?',
     dateHint: 'Hoje ou até 30 dias atrás.',
+    /** Tarefa 0049: o artigo do Guia de cada evento relatado (só os que existem). */
+    eventArticles: { fogo: 'Fogo na palha', enxurrada_erosao: 'Como evitar erosão' },
+    learnMore: (title: string) => `Saiba mais: ${title}`,
     eventLabel: 'O que aconteceu?',
     events: {
       fogo: 'Fogo',

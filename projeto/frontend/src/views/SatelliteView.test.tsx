@@ -585,6 +585,8 @@ describe('raio-X da sua terra (tarefa 0043)', () => {
     expect(screen.getByText('Houve fogo a até 5 km do seu ponto em 3 de 10 anos (MODIS, NASA).')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Saiba mais: Geada na safrinha' })).toHaveAttribute('href', '/guia/geada-na-safrinha')
     expect(screen.getByRole('link', { name: 'Saiba mais: Fogo na palha' })).toHaveAttribute('href', '/guia/fogo-na-palha')
+    // Tarefa 0049: o artigo da erosão existe, e a chuva forte liga para ele.
+    expect(screen.getByRole('link', { name: 'Saiba mais: Como evitar erosão' })).toHaveAttribute('href', '/guia/como-evitar-erosao')
     expect(screen.queryByText(/granizo/i)).not.toBeInTheDocument()
   })
 
