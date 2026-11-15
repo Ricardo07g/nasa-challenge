@@ -185,3 +185,43 @@
   font-weight: var(--font-weight-bold);
   line-height: 1;
 }
+
+/*
+ * Celular estreito (tarefa 0046): com o botão "Avisos", o cabeçalho fica mais justo (menos respiro entre os
+ * botões, nome um pouco menor). Se ainda não couber numa linha, os botões descem para a linha de baixo em vez
+ * de passar por cima do nome.
+ */
+@media (max-width: 480px) {
+  .inner {
+    flex-wrap: wrap;
+    column-gap: 8px;
+  }
+
+  .logo svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brandName {
+    font-size: 18px;
+  }
+
+  .actions {
+    gap: 2px;
+    margin-left: auto;
+  }
+
+  .community {
+    padding: 8px 6px;
+    gap: 4px;
+  }
+
+  .listen {
+    padding-inline: 8px;
+  }
+
+  .lang {
+    padding-inline: 4px;
+    gap: 4px;
+  }
+}
