@@ -30,7 +30,7 @@ Na entressafra a chuva falha. O sorgo é uma opção para quando o risco de seca
 
 ## Na sua lavoura
 
-O app mostra o sorgo na [Resposta](/resposta) e em [Todas as opções](/opcoes). O selo de sede da cultura leva a este artigo. Veja [a conta de água](/guia/conta-de-agua).
+O app mostra o sorgo na [Sugestão](/resposta) e em [Comparar](/opcoes). O selo de sede da cultura leva a este artigo. Veja [a conta de água](/guia/conta-de-agua).
 
 ## Fontes
 

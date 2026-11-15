@@ -67,35 +67,67 @@ type RecommendationHeroProps = {
   children?: ReactNode
   /** Na tela da resposta, o nome da cultura é o título principal da página (h1). */
   as?: 'h1' | 'h2'
+  /** Imagem da planta no canto (tarefa 0044); sem ela, o broto decorativo. */
+  media?: ReactNode
+  /** Selo embaixo do título (ex.: "Sede da cultura"). */
+  badge?: ReactNode
 }
 
-export function RecommendationHero({ label, title, children, as: Heading = 'h2' }: RecommendationHeroProps) {
+export function RecommendationHero({ label, title, children, as: Heading = 'h2', media, badge }: RecommendationHeroProps) {
   return (
-    <div className={styles.hero}>
-      <span className={styles.heroDecor}>
-        <SproutIcon size={65} />
-      </span>
+    <div className={styles.hero} data-media={media !== undefined}>
+      {media ? (
+        <span className={styles.heroMedia}>{media}</span>
+      ) : (
+        <span className={styles.heroDecor}>
+          <SproutIcon size={65} />
+        </span>
+      )}
       <span className={styles.heroLabel}>
         <ShieldIcon size={20} />
         {label}
       </span>
       <Heading className={styles.heroTitle}>{title}</Heading>
+      {badge}
       {children}
     </div>
   )
 }
 
-type TimelineItem = { year: number; title: string; text: string }
+type TimelineItem = { year: number; title: string; text: string; media?: ReactNode; badge?: ReactNode }
 
 export function YearTimeline({ label, items }: { label: string; items: readonly TimelineItem[] }) {
   return (
     <ol className={styles.timeline} aria-label={label}>
       {items.map((item) => (
         <li key={item.year} className={styles.timelineItem}>
-          <span className={styles.yearTile}>{item.year}</span>
+          <span className={styles.timelineTop}>
+            <span className={styles.yearTile}>{item.year}</span>
+            {item.media && <span className={styles.timelineMedia}>{item.media}</span>}
+          </span>
           <span className={styles.timelineText}>
             <strong className={styles.timelineTitle}>{item.title}</strong>
+            {item.badge}
             <span>{item.text}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+type MiniPlanItem = { year: number; title: string; media?: ReactNode }
+
+/** Os 3 anos do plano em miniatura (aba Sugestão, tarefa 0044): ano, cultura e a imagem da planta. */
+export function MiniPlan({ label, items }: { label: string; items: readonly MiniPlanItem[] }) {
+  return (
+    <ol className={styles.miniPlan} aria-label={label}>
+      {items.map((item, index) => (
+        <li key={`${item.year}-${index}`} className={styles.miniPlanItem}>
+          {item.media && <span className={styles.miniPlanMedia}>{item.media}</span>}
+          <span className={styles.miniPlanText}>
+            <span className={styles.miniPlanYear}>{item.year}</span>
+            <strong>{item.title}</strong>
           </span>
         </li>
       ))}
@@ -123,9 +155,13 @@ type OptionCompareCardProps = {
   highlighted?: boolean
   /** Fora da janela de plantio: cartão laranja com este aviso no lugar das linhas. */
   unavailable?: string
+  /** Imagem da planta no canto (tarefa 0044). */
+  media?: ReactNode
+  /** Selo embaixo do nome (ex.: "Sede da cultura"). */
+  badge?: ReactNode
 }
 
-export function OptionCompareCard({ rank, name, rows, highlighted = false, unavailable }: OptionCompareCardProps) {
+export function OptionCompareCard({ rank, name, rows, highlighted = false, unavailable, media, badge }: OptionCompareCardProps) {
   const titleId = useId()
   return (
     <article
@@ -136,9 +172,13 @@ export function OptionCompareCard({ rank, name, rows, highlighted = false, unava
     >
       <div className={styles.compareHead}>
         <span className={styles.rank}>{rank}</span>
-        <h3 id={titleId} className={styles.compareName}>
-          {name}
-        </h3>
+        <span className={styles.compareTitle}>
+          <h3 id={titleId} className={styles.compareName}>
+            {name}
+          </h3>
+          {badge}
+        </span>
+        {media && <span className={styles.compareMedia}>{media}</span>}
       </div>
       {unavailable !== undefined ? (
         <p>{unavailable}</p>

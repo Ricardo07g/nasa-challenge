@@ -23,7 +23,7 @@ The app gives up to 40 straw points in the soil score. See how much each option 
 - Second-crop corn and sorghum: 20.
 - Leave it fallow: 0.
 
-See the effect in the Soil row of [All options](/opcoes) and in the [Answer](/resposta). If you want straw, look at [pearl millet](/guia/milheto) or [corn with brachiaria](/guia/milho-braquiaria).
+See the effect in the Soil row of [Compare](/opcoes) and in the [Suggestion](/resposta). If you want straw, look at [pearl millet](/guia/milheto) or [corn with brachiaria](/guia/milho-braquiaria).
 
 The straw should stay on the surface. How much straw your soil needs is up to your agronomist.
 

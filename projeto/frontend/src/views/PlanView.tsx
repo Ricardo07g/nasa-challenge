@@ -4,23 +4,27 @@ import { Button } from '../design-system/components/Button'
 import { Card } from '../design-system/components/Card'
 import { ChipGroup } from '../design-system/components/Choice'
 import { PageHeading, YearTimeline } from '../design-system/components/Content'
-import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
-import { ToneBadge } from '../design-system/components/Status'
+import { ThirstBadge, ToneBadge } from '../design-system/components/Status'
+import { PlantImage } from '../design-system/plants/PlantImage'
+import type { AnswerNav } from '../controllers/useAnswerNav'
 import { CalendarIcon, ClimateIcon, CommunityIcon, DropIcon, DryIcon, HistoryIcon, UncertainIcon } from '../design-system/icons'
 import { formatDayMonth } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
-import type { CropId, NivelSinal, SinalOutono } from '../models/recomendacao'
+import type { CropId, NivelSinal, Sede, SinalOutono } from '../models/recomendacao'
 import type { ScreenStatus } from '../models/screenStatus'
 import { PAST_YEARS } from '../services/pastSeasonService'
 import type { PlanScenario, PlanView as Plan, PlantingRule } from '../services/recomendacaoRules'
+import { AnswerHeader } from './AnswerHeader'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
 import layout from './layout.module.css'
 
 export type PlanViewProps = {
   t: Messages
   lang: Lang
-  nav: { label: string; tabs: AnswerTab[]; backTo: string }
+  nav: AnswerNav
+  /** Sede de cada cultura do plano (linha "Água" do motor, tarefa 0044); sem o dado, o selo não aparece. */
+  thirst: Partial<Record<CropId, Sede>>
   status: ScreenStatus
   onRetry: () => void
   signal: SinalOutono | null
@@ -47,8 +51,7 @@ export function PlanView(props: PlanViewProps) {
   const p = t.plan
   return (
     <div className={layout.page}>
-      <BackLink to={nav.backTo}>{t.nav.back}</BackLink>
-      <AnswerTabs label={nav.label} tabs={nav.tabs} />
+      <AnswerHeader t={t} nav={nav} />
       <PageHeading title={p.title} subtitle={p.subtitle} />
       {status === 'loading' && <FlowLoading label={t.common.loading} />}
       {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={onRetry} />}
@@ -59,7 +62,7 @@ export function PlanView(props: PlanViewProps) {
 }
 
 function Ready(props: PlanViewProps & { plan: Plan }) {
-  const { t, lang, signal, scenario, onScenario, plan, rule, communityTo, pastTo, showGainReference } = props
+  const { t, lang, signal, scenario, onScenario, plan, rule, communityTo, pastTo, showGainReference, thirst } = props
   const p = t.plan
   const name = (crop: CropId) => t.crops.names[crop]
   const lower = (crop: CropId) => name(crop).toLocaleLowerCase(lang)
@@ -114,11 +117,16 @@ function Ready(props: PlanViewProps & { plan: Plan }) {
       </Card>
       <YearTimeline
         label={p.timelineLabel}
-        items={plan.years.map(({ year, crop, swappedFrom }) => ({
-          year,
-          title: name(crop),
-          text: swappedFrom ? p.swapTagline(lower(swappedFrom)) : t.crops.taglines[crop],
-        }))}
+        items={plan.years.map(({ year, crop, swappedFrom }) => {
+          const sede = thirst[crop]
+          return {
+            year,
+            title: name(crop),
+            text: swappedFrom ? p.swapTagline(lower(swappedFrom)) : t.crops.taglines[crop],
+            media: <PlantImage plant={crop} label={t.suggestion.plantImage(name(crop))} size={64} />,
+            badge: sede ? <ThirstBadge level={sede}>{t.suggestion.thirst[sede]}</ThirstBadge> : undefined,
+          }
+        })}
       />
       {ruleText && (
         <Card tone="blue">

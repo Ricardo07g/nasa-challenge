@@ -478,7 +478,12 @@ def test_should_detail_each_year_of_the_rain_strip_in_every_option(client: TestC
         assert [d["ano"] for d in opcao["anos_detalhe"]] == list(range(2005, 2025))
         assert [d["bom"] for d in opcao["anos_detalhe"]] == opcao["chuva"]["faixa"]
     detalhes = {d["ano"]: d for d in _milho(body)["anos_detalhe"]}
-    # 2007 fica sem chuva de fevereiro a junho; floração no dia 60 (18/fev + 60 = 19/abr)
+    # 2007 fica sem chuva de fevereiro a junho; floração no dia 60 (18/fev + 60 = 19/abr). Os
+    # campos do explorador da tarefa 0044 têm teste próprio (abaixo).
+    explorador = {"isna", "dias_calor", "falta_agua", "calor", "semeadura", "umidade_inicial"}
+    detalhes = {
+        ano: {k: v for k, v in d.items() if k not in explorador} for ano, d in detalhes.items()
+    }
     assert detalhes[2007] == {
         "ano": 2007,
         "bom": False,
@@ -529,3 +534,59 @@ def test_should_send_the_year_detail_without_enso_when_there_is_no_oni_file(
 
     assert {d["enso"] for o in body["opcoes"] for d in o["anos_detalhe"]} == {None}
     assert all("Niño" not in d["texto"] for d in _milho(body)["anos_detalhe"])
+
+
+def test_should_send_the_suggestion_blocks_of_each_option_in_the_front_contract(
+    client: TestClient,
+) -> None:
+    # Tarefa 0044: linha "Água" (sede incluída), critério de "deu certo", ciclo, o que observar e
+    # a taxa de acerto por fase do ENSO; o ISNA e o porquê de cada ano para o explorador.
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"}).json()
+    milho = _milho(body)
+
+    assert set(milho["agua"]) == {
+        "precisa_mm",
+        "chove_mm",
+        "falta_normal_mm",
+        "falta_seco_mm",
+        "sede",
+        "cad_mm",
+        "anos",
+        "futuro",
+    }
+    assert milho["agua"]["sede"] in {"pouca", "media", "muita"}
+    assert milho["agua"]["futuro"] is None  # sem CMIP6 no conftest
+    assert milho["criterio"] == {
+        "isna_min": 0.55,
+        "calor_temp_c": 35.0,
+        "calor_min_dias": 3,
+        "fase": "floracao",
+        "janela_dias": 15,
+    }
+    assert milho["ciclo"] == {"dias": 100, "floracao_dias": 60}
+    assert milho["observar"] == {"veranico_dias": 0, "anos_calor": 0, "total": 20}
+    fases = {item["fase"]: item for item in milho["enso_acerto"]}
+    assert set(fases["el_nino"]) == {"fase", "anos", "bons", "anos_outros", "bons_outros", "clara"}
+    seca = next(d for d in milho["anos_detalhe"] if d["ano"] == 2007)
+    assert seca["isna"] < 0.55
+    assert (seca["falta_agua"], seca["calor"], seca["dias_calor"]) == (True, False, 0)
+    assert (seca["semeadura"], seca["umidade_inicial"]) == ("2007-02-18", None)
+
+
+def test_should_send_objectives_future_climate_frost_and_planting_deadlines(
+    client: TestClient,
+) -> None:
+    body = client.get("/api/recomendacao", params={**UFU, "colheita": "tarde"}).json()
+
+    assert set(body["objetivos"]) == {"equilibrio", "seguranca", "renda", "terra"}
+    equilibrio = body["objetivos"]["equilibrio"]
+    assert equilibrio["ordem"] == [o["id"] for o in body["opcoes"]]
+    assert equilibrio["plano"][0] == body["melhor"] == body["plano_3_anos"]["normal"]["anos"][0]
+    assert set(equilibrio) == {"ordem", "plano", "nota_plano"}
+    assert body["clima_futuro"] is None  # sem CMIP6 no conftest
+    assert body["geada"] == {"anos": 0, "total": 20, "tmin_max_c": 3.0, "meses": [5, 6, 7]}
+    assert {f["id"]: f["data_limite"] for f in body["fora_da_janela"]} == {
+        "milho_safrinha": "2027-02-28",
+        "milho_braquiaria": "2027-02-28",
+        "crotalaria": "2027-02-28",
+    }

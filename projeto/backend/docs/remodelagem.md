@@ -27,7 +27,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | ✅ na branch (15/11 ~02:17), revisada |
 | S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | ✅ na branch (15/11 ~02:57), revisada |
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | ✅ na branch (15/11 ~04:00), revisada; extração completa do MCD64A1 rodando |
-| S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | a fazer |
+| S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | feito na branch `feat/remodelagem-s5a-sugestao` (15/11 ~04:10; falta o merge e a revisão; irrigação opcional não feita) |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | a fazer |
 | S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~03:10), revisada |
@@ -108,6 +108,20 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D64 | 15/11 | Cartão "Clima 2041–2060": a chuva de março a maio de cada modelo é a variação de cada mês pesada pela chuva média do mês na célula; a máxima, a média simples dos meses; o cartão mostra a média dos modelos e quantos indicam menos chuva, mais chuva e mais calor. | Março chove mais que maio: a média simples das porcentagens exageraria o mês mais seco. |
 | D65 | 15/11 | Cabeçalho do painel: o lugar é a cidade de referência mais perto (lista do front, sem rede), não o endereço do Photon; altitude não aparece (o `grid_cell` não tem a coluna e o pedido manda não buscar fora). | Evita um pedido externo a cada visita da tela 4; a altitude do POWER chega na busca, mas não é gravada. |
 | D66 | 15/11 | Sem o raio-X (API antiga ou falha), a tela 4 volta aos cartões de antes (chuva, terra e clima) e à faixa de quadrinhos. O mock do raio-X fica num arquivo próprio (`repositories/mocks/raioXFixture.ts`). O RF-29 é o próximo livre do PRD: se a S7 também pegar o RF-29 (ou o D55 a D66), renumerar no merge. | A tela nunca fica vazia; arquivos próprios evitam conflito com a S7 (que mexe nos fixtures da comunidade). |
+| D67 | 15/11 | S5a: as abas mudam de nome e de ordem (Sugestão, Comparar, Plano de 3 anos), mas as URLs ficam (`/resposta`, `/opcoes`, `/plano`). | Links já compartilhados não quebram e a S5b trabalha nas mesmas rotas. |
+| D68 | 15/11 | A reordenação pelo objetivo é **no motor**: o `/recomendacao` traz `objetivos` (equilíbrio, segurança, renda e terra), cada um com a ordem das opções e o plano; o navegador só escolhe. Sem o campo (API antiga), o front reordena pelo eixo como antes. | O plano do objetivo usa a regra do PRD 7.7 (restrições, nematoide, bônus de diversidade), que só existe no backend; refazer no front duplicaria a regra. O RNF-02 continua: trocar de objetivo não pede nada à API. |
+| D69 | 15/11 | O objetivo vai na URL (`objetivo=` com `seguranca`, `renda` ou `terra`, pelo `flowParams`, segue em todas as telas); sem objetivo = equilíbrio (pesos padrão, a melhor opção do motor), e tocar de novo tira a escolha. Ordem = nota do eixo (segurança, renda ou solo), desempate pela final. | "Se mantém entre as abas" (pedido 5.1). A escolha nula preserva a melhor opção do motor como padrão. |
+| D70 | 15/11 | Plano de um objetivo: a melhor sequência do PRD 7.7 que começa pela 1ª da ordem, com a média da nota do eixo + o bônus de diversidade **sem o teto de 100** na comparação, desempate pela mesma conta com a nota final; **sem o pousio** nos objetivos. **A revisar.** | Com o teto, planos diferentes empatavam em 100; com o pousio (segurança 100, PRD 7.2), "mais segurança" sugeria deixar a terra parada no 3º ano (UFU, colheita meio), o que não é proteger a lavoura. |
+| D71 | 15/11 | O Plano A (`plano_3_anos.normal`) passou a ser o plano do equilíbrio: começa pela melhor opção. O Plano B continua livre. O sinal do outono usa esse Plano A. | "A sugestão é o ano 1 de uma rotação" (pedido 5). Na UFU, o Plano A não mudou em nenhuma faixa. |
+| D72 | 15/11 | Linha Água: "ano seco" = o percentil 80 da falta (só 20% dos anos faltou mais), com a mesma interpolação da tela 3; `agua.percentil_seco` = 20. | O pedido diz "percentil 20 dos 20 anos"; para a falta (mais é pior), o percentil 20 seria um ano úmido. Mantém o sentido do ano seco da S3 (percentil 20 da chuva). |
+| D73 | 15/11 | Sede da cultura pelo consumo mediano no ciclo (ETc): pouca abaixo de 280 mm, muita de 325 mm para cima (hipótese do time, `regras.yaml`). | Na UFU: milho 332–359 mm, sorgo 289–316, crotalária 249–272, milheto 231–248, conforme a data de plantio; os cortes deixam a sede estável entre as faixas de colheita. |
+| D74 | 15/11 | "Deu certo" é explicado com o critério que vem da API (`criterio`: ISNA mínimo, 35 °C, **3 dias**, janela), não com o texto do pedido ("nenhum dia de 35 °C"). | Pedido da tarefa: usar o critério do motor (está nos números estranhos). A tela nunca repete número fixo. |
+| D75 | 15/11 | Explorador: a barra é o ISNA do motor (já limitado a 100%); o detalhe do ano abre na própria Sugestão, com o `ano` na URL, e pede a safra dia a dia ao `/api/safra-passada` com a `opcao` mostrada e a `colheita` da URL. `/safra-passada?…&ano=X` e `/relatorio` levam para `/resposta`. | "Reaproveite a tela `/safra-passada`": a linha do tempo, o service e o endpoint ficam, como parte do detalhe. Antes, o front não mandava a colheita (o replay era sempre do meio) nem a opção. |
+| D76 | 15/11 | El Niño / La Niña: a frase só aparece com pelo menos 5 anos da fase e 25 pontos percentuais de diferença contra os outros anos (neutros e a outra fase) (`enso_acerto`, hipótese do time). | O mínimo de 5 anos é o do sinal do outono; 25 pontos é ~2 anos de diferença em 7. |
+| D77 | 15/11 | Clima 2041–2060 e geada: cálculo pequeno da S5a (`clima_futuro_sugestao`, `geada_sugestao`), na célula, com os meses e o limite da seção 4 (março a maio; 3 °C de maio a julho); média simples dos meses de cada modelo. A geada só aparece no aviso da colheita tarde, e só se algum ano teve geada. **Unificar com a S4 na S9.** | A S4 rodava em paralelo; nomes de grupo diferentes evitam chave repetida no `regras.yaml` no merge. |
+| D78 | 15/11 | O aviso único da colheita tarde é montado no front (pt e en) com `fora_da_janela[].data_limite`; o "quando" vem da faixa da URL ("depois de 20 de fevereiro") e as datas vão por extenso ("28 de fevereiro"), não "28/02". | A data exata não vai para a URL (D33); por extenso é o que o "Ouvir" lê bem. |
+| D79 | 15/11 | O relatório saiu inteiro (tela, botão, controller e service); as chaves de i18n `report`, `past` e `answerTabs.answer/options` ficaram sem uso até a S9. O RF novo é o RF-30 (renumerar no merge se a S4 também pegar o RF-30, como no D13). | Regra de só acrescentar no i18n enquanto a S4 roda. |
+| D80 | 15/11 | "Como fazer": manejo = os passos do `culturas.yaml` com "Rascunho: a revisar pela agrônoma." (são rascunho no YAML); "o que observar" = veranico típico (mediana, para baixo) e anos de calor da fase crítica, do motor, e o fim das chuvas do `/talhao` (S3). Irrigação (opcional da 5.3) não foi feita. | Regra geral: nada de recomendação agronômica nova. A irrigação fica atrás de uma opção desligada e não muda o "deu certo"; ficou para depois por tempo. |
 
 ## Revisão por seção
 
@@ -226,6 +240,25 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
 - **S3, dia sugerido na UFU é 25/fev** (10 anos de NDVI), na faixa "fim de fevereiro ou março". O MOD13Q1 é
   de 16 dias (Terra e Aqua defasados em 8): o dia é a data da composição em que o NDVI caiu, não o dia exato
   da colheita. Com a regra nova (D31), um ponto com mediana em 21 ou 22/fev passa de "meio" para "tarde".
+- **S5a, falta água mesmo chovendo mais do que a planta precisa:** na UFU, colheita meio, o milho com
+  braquiária precisa de 346 mm no ciclo, costuma chover 400 mm e ainda faltam 116 mm (158 num ano seco). A
+  chuva se concentra em fevereiro e março, a terra só guarda 60 mm (solo argiloso) e o excesso escorre; no fim
+  do ciclo (abril a junho) falta. É a conta do balde do PRD 7.2; a tela explica numa frase.
+- **S5a, explorador "achatado" nas coberturas:** milheto e crotalária têm ISNA de 1,0 em todos os 20 anos na
+  UFU (a fase crítica da cobertura são os 30 primeiros dias, os mais chuvosos), então todas as barras ficam no
+  topo. O "deu certo" delas quase só depende do calor. O mesmo motivo põe a crotalária em 1º no "Mais
+  segurança" (19 de 20, contra 16 de 20 do milho com braquiária no meio): critérios diferentes para grão e
+  cobertura (como no custo do atraso da S3).
+- **S5a, clima 2041–2060 muda pouco a falta de água:** de +1 a +12 mm em ano normal (chuva de março a maio
+  −0,7%, máxima +1,3 °C, média dos 3 modelos); a faixa entre os modelos (ex.: 112 a 143 mm no milho) é maior
+  que a mudança. Coerente com a nota de futuro igual à de segurança (S1).
+- **S5a, sede da crotalária perto do corte:** 272 mm na colheita cedo contra o corte de 280 mm; a sede pode
+  virar "média" em outro ponto ou com outro solo. Os cortes são hipótese do time (D73).
+- **S5a, planos dos objetivos repetem a cultura:** renda = milho com braquiária nos 3 anos; terra =
+  crotalária nos 3 anos (UFU, meio). O PRD 7.7 não pune repetição; a S5b mostra a repetição como fato.
+- **S5a, El Niño / La Niña:** a frase não aparece para a melhor opção em nenhuma faixa na UFU; aparece para o
+  sorgo (meio: El Niño 4 de 7 contra 11 de 13; tarde: La Niña 6 de 8 contra 5 de 12). Em La Niña o sorgo da
+  colheita tarde se sai **melhor** que nos outros anos: são poucos anos, a tela diz isso.
 
 - **S4, histórico da UFU: parada em 0 de 10 anos.** O NDVI depois da colheita fica entre 0,7 e 0,9 em abril e
   maio todos os anos (a faixa de calor mostra isso): o pixel plantou (ou tem capim) em todas as
@@ -256,6 +289,14 @@ e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
   O aviso "Não parece uma lavoura de soja" aparece certo.
 
 ## O que não foi possível e por quê
+
+- **S5a, irrigação (opcional da 5.3):** "Você irriga essa área?" atrás de uma opção desligada não foi feita
+  (tempo); fica para a S5b ou depois. O "deu certo" não muda com ela.
+- **S5a, geada na UFU:** nenhum ano com mínima de 3 °C ou menos de maio a julho no POWER da célula; a linha
+  da geada não aparece na fazenda de exemplo (o código e os testes cobrem quando há).
+- **S5a, Comparar e Plano completos:** só ganharam o objetivo, a imagem da planta, o selo de sede e (no
+  Comparar) a linha Água; o resto é da S5b. O "Como teria sido em 2024?" do Plano abre o detalhe de 2024 no
+  explorador (a S5b tira o botão).
 
 - **S7, chuva do satélite ao lado da chuva relatada:** não há chuva recente do satélite ligada (o
   IMERG Late saiu do sinal na tarefa 0038 e o banco só tem janeiro a julho). O pedido diz "quando

@@ -111,7 +111,7 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   lugar do satélite com `fonte_ano: 'produtor'`, as linhas do bloco e o aviso "Não parece uma lavoura
   de soja"). Os anos confirmáveis vêm do `/talhao` (`anos_confirmaveis`); sem o campo (API antiga), o
   bloco não aparece. A tela 4 pede o `/talhao` **sem** `confirmadas` (o que o satélite viu) e aplica as
-  respostas no front, para confirmar não recarregar o talhão; o relatório também aplica. Os botões de
+  respostas no front, para confirmar não recarregar o talhão. Os botões de
   cada ano são um `ChipGroup` (grupo com o rótulo do ano, `aria-pressed`); tocar de novo na resposta
   marcada volta para o satélite. O ano `sem_soja` vira o quadrinho `none` (pontilhado com "–") e a
   legenda "Sem soja"; não conta como parado, plantou nem sem certeza.
@@ -206,6 +206,26 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   manda, sem granizo) e cartões menores com "ver na sugestão". Os "Saiba mais" só apontam para artigos
   que existem. Sem o raio-X (API antiga ou falha), a tela volta aos cartões de antes. Aviso nunca leva o
   selo de "pronto" (✓).
+- **Abas da resposta e aba Sugestão (tarefa 0044 do backend, RF-05, RF-22 e RF-30):** as abas são
+  "Sugestão", "Comparar" e "Plano de 3 anos", nessa ordem (`controllers/useAnswerNav.ts`); as URLs
+  continuam `/resposta`, `/opcoes` e `/plano`. O topo das três (`views/AnswerHeader.tsx`) tem o "Voltar",
+  as abas e o seletor "O que você quer mais?" ("Mais segurança", "Renda", "Cuidar da terra"; sem escolha =
+  equilíbrio). O objetivo fica na URL (`objetivo=seguranca|renda|terra`, lido e escrito pelo
+  `flowParams.ts`, então segue em todas as telas) e **não pede nada à API**: a ordem e o plano de cada
+  objetivo vêm prontos do motor (`objetivos` do `/recomendacao`); `services/suggestionService.ts` só
+  escolhe (sem o campo, API antiga, reordena pelo eixo como antes). Na Sugestão: a 1ª opção do objetivo é o
+  "Ano 1 do seu plano" e o plano do objetivo aparece em miniatura (`MiniPlan`); "deu certo" é explicado com
+  o `criterio` da API (nunca número fixo na tela); o explorador ano a ano (`YearBarsChart`: barra =
+  `anos_detalhe[].isna`, linha de corte = `criterio.isna_min`, ano com aperto listrado, "N"/"L" escritos
+  para El Niño/La Niña) abre o detalhe do ano tocado, com o `ano` na URL; o detalhe pede a safra dia a dia
+  a `GET /api/safra-passada` com a `colheita` da URL e a `opcao` mostrada (`pastSeasonService`). A frase de
+  El Niño / La Niña só aparece com `enso_acerto[].clara`. A linha "Água" (`WaterBar`) e o selo "Sede da
+  cultura" (`ThirstBadge`, 1 a 3 gotas e o texto) vêm de `opcoes[].agua`; sem o campo, não aparecem. O
+  aviso da colheita tarde é um só, com as culturas de `fora_da_janela` juntas pela `data_limite`
+  (`lateNotice`). Toda imagem de cultura é o `PlantImage` do design system. Os links "Saiba mais" da aba
+  ficam em `SUGGESTION_ARTICLES` e `cropArticle` (um teste confere que o artigo existe em pt e en).
+  **Não há mais relatório nem a tela solta da safra passada:** `/relatorio` e `/safra-passada?…&ano=X`
+  levam para `/resposta` (com o `ano`, na safra passada). Não crie link para elas.
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front.
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).

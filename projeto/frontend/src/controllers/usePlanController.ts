@@ -6,6 +6,7 @@ import { farmService, type FarmService } from '../services/farmService'
 import { keepFlowQuery } from '../services/flowParams'
 import { PAST_YEARS } from '../services/pastSeasonService'
 import { buildPlan, initialScenario, plantingRule, type PlanScenario } from '../services/recomendacaoRules'
+import { suggestedPlan, thirstByCrop } from '../services/suggestionService'
 import { useAnswerNav } from './useAnswerNav'
 import { useFlowRecomendacao } from './useFlowRecomendacao'
 
@@ -28,7 +29,11 @@ export function usePlanController(deps: Deps = defaultDeps) {
   const scenario = chosen ?? initialScenario(data?.sinal)
   const chooseScenario = useCallback((value: PlanScenario | null) => value && setChosen(value), [])
 
-  const plan = useMemo(() => (data ? buildPlan(data, scenario) : null), [data, scenario])
+  // Com o objetivo do produtor (tarefa 0044), o Plano A é o plano sugerido para ele, que começa pela sugestão.
+  const plan = useMemo(
+    () => (data ? buildPlan(data, scenario, suggestedPlan(data, nav.objective)) : null),
+    [data, scenario, nav.objective],
+  )
 
   return {
     redirectTo,
@@ -40,9 +45,11 @@ export function usePlanController(deps: Deps = defaultDeps) {
     chooseScenario,
     rule: data ? plantingRule(data) : null,
     plan,
+    thirst: data ? thirstByCrop(data) : {},
     /** O estudo do ganho na soja é ilustrativo (não vem de dado nenhum): só com os dados de exemplo. */
     showGainReference: deps.apiMode === 'mock',
     communityTo: `/comunidade${keepFlowQuery(search.toString())}`,
-    pastTo: `/safra-passada${keepFlowQuery(search.toString())}${search.toString() ? '&' : '?'}ano=${PAST_YEARS[0]}`,
+    // A safra passada virou o detalhe do ano no explorador da Sugestão (tarefa 0044); a S5b tira o botão.
+    pastTo: `/resposta${keepFlowQuery(search.toString())}${search.toString() ? '&' : '?'}ano=${PAST_YEARS[0]}`,
   }
 }

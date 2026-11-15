@@ -44,6 +44,23 @@ def test_should_return_the_past_season_in_the_contract_shape_used_by_the_front(
     assert body["eventos"][-1]["tipo"] == "colheita"
 
 
+def test_should_replay_the_option_given_in_the_query(client: TestClient) -> None:
+    # Tarefa 0044: o detalhe de cada ano do explorador mostra a opção da aba Sugestão.
+    response = client.get("/api/safra-passada", params={**UFU, "ano": 2010, "opcao": "milheto"})
+
+    assert response.status_code == 200
+    assert response.json()["opcao"] == "milheto"
+
+
+def test_should_answer_404_for_an_option_out_of_the_window(client: TestClient) -> None:
+    params = {**UFU, "ano": 2010, "colheita": "tarde", "opcao": "crotalaria"}
+
+    response = client.get("/api/safra-passada", params=params)
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"
+
+
 def test_should_answer_a_good_year_without_warnings(client: TestClient) -> None:
     response = client.get("/api/safra-passada", params={**UFU, "ano": 2010})
 

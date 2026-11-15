@@ -5,7 +5,7 @@
  * reais (tarefa 0040): a renda do grão é a segurança climática da opção; quem não dá grão fica com 0.
  */
 import type { Lang } from '../../i18n/language'
-import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo } from '../../models/recomendacao'
+import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo, Sede } from '../../models/recomendacao'
 import { MOCK_PILOT_AREA as AREA } from './mockLocation'
 import type { CustoAtraso, CustoAtrasoParams } from '../../models/custoAtraso'
 import {
@@ -213,6 +213,52 @@ const ENSO: Record<number, AnoDetalhe['enso']> = {
   2024: 'el_nino',
 }
 
+/** Aba Sugestão (tarefa 0044): água no ciclo em mm (precisa, chove, falta normal e seca), ciclo e floração. */
+const WATER: Record<CropSeed['id'], { mm: [number, number, number, number]; sede: Sede; cycle: [number, number] }> = {
+  milho_braquiaria: { mm: [346, 400, 116, 158], sede: 'muita', cycle: [120, 60] },
+  milho_safrinha: { mm: [346, 400, 116, 158], sede: 'muita', cycle: [120, 60] },
+  sorgo: { mm: [303, 398, 83, 114], sede: 'media', cycle: [115, 65] },
+  crotalaria: { mm: [262, 392, 42, 87], sede: 'pouca', cycle: [100, 60] },
+  milheto: { mm: [242, 376, 25, 77], sede: 'pouca', cycle: [90, 50] },
+}
+
+const COVER: ReadonlySet<CropId> = new Set(['crotalaria', 'milheto'])
+
+function suggestionFields(seed: CropSeed, details: AnoDetalhe[]): Partial<Opcao> {
+  const water = WATER[seed.id]
+  const [precisa, chove, normal, seco] = water.mm
+  const cover = COVER.has(seed.id)
+  const nino = details.filter((d) => d.enso === 'el_nino')
+  const others = details.filter((d) => d.enso !== 'el_nino')
+  return {
+    agua: {
+      precisa_mm: precisa,
+      chove_mm: chove,
+      falta_normal_mm: normal,
+      falta_seco_mm: seco,
+      sede: water.sede,
+      cad_mm: 60,
+      anos: 20,
+      futuro: { falta_normal_mm: normal + 12, falta_min_mm: normal + 2, falta_max_mm: normal + 25, mudanca_mm: 12, modelos: 3 },
+    },
+    criterio: cover
+      ? { isna_min: 0.5, calor_temp_c: 35, calor_min_dias: 3, fase: 'pegamento', janela_dias: 30 }
+      : { isna_min: 0.55, calor_temp_c: 35, calor_min_dias: 3, fase: 'floracao', janela_dias: 15 },
+    ciclo: { dias: water.cycle[0], floracao_dias: water.cycle[1] },
+    observar: { veranico_dias: cover ? 4 : 9, anos_calor: cover ? 1 : 0, total: 20 },
+    enso_acerto: [
+      {
+        fase: 'el_nino',
+        anos: nino.length,
+        bons: nino.filter((d) => d.bom).length,
+        anos_outros: others.length,
+        bons_outros: others.filter((d) => d.bom).length,
+        clara: seed.id === 'sorgo',
+      },
+    ],
+  }
+}
+
 /** P1: uma frase por ano da faixa de chuva (dados de exemplo). */
 function yearDetails(strip: boolean[], lang: Lang): AnoDetalhe[] {
   return strip.map((bom, index) => {
@@ -228,12 +274,28 @@ function yearDetails(strip: boolean[], lang: Lang): AnoDetalhe[] {
         : bom
           ? `In ${ano}, the stage that needs water most was around April 15 and there was enough rain.`
           : `In ${ano}, the crop reached the stage that needs water most around April 15 and went ${dias} days without rain.`
-    return { ano, bom, fase_critica: `${ano}-04-15`, dias_sem_chuva: bom ? 0 : dias, enso, texto: texto + ensoText }
+    return {
+      ano,
+      bom,
+      fase_critica: `${ano}-04-15`,
+      dias_sem_chuva: bom ? 0 : dias,
+      enso,
+      texto: texto + ensoText,
+      // Explorador ano a ano (tarefa 0044): água na fase crítica em fração do que a planta precisa
+      isna: bom ? Math.min(1, 0.7 + (index % 4) * 0.1) : 0.3 + (index % 3) * 0.08,
+      dias_calor: 0,
+      falta_agua: !bom,
+      calor: false,
+      semeadura: `${ano}-02-18`,
+      umidade_inicial: ano >= 2016 ? 0.4 : null,
+    }
   })
 }
 
 function buildOption(seed: CropSeed, lang: Lang): Opcao {
+  const details = yearDetails(rainStrip(seed.goodYears), lang)
   return {
+    ...suggestionFields(seed, details),
     id: seed.id,
     nome: seed.name[lang],
     na_janela: true,
@@ -263,8 +325,28 @@ function buildOption(seed: CropSeed, lang: Lang): Opcao {
     notas: seed.notes,
     porque: seed.why[lang],
     como_fazer: seed.how[lang],
-    anos_detalhe: yearDetails(rainStrip(seed.goodYears), lang),
+    anos_detalhe: details,
   }
+}
+
+/**
+ * Ordem e plano de cada objetivo (tarefa 0044), como o motor manda: a nota do eixo, desempate pela final. O
+ * plano do equilíbrio é o Plano A (`planA`), que começa pela melhor opção.
+ */
+function objectives(opcoes: Opcao[], planA: CropId[]): Recomendacao['objetivos'] {
+  const axes = {
+    equilibrio: (o: Opcao) => o.notas.final,
+    seguranca: (o: Opcao) => o.notas.seguranca,
+    renda: (o: Opcao) => o.notas.renda,
+    terra: (o: Opcao) => o.notas.solo,
+  }
+  return Object.fromEntries(
+    Object.entries(axes).map(([key, axis]) => {
+      const ordem = [...opcoes].sort((a, b) => axis(b) - axis(a) || b.notas.final - a.notas.final).map((o) => o.id)
+      const plano = key === 'equilibrio' ? planA : [ordem[0], ordem[1] ?? ordem[0], ordem[0]]
+      return [key, { ordem, plano, nota_plano: 66 }]
+    }),
+  )
 }
 
 const SOWING: Record<Colheita, string> = { cedo: '2027-02-08', meio: '2027-02-18', tarde: '2027-03-02' }
@@ -419,6 +501,9 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
   }
 }
 
+/** Plano A de exemplo: começa pela melhor opção (tarefa 0044). */
+const PLAN_A: CropId[] = ['milho_braquiaria', 'crotalaria', 'sorgo']
+
 const OUT_OF_WINDOW: Text = {
   pt: 'Colhendo a soja depois do dia 20, o milho sozinho passa da data do zoneamento (ZARC).',
   en: 'Harvesting soybeans after the 20th, corn alone misses the zoning deadline (ZARC).',
@@ -445,8 +530,18 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
     alternativas: late ? alternativas.filter((alt) => alt.opcao !== 'milho_safrinha') : alternativas,
     opcoes,
     fora_da_janela: late
-      ? [{ id: 'milho_safrinha', nome: all.find((o) => o.id === 'milho_safrinha')!.nome, texto: OUT_OF_WINDOW[lang] }]
+      ? [
+          {
+            id: 'milho_safrinha',
+            nome: all.find((o) => o.id === 'milho_safrinha')!.nome,
+            texto: OUT_OF_WINDOW[lang],
+            data_limite: '2027-02-28',
+          },
+        ]
       : [],
+    objetivos: objectives(opcoes, PLAN_A),
+    clima_futuro: { chuva_pct: -0.7, tmax_c: 1.3, modelos: 3, concordam_chuva: 2, concordam_tmax: 3, meses: [3, 4, 5], cenario: 'ssp245' },
+    geada: { anos: late ? 1 : 0, total: 20, tmin_max_c: 3, meses: [5, 6, 7] },
     pousio: {
       texto:
         lang === 'pt'
@@ -455,7 +550,7 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
     },
     plano_3_anos: {
       normal: {
-        anos: ['milho_braquiaria', 'crotalaria', 'sorgo'],
+        anos: PLAN_A,
         nota: 66,
         descricao: lang === 'pt' ? 'Grão em 2 anos e terra coberta nos 3.' : 'Grain in 2 years and soil covered in all 3.',
       },

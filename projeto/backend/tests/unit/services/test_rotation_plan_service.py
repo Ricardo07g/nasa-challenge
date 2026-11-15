@@ -242,6 +242,87 @@ def test_should_leave_only_fallow_when_no_crop_fits_the_window() -> None:
         assert plano.descricao
 
 
+def _with_notes(crop_id: str, seguranca: float, solo: float, renda: float, final: float):
+    notas = NotasOpcao(seguranca=seguranca, futuro=None, solo=solo, renda=renda, final=final)
+    return replace(_make_option(crop_id, final), notas=notas, notas_seco=notas)
+
+
+OBJECTIVE_OPTIONS = [
+    _with_notes("milho_braquiaria", seguranca=80.0, solo=50.0, renda=80.0, final=70.0),
+    _with_notes("sorgo", seguranca=90.0, solo=35.0, renda=90.0, final=68.0),
+    _with_notes("milheto", seguranca=100.0, solo=55.0, renda=0.0, final=50.0),
+    _with_notes("crotalaria", seguranca=95.0, solo=85.0, renda=0.0, final=58.0),
+]
+
+
+def test_should_start_the_suggested_plan_with_the_given_crop() -> None:
+    # Tarefa 0044: a sugestão é o ano 1 da rotação. Com a melhor nota final no ano 1 (milho com
+    # braquiária), os anos 2 e 3 seguem a regra do PRD 7.7 (média das notas finais + diversidade).
+    service = RotationPlanService()
+
+    plano = service.best_plan_starting_with("sorgo", OBJECTIVE_OPTIONS, POUSIO)
+
+    assert plano[0] == "sorgo"
+    # sorgo (grão) + milho com braquiária (grão, gramínea) + crotalária (leguminosa): +10
+    assert set(plano) == {"sorgo", "milho_braquiaria", "crotalaria"}
+
+
+def test_should_score_the_plan_by_the_objective_axis_when_one_is_given() -> None:
+    # "Cuidar da terra": a nota do eixo do solo decide, com o mesmo bônus de diversidade. A
+    # crotalária nos 3 anos (85) passa crotalária + milho com braquiária + crotalária (73,3 + 10):
+    # o PRD 7.7 não pune a repetição (a S5b mostra a repetição como fato).
+    service = RotationPlanService()
+
+    plano = service.best_plan_starting_with(
+        "crotalaria", OBJECTIVE_OPTIONS, POUSIO, axis=lambda notas: notas.solo
+    )
+
+    assert plano == ("crotalaria", "crotalaria", "crotalaria")
+
+
+def test_should_prefer_crops_over_fallow_when_safety_ties_by_breaking_on_the_final_score() -> None:
+    # "Mais segurança": o pousio tem segurança 100 (PRD 7.2), mas não é sugestão. Sem o teto de
+    # 100 na comparação, milheto + crotalária (+5 de diversidade) passa o pousio; e no empate vale
+    # a nota final.
+    service = RotationPlanService()
+
+    plano = service.best_plan_starting_with(
+        "milheto", OBJECTIVE_OPTIONS, POUSIO, axis=lambda notas: notas.seguranca
+    )
+
+    assert plano[0] == "milheto"
+    assert "pousio" not in plano
+
+
+def test_should_leave_fallow_out_of_a_plan_by_objective_when_asked() -> None:
+    # Com segurança 100, o pousio ganharia: crotalária (95) + milho com braquiária (80) + pousio
+    # (100) = 91,7 + 10 contra 90 + 10 com a crotalária de novo. No plano de um objetivo, o pousio
+    # não entra (tarefa 0044): "mais segurança" é menos risco de perder a lavoura, e o pousio não
+    # tem lavoura. O Plano A e o B (PRD 7.7) continuam com o pousio nas combinações.
+    service = RotationPlanService()
+    opcoes = [OBJECTIVE_OPTIONS[0], OBJECTIVE_OPTIONS[3]]  # milho com braquiária e crotalária
+    safety = lambda notas: notas.seguranca  # noqa: E731
+
+    com_pousio = service.best_plan_starting_with("crotalaria", opcoes, POUSIO, axis=safety)
+    sem_pousio = service.best_plan_starting_with(
+        "crotalaria", opcoes, POUSIO, axis=safety, allow_fallow=False
+    )
+
+    assert "pousio" in com_pousio
+    assert sem_pousio == ("crotalaria", "milho_braquiaria", "crotalaria")
+
+
+def test_should_keep_the_nematode_rule_in_the_objective_plan() -> None:
+    service = RotationPlanService()
+
+    plano = service.best_plan_starting_with(
+        "sorgo", OBJECTIVE_OPTIONS, POUSIO, axis=lambda notas: notas.renda, nematoide=True
+    )
+
+    assert plano[0] == "sorgo"
+    assert {"crotalaria", "milheto"} & set(plano)
+
+
 def test_should_take_number_of_dry_years_from_injected_rules() -> None:
     base = load_default_rules()
     service = RotationPlanService(rules=replace(base, rotacao=replace(base.rotacao, anos_secos=2)))

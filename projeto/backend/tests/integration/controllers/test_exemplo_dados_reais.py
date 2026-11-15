@@ -186,6 +186,13 @@ def test_should_detail_each_year_of_the_example_farm_like_the_replay(
         assert {d["enso"] for d in opcao["anos_detalhe"]} == {None}
     milho = next(o for o in rec["opcoes"] if o["id"] == "milho_safrinha")
     detalhes = {d["ano"]: d for d in milho["anos_detalhe"]}
+    # O ISNA, o calor e a semeadura do explorador (tarefa 0044) vêm da mesma conta do motor
+    assert detalhes[2024]["isna"] < 0.55 and detalhes[2024]["falta_agua"] is True
+    assert detalhes[2024]["semeadura"] == "2024-02-18"
+    explorador = {"isna", "dias_calor", "falta_agua", "calor", "semeadura", "umidade_inicial"}
+    detalhes = {
+        ano: {k: v for k, v in d.items() if k not in explorador} for ano, d in detalhes.items()
+    }
     assert detalhes[2024] == {
         "ano": 2024,
         "bom": False,

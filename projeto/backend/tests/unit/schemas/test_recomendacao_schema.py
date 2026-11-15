@@ -41,6 +41,13 @@ def test_should_send_each_year_detail_in_the_front_contract() -> None:
         "dias_sem_chuva": 12,
         "enso": "el_nino",
         "texto": "Em 2019, ...",
+        # Explorador ano a ano (tarefa 0044): os padrões do model quando o motor não preenche
+        "isna": 1.0,
+        "dias_calor": 0,
+        "falta_agua": False,
+        "calor": False,
+        "semeadura": None,
+        "umidade_inicial": None,
     }
 
 
@@ -53,6 +60,21 @@ def test_should_keep_year_detail_optional_in_the_option_contract() -> None:
     assert "anos_detalhe" in opcao["properties"]
     assert "anos_detalhe" not in opcao.get("required", [])
     assert set(ano["properties"]) == {
+        "ano",
+        "bom",
+        "fase_critica",
+        "dias_sem_chuva",
+        "enso",
+        "texto",
+        "isna",
+        "dias_calor",
+        "falta_agua",
+        "calor",
+        "semeadura",
+        "umidade_inicial",
+    }
+    # Os campos da tarefa 0044 são opcionais (o front lê `campo?`)
+    assert set(ano.get("required", [])) == {
         "ano",
         "bom",
         "fase_critica",

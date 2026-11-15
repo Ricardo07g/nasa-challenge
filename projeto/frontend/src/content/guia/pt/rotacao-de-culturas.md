@@ -24,7 +24,7 @@ Como ler:
 - Não aparece plano com mais de 2 pousios seguidos.
 - Com nematoide na área, o plano precisa de crotalária ou milheto.
 
-Você pode trocar uma opção e ver a nota na hora. Veja cada cultura na [Resposta](/resposta), por exemplo a [crotalária](/guia/crotalaria).
+Você pode trocar uma opção e ver a nota na hora. Veja cada cultura na [Sugestão](/resposta), por exemplo a [crotalária](/guia/crotalaria).
 
 ## Fontes
 

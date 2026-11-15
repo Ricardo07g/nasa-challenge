@@ -30,7 +30,7 @@ It fertilizes the soil and breaks the cycle of soil pests. It is the cover that 
 
 ## In your field
 
-The app shows crotalaria in [All options](/opcoes). With nematodes in the field, the [3-year plan](/plano) looks for crotalaria or millet. See [green manure](/guia/adubo-verde) and [nematodes](/guia/nematoide).
+The app shows crotalaria in [Compare](/opcoes). With nematodes in the field, the [3-year plan](/plano) looks for crotalaria or millet. See [green manure](/guia/adubo-verde) and [nematodes](/guia/nematoide).
 
 ## Sources
 

@@ -1,4 +1,8 @@
 import type { CropId } from './recomendacao'
+import type { Colheita } from './talhao'
+
+/** Detalhe de um ano do explorador (tarefa 0044): a faixa de colheita e a opção que a aba Sugestão mostra. */
+export type PastSeasonOptions = { colheita?: Colheita; opcao?: CropId }
 
 export type TipoEvento =
   | 'semeadura'

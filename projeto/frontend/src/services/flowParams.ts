@@ -1,3 +1,4 @@
+import { OBJETIVOS, type Objetivo } from '../models/recomendacao'
 import { COLHEITAS, TEXTURAS, type Colheita, type Textura } from '../models/talhao'
 import { formatConfirmadas, parseConfirmadas } from './confirmedSeasonsService'
 
@@ -8,6 +9,8 @@ export type FlowParams = {
   colheita?: Colheita
   solo?: Textura
   exemplo?: boolean
+  /** "O que você quer mais?" (tarefa 0044): vale nas três abas da resposta; sem ele, o equilíbrio do motor. */
+  objetivo?: Objetivo
   /** Safras confirmadas na tela 4, já no formato da URL e em ordem de ano ("2024:plantou,2025:parado"). */
   confirmadas?: string
 }
@@ -24,12 +27,14 @@ export function readFlowParams(search: URLSearchParams): (FlowParams & { exemplo
   if (lat === null || lon === null) return null
   const colheita = search.get('colheita')
   const solo = search.get('solo')
+  const objetivo = search.get('objetivo')
   return {
     lat,
     lon,
     colheita: COLHEITAS.includes(colheita as Colheita) ? (colheita as Colheita) : undefined,
     solo: TEXTURAS.includes(solo as Textura) ? (solo as Textura) : undefined,
     exemplo: search.get('exemplo') === '1',
+    objetivo: OBJETIVOS.includes(objetivo as Objetivo) ? (objetivo as Objetivo) : undefined,
     confirmadas: formatConfirmadas(parseConfirmadas(search.get('confirmadas'))),
   }
 }
@@ -43,6 +48,7 @@ export function buildFlowQuery(params: FlowParams): string {
   if (params.colheita) query.set('colheita', params.colheita)
   if (params.solo) query.set('solo', params.solo)
   if (params.exemplo) query.set('exemplo', '1')
+  if (params.objetivo) query.set('objetivo', params.objetivo)
   // No fim e sem codificar ":" e ",": o link fica legível para compartilhar (só dígitos, letras, ":" e ",").
   const confirmadas = params.confirmadas ? `&confirmadas=${params.confirmadas}` : ''
   return `?${query.toString()}${confirmadas}`

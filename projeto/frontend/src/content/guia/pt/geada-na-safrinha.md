@@ -22,7 +22,7 @@ O que ajuda:
 - Semear dentro do prazo. Veja [o prazo de plantio e o ZARC](/guia/prazo-de-plantio-zarc).
 - Escalonar a semeadura, conforme a colheita da soja avança. Assim a geada não pega tudo de uma vez.
 
-No app, a [Resposta](/resposta) indica até quando semear. A tela [O que o satélite viu](/satelite) mostra os alertas da sua área.
+No app, a [Sugestão](/resposta) indica até quando semear. A tela [O que o satélite viu](/satelite) mostra os alertas da sua área.
 
 Que cultivar escolher para o seu frio fica com o seu agrônomo.
 

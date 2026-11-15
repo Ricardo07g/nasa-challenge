@@ -127,6 +127,19 @@
   gap: 12px;
 }
 
+.alternativeHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.alternativeMedia {
+  flex: 0 0 auto;
+  width: 52px;
+  display: flex;
+}
+
 .alternativeLabel {
   display: flex;
   align-items: center;

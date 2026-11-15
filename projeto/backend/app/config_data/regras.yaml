@@ -559,3 +559,50 @@ comunidade:
   max_relatos_por_dia:
     valor: 10
     fonte: "Hipótese do time (o pedido da seção 7 dá 10 por dia como exemplo): no máximo 10 relatos por aparelho nas últimas 24 horas, para conter abuso sem cadastro"
+
+agua:
+  # Linha "Água" e selo "Sede da cultura" (seção 5.3 da remodelagem, tarefa 0044). Tudo sai do
+  # balanço hídrico diário do motor (PRD 7.2), nos dias do ciclo de cada ano: "precisa" = mediana
+  # do consumo da cultura (ETc = ETo x Kc); "chove" = mediana da chuva (GPM IMERG; nos anos sem
+  # IMERG, NASA POWER); "falta" = ETc - ETr (o que a planta queria e a terra não tinha).
+  # Na fazenda da UFU (15/11), o consumo vai de ~230 mm (milheto) a ~360 mm (milho): os cortes
+  # abaixo deixam milho em "muita", sorgo em "média" e milheto e crotalária em "pouca".
+  sede_pouca_ate_mm:
+    valor: 280.0
+    fonte: "Hipótese do time, a revisar pela agrônoma (tarefa 0044): consumo da cultura no ciclo abaixo de 280 mm = pouca água"
+  sede_muita_desde_mm:
+    valor: 325.0
+    fonte: "Hipótese do time, a revisar pela agrônoma (tarefa 0044): consumo da cultura no ciclo de 325 mm ou mais = muita água; entre os dois cortes, média"
+  percentil_seco:
+    valor: 20
+    fonte: "Pedido da remodelagem, seção 5.3 ('percentil 20 dos 20 anos'), com o sentido do ano seco da tela 3 (chuva_que_sobra.percentil_seco): só 20% dos anos foram piores. Para a falta de água, em que mais é pior, é o percentil 80 da falta (interpolação linear entre os anos ordenados)"
+
+enso_acerto:
+  # Frase "Em anos de La Niña, deu certo em X de Y" da aba Sugestão (seção 5.4, tarefa 0044): só
+  # aparece se a diferença for clara. Compara a taxa de acerto da opção nos anos daquela fase (ONI
+  # da NOAA, grupo enso) com a dos outros anos da série. Só informa: não entra na conta.
+  diferenca_min_pct:
+    valor: 25.0
+    fonte: "Hipótese do time, a revisar (tarefa 0044): diferença clara = 25 pontos percentuais ou mais entre a taxa de acerto nos anos da fase e nos outros anos (ex.: 3 de 7 contra 12 de 13)"
+  anos_fase_min:
+    valor: 5
+    fonte: "Hipótese do time, a revisar (tarefa 0044): pelo menos 5 anos da fase na série, o mesmo mínimo do sinal do outono (sinal_enso.anos_fase_min); com menos, só a marcação por ano"
+
+clima_futuro_sugestao:
+  # Linha "Clima 2041-2060" da aba Sugestão (seção 5.4, tarefa 0044): variação da chuva e da máxima
+  # na célula (média dos modelos do cmip6_delta) e quantos modelos concordam no sentido. Cálculo
+  # pequeno da S5a: a seção 4 (raio-X) faz o mesmo nos cartões menores; unificar na S9.
+  meses:
+    valor: [3, 4, 5]
+    fonte: "Pedido da remodelagem, seção 4 (cartão 'Clima 2041-2060': variação da chuva de março a maio e da máxima), reaproveitado na Sugestão (5.4). Média simples dos 3 meses de cada modelo"
+
+geada_sugestao:
+  # Risco de geada no aviso da colheita tarde (seção 5.4, tarefa 0044): anos com alguma mínima de
+  # `tmin_max_c` °C ou menos nos meses abaixo (NASA POWER). Cálculo pequeno da S5a: a seção 4 faz o
+  # alerta de geada do raio-X com a mesma regra; unificar na S9.
+  tmin_max_c:
+    valor: 3.0
+    fonte: "Pedido da remodelagem, seção 4 (alerta de geada: mínima de 3 °C ou menos entre maio e julho, POWER). Hipótese do time, a revisar pela agrônoma"
+  meses:
+    valor: [5, 6, 7]
+    fonte: "Pedido da remodelagem, seção 4 (alerta de geada: de maio a julho)"

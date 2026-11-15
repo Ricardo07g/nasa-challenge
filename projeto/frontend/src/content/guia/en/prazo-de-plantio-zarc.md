@@ -23,7 +23,7 @@ The app uses these limits, which are a team hypothesis:
 - Pearl millet: March 15.
 - Sorghum: March 20.
 
-On the [When you harvest](/quando) screen, you say when you harvest the soybeans: early February, mid-February, or late February and March. If there is no time to sow in time, the [Answer](/resposta) warns: "sowing only until this date (ZARC), and with a late harvest there is no time".
+On the [When you harvest](/quando) screen, you say when you harvest the soybeans: early February, mid-February, or late February and March. If there is no time to sow in time, the [Suggestion](/resposta) warns: "sowing only until this date (ZARC), and with a late harvest there is no time".
 
 Harvesting soybeans earlier opens room. Sowing on staggered dates, as the harvest advances, avoids losing everything at once.
 

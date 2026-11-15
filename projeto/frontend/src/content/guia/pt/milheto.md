@@ -30,7 +30,7 @@ A palha cobre a terra, segura a umidade e deixa o plantio direto da soja mais f�
 
 ## Na sua lavoura
 
-O app mostra o milheto em [Todas as opções](/opcoes) e dentro do [Plano de 3 anos](/plano). Veja também [a palhada](/guia/palhada).
+O app mostra o milheto em [Comparar](/opcoes) e dentro do [Plano de 3 anos](/plano). Veja também [a palhada](/guia/palhada).
 
 ## Fontes
 

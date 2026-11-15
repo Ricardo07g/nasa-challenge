@@ -34,7 +34,7 @@ describe('rotas', () => {
     const nav = await screen.findByRole('navigation', { name: 'Telas da resposta' })
     expect(nav).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Plano de 3 anos' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Resposta' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Sugestão' })).toHaveAttribute(
       'href',
       '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
     )
@@ -117,8 +117,8 @@ describe('rotas', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Ver o que plantar' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Milho com braquiária' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Resposta' })).toHaveAttribute('aria-current', 'page')
-    expect(document.title).toBe('Raiz Orbital – A melhor opção')
+    expect(screen.getByRole('link', { name: 'Sugestão' })).toHaveAttribute('aria-current', 'page')
+    expect(document.title).toBe('Raiz Orbital – Sugestão')
   })
 
   it('a resposta sem a colheita volta para a pergunta 2', async () => {
@@ -127,15 +127,16 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Quando você colhe a soja?' })).toBeInTheDocument()
   })
 
-  it('a aba "Todas as opções" abre a tela 6 mantendo o caminho', async () => {
-    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+  it('a aba "Comparar" abre a tela 6 mantendo o caminho e o objetivo', async () => {
+    renderAt('/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&objetivo=terra')
 
-    await userEvent.click(await screen.findByRole('link', { name: 'Todas as opções' }))
+    await userEvent.click(await screen.findByRole('link', { name: 'Comparar' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Todas as opções' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Comparar' })).toBeInTheDocument()
     expect(await screen.findByRole('article', { name: 'Milho com braquiária' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Todas as opções' })).toHaveAttribute('aria-current', 'page')
-    expect(document.title).toBe('Raiz Orbital – Todas as opções')
+    expect(screen.getByRole('link', { name: 'Comparar' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: 'Cuidar da terra' })).toHaveAttribute('aria-pressed', 'true')
+    expect(document.title).toBe('Raiz Orbital – Comparar')
   })
 
   it('a aba "Plano de 3 anos" abre a linha do tempo do plano', async () => {
@@ -174,19 +175,26 @@ describe('rotas', () => {
     expect(document.title).toBe('Raiz Orbital – Como a conta é feita')
   })
 
-  it('o relatório abre pela URL com a folha para imprimir', async () => {
-    renderAt('/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio')
+  it('o relatório saiu (tarefa 0044): o endereço antigo leva à Sugestão com o mesmo caminho', async () => {
+    const router = renderAt('/relatorio?lat=-18.9543&lon=-48.1993&colheita=meio')
 
-    expect(await screen.findByRole('article', { name: 'Relatório da lavoura · Raiz Orbital' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Salvar em PDF' })).toBeInTheDocument()
-    expect(document.title).toBe('Raiz Orbital – Relatório da lavoura · Raiz Orbital')
+    await vi.waitFor(() =>
+      expect(`${router.state.location.pathname}${router.state.location.search}`).toBe(
+        '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
+      ),
+    )
+    expect(screen.queryByText(/Relatório/)).not.toBeInTheDocument()
   })
 
-  it('o replay da safra passada abre pela URL', async () => {
-    renderAt('/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024')
+  it('a safra passada virou o detalhe do ano no explorador: o endereço antigo abre a Sugestão com o ano', async () => {
+    const router = renderAt('/safra-passada?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Como teria sido a safrinha de 2024' })).toBeInTheDocument()
-    expect(await screen.findByRole('list', { name: 'Como teria sido a safrinha de 2024' })).toBeInTheDocument()
+    await vi.waitFor(() =>
+      expect(`${router.state.location.pathname}${router.state.location.search}`).toBe(
+        '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
+      ),
+    )
+    expect(await screen.findByRole('region', { name: 'O que aconteceu em 2024' })).toBeInTheDocument()
   })
 
   it('toda tela tem o rodapé com o aviso e o caminho do agrônomo', async () => {

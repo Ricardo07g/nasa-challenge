@@ -17,7 +17,7 @@ Essas fases podem mudar a chuva em muitas regiões. O app só informa a fase de 
 
 Quem mede a fase é a NOAA, dos Estados Unidos, e não a NASA. A medida é o ONI: a temperatura do mar numa região do Pacífico, em média de 3 meses. O app usa +0,5 °C ou mais para El Niño e -0,5 °C ou menos para La Niña.
 
-Para cada safrinha, o app faz a média do ONI de dezembro a abril (DJF, JFM e FMA) e põe uma marca no ano, na [Resposta](/resposta).
+Para cada safrinha, o app faz a média do ONI de dezembro a abril (DJF, JFM e FMA) e põe uma marca no ano, na [Sugestão](/resposta).
 
 O sinal do outono usa a previsão da NOAA e vê como a opção do primeiro ano se saiu em anos da mesma fase. Isso é hipótese do time. Veja o sinal em [Plano de 3 anos](/plano).
 

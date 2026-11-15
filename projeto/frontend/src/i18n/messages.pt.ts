@@ -541,6 +541,154 @@ export const pt = {
     noWarnings: 'Nenhum aviso nesta safra.',
     note: 'Valores de exemplo. No app, o ano e as datas vêm dos dados reais.',
   },
+  /** Abas da resposta e aba Sugestão (seção 5 da remodelagem, tarefa 0044). */
+  suggestion: {
+    tabs: { suggestion: 'Sugestão', compare: 'Comparar', plan: 'Plano de 3 anos' },
+    compareTitle: 'Comparar',
+    objective: {
+      label: 'O que você quer mais?',
+      seguranca: 'Mais segurança',
+      renda: 'Renda',
+      terra: 'Cuidar da terra',
+      hintNone: 'Sem escolha, o app equilibra as três coisas. Toque de novo para tirar a escolha.',
+      hint: {
+        seguranca: 'Na frente, quem deu certo em mais anos.',
+        renda: 'Na frente, quem dá grão com menos risco.',
+        terra: 'Na frente, quem mais cuida da terra.',
+      },
+    },
+    lead: (year: number) => `Depois da soja de ${year}, na sua lavoura:`,
+    year1: 'Ano 1 do seu plano',
+    plantImage: (crop: string) => `Desenho da planta: ${crop}`,
+    planTitle: 'Seu plano de 3 anos',
+    planYear: (year: number, crop: string) => `${year}: ${crop}`,
+    explorePlan: 'Explorar o plano',
+    thirst: {
+      label: 'Sede da cultura',
+      pouca: 'Sede: pouca água',
+      media: 'Sede: água média',
+      muita: 'Sede: muita água',
+    },
+    worked: {
+      title: 'Deu certo',
+      criterionGrain: (isna: number, temp: string, days: number, half: number) =>
+        `Deu certo = a planta teve pelo menos ${isna}% da água que precisa na fase que mais precisa de água (${half} dias antes e depois da floração) e não fez ${temp} °C em ${days} dias ou mais nessa fase.`,
+      criterionCover: (isna: number, temp: string, days: number, window: number) =>
+        `Deu certo = nos primeiros ${window} dias, quando a planta pega, ela teve pelo menos ${isna}% da água que precisa e não fez ${temp} °C em ${days} dias ou mais.`,
+      chartLabel: (good: number, total: number) =>
+        `Água na fase que mais precisa, ano a ano. Deu certo em ${good} de ${total} anos.`,
+      cutLabel: (pct: number) => `Limite: ${pct}%`,
+      good: 'Deu certo',
+      water: 'Faltou água',
+      heat: 'Fez calor',
+      both: 'Faltou água e fez calor',
+      yearButton: (year: number, pct: number, state: string, enso: string) =>
+        `${year}: ${pct}% da água que a planta precisa. ${state}.${enso ? ` ${enso}.` : ''}`,
+      ensoNino: 'Ano de El Niño',
+      ensoNina: 'Ano de La Niña',
+      markNino: 'N',
+      markNina: 'L',
+      legendEnso: 'N: El Niño · L: La Niña (NOAA)',
+      axisNote: (period: string) =>
+        `Altura da barra: a água que a planta teve na fase que mais precisa, em % do que ela precisa (conta do motor). ${period}.`,
+      tapHint: 'Toque num ano para ver o que aconteceu.',
+      ensoNote: (phase: string, good: number, total: number, goodOthers: number, totalOthers: number) =>
+        `Em anos de ${phase}, deu certo em ${good} de ${total}; nos outros anos, em ${goodOthers} de ${totalOthers}.`,
+      ensoPhase: { el_nino: 'El Niño', la_nina: 'La Niña' },
+      ensoFew: 'São poucos anos: mostra o que aconteceu, não é previsão.',
+    },
+    year: {
+      title: (year: number) => `O que aconteceu em ${year}`,
+      close: 'Fechar',
+      sowing: 'Semeadura',
+      flowering: 'Floração, a fase que mais precisa de água',
+      establishment: 'Começo dos dias em que a planta pega',
+      dry: 'Maior sequência sem chuva nessa fase',
+      days: (n: number) => (n === 1 ? '1 dia' : `${n} dias`),
+      heat: (temp: string) => `Dias de ${temp} °C ou mais nessa fase`,
+      enso: 'El Niño ou La Niña',
+      ensoNone: 'Nenhum dos dois (ano neutro)',
+      soil: 'Umidade da terra no dia de plantar (SMAP)',
+      soilValue: (pct: number) => `${pct}% da água que a terra guarda`,
+      why: 'O motivo',
+      timeline: 'A safra dia a dia',
+      timelineError: 'Não deu para carregar a safra dia a dia.',
+    },
+    water: {
+      title: 'Água',
+      need: (mm: string) => `Precisa de ${mm} mm`,
+      rain: (mm: string) => `Costuma chover ${mm} mm`,
+      short: (normal: string, dry: string) => `Falta ${normal} mm em ano normal e ${dry} mm em ano seco`,
+      noShort: (dry: string) => `Em ano normal não falta; em ano seco, faltam ${dry} mm`,
+      barLabel: (need: string, rain: string, normal: string) =>
+        `Barra da água: precisa de ${need} mm, costuma chover ${rain} mm, falta ${normal} mm em ano normal.`,
+      why: (cad: string) =>
+        `Mesmo quando chove mais do que a planta precisa, pode faltar: a chuva vem toda no começo e a terra só guarda ${cad} mm.`,
+      future: (normal: string, min: string, max: string) =>
+        `Em 2041–2060, a falta em ano normal seria de ${normal} mm (de ${min} a ${max} mm, conforme o modelo).`,
+      futureMore: (mm: string) => `${mm} mm a mais que hoje.`,
+      futureLess: (mm: string) => `${mm} mm a menos que hoje.`,
+      futureSame: 'Igual a hoje.',
+      note: (years: number) =>
+        `Conta do motor nos dias do ciclo: chuva do GPM IMERG e gasto da lavoura com o clima do NASA POWER. Mediana de ${years} anos; ano seco = só 1 em cada 5 anos teve falta maior.`,
+      guide: 'A umidade que a palhada segura, a enxurrada e a água que fica para a próxima safra estão no Guia, sem número: não temos esse dado.',
+    },
+    climate: {
+      title: 'Clima 2041–2060',
+      rain: (pct: string) => `Chuva de março a maio: ${pct}%`,
+      heat: (deg: string) => `Máxima: ${deg} °C`,
+      agreeRain: (n: number, total: number, less: boolean) =>
+        `${n} de ${total} modelos indicam ${less ? 'menos' : 'mais'} chuva.`,
+      agreeHeat: (n: number, total: number, hotter: boolean) =>
+        `${n} de ${total} indicam ${hotter ? 'mais' : 'menos'} calor.`,
+      source: 'NEX-GDDP-CMIP6 (NASA), cenário SSP2-4.5, média dos modelos, contra 1995–2014.',
+    },
+    how: {
+      title: 'Como fazer',
+      when: 'Quando plantar',
+      whenText: (date: string) => `Logo depois de colher a soja, até ${date} (data limite do ZARC na conta).`,
+      whenSoon: 'Logo depois de colher a soja.',
+      duration: 'Quanto tempo leva',
+      durationText: (cycle: number, flowering: number) =>
+        `Cerca de ${cycle} dias da semeadura ao fim do ciclo; floresce por volta do dia ${flowering}.`,
+      watch: 'O que observar',
+      watchDry: (days: number) =>
+        `Veranico: em metade dos anos, a planta ficou ${days} dias ou mais sem chuva na fase que mais precisa de água.`,
+      watchDryNone: 'Veranico: em metade dos anos ou mais, não ficou nenhum dia sem chuva na fase que mais precisa de água.',
+      watchHeat: (years: number, total: number, temp: string, days: number) =>
+        `Calor: em ${years} de ${total} anos fez ${temp} °C em ${days} dias ou mais nessa fase.`,
+      watchHeatNone: (total: number, temp: string, days: number) =>
+        `Calor: em nenhum dos ${total} anos fez ${temp} °C em ${days} dias ou mais nessa fase.`,
+      watchRainEnd: (date: string) => `Fim das chuvas: em metade dos anos, a chuva acabou até ${date}.`,
+      manage: 'Manejo',
+      draft: 'Rascunho: a revisar pela agrônoma.',
+      fullGuide: 'Passo a passo completo',
+    },
+    late: {
+      title: 'Colheita tarde',
+      when: { cedo: 'até 10 de fevereiro', meio: 'entre 11 e 20 de fevereiro', tarde: 'depois de 20 de fevereiro' },
+      group: (crops: string, date: string) => `${crops} (ZARC, ${date})`,
+      text: (when: string, list: string, count: number) =>
+        `Colhendo ${when}, já passou o prazo seguro de plantio para ${list}. Por isso ${count === 1 ? 'ela não aparece' : 'elas não aparecem'}.`,
+      /** Todas com a mesma data limite: a data vai logo depois do prazo, como no pedido da seção 5.4. */
+      textOneDate: (when: string, date: string, list: string, count: number) =>
+        `Colhendo ${when}, já passou o prazo seguro de plantio (ZARC, ${date}) para ${list}. Por isso ${count === 1 ? 'ela não aparece' : 'elas não aparecem'}.`,
+      zarc: 'ZARC é o Zoneamento Agrícola de Risco Climático do Ministério da Agricultura: diz, para cada município, até quando plantar com o risco de clima mais baixo.',
+      frost: (years: number, total: number, temp: string) =>
+        `Geada: em ${years} de ${total} anos a mínima chegou a ${temp} °C ou menos entre maio e julho (NASA POWER).`,
+      and: 'e',
+    },
+    learnMore: (title: string) => `Saiba mais: ${title}`,
+    articles: {
+      worked: 'O que significa "deu certo"',
+      water: 'A conta de água da lavoura',
+      enso: 'El Niño e La Niña',
+      future: 'O clima de 2041 a 2060',
+      zarc: 'O prazo de plantio e o ZARC',
+      frost: 'Geada na safrinha',
+      rotation: 'Rotação de culturas',
+    },
+  },
   telegram: {
     title: 'Receber no Telegram',
     text: 'A resposta em áudio no seu celular e um aviso se faltar chuva na sua lavoura.',

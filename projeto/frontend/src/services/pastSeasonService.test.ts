@@ -28,6 +28,14 @@ describe('pastSeasonService (P4)', () => {
 
     await createPastSeasonService(repository).get({ lat: 1, lon: 2 }, 2023, 'pt')
 
-    expect(repository.get).toHaveBeenCalledWith({ lat: 1, lon: 2 }, 2023, 'pt')
+    expect(repository.get).toHaveBeenCalledWith({ lat: 1, lon: 2 }, 2023, 'pt', {})
+  })
+
+  it('repassa a faixa de colheita e a opção do detalhe de um ano (tarefa 0044)', async () => {
+    const repository = { get: vi.fn().mockResolvedValue({ ano: 2016 }) }
+
+    await createPastSeasonService(repository).get({ lat: 1, lon: 2 }, 2016, 'pt', { colheita: 'meio', opcao: 'sorgo' })
+
+    expect(repository.get).toHaveBeenCalledWith({ lat: 1, lon: 2 }, 2016, 'pt', { colheita: 'meio', opcao: 'sorgo' })
   })
 })

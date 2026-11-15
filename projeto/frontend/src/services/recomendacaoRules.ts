@@ -149,19 +149,23 @@ export type PlanView = {
   dryNote: string | null
 }
 
-/** Tela 7: o plano de 3 anos no cenário escolhido (ano normal ou ano seco), a partir da soja que vem. */
-export function buildPlan(recomendacao: Recomendacao, scenario: PlanScenario): PlanView {
+/**
+ * Tela 7: o plano de 3 anos no cenário escolhido (ano normal ou ano seco), a partir da soja que vem. Com o
+ * objetivo do produtor (tarefa 0044), o Plano A é o plano sugerido para ele (`planA`, do motor).
+ */
+export function buildPlan(recomendacao: Recomendacao, scenario: PlanScenario, planA?: readonly CropId[]): PlanView {
   const { normal, seco, hoje } = recomendacao.plano_3_anos
   const firstYear = harvestYear(recomendacao.entrada.semeadura)
-  const anos = scenario === 'seco' ? seco.anos : normal.anos
+  const normalYears = planA ?? normal.anos
+  const anos = scenario === 'seco' ? seco.anos : normalYears
   return {
     years: anos.map((crop, index) => ({
       year: firstYear + index,
       crop,
-      swappedFrom: scenario === 'seco' && normal.anos[index] !== crop ? normal.anos[index] : null,
+      swappedFrom: scenario === 'seco' && normalYears[index] !== crop ? normalYears[index] : null,
     })),
     summary: planSummary(anos),
-    swaps: scenario === 'seco' ? planSwaps(normal.anos, seco.anos, firstYear) : [],
+    swaps: scenario === 'seco' ? planSwaps(normalYears, seco.anos, firstYear) : [],
     today: hoje.descricao,
     dryNote: scenario === 'seco' ? seco.descricao || null : null,
   }

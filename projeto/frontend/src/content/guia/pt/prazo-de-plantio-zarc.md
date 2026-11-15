@@ -23,7 +23,7 @@ O app usa estes limites, que são hipótese do time:
 - Milheto: 15 de março.
 - Sorgo: 20 de março.
 
-Na tela [Quando você colhe](/quando), você diz quando colhe a soja: começo de fevereiro, meio ou fim de fevereiro e março. Se não dá tempo de semear a tempo, a [Resposta](/resposta) avisa: "o plantio vai só até tal data (ZARC), e com a colheita tarde não dá tempo".
+Na tela [Quando você colhe](/quando), você diz quando colhe a soja: começo de fevereiro, meio ou fim de fevereiro e março. Se não dá tempo de semear a tempo, a [Sugestão](/resposta) avisa: "o plantio vai só até tal data (ZARC), e com a colheita tarde não dá tempo".
 
 Colher a soja mais cedo abre espaço. Semear em datas escalonadas, conforme a colheita avança, evita perder tudo de uma vez.
 

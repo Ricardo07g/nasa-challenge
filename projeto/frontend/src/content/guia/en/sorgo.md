@@ -30,7 +30,7 @@ In the off-season the rain fails. Sorghum is an option when drought risk is scar
 
 ## In your field
 
-The app shows sorghum in the [Answer](/resposta) and in [All options](/opcoes). The crop's thirst badge leads to this article. See [the water math](/guia/conta-de-agua).
+The app shows sorghum in the [Suggestion](/resposta) and in [Compare](/opcoes). The crop's thirst badge leads to this article. See [the water math](/guia/conta-de-agua).
 
 ## Sources
 

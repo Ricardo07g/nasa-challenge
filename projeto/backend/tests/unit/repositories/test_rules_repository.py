@@ -338,12 +338,36 @@ def test_should_load_the_end_of_rains_rule() -> None:
     assert (regra.inicio, regra.dias, regra.chuva_max_mm) == ("03-01", 20, 10.0)
 
 
+def test_should_load_the_water_and_crop_thirst_rules_of_the_suggestion() -> None:
+    # Tarefa 0044 (5.3): sede da cultura pelo consumo no ciclo (hipótese do time) e o ano seco
+    # da falta de água com o mesmo sentido da tela 3 (só 20% dos anos piores).
+    agua = YamlRulesRepository(SHIPPED).get_rules().agua
+
+    assert (agua.sede_pouca_ate_mm, agua.sede_muita_desde_mm) == (280.0, 325.0)
+    assert agua.percentil_seco == 20
+
+
+def test_should_load_the_enso_hit_rate_and_cell_climate_rules_of_the_suggestion() -> None:
+    # Tarefa 0044 (5.4): quando a diferença entre os anos de El Niño / La Niña e os outros é
+    # "clara"; e os cálculos pequenos do clima 2041-2060 e da geada (a unificar com a S4 na S9).
+    regras = YamlRulesRepository(SHIPPED).get_rules()
+
+    assert (regras.enso_acerto.diferenca_min_pct, regras.enso_acerto.anos_fase_min) == (25.0, 5)
+    assert regras.clima_futuro_sugestao.meses == (3, 4, 5)
+    assert regras.geada_sugestao.tmin_max_c == 3.0
+    assert regras.geada_sugestao.meses == (5, 6, 7)
+
+
 @pytest.mark.parametrize(
     "path",
     [
         ("colheita", "meio_ate"),
         ("chuva_que_sobra", "percentil_seco"),
         ("fim_das_chuvas", "chuva_max_mm"),
+        ("agua", "sede_muita_desde_mm"),
+        ("enso_acerto", "diferenca_min_pct"),
+        ("clima_futuro_sugestao", "meses"),
+        ("geada_sugestao", "tmin_max_c"),
     ],
 )
 def test_should_refuse_a_screen_three_number_without_source(

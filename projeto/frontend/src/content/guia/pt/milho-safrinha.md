@@ -30,7 +30,7 @@ Milho plantado logo depois da soja, para colher grão no inverno. No app aparece
 
 ## Na sua lavoura
 
-O app mostra o milho safrinha na [Resposta](/resposta) e em [Todas as opções](/opcoes). Veja também [o prazo de plantio](/guia/prazo-de-plantio-zarc) e [a geada](/guia/geada-na-safrinha).
+O app mostra o milho safrinha na [Sugestão](/resposta) e em [Comparar](/opcoes). Veja também [o prazo de plantio](/guia/prazo-de-plantio-zarc) e [a geada](/guia/geada-na-safrinha).
 
 ## Fontes
 

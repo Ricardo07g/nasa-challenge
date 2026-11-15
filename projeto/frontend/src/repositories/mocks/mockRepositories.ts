@@ -130,13 +130,18 @@ const EVENTS: Record<number, Event[]> = {
 
 export function createMockPastSeasonRepository(delayMs = 300): PastSeasonRepository {
   return {
-    async get(_point, year, lang) {
+    async get(_point, year, lang, options = {}) {
       await delay(delayMs)
+      // Qualquer ano da série (detalhe do explorador, tarefa 0044): os eventos de exemplo, no ano pedido.
       const events = EVENTS[year] ?? EVENTS[2024]
       return {
         ano: year,
-        opcao: 'milho_braquiaria',
-        eventos: events.map((event) => ({ data: event.data, tipo: event.tipo, texto: event.texto[lang] })),
+        opcao: options.opcao ?? 'milho_braquiaria',
+        eventos: events.map((event) => ({
+          data: `${year}${event.data.slice(4)}`,
+          tipo: event.tipo,
+          texto: event.texto[lang],
+        })),
       }
     },
   }

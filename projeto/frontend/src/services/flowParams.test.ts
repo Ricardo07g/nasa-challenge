@@ -72,4 +72,26 @@ describe('keepFlowQuery', () => {
     expect(keepFlowQuery('')).toBe('')
     expect(keepFlowQuery('?colheita=meio')).toBe('')
   })
+
+  it('repassa o objetivo do produtor entre as abas (tarefa 0044)', () => {
+    expect(keepFlowQuery('?lat=-18.9543&lon=-48.1993&colheita=meio&objetivo=terra&ano=2016')).toBe(
+      '?lat=-18.9543&lon=-48.1993&colheita=meio&objetivo=terra',
+    )
+  })
+})
+
+describe('objetivo do produtor na URL (tarefa 0044)', () => {
+  it('lê só os objetivos conhecidos; sem objetivo vale o equilíbrio do motor', () => {
+    const read = (query: string) => readFlowParams(new URLSearchParams(query))?.objetivo
+    expect(read('lat=1&lon=2&objetivo=seguranca')).toBe('seguranca')
+    expect(read('lat=1&lon=2&objetivo=renda')).toBe('renda')
+    expect(read('lat=1&lon=2&objetivo=dinheiro')).toBeUndefined()
+    expect(read('lat=1&lon=2')).toBeUndefined()
+  })
+
+  it('o objetivo vai antes das safras confirmadas', () => {
+    expect(buildFlowQuery({ lat: 1, lon: 2, colheita: 'meio', objetivo: 'renda', confirmadas: '2025:parado' })).toBe(
+      '?lat=1&lon=2&colheita=meio&objetivo=renda&confirmadas=2025:parado',
+    )
+  })
 })

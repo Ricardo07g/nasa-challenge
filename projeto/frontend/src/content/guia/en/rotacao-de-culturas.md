@@ -24,7 +24,7 @@ How to read it:
 - No plan shows more than 2 fallow years in a row.
 - With nematodes in the field, the plan needs crotalaria or millet.
 
-You can swap an option and see the score right away. See each crop in the [Answer](/resposta), for example [crotalaria](/guia/crotalaria).
+You can swap an option and see the score right away. See each crop in the [Suggestion](/resposta), for example [crotalaria](/guia/crotalaria).
 
 ## Sources
 

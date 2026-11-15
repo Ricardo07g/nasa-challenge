@@ -1,12 +1,13 @@
-import { ChipGroup } from '../design-system/components/Choice'
 import { OptionCompareCard, PageHeading } from '../design-system/components/Content'
-import { AnswerTabs, BackLink, type AnswerTab } from '../design-system/components/Navigation'
-import { StatusPill } from '../design-system/components/Status'
+import { StatusPill, ThirstBadge } from '../design-system/components/Status'
 import { ClimateIcon, DropIcon, GrainIcon, SoilIcon } from '../design-system/icons'
+import { PlantImage } from '../design-system/plants/PlantImage'
+import type { AnswerNav } from '../controllers/useAnswerNav'
 import type { Messages } from '../i18n/messages.pt'
-import type { Eixo, Opcao } from '../models/recomendacao'
+import type { Opcao } from '../models/recomendacao'
 import { futureSummary, type LateSummary } from '../services/recomendacaoRules'
 import type { RainSummary } from '../services/satelliteService'
+import { AnswerHeader } from './AnswerHeader'
 import { FlowError, FlowLoading, FlowOutside, LateWarning } from './FlowStates'
 import type { ScreenStatus } from '../models/screenStatus'
 import { rainPeriodText } from './rainPeriod'
@@ -15,19 +16,15 @@ import layout from './layout.module.css'
 
 export type OptionsViewProps = {
   t: Messages
-  nav: { label: string; tabs: AnswerTab[]; backTo: string }
+  nav: AnswerNav
   status: ScreenStatus
   onRetry: () => void
-  axis: Eixo | null
-  onAxis: (axis: Eixo | null) => void
   summary: { options: Opcao[]; late: LateSummary } | null
   /** Anos e período da chuva (do talhão), para a legenda dos quadrinhos. */
   rain: RainSummary | null
 }
 
-const AXES: readonly Eixo[] = ['chuva', 'renda', 'terra']
-
-/** Clima de 2041–2060 da opção, no mesmo formato do cartão da resposta; sem o CMIP6, a linha não aparece (D2). */
+/** Clima de 2041–2060 da opção, no mesmo formato da resposta; sem o CMIP6, a linha não aparece (D2). */
 function futureRows(t: Messages, option: Opcao) {
   const future = futureSummary(option)
   if (!future) return []
@@ -41,29 +38,41 @@ function futureRows(t: Messages, option: Opcao) {
   ]
 }
 
-/** Tela 6 "Todas as opções": reordenar, um cartão por opção e "Deixar parado" como linha de base. */
-export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary, rain }: OptionsViewProps) {
+/** Linha "Água" (tarefa 0044), curta: precisa e costuma chover, e embaixo a falta. Sem o dado, não aparece. */
+function waterRows(t: Messages, option: Opcao) {
+  const agua = option.agua
+  if (!agua) return []
+  const w = t.suggestion.water
+  const mm = (value: number) => String(value)
+  return [
+    {
+      label: w.title,
+      icon: <DropIcon />,
+      iconTone: 'blue' as const,
+      value: `${w.need(mm(agua.precisa_mm))} · ${w.rain(mm(agua.chove_mm))}`,
+      extra:
+        agua.falta_normal_mm > 0
+          ? w.short(mm(agua.falta_normal_mm), mm(agua.falta_seco_mm))
+          : w.noShort(mm(agua.falta_seco_mm)),
+    },
+  ]
+}
+
+/**
+ * Aba Comparar (antes "Todas as opções", tarefa 0044): a ordem segue o objetivo do produtor, cada cartão tem a
+ * imagem da planta, o selo de sede e a linha Água. A S5b refaz o conteúdo (até 3 culturas lado a lado).
+ */
+export function OptionsView({ t, nav, status, onRetry, summary, rain }: OptionsViewProps) {
   const o = t.options
   return (
     <div className={layout.page}>
-      <BackLink to={nav.backTo}>{t.nav.back}</BackLink>
-      <AnswerTabs label={nav.label} tabs={nav.tabs} />
-      <PageHeading title={o.title} />
+      <AnswerHeader t={t} nav={nav} />
+      <PageHeading title={t.suggestion.compareTitle} />
       {status === 'loading' && <FlowLoading label={t.common.loading} />}
       {status === 'error' && <FlowError t={t} message={t.common.loadError} onRetry={onRetry} />}
       {status === 'outside' && <FlowOutside t={t} />}
       {status === 'ready' && summary && (
         <>
-          <div className={layout.stack}>
-            <p>{o.sortLabel}</p>
-            <ChipGroup
-              label={o.sortLabel}
-              options={AXES.map((value) => ({ value, label: t.axes[value] }))}
-              value={axis}
-              onChange={onAxis}
-              allowDeselect
-            />
-          </div>
           <LateWarning t={t} late={summary.late} />
           <div className={layout.optionGrid}>
             {summary.options.map((option, index) => (
@@ -73,6 +82,8 @@ export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary, ra
                 name={option.nome}
                 highlighted={index === 0 && option.na_janela}
                 unavailable={option.na_janela ? undefined : o.outOfWindowTitle}
+                media={<PlantImage plant={option.id} label={t.suggestion.plantImage(option.nome)} size={64} />}
+                badge={option.agua ? <ThirstBadge level={option.agua.sede}>{t.suggestion.thirst[option.agua.sede]}</ThirstBadge> : undefined}
                 rows={[
                   {
                     label: t.axes.chuva,
@@ -82,6 +93,7 @@ export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary, ra
                     extra: <RainYears t={t} option={option} />,
                     pill: <StatusPill rotulo={option.chuva.rotulo}>{t.labels[option.chuva.rotulo]}</StatusPill>,
                   },
+                  ...waterRows(t, option),
                   ...futureRows(t, option),
                   {
                     label: t.axes.renda,
@@ -102,6 +114,7 @@ export function OptionsView({ t, nav, status, onRetry, axis, onAxis, summary, ra
             <OptionCompareCard
               rank={o.rank(summary.options.length + 1)}
               name={t.crops.names.pousio}
+              media={<PlantImage plant="pousio" label={t.suggestion.plantImage(t.crops.names.pousio)} size={64} />}
               rows={[
                 { label: t.axes.chuva, value: o.fallowRain, icon: <DropIcon />, iconTone: 'blue' },
                 { label: t.axes.renda, value: o.fallowIncome, icon: <GrainIcon /> },
