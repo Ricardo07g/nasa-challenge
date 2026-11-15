@@ -1,16 +1,17 @@
-import { EXAMPLE_FARM, PREPARED_AREA } from '../models/area'
+import { EXAMPLE_FARM, type PilotArea } from '../models/area'
 import type { Ponto } from '../models/talhao'
 
 export { EXAMPLE_FARM }
 
-/** O ponto está na área com dados preparados? (o front avisa antes de chamar a API) */
-export function isInsidePreparedArea({ lat, lon }: Ponto): boolean {
-  return (
-    lat >= PREPARED_AREA.minLat &&
-    lat <= PREPARED_AREA.maxLat &&
-    lon >= PREPARED_AREA.minLon &&
-    lon <= PREPARED_AREA.maxLon
-  )
+/** O ponto está na área piloto (a borda conta)? A área vem de `GET /api/area-piloto`. */
+export function isInsideArea({ lat, lon }: Ponto, area: PilotArea): boolean {
+  return lat >= area.min_lat && lat <= area.max_lat && lon >= area.min_lon && lon <= area.max_lon
+}
+
+/** Centro da área piloto: a preferência da busca de endereço. */
+export function areaCenter(area: PilotArea): Ponto {
+  const half = (a: number, b: number) => Number(((a + b) / 2).toFixed(6))
+  return { lat: half(area.min_lat, area.max_lat), lon: half(area.min_lon, area.max_lon) }
 }
 
 /** Cidades de referência do Triângulo Mineiro (sem serviço externo de endereço). */

@@ -107,15 +107,36 @@ export const en = {
     title: 'Where is your field?',
     mapLabel: 'Map to mark your field. Drag the map or the pin onto your field.',
     near: (place: string) => `Near ${place}`,
+    searchLabel: 'Search for a city, road or address',
+    searchHint: 'You can also paste coordinates, like -18.9543, -48.1993, or a Google Maps link.',
+    searchList: 'Places found',
+    searching: 'Searching…',
+    searchFound: (count: number) =>
+      count === 1
+        ? 'We found 1 place. Tap it, or use the arrow keys and Enter.'
+        : `We found ${count} places. Tap one, or use the arrow keys and Enter.`,
+    searchEmpty: 'We could not find that place. Try another name or drag the map.',
+    searchError: 'The search is not responding right now. Drag the map or paste the coordinates.',
+    goToCoordinates: 'Go to the coordinates',
+    goToLink: 'Go to the point in the link',
+    shortLink:
+      'This is a short link, and we cannot see its point from here. Open the link in Google Maps, copy the full address from the browser bar and paste it here. Or paste the coordinates of the point.',
+    linkWithoutPoint:
+      'We could not find coordinates in this link. Paste the full Google Maps link or the coordinates, like -18.9543, -48.1993.',
+    invalidCoordinates: 'These coordinates do not exist. Latitude goes from -90 to 90, and longitude from -180 to 180.',
+    attribution: 'Addresses: © OpenStreetMap',
+    areaLegend: 'Dashed line: area with data',
+    showArea: 'See the whole area',
     useLocation: 'Use my current location',
     locating: 'Finding your location…',
     locationError: 'We could not find your location. Drag the map to your field.',
     help: 'Or drag the map until the pin is on your field.',
     selected: (coordinates: string) => `Selected location: ${coordinates}`,
-    confirm: "It's here",
+    confirm: 'Confirm location',
     outsideTitle: "We're not there yet",
     outsideText:
       'For now, the data is ready only for the Uberlândia and Uberaba region. See how it works on the example farm.',
+    outsideNotice: 'For now we only have data for the Uberlândia and Uberaba region.',
     seeExample: 'See the example farm',
   },
   when: {

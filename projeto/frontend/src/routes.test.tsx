@@ -65,6 +65,20 @@ describe('rotas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })).toBeInTheDocument()
   })
 
+  it('na pergunta 1, busca o lugar, escolhe e "Confirmar local" leva à pergunta 2 (tarefa 0041)', async () => {
+    const router = renderAt('/onde')
+
+    await userEvent.type(await screen.findByRole('combobox', { name: 'Buscar cidade, estrada ou endereço' }), 'uberaba')
+    await userEvent.click(await screen.findByRole('option', { name: /Uberaba/ }))
+    const confirm = screen.getByRole('button', { name: 'Confirmar local' })
+    await vi.waitFor(() => expect(confirm).toBeEnabled())
+    await userEvent.click(confirm)
+
+    await vi.waitFor(() =>
+      expect(`${router.state.location.pathname}${router.state.location.search}`).toBe('/quando?lat=-19.748&lon=-47.932'),
+    )
+  })
+
   it('"Próximo passo" na pergunta 2 abre a missão do satélite (RF-19)', async () => {
     renderAt('/quando?lat=-18.9543&lon=-48.1993')
 

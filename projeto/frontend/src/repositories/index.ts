@@ -1,5 +1,6 @@
 import { createHttpCommunityRepository } from './communityRepository'
 import { createHttpExemploRepository } from './exemploRepository'
+import { createPhotonGeocodingRepository } from './geocodingRepository'
 import {
   createMockCommunityRepository,
   createMockExemploRepository,
@@ -8,7 +9,9 @@ import {
   createMockRegionRepository,
   createMockTalhaoRepository,
 } from './mocks/mockRepositories'
+import { createMockGeocodingRepository, createMockPilotAreaRepository } from './mocks/mockLocation'
 import { createHttpPastSeasonRepository } from './pastSeasonRepository'
+import { createHttpPilotAreaRepository } from './pilotAreaRepository'
 import { createHttpRecomendacaoRepository } from './recomendacaoRepository'
 import { createHttpRegionRepository } from './regionRepository'
 import { resolveApiMode } from './repositoryMode'
@@ -27,3 +30,6 @@ export const exemploRepository = useHttp ? createHttpExemploRepository() : creat
 export const communityRepository = useHttp ? createHttpCommunityRepository() : createMockCommunityRepository()
 export const regionRepository = useHttp ? createHttpRegionRepository() : createMockRegionRepository()
 export const pastSeasonRepository = useHttp ? createHttpPastSeasonRepository() : createMockPastSeasonRepository()
+export const pilotAreaRepository = useHttp ? createHttpPilotAreaRepository() : createMockPilotAreaRepository()
+/** Busca de endereço: Photon de verdade com a API real; cidades de exemplo, sem rede, no modo mock. */
+export const geocodingRepository = useHttp ? createPhotonGeocodingRepository() : createMockGeocodingRepository()

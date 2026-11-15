@@ -66,3 +66,19 @@ export async function getJson<T>(path: string, options?: GetJsonOptions): Promis
   }
   return (await response.json()) as T
 }
+
+export type GetExternalJsonOptions = { signal?: AbortSignal }
+
+export type GetExternalJson = <T>(url: string, options?: GetExternalJsonOptions) => Promise<T>
+
+/**
+ * GET num serviço público de fora do app, sem chave (hoje só a busca de endereço do Photon, tarefa
+ * 0041). URL completa e o `signal` para cancelar o pedido anterior. Nunca mande segredo por aqui.
+ */
+export async function getExternalJson<T>(url: string, options?: GetExternalJsonOptions): Promise<T> {
+  const response = await fetch(url, { signal: options?.signal })
+  if (!response.ok) {
+    throw new ApiError(url, response.status, null)
+  }
+  return (await response.json()) as T
+}

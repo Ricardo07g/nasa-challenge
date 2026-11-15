@@ -63,12 +63,20 @@ export function WherePage() {
       t={t}
       center={state.center}
       place={state.place}
+      area={state.area}
       outside={state.outside}
+      canConfirm={state.canConfirm}
       locating={state.locating}
       locationError={state.locationError}
+      query={state.query}
+      options={state.options}
+      searchStatus={state.searchStatus}
+      notice={state.notice}
       onMove={state.move}
       onUseLocation={state.useMyLocation}
       onConfirm={state.confirm}
+      onQueryChange={state.changeQuery}
+      onSelectOption={state.selectOption}
     />
   )
 }
