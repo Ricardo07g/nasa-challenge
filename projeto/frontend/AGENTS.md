@@ -494,8 +494,12 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   para `/resposta` (com o `ano`, que abre o "Por que essa sugestão?" naquele ano). Não crie link para elas.
 - **Cabeçalho e rodapé globais (remodelagem, tarefa 0052, RF-36):** valem para todas as telas (`ShellView`, estado no
   `useShellController`). **Cabeçalho** (`design-system/components/Header.tsx`): logo, "Raiz Orbital" (nunca quebra
-  linha) e o slogan (some no celular) à esquerda; à direita, **só três itens**: **Guia** (desde o pacote 3, tarefa
-  0061, no lugar da Comunidade: pílula verde-clara com o livro, `BookIcon`, e o nome escrito também no celular; leva a
+  linha; o nome não se traduz) e o slogan (`header.slogan`: "Do espaço até a raiz." / "Eyes on the sky, roots in the
+  ground.", desde 15/11/2026; some no celular) à esquerda. **Só na Início e só em inglês**, entre o nome e o slogan, a
+  linha discreta `nameMeaning` ("Portuguese for “Orbital Root”", `header.nameMeaning`, vazia em pt; o
+  `useShellController` manda `null` fora da Início ou com o texto vazio): 14 px, 13 px até 900 px (aí quebra em 2
+  linhas abaixo de ~400 px, dentro dos 64 px do cabeçalho), `--color-text-soft`, peso normal, sem link próprio.
+  À direita, **só três itens**: **Guia** (desde o pacote 3, tarefa 0061, no lugar da Comunidade: pílula verde-clara com o livro, `BookIcon`, e o nome escrito também no celular; leva a
   `/guia`), Avisos (sino, nome e o selo laranja com o `contador` de `/api/avisos`; sem aviso, sem selo; no celular, só
   o sino com o selo) e o idioma **em destaque** (15/11/2026, pedido do usuário): pílula "EN | PT" com o inglês primeiro,
   cada um com a **bandeirinha** (EUA e Brasil, SVG próprio em `design-system/flags/Flag.tsx`, decorativo, cores

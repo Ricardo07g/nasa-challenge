@@ -13,8 +13,28 @@ describe('useShellController', () => {
     expect(result.current.header.navLabel).toBe('Principal')
     expect(result.current.header.lang.current).toBe('pt')
     expect(Object.keys(result.current.header).sort()).toEqual(
-      ['alerts', 'guide', 'homeLabel', 'lang', 'navLabel', 'slogan'].sort(),
+      ['alerts', 'guide', 'homeLabel', 'lang', 'nameMeaning', 'navLabel', 'slogan'].sort(),
     )
+  })
+
+  it('na Início em inglês, o cabeçalho traz o slogan novo e explica o nome: Portuguese for “Orbital Root”', () => {
+    const { result } = renderHook(() => useShellController(), { wrapper: providers('/', 'en') })
+
+    expect(result.current.header.slogan).toBe('Eyes on the sky, roots in the ground.')
+    expect(result.current.header.nameMeaning).toBe('Portuguese for “Orbital Root”')
+  })
+
+  it('em português, o nome não ganha explicação (já é português), nem na Início', () => {
+    const { result } = renderHook(() => useShellController(), { wrapper: providers('/', 'pt') })
+
+    expect(result.current.header.nameMeaning).toBeNull()
+  })
+
+  it('nas outras telas, nem em inglês o nome ganha explicação (só na Início)', () => {
+    const { result } = renderHook(() => useShellController(), { wrapper: providers('/guia', 'en') })
+
+    expect(result.current.header.slogan).toBe('Eyes on the sky, roots in the ground.')
+    expect(result.current.header.nameMeaning).toBeNull()
   })
 
   it('o Guia (pacote 3) leva a /guia, de qualquer tela', () => {

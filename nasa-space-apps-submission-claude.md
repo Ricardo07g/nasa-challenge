@@ -14,7 +14,7 @@ Raiz Orbital is a responsive website that answers one question for one specific 
 
 This is exactly what Field Shift asks for: NASA Earth observations, local soil information, crop characteristics and farmer priorities, combined into rotation strategies that strengthen soil health and adapt farms to a changing climate. Our first version covers the Uberlândia and Uberaba region (Triângulo Mineiro, Minas Gerais), where our team is based, just as the 2026/27 El Niño puts the next off-season at risk.
 
-Tagline: "From space to the root."
+Tagline: "Eyes on the sky, roots in the ground."
 
 ---
 

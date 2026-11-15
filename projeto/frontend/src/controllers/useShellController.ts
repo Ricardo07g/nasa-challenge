@@ -46,6 +46,8 @@ export function useShellController(
     header: {
       homeLabel: t.header.home,
       slogan: t.header.slogan,
+      // Só na Início e só em inglês (em português a frase é vazia): "Portuguese for “Orbital Root”".
+      nameMeaning: isHome && t.header.nameMeaning ? t.header.nameMeaning : null,
       navLabel: t.header.navLabel,
       guide: { label: t.header.guide, to: '/guia' },
       alerts: {

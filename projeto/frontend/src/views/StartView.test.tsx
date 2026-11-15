@@ -152,7 +152,8 @@ describe('StartView (tela Início, tarefa 0052)', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'What to plant after soybeans?' })).toBeInTheDocument()
     expect(screen.getByText('For soybean growers in Triângulo Mineiro, Brazil')).toBeInTheDocument()
-    expect(screen.getByText('From space to the root.')).toBeInTheDocument()
+    expect(screen.getByText('Eyes on the sky, roots in the ground.')).toBeInTheDocument()
+    expect(screen.queryByText(/Portuguese for/)).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Start' })).toHaveAttribute('href', '/onde')
     expect(screen.getByRole('button', { name: 'Listen to summary' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'NASA data Triângulo Mineiro · MG' })).toBeInTheDocument()
