@@ -88,6 +88,13 @@ describe('Modal (padrão de "ver detalhes" em todas as telas)', () => {
     expect(screen.getByRole('dialog')).toHaveAttribute('data-size', 'wide')
   })
 
+  it('o grande (regra geral 7 do pacote 2) ocupa quase a tela toda, com borda em volta (24 px; 8 px no celular)', () => {
+    // O tamanho é CSS (`[data-size='large']` no Modal.module.css; o jsdom não aplica estilos).
+    renderModal({ size: 'large' })
+
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-size', 'large')
+  })
+
   it('ao abrir, o foco entra no modal e fica preso nele (Tab e Shift+Tab dão a volta)', async () => {
     render(<Screen />)
     await userEvent.click(screen.getByRole('button', { name: 'Dados da NASA' }))

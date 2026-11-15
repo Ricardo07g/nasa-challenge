@@ -6,6 +6,7 @@ import { buildTalhao } from '../repositories/mocks/fixtures'
 import { createMockRegionRepository } from '../repositories/mocks/mockRepositories'
 import type { CommunityService } from '../services/communityService'
 import type { FarmService } from '../services/farmService'
+import type { SpeechService } from '../services/speechService'
 import { providers } from '../test/providers'
 import { useCommunityController } from './useCommunityController'
 
@@ -53,6 +54,36 @@ function deps(nearby: () => Promise<RelatosVizinhos> = () => Promise.resolve(NEA
   const farm: FarmService = { talhao: vi.fn((point) => Promise.resolve(buildTalhao(point, 'pt'))), recomendacao: vi.fn() }
   return { community, farm, today: () => TODAY }
 }
+
+const speech = (): SpeechService => ({ isSupported: () => true, speak: vi.fn(), stop: vi.fn() })
+
+describe('useCommunityController: "Ouvir resumo" (regra geral 9 do pacote 2)', () => {
+  it('o raio, o plantio da safra mais recente (pela safra) e o aviso de relato de vizinho', async () => {
+    const d = { ...deps(), speech: speech() }
+    const { result } = renderHook(() => useCommunityController(d), { wrapper: providers(FIELD) })
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+
+    act(() => result.current.listen.toggle())
+    expect(d.speech.speak).toHaveBeenCalledWith(
+      'Aqui você vê o que os vizinhos contam, até 30 km da sua lavoura, e conta o que aconteceu aí. 1 vizinho contou o que fez depois da soja 2025/26. Todo relato é de vizinho e não é confirmado.',
+      'pt',
+      expect.any(Function),
+    )
+  })
+
+  it('sem relatos: diz que ainda não há relatos', async () => {
+    const d = { ...deps(() => Promise.resolve({ ...NEARBY, relatos: [] })), speech: speech() }
+    const { result } = renderHook(() => useCommunityController(d), { wrapper: providers(FIELD, 'en') })
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+
+    act(() => result.current.listen.toggle())
+    expect(d.speech.speak).toHaveBeenCalledWith(
+      'Here you see what neighbors report, up to 30 km from your field, and tell what happened there. There are no reports near you yet. Every report comes from a neighbor and is not confirmed.',
+      'en',
+      expect.any(Function),
+    )
+  })
+})
 
 describe('useCommunityController (tela "Na sua região", relatos da comunidade)', () => {
   it('carrega os relatos em volta da lavoura marcada: resumo, mapa e os meus', async () => {

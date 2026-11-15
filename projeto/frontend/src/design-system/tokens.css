@@ -231,6 +231,23 @@
   --color-photo-credit: #ffffff;
   --photo-credit-shade: linear-gradient(0deg, rgb(0 0 0 / 75%), rgb(0 0 0 / 55%));
   --photo-fallback: linear-gradient(140deg, var(--color-primary), var(--color-primary-strong));
+
+  /*
+   * Pacote 2 de telas (16/11/2026, tarefa 0054): Voltar, respostas das safras, aviso "não preenchido",
+   * modal grande e o destaque da lavoura de demonstração.
+   */
+  --color-back-border: #cfdcd4; /* borda do "← Voltar" */
+  --color-back-border-hover: #b9cfc2;
+  --color-back-hover: #e6efea; /* fundo do "← Voltar" com o mouse em cima */
+  --shadow-back: 0 1px 2px rgb(0 0 0 / 4%);
+  --color-chip-border: #c9d7cf; /* botões das respostas das safras */
+  --color-fallow: #9a4b14; /* "Deixei parado" marcado */
+  --color-current-season-bg: #f2f6fa; /* linha da safra atual (2026/27) */
+  --color-notice-bg: #fff8ec; /* aviso "Você não preencheu as últimas safras" */
+  --color-notice-border: #f1dfbd;
+  --color-notice-text: #6b4a10;
+  --shadow-demo: 0 4px 14px rgb(31 107 71 / 12%); /* botão da lavoura de demonstração em destaque */
+  --modal-large-gap: 24px; /* borda em volta do modal grande (8 px no celular) */
 }
 
 /* Celular e tablet (até 900 px, protótipos da remodelagem v4): margem menor e cabeçalho mais baixo */
@@ -238,5 +255,6 @@
   :root {
     --page-margin-v4: 20px;
     --header-height-v4: 64px;
+    --modal-large-gap: 8px;
   }
 }

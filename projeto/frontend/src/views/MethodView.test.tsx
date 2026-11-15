@@ -57,6 +57,7 @@ function setup(overrides: Partial<MethodViewProps> = {}) {
     onRetrySources: vi.fn(),
     rain: { years: 20, period: { start: '2005', end: '2024' }, skipped: 0 },
     rules: RULES,
+    listen: { supported: true, speaking: false, toggle: vi.fn() },
     ...overrides,
   }
   render(
@@ -68,6 +69,14 @@ function setup(overrides: Partial<MethodViewProps> = {}) {
 }
 
 describe('MethodView (tela 9)', () => {
+  it('pacote 2: o "← Voltar" de verdade e o "Ouvir resumo" perto do título', async () => {
+    const props = setup()
+
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('data-back-button')
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvir resumo' }))
+    expect(props.listen.toggle).toHaveBeenCalled()
+  })
+
   it('o método em três passos, a conta aberta, a validação e o que o satélite não enxerga', () => {
     setup()
 

@@ -1,0 +1,210 @@
+/*
+ * "Confirme as últimas safras" (protótipo da tela 4 do pacote 2). Largo: tabela Safra · Soja · Depois da soja.
+ * Estreito (celular ou dentro do modal): uma pergunta embaixo da outra. Quem decide é a largura do próprio
+ * formulário (container query), para o mesmo componente servir a tela 4 e o modal da tela 5.
+ */
+.form {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.head,
+.row {
+  display: grid;
+  grid-template-columns: 120px 210px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.head {
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 11.5px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-soft);
+}
+
+.row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Safra atual (2026/27): linha destacada em azul, com o selo */
+.row[data-current] {
+  margin: 6px -12px 0;
+  padding: 12px;
+  border-bottom: 0;
+  border-radius: var(--radius-xs);
+  background: var(--color-current-season-bg);
+}
+
+.season {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin: 0;
+  min-width: 0;
+}
+
+.seasonName {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  font-size: 11.5px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.35;
+  color: var(--color-info);
+}
+
+.currentTag {
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-info);
+  color: var(--color-on-primary);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+}
+
+.question {
+  min-width: 0;
+}
+
+/* O nome da pergunta só aparece quando a tabela não cabe (no largo, o cabeçalho diz). */
+.questionLabel {
+  display: none;
+}
+
+.caption {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  color: var(--color-text-soft);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Mesmo tamanho marcado ou não: só a cor muda (a tela não pula). */
+.chip {
+  height: 36px;
+  padding: 0 13px;
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.chip[data-tone='fallow'][aria-pressed='true'] {
+  border-color: var(--color-fallow);
+  background: var(--color-fallow);
+}
+
+.chip[data-tone='unsure'][aria-pressed='true'] {
+  border-color: var(--color-info);
+  background: var(--color-info);
+}
+
+.chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chip:focus-visible,
+.changeDate:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.soyPlanted {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--font-size-caption);
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.soyPlanted svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.soyPlanted > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.soyPlanted b {
+  font-weight: var(--font-weight-semibold);
+}
+
+.changeDate {
+  margin-top: 3px;
+  color: var(--color-primary);
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Estreito (celular, modal): as perguntas uma embaixo da outra, cada uma com o seu nome. */
+@container (max-width: 719px) {
+  .head {
+    display: none;
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .row[data-current] {
+    margin: 6px -8px 0;
+    padding: 12px 8px;
+  }
+
+  .questionLabel {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--font-size-tiny);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+  }
+}

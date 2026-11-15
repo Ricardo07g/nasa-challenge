@@ -28,9 +28,13 @@ import { farmService, isOutsideArea, type FarmService } from '../services/farmSe
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { EXAMPLE_FARM } from '../services/locationService'
 import { historySummary } from '../services/satelliteService'
+import { seasonName } from '../services/seasonService'
+import { speechService, type SpeechService } from '../services/speechService'
+import { formatNumber } from '../i18n/format'
 import { useAsync } from './useAsync'
+import { useListenSummary } from './useListenSummary'
 
-type Deps = { community: CommunityService; farm: FarmService; today?: () => string }
+type Deps = { community: CommunityService; farm: FarmService; today?: () => string; speech?: SpeechService }
 
 const defaultDeps: Deps = { community: communityService, farm: farmService }
 
@@ -67,7 +71,7 @@ export type CommunityFormState = {
  * da região pelo satélite (P3) continua como antes: some sem o arquivo da região (404).
  */
 export function useCommunityController(deps: Deps = defaultDeps) {
-  const { lang } = useI18n()
+  const { lang, messages: t } = useI18n()
   const [search] = useSearchParams()
   const params = useMemo(() => readFlowParams(search), [search])
   // O dia de hoje no aparelho, lido uma vez ao abrir a tela (padrão das datas de chuva e evento).
@@ -166,12 +170,33 @@ export function useCommunityController(deps: Deps = defaultDeps) {
   const history = historySummary(talhao.data?.historico ?? null)
   const regionReady = regionStatus === 'ready' && regionAsync.data ? regionAsync.data : null
   const place = regionReady ? regionPlace(regionReady) : null
+  const region = regionReady ? regionSummary(regionReady) : null
+  const radiusKm = data?.raio_km ?? 30
+
+  // "Ouvir resumo" (regra geral 9 do pacote 2): o raio, o que os vizinhos contaram (ou a região pelo satélite)
+  // e o aviso de que todo relato é de vizinho. 3 frases, com os números da tela.
+  const c = t.community
+  const reportSentence = summary?.planting
+    ? c.summaryPlanting(summary.planting.total, seasonName(summary.planting.year))
+    : summary?.rain
+      ? c.summaryRain(summary.rain.count, formatNumber(lang, summary.rain.averageMm))
+      : summary?.empty
+        ? c.summaryEmpty
+        : null
+  const regionSentence = region
+    ? c.summaryRegion(seasonName(region.last.ano), lang === 'pt' ? String(region.last.pct).replace('.', ',') : String(region.last.pct))
+    : null
+  const listen = useListenSummary(
+    [c.summaryIntro(radiusKm), reportSentence ?? regionSentence, c.summaryNote].filter(Boolean).join(' '),
+    lang,
+    deps.speech ?? speechService,
+  )
 
   return {
     // A Comunidade abre de qualquer tela pelo cabeçalho: volta para a resposta se o caminho estiver na URL.
     backTo: params?.colheita ? `/resposta${keepFlowQuery(search.toString())}` : '/',
     center,
-    radiusKm: data?.raio_km ?? 30,
+    radiusKm,
     status,
     retry: nearby.retry,
     summary,
@@ -200,9 +225,10 @@ export function useCommunityController(deps: Deps = defaultDeps) {
     removing,
     regionStatus,
     retryRegion: regionAsync.retry,
-    region: regionReady ? regionSummary(regionReady) : null,
+    region,
     regionRadius: place?.radiusKm ?? null,
     regionDistance: place?.distanceKm ?? null,
     history: history ? { idle: history.idle, known: history.known, uncertain: history.uncertain } : null,
+    listen,
   }
 }

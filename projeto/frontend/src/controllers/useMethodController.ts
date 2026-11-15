@@ -13,8 +13,11 @@ import type { MetodoRegras } from '../models/metodo'
 import { metodoRepository } from '../repositories'
 import type { MetodoRepository } from '../repositories/metodoRepository'
 import { useTelegramLink } from './useTelegramLink'
+import { formatNumber } from '../i18n/format'
+import { speechService, type SpeechService } from '../services/speechService'
+import { useListenSummary } from './useListenSummary'
 
-type Deps = { farm: FarmService; method?: MetodoRepository; telegram?: TelegramService }
+type Deps = { farm: FarmService; method?: MetodoRepository; telegram?: TelegramService; speech?: SpeechService }
 
 const defaultDeps: Deps = { farm: farmService, method: metodoRepository }
 
@@ -24,7 +27,7 @@ const defaultDeps: Deps = { farm: farmService, method: metodoRepository }
  * lavoura da pessoa; sem ele, da fazenda de exemplo (RF-11).
  */
 export function useMethodController(deps: Deps = defaultDeps) {
-  const { lang } = useI18n()
+  const { lang, messages: t } = useI18n()
   const [search] = useSearchParams()
   const params = useMemo(() => readFlowParams(search), [search])
   const example = !params?.colheita
@@ -64,6 +67,24 @@ export function useMethodController(deps: Deps = defaultDeps) {
     ? { status: talhao.status, rows: sourceStatuses(talhao.data), rainKm: rainResolutionKm(talhao.data) }
     : { status: talhao.status, rows: [], rainKm: null }
 
+  const rain = talhao.data ? rainSummary(talhao.data.dados, recomendacao.data?.opcoes ?? null) : null
+  const rules = rulesAsync.data ?? null
+
+  // "Ouvir resumo" (regra geral 9 do pacote 2): os anos de chuva, os pesos da nota (do regras.yaml) e o "sem IA".
+  const n = (value: number) => formatNumber(lang, value)
+  const p = rules?.pesos
+  const listen = useListenSummary(
+    [
+      t.method.summaryRain(rain?.years ?? null),
+      p ? t.method.summaryWeights(n(p.seguranca_pct), n(p.futuro_pct), n(p.solo_pct), n(p.renda_pct)) : null,
+      t.method.summaryEnd,
+    ]
+      .filter(Boolean)
+      .join(' '),
+    lang,
+    deps.speech ?? speechService,
+  )
+
   return {
     backTo: example ? '/' : `/resposta${keepFlowQuery(search.toString())}`,
     status: recomendacao.status,
@@ -73,7 +94,8 @@ export function useMethodController(deps: Deps = defaultDeps) {
     telegramHref,
     sources,
     retrySources: talhao.retry,
-    rain: talhao.data ? rainSummary(talhao.data.dados, recomendacao.data?.opcoes ?? null) : null,
-    rules: rulesAsync.data ?? null,
+    rain,
+    rules,
+    listen,
   }
 }

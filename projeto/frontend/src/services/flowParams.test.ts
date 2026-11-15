@@ -139,3 +139,51 @@ describe('culturas comparadas, plano editado e "como é hoje" na URL (tarefa 004
     )
   })
 })
+
+describe('data da colheita, últimas safras e escolha atual na URL (pacote 2, tarefa 0054)', () => {
+  const read = (query: string) => readFlowParams(new URLSearchParams(`lat=1&lon=2&${query}`))
+
+  it('lê a data da colheita da tela 2 (AAAA-MM-DD) só se for uma data de verdade', () => {
+    expect(read('data=2027-03-03')?.data).toBe('2027-03-03')
+    expect(read('data=2027-02-30')?.data).toBeUndefined()
+    expect(read('data=3/3/2027')?.data).toBeUndefined()
+    expect(read('')?.data).toBeUndefined()
+  })
+
+  it('lê as respostas das últimas safras em ordem de ano; nenhuma válida = indefinido', () => {
+    expect(read('safras=2026:sem_soja,2024:milho_braquiaria,2025:pousio')?.safras).toBe(
+      '2024:milho_braquiaria,2025:pousio,2026:sem_soja',
+    )
+    expect(read('safras=2024:feijao')?.safras).toBeUndefined()
+  })
+
+  it('lê a escolha atual: uma cultura ou "nao_sei"', () => {
+    expect(read('pensa=sorgo')?.pensa).toBe('sorgo')
+    expect(read('pensa=nao_sei')?.pensa).toBe('nao_sei')
+    expect(read('pensa=soja')?.pensa).toBeUndefined()
+  })
+
+  it('não inventa safras a partir do confirmadas e do hoje antigos (quem lê os links velhos é o service)', () => {
+    expect(read('confirmadas=2025:parado&hoje=2024:sorgo')?.safras).toBeUndefined()
+  })
+
+  it('monta a URL com a data depois da colheita e as respostas no fim, legíveis', () => {
+    expect(
+      buildFlowQuery({
+        lat: 1,
+        lon: 2,
+        colheita: 'tarde',
+        data: '2027-03-03',
+        objetivo: 'renda',
+        safras: '2024:milho_braquiaria,2025:pousio',
+        pensa: 'nao_sei',
+      }),
+    ).toBe('?lat=1&lon=2&colheita=tarde&data=2027-03-03&objetivo=renda&safras=2024:milho_braquiaria,2025:pousio&pensa=nao_sei')
+  })
+
+  it('repassa a data, as safras e a escolha atual entre as telas', () => {
+    expect(keepFlowQuery('?lat=1&lon=2&data=2027-02-18&safras=2025:soja&pensa=milheto&ano=2016')).toBe(
+      '?lat=1&lon=2&data=2027-02-18&safras=2025:soja&pensa=milheto',
+    )
+  })
+})

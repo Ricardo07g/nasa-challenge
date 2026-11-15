@@ -10,6 +10,7 @@ import type { MetodoRegras } from '../models/metodo'
 import { ApiError } from '../repositories/httpClient'
 import type { MetodoRepository } from '../repositories/metodoRepository'
 import { createMockMetodoRepository } from '../repositories/mocks/mockMetodo'
+import type { SpeechService } from '../services/speechService'
 import { useMethodController } from './useMethodController'
 
 const telegram: TelegramService = { enabled: true, linkFor: () => 'https://t.me/BotDoTime?start=x' }
@@ -33,6 +34,26 @@ function deps(
   const method: MetodoRepository = { get: vi.fn(loadRules) }
   return { farm, method }
 }
+
+const speech = (): SpeechService => ({ isSupported: () => true, speak: vi.fn(), stop: vi.fn() })
+
+describe('useMethodController: "Ouvir resumo" (regra geral 9 do pacote 2)', () => {
+  it('os anos de chuva, os pesos da nota (do regras.yaml) e que nenhum número vem de IA', async () => {
+    const d = { ...deps(), telegram, speech: speech() }
+    const { result } = renderHook(() => useMethodController(d), { wrapper: providers('/como-funciona') })
+    await waitFor(() => expect(result.current.rules).not.toBeNull())
+    await waitFor(() => expect(result.current.rain).not.toBeNull())
+
+    act(() => result.current.listen.toggle())
+    const rules = await createMockMetodoRepository().get()
+    const p = rules.pesos
+    expect(d.speech.speak).toHaveBeenCalledWith(
+      `A conta usa ${result.current.rain!.years} anos de chuva e calor do satélite, o solo e o verde da lavoura, em 3 passos. A nota de cada cultura vai de 0 a 100: segurança vale ${p.seguranca_pct}%, clima futuro ${p.futuro_pct}%, terra ${p.solo_pct}% e renda ${p.renda_pct}%. Nenhum número vem de inteligência artificial: são regras fixas, com dados de satélite.`,
+      'pt',
+      expect.any(Function),
+    )
+  })
+})
 
 describe('useMethodController (tela 9)', () => {
   it('sem caminho na URL, as notas são da fazenda de exemplo (colheita no meio de fevereiro)', async () => {

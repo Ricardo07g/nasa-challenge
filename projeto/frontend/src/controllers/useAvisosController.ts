@@ -13,9 +13,11 @@ import {
 } from '../services/avisosService'
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { nearestPlace } from '../services/locationService'
+import { speechService, type SpeechService } from '../services/speechService'
 import { useAsync } from './useAsync'
+import { useListenSummary, type ListenSummaryState } from './useListenSummary'
 
-type Deps = { avisos: AvisosService }
+type Deps = { avisos: AvisosService; speech?: SpeechService }
 
 const defaultDeps: Deps = { avisos: avisosService }
 
@@ -32,6 +34,8 @@ export type AvisosState = {
   explorerTo: string | null
   markTo: string
   backTo: string
+  /** "Ouvir resumo" (regra geral 9 do pacote 2): o lugar e quantos avisos ativos. */
+  listen: ListenSummaryState
 }
 
 /**
@@ -41,7 +45,7 @@ export type AvisosState = {
  * quando o app é aberto.
  */
 export function useAvisosController(deps: Deps = defaultDeps): AvisosState {
-  const { lang } = useI18n()
+  const { lang, messages: t } = useI18n()
   const [search] = useSearchParams()
   const flowParams = useMemo(() => readFlowParams(search), [search])
   const flow = useMemo(() => pointFromFlow(flowParams), [flowParams])
@@ -66,14 +70,19 @@ export function useAvisosController(deps: Deps = defaultDeps): AvisosState {
       ? explorerLink(point, safrinha.explorar_ano)
       : null
 
+  const place = point ? nearestPlace(point) : null
+  const count = status === 'ready' && avisos ? avisos.contador : null
+  const listen = useListenSummary(place ? t.alerts.summary(place, count) : t.alerts.summaryNoPoint, lang, deps.speech ?? speechService)
+
   return {
     status,
     retry: state.retry,
     avisos,
     groups,
-    place: point ? nearestPlace(point) : null,
+    place,
     explorerTo,
     markTo: '/onde',
     backTo: flowParams?.colheita ? `/resposta${keepFlowQuery(search.toString())}` : '/',
+    listen,
   }
 }

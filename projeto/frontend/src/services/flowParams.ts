@@ -1,7 +1,9 @@
 import { OBJETIVOS, type CropId, type Objetivo } from '../models/recomendacao'
+import type { CurrentChoice } from '../models/seasonAnswers'
 import { COLHEITAS, TEXTURAS, type Colheita, type Textura } from '../models/talhao'
 import { formatConfirmadas, parseConfirmadas } from './confirmedSeasonsService'
 import { formatToday, parseCompared, parsePlan, parseToday } from './cropListParams'
+import { formatSeasonAnswers, parseCurrentChoice, parseSeasonAnswers } from './seasonAnswersService'
 
 /** O que a URL guarda entre as telas (RF-18): dá para recarregar ou compartilhar a mesma resposta. */
 export type FlowParams = {
@@ -20,6 +22,15 @@ export type FlowParams = {
   plano?: CropId[]
   /** "Como é hoje" (tarefa 0045): o que o produtor plantou nas últimas safras ("2024:pousio,2025:sorgo"). */
   hoje?: string
+  /** Pacote 2 (tarefa 0054): a data da colheita escolhida na tela 2, "AAAA-MM-DD". */
+  data?: string
+  /**
+   * Pacote 2 (tarefa 0054): as respostas das últimas safras, no formato da URL e em ordem de ano
+   * ("2024:milho_braquiaria,2025:pousio,2026:sem_soja"). Regras em `seasonAnswersService`.
+   */
+  safras?: string
+  /** Pacote 2 (tarefa 0054): o que o produtor pensa plantar depois da soja 2026/27 (uma cultura ou "nao_sei"). */
+  pensa?: CurrentChoice
 }
 
 function readNumber(value: string | null): number | null {
@@ -46,7 +57,18 @@ export function readFlowParams(search: URLSearchParams): (FlowParams & { exemplo
     comparar: parseCompared(search.get('comparar')),
     plano: parsePlan(search.get('plano')),
     hoje: formatToday(parseToday(search.get('hoje'))),
+    data: readDate(search.get('data')),
+    safras: formatSeasonAnswers(parseSeasonAnswers(search.get('safras'))),
+    pensa: parseCurrentChoice(search.get('pensa')),
   }
+}
+
+/** "AAAA-MM-DD" que existe no calendário (2027-02-30 não passa). */
+function readDate(value: string | null): string | undefined {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? value : undefined
 }
 
 const round = (value: number) => Number(value.toFixed(4))
@@ -56,6 +78,7 @@ export function buildFlowQuery(params: FlowParams): string {
   query.set('lat', String(round(params.lat)))
   query.set('lon', String(round(params.lon)))
   if (params.colheita) query.set('colheita', params.colheita)
+  if (params.data) query.set('data', params.data)
   if (params.solo) query.set('solo', params.solo)
   if (params.exemplo) query.set('exemplo', '1')
   if (params.objetivo) query.set('objetivo', params.objetivo)
@@ -65,7 +88,10 @@ export function buildFlowQuery(params: FlowParams): string {
   const comparar = params.comparar?.length ? `&comparar=${params.comparar.join(',')}` : ''
   const plano = params.plano?.length ? `&plano=${params.plano.join(',')}` : ''
   const hoje = params.hoje ? `&hoje=${params.hoje}` : ''
-  return `?${query.toString()}${confirmadas}${comparar}${plano}${hoje}`
+  // Pacote 2 (tarefa 0054): as respostas das últimas safras e a escolha atual, também legíveis.
+  const safras = params.safras ? `&safras=${params.safras}` : ''
+  const pensa = params.pensa ? `&pensa=${params.pensa}` : ''
+  return `?${query.toString()}${confirmadas}${comparar}${plano}${hoje}${safras}${pensa}`
 }
 
 /** Query da URL atual que segue para o próximo link ("" se ainda não tem ponto marcado). */

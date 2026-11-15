@@ -9,10 +9,13 @@ import {
   missionFacts,
   phaseWait,
 } from '../services/missionService'
+import { useI18n } from '../i18n/useI18n'
+import { speechService, type SpeechService } from '../services/speechService'
 import { useFlowFarm } from './useFlowFarm'
+import { useListenSummary } from './useListenSummary'
 import { usePrefersReducedMotion } from './usePrefersReducedMotion'
 
-type Deps = { farm: FarmService }
+type Deps = { farm: FarmService; speech?: SpeechService }
 
 const defaultDeps: Deps = { farm: farmService }
 
@@ -21,6 +24,7 @@ const defaultDeps: Deps = { farm: farmService }
  * recomendação (quase sempre já no cache), passa pelas 6 fases (mínimo de 1,2 s cada) e segue sozinha.
  */
 export function useMissionController(deps: Deps = defaultDeps) {
+  const { lang, messages: t } = useI18n()
   const navigate = useNavigate()
   const reducedMotion = usePrefersReducedMotion()
   const { params, query, redirectTo, talhao, recomendacao, status } = useFlowFarm(deps.farm)
@@ -72,6 +76,10 @@ export function useMissionController(deps: Deps = defaultDeps) {
   const spin = useCallback(() => setSpins((value) => value + 1), [])
 
   const facts = status === 'ready' && talhao.data && recomendacao.data ? missionFacts(talhao.data, recomendacao.data) : null
+  const place = params ? nearestPlace(params) : null
+  // "Ouvir resumo" (regra geral 9 do pacote 2): o lugar e os anos de chuva lidos; não muda a cada fase,
+  // para a fala não parar no meio.
+  const listen = useListenSummary(t.mission.summary(place, facts?.rainYears ?? null), lang, deps.speech ?? speechService)
 
   return {
     redirectTo,
@@ -81,12 +89,13 @@ export function useMissionController(deps: Deps = defaultDeps) {
     phase,
     complete,
     facts,
-    place: params ? nearestPlace(params) : null,
+    place,
     weak: weak && !complete,
     waitMore,
     retry,
     spins,
     spin,
     reducedMotion,
+    listen,
   }
 }

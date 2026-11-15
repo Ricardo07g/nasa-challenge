@@ -24,6 +24,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     // Os testes usam as fixtures de repositories/mocks (sem rede): a API real é o padrão fora daqui.
-    env: { VITE_API_MODE: 'mock' },
+    // A lavoura de demonstração já marcada em "Onde fica a lavoura" fica fixa (o padrão do app), sem
+    // depender da variável da máquina; os testes do controller ligam e desligam pelas dependências.
+    env: { VITE_API_MODE: 'mock', VITE_ABRIR_COM_DEMONSTRACAO: 'true' },
   },
 })

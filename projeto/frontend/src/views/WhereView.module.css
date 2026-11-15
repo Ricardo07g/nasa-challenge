@@ -11,26 +11,6 @@
   color: var(--color-text-muted);
 }
 
-/* "← Voltar": discreto como no protótipo, com a área de toque maior por fora */
-.back {
-  display: flex;
-  width: fit-content;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  margin: -10px -12px;
-  border-radius: var(--radius-2xs);
-  color: var(--color-primary);
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1.25;
-  text-decoration: none;
-}
-
-.back:hover {
-  background: var(--color-tint-green-soft);
-}
-
 .title {
   margin: 18px 0 0;
   font-family: var(--font-display);
@@ -219,15 +199,20 @@
   cursor: progress;
 }
 
+/* Pacote 2: a lavoura de demonstração em destaque (borda verde de 2 px, fundo verde-claro, sombra leve e o
+   selo "Bom para testar" no canto de cima), para os primeiros testes. */
 .demo {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   min-height: 60px;
-  padding: 10px 14px;
-  border: 1px solid var(--color-border);
+  margin-top: 8px;
+  padding: 12px 14px 10px;
+  border: 2px solid var(--color-primary);
   border-radius: var(--radius-cta);
-  background: var(--color-surface);
+  background: var(--color-tint-green-soft);
+  box-shadow: var(--shadow-demo);
   color: var(--color-text);
   font: inherit;
   text-align: left;
@@ -235,8 +220,23 @@
 }
 
 .demo:hover {
-  border-color: var(--color-border-green-hover);
-  background: var(--color-tint-green-soft);
+  border-color: var(--color-primary-strong);
+  background: var(--color-tint-green);
+}
+
+.demoBadge {
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .demoIcon {
@@ -345,7 +345,6 @@
   display: none;
 }
 
-.back:focus-visible,
 .gps:focus-visible,
 .demo:focus-visible,
 .otherWays:focus-visible,

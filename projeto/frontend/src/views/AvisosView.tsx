@@ -1,9 +1,12 @@
 import { Link } from 'react-router'
+import type { ListenSummaryState } from '../controllers/useListenSummary'
+import { BackButton } from '../design-system/components/BackButton'
+import { ListenSummary } from '../design-system/components/ListenSummary'
 import { Button } from '../design-system/components/Button'
 import { Card } from '../design-system/components/Card'
+import { GuideLink } from '../design-system/components/GuideLink'
 import { PageHeading } from '../design-system/components/Content'
 import { ErrorState } from '../design-system/components/Feedback'
-import { BackLink } from '../design-system/components/Navigation'
 import { WarningIcon, WatchIcon } from '../design-system/icons'
 import type { AvisosStatus } from '../controllers/useAvisosController'
 import { formatFullDate } from '../i18n/format'
@@ -26,12 +29,14 @@ export type AvisosViewProps = {
   explorerTo: string | null
   markTo: string
   backTo: string
+  /** "Ouvir resumo" (regra geral 9 do pacote 2). */
+  listen: ListenSummaryState
 }
 
 /** Artigo do Guia sobre os alertas oficiais (seção 8 do pedido: "Avisos → Rodapé"). */
-const OFFICIAL_GUIDE = '/guia/alertas-defesa-civil'
+const OFFICIAL_GUIDE = 'alertas-defesa-civil'
 /** Artigo do Guia "Como ler os avisos" (tarefa 0046). */
-const READ_GUIDE = '/guia/como-ler-os-avisos'
+const READ_GUIDE = 'como-ler-os-avisos'
 const SMS_HREF = 'sms:40199'
 const WHATSAPP_HREF = 'https://wa.me/556120344611'
 
@@ -41,15 +46,24 @@ const WHATSAPP_HREF = 'https://wa.me/556120344611'
  * aviso tem o nível escrito (nunca só a cor), o que o dado mostra, o que fazer, a fonte e a data.
  */
 export function AvisosView(props: AvisosViewProps) {
-  const { t, status, place } = props
+  const { t, status, place, listen } = props
   const a = t.alerts
   return (
     <div className={layout.page}>
-      <BackLink to={props.backTo}>{t.nav.back}</BackLink>
+      <BackButton to={props.backTo}>{t.nav.back}</BackButton>
       <PageHeading title={a.title} subtitle={a.subtitle} />
+      <ListenSummary
+        supported={listen.supported}
+        speaking={listen.speaking}
+        onToggle={listen.toggle}
+        label={t.listen.summary}
+        stopLabel={t.listen.stop}
+      />
       {place && status !== 'no-point' && <p className={styles.place}>{a.place(place)}</p>}
       <p>
-        <Link to={READ_GUIDE}>{a.guideLink}</Link>
+        <GuideLink slug={READ_GUIDE} newTabLabel={t.common.newTab}>
+          {a.guideLink}
+        </GuideLink>
       </p>
       {status === 'no-point' && (
         <Card as="section" aria-label={a.markField}>
@@ -223,7 +237,9 @@ function OfficialAlerts({ t }: { t: Messages }) {
           </a>
         </div>
         <p>
-          <Link to={OFFICIAL_GUIDE}>{o.guide}</Link>
+          <GuideLink slug={OFFICIAL_GUIDE} newTabLabel={t.common.newTab}>
+            {o.guide}
+          </GuideLink>
         </p>
       </div>
     </Card>

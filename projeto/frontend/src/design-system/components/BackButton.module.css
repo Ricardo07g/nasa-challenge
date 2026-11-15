@@ -1,0 +1,38 @@
+/* "← Voltar" (regra geral 1 do pacote 2): 42 px, borda verde-clara, fundo branco, texto e seta verdes */
+.back {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  height: 42px;
+  padding: 0 16px 0 12px;
+  border: 1px solid var(--color-back-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-back);
+  color: var(--color-primary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.back:hover {
+  border-color: var(--color-back-border-hover);
+  background: var(--color-back-hover);
+  color: var(--color-primary);
+}
+
+.back svg {
+  flex: none;
+}
+
+.back:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}

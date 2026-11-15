@@ -83,6 +83,8 @@ describe('WhereView: topo (tarefa 0053)', () => {
     const props = setup()
 
     expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute('href', '/')
+    // O "← Voltar" de verdade do design system (regra geral 1 do pacote 2).
+    expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute('data-back-button')
     expect(screen.getByRole('heading', { level: 1, name: 'Onde fica a lavoura?' })).toBeInTheDocument()
     expect(screen.getByText('Toque no mapa em cima da sua lavoura.')).toBeInTheDocument()
 
@@ -194,7 +196,7 @@ describe('WhereView: atalhos', () => {
     const props = setup()
 
     await userEvent.click(screen.getByRole('button', { name: 'Usar onde estou agora' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Usar a lavoura de demonstração Perto de Uberlândia (MG)' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Usar a lavoura de demonstração Perto de Uberlândia (MG) Bom para testar' }))
     await userEvent.click(screen.getByRole('button', { name: 'Outras formas de marcar' }))
 
     expect(props.onUseLocation).toHaveBeenCalled()
@@ -303,7 +305,7 @@ describe('WhereView em inglês', () => {
     expect(card()).toHaveTextContent('Chosen spot')
     expect(within(card()).getByRole('heading', { name: 'Demo field, near Uberlândia (MG)' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Use my current location' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Use the demo field Near Uberlândia (MG)' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Use the demo field Near Uberlândia (MG) Good for testing' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Other ways to mark' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Confirm location' })).toBeEnabled()
     expect(screen.getByText('MVP area: Uberlândia and Uberaba')).toBeInTheDocument()

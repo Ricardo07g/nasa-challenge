@@ -3,6 +3,17 @@ import type { Ponto } from '../models/talhao'
 
 export { EXAMPLE_FARM }
 
+/**
+ * Abrir "Onde fica a lavoura" com a lavoura de demonstração já marcada (pacote 2, para os primeiros testes):
+ * `VITE_ABRIR_COM_DEMONSTRACAO`, ligado por padrão; só "false", "0" ou "nao" desligam. Com `lat`/`lon` na URL,
+ * vale o ponto da URL.
+ */
+export function opensWithDemo(value: string | undefined): boolean {
+  return !['false', '0', 'nao'].includes((value ?? '').trim().toLowerCase())
+}
+
+export const OPEN_WITH_DEMO = opensWithDemo(import.meta.env.VITE_ABRIR_COM_DEMONSTRACAO)
+
 /** O ponto está na área piloto (a borda conta)? A área vem de `GET /api/area-piloto`. */
 export function isInsideArea({ lat, lon }: Ponto, area: PilotArea): boolean {
   return lat >= area.min_lat && lat <= area.max_lat && lon >= area.min_lon && lon <= area.max_lon

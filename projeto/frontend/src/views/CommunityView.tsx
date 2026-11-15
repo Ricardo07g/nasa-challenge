@@ -1,11 +1,13 @@
 import { Link } from 'react-router'
+import type { ListenSummaryState } from '../controllers/useListenSummary'
+import { BackButton } from '../design-system/components/BackButton'
+import { ListenSummary } from '../design-system/components/ListenSummary'
 import { Button } from '../design-system/components/Button'
 import { Card } from '../design-system/components/Card'
 import { RainBarChart } from '../design-system/components/Charts'
 import { ChipGroup } from '../design-system/components/Choice'
 import { PageHeading } from '../design-system/components/Content'
 import { ErrorState } from '../design-system/components/Feedback'
-import { BackLink } from '../design-system/components/Navigation'
 import { ReportsMap, type ReportCell } from '../design-system/components/ReportsMap'
 import { SendIcon } from '../design-system/icons'
 import type { CommunityFormState } from '../controllers/useCommunityController'
@@ -25,6 +27,7 @@ import type {
   RainDraft,
   RegionSummary,
 } from '../services/communityService'
+import { seasonName } from '../services/seasonService'
 import { EventFields, PlantingFields, PrivacyNotice, RainFields, ReportBadges, SendResult } from './CommunityForms'
 import styles from './CommunityView.module.css'
 import { FlowLoading } from './FlowStates'
@@ -60,6 +63,8 @@ export type CommunityViewProps = {
   regionRadius: number | null
   regionDistance: number | null
   history: { idle: number; known: number; uncertain: number } | null
+  /** "Ouvir resumo" (regra geral 9 do pacote 2). */
+  listen: ListenSummaryState
 }
 
 /**
@@ -68,7 +73,7 @@ export type CommunityViewProps = {
  * livre e sem dado pessoal. O que a API não manda não aparece (decisão D2).
  */
 export function CommunityView(props: CommunityViewProps) {
-  const { t, backTo, status, region, regionStatus, regionRadius, regionDistance } = props
+  const { t, backTo, status, region, regionStatus, regionRadius, regionDistance, listen } = props
   const c = t.community
   const subtitle =
     region && regionRadius
@@ -80,8 +85,15 @@ export function CommunityView(props: CommunityViewProps) {
         : undefined
   return (
     <div className={layout.page}>
-      <BackLink to={backTo}>{t.nav.back}</BackLink>
+      <BackButton to={backTo}>{t.nav.back}</BackButton>
       <PageHeading title={c.title} subtitle={subtitle} />
+      <ListenSummary
+        supported={listen.supported}
+        speaking={listen.speaking}
+        onToggle={listen.toggle}
+        label={t.listen.summary}
+        stopLabel={t.listen.stop}
+      />
       {regionStatus === 'ready' && region && <SatelliteRegion {...props} region={region} />}
       {regionStatus === 'error' && (
         <ErrorState message={t.common.loadError} retryLabel={t.common.retry} onRetry={props.onRegionRetry} />
@@ -107,7 +119,7 @@ function SatelliteRegion({ t, region, history }: CommunityViewProps & { region: 
       <div className={layout.pageGrid}>
         <div className={layout.stack}>
           <Card tone="orange">
-            <p className={layout.bigStat}>{c.regionBig(region.last.ano, region.last.pct)}</p>
+            <p className={layout.bigStat}>{c.regionBig(seasonName(region.last.ano), region.last.pct)}</p>
           </Card>
           <p>
             {history
@@ -219,7 +231,7 @@ function Nearby({ t, lang, summary, markers, center, radiusKm }: CommunityViewPr
           {summary.planting && (
             <div className={styles.line}>
               <p>
-                {c.plantingLine(summary.planting.total, summary.planting.year, plantingList(t, summary.planting.crops))}{' '}
+                {c.plantingLine(summary.planting.total, seasonName(summary.planting.year), plantingList(t, summary.planting.crops))}{' '}
                 {c.wentWell(summary.planting.wentWell, summary.planting.total)}
               </p>
               <ReportBadges t={t} example={summary.planting.example} />
@@ -265,7 +277,7 @@ function describeMine(t: Messages, lang: Lang, report: RelatoComunidade): string
   const c = t.community
   if (report.tipo === 'plantio') {
     const crops = c.reportCrops as Record<string, string>
-    return c.myPlanting(crops[report.subtipo ?? ''] ?? String(report.subtipo), Number(report.valores.ano))
+    return c.myPlanting(crops[report.subtipo ?? ''] ?? String(report.subtipo), seasonName(Number(report.valores.ano)))
   }
   const date = report.data_fato ? formatDayMonth(lang, report.data_fato) : ''
   if (report.tipo === 'chuva') return c.myRain(Number(report.valores.mm), date)

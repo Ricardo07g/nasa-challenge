@@ -1,9 +1,10 @@
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Avisos, PontoAvisos } from '../models/avisos'
 import { ApiError } from '../repositories/httpClient'
 import { buildAvisos } from '../repositories/mocks/mockAvisos'
 import type { AvisosService } from '../services/avisosService'
+import type { SpeechService } from '../services/speechService'
 import { providers } from '../test/providers'
 import { useAvisosController } from './useAvisosController'
 
@@ -20,6 +21,45 @@ function deps(
   }
   return { avisos }
 }
+
+const speech = (): SpeechService => ({ isSupported: () => true, speak: vi.fn(), stop: vi.fn() })
+
+describe('useAvisosController: "Ouvir resumo" (regra geral 9 do pacote 2)', () => {
+  it('sem ponto: o que a tela faz, como marcar e os telefones de emergência', () => {
+    const d = { ...deps(), speech: speech() }
+    const { result } = renderHook(() => useAvisosController(d), { wrapper: providers('/avisos') })
+
+    act(() => result.current.listen.toggle())
+    expect(d.speech.speak).toHaveBeenCalledWith(
+      'Aqui aparecem os avisos de terra seca, calor e chuva da sua lavoura. Marque onde ela fica para ver os avisos, sem cadastro. Em emergência, ligue 193 para os bombeiros ou 199 para a Defesa Civil.',
+      'pt',
+      expect.any(Function),
+    )
+  })
+
+  it('com o ponto: o lugar e quantos avisos ativos, em pt e en', async () => {
+    const d = { ...deps(), speech: speech() }
+    const { result } = renderHook(() => useAvisosController(d), { wrapper: providers(FIELD) })
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+
+    act(() => result.current.listen.toggle())
+    expect(d.speech.speak).toHaveBeenCalledWith(
+      'Sua lavoura perto de Uberlândia (MG) tem 2 avisos ativos agora. Cada aviso diz o que o dado mostra e o que fazer. Em emergência, ligue 193 para os bombeiros ou 199 para a Defesa Civil.',
+      'pt',
+      expect.any(Function),
+    )
+
+    const english = { ...deps(), speech: speech() }
+    const en = renderHook(() => useAvisosController(english), { wrapper: providers(FIELD, 'en') })
+    await waitFor(() => expect(en.result.current.status).toBe('ready'))
+    act(() => en.result.current.listen.toggle())
+    expect(english.speech.speak).toHaveBeenCalledWith(
+      'Your field near Uberlândia (MG) has 2 active alerts now. Each alert says what the data shows and what to do. In an emergency, call 193 for the fire brigade or 199 for Civil Defense.',
+      'en',
+      expect.any(Function),
+    )
+  })
+})
 
 describe('useAvisosController (tela "Avisos")', () => {
   it('sem ponto na URL nem salvo no aparelho, pede para marcar a lavoura e não chama a API', () => {

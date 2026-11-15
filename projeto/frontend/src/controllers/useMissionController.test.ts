@@ -5,6 +5,7 @@ import type { Talhao } from '../models/talhao'
 import { ApiError } from '../repositories/httpClient'
 import type { FarmService } from '../services/farmService'
 import { providers } from '../test/providers'
+import type { SpeechService } from '../services/speechService'
 import { useMissionController } from './useMissionController'
 
 const flow = 'lat=-18.9543&lon=-48.1993&colheita=meio'
@@ -39,6 +40,26 @@ function deps(overrides: Partial<FarmService> = {}) {
 
 /** Avança o relógio falso e deixa as promessas resolverem. */
 const advance = (ms: number) => act(async () => void (await vi.advanceTimersByTimeAsync(ms)))
+
+const speech = (): SpeechService => ({ isSupported: () => true, speak: vi.fn(), stop: vi.fn() })
+
+describe('useMissionController: "Ouvir resumo" (regra geral 9 do pacote 2)', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('o lugar, os anos de chuva lidos e o que vem depois', async () => {
+    const d = { ...deps(), speech: speech() }
+    const { result } = renderHook(() => useMissionController(d), { wrapper: providers(`/calculando?${flow}`) })
+    await advance(0)
+
+    act(() => result.current.listen.toggle())
+    expect(d.speech.speak).toHaveBeenCalledWith(
+      `O satélite está lendo a sua lavoura, perto de Uberlândia (MG). Juntamos ${result.current.facts!.rainYears} anos de chuva, o solo e o verde da lavoura, em 6 partes. Quando terminar, você vê o raio-X da sua terra.`,
+      'pt',
+      expect.any(Function),
+    )
+  })
+})
 
 describe('useMissionController (tela de cálculo, RF-19)', () => {
   beforeEach(() => vi.useFakeTimers())

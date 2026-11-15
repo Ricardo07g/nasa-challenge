@@ -1,10 +1,12 @@
 import type { ComponentProps, ReactNode } from 'react'
+import type { GuideSlug } from '../content/guia/slugs'
 import { ChipGroup, DateField, MeasureField } from '../design-system/components/Choice'
-import { Link } from 'react-router'
+import { GuideLink } from '../design-system/components/GuideLink'
 import { ShieldIcon, UncertainIcon, WarningIcon } from '../design-system/icons'
 import type { Messages } from '../i18n/messages.pt'
 import { CULTURAS_RELATO, EVENTOS, MOTIVOS, RESULTADOS, type CulturaRelato } from '../models/community'
 import type { EventDraft, PlantingDraft, RainDraft, ReportErrorKind } from '../services/communityService'
+import { seasonName } from '../services/seasonService'
 import styles from './CommunityView.module.css'
 
 /**
@@ -52,7 +54,7 @@ export function PlantingFields({
       {years.length > 0 && (
         <QuestionChips
           label={c.yearLabel}
-          options={years.map((year) => ({ value: String(year), label: String(year) }))}
+          options={years.map((year) => ({ value: String(year), label: seasonName(year) }))}
           value={draft.year === null ? null : String(draft.year)}
           onChange={(year) => onChange({ year: year === null ? null : Number(year) })}
         />
@@ -99,9 +101,9 @@ export function RainFields({
 }
 
 /** Artigos do Guia ligados aos relatos de evento (tabela da seção 8 da remodelagem, tarefa 0049). */
-const EVENT_ARTICLES: Partial<Record<string, string>> = {
-  fogo: '/guia/fogo-na-palha',
-  enxurrada_erosao: '/guia/como-evitar-erosao',
+const EVENT_ARTICLES: Partial<Record<string, GuideSlug>> = {
+  fogo: 'fogo-na-palha',
+  enxurrada_erosao: 'como-evitar-erosao',
 }
 
 export function EventFields({
@@ -136,9 +138,9 @@ export function EventFields({
         </div>
       )}
       {draft.event && EVENT_ARTICLES[draft.event] && (
-        <Link to={EVENT_ARTICLES[draft.event]!} className={styles.hint}>
+        <GuideLink slug={EVENT_ARTICLES[draft.event]!} newTabLabel={t.common.newTab} className={styles.hint}>
           {c.learnMore(c.eventArticles[draft.event as keyof typeof c.eventArticles])}
-        </Link>
+        </GuideLink>
       )}
       <DateField label={c.dateLabel} value={draft.date} min={bounds.min} max={bounds.max} onChange={(date) => onChange({ date })} />
       <p className={styles.hint}>{c.dateHint}</p>

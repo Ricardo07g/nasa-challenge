@@ -12,6 +12,46 @@ export const en = {
     disclaimer: 'Helps you decide. It does not replace your agronomist.',
     ready: 'Done',
     close: 'Close',
+    newTab: '(opens in a new tab)',
+  },
+  seasons: {
+    colSeason: 'Season',
+    colSoy: 'Soybeans',
+    colAfter: 'After soybeans',
+    planted: 'Planted',
+    notPlanted: 'Did not plant',
+    afterQuestion: (months: string) => `${months}: what you planted`,
+    noSoyAfter: 'No soybeans that season: nothing to mark here.',
+    groupSoy: (season: string) => `Soybeans in the ${season} season`,
+    groupAfter: (season: string) => `After soybeans in the ${season} season`,
+    groupCurrent: (season: string) => `What you plan to plant after the ${season} soybeans`,
+    options: {
+      milho_safrinha: 'Corn alone',
+      milho_braquiaria: 'Corn with brachiaria',
+      sorgo: 'Sorghum',
+      milheto: 'Pearl millet',
+      crotalaria: 'Crotalaria',
+      pousio: 'Left it fallow',
+    },
+    fallowFuture: 'Leave it fallow',
+    notSure: 'Not sure yet',
+    satellitePlanted: 'satellite saw planting',
+    satelliteFallow: 'satellite saw the land fallow',
+    satelliteSoy: 'satellite saw soybeans',
+    satelliteNoSoy: 'satellite did not see soybeans',
+    green: (value: string) => `green ${value}`,
+    currentTag: 'current season',
+    soyPlanted: 'Soybeans planted',
+    harvestExpected: (date: string) => `harvest expected on ${date}`,
+    harvestExpectedEarly: (year: string) => `harvest expected in early ${year}`,
+    changeDate: 'Change date',
+    currentQuestion: (date: string, year: string) => `after harvest (${date}) until July ${year}: what you plan to plant`,
+    currentQuestionNoDate: (year: string) => `after harvest until July ${year}: what you plan to plant`,
+    missing: 'You did not fill in your last seasons.',
+    fillNow: 'Fill in now',
+    modalTitle: 'Your last seasons',
+    modalSubtitle: "What did you plant after soybeans? Skip what you don't remember.",
+    save: 'Save',
   },
   header: {
     home: 'Raiz Orbital, back to start',
@@ -149,6 +189,7 @@ export const en = {
     gpsError: 'We could not find your location. Tap the map or use the demo field.',
     useLocation: 'Use my current location',
     locating: 'Finding you…',
+    demoBadge: 'Good for testing',
     useDemo: 'Use the demo field',
     demoNear: 'Near Uberlândia (MG)',
     otherWays: 'Other ways to mark',
@@ -256,6 +297,10 @@ export const en = {
     soyContinue: 'Continue anyway',
   },
   mission: {
+    summary: (place: string | null, rainYears: number | null) =>
+      `The satellite is reading your field${place ? `, near ${place}` : ''}. ${
+        rainYears ? `We gather ${rainYears} years of rain, the soil and the green of the field, in 6 steps.` : 'We gather the rain, the soil and the green of the field, in 6 steps.'
+      } When it is done, you will see your soil X-ray.`,
     title: 'Mission: your field',
     intro: 'We are looking at your field from space',
     phases: [
@@ -819,12 +864,21 @@ export const en = {
       'Send your field location and say when you harvest soybeans. The bot replies in text and audio, with a link to this page. You can opt into low-rainfall and heat warnings. In Portuguese and English.',
   },
   community: {
+    summaryIntro: (km: number) => `Here you see what neighbors report, up to ${km} km from your field, and tell what happened there.`,
+    summaryPlanting: (count: number, season: string) =>
+      `${count} ${count === 1 ? 'neighbor said what they did' : 'neighbors said what they did'} after the ${season} soybeans.`,
+    summaryRain: (count: number, mm: string) =>
+      `In the last 7 days, ${count === 1 ? '1 rain report' : `${count} rain reports`}, with ${mm} mm on average.`,
+    summaryRegion: (season: string, pct: string) =>
+      `From the satellite, in the ${season} season, ${pct}% of the soybean area in the region was left idle after harvest.`,
+    summaryEmpty: 'There are no reports near you yet.',
+    summaryNote: 'Every report comes from a neighbor and is not confirmed.',
     title: 'In your region',
     regionSubtitle: (km: number) => `Within ${km} km of your field · seen by satellite`,
     regionSubtitleAway: (km: number, distance: number) =>
       `${km} km radius around a point ${distance} km from your field · seen by satellite`,
     regionPct: (pct: number) => `${pct}%`,
-    regionBig: (year: number, pct: number) => `In ${year}, ${pct}% of the soybean area was left idle after harvest.`,
+    regionBig: (season: string, pct: number) => `In the ${season} season, ${pct}% of the soybean area was left idle after harvest.`,
     regionCompare: (idle: number, known: number, uncertain: number, average: number) =>
       `Your field: idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}. In the region, on average ${average}% of the area stays idle.`,
     regionAverage: (average: number) => `In the region, on average ${average}% of the area stays idle after soybeans.`,
@@ -916,8 +970,8 @@ export const en = {
     unconfirmed: 'Neighbor report, not confirmed',
     example: 'Example',
     empty: 'There are no reports near you yet. Be the first to tell.',
-    plantingLine: (count: number, year: number, list: string) =>
-      `${count} ${count === 1 ? 'neighbor said what they did' : 'neighbors said what they did'} after soybeans in ${year}: ${list}.`,
+    plantingLine: (count: number, season: string, list: string) =>
+      `${count} ${count === 1 ? 'neighbor said what they did' : 'neighbors said what they did'} after the ${season} soybeans: ${list}.`,
     wentWell: (count: number, total: number) => `${count} of ${total} said it went well.`,
     rainLine: (average: number, count: number) =>
       `In the last 7 days, rain gauges showed ${average} mm on average (${count} ${count === 1 ? 'report' : 'reports'}).`,
@@ -925,7 +979,7 @@ export const en = {
     eventLine: (event: string, date: string) => `${event}, on ${date}`,
     mineTitle: 'Your reports',
     mineHint: 'Only this device can delete them.',
-    myPlanting: (crop: string, year: number) => `${crop}, ${year} season`,
+    myPlanting: (crop: string, season: string) => `${crop}, ${season} season`,
     myRain: (mm: number, date: string) => `${mm} mm of rain, on ${date}`,
     remove: 'Delete',
     removeLabel: (what: string) => `Delete the report: ${what}`,
@@ -947,6 +1001,13 @@ export const en = {
     shareSeeCommunity: 'See what neighbors report',
   },
   method: {
+    summaryRain: (years: number | null) =>
+      years
+        ? `The math uses ${years} years of satellite rain and heat, the soil and the green of the field, in 3 steps.`
+        : 'The math uses satellite rain and heat, the soil and the green of the field, in 3 steps.',
+    summaryWeights: (safety: string, future: string, soil: string, income: string) =>
+      `Each crop gets a score from 0 to 100: safety counts ${safety}%, future climate ${future}%, soil ${soil}% and income ${income}%.`,
+    summaryEnd: 'No number comes from artificial intelligence: these are fixed rules, with satellite data.',
     title: 'How the score is calculated',
     subtitle: "In three steps, plus what the satellite can't see.",
     step1: (years: string) => `We take the rain and heat of each year (${years}) at the point of your field.`,
@@ -1027,6 +1088,8 @@ export const en = {
     disclaimer: 'Decision support: check with your agronomist before buying seed.',
   },
   guide: {
+    summary: (count: number) =>
+      `The Guide has ${count} short articles on crops, planting, soil, climate and safety. Search by title or tap an article to read it. The crop and planting ones are still drafts, to be reviewed by the agronomist.`,
     title: 'Guide',
     subtitle: 'Short answers to the most common questions from the field.',
     mvpArea:
@@ -1068,12 +1131,24 @@ export const en = {
     apiMode: (mode: string) => `Data mode: ${mode}`,
     backendStatus: (status: string) => `Backend: ${status}`,
     cropOptions: 'Off-season options (real API)',
+    package2: 'Package 2: shared pieces',
+    package2Guide: 'Learn more: crop rotation',
+    package2Large: 'Open the large modal',
+    package2LargeText: 'Almost the whole screen, with a 24 px border around it (8 px on phones). For "see details" with charts.',
     sampleText: 'NASA satellites look at many years of rain on your field.',
     plantPhotos: 'Plant photos',
     photoFallback: 'If the photo does not load',
   },
   // "Alerts" screen (section 6 of the redesign, backend task 0046, RF-31)
   alerts: {
+    summaryNoPoint:
+      'Here you see the dry soil, heat and rain alerts for your field. Mark where it is to see the alerts, with no sign-up. In an emergency, call 193 for the fire brigade or 199 for Civil Defense.',
+    summary: (place: string, count: number | null) =>
+      `${
+        count === null
+          ? `These are the alerts for your field near ${place}.`
+          : `Your field near ${place} has ${count === 0 ? 'no active alerts' : count === 1 ? '1 active alert' : `${count} active alerts`} now.`
+      } Each alert says what the data shows and what to do. In an emergency, call 193 for the fire brigade or 199 for Civil Defense.`,
     title: 'Alerts',
     subtitle: 'For the field marked on this device. Alerts show up when you open the app.',
     headerLabel: 'Alerts',
