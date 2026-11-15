@@ -5,6 +5,7 @@ from typing import Annotated, Final, Literal
 from fastapi import APIRouter, Depends, Header, Query, Response
 
 from app.constants import EXAMPLE_FARM_LAT, EXAMPLE_FARM_LON
+from app.controllers.http_cache import revalidated_json_response
 from app.dependencies import get_recommendation_service, get_talhao_service
 from app.schemas.recomendacao import ExemploResponse, RecomendacaoResponse
 from app.schemas.talhao import TalhaoResponse
@@ -13,9 +14,8 @@ from app.services.talhao_service import TalhaoService
 
 router = APIRouter(tags=["recomendacao"])
 
-# Plano técnico §8: a recomendação só muda quando o pipeline roda, então o navegador e a CDN podem
-# guardar a resposta por um dia. Os textos dependem do idioma, por isso o Vary.
-RECOMMENDATION_CACHE_CONTROL: Final[str] = "public, max-age=86400"
+# Tarefa 0025 (ajusta o plano técnico §8): o navegador guarda a resposta, mas revalida pelo ETag
+# (`http_cache.py`). Os textos dependem do idioma, por isso o Vary.
 RECOMMENDATION_VARY: Final[str] = "Accept-Language"
 
 RecService = Annotated[RecommendationService, Depends(get_recommendation_service)]
@@ -37,13 +37,13 @@ def get_recomendacao(
     lat: Annotated[float, Query(ge=-90.0, le=90.0)],
     lon: Annotated[float, Query(ge=-180.0, le=180.0)],
     service: RecService,
-    response: Response,
     colheita: Annotated[Colheita, Query()] = "meio",
     solo: Annotated[Textura | None, Query()] = None,
     nematoide: Annotated[SimNao | None, Query()] = None,
     gado: Annotated[SimNao | None, Query()] = None,
     accept_language: Annotated[str, Header(alias="Accept-Language")] = "pt-BR",
-) -> RecomendacaoResponse:
+    if_none_match: Annotated[str | None, Header(alias="If-None-Match")] = None,
+) -> Response:
     rec = service.recommend(
         lat=lat,
         lon=lon,
@@ -53,10 +53,9 @@ def get_recomendacao(
         gado=_sim_nao(gado),
         lang=accept_language,
     )
-    # Só chega aqui com sucesso: erro de domínio ou de validação sai sem cache.
-    response.headers["Cache-Control"] = RECOMMENDATION_CACHE_CONTROL
-    response.headers["Vary"] = RECOMMENDATION_VARY
-    return RecomendacaoResponse.from_model(rec)
+    # Só chega aqui com sucesso: erro de domínio ou de validação sai sem cache nem ETag.
+    body = RecomendacaoResponse.from_model(rec).model_dump_json(by_alias=True).encode()
+    return revalidated_json_response(body, if_none_match=if_none_match, vary=RECOMMENDATION_VARY)
 
 
 @router.get("/exemplo", response_model=ExemploResponse)

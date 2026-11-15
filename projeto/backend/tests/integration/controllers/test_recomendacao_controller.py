@@ -2,7 +2,9 @@
 
 from dataclasses import replace
 from datetime import date
+from hashlib import sha256
 
+import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
@@ -11,17 +13,24 @@ from app.dependencies import (
     get_ndvi_repository,
     get_rules_repository,
     get_seasonal_forecast_repository,
+    get_soil_repository,
 )
 from app.main import app
 from app.models.regras import Regras
 from app.models.sinal_outono import SeasonalForecast
-from app.models.talhao import NdviRecord
+from app.models.talhao import NdviRecord, SoloInfo
 from app.repositories.rules_repository import load_default_rules
+from app.repositories.soil_repository import DEFAULT_SOIL
 
 UFU = {"lat": -18.9543, "lon": -48.1993}
-# Plano técnico §8: os dados só mudam quando o pipeline roda, então o navegador e a CDN podem
-# guardar a resposta por um dia.
-ONE_DAY_PUBLIC_CACHE = "public, max-age=86400"
+# Tarefa 0025 (ajusta o plano técnico §8): o navegador pode guardar a resposta, mas pergunta à API
+# toda vez se ela mudou (ETag). Com o max-age de um dia, o dado carregado depois no banco ficava
+# velho no navegador.
+ALWAYS_REVALIDATE = "public, no-cache"
+
+
+def _vary(response: httpx2.Response) -> set[str]:
+    return {token.strip() for token in response.headers["vary"].split(",")}
 
 
 class FakeRulesRepository:
@@ -166,25 +175,112 @@ def test_should_list_every_invalid_field_in_the_problem_json(client: TestClient)
     assert body["detail"].startswith("Parâmetros inválidos: ")
 
 
-def test_should_send_one_day_public_cache_header_when_recommendation_succeeds(
+def test_should_let_the_browser_store_the_recommendation_but_always_revalidate(
     client: TestClient,
 ) -> None:
     response = client.get("/api/recomendacao", params={**UFU, "colheita": "meio"})
 
     assert response.status_code == 200
-    assert response.headers["cache-control"] == ONE_DAY_PUBLIC_CACHE
+    assert response.headers["cache-control"] == ALWAYS_REVALIDATE
+    # ETag forte: SHA-256 do corpo JSON, 32 primeiros dígitos hexadecimais, entre aspas.
+    assert response.headers["etag"] == f'"{sha256(response.content).hexdigest()[:32]}"'
     # Os textos mudam com o idioma: um cache público não pode servir pt a quem pediu en.
-    assert "Accept-Language" in response.headers["vary"]
+    assert "Accept-Language" in _vary(response)
+
+
+def test_should_answer_304_without_body_when_the_browser_already_has_the_current_version(
+    client: TestClient,
+) -> None:
+    params = {**UFU, "colheita": "meio"}
+    first = client.get("/api/recomendacao", params=params)
+
+    again = client.get(
+        "/api/recomendacao", params=params, headers={"If-None-Match": first.headers["etag"]}
+    )
+
+    assert again.status_code == 304
+    assert again.content == b""
+    assert again.headers["etag"] == first.headers["etag"]
+    assert again.headers["cache-control"] == ALWAYS_REVALIDATE
+    # RFC 9110 §15.4.5: o 304 leva o mesmo Vary que o 200 levaria (com o Accept-Encoding do GZip).
+    assert _vary(again) == _vary(first)
+
+
+@pytest.mark.parametrize("if_none_match", ["W/{etag}", '"outra-versao", {etag}', "*"])
+def test_should_compare_if_none_match_the_way_browsers_and_proxies_send_it(
+    client: TestClient, if_none_match: str
+) -> None:
+    # RFC 9110 §13.1.2: comparação fraca (um proxy que comprime pode trocar por W/), lista e "*".
+    params = {**UFU, "colheita": "meio"}
+    etag = client.get("/api/recomendacao", params=params).headers["etag"]
+
+    again = client.get(
+        "/api/recomendacao",
+        params=params,
+        headers={"If-None-Match": if_none_match.format(etag=etag)},
+    )
+
+    assert again.status_code == 304
+
+
+class StaleSoilRepository:
+    """Solo antes de o time carregar o SoilGrids: textura média padrão."""
+
+    def get_soil(self, lat: float, lon: float) -> SoloInfo:
+        return DEFAULT_SOIL
+
+
+def test_should_send_the_new_body_when_the_data_changed_after_the_browser_stored_it(
+    client: TestClient,
+) -> None:
+    # O caso real: o navegador guardou a resposta com o solo padrão e depois o solo entrou no banco.
+    params = {**UFU, "colheita": "meio"}
+    loaded_soil = app.dependency_overrides[get_soil_repository]
+    app.dependency_overrides[get_soil_repository] = StaleSoilRepository
+    stale = client.get("/api/recomendacao", params=params)
+    app.dependency_overrides[get_soil_repository] = loaded_soil
+
+    fresh = client.get(
+        "/api/recomendacao", params=params, headers={"If-None-Match": stale.headers["etag"]}
+    )
+
+    assert stale.json()["entrada"]["solo"] == "medio"
+    assert fresh.status_code == 200
+    assert fresh.json()["entrada"]["solo"] == "argiloso"
+    assert fresh.headers["etag"] != stale.headers["etag"]
+
+
+def test_should_send_a_different_etag_for_each_language(client: TestClient) -> None:
+    params = {**UFU, "colheita": "meio"}
+    pt = client.get("/api/recomendacao", params=params, headers={"Accept-Language": "pt-BR"})
+
+    en = client.get(
+        "/api/recomendacao",
+        params=params,
+        headers={"Accept-Language": "en", "If-None-Match": pt.headers["etag"]},
+    )
+
+    assert pt.status_code == 200
+    # A versão em português não serve a quem pediu inglês: vem o corpo em inglês.
+    assert en.status_code == 200
+    assert en.headers["etag"] != pt.headers["etag"]
 
 
 def test_should_not_cache_errors(client: TestClient) -> None:
-    outside = client.get("/api/recomendacao", params={"lat": -23.55, "lon": -46.63})
-    invalid = client.get("/api/recomendacao", params={**UFU, "colheita": "invalida"})
+    # Nem com If-None-Match o erro vira 304.
+    revalidate = {"If-None-Match": "*"}
+    outside = client.get(
+        "/api/recomendacao", params={"lat": -23.55, "lon": -46.63}, headers=revalidate
+    )
+    invalid = client.get(
+        "/api/recomendacao", params={**UFU, "colheita": "invalida"}, headers=revalidate
+    )
 
     assert outside.status_code == 404
     assert invalid.status_code == 422
-    assert "cache-control" not in outside.headers
-    assert "cache-control" not in invalid.headers
+    for response in (outside, invalid):
+        assert "cache-control" not in response.headers
+        assert "etag" not in response.headers
 
 
 def test_should_return_example_farm_at_ufu_point_when_get_exemplo_called(
