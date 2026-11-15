@@ -418,6 +418,30 @@ class RegrasGeadaSugestao:
 
 
 @dataclass(frozen=True)
+class RegrasPlanoB:
+    """Quando o limite de chuva do Plano B "separa bem" os anos bons dos ruins (tarefa 0045).
+
+    "Secou" = chuva dos `dias_antes_semeadura` dias antes da semeadura abaixo do limite. O número só
+    aparece com `anos_falha_min` anos de falha ou mais, pegando `sensibilidade_min_pct`% das falhas,
+    com `precisao_min_pct`% dos anos marcados sendo de falha e chance ao acaso de até
+    `chance_max_pct`%.
+    """
+
+    dias_antes_semeadura: int
+    anos_falha_min: int
+    sensibilidade_min_pct: float
+    precisao_min_pct: float
+    chance_max_pct: float
+
+
+@dataclass(frozen=True)
+class RegrasChuvaAproveitada:
+    """Fim ("MM-DD") da janela da chuva aproveitada, que começa na semeadura (tarefa 0045)."""
+
+    fim: str
+
+
+@dataclass(frozen=True)
 class Regras:
     """Todas as regras do motor, versão 0 (PRD 7)."""
 
@@ -449,3 +473,5 @@ class Regras:
     enso_acerto: RegrasEnsoAcerto
     clima_futuro_sugestao: RegrasClimaFuturoSugestao
     geada_sugestao: RegrasGeadaSugestao
+    plano_b: RegrasPlanoB
+    chuva_aproveitada: RegrasChuvaAproveitada

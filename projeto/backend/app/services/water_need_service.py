@@ -67,6 +67,7 @@ class WaterNeedService:
             cad_mm=round(cad_mm),
             anos=len(resultados),
             futuro=self._future(falta_normal, futuro_por_modelo or {}),
+            usa_mm=round(median(r.etr_mm for r in resultados)),
         )
 
     @staticmethod
