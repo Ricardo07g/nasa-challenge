@@ -223,13 +223,16 @@ class ObjetivoResultado:
 
     `ordem`: as opções na janela, da melhor para a pior no objetivo; depois, as fora do prazo do
     ZARC, na mesma regra (tarefa 0056). `plano`: os 3 anos (só culturas no prazo), começando
-    pela 1ª da ordem (`RotationPlanService.best_plan_starting_with`). `nota_plano`: a nota do plano
-    pela regra do PRD 7.7 (média das notas finais + diversidade), comparável entre os objetivos.
+    pela 1ª da ordem, pela sugestão em cadeia (`PlanSuggestionService`, a mesma regra do
+    `/api/plano/sugestao`, tarefa 0065). `nota_plano`: a nota do plano pela regra do PRD 7.7
+    (média das notas finais + diversidade), comparável entre os objetivos. `motivos`: o porquê de
+    cada ano, na ordem do `plano` (None no 1º ano, que não é sugerido).
     """
 
     ordem: tuple[str, ...]
     plano: tuple[str, ...]
     nota_plano: float
+    motivos: tuple[str | None, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -242,11 +245,16 @@ class Alternativa:
 
 @dataclass(frozen=True)
 class PlanoRotacao:
-    """3-year off-season crop sequence evaluation."""
+    """3-year off-season crop sequence evaluation.
+
+    `motivos` (tarefa 0065): só no Plano A, o porquê de cada ano da sugestão em cadeia (None no 1º
+    ano); None no Plano B e na sequência de hoje.
+    """
 
     anos: tuple[str, ...]
     nota: float
     descricao: str
+    motivos: tuple[str | None, ...] | None = None
 
 
 @dataclass(frozen=True)

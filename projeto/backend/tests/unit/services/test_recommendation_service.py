@@ -1157,6 +1157,47 @@ def test_should_start_plan_a_with_the_best_option() -> None:
     assert rec.plano_normal.anos == rec.objetivos["equilibrio"].plano
 
 
+@pytest.mark.parametrize("colheita", ["cedo", "meio", "tarde"])
+def test_should_build_plan_a_and_the_objective_plans_with_the_chain_rules(colheita: str) -> None:
+    # Tarefa 0065: uma regra só para o plano. O Plano A e o plano de cada objetivo saem da mesma
+    # sugestão em cadeia do /api/plano/sugestao (1º ano fixo = a 1ª da ordem, os pontos do grupo
+    # `plano_cadeia`), com o porquê de cada ano sugerido. Antes, sem a cadeia, o Plano A da
+    # lavoura de teste repetia o milho com braquiária nos 3 anos.
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita=colheita)
+    plan = RotationPlanService()
+    eixos = {
+        "equilibrio": None,
+        "seguranca": lambda n: n.seguranca,
+        "renda": lambda n: n.renda,
+        "terra": lambda n: n.solo,
+    }
+
+    for chave, eixo in eixos.items():
+        objetivo = rec.objetivos[chave]
+        assert objetivo.plano == plan.best_plan_with_prefix(
+            (objetivo.ordem[0],),
+            list(rec.opcoes),
+            rec.notas_pousio,  # type: ignore[arg-type]
+            axis=eixo,
+            allow_fallow=eixo is None,
+            chain=True,
+        )
+        assert objetivo.motivos[0] is None
+        assert all(isinstance(m, str) and m for m in objetivo.motivos[1:])
+    assert rec.plano_normal.anos == rec.objetivos["equilibrio"].plano
+    assert rec.plano_normal.motivos == rec.objetivos["equilibrio"].motivos
+    # O Plano B (ano seco) e a sequência de hoje não têm o porquê
+    assert rec.plano_seco.motivos is None and rec.plano_hoje.motivos is None
+
+
+def test_should_write_the_reason_of_plan_a_in_the_language_of_the_request() -> None:
+    pt = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    en = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="en")
+
+    assert pt.plano_normal.anos == en.plano_normal.anos
+    assert pt.plano_normal.motivos != en.plano_normal.motivos
+
+
 class UnevenAutumnClimateRepository(FakeClimateRepository):
     """Março chove muito mais que abril e maio, e 2010 tem uma noite de 2 °C em junho.
 
@@ -1327,7 +1368,11 @@ def test_should_not_change_the_numbers_of_the_crops_in_the_window() -> None:
 
     assert todas.opcoes == so_no_prazo.opcoes
     assert (todas.melhor, todas.alternativas) == (so_no_prazo.melhor, so_no_prazo.alternativas)
-    assert todas.plano_normal == so_no_prazo.plano_normal
+    # O porquê pode citar a cultura que passou do prazo (tarefa 0065); o plano e a nota, não.
+    assert (todas.plano_normal.anos, todas.plano_normal.nota) == (
+        so_no_prazo.plano_normal.anos,
+        so_no_prazo.plano_normal.nota,
+    )
     assert {k: o.plano for k, o in todas.objetivos.items()} == {
         k: o.plano for k, o in so_no_prazo.objetivos.items()
     }

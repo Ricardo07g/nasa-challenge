@@ -12,7 +12,7 @@ cultura fora dele ganharia aquele ano), variar a função; sem nenhuma, a melhor
 pela agrônoma.
 """
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from app.constants import ROTATION_HORIZON_YEARS
 from app.models.plano import AnoSugerido
@@ -57,11 +57,16 @@ class PlanSuggestionService:
         pousio: NotasOpcao,
         nematoide: bool | None = None,
         lang: str = "pt-BR",
+        axis: Callable[[NotasOpcao], float] | None = None,
+        allow_fallow: bool = True,
     ) -> tuple[AnoSugerido, ...]:
         """Os 3 anos: os `fixos` (1 ou 2) e os sugeridos, só com as `opcoes` no prazo e o pousio.
 
         `fora_do_prazo`: as culturas fora do prazo do ZARC, avaliadas pelo motor; não são
         sugeridas, mas dizem se o prazo pesou na escolha de um ano.
+        `axis` e `allow_fallow`: o plano de um objetivo do produtor (tarefa 0065), com a nota do
+        eixo do objetivo e sem o pousio; sem eles, o plano em cadeia do PRD 7.7 (nota final, com o
+        pousio), o mesmo do Plano A do `/recomendacao`.
 
         Raises:
             ValidationDomainError: sem 1 ou 2 anos fixos.
@@ -72,12 +77,24 @@ class PlanSuggestionService:
             )
         plan = self._plan_service
         seq = plan.best_plan_with_prefix(
-            fixos, list(opcoes), pousio, nematoide=nematoide, chain=True
+            fixos,
+            list(opcoes),
+            pousio,
+            axis=axis,
+            nematoide=nematoide,
+            allow_fallow=allow_fallow,
+            chain=True,
         )
         # A mesma conta sem o prazo do ZARC, para saber se ele pesou em algum ano
         free = (
             plan.best_plan_with_prefix(
-                fixos, [*opcoes, *fora_do_prazo], pousio, nematoide=nematoide, chain=True
+                fixos,
+                [*opcoes, *fora_do_prazo],
+                pousio,
+                axis=axis,
+                nematoide=nematoide,
+                allow_fallow=allow_fallow,
+                chain=True,
             )
             if fora_do_prazo
             else seq

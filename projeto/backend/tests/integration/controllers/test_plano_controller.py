@@ -189,6 +189,25 @@ def test_should_suggest_the_next_years_with_the_reason_and_evaluate_the_plan(
     assert body == avaliado
 
 
+@pytest.mark.parametrize("colheita", ["cedo", "meio", "tarde"])
+def test_should_give_plan_a_the_same_plan_as_the_chain_suggestion_with_its_first_year(
+    client: TestClient, colheita: str
+) -> None:
+    # Tarefa 0065: uma regra só. O Plano A do /recomendacao (e o plano do equilíbrio) é o plano do
+    # /api/plano/sugestao com o mesmo 1º ano e a mesma faixa, com o mesmo porquê de cada ano.
+    params = {**UFU, "colheita": colheita}
+    rec = client.get("/api/recomendacao", params=params).json()
+    plano_a = rec["plano_3_anos"]["normal"]
+
+    sugestao = client.get("/api/plano/sugestao", params={**params, "fixos": plano_a["anos"][0]})
+
+    anos = sugestao.json()["anos"]
+    assert plano_a["anos"] == [a["cultura"] for a in anos]
+    assert plano_a["motivos"] == [a["motivo"] for a in anos]
+    equilibrio = rec["objetivos"]["equilibrio"]
+    assert (equilibrio["plano"], equilibrio["motivos"]) == (plano_a["anos"], plano_a["motivos"])
+
+
 def test_should_write_the_reason_in_the_language_of_accept_language(client: TestClient) -> None:
     params = {**UFU, "fixos": "sorgo,pousio"}
 
