@@ -1,34 +1,86 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
+import type { CommunityFormState } from '../controllers/useCommunityController'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
-import { buildCommunity } from '../repositories/mocks/fixtures'
+import type { RelatoComunidade } from '../models/community'
 import { createMockRegionRepository } from '../repositories/mocks/mockRepositories'
-import { regionPoints, regionSummary } from '../services/communityService'
+import { cellMarkers, nearbySummary, regionSummary } from '../services/communityService'
 import { CommunityView, type CommunityViewProps } from './CommunityView'
 
 const center = { lat: -18.9543, lon: -48.1993 }
 const region = regionSummary(await createMockRegionRepository(0).get(center, 'pt'))
+const TODAY = '2026-11-15'
 
-function setup(overrides: Partial<CommunityViewProps> = {}) {
+function relato(changes: Partial<RelatoComunidade>): RelatoComunidade {
+  return {
+    id: 'r1',
+    tipo: 'chuva',
+    subtipo: null,
+    valores: { mm: 20 },
+    celula: '-190_-482',
+    lat: -18.95,
+    lon: -48.15,
+    data_fato: TODAY,
+    meu: false,
+    ...changes,
+  }
+}
+
+const RELATOS: RelatoComunidade[] = [
+  relato({ id: 'c1', valores: { mm: 20 } }),
+  relato({ id: 'c2', valores: { mm: 11 }, data_fato: '2026-11-12' }),
+  relato({ id: 'e1', tipo: 'evento', subtipo: 'granizo', valores: {}, data_fato: '2026-11-10' }),
+  relato({ id: 'e2', tipo: 'evento', subtipo: 'fogo', valores: {}, data_fato: '2026-11-14', meu: true }),
+  relato({ id: 'p1', tipo: 'plantio', subtipo: 'milheto', valores: { ano: 2026, resultado: 'bem' }, data_fato: null }),
+  relato({ id: 'p2', tipo: 'plantio', subtipo: 'milheto', valores: { ano: 2026, resultado: 'perdi', motivo: 'seca' }, data_fato: null }),
+  relato({ id: 'p3', tipo: 'plantio', subtipo: 'pousio', valores: { ano: 2026 }, data_fato: null, meu: true }),
+]
+
+const FORM: CommunityFormState = {
+  open: null,
+  planting: { crop: null, year: 2026, outcome: null, reason: null },
+  rain: { mm: '', date: TODAY },
+  event: { event: null, date: TODAY },
+  bounds: { min: '2026-10-16', max: TODAY },
+  ready: false,
+  sending: false,
+  result: null,
+  showNotice: true,
+  fireCall: false,
+}
+
+function setup(overrides: Partial<CommunityViewProps> = {}, form: Partial<CommunityFormState> = {}) {
+  const data = { raio_km: 30, anos_safra: [2024, 2025, 2026], relatos: RELATOS }
   const props: CommunityViewProps = {
     t: pt,
+    lang: 'pt',
     backTo: '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
+    center,
+    radiusKm: 30,
     status: 'ready',
     onRetry: vi.fn(),
-    community: buildCommunity('pt'),
-    center,
-    points: regionPoints(center),
-    demo: null,
-    onDemo: vi.fn(),
-    region,
-    regionStatus: 'ready',
+    summary: nearbySummary(data, TODAY),
+    markers: cellMarkers(RELATOS),
+    canTell: true,
+    markTo: '/onde',
+    years: [2024, 2025, 2026],
+    form: { ...FORM, ...form },
+    onOpenForm: vi.fn(),
+    onPlanting: vi.fn(),
+    onRain: vi.fn(),
+    onEvent: vi.fn(),
+    onSend: vi.fn(),
+    onRemove: vi.fn(),
+    removing: null,
+    region: null,
+    regionStatus: 'outside',
     onRegionRetry: vi.fn(),
-    regionRadius: 30,
+    regionRadius: null,
     regionDistance: null,
-    history: { idle: 5, known: 9, uncertain: 1 },
+    history: null,
     ...overrides,
   }
   render(
@@ -39,209 +91,226 @@ function setup(overrides: Partial<CommunityViewProps> = {}) {
   return props
 }
 
-describe('CommunityView (tela 8)', () => {
-  it('no fim da tela, um link para o Guia', () => {
-    setup()
-    expect(screen.getByRole('link', { name: 'Guia: dúvidas e respostas curtas' })).toHaveAttribute('href', '/guia')
-  })
-
-  it('região pelo satélite: o último ano em destaque, a comparação e o gráfico ano a ano (P3)', () => {
+describe('CommunityView ("Na sua região": contar e ver a redondeza)', () => {
+  it('título, subtítulo dos relatos, o Voltar e o link para o Guia no fim', () => {
     setup()
 
     expect(screen.getByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
-    expect(screen.getByText('Até 30 km da sua lavoura · visto pelo satélite')).toBeInTheDocument()
-    expect(screen.getByText('Em 2025, 62% da área de soja ficou parada depois da colheita.')).toBeInTheDocument()
-    expect(
-      screen.getByText('Sua área: parada em 5 de 9 anos (1 sem certeza). Na região, em média 65% da área fica parada.'),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: '% da área de soja parada depois da colheita, ano a ano.' })).toHaveTextContent(
-      '62%',
-    )
-    expect(screen.getByText(/Em 9% da área o satélite não conseguiu dizer/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
-      'href',
-      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
-    )
+    expect(screen.getByText('O que os vizinhos contam, até 30 km da sua lavoura')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute('href', '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
+    expect(screen.getByRole('link', { name: 'Guia: dúvidas e respostas curtas' })).toHaveAttribute('href', '/guia')
   })
 
-  it('círculo centrado longe da lavoura: o subtítulo diz o raio e a que distância fica o centro', () => {
-    setup({ regionDistance: 12.3 })
-
-    expect(
-      screen.getByText('Raio de 30 km em volta de um ponto a 12,3 km da sua lavoura · visto pelo satélite'),
-    ).toBeInTheDocument()
-    expect(screen.queryByText('Até 30 km da sua lavoura · visto pelo satélite')).not.toBeInTheDocument()
-  })
-
-  it('o subtítulo e as frases da região em inglês', () => {
-    setup({ t: en, community: buildCommunity('en'), regionDistance: 12.3 })
-
-    expect(screen.getByText('30 km radius around a point 12.3 km from your field · seen by satellite')).toBeInTheDocument()
-    expect(screen.getByText('In 2025, 62% of the soybean area was left idle after harvest.')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: '% of the soybean area left idle after harvest, year by year.' })).toBeInTheDocument()
-  })
-
-  it('ponto fora das regiões medidas: o bloco da região não aparece (sem aviso, sem erro)', () => {
-    setup({ region: null, regionStatus: 'outside', regionRadius: null })
-
-    expect(screen.queryByRole('region', { name: 'Área parada na região, pelo satélite' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/ainda não mediu/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Tentar de novo' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/visto pelo satélite/)).not.toBeInTheDocument()
-    // a comunidade continua na tela
-    expect(screen.getByRole('heading', { name: 'Na sua região' })).toBeInTheDocument()
-  })
-
-  it('ponto fora das regiões medidas, em inglês: também sem o bloco', () => {
-    setup({ t: en, community: buildCommunity('en'), region: null, regionStatus: 'outside', regionRadius: null })
-
-    expect(screen.queryByRole('region', { name: 'Idle cropland in the region, by satellite' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/has not measured/i)).not.toBeInTheDocument()
-  })
-
-  it('porcentagens com casa decimal saem com vírgula em português e com ponto em inglês', () => {
-    const decimal = { last: { ano: 2025, pct: 0.8 }, average: 1.5, uncertain: 2.3, bars: [{ ano: 2025, pct: 0.8 }] }
-    setup({ region: decimal, history: null })
-
-    expect(screen.getByText('Em 2025, 0,8% da área de soja ficou parada depois da colheita.')).toBeInTheDocument()
-    expect(screen.getByText(/Na região, em média 1,5% da área fica parada/)).toBeInTheDocument()
-    expect(screen.getByText(/Em 2,3% da área o satélite não conseguiu dizer/)).toBeInTheDocument()
-    expect(screen.getByText('0,8%')).toBeInTheDocument()
-    expect(screen.queryByText(/0\.8%/)).not.toBeInTheDocument()
-    cleanup()
-
-    setup({ t: en, community: buildCommunity('en'), region: decimal, history: null })
-    expect(screen.getByText('In 2025, 0.8% of the soybean area was left idle after harvest.')).toBeInTheDocument()
-  })
-
-  it('a comunidade vem embaixo, marcada como ilustrativa, com quantos participam', () => {
-    setup()
-
-    const community = screen.getByRole('region', { name: 'O que os vizinhos contam' })
-    expect(community).toHaveTextContent('Valores ilustrativos')
-    expect(community).toHaveTextContent('Até 30 km de Uberlândia · 18 produtores participando')
-  })
-
-  it('sem ano sem certeza na lavoura, a comparação fica sem o parêntese', () => {
-    setup({ history: { idle: 5, known: 10, uncertain: 0 } })
-
-    expect(screen.getByText('Sua área: parada em 5 de 10 anos. Na região, em média 65% da área fica parada.')).toBeInTheDocument()
-  })
-
-  it('sem a região na API, o bloco do satélite não aparece (decisão D2) e a comunidade continua', () => {
-    setup({ region: null, regionStatus: 'not-connected', regionRadius: null })
-
-    expect(screen.queryByText(/da área de soja ficou parada/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Área parada na região, pelo satélite' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'O que os vizinhos contam' })).toBeInTheDocument()
-  })
-
-  it('se a região falhar por outro motivo, dá para tentar de novo', async () => {
-    const props = setup({ region: null, regionStatus: 'error', regionRadius: null, status: 'not-connected', community: null })
-
-    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
-    expect(props.onRegionRetry).toHaveBeenCalled()
-  })
-
-  it('comunidade ainda não conectada (API real): os blocos não aparecem, sem vizinho simulado (decisão D2)', () => {
-    setup({ status: 'not-connected', community: null, points: [] })
-
-    expect(screen.queryByRole('region', { name: 'O que os vizinhos contam' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Choveu aqui' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
-    expect(screen.queryByText('Valores ilustrativos')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Contar como foi a minha' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Registrar a chuva de hoje' })).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('region', { name: 'Mapa da região com pluviômetros e o que cada vizinho plantou' }),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText(/mm · satélite/)).not.toBeInTheDocument()
-  })
-
-  it('comunidade e região ainda não conectadas, em inglês: nada de "Not connected yet"', () => {
-    setup({ t: en, status: 'not-connected', community: null, region: null, regionStatus: 'not-connected', regionRadius: null })
-
-    expect(screen.queryByRole('region', { name: 'Idle cropland in the region, by satellite' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'It rained here' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Not connected yet/)).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
-  })
-
-  it('o que os vizinhos plantaram: uma linha por opção, com as bolinhas', () => {
-    setup()
-
-    const neighbors = screen.getByRole('region', { name: 'O que os vizinhos plantaram depois da soja em 2026' })
-    expect(within(neighbors).getByText('Milho safrinha')).toBeInTheDocument()
-    expect(within(neighbors).getByText('3 de 6 gostaram')).toBeInTheDocument()
-    expect(within(neighbors).getByText('1 de 1 gostou')).toBeInTheDocument()
-    expect(within(neighbors).getAllByRole('img')).toHaveLength(5)
-  })
-
-  it('mapa da região e "Choveu aqui" com o pluviômetro ao lado do satélite', () => {
-    setup()
-
-    expect(
-      screen.getByRole('region', { name: 'Mapa da região com pluviômetros e o que cada vizinho plantou' }),
-    ).toBeInTheDocument()
-    const rain = screen.getByRole('region', { name: 'Choveu aqui' })
-    expect(rain).toHaveTextContent('A 6 km, ao norte')
-    expect(rain).toHaveTextContent('32 mm · satélite 24 mm')
-    expect(screen.getByText(/nunca a posição exata das fazendas/)).toBeInTheDocument()
-  })
-
-  it('os botões avisam o controller', async () => {
+  it('contar: três relatos, cada um num botão', async () => {
     const props = setup()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Contar como foi a minha' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Registrar a chuva de hoje' }))
+    const tell = screen.getByRole('group', { name: 'Conte o que aconteceu aí' })
+    await userEvent.click(within(tell).getByRole('button', { name: 'O que plantei depois da soja' }))
+    await userEvent.click(within(tell).getByRole('button', { name: 'Choveu aqui' }))
+    await userEvent.click(within(tell).getByRole('button', { name: 'Aconteceu aqui' }))
 
-    expect(props.onDemo).toHaveBeenNthCalledWith(1, 'tell')
-    expect(props.onDemo).toHaveBeenNthCalledWith(2, 'rain')
+    expect(props.onOpenForm).toHaveBeenNthCalledWith(1, 'plantio')
+    expect(props.onOpenForm).toHaveBeenNthCalledWith(2, 'chuva')
+    expect(props.onOpenForm).toHaveBeenNthCalledWith(3, 'evento')
   })
 
-  it('depois de tocar, avisa que é só demonstração', () => {
-    setup({ demo: 'rain' })
+  it('sem a lavoura marcada: pede para marcar antes de contar', () => {
+    setup({ canTell: false })
 
-    expect(within(screen.getByRole('region', { name: 'Choveu aqui' })).getByRole('status')).toHaveTextContent(
-      'Esta é uma demonstração. Nenhum dado será enviado ou guardado.',
+    expect(screen.queryByRole('group', { name: 'Conte o que aconteceu aí' })).not.toBeInTheDocument()
+    expect(screen.getByText('Para contar, primeiro marque onde fica a sua lavoura.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Marcar minha lavoura' })).toHaveAttribute('href', '/onde')
+  })
+
+  it('"O que plantei": culturas com "Outra" e "Deixei parado", a safra mais recente marcada e como foi', async () => {
+    const props = setup({}, { open: 'plantio' })
+
+    const crops = screen.getByRole('group', { name: 'O que você plantou?' })
+    expect(within(crops).getAllByRole('button')).toHaveLength(7)
+    await userEvent.click(within(crops).getByRole('button', { name: 'Deixei parado' }))
+    expect(props.onPlanting).toHaveBeenCalledWith({ crop: 'pousio' })
+    expect(within(screen.getByRole('group', { name: 'Em que safra?' })).getByRole('button', { name: '2026' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
     )
+    await userEvent.click(screen.getByRole('button', { name: 'Perdi' }))
+    expect(props.onPlanting).toHaveBeenCalledWith({ outcome: 'perdi' })
+    expect(screen.queryByRole('group', { name: 'Por que perdeu?' })).not.toBeInTheDocument()
+  })
+
+  it('se perdeu, pergunta o motivo; quem deixou parado não diz como foi', () => {
+    setup({}, { open: 'plantio', planting: { crop: 'sorgo', year: 2026, outcome: 'perdi', reason: null } })
+    const reasons = screen.getByRole('group', { name: 'Por que perdeu?' })
+    expect(within(reasons).getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'Seca',
+      'Calor',
+      'Geada',
+      'Granizo',
+      'Praga',
+      'Outro motivo',
+    ])
+  })
+
+  it('"Deixei parado" não pergunta como foi', () => {
+    setup({}, { open: 'plantio', planting: { crop: 'pousio', year: 2026, outcome: null, reason: null } })
+
+    expect(screen.queryByRole('group', { name: 'Como foi?' })).not.toBeInTheDocument()
+  })
+
+  it('antes do primeiro envio, avisa que os vizinhos veem a região; enviar só com tudo escolhido', async () => {
+    const props = setup({}, { open: 'plantio' })
+
+    expect(screen.getByText('Seus vizinhos veem a região, não o seu ponto.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Enviar' })).toBeDisabled()
+    expect(props.onSend).not.toHaveBeenCalled()
+  })
+
+  it('depois do primeiro envio, o aviso não aparece de novo', async () => {
+    const props = setup({}, { open: 'chuva', ready: true, showNotice: false })
+
+    expect(screen.queryByText('Seus vizinhos veem a região, não o seu ponto.')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }))
+    expect(props.onSend).toHaveBeenCalled()
+  })
+
+  it('"Choveu aqui": milímetros e a data, de 30 dias atrás até hoje', async () => {
+    const props = setup({}, { open: 'chuva' })
+
+    await userEvent.type(screen.getByLabelText('Quantos milímetros choveu?'), '3')
+    expect(props.onRain).toHaveBeenCalledWith({ mm: '3' })
+    const date = screen.getByLabelText('Que dia?')
+    expect(date).toHaveValue(TODAY)
+    expect(date).toHaveAttribute('min', '2026-10-16')
+    expect(date).toHaveAttribute('max', TODAY)
+  })
+
+  it('"Aconteceu aqui": a lista fechada e, com fogo, o 193 dos Bombeiros', async () => {
+    const props = setup({}, { open: 'evento', event: { event: 'fogo', date: TODAY }, fireCall: true })
+
+    const events = screen.getByRole('group', { name: 'O que aconteceu?' })
+    expect(within(events).getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'Fogo',
+      'Granizo',
+      'Geada',
+      'Vendaval',
+      'Enxurrada ou erosão',
+      'Praga ou doença',
+    ])
+    expect(screen.getByRole('alert')).toHaveTextContent('Em caso de fogo, ligue 193 (Bombeiros).')
+    expect(screen.getByRole('link', { name: 'Ligar 193' })).toHaveAttribute('href', 'tel:193')
+    await userEvent.click(within(events).getByRole('button', { name: 'Geada' }))
+    expect(props.onEvent).toHaveBeenCalledWith({ event: 'geada' })
+  })
+
+  it('enviado: confirma; passou do limite: avisa', () => {
+    setup({}, { result: 'sent' })
+    expect(screen.getByRole('status')).toHaveTextContent('Pronto! Seu relato já aparece para os vizinhos.')
+  })
+
+  it('passou do limite por dia: avisa com o número', () => {
+    setup({}, { open: 'evento', result: 'limit' })
+    expect(screen.getByRole('alert')).toHaveTextContent('Você já mandou 10 relatos hoje. Tente de novo amanhã.')
+  })
+
+  it('"Perto de você": plantio, chuva e eventos, cada um como relato de vizinho não confirmado', () => {
+    setup()
+
+    const near = screen.getByRole('region', { name: 'Perto de você' })
+    expect(near).toHaveTextContent(
+      '3 vizinhos contaram o que fizeram depois da soja em 2026: 2 milheto, 1 deixou parado.',
+    )
+    expect(near).toHaveTextContent('1 de 3 disse que foi bem.')
+    expect(near).toHaveTextContent('Nos últimos 7 dias, os pluviômetros marcaram em média 15,5 mm (2 relatos).')
+    const events = within(near).getByRole('list', { name: 'O que aconteceu nos últimos 30 dias' })
+    expect(within(events).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'Fogo, em 14 de novembroRelato de vizinho, não confirmado',
+      'Granizo, em 10 de novembroRelato de vizinho, não confirmado',
+    ])
+    expect(within(near).getAllByText('Relato de vizinho, não confirmado')).toHaveLength(4)
+    expect(screen.queryByText('Exemplo')).not.toBeInTheDocument()
+  })
+
+  it('mapa da redondeza com o círculo de 30 km e cada célula com texto por tipo', () => {
+    setup()
+
+    const map = screen.getByRole('region', { name: 'Mapa dos relatos até 30 km da sua lavoura' })
+    expect(within(map).getByText('Círculo de 30 km em volta da sua lavoura')).toBeInTheDocument()
+    const cells = within(map).getByRole('list', { name: 'Mapa dos relatos até 30 km da sua lavoura' })
+    expect(cells).toHaveTextContent('3 de plantio, 2 de chuva, 2 eventos')
+    expect(within(map).getByRole('list', { name: 'Legenda do mapa' })).toHaveTextContent('PlantioChuvaEvento')
+  })
+
+  it('dados de demonstração: cada item com o selo "Exemplo"', () => {
+    const examples = RELATOS.map((r) => ({ ...r, exemplo: true, meu: false }))
+    setup({ summary: nearbySummary({ raio_km: 30, anos_safra: [2026], relatos: examples }, TODAY) })
+
+    const near = screen.getByRole('region', { name: 'Perto de você' })
+    expect(within(near).getAllByText('Exemplo')).toHaveLength(4)
+  })
+
+  it('sem relatos: convida a ser o primeiro, sem mapa e sem relato inventado', () => {
+    setup({ summary: nearbySummary({ raio_km: 30, anos_safra: [2026], relatos: [] }, TODAY), markers: [] })
+
+    expect(screen.getByText('Ainda não há relatos perto de você. Seja o primeiro a contar.')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: /Mapa dos relatos/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('Relato de vizinho, não confirmado')).not.toBeInTheDocument()
+  })
+
+  it('os meus relatos, com "Apagar"', async () => {
+    const props = setup()
+
+    const mine = screen.getByRole('region', { name: 'Seus relatos' })
+    expect(within(mine).getAllByRole('listitem').map((item) => item.firstChild?.textContent)).toEqual([
+      'Fogo, em 14 de novembro',
+      'Deixei parado, safra 2026',
+    ])
+    await userEvent.click(within(mine).getByRole('button', { name: 'Apagar o relato: Fogo, em 14 de novembro' }))
+    expect(props.onRemove).toHaveBeenCalledWith('e2')
+  })
+
+  it('comunidade sem banco no servidor: nem contar nem a redondeza (sem aviso), o Guia continua', () => {
+    setup({ status: 'not-connected', summary: null, markers: [] })
+
+    expect(screen.queryByRole('group', { name: 'Conte o que aconteceu aí' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Perto de você' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Guia: dúvidas e respostas curtas' })).toBeInTheDocument()
   })
 
   it('enquanto carrega e quando dá erro', async () => {
-    const { unmount } = render(
-      <MemoryRouter>
-        <CommunityView
-          t={pt}
-          backTo="/"
-          status="loading"
-          onRetry={vi.fn()}
-          community={null}
-          center={center}
-          points={[]}
-          demo={null}
-          onDemo={vi.fn()}
-          region={null}
-          regionStatus="loading"
-          onRegionRetry={vi.fn()}
-          regionRadius={null}
-          regionDistance={null}
-          history={null}
-        />
-      </MemoryRouter>,
-    )
+    setup({ status: 'loading', summary: null, markers: [] })
     expect(screen.getByRole('status')).toHaveTextContent('Carregando…')
-    unmount()
+  })
 
-    const props = setup({ status: 'error', community: null })
+  it('erro ao carregar: tentar de novo', async () => {
+    const props = setup({ status: 'error', summary: null, markers: [] })
+
     await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
     expect(props.onRetry).toHaveBeenCalled()
   })
 
+  it('região pelo satélite (quando o arquivo da região existir): o último ano em destaque', () => {
+    setup({ region, regionStatus: 'ready', regionRadius: 30, history: { idle: 5, known: 9, uncertain: 1 } })
+
+    expect(screen.getByText('Até 30 km da sua lavoura · visto pelo satélite')).toBeInTheDocument()
+    expect(screen.getByText('Em 2025, 62% da área de soja ficou parada depois da colheita.')).toBeInTheDocument()
+  })
+
+  it('sem o arquivo da região: o bloco do satélite não aparece', () => {
+    setup()
+
+    expect(screen.queryByText(/da área de soja ficou parada/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/visto pelo satélite/)).not.toBeInTheDocument()
+  })
+
   it('em inglês', () => {
-    setup({ t: en, community: buildCommunity('en') })
+    setup({ t: en, lang: 'en' }, { open: 'evento', fireCall: true })
 
     expect(screen.getByRole('heading', { level: 1, name: 'In your region' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Tell what happened there' })).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('In case of fire, call 193 (Fire Department).')
+    expect(screen.getByRole('region', { name: 'Near you' })).toHaveTextContent(
+      'In the last 7 days, rain gauges showed 15.5 mm on average (2 reports).',
+    )
   })
 })

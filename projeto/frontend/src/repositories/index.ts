@@ -2,8 +2,8 @@ import { createHttpCommunityRepository } from './communityRepository'
 import { createHttpCustoAtrasoRepository } from './custoAtrasoRepository'
 import { createHttpExemploRepository } from './exemploRepository'
 import { createPhotonGeocodingRepository } from './geocodingRepository'
+import { createMockCommunityRepository } from './mocks/mockCommunity'
 import {
-  createMockCommunityRepository,
   createMockCustoAtrasoRepository,
   createMockExemploRepository,
   createMockPastSeasonRepository,
@@ -29,7 +29,10 @@ export const recomendacaoRepository = useHttp
   ? createHttpRecomendacaoRepository()
   : createMockRecomendacaoRepository()
 export const exemploRepository = useHttp ? createHttpExemploRepository() : createMockExemploRepository()
+/** Relatos da comunidade (tarefa 0047): os exemplos, com o selo "Exemplo", só no modo mock. */
 export const communityRepository = useHttp ? createHttpCommunityRepository() : createMockCommunityRepository()
+/** Identificador do aparelho no localStorage: o mesmo nos dois modos. */
+export { deviceRepository } from './deviceRepository'
 export const regionRepository = useHttp ? createHttpRegionRepository() : createMockRegionRepository()
 export const pastSeasonRepository = useHttp ? createHttpPastSeasonRepository() : createMockPastSeasonRepository()
 export const pilotAreaRepository = useHttp ? createHttpPilotAreaRepository() : createMockPilotAreaRepository()

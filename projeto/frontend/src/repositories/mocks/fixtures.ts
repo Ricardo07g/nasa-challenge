@@ -5,7 +5,6 @@
  * reais (tarefa 0040): a renda do grão é a segurança climática da opção; quem não dá grão fica com 0.
  */
 import type { Lang } from '../../i18n/language'
-import type { Community } from '../../models/community'
 import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo } from '../../models/recomendacao'
 import { MOCK_PILOT_AREA as AREA } from './mockLocation'
 import type { CustoAtraso, CustoAtrasoParams } from '../../models/custoAtraso'
@@ -501,27 +500,5 @@ export function buildRecomendacao(params: RecomendacaoParams, lang: Lang): Recom
       lang === 'pt'
         ? 'Ajuda a decidir. Não substitui o agrônomo.'
         : 'It helps you decide. It does not replace the agronomist.',
-  }
-}
-
-export function buildCommunity(lang: Lang): Community {
-  const pt = lang === 'pt'
-  return {
-    lugar: 'Uberlândia',
-    raio_km: 30,
-    participantes: 18,
-    ano: 2026,
-    vizinhos: [
-      { opcao: pt ? 'Milho safrinha' : 'Second-crop corn', total: 6, gostaram: 3 },
-      { opcao: pt ? 'Parado (pousio)' : 'Left idle (fallow)', total: 4, gostaram: 1 },
-      { opcao: pt ? 'Milho + braquiária' : 'Corn + brachiaria', total: 3, gostaram: 2 },
-      { opcao: pt ? 'Sorgo' : 'Sorghum', total: 2, gostaram: 2 },
-      { opcao: pt ? 'Crotalária' : 'Crotalaria', total: 1, gostaram: 1 },
-    ],
-    leituras: [
-      { lugar: pt ? 'A 6 km, ao norte' : '6 km north', pluviometro_mm: 32, satelite_mm: 24 },
-      { lugar: pt ? 'A 11 km, a leste' : '11 km east', pluviometro_mm: 18, satelite_mm: 21 },
-      { lugar: pt ? 'A 14 km, ao sul' : '14 km south', pluviometro_mm: 0, satelite_mm: 3 },
-    ],
   }
 }

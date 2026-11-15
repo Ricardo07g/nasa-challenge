@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -153,7 +153,10 @@ describe('rotas', () => {
     await userEvent.click(await screen.findByRole('link', { name: 'Comunidade' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Na sua região' })).toBeInTheDocument()
-    expect(await screen.findByText('Até 30 km de Uberlândia · 18 produtores participando')).toBeInTheDocument()
+    // Modo de demonstração: os relatos de exemplo, cada um com o selo "Exemplo" (tarefa 0047).
+    const nearby = await screen.findByRole('region', { name: 'Perto de você' })
+    expect(within(nearby).getAllByText('Exemplo').length).toBeGreaterThan(0)
+    expect(screen.getByRole('region', { name: 'Conte o que aconteceu aí' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
       'href',
       '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',

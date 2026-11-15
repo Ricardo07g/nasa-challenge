@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { ChipGroup, DateField, NumberStepper, RadioCard } from './Choice'
+import { ChipGroup, DateField, MeasureField, NumberStepper, RadioCard } from './Choice'
 
 const options = [
   { value: 'chuva', label: 'Chuva' },
@@ -131,5 +131,20 @@ describe('NumberStepper', () => {
     expect(onStep).toHaveBeenNthCalledWith(1, -10)
     expect(onStep).toHaveBeenNthCalledWith(2, 10)
     expect(screen.getByText('ha')).toBeInTheDocument()
+  })
+})
+
+describe('MeasureField (relatos da comunidade: milímetros de chuva)', () => {
+  it('campo de texto com teclado de número, unidade e dica ligada ao campo', async () => {
+    const onChange = vi.fn()
+    render(<MeasureField label="Quantos milímetros?" value="1" unit="mm" hint="De 0 a 300 mm." onChange={onChange} />)
+
+    const input = screen.getByLabelText('Quantos milímetros?')
+    expect(input).toHaveAttribute('inputmode', 'decimal')
+    expect(input).toHaveValue('1')
+    expect(input).toHaveAccessibleDescription('De 0 a 300 mm.')
+    await userEvent.type(input, '2')
+    expect(onChange).toHaveBeenLastCalledWith('12')
+    expect(screen.getByText('mm')).toBeInTheDocument()
   })
 })

@@ -13,6 +13,7 @@ import { TEXTURAS, type Confirmacao, type SituacaoAno, type Textura } from '../m
 import type { ConfirmRow } from '../services/confirmedSeasonsService'
 import type { ClimateSummary, HistorySummary, RainSummary, SoilSummary } from '../services/satelliteService'
 import { FlowError, FlowLoading, FlowOutside } from './FlowStates'
+import { ShareSeasons, type ShareSeasonsProps } from './ShareSeasons'
 import type { ScreenStatus } from '../models/screenStatus'
 import layout from './layout.module.css'
 import styles from './SatelliteView.module.css'
@@ -28,6 +29,8 @@ export type SatelliteViewProps = {
   confirmations: ConfirmRow[]
   /** "Plantei" / "Deixei parado"; `null` = tocou de novo na resposta marcada (volta para o satélite). */
   onConfirmSeason: (year: number, value: Confirmacao | null) => void
+  /** "Compartilhar com a comunidade" das safras confirmadas (tarefa 0047); null = não oferece. */
+  share?: Omit<ShareSeasonsProps, 't'> | null
   /** O satélite não viu soja no ponto em nenhum ano: "Não parece uma lavoura de soja". */
   noSoy: boolean
   /** "Ajustar no mapa": volta ao mapa com o ponto. */
@@ -72,9 +75,11 @@ export function SatelliteView(props: SatelliteViewProps) {
 }
 
 /** Cartão 1: o histórico do satélite (com as safras confirmadas) e o bloco de confirmação. */
-function HistoryCard({ t, lang, history, confirmations, onConfirmSeason, noSoy, adjustTo }: SatelliteViewProps) {
+function HistoryCard({ t, lang, history, confirmations, onConfirmSeason, share, noSoy, adjustTo }: SatelliteViewProps) {
   const s = t.satellite
-  const confirm = confirmations.length > 0 && <ConfirmSeasons t={t} rows={confirmations} onConfirm={onConfirmSeason} />
+  const confirm = confirmations.length > 0 && (
+    <ConfirmSeasons t={t} rows={confirmations} onConfirm={onConfirmSeason} share={share ?? null} />
+  )
   if (history) {
     return (
       <DataSourceCard
@@ -128,10 +133,12 @@ function ConfirmSeasons({
   t,
   rows,
   onConfirm,
+  share,
 }: {
   t: Messages
   rows: ConfirmRow[]
   onConfirm: SatelliteViewProps['onConfirmSeason']
+  share: Omit<ShareSeasonsProps, 't'> | null
 }) {
   const s = t.satellite
   const titleId = useId()
@@ -162,6 +169,7 @@ function ConfirmSeasons({
           />
         </div>
       ))}
+      {share && <ShareSeasons t={t} {...share} />}
     </section>
   )
 }

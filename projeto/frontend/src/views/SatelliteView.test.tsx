@@ -237,6 +237,29 @@ describe('SatelliteView (tela 4)', () => {
 
       expect(screen.getByText('2 anos confirmados por você')).toBeInTheDocument()
     })
+
+    it('depois de confirmar, oferece "Compartilhar com a comunidade" no bloco (tarefa 0047)', async () => {
+      const onToggle = vi.fn()
+      setup({
+        confirmations: rows,
+        share: {
+          state: { open: false, showNotice: true, rows: [] },
+          communityTo: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
+          onToggle,
+          onChange: vi.fn(),
+          onSend: vi.fn(),
+        },
+      })
+
+      await userEvent.click(screen.getByRole('button', { name: 'Compartilhar com a comunidade' }))
+      expect(onToggle).toHaveBeenCalled()
+    })
+
+    it('sem safra confirmada (ou na fazenda de exemplo), não oferece compartilhar', () => {
+      setup({ confirmations: rows, share: null })
+
+      expect(screen.queryByRole('button', { name: 'Compartilhar com a comunidade' })).not.toBeInTheDocument()
+    })
   })
 
   describe('soja de cada ano (tarefa 0039)', () => {

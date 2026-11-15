@@ -2,6 +2,8 @@ import { act, renderHook, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Recomendacao } from '../models/recomendacao'
 import type { Talhao } from '../models/talhao'
+import { ApiError } from '../repositories/httpClient'
+import type { CommunityService } from '../services/communityService'
 import type { FarmService } from '../services/farmService'
 import { providers } from '../test/providers'
 import { useSatelliteController } from './useSatelliteController'
@@ -244,5 +246,90 @@ describe('useSatelliteController (tela 4)', () => {
     const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
 
     await waitFor(() => expect(result.current.status).toBe('outside'))
+  })
+})
+
+describe('"Compartilhar com a comunidade" depois de confirmar as safras (tarefa 0047)', () => {
+  const confirmable: Partial<Talhao> = { ...talhao, anos_confirmaveis: [2024, 2025, 2026] }
+
+  function withCommunity(send: CommunityService['send'] = vi.fn().mockResolvedValue({ id: 'r1' })) {
+    const community: CommunityService = {
+      nearby: vi.fn(),
+      send,
+      remove: vi.fn(),
+      noticeSeen: vi.fn(() => false),
+      region: vi.fn(),
+    }
+    return { ...deps(() => Promise.resolve(confirmable)), community }
+  }
+
+  it('sem safra confirmada, não oferece compartilhar', async () => {
+    const d = withCommunity()
+    const { result } = renderHook(() => useSatelliteController(d), { wrapper: providers(`/satelite?${flow}`) })
+
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    expect(result.current.share).toBeNull()
+  })
+
+  it('na fazenda de exemplo, não oferece compartilhar (o relato vale para a lavoura marcada)', async () => {
+    const d = withCommunity()
+    const { result } = renderHook(() => useSatelliteController(d), {
+      wrapper: providers(`/satelite?${flow}&exemplo=1&confirmadas=2025:parado`),
+    })
+
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    expect(result.current.share).toBeNull()
+  })
+
+  it('uma linha por safra confirmada: "deixei parado" já pronto; "plantei" pergunta a cultura e como foi', async () => {
+    const d = withCommunity()
+    const { result } = renderHook(() => useSatelliteController(d), {
+      wrapper: providers(`/satelite?${flow}&confirmadas=2024:plantou,2025:parado`),
+    })
+
+    await waitFor(() => expect(result.current.share).not.toBeNull())
+    expect(result.current.share?.open).toBe(false)
+    expect(result.current.share?.showNotice).toBe(true)
+    expect(result.current.share?.rows).toEqual([
+      { year: 2024, idle: false, draft: { crop: null, year: 2024, outcome: null, reason: null }, ready: false, status: null },
+      { year: 2025, idle: true, draft: { crop: 'pousio', year: 2025, outcome: null, reason: null }, ready: true, status: null },
+    ])
+    act(() => result.current.toggleShare())
+    expect(result.current.share?.open).toBe(true)
+  })
+
+  it('compartilhar grava o relato de plantio da safra no ponto da lavoura', async () => {
+    const d = withCommunity()
+    const { result } = renderHook(() => useSatelliteController(d), {
+      wrapper: providers(`/satelite?${flow}&confirmadas=2024:plantou`),
+    })
+    await waitFor(() => expect(result.current.share).not.toBeNull())
+
+    act(() => result.current.changeShare(2024, { crop: 'milheto' }))
+    act(() => result.current.changeShare(2024, { outcome: 'bem' }))
+    expect(result.current.share?.rows[0].ready).toBe(true)
+    await act(() => result.current.sendShare(2024))
+
+    expect(d.community.send).toHaveBeenCalledWith({
+      tipo: 'plantio',
+      subtipo: 'milheto',
+      valores: { ano: 2024, resultado: 'bem' },
+      lat: -18.9543,
+      lon: -48.1993,
+      data_fato: null,
+    })
+    expect(result.current.share?.rows[0].status).toBe('sent')
+  })
+
+  it('se o envio falhar, diz o motivo na linha', async () => {
+    const d = withCommunity(vi.fn().mockRejectedValue(new ApiError('/api/comunidade/relatos', 429, 'TOO_MANY_REPORTS', 'POST')))
+    const { result } = renderHook(() => useSatelliteController(d), {
+      wrapper: providers(`/satelite?${flow}&confirmadas=2025:parado`),
+    })
+    await waitFor(() => expect(result.current.share).not.toBeNull())
+
+    await act(() => result.current.sendShare(2025))
+
+    expect(result.current.share?.rows[0].status).toBe('limit')
   })
 })
