@@ -66,6 +66,7 @@ services:
       SMAP_PATH: ${SMAP_PATH:-/dados_baixados/nasa_smap/smap_semeadura.json}
       SMAP_RECENTE_PATH: ${SMAP_RECENTE_PATH:-/dados_baixados/nasa_smap/smap_recente.json}
       SOJA_RECENTE_PATH: ${SOJA_RECENTE_PATH:-/dados_baixados/nasa_modis_soja_recente/soja_recente_2026.json}
+      ENSO_PREVISAO_PATH: ${ENSO_PREVISAO_PATH:-/dados_baixados/noaa_enso_previsao/enso_previsao.json}
     volumes:
       - ./backend/app:/app/app
       - ./backend/tests:/app/tests
