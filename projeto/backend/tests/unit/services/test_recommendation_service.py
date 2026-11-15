@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from app.models.climate import ClimateSeason, Cmip6Delta
+from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.crop_option import CropParams
 from app.models.enso import OniYear
 from app.models.recomendacao import Alternativa, NotasOpcao, Recomendacao, ResultadoOpcao
@@ -175,6 +175,21 @@ PEAKS = {
 }
 
 
+class FakeSmapRepository:
+    """Umidade de teste (não do SMAP) da célula, em alguns dias."""
+
+    def __init__(self, wetness_by_day: dict[date, float]) -> None:
+        self._wetness_by_day = wetness_by_day
+        self.calls: list[str] = []
+
+    def get_cell_smap_series(self, cell_id: str) -> list[SmapSoilMoisture]:
+        self.calls.append(cell_id)
+        return [
+            SmapSoilMoisture(day, -18.95, -48.15, 0.3, wetness, "teste")
+            for day, wetness in sorted(self._wetness_by_day.items())
+        ]
+
+
 def _service(
     climate: FakeClimateRepository | None = None,
     rules: Regras | None = None,
@@ -182,6 +197,7 @@ def _service(
     sinal: SinalOutonoService | None = None,
     ndvi: FakeNdviRepository | None = None,
     year_detail: YearDetailService | None = None,
+    smap: FakeSmapRepository | None = None,
 ) -> RecommendationService:
     return RecommendationService(
         crop_repo=FakeCropParamsRepository(),
@@ -194,6 +210,7 @@ def _service(
         sinal_service=sinal,
         ndvi_repo=ndvi,
         year_detail_service=year_detail,
+        smap_repo=smap,
     )
 
 
@@ -780,3 +797,69 @@ def test_should_return_no_alternatives_when_best_wins_every_axis() -> None:
 
     assert build_alternatives(opcoes, "milheto") == ()
     assert build_alternatives(opcoes[:1], "milheto") == ()
+
+
+# --- balde inicial pelo SMAP (PRD 7.2, R3.3) ---------------------------------------------------
+
+YEAR_2020 = list(range(2005, 2025)).index(2020)
+
+
+def test_should_start_each_year_with_the_smap_of_its_sowing_day() -> None:
+    # 2020 sem chuva: com 50% da CAD a cobertura pega; com a terra seca do SMAP, não.
+    climate = FakeClimateRepository(dry_years=(2020,))
+    smap = FakeSmapRepository({date(2020, 2, 18): 0.05})
+
+    sem = _opcao(_service(climate).recommend(lat=-18.95, lon=-48.20, colheita="meio"), "milheto")
+    com = _opcao(
+        _service(climate, smap=smap).recommend(lat=-18.95, lon=-48.20, colheita="meio"), "milheto"
+    )
+
+    assert sem.faixa_anos[YEAR_2020] is True
+    assert com.faixa_anos[YEAR_2020] is False
+    assert com.anos_bons_chuva == sem.anos_bons_chuva - 1
+    assert smap.calls == [CELL_ID]
+
+
+def test_should_ignore_smap_of_a_day_that_is_not_the_sowing_day() -> None:
+    climate = FakeClimateRepository(dry_years=(2020,))
+    smap = FakeSmapRepository({date(2020, 2, 8): 0.05})  # dia da faixa "cedo"
+
+    sem = _service(climate).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    com = _service(climate, smap=smap).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert [o.faixa_anos for o in com.opcoes] == [o.faixa_anos for o in sem.opcoes]
+    assert all(len(o.porque) == len(s.porque) for o, s in zip(com.opcoes, sem.opcoes, strict=True))
+
+
+SMAP_EVERY_YEAR = {date(year, 2, 18): 0.6 for year in range(2016, 2026)}
+
+
+def test_should_explain_in_which_years_the_bucket_started_from_smap() -> None:
+    rec = _service(smap=FakeSmapRepository(SMAP_EVERY_YEAR)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    frase = (
+        "O balde de água começou com a umidade da terra medida pelo SMAP no dia de plantar em 9 "
+        "dos 20 anos (2016 a 2024); nos outros, com 50% da água disponível."
+    )
+    assert all(o.porque[1] == frase for o in rec.opcoes)
+
+
+def test_should_explain_the_smap_bucket_in_english() -> None:
+    rec = _service(smap=FakeSmapRepository(SMAP_EVERY_YEAR)).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio", lang="en"
+    )
+
+    assert rec.opcoes[0].porque[1] == (
+        "The water bucket started from the soil moisture measured by SMAP on sowing day in 9 of "
+        "the 20 years (2016 to 2024); in the other years, at 50% of the available water."
+    )
+
+
+def test_should_not_explain_smap_when_no_year_has_it_on_the_sowing_day() -> None:
+    smap = FakeSmapRepository({date(2020, 2, 8): 0.6})
+
+    rec = _service(smap=smap).recommend(lat=-18.95, lon=-48.20, colheita="meio")
+
+    assert not any("SMAP" in frase for o in rec.opcoes for frase in o.porque)

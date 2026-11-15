@@ -221,6 +221,9 @@ enso:
 #   solo: {textura} {cad_mm} {fonte_solo}
 #   historico: {parado} {plantou} {anos_certos} {sem_certeza} {total} {ano_inicio} {ano_fim}
 #     (anos_certos = parado + plantou; sem_certeza = incerto + sem_dado; total = anos da janela)
+#   balde_smap: {anos_smap} {total} {ano_inicio} {ano_fim} {padrao_pct}
+#     (anos da série com o SMAP do dia de plantar, PRD 7.2; nos outros, o balde começa em
+#     padrao_pct% da CAD)
 frases:
   pt:
     seguranca: "Semeando em {data}, em {anos_aperto} dos últimos {total} anos faltou água ou fez calor de {calor_c} °C {fase} ({fonte_chuva})."
@@ -229,6 +232,7 @@ frases:
     futuro: "No clima de 2041–2060 (NEX-GDDP-CMIP6, {cenario}, {modelos} modelos), daria certo em {anos_bons} de {total} anos (de {minimo} a {maximo}, conforme o modelo)."
     solo: "Conta feita com solo {textura} ({cad_mm} mm de água disponível; {fonte_solo})."
     historico: "Seu talhão ficou em pousio em {parado} de {anos_certos} entressafras vistas pelo satélite de {ano_inicio} a {ano_fim} (NDVI do MODIS)."
+    balde_smap: "O balde de água começou com a umidade da terra medida pelo SMAP no dia de plantar em {anos_smap} dos {total} anos ({ano_inicio} a {ano_fim}); nos outros, com {padrao_pct}% da água disponível."
   en:
     seguranca: "Sowing on {data}, in {anos_aperto} of the last {total} years the crop ran short of water or had {calor_c} °C heat {fase} ({fonte_chuva})."
     fase_grao: "around flowering"
@@ -236,6 +240,7 @@ frases:
     futuro: "In the 2041–2060 climate (NEX-GDDP-CMIP6, {cenario}, {modelos} models), it would work in {anos_bons} of {total} years ({minimo} to {maximo}, depending on the model)."
     solo: "Computed with {textura} soil ({cad_mm} mm of available water; {fonte_solo})."
     historico: "Your field was left fallow in {parado} of {anos_certos} off-seasons seen by the satellite from {ano_inicio} to {ano_fim} (MODIS NDVI)."
+    balde_smap: "The water bucket started from the soil moisture measured by SMAP on sowing day in {anos_smap} of the {total} years ({ano_inicio} to {ano_fim}); in the other years, at {padrao_pct}% of the available water."
 
 # Textos da linha do tempo da safra (P4 e P6), sem IA generativa. RASCUNHO: agrônoma revisar.
 #   semeadura, colheita_grao, colheita_cobertura: {opcao} (nome da opção)

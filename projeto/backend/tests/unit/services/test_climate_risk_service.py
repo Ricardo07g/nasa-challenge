@@ -5,7 +5,7 @@ from datetime import date
 
 import pytest
 
-from app.models.climate import ClimateSeason, Cmip6Delta
+from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.crop_option import CropParams
 from app.models.regras import Regras
 from app.repositories.rules_repository import load_default_rules
@@ -244,7 +244,11 @@ def test_should_start_future_bucket_like_historical_when_smap_wetness_given() ->
     seasons = [_make_season(2005, daily_rain=0.0, eto=4.0)]
 
     [hist] = service.simulate_historical(
-        crop=cover, seasons=seasons, semeadura=date(2027, 2, 18), cad_mm=40.0, smap_wetness=1.0
+        crop=cover,
+        seasons=seasons,
+        semeadura=date(2027, 2, 18),
+        cad_mm=40.0,
+        smap_wetness_by_year={2005: 1.0},
     )
     futuro = service.simulate_future_cmip6(
         crop=cover,
@@ -252,7 +256,7 @@ def test_should_start_future_bucket_like_historical_when_smap_wetness_given() ->
         deltas=_deltas("IGUAL", rain_pct=0.0),
         semeadura=date(2027, 2, 18),
         cad_mm=40.0,
-        smap_wetness=1.0,
+        smap_wetness_by_year={2005: 1.0},
     )
 
     assert hist.aperto is False
@@ -322,3 +326,61 @@ def test_should_use_loss_steps_from_injected_rules() -> None:
     )
 
     assert service.loss_factor(0.10) == 0.90
+
+
+# --- balde inicial pelo SMAP (PRD 7.2, R3.3) ---------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("wetness", "fraction"),
+    [(None, 0.5), (0.62, 0.62), (0.05, 0.2), (1.0, 1.0)],
+)
+def test_should_start_the_bucket_at_half_or_at_the_smap_wetness_with_a_floor(
+    wetness: float | None, fraction: float
+) -> None:
+    # PRD 7.2 e US-03: arm0 = CAD × sm_rootzone_wetness, com piso de 20%; sem SMAP, 50% da CAD.
+    assert ClimateRiskService(WaterBalanceCalculator()).initial_bucket_fraction(wetness) == fraction
+
+
+def _smap(day: date, wetness: float) -> SmapSoilMoisture:
+    # Valores de teste (não do SMAP): só o dia e a umidade relativa importam aqui.
+    return SmapSoilMoisture(day, -18.95, -48.15, 0.3, wetness, "teste")
+
+
+def test_should_take_the_smap_wetness_of_the_sowing_day_of_each_year() -> None:
+    series = [
+        _smap(date(2016, 2, 8), 0.9),  # dia da faixa "cedo": não é o da semeadura pedida
+        _smap(date(2016, 2, 18), 0.61),
+        _smap(date(2017, 2, 18), 0.33),
+        _smap(date(2017, 3, 3), 0.8),
+    ]
+
+    by_year = ClimateRiskService(WaterBalanceCalculator()).sowing_day_wetness(
+        series, date(2027, 2, 18)
+    )
+
+    assert by_year == {2016: 0.61, 2017: 0.33}
+
+
+def test_should_start_each_year_with_its_own_smap_and_half_without_it() -> None:
+    # Sem chuva: o balde inicial decide o estabelecimento da cobertura nos primeiros 30 dias.
+    service = ClimateRiskService(WaterBalanceCalculator())
+    cover = _make_crop(crop_id="milheto", tipo="cobertura", limite="03-15")
+    seasons = [_make_season(year, daily_rain=0.0, eto=4.0) for year in (2015, 2016, 2017)]
+
+    resultados = service.simulate_historical(
+        crop=cover,
+        seasons=seasons,
+        semeadura=date(2027, 2, 18),
+        cad_mm=40.0,
+        smap_wetness_by_year={2016: 1.0, 2017: 0.05},
+    )
+    sem_smap = service.simulate_historical(
+        crop=cover, seasons=seasons, semeadura=date(2027, 2, 18), cad_mm=40.0
+    )
+
+    isna = {r.ano: r.isna for r in resultados}
+    base = {r.ano: r.isna for r in sem_smap}
+    assert isna[2015] == base[2015]  # sem SMAP no ano: 50% da CAD, como antes
+    assert isna[2016] > base[2016]  # terra cheia no dia de plantar
+    assert isna[2017] < base[2017]  # terra seca (piso de 20%)
