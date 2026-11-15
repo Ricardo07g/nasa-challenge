@@ -6,7 +6,7 @@
 - **Prioridade:** Média (Fase 7; o service de avisos é a base do P6)
 - **Roteiro:** P4 (Fase 7)
 - **Módulos Afetados:** `app/config_data/regras.yaml`, `app/models/regras.py`, `app/models/safra_passada.py`, `app/repositories/rules_repository.py`, `app/services/crop_alert_service.py`, `app/services/past_season_service.py`, `app/schemas/safra_passada.py`, `app/controllers/safra_passada_controller.py`, `app/dependencies.py`, `app/main.py`
-- **Referências:** [plano de evolução do produto](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20plano%20de%20evolu%C3%A7%C3%A3o%20do%20produto.md) (4.4: P4 e regras do P6; 4.1: P1), [PRD](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (7.2: janela crítica e calor), contrato do front em `projeto/frontend/src/models/pastSeason.ts`
+- **Referências:** plano de evolução (4.4: P4 e regras do P6; 4.1: P1), PRD (7.2: janela crítica e calor), contrato do front em `projeto/frontend/src/models/pastSeason.ts`
 
 ---
 

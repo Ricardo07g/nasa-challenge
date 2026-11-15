@@ -6,7 +6,7 @@
 - **Prioridade:** Alta (o navegador mostrava resposta velha depois da carga de dado novo)
 - **Módulos afetados:** `projeto/backend/app/controllers/http_cache.py` (novo), `projeto/backend/app/controllers/recomendacao_controller.py`, `projeto/backend/tests/integration/controllers/test_recomendacao_controller.py`, `projeto/backend/AGENTS.md`, `projeto/backend/docs/diagrama-de-sequencias.md`, `projeto/backend/docs/roteiro-de-implementacao.md`
 - **Roteiro:** ajusta o [R4.5](../roteiro-de-implementacao.md) ([tarefa 0011](0011-http-cache-e-422-problem-json.md))
-- **Referências:** plano técnico do backend §8 (`arquivos contexto/Raiz Orbital – plano técnico do backend.md`), RFC 9110 §8.8.3, §13.1.2 e §15.4.5, `projeto/frontend/src/repositories/httpClient.ts`
+- **Referências:** plano técnico do backend §8, RFC 9110 §8.8.3, §13.1.2 e §15.4.5, `projeto/frontend/src/repositories/httpClient.ts`
 
 ---
 
@@ -128,8 +128,6 @@ O `Origin` vem do `CORSMiddleware` e o `Accept-Encoding` do 200 vem do `GZipMidd
 
 ## 6. Fora do escopo
 
-- Atualizar o texto do plano técnico §8 em `arquivos contexto/` (fonte do produto): fica registrado aqui
-  e no `AGENTS.md` do backend que a regra mudou.
 - ETag pelo `versao_dados` (para responder 304 sem calcular a recomendação): depende do R3.5.
 - Cache em `/exemplo` e `/talhao`.
 

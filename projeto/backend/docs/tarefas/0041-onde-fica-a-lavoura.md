@@ -8,7 +8,7 @@
 - **Módulos Afetados:**
   - backend: `app/models/pilot_area.py`, `app/services/pilot_area_service.py`, `app/schemas/pilot_area.py`, `app/controllers/pilot_area_controller.py`, `app/dependencies.py`, `app/main.py`;
   - front: `services/locationInputService.ts`, `services/geocodingService.ts`, `services/pilotAreaService.ts`, `services/locationService.ts`, `repositories/geocodingRepository.ts`, `repositories/pilotAreaRepository.ts`, `repositories/httpClient.ts` (`getExternalJson`), `repositories/mocks/mockLocation.ts`, `repositories/index.ts`, `models/place.ts`, `models/area.ts`, `controllers/useWhereController.ts`, `controllers/useDebouncedRequest.ts`, `views/WhereView.tsx`, `design-system/components/PlaceSearch.tsx`, `design-system/components/MapPicker.tsx`, `design-system/icons` (`SearchIcon`), `pages.tsx`, `i18n/messages.{pt,en}.ts` (só o bloco `where`).
-- **Referências:** `arquivos contexto/prompt-raiz-orbital.md` (seção 2), `projeto/backend/docs/remodelagem.md` (D3, D21 a D30), `projeto/frontend/AGENTS.md` ("Busca de endereço" e "Área piloto")
+- **Referências:** pedido de remodelagem de 15/11/2026 (seção 2), `projeto/backend/docs/remodelagem.md` (D3, D21 a D30), `projeto/frontend/AGENTS.md` ("Busca de endereço" e "Área piloto")
 
 ---
 

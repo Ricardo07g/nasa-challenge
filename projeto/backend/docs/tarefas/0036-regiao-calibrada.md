@@ -6,7 +6,7 @@
 - **Prioridade:** Média (P3 do plano de evolução, Should)
 - **Roteiro:** P3 (Fase 7); calibra a [tarefa 0034](0034-regiao-pelo-satelite.md)
 - **Módulos Afetados:** `app/config_data/regras.yaml`, `app/models/regras.py`, `app/repositories/rules_repository.py`, `app/models/regiao.py`, `app/repositories/regiao_repository.py`, `app/services/region_service.py`, `app/services/field_history_service.py`, `app/schemas/regiao.py`, `pipeline/fetch_regiao_ndvi.py`; no front, `src/models/region.ts`, `src/services/communityService.ts`, `src/controllers/useCommunityController.ts`, `src/views/CommunityView.tsx`, `src/pages.tsx`, `src/i18n/messages.{pt,en}.ts`, `src/repositories/mocks/mockRepositories.ts`
-- **Referências:** guia do histórico NDVI (`arquivos contexto/`, seção "Região pelo satélite (P3)"), PRD RF-23, `AGENTS.md` do backend ("Dados da API" e "Contrato dos dados das fontes" → "Região pelo satélite"), `AGENTS.md` do front
+- **Referências:** guia do histórico NDVI (seção "Região pelo satélite (P3)"), PRD RF-23, `AGENTS.md` do backend ("Dados da API" e "Contrato dos dados das fontes" → "Região pelo satélite"), `AGENTS.md` do front
 
 ---
 

@@ -8,7 +8,7 @@
 - **Módulos Afetados:**
   - backend: `migrations/versions/3f7c2a9d4e81_relatos_da_comunidade.py`, `app/models/community_report.py`, `app/repositories/community_report_repository.py`, `app/services/community_report_service.py`, `app/schemas/community_report.py`, `app/controllers/community_report_controller.py`, `app/services/errors.py` (`TooManyReportsError`, `CommunityUnavailableError`), `app/models/regras.py` e `app/repositories/rules_repository.py` (grupo `comunidade`), `app/config_data/regras.yaml`, `app/config.py` (`community_device_salt`), `app/constants.py` (`PILOT_UTC_OFFSET_HOURS`), `app/dependencies.py`, `app/main.py`, `.env.example`;
   - front: `models/community.ts`, `repositories/communityRepository.ts`, `repositories/deviceRepository.ts`, `repositories/httpClient.ts` (`sendJson` e cabeçalhos no `getJson`), `repositories/mocks/mockCommunity.ts`, `repositories/index.ts`, `services/communityService.ts`, `controllers/useCommunityController.ts`, `controllers/useSatelliteController.ts` (compartilhar), `views/CommunityView.tsx`, `views/CommunityForms.tsx`, `views/ShareSeasons.tsx`, `views/SatelliteView.tsx`, `design-system/components/ReportsMap.tsx`, `design-system/components/Choice.tsx` (`MeasureField`), `pages.tsx`, `i18n/messages.{pt,en}.ts` (só acréscimos no bloco `community`).
-- **Referências:** `arquivos contexto/prompt-raiz-orbital.md` (seção 7), `projeto/backend/docs/remodelagem.md` (D42 a D54), `projeto/backend/AGENTS.md` ("Relatos da comunidade"), `projeto/frontend/AGENTS.md` ("Comunidade")
+- **Referências:** pedido de remodelagem de 15/11/2026 (seção 7), `projeto/backend/docs/remodelagem.md` (D42 a D54), `projeto/backend/AGENTS.md` ("Relatos da comunidade"), `projeto/frontend/AGENTS.md` ("Comunidade")
 
 ---
 

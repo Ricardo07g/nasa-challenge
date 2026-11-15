@@ -6,7 +6,7 @@
 - **Prioridade:** Alta (T-10 do PRD, Must; destrava o "hoje" do R4.3)
 - **Roteiro:** R3.2 (Fase 3)
 - **Módulos Afetados:** `app/config_data/regras.yaml`, `app/models/regras.py`, `app/models/talhao.py`, `app/repositories/ndvi_repository.py`, `app/repositories/rules_repository.py`, `app/services/field_history_service.py`, `app/services/recommendation_service.py`, `app/schemas/talhao.py`, `app/controllers/recomendacao_controller.py`, `app/dependencies.py`, `app/constants.py`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (RF-08, 7.6, 7.8 e 7.9; T-10), [guia do histórico NDVI](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20hist%C3%B3rico%20do%20talh%C3%A3o%20e%20da%20regi%C3%A3o%20pelo%20NDVI%20%28guia%20para%20o%20dev%29.md) ("Regra do talhão" e "Contrato da API"), "Contrato dos dados das fontes" no [`AGENTS.md`](../../AGENTS.md) (seção NDVI), [tarefa 0009](0009-token-earthdata-e-contrato-dados-fontes.md)
+- **Referências:** PRD (RF-08, 7.6, 7.8 e 7.9; T-10), guia do histórico NDVI ("Regra do talhão" e "Contrato da API"), "Contrato dos dados das fontes" no [`AGENTS.md`](../../AGENTS.md) (seção NDVI), [tarefa 0009](0009-token-earthdata-e-contrato-dados-fontes.md)
 
 ---
 

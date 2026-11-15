@@ -3,9 +3,8 @@
 - **Status:** Proposto
 - **Data:** 2026-11-14
 - **Decisores:** Time Raiz Orbital (Backend, Engenharia de Dados)
-- **Contexto:** `arquivos contexto/PRD – Raiz Orbital o que plantar depois da soja.md` (§6),
-  `arquivos contexto/Raiz Orbital – plano técnico do backend.md` (§6 e §7),
-  `projeto/backend/docs/roteiro-de-implementacao.md` (seção 3)
+- **Contexto:** PRD §6 e plano técnico §6 e §7 (documentos de produto de origem, fora do repositório desde
+  15/11/2026), `projeto/backend/docs/roteiro-de-implementacao.md` (seção 3)
 
 ---
 

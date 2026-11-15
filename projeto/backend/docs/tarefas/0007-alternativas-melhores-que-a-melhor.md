@@ -6,7 +6,7 @@
 - **Prioridade:** Alta (a tela 5 mostrava alternativa pior que a resposta)
 - **Roteiro:** R4.2 (Fase 4, trilha Motor; depende do R4.1, tarefa 0006)
 - **Módulos Afetados:** `app/services/recommendation_service.py`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (RF-05, T-05), [plano técnico do backend](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20plano%20t%C3%A9cnico%20do%20backend.md) (§4.5), roteiro §5 ("Regra das alternativas")
+- **Referências:** PRD (RF-05, T-05), plano técnico (§4.5), roteiro §5 ("Regra das alternativas")
 
 ---
 

@@ -6,7 +6,7 @@
 - **Prioridade:** Média (sinal fraco no campo; contrato de erro único para o front)
 - **Módulos afetados:** `projeto/backend/app/main.py`, `projeto/backend/app/controllers/recomendacao_controller.py`, `projeto/backend/tests/integration/controllers/test_recomendacao_controller.py`, `projeto/backend/AGENTS.md`
 - **Roteiro:** [R4.5](../roteiro-de-implementacao.md) (Fase 4)
-- **Referências:** plano técnico do backend §8 (`arquivos contexto/Raiz Orbital – plano técnico do backend.md`), [ADR-0002](../adr/0002-contratos-api-talhao-e-recomendacao.md), `projeto/frontend/src/repositories/httpClient.ts`
+- **Referências:** plano técnico do backend §8, [ADR-0002](../adr/0002-contratos-api-talhao-e-recomendacao.md), `projeto/frontend/src/repositories/httpClient.ts`
 
 ---
 

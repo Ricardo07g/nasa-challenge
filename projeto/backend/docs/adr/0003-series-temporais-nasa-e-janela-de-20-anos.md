@@ -4,7 +4,7 @@
 - **Data:** 2026-11-14
 - **Decisores:** Time Raiz Orbital (Frontend, Backend, Engenharia de Dados)
 - **Atualizado em:** 2026-11-14 (tarefa R0.4): ponto da fazenda de exemplo e caminhos dos arquivos. A decisão não mudou.
-- **Contexto:** `data/`, `projeto/backend/docs/`, `arquivos contexto/Raiz Orbital – plano técnico do backend.md`
+- **Contexto:** `data/`, `projeto/backend/docs/`
 
 ---
 

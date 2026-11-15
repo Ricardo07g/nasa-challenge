@@ -98,8 +98,6 @@ vez. **Fica para quando um script precisar de verdade**, que deve ser o IMERG (R
 
 ## 4. Fora do escopo (fica registrado)
 
-- `arquivos contexto/` (PRD, plano técnico, guia do NDVI) ainda citam o Earth Engine e o
-  `extract_gee_ndvi.py`: são a fonte de verdade do produto e mudam quando a ADR-0005 for aceita.
 - ADR-0002 ainda fala do `data/extract_gee_ndvi.py` (como contexto da época) e do "Earth Engine
   instável" na resiliência do `historico`.
 - `docs/coding-guidelines.md` ainda tem links `file:///workspace/...`.

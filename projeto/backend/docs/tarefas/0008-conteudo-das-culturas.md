@@ -6,7 +6,7 @@
 - **Prioridade:** Média
 - **Roteiro:** R4.4 (Fase 4) · PRD T-11
 - **Módulos afetados:** `projeto/backend/app/config_data/culturas.yaml`, `app/models/crop_option.py`, `app/repositories/crop_params_repository.py`, `app/repositories/crop_option_repository.py`, `app/services/recommendation_service.py` (uma linha), `app/dependencies.py` (uma função)
-- **Referências:** [roteiro de implementação](../roteiro-de-implementacao.md) (R4.4), [ADR-0001](../adr/0001-padronizacao-identificadores-de-culturas-crop-id.md), [PRD](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (§4 tela 5, §5, RNF-03), [plano técnico do backend](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20plano%20t%C3%A9cnico%20do%20backend.md) (§3.2 e §3.4)
+- **Referências:** [roteiro de implementação](../roteiro-de-implementacao.md) (R4.4), [ADR-0001](../adr/0001-padronizacao-identificadores-de-culturas-crop-id.md), PRD (§4 tela 5, §5, RNF-03), plano técnico (§3.2 e §3.4)
 
 ---
 

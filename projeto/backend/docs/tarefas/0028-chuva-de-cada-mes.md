@@ -9,7 +9,7 @@
   `src/models/talhao.ts`, `src/controllers/useWhenController.ts`, `src/views/WhenView.tsx`,
   `src/design-system/components/Charts.tsx` (+ `.module.css`), `src/i18n/messages.{pt,en}.ts`,
   `src/repositories/mocks/fixtures.ts`; `AGENTS.md` do backend e do front
-- **Referências:** `arquivos contexto/Raiz Orbital – prompt do Lovable.md` (tela 3: "gráfico de barras simples
+- **Referências:** prompt do Lovable (tela 3: "gráfico de barras simples
   da chuva média por mês (jan a jun, barras azuis decrescentes), com a legenda 'Chuva de cada mês na
   região.'"), plano técnico §3.1 (`/talhao`)
 
@@ -124,8 +124,6 @@ legenda "Média de 2005 a 2024, NASA POWER". Com a API do checkout principal (se
 
 ## 7. Fora do escopo
 
-- Atualizar o plano técnico §3.1 em `arquivos contexto/` (fonte do produto): o campo está documentado
-  aqui e nos `AGENTS.md`.
 - IMERG: quando a temporada vier com outra `rain_source`, o campo já leva a chave nova sem mudança.
 - Usar o gráfico em outras telas.
 

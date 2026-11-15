@@ -4,7 +4,7 @@
 - **Data:** 2026-11-14
 - **Decisores:** Time Raiz Orbital (Frontend, Backend, Design de Produto)
 - **Atualizado em:** 2026-11-14 (tarefa R0.4): ponto da fazenda de exemplo e caminhos dos arquivos. A decisão não mudou.
-- **Contexto:** `projeto/frontend/src/routes.tsx`, `projeto/frontend/src/models/community.ts`, `arquivos contexto/Raiz Orbital – Protótipo das telas.html`, `projeto/backend/docs/historias-de-usuario.md`
+- **Contexto:** `projeto/frontend/src/routes.tsx`, `projeto/frontend/src/models/community.ts`, `projeto/backend/docs/historias-de-usuario.md`
 
 ---
 

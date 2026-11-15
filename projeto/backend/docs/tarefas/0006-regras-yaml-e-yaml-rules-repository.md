@@ -6,7 +6,7 @@
 - **Prioridade:** Alta (destrava R4.2, R4.3 e a Fase 6)
 - **Roteiro:** R4.1 (Fase 4, trilha Motor)
 - **Módulos Afetados:** `app/config_data/regras.yaml`, `app/models/regras.py`, `app/repositories/rules_repository.py`, `app/services/` (clima, histórico, plano, recomendação), `app/dependencies.py`, `app/config.py`, `app/constants.py`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (seção 7: "os limiares são a versão 0 e ficam em `regras.yaml`"; T-02, T-11), [plano técnico do backend](../../../../arquivos%20contexto/Raiz%20Orbital%20%E2%80%93%20plano%20t%C3%A9cnico%20do%20backend.md) (§4.4, §4.8 e §5), [ADR-0004](../adr/0004-fluxo-fazenda-exemplo-e-camada-comunitaria.md) (bônus da pecuária)
+- **Referências:** PRD (seção 7: "os limiares são a versão 0 e ficam em `regras.yaml`"; T-02, T-11), plano técnico (§4.4, §4.8 e §5), [ADR-0004](../adr/0004-fluxo-fazenda-exemplo-e-camada-comunitaria.md) (bônus da pecuária)
 
 ---
 

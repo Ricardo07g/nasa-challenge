@@ -8,7 +8,7 @@
 - **Módulos Afetados:**
   - backend: `app/config_data/regras.yaml` (grupos `plano_b` e `chuva_aproveitada`), `app/models/regras.py`, `app/repositories/rules_repository.py`, `app/models/recomendacao.py` (`AguaOpcao.usa_mm`), `app/services/water_need_service.py`, `app/models/plano.py` (novo), `app/services/plan_b_service.py` (novo), `app/services/plan_evaluation_service.py` (novo), `app/schemas/plano.py` (novo), `app/controllers/plano_controller.py` (novo), `app/dependencies.py`, `app/main.py`;
   - front: `models/plano.ts` (novo), `repositories/planoRepository.ts` e `mocks/mockPlano.ts` (novos), `repositories/index.ts`, `services/cropListParams.ts`, `compareService.ts` e `planService.ts` (novos), `services/flowParams.ts`, `controllers/useAnswerNav.ts`, `useOptionsController.ts`, `usePlanController.ts`, `views/OptionsView.tsx` e `PlanView.tsx` (refeitas), `views/AnswerView.tsx` (sem "Se você prefere…"), `views/CommunityForms.tsx` (`QuestionChips` exportado), `design-system/components/Compare.tsx` (novo: `CropPicker`, `CompareTable`), `Choice.tsx` (`SelectField`), `Card.tsx` (`AlternativeCard.action`), `pages.tsx`, `i18n/messages.{pt,en}.ts` (blocos novos `compare` e `rotation`).
-- **Referências:** `arquivos contexto/prompt-raiz-orbital.md` (seção 5, itens 5.5 e 5.6; tabela de links da seção 8), `projeto/backend/docs/remodelagem.md` (D110 a D122), tarefas 0038 (sinal do outono), 0039 (safras confirmadas), 0044 (aba Sugestão) e 0047 (comunidade)
+- **Referências:** pedido de remodelagem de 15/11/2026 (seção 5, itens 5.5 e 5.6; tabela de links da seção 8), `projeto/backend/docs/remodelagem.md` (D110 a D122), tarefas 0038 (sinal do outono), 0039 (safras confirmadas), 0044 (aba Sugestão) e 0047 (comunidade)
 
 ---
 

@@ -6,7 +6,7 @@
 - **Prioridade:** Alta (o plano B do RF-20 é o plano do ano seco)
 - **Roteiro:** R4.3 (Fase 4, trilha Motor; depende do R4.1, tarefa 0006; o "hoje" pelo histórico depende do R3.2)
 - **Módulos Afetados:** `app/services/rotation_plan_service.py`, `app/services/recommendation_service.py`, `app/config_data/regras.yaml`, `app/models/regras.py`, `app/repositories/rules_repository.py`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (5, 7.2, 7.4, 7.6, 7.7, RF-07, §11 "Testes unitários obrigatórios", T-09), roteiro §5 ("Reescala do nematoide" e "Plano hoje")
+- **Referências:** PRD (5, 7.2, 7.4, 7.6, 7.7, RF-07, §11 "Testes unitários obrigatórios", T-09), roteiro §5 ("Reescala do nematoide" e "Plano hoje")
 
 ---
 

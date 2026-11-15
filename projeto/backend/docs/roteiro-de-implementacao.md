@@ -2,7 +2,8 @@
 
 - **Atualizado em:** 2026-11-14
 - **Base:** `main` em `1a4b42d` (121 testes passando), PRD v3.1, plano técnico do backend, plano de evolução,
-  guia do histórico NDVI e prompt do Lovable (todos em `arquivos contexto/`), e a
+  guia do histórico NDVI e prompt do Lovable (documentos de produto de origem, fora do repositório desde
+  15/11/2026), e a
   [tarefa 0001](tarefas/0001-ingestao-on-demand-dados-satelite.md) (busca sob demanda + PostGIS).
 - **Objetivo:** levar o backend do estado atual ao produto completo com **dados reais da NASA**,
   dizendo o que depende do quê e o que pode ser feito **em paralelo**.

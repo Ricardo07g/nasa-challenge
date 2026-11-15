@@ -8,7 +8,7 @@
 - **Módulos Afetados:**
   - backend: `app/config_data/regras.yaml` (grupos `colheita`, `chuva_que_sobra`, `fim_das_chuvas`), `app/models/regras.py`, `app/repositories/rules_repository.py`, `app/services/calendar_days.py`, `app/services/field_history_service.py`, `app/services/remaining_rain_service.py`, `app/services/rain_end_service.py`, `app/services/monthly_rain_service.py`, `app/services/talhao_service.py`, `app/services/harvest_delay_service.py`, `app/models/talhao.py`, `app/models/custo_atraso.py`, `app/schemas/talhao.py`, `app/schemas/custo_atraso.py`, `app/controllers/custo_atraso_controller.py`, `app/dependencies.py`, `app/main.py`, `app/constants.py`;
   - front: `models/talhao.ts`, `models/custoAtraso.ts`, `repositories/custoAtrasoRepository.ts`, `repositories/mocks/` (fixtures e mock do custo), `repositories/index.ts`, `services/harvestService.ts`, `services/rainLeftService.ts`, `services/monthlyRainService.ts`, `services/delayCostService.ts`, `controllers/useWhenController.ts`, `views/WhenView.tsx`, `design-system/components/Charts.tsx` (`RainLeftChart`, `RainEtoChart`), `pages.tsx`, `i18n/messages.{pt,en}.ts` (só o bloco `when`), `views/DesignSystemView.tsx` (tirou o "Colocar a data exata"), dois artigos do Guia.
-- **Referências:** `arquivos contexto/prompt-raiz-orbital.md` (seção 3), `projeto/backend/docs/remodelagem.md` (D31 a D41), tarefas 0028 (chuva de cada mês), 0037 (soja recente) e 0048 (Guia)
+- **Referências:** pedido de remodelagem de 15/11/2026 (seção 3), `projeto/backend/docs/remodelagem.md` (D31 a D41), tarefas 0028 (chuva de cada mês), 0037 (soja recente) e 0048 (Guia)
 
 ---
 

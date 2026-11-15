@@ -4,8 +4,6 @@
 (NASA POWER, IMERG, MODIS, SMAP, CMIP6, SoilGrids) para ajudar o produtor a escolher a cultura de
 entressafra com menos risco.
 
-Os documentos do produto (PRD, plano técnico do backend, discovery, business plan e protótipo das telas) estão em [`arquivos contexto/`](arquivos%20contexto/).
-
 ## Estrutura
 
 ```
@@ -13,7 +11,6 @@ projeto/
   docker-compose.yml   ambiente local (PostgreSQL + PostGIS, backend e frontend)
   backend/             API em Python 3.12 + FastAPI (dependências com uv)
   frontend/            interface em React + TypeScript + Vite
-arquivos contexto/     PRD, protótipo das telas, discovery e business plan
 AGENTS.md              regras para pessoas e agentes de IA (Claude, Gemini)
 ```
 

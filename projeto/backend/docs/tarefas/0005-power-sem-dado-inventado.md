@@ -6,7 +6,7 @@
 - **Prioridade:** Alta
 - **Roteiro:** R1.4 (trilha "Qualidade do POWER"); depende da [tarefa 0004](0004-eto-penman-monteith.md)
 - **Módulos Afetados:** `projeto/backend/app/repositories/external/nasa_power_client.py`, `projeto/backend/app/services/climate_season_builder.py`, `projeto/backend/app/constants.py`, `projeto/backend/AGENTS.md`
-- **Referências:** [PRD – Raiz Orbital](../../../../arquivos%20contexto/PRD%20%E2%80%93%20Raiz%20Orbital%20o%20que%20plantar%20depois%20da%20soja.md) (6.1: "o valor `-999` é dado ausente"), [roteiro](../roteiro-de-implementacao.md) (R1.4 e seção 5, "Ano com dia faltando no POWER"), `pipeline/export_climate_fixture.py`, regra "nunca use dado sintético" do `AGENTS.md` do backend
+- **Referências:** PRD (6.1: "o valor `-999` é dado ausente"), [roteiro](../roteiro-de-implementacao.md) (R1.4 e seção 5, "Ano com dia faltando no POWER"), `pipeline/export_climate_fixture.py`, regra "nunca use dado sintético" do `AGENTS.md` do backend
 
 ---
 
