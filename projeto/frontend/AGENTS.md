@@ -265,18 +265,35 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `where.area.text`), os avisos de fora da área (`where.outsideNotice`, `outsideText`), "De onde vem cada dado"
   (`method.sourcesArea`) e a página inicial do Guia (`guide.mvpArea`). A tela inicial não fala mais do MVP (tarefa
   0052: o selo e a frase saíram). Mudou a área? Troque esses textos junto, em pt e en.
-- **Tela 3 "Quando você colhe" (tarefa 0042 do backend, RF-02, RF-16 e RF-27):** o campo do dia vem no
-  topo, já com o dia do satélite (`colheita_sugerida.dia`, posto no ano da época da colheita por
-  `services/harvestService.ts`); "Não sei o dia exato" abre as 3 faixas. **Sugestão = seleção:** a faixa
-  marcada é sempre a do dia no campo (`harvestFromDate`, a mesma regra do backend) e a faixa azul só diz
-  "Já deixamos esse dia no campo" quando o campo tem o dia do satélite; a faixa da URL (voltando da tela 4)
-  vale mais que a sugestão, e aí a faixa azul oferece "Usar o dia do satélite". As contas ficam no backend:
-  o front só procura o dia na tabela `chuva_que_sobra` (`services/rainLeftService.ts`; só com a faixa, usa o
-  dia de colheita da faixa no motor, `bandDate`), lê o `fim_das_chuvas` e o mês em destaque
-  (`mes_chuva_abaixo_eto`) e pede o custo do atraso a `GET /api/custo-atraso`
-  (`repositories/custoAtrasoRepository.ts` → `services/delayCostService.ts`). Gráficos do design system:
-  `RainLeftChart` (mediana em linha cheia, ano seco tracejado) e `RainEtoChart` (chuva cheia, gasto
-  listrado, mês em destaque com contorno e texto). Cada bloco sem dado não aparece.
+- **Tela 3 "Quando você colhe" (`/quando`; tarefa 0042 do backend e, desde o pacote 2, tarefa 0057, RF-40):**
+  na tela fica **só a pergunta**; o que ajuda a decidir vai para o modal grande. O satélite não vê o dia da
+  colheita: a tela **abre sem data** e com o "Próximo passo" desligado (a `colheita_sugerida` do NDVI não
+  preenche mais nada; saíram o `harvestSuggestion`, o `harvestWindow` e a faixa azul). O campo
+  (`input type=date` escondido, aberto pelo botão com `showPicker()`) vai de 1/jan a 30/abr da safra atual
+  (`harvestDateWindow`, do `CURRENT_SEASON`); a época sai da data pelo `harvestFromDate` (a regra do
+  `regras.yaml`, grupo `colheita`: até 10/fev e janeiro = cedo; 11 a 20 = meio; do 21 em diante, março e abril
+  = tarde). "Não sei o dia exato" abre o `Modal` com as 3 épocas **sem nenhuma marcada** (sempre), e "Usar esta
+  época" só liga depois de escolher (o rascunho fica no controller). **A escolha fica na URL**, gravada na hora
+  com o `useReplaceFlow` (sem rolar, com teste de rolagem no `routes.test.tsx`): `data` + `colheita`, ou só
+  `colheita` com a época; ao voltar, `harvestChoice` lê a URL (a data dentro do campo vale mais, data fora não
+  vale). O "Próximo passo" leva as duas para `/calculando`. Aviso laranja com "Conferir no mapa" só com
+  `soja_recente.vista === false`. Duas colunas da **mesma altura** no computador (a coluna da data tem 21 px
+  embaixo para os dois botões terminarem na mesma linha); no celular, o "Próximo passo" fica numa barra fixa
+  com a data escolhida. A caixa "Ainda não decidiu?" é inteira clicável (o `::after` do botão cobre a caixa).
+  **Modal grande** (`views/WhenDetails.tsx`), 4 blocos com os textos abertos, cada um some sem dado: Compare as
+  épocas (`services/harvestBandsService.ts`: a chuva que sobra de cada época, no dia escolhido para a do
+  produtor e no dia da época no motor, `bandDate`, para as outras, e a melhor opção do
+  `GET /api/custo-atraso` → `delayCostService`), a chuva que sobra (`rainLeftCurve` + `rainLeft` do
+  `rainLeftService`: a tabela do backend vai de 15/jan a 31/mar; fora dela, sem números), a chuva × gasto
+  (`rainChart`, só o `mes_chuva_abaixo_eto` em destaque) e o fim das chuvas (`rainEnd`). Os °C do "deu certo"
+  vêm do `/api/metodo` (`services/methodRulesService.ts`, um pedido por visita; sem a rota, a frase fica sem o
+  número). As contas continuam no backend. Gráficos do design system **na largura real do espaço**
+  (`useElementWidth`, `ResizeObserver`; o texto não encolhe no celular): `RainLeftChart` (eixo dos mm de 200
+  em 200, marca opcional com os números), `RainEtoChart` (legenda da fonte opcional) e `RainEndTimeline`
+  (mais cedo, metade dos anos, mais tarde). Os "Saiba mais" são `GuideLink` (`deu-certo`,
+  `plantar-logo-depois-da-colheita`, `conta-de-agua`, `quando-a-chuva-acaba`). "Ouvir resumo" próprio
+  (`when.summary*`): com a data ou a época, os números da chuva que sobra; sem nada, pede o dia ou a época.
+  Textos com negrito no modal usam `**…**` lido pelo `parseInline` (nunca HTML).
 - **Tela 4 "O que o satélite viu" = raio-X da sua terra (tarefa 0043 do backend, RF-29):** os números vêm
   de `GET /api/raio-x` (`repositories/raioXRepository.ts` → `services/raioXService.ts`), pedido com a
   colheita e a terra da URL e **sem** as safras confirmadas (como o talhão: confirmar não recarrega o
