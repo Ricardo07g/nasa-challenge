@@ -25,7 +25,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | ✅ na branch (15/11 ~03:20), revisada |
 | S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | feito na branch `feat/remodelagem-s8-guia` (19 artigos em pt e en; faltam 7 do tema, ver a tarefa 0048) |
 | S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | ✅ na branch (15/11 ~04:00), revisada |
-| S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | feito na branch `feat/remodelagem-s3-quando` (15/11 ~05:10): tudo do pedido, mais os artigos "Quando a chuva acaba" e "Plantar logo depois da colheita"; falta o merge e a revisão |
+| S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | ✅ na branch (15/11 ~05:00), revisada |
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | a fazer |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | a fazer |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
@@ -85,6 +85,17 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D41 | 15/11 | Os dois artigos novos do Guia ("Quando a chuva acaba", sem rascunho por ser de clima e dados; "Plantar logo depois da colheita", rascunho por ser de plantio) citam só páginas já na lista conferida, reabertas em 15/11. | Regra do Guia: só fonte aberta e conferida; números só do `regras.yaml`, `culturas.yaml` e PRD. |
 
 ## Revisão por seção
+
+### S3 — Quando você colhe (revisada em 15/11 ~05:05)
+
+- ✅ Dia da colheita no topo, preenchido com o dia do satélite (UFU: 25/02, fim de fevereiro ou março); "Não sei o dia exato" abre as 3 faixas; saiu "Colocar a data exata".
+- ✅ Sugestão = seleção: a faixa azul só diz "já deixamos esse dia" quando é verdade; regra única das faixas no `regras.yaml` (D31).
+- ✅ Chuva que sobra até 30/jun (mediana e ano seco, IMERG): "Colhendo em 25 de fevereiro, sobram em média 367 mm; num ano seco, 276 mm.", com a curva.
+- ✅ Chuva (IMERG) × gasto da lavoura (ETo do POWER) por mês; abril destacado com texto e contorno (90 × 109 mm).
+- ✅ Custo do atraso pelo motor (`/api/custo-atraso`): cedo 18, meio 16, tarde 20 de 20, dizendo que a melhor opção muda.
+- ✅ Fim das chuvas: "Em metade dos anos, a chuva acabou até 21 de abril; o mais cedo foi 16 de março de 2021 e o mais tarde 22 de junho de 2012."
+- ✅ Dois artigos novos no Guia ("Quando a chuva acaba" e "Plantar logo depois da colheita") e os links "Saiba mais". Conferido em 1280 e 390 px com dados reais.
+- ⚠️ O dia exato não vai para a URL (só a faixa): ao voltar da tela 4, volta a faixa (D33).
 
 ### S2 — Onde fica a lavoura (revisada em 15/11 ~04:05)
 
