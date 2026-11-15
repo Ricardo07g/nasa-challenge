@@ -659,26 +659,30 @@ class RecommendationService:
         source = seasons[0].rain_source
         return RAIN_SOURCE_NAMES.get(source, source)
 
-    @staticmethod
-    def _soil_text(crop: CropParams, is_en: bool) -> str:
-        """Frase de solo do PRD 7.6: palhada, nitrogênio e ciclo do nematoide."""
+    def _soil_text(self, crop: CropParams, is_en: bool) -> str:
+        """Frase de solo do PRD 7.6: palhada, nitrogênio e ciclo do nematoide.
+
+        "Quebra o ciclo do nematoide" = as supressoras do PRD 7.7 (`rotacao.
+        culturas_supressoras_nematoide`: crotalária e milheto), a mesma regra dos fatos do Plano
+        (tarefa 0049). Os pontos de pragas da nota de solo (PRD 7.4) não mudam.
+        """
         if crop.solo_palhada >= 35:
             nivel, level = "alta", "high"
         elif crop.solo_palhada >= 20:
             nivel, level = "média", "medium"
         else:
             nivel, level = "pouca", "little"
-        quebra = crop.solo_pragas > 0
+        quebra = crop.id in self._rules.rotacao.culturas_supressoras_nematoide
         if is_en:
             nitrogen = (
                 f"{crop.n_deixado_kg} kg/ha of nitrogen" if crop.n_deixado_kg else "no nitrogen"
             )
-            ciclo = "helps break" if quebra else "does not break"
+            ciclo = "breaks" if quebra else "does not break"
             return f"Leaves {level} straw and {nitrogen}; {ciclo} the nematode cycle."
         nitrogenio = (
             f"{crop.n_deixado_kg} kg/ha de nitrogênio" if crop.n_deixado_kg else "nenhum nitrogênio"
         )
-        ciclo = "ajuda a quebrar" if quebra else "não quebra"
+        ciclo = "quebra" if quebra else "não quebra"
         return f"Deixa palhada {nivel} e {nitrogenio}; {ciclo} o ciclo do nematoide."
 
     def _why(

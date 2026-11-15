@@ -658,6 +658,22 @@ def test_should_give_the_signal_the_plan_a_and_the_plan_b_shown_on_the_plan_scre
     assert call["cultura_b"] == ab.cultura_b
 
 
+def test_should_say_only_the_suppressor_crops_of_prd_7_7_break_the_nematode_cycle() -> None:
+    # S9 (tarefa 0049): a linha Terra dizia "ajuda a quebrar o ciclo" para sorgo e milho com
+    # braquiária (pontos de pragas > 0), e os fatos do Plano contam só crotalária e milheto
+    # (PRD 7.7).
+    # Uma regra só: as supressoras do regras.yaml (rotacao.culturas_supressoras_nematoide).
+    rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio")
+    en = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="en")
+
+    for crop_id in ("crotalaria", "milheto"):
+        assert _opcao(rec, crop_id).texto_terra.endswith("; quebra o ciclo do nematoide.")
+        assert _opcao(en, crop_id).texto_terra.endswith("; breaks the nematode cycle.")
+    for crop_id in ("sorgo", "milho_braquiaria", "milho_safrinha"):
+        assert _opcao(rec, crop_id).texto_terra.endswith("; não quebra o ciclo do nematoide.")
+        assert _opcao(en, crop_id).texto_terra.endswith("; does not break the nematode cycle.")
+
+
 def test_should_write_texts_in_english_when_language_is_en() -> None:
     rec = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="en-US,en;q=0.9")
     milho = _opcao(rec, "milho_safrinha")
