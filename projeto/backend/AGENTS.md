@@ -139,8 +139,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
   `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`,
-  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`). Nunca coloque caminho
-  fixo (como `/workspace/...`) num repository.
+  `IMERG_LATE_PATH`, `SMAP_PATH`, `SMAP_RECENTE_PATH`, `SOJA_RECENTE_PATH`, `ENSO_PREVISAO_PATH`). Nunca
+  coloque caminho fixo (como `/workspace/...`) num repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
@@ -192,6 +192,28 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
 
   Para ligar o arquivo: **com uv**, `ONI_PATH=../../data/baixados/noaa_oni/oni.json` no `.env` desta
   pasta; **no compose**, já ligado (`ONI_PATH=/dados_baixados/noaa_oni/oni.json`). O arquivo é lido
+  uma vez por processo: depois de baixar, reinicie o backend.
+- **Previsão do ENSO da NOAA CPC** (sinal para o outono, tarefa 0038):
+  `pipeline/fetch_enso_previsao.py` faz 2 pedidos públicos, **sem credencial**: a tabela "Official NOAA CPC ENSO Probabilities"
+  (`https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/probabilities/`, HTML com
+  `<table id="probabilities-table">`, ~28 KB: chance em % de La Niña, neutro e El Niño em 9 estações
+  de 3 meses, a partir da do meio no mês da emissão) e a ENSO Diagnostic Discussion
+  (`.../enso_advisory/ensodisc.shtml`, ~13 KB: só o dia da emissão, que precisa ser do mesmo mês).
+  A NOAA publica as duas na **2ª quinta-feira de cada mês** e verifica as chances pelo RONI (±0,5
+  °C). O ano de cada estação é o do mês do meio (o DJF de 2027 é dez/2026 a fev/2027). Grava o
+  contrato "Previsão do ENSO" (abaixo) em `data/baixados/noaa_enso_previsao/enso_previsao.json`, a
+  partir da raiz do repositório. Página fora do formato (sem tabela, coluna trocada, estação fora de
+  ordem, chances que não somam 100, discussão de outro mês): erro, e nada é gravado. É dado da NOAA,
+  não da NASA.
+
+  ```bash
+  uv run python -m pipeline.fetch_enso_previsao --dry-run   # os 2 pedidos, sem rede
+  uv run python -m pipeline.fetch_enso_previsao             # grava o arquivo (rode todo mês)
+  ```
+
+  Para ligar o arquivo: **com uv**,
+  `ENSO_PREVISAO_PATH=../../data/baixados/noaa_enso_previsao/enso_previsao.json` no `.env` desta
+  pasta; **no compose**, já ligado (`/dados_baixados/noaa_enso_previsao/enso_previsao.json`). Lido
   uma vez por processo: depois de baixar, reinicie o backend.
 - **Com banco** (`DATABASE_URL` preenchida; `DATABASE_URL=` vazia vale como sem banco), o
   `dependencies.py` liga o PostGIS e a **busca sob demanda** (tarefas 0001 e 0003):
@@ -330,8 +352,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     150 buscas públicas no CMR e **1.200 recortes** de uma variável (10 anos × 15 dias × 8
     granulos), **cerca de 12 min** na primeira vez. Nas seguintes, o cache só pede os dias novos da
     janela (~10 dias × 8 = 80 recortes por dia que passou). O `--dry-run` do `--recente` faz só a
-    busca pública no CMR (acha o dia) e mostra o que falta. Rode perto da data de plantio (fev/mar)
-    para o sinal valer, à mão ou por cron.
+    busca pública no CMR (acha o dia) e mostra o que falta. Rode perto da data de plantio (fev/mar),
+    à mão ou por cron. Desde a tarefa 0038, o SMAP de agora só aparece como informação no sinal.
 
   ```bash
   uv run python -m pipeline.fetch_smap --recente --dry-run   # dia recente e custo
@@ -420,23 +442,43 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     pré-carga com `--forcar`: o upsert do `save_cell_seasons` regrava a chuva **e** o `rain_source`.
   - Sem banco (só a fixture), não há IMERG.
 
-- **Sinal para o outono** (`sinal` de `/recomendacao`, RF-20, tarefa 0015): o `SinalOutonoService` aplica a
-  regra do PRD 7.10 (limiares em `regras.yaml`, grupo `sinal_outono`) a três fontes, uma por repository
-  (`app/repositories/sinal_outono_repository.py`), cada uma ligada no `dependencies.py`:
-  - **GEOS-S2S** (A2.1): `NoAutumnSignalDataRepository` (sem dado). O GMAO só publica a previsão em
-    NetCDF-4/HDF5, sem OPeNDAP nem texto: não dá para ler sem biblioteca nova (tarefa 0032, com o
-    que precisaria);
-  - **SMAP recente com percentil** (A2.2, tarefa 0031): `FileRecentSoilMoistureRepository`, que lê o
-    arquivo do `SMAP_RECENTE_PATH` (o ponto da célula de 0,1°; sem arquivo, sem ponto ou com
-    percentil `null`: `None`);
-  - **chuva dos últimos 30 dias** (A2.3, tarefa 0033): `FileRecentRainRepository`, que lê o arquivo do
-    `IMERG_LATE_PATH` (contrato "Chuva recente", abaixo) pela célula de 0,1° do ponto. Sem arquivo
-    ou sem a célula: `None`.
+- **Sinal para o outono** (`sinal` de `/recomendacao`, RF-20; regra da tarefa 0038, decisão de
+  15/11/2026): o `SinalOutonoService` junta três fontes, cada uma ligada no `dependencies.py`:
+  - **previsão do ENSO** (`FileEnsoForecastRepository`, `ENSO_PREVISAO_PATH`): a chance oficial de
+    El Niño, neutro e La Niña da NOAA CPC na estação do outono da safrinha (`sinal_enso.estacao_previsao`
+    do `regras.yaml`: FMA, fevereiro a abril). **Sem o arquivo, sem a estação nele ou com ela já
+    passada, o `sinal` sai `null`** ("Ainda não conectado" na tela 7);
+  - **ONI de cada ano** (`FileEnsoRepository`, `ONI_PATH`, tarefa 0035) com o `bom` de cada ano do
+    `anos_detalhe` da opção do 1º ano do Plano A: em quantos anos daquela fase ela deu certo;
+  - **SMAP recente** (`FileRecentSoilMoistureRepository`, `SMAP_RECENTE_PATH`, tarefa 0031): **só
+    informa** (`smap_agora`). Sozinho não liga o sinal e nunca muda o nível.
 
-  A terra só conta com o SMAP **e** a chuva recente juntos: só com um dos dois, o `sinal` continua
-  `null`.
-  Sem dado de nenhuma fonte, também. Nunca preencha com previsão inventada.
-- **Chuva dos últimos 30 dias pelo IMERG Late** (A2.3, tarefa 0033): `pipeline/fetch_imerg_late.py`
+  Regra (números no grupo `sinal_enso`, hipótese do time, **a revisar**):
+  - `incerto`: nenhuma fase com 50% ou mais (`fase_chance_min_pct`), duas empatadas no topo, menos
+    de 5 anos daquela fase na série (`anos_fase_min`; ano sem ONI não conta como neutro), ou o Plano B
+    não se saiu melhor que o A nesses anos;
+  - `seco` (marca o Plano B): a opção do 1º ano do Plano A deu errado em metade ou mais dos anos da
+    fase (`fracao_anos_ruins_seco`) e o 1º ano do Plano B se saiu melhor (ou é a mesma cultura, ou
+    pousio);
+  - `normal` (marca o Plano A): no resto.
+  - **Regra da data** (`regra_dia_plantar.texto` e `regra_data`): "Se nos 30 dias antes de <data
+    limite> chover menos que X mm (60% da média de M mm), vá de plano B". M é a média da chuva da
+    data limite − 30 dias até a véspera na série guardada da célula (a mesma `climate_season` do
+    motor: POWER ou IMERG), X = `sinal_outono.chuva_fracao_seco` × M, em mm inteiros; a data limite
+    é a da cultura do 1º ano do Plano A (ou do B, se o A começa em pousio). Sem a série, volta a
+    frase antiga do dia de plantar ("se a terra estiver seca").
+  - `motivo`: "Previsão para fevereiro a abril de 2027: El Niño (98%, NOAA). Nos 7 anos de El Niño
+    desde 2005, milho sozinho deu certo em 5." O nome da fonte vem do arquivo (`fonte`). Nunca chama
+    El Niño de "ano seco" (PRD 7.10).
+  - Contrato do front (`SinalOutono` em `src/models/recomendacao.ts`): `nivel`, `motivo`, `fonte` (a
+    previsão primeiro, depois a chuva da regra e o `SMAP`), `data` (dia da emissão da previsão),
+    `regra_dia_plantar`, e os opcionais `regra_data` (`data_limite`, `inicio`, `dias`,
+    `chuva_min_mm`, `media_mm`) e `smap_agora` (`percentil`, `data`, `texto`).
+  - **Fora do sinal** (continuam no repositório, sem uso): o GEOS-S2S (`SeasonalForecastRepository`,
+    `NoAutumnSignalDataRepository`; só NetCDF-4/HDF5, tarefa 0032) e a chuva recente do IMERG Late
+    (`FileRecentRainRepository`, `IMERG_LATE_PATH`; só de fev a jul, tarefa 0033).
+- **Chuva dos últimos 30 dias pelo IMERG Late** (A2.3, tarefa 0033; fora do sinal desde a tarefa
+  0038): `pipeline/fetch_imerg_late.py`
   grava, por célula de 0,1° da caixa (piloto por padrão, ou `--area="lat_min,lat_max,lon_min,lon_max"`),
   a soma dos últimos 30 dias do `GPM_3IMERGDL` v07 (Late, diário) e a média dos mesmos dias.
   - **Granulos:** pelo CMR (público, sem token), que dá o nome de cada dia (o sufixo muda: `V07B`,
@@ -716,7 +758,8 @@ Regras gerais:
   `app/repositories/point_cache.py`); na tabela, `key` + `geom`.
 - Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1`, `smap` e
   `gpm_imerg` (a que o front já procura; decidida em 14/11, tarefa 0027), mais `imerg_late`
-  (chuva recente, A2.3). Fora da NASA: `noaa_oni` (ONI da NOAA, só em arquivo).
+  (chuva recente, A2.3). Fora da NASA: `noaa_oni` (ONI da NOAA) e `noaa_cpc_enso` (previsão do
+  ENSO da NOAA CPC, tarefa 0038), só em arquivo.
 - Todo arquivo traz `versao_dados`, a execução que o gerou.
 - Sem valor: campo ausente ou `null`. Nunca `-999`, zero ou número inventado, e nunca dado
   sintético com uma dessas chaves de fonte.
@@ -920,6 +963,32 @@ em `versao_dados.parametros`. Não tem tabela no banco.
 | `oni` | `oni` | média das estações, em °C, com 2 casas; finito e entre −5 e +5 (recusa marcas como −99,9) |
 | `fase` | `fase` | `el_nino`, `la_nina` ou `null` (neutro); ausente vale `null` |
 
+### Previsão do ENSO: `EnsoForecast` (`app/models/enso_forecast.py`)
+
+A chance oficial (em %) de La Niña, neutro e El Niño de uma emissão da NOAA CPC, por estação de 3
+meses (tarefa 0038). O `FileEnsoForecastRepository` lê este arquivo (`ENSO_PREVISAO_PATH`); vem do
+`pipeline/fetch_enso_previsao.py`. Não tem tabela no banco.
+
+```json
+{
+  "versao_dados": {"fonte": "noaa_cpc_enso", "parametros": {"produto": "Official NOAA CPC ENSO Probabilities", "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/probabilities/", "url_discussao": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml", "indice": "RONI (...)", "emitida": "2026-11", "estacoes": ["OND", "JJA"]}, "fim": "2026-11-15T03:21:00Z", "versao": "2026.11-noaa-cpc-enso"},
+  "fonte": "NOAA",
+  "emitida_em": "2026-11-12",
+  "estacoes": [
+    {"estacao": "FMA", "ano": 2027, "la_nina": 0, "neutro": 2, "el_nino": 98},
+    {"estacao": "MAM", "ano": 2027, "la_nina": 0, "neutro": 20, "el_nino": 80}
+  ]
+}
+```
+
+| JSON | Model | Regra |
+| --- | --- | --- |
+| `fonte` | `EnsoForecast.fonte` | nome curto que vai na frase do sinal ("NOAA"); não vazio |
+| `emitida_em` | `EnsoForecast.emitida_em` | dia da emissão (da discussão); vira o `data` do sinal |
+| `estacoes[].estacao` | `estacao` | código da NOAA (DJF ... NDJ); na ordem, de mês em mês |
+| `estacoes[].ano` | `ano` | ano do mês do meio (o DJF de 2027 é dez/2026 a fev/2027) |
+| `estacoes[].la_nina`, `neutro`, `el_nino` | idem | inteiros de 0 a 100; somam 100 ± 2 (arredondamento da NOAA) |
+
 ### Região pelo satélite: `RegiaoSatelite` (`app/models/regiao.py`)
 
 Uma região por centro e raio, com os percentuais da soja do ano na entressafra de cada ano (tarefa
@@ -987,8 +1056,8 @@ recusa se o `versao_dados.fonte` não for `imerg_late`. Vem do `pipeline/fetch_i
 | `fracao_da_media` | `fracao_da_media` | `chuva_30d_mm ÷ media_30d_mm`, 4 casas; o model recusa fração que não bate com a conta |
 | `anos_media` | `anos_media` | anos do POWER que entraram na média, pelo menos 1 |
 
-- O sinal usa o `RecentRain` (`to_recent_rain()`): `chuva_mm`, `media_mm`, `dias`, `data`; a regra
-  do PRD 7.10 compara `fracao_da_media` com `chuva_fracao_seco` do `regras.yaml`.
+- O `RecentRain` (`to_recent_rain()`: `chuva_mm`, `media_mm`, `dias`, `data`) era a chuva do sinal
+  pela regra do PRD 7.10; desde a tarefa 0038 o sinal não usa mais esta chuva (fica no repositório).
 - Ainda não há tabela: é dado de agora, regravado perto do plantio (fev/mar).
 
 ### Soja recente: `MapaSojaRecente` (`app/models/soja_recente.py`)
