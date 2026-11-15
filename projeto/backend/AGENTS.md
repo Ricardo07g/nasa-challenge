@@ -98,6 +98,8 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
   Para criar nova migração: `uv run alembic revision -m "descricao"`
 - Tabelas (migração inicial `cb6b775d83e3` + R1.6 `6e961f333ddc`):
   - `grid_cell`, `climate_season` e `soil_point`: gravadas pela busca sob demanda (ver "Dados da API");
+    o `climate_season.rain_source` é `nasa_power` ou, nos anos trocados pela carga do IMERG,
+    `gpm_imerg`;
   - `cmip6_delta`, `ndvi_point`, `smap_point` e `data_run` (com `version`): no formato do "Contrato
     dos dados das fontes", abaixo. `PostgisCmip6Repository`, `PostgisNdviRepository`,
     `PostgisSmapRepository` e `PostgisDataRunRepository` gravam e leem. A API já lê o `cmip6_delta`
@@ -211,6 +213,38 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   uv run python -m pipeline.fetch_cmip6_deltas --area            # caixa piloto, 3 modelos
   ```
 
+- **Chuva do GPM IMERG Final** (R2.4, tarefa 0026): `pipeline/fetch_imerg.py` grava a chuva diária
+  do `GPM_3IMERGDF` v07 (0,1°) das 225 células da caixa piloto, de 1/jan em diante (212 dias) de
+  2005 a 2024, no arquivo do contrato IMERG (abaixo). É refinamento da chuva do POWER (ADR-0003).
+  - **Credencial:** `EARTHDATA_TOKEN` (pelo `Settings`), com o aplicativo **NASA GESDISC DATA
+    ARCHIVE** autorizado e a EULA do GES DISC aceita no perfil da Earthdata. O token vai como
+    `Authorization: Bearer` num cabeçalho comum, que o `urllib` repete no redirecionamento do login
+    (o `authorization` do `HttpRequest` não serve: ele não segue o redirecionamento). Fora dos
+    hosts `*.earthdata.nasa.gov` e `*.eosdis.nasa.gov` o cabeçalho é tirado; o cookie da sessão
+    fica guardado. O token nunca aparece em mensagem ou log.
+  - **Como pede:** a lista dos arquivos vem da busca pública do CMR (sem token, um pedido por ano,
+    paginado), porque o nome muda com o processamento (`V07A`, `V07B`). Um DAS por versão confere
+    a unidade (`mm/day`), o preenchimento e a origem do tempo. Depois, **um recorte ASCII por dia**
+    no OPeNDAP do GES DISC (`gpm1`, Hyrax) com o retângulo de pixels que cobre a caixa
+    (`precipitation[0:0][1310:1324][701:715]`, ordem `[tempo][lon][lat]`). O Hyrax recusa
+    `Accept: application/json` (406): o script pede `text/plain`.
+  - **Paralelo e retomada:** o primeiro pedido vai sozinho (confere o acesso e abre a sessão); os
+    outros vão em paralelo (`--paralelo`, padrão 6, máximo 10), com 3 retentativas e espera
+    exponencial (5, 10 e 20 s). 401, 403, redirecionamento sem fim ou página de login: para na
+    hora. Cada recorte é conferido antes de entrar no cache (gravado como `.part` e renomeado).
+    Algum dia falhou: nada é gravado e o script pede para rodar de novo (continua do cache).
+  - **Tempo:** 4.240 recortes; até ~2,2 h com 6 em paralelo, contando ~11 s por pedido (o primeiro
+    pedido real, que inclui o login); com a sessão aberta deve ser menos. `--anos 2024` baixa um
+    ano só, para conferir antes.
+  - Saída padrão `data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` e cache
+    `data/baixados/nasa_gpm_imerg/cache_opendap/`, a partir da raiz do repositório (fora do git).
+
+  ```bash
+  uv run python -m pipeline.fetch_imerg --dry-run     # pedidos e tempo, sem rede
+  uv run python -m pipeline.fetch_imerg --anos 2024   # um ano, para conferir
+  uv run python -m pipeline.fetch_imerg               # 2005–2024
+  ```
+
 - **Pré-carga da caixa piloto** (tarefa 0012, R1.5): `pipeline/preload_pilot_box.py` grava no banco
   o clima e o solo das 225 células de 0,1° da caixa (`PILOT_*` de `app/constants.py`), com a da
   fazenda de exemplo primeiro, para o primeiro clique na caixa sair do banco, sem busca sob demanda.
@@ -241,14 +275,16 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - Depois da pré-carga, a célula da fazenda de exemplo (`-190_-482`) sai do banco (POWER de agora,
     com Penman-Monteith), não mais da fixture.
 
-- **Carga dos arquivos no banco** (tarefa 0022): `pipeline/load_files_to_db.py` copia o arquivo do
-  CMIP6 para o `cmip6_delta` e o do NDVI para o `ndvi_point`. Não busca nada na rede. Rode depois da
-  pré-carga (o `cmip6_delta` só aceita célula que já está em `grid_cell`).
+- **Carga dos arquivos no banco** (tarefas 0022 e 0027): `pipeline/load_files_to_db.py` copia o
+  arquivo do CMIP6 para o `cmip6_delta`, o do NDVI para o `ndvi_point` e a chuva do IMERG para o
+  `climate_season`. Não busca nada na rede. Rode depois da pré-carga (o `cmip6_delta` só aceita
+  célula que já está em `grid_cell`, e o IMERG só troca temporada que já está no `climate_season`).
+  Dá para passar um, dois ou os três arquivos.
 
   ```bash
   # da pasta projeto/backend, com DATABASE_URL apontando para o banco que recebe a carga
-  uv run python -m pipeline.load_files_to_db --cmip6 <arquivo> --ndvi <arquivo> --dry-run
-  uv run python -m pipeline.load_files_to_db --cmip6 <arquivo> --ndvi <arquivo>
+  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq> --dry-run
+  uv run python -m pipeline.load_files_to_db --cmip6 <arq> --ndvi <arq> --imerg <arq>
   ```
 
   - **CMIP6:** cada célula de `grid_cell` recebe os deltas do ponto do arquivo cuja `cobertura`
@@ -257,17 +293,37 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **NDVI:** a série de cada ponto, lida pelo `CachedNdviRepository` (sem neve, nuvem nem NDVI
     vazio) e gravada pelo `PostgisNdviRepository.save_ndvi_history`. Registro sem `produto` ou
     `qualidade` (cache antigo) ou com o NDVI bruto não cabe na tabela e conta como pulado.
-  - **Conferência antes de gravar:** os dois arquivos são lidos primeiro. Arquivo ausente, sem
+  - **IMERG** (`--imerg`, R3.4): para cada célula e ano que já estão no `climate_season` com a
+    mesma janela (212 dias desde 1/jan), o `rain_mm` passa a ser a série do IMERG e o
+    `rain_source` passa a `gpm_imerg`, **só quando o ano do IMERG está completo** (nenhum dia
+    `null`). Ano incompleto continua com o NASA POWER; célula ou ano que não está no banco (ou com
+    outra janela) fica de fora. Nenhuma temporada é criada e as outras séries (temperatura, ETo)
+    não mudam. Pelo `PostgisClimateRepository` (`list_season_windows` e `replace_seasons_rain`).
+  - **Conferência antes de gravar:** os arquivos são lidos primeiro. Arquivo ausente, sem
     `versao_dados`, de outra fonte (o `versao_dados.fonte` tem de ser `nex_gddp_cmip6` /
-    `modis_mod13q1`) ou fora do contrato: nada é gravado (saída 1).
-  - **Idempotente** (upsert). **`data_run`:** uma linha por fonte com linhas gravadas, com a
-    `version` do `versao_dados` do arquivo e, em `params`, o nome do arquivo (sem a pasta), as
-    contagens e o `versao_dados.parametros` do arquivo (`parametros_do_arquivo`).
+    `modis_mod13q1` / `gpm_imerg`) ou fora do contrato: nada é gravado (saída 1).
+  - **Idempotente** (upsert; a chuva, update). **`data_run`:** uma linha por fonte com linhas
+    gravadas, com a `version` do `versao_dados` do arquivo e, em `params`, o nome do arquivo (sem a
+    pasta), as contagens e o `versao_dados.parametros` do arquivo (`parametros_do_arquivo`). No
+    IMERG, as contagens são `celulas_no_arquivo`, `temporadas_no_arquivo`, `temporadas_trocadas`,
+    `temporadas_incompletas` e `temporadas_sem_clima`.
   - **Células novas:** a busca sob demanda cria células depois da carga. Elas ficam sem linha no
     `cmip6_delta`, mas a API acha os deltas no arquivo (ordem tabela → arquivo, abaixo). Rodar a
     carga de novo copia essas células. A ingestão não muda.
   - O pacote do time leva a cópia do banco com as duas tabelas: quem recebe não roda a carga.
     Caminho dos arquivos e comando completo: `docs/como-preparar-os-dados-locais.md`.
+
+- **Chuva do IMERG na conta** (R3.4, tarefa 0027): depois da carga (`--imerg`, acima), as
+  temporadas trocadas têm `rain_source = gpm_imerg` e o motor usa a chuva do IMERG nelas, sem
+  mudança no código do balde (ele lê o `rain_mm`). Nos outros anos (e células) segue o POWER.
+  - `/talhao` lista `{"fonte": "gpm_imerg", "periodo": "2005-2024"}` em `dados`, depois do
+    `nasa_power`, quando algum ano da célula tem a chuva do IMERG. O front já lê essa chave
+    (`satelliteService.ts`: período da chuva; `sourceService.ts`: fonte conectada e chuva em 10 km).
+  - O "Por quê?" diz "(GPM IMERG + NASA POWER)" quando algum ano da série é do IMERG
+    (`RAIN_SOURCE_NAMES`); sem nenhum, "(NASA POWER)".
+  - **Voltar ao POWER:** a carga apaga a chuva do POWER das temporadas trocadas. Para voltar, rode a
+    pré-carga com `--forcar`: o upsert do `save_cell_seasons` regrava a chuva **e** o `rain_source`.
+  - Sem banco (só a fixture), não há IMERG.
 
 - **Sinal para o outono** (`sinal` de `/recomendacao`, RF-20, tarefa 0015): o `SinalOutonoService` aplica a
   regra do PRD 7.10 (limiares em `regras.yaml`, grupo `sinal_outono`) a três fontes, uma por repository
@@ -401,8 +457,8 @@ Regras gerais:
 - Datas `AAAA-MM-DD`. Horas em ISO 8601 com fuso (`2026-11-14T13:00:00Z`).
 - Coordenadas WGS 84 em graus decimais. O ponto vira chave de cache com `point_key` (0,0025°,
   `app/repositories/point_cache.py`); na tabela, `key` + `geom`.
-- Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1` e `smap`.
-  A do IMERG (`gpm_imerg` ou `imerg_final`) espera a decisão da seção 5 do roteiro.
+- Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1`, `smap` e
+  `gpm_imerg` (a que o front já procura; decisão adotada na tarefa 0026, **a revisar**).
 - Todo arquivo traz `versao_dados`, a execução que o gerou.
 - Sem valor: campo ausente ou `null`. Nunca `-999`, zero ou número inventado, e nunca dado
   sintético com uma dessas chaves de fonte.
@@ -521,6 +577,45 @@ produto (007 ou 008) vai em `versao_dados.parametros`, não em cada linha.
   sm_surface_m3_m3)`, chave `(key, date)`. Substitui a `smap_moisture` por célula da migração inicial.
 - Antes de 2015 não há SMAP. O percentil (`sm_rootzone_pctl`, A2.2) é calculado depois e não faz
   parte deste registro.
+
+### IMERG: `ImergCellSeries` e `ImergSeason` (`app/models/climate.py`)
+
+Chuva diária do GPM IMERG Final (`GPM_3IMERGDF` versão 07, 0,1°) por **célula de 0,1° do projeto**:
+a grade do IMERG tem centros em x,x5, então cada célula (`cell_id_for`, `floor`) é exatamente um
+pixel. O arquivo é a saída do `pipeline/fetch_imerg.py` (R2.4).
+
+```json
+{
+  "versao_dados": {"fonte": "gpm_imerg", "parametros": {"produto": "GPM_3IMERGDF", "versao_produto": "07", "versoes_arquivo": ["V07B"], "anos": [2005, 2024], "temporada": {"inicio": "01-01", "dias": 212}}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-gpm-imerg"},
+  "celulas": [
+    {
+      "celula": "-190_-482", "lat": -18.95, "lon": -48.15,
+      "temporadas": [
+        {"ano": 2005, "inicio": "2005-01-01", "chuva_mm": [0.0, 12.41, null, 3.07]}
+      ]
+    }
+  ]
+}
+```
+
+| JSON | Model | Regra |
+| --- | --- | --- |
+| `celula` | `ImergCellSeries.cell_id` | id `floor` do projeto (`<floor(lat×10)>_<floor(lon×10)>`) |
+| `lat`, `lon` | `latitude`, `longitude` | o **centro** da célula ((idx + 0,5) / 10), que é o centro do pixel do IMERG |
+| `ano` | `ImergSeason.year` | sem ano repetido na célula |
+| `inicio` | `start_date` | sempre 1/jan do `ano` |
+| `chuva_mm` | `rain_mm` | **212 dias** desde 1/jan (a janela do `ClimateSeasonBuilder`: no bissexto, até 30/jul), em mm (o `precipitation` do IMERG é mm/dia), 2 casas; `null` = sem dado |
+
+- **Dia sem dado → `null`, nunca 0 inventado:** dia sem arquivo no GES DISC (o
+  `versao_dados.parametros.dias_sem_arquivo` conta) ou pixel com o valor de preenchimento (−9999,9).
+  Chuva negativa é recusada.
+- **Ano com dia faltando continua no arquivo** (`ImergSeason.complete` é falso): a regra de descarte
+  fica para quem usa.
+- `versao_dados.parametros` traz também a variável e a unidade, o serviço, a caixa, o retângulo de
+  pixels e o número de células.
+- Não há tabela própria: a carga (`load_files_to_db.py --imerg`, tarefa 0027) leva os anos completos
+  para o `rain_mm` do `climate_season`, com `rain_source = gpm_imerg`. O `FileImergRepository`
+  (`app/repositories/imerg_repository.py`) lê o arquivo nos models.
 
 ## Configuração e segredos
 

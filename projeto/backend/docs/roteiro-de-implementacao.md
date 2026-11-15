@@ -152,7 +152,7 @@ Cada linha diz quem decide e qual tarefa fica parada até lá.
 | Contrato do RF-10 | parâmetros de produtividade, preço e custo em `/recomendacao` (nenhum doc define) | produto + front | R4.6 |
 | Valores de custo (A1) | `custo_padrao_ha` e `custo_semente_ha` por cultura, com fonte | agrônoma | A1.1 |
 | Pecuária (`gado`) | completar (plano técnico §3.2) ou retirar (o plano de evolução §7 tirou a pergunta "Tem gado?") | produto | R4.7 |
-| Chave da fonte de chuva | `gpm_imerg` (front, `projeto/frontend/src/services/satelliteService.ts:28`) ou `imerg_final` (back, `app/services/recommendation_service.py`) | back + front | R3.4 |
+| Chave da fonte de chuva ✅ | **Decidido em 14/11: `gpm_imerg`** nos dois lados (o front já usava; o back deixou o `imerg_final` na [0027](tarefas/0027-imerg-na-conta.md)) | back + front | R3.4 |
 | Nomes do detalhe por ano (P1) | o contrato do front (`fase_critica`, `dias_sem_chuva`) ou o do plano de evolução §4.1 (`floracao`, `dias_secos`, `isna`, `dias_calor`) | back + front | P1 |
 
 ---
@@ -195,7 +195,7 @@ do R0.2: em arquivo antes do R1.6 e em tabela depois. **Nunca gerar dado sintét
 | [R2.1](tarefas/0014-deltas-cmip6.md) ✅ | **Deltas do CMIP6** <ul><li>Por célula do POWER: 3 modelos, SSP2-4.5, deltas mensais 2041–2060 × 1995–2014</li><li>Pelo THREDDS, com recorte por ponto, só jan–jul</li><li>Conversões: `pr` × 86.400 → mm/dia; `tasmax` − 273,15 → °C</li></ul> | `pipeline/fetch_cmip6_deltas.py` | R0.2, R0.3, decisões de Tmin e modelos | não | T-06 |
 | [R2.2](tarefas/0017-ndvi-appeears.md) ✅ (AppEEARS ou ORNL, [0024](tarefas/0024-ndvi-pela-ornl.md); fazenda de exemplo extraída pela ORNL em 14/11) | **NDVI do MODIS** <ul><li>Série MOD13Q1 (+MYD13Q1) de jan–jul de cada ano, com qualidade ≤ 1</li><li>Para a fazenda de exemplo e os talhões de calibração (o PRD fala em 5 talhões conhecidos)</li><li>Pelo **AppEEARS**, numa tarefa por ponto, reaproveitando o cliente de `data/extract_smap.py`; a ORNL fica de reserva</li><li>A caixa inteira a 250 m (~360 mil pixels) fica para o P3</li></ul> | `pipeline/fetch_ndvi.py` | R0.1, R0.2, R0.3, decisão dos anos | **token** (ORNL: não) | T-10 |
 | R2.3 | **SMAP L4** (`SPL4SMGP`, `sm_rootzone`) <ul><li>Na data de semeadura de cada ano, de 2015 a 2024</li><li>Pelo AppEEARS, reaproveitando `data/extract_smap.py`</li><li>Conferir a versão (007 × 008) e os nomes das camadas em `GET /api/product/SPL4SMGP.<versão>`</li><li>Antes de 2015 não há SMAP: o balde fica em 50% da CAD</li></ul> | `pipeline/fetch_smap.py` | R0.1, R0.2, R0.3 | **token** | — |
-| R2.4 | **IMERG Final diário** (`GPM_3IMERGDF` v07) <ul><li>Na caixa, de 2005 a 2024, jan–jul, por célula de 0,1°</li><li>Preferir recorte (OPeNDAP) a baixar o arquivo global</li><li>É refinamento (ADR-0003) e fica fora do caminho crítico</li></ul> | `pipeline/fetch_imerg.py` | R0.1, R0.3, R1.1 | **token** | T-04 |
+| [R2.4](tarefas/0026-imerg-por-recorte.md) ✅ (script; a extração real da caixa roda à parte, com o `EARTHDATA_TOKEN`) | **IMERG Final diário** (`GPM_3IMERGDF` v07) <ul><li>Na caixa, de 2005 a 2024, jan–jul, por célula de 0,1°</li><li>Preferir recorte (OPeNDAP) a baixar o arquivo global</li><li>É refinamento (ADR-0003) e fica fora do caminho crítico</li></ul> | `pipeline/fetch_imerg.py` | R0.1, R0.3, R1.1 | **token** | T-04 |
 
 ### Fase 3: ligar as fontes novas na API (cada item depende só da sua fonte)
 
@@ -204,7 +204,7 @@ do R0.2: em arquivo antes do R1.6 e em tabela depois. **Nunca gerar dado sintét
 | [R3.1](tarefas/0021-nota-de-futuro-cmip6.md) ✅ | **Nota de futuro.** `get_cmip6_deltas` passa a ler os deltas (hoje o PostGIS só repassa à fixture). O `TalhaoService` já põe `nex_gddp_cmip6` em `dados[]` quando há deltas | `climate_repository.py` | R2.1 (+R1.6 para ler do banco) | T-06 |
 | [R3.2](tarefas/0018-historico-ndvi-na-api.md) ✅ | **Histórico do talhão** <ul><li>Cache ou tabela de NDVI ligado</li><li>Contrato completo (decisão da seção 5)</li><li>**Frase de histórico no `porque`** (PRD 7.6)</li><li>`/exemplo` usando a `colheita_sugerida`, em vez de `meio` fixo</li></ul> | `field_history_service.py`, `recommendation_service.py`, `schemas/talhao.py`, `recomendacao_controller.py` | R2.2 | T-10 |
 | R3.3 | **Balde inicial pelo SMAP:** passar `smap_wetness` para `simulate_historical` (o parâmetro e o `get_latest_smap` já existem) | `climate_risk_service.py`, `recommendation_service.py` | R2.3 | — |
-| R3.4 | **Chuva do IMERG no balde** (`rain_source = imerg_final`), com a mesma chave de fonte no back e no front | `climate_repository.py`, front `satelliteService.ts` | R2.4, decisão da chave | T-04 |
+| [R3.4](tarefas/0027-imerg-na-conta.md) ✅ | **Chuva do IMERG no balde** (`rain_source = gpm_imerg`), com a mesma chave de fonte no back e no front | `climate_repository.py`, front `satelliteService.ts` | R2.4, decisão da chave | T-04 |
 | R3.5 | **`versao_dados` pelo `data_run`** (hoje é a constante `DATA_VERSION` em `app/constants.py`) | `constants.py`, `recommendation_service.py` | R1.6 | — |
 
 ### Fase 4: motor e contrato (pode começar já; **uma tarefa de cada vez**)

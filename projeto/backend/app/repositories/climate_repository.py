@@ -2,6 +2,8 @@
 
 import json
 import math
+from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -36,6 +38,16 @@ class WritableClimateRepository(ClimateRepository, Protocol):
     def save_cell_seasons(
         self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
     ) -> None: ...
+
+
+@dataclass(frozen=True)
+class SeasonWindow:
+    """Onde uma temporada gravada começa e quantos dias tem (sem as séries)."""
+
+    cell_id: str
+    year: int
+    start_date: date
+    days: int
 
 
 def cell_id_for(lat: float, lon: float) -> str:
@@ -226,6 +238,46 @@ class PostgisClimateRepository:
             cur.execute("SELECT id FROM grid_cell ORDER BY id;")
             return [str(row[0]) for row in cur.fetchall()]
 
+    def list_season_windows(self) -> list[SeasonWindow]:
+        """Início e número de dias de cada temporada do `climate_season` (só o banco).
+
+        Usado pela carga do IMERG: a chuva nova só entra numa temporada da mesma janela.
+        """
+        with psycopg.connect(self._database_url) as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT cell_id, year, start_date, COALESCE(cardinality(rain_mm), 0)
+                FROM climate_season
+                ORDER BY cell_id, year;
+                """
+            )
+            return [
+                SeasonWindow(cell_id=str(r[0]), year=int(r[1]), start_date=r[2], days=int(r[3]))
+                for r in cur.fetchall()
+            ]
+
+    def replace_seasons_rain(
+        self, rain_source: str, rains: Mapping[tuple[str, int], tuple[float, ...]]
+    ) -> int:
+        """Troca a chuva (e a fonte dela) das temporadas `(célula, ano)` que já estão no banco.
+
+        Não cria temporada nem mexe nas outras séries. Uma transação só. Devolve quantas trocou.
+        """
+        replaced = 0
+        with psycopg.connect(self._database_url) as conn:
+            with conn.cursor() as cur:
+                for (cell_id, year), rain_mm in rains.items():
+                    cur.execute(
+                        """
+                        UPDATE climate_season SET rain_mm = %s, rain_source = %s
+                        WHERE cell_id = %s AND year = %s;
+                        """,
+                        (list(rain_mm), rain_source, cell_id, year),
+                    )
+                    replaced += cur.rowcount
+            conn.commit()
+        return replaced
+
     def save_cell_seasons(
         self, cell_id: str, lat: float, lon: float, seasons: list[ClimateSeason]
     ) -> None:
@@ -255,6 +307,7 @@ class PostgisClimateRepository:
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (cell_id, year) DO UPDATE
                         SET rain_mm = EXCLUDED.rain_mm,
+                            rain_source = EXCLUDED.rain_source,
                             tmax_c = EXCLUDED.tmax_c,
                             tmin_c = EXCLUDED.tmin_c,
                             eto_mm = EXCLUDED.eto_mm;

@@ -13,8 +13,8 @@ class DataRun:
 
     É a base do `versao_dados` da resposta (R3.5) e da tela "Como a conta é feita".
     `source` usa as chaves estáveis de fonte (`nasa_power`, `soilgrids`, `nex_gddp_cmip6`,
-    `modis_mod13q1`, `smap`). `params` guarda o que foi pedido (produto e versão, modelos,
-    cenário, anos, pontos). `finished_at` sempre com fuso, como o `TIMESTAMPTZ` do banco.
+    `modis_mod13q1`, `smap`, `gpm_imerg`). `params` guarda o que foi pedido (produto e versão,
+    modelos, cenário, anos, pontos). `finished_at` sempre com fuso, como o `TIMESTAMPTZ` do banco.
     """
 
     source: str

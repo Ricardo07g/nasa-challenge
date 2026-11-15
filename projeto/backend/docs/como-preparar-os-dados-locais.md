@@ -15,6 +15,7 @@ alguns cartões (clima futuro, histórico do talhão).
 | Solo (argila e areia → CAD) | SoilGrids (ISRIC) | banco (`soil_point`) | "Terra argilosa / média / arenosa · Do mapa de solos" | pré-carga, ou no 1º clique |
 | Clima futuro (2041–2060 × 1995–2014) | NEX-GDDP-CMIP6 | arquivo `data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json` e, depois da carga, banco (`cmip6_delta`) | "Clima dos próximos anos" e a nota de futuro | script `fetch_cmip6_deltas` + carga no banco |
 | Histórico do talhão (NDVI) | MODIS (MOD13Q1 + MYD13Q1) pelo AppEEARS ou pela ORNL DAAC | arquivo `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` (o mesmo nome para as duas fontes) e, depois da carga, banco (`ndvi_point`) | "Sua área ficou parada em X de Y anos" e a colheita sugerida | script `fetch_ndvi` + carga no banco |
+| Chuva diária em 0,1° (refinamento da chuva do POWER) | GPM IMERG Final (`GPM_3IMERGDF` v07) pelo OPeNDAP do GES DISC | arquivo `data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` e, depois da carga, a chuva dos anos completos no banco (`climate_season`, `rain_source = gpm_imerg`) | "Chuva mais detalhada" conectada (10 km) e "(GPM IMERG + NASA POWER)" no "Por quê?" | script `fetch_imerg` + carga no banco (`--imerg`) |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
 aponta `CMIP6_PATH` e `NDVI_CACHE_PATH` para os arquivos acima. Arquivo ausente = a API segue sem
@@ -62,7 +63,8 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
 | Clima futuro só da fazenda de exemplo | `uv run python -m pipeline.fetch_cmip6_deltas --pontos="-18.9543,-48.1993"` | ~40 min (360 pedidos ao NCSS, um ponto por pedido) | nenhuma |
 | Histórico do talhão (NDVI) pelo AppEEARS | `uv run python -m pipeline.fetch_ndvi --pontos="-18.9543,-48.1993"` | depende da fila do AppEEARS (minutos a horas) | `APPEEARS_TOKEN` ou `EARTHDATA_USERNAME` + `EARTHDATA_PASSWORD` no `projeto/backend/.env` |
 | Histórico do talhão (NDVI) pela ORNL | `uv run python -m pipeline.fetch_ndvi --fonte ornl --pontos="-18.9543,-48.1993"` | ~1,6 h por ponto (64 pedidos, sem fila; vários dão 502 e são repetidos); se parar, rode de novo que continua do cache | nenhuma |
-| Carregar os arquivos no banco (`cmip6_delta` e `ndvi_point`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` | segundos | nenhuma |
+| Chuva do IMERG da caixa piloto (2005–2024) | `uv run python -m pipeline.fetch_imerg` (antes: `--dry-run`; para conferir: `--anos 2024`) | até ~2,2 h (4.240 recortes, um por dia, 6 em paralelo); se parar, rode de novo que continua do cache | `EARTHDATA_TOKEN` no `projeto/backend/.env`, com o aplicativo *NASA GESDISC DATA ARCHIVE* autorizado e a EULA do GES DISC aceita |
+| Carregar os arquivos no banco (`cmip6_delta`, `ndvi_point` e a chuva do IMERG no `climate_season`) | `DATABASE_URL=postgresql://raiz:raiz_local@localhost:5433/raiz_orbital uv run python -m pipeline.load_files_to_db --cmip6 ../../data/baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json --ndvi ../../data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json --imerg ../../data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` | segundos | nenhuma |
 
 - A pré-carga é idempotente: rodar de novo só completa o que faltou (por exemplo, solos em que o
   SoilGrids não respondeu). Solo sem dado no mapa (área urbana) nunca é gravado.
@@ -79,8 +81,13 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   - Célula criada **depois** da carga (busca sob demanda, num clique fora das células já
     gravadas) não tem linha no `cmip6_delta`, mas a API continua achando os deltas no arquivo
     (ordem tabela → arquivo). Para copiar essas células para a tabela, rode a carga de novo.
+  - **IMERG** (`--imerg`, tarefa 0027): troca a chuva do POWER pela do IMERG só nas temporadas
+    que já estão no `climate_season` (rode depois da pré-carga) e só nos anos completos do IMERG
+    (ano com dia sem dado fica com o POWER). O resumo conta as temporadas trocadas, as
+    incompletas e as que não estão no banco. A chuva do POWER das temporadas trocadas não fica
+    guardada: para voltar a ela, rode a pré-carga com `--forcar`.
   - Quem recebe o pacote do time **não precisa** rodar a carga: a cópia do banco já leva as
-    duas tabelas.
+    tabelas (a chuva do IMERG vai junto no `climate_season`).
 - O CMIP6 grava em `data/baixados/nasa_nex_gddp_cmip6/` (o JSON e o cache `cache_ncss/`) a partir
   da raiz do repositório, de qualquer pasta que você rode. Antes, veja o plano sem baixar nada:
   `uv run python -m pipeline.fetch_cmip6_deltas --dry-run --area` (pedidos e tempo nos dois modos).
@@ -101,6 +108,12 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
     rode o mesmo comando de novo, que só pede as datas que faltam. Recorte que dá 502 duas vezes é
     dividido sozinho em pedaços menores. `--datas-por-pedido` (padrão 5, máximo 10) e `--pausa`
     (padrão 5 s) ajustam o ritmo; dá para mudar de uma execução para outra sem perder o cache.
+- O IMERG grava em `data/baixados/nasa_gpm_imerg/` (o JSON e o cache `cache_opendap/`) a partir
+  da raiz do repositório. O `--dry-run` mostra pedidos, o que já está no cache e o tempo, sem rede.
+  O primeiro recorte vai sozinho: se o GES DISC recusar (token vencido, aplicativo não autorizado
+  ou EULA), o script para ali, sem insistir. Dia que falhou depois das retentativas: nada é
+  gravado e o script pede para rodar de novo. Dia sem arquivo no GES DISC ou pixel vazio vira
+  `null` no arquivo (nunca 0).
 - Cada script grava o log da execução se você redirecionar a saída, por exemplo
   `... > ../../data/baixados/logs/<script>_$(date +%Y%m%d_%H%M).log 2>&1`.
 - Depois de baixar, reinicie o backend (`docker compose restart backend`).
@@ -122,7 +135,8 @@ O zip fica na raiz do repositório (também fora do git). Ele não leva `.env` n
 ## Como conferir
 
 ```bash
-# fazenda de exemplo: dados[] deve listar nasa_power e, com o arquivo do CMIP6, nex_gddp_cmip6
+# fazenda de exemplo: dados[] deve listar nasa_power, com a carga do IMERG gpm_imerg e, com o
+# arquivo do CMIP6, nex_gddp_cmip6
 curl -s "localhost:8000/api/talhao?lat=-18.9543&lon=-48.1993" | python3 -m json.tool
 
 # o que está no banco
@@ -149,6 +163,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | NDVI: tarefa do AppEEARS parada em `pending` por horas | fila do AppEEARS | use `--fonte ornl` (sem fila) |
 | NDVI pela ORNL termina com código 2 | o serviço deu 502 ou ficou sem responder em algum recorte | rode o mesmo comando de novo (continua do cache); se a ORNL estiver fora do ar, tente mais tarde |
 | IMERG: 403 "EULA Acceptance Failure" | falta aceitar a EULA do GES DISC | perfil da Earthdata → *Applications → Authorized Apps* → *NASA GESDISC DATA ARCHIVE* |
+| IMERG: "O GES DISC recusou o acesso (HTTP 401 / página HTML)" | o `EARTHDATA_TOKEN` venceu (dura 60 dias) ou falta autorizar o aplicativo | gere outro token em urs.earthdata.nasa.gov e confira *Authorized Apps* |
 | Restaurar a cópia do banco dá "duplicate key" | o banco já tinha dados | esvazie as tabelas (passo 3 do caminho rápido) |
 
 ## Regras para agentes de código (Claude, Gemini)

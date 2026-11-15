@@ -1,9 +1,12 @@
 """Entidades do domínio para as séries de clima por célula e os deltas do CMIP6."""
 
+import math
+import re
 from dataclasses import dataclass
 from datetime import date
 from typing import Final
 
+from app.constants import CLIMATE_SEASON_DAYS, GRID_CELL_SCALE_FACTOR
 from app.models.validation import require_between, require_finite, require_non_blank
 
 # Limites do contrato (projeto/backend/AGENTS.md, "Contrato dos dados das fontes").
@@ -18,6 +21,10 @@ FIRST_MONTH: Final[int] = 1
 LAST_MONTH: Final[int] = 12
 # A chuva pode cair no máximo 100% (chuva zero); abaixo disso a série ficaria negativa.
 MIN_RAIN_CHANGE_PCT: Final[float] = -100.0
+# Id da célula de 0,1° (`cell_id_for`): "<floor(lat*10)>_<floor(lon*10)>".
+CELL_ID_PATTERN: Final[re.Pattern[str]] = re.compile(r"(-?\d+)_(-?\d+)")
+# Tolerância para conferir que lat/lon são o centro da célula ((idx + 0,5) / 10).
+CELL_CENTER_TOLERANCE_DEG: Final[float] = 1.0e-6
 
 
 @dataclass(frozen=True)
@@ -61,6 +68,79 @@ class ClimateSeason:
     rh2m_pct: tuple[float, ...] = ()
     ws2m_ms: tuple[float, ...] = ()
     solar_rad_mj: tuple[float, ...] = ()
+
+
+@dataclass(frozen=True)
+class ImergSeason:
+    """Chuva diária (mm) do GPM IMERG Final numa célula num ano: 212 dias desde 1/jan.
+
+    A janela é a do `ClimateSeasonBuilder` (no ano bissexto, 1/jan a 30/jul). `None` é dia sem
+    dado (sem arquivo no GES DISC ou pixel com o valor de preenchimento), nunca 0 inventado. O ano
+    com dia faltando continua no contrato: o descarte fica para quem usa (`complete`).
+    """
+
+    year: int
+    start_date: date
+    rain_mm: tuple[float | None, ...]
+
+    def __post_init__(self) -> None:
+        if self.start_date != date(self.year, 1, 1):
+            raise ValueError(
+                f"start_date precisa ser 1/jan de {self.year}, veio {self.start_date.isoformat()}"
+            )
+        if len(self.rain_mm) != CLIMATE_SEASON_DAYS:
+            raise ValueError(
+                f"rain_mm precisa ter {CLIMATE_SEASON_DAYS} dias, veio {len(self.rain_mm)}"
+            )
+        for value in self.rain_mm:
+            if value is None:
+                continue
+            require_finite("rain_mm", value)
+            if value < 0:
+                raise ValueError(f"rain_mm não pode ser negativa, veio {value!r}")
+
+    @property
+    def missing_days(self) -> int:
+        return sum(1 for value in self.rain_mm if value is None)
+
+    @property
+    def complete(self) -> bool:
+        """Todos os 212 dias com chuva (nenhum `None`)."""
+        return self.missing_days == 0
+
+
+@dataclass(frozen=True)
+class ImergCellSeries:
+    """Série do GPM IMERG Final de uma célula de 0,1° do projeto (contrato "IMERG").
+
+    `cell_id` é o id `floor` do projeto (`cell_id_for`); `latitude` e `longitude` são o centro
+    da célula, que é também o centro do pixel de 0,1° do IMERG (um pixel por célula).
+    """
+
+    cell_id: str
+    latitude: float
+    longitude: float
+    seasons: tuple[ImergSeason, ...]
+
+    def __post_init__(self) -> None:
+        match = CELL_ID_PATTERN.fullmatch(self.cell_id)
+        if match is None:
+            raise ValueError(f"cell_id fora do formato <lat>_<lon> (floor × 10): {self.cell_id!r}")
+        require_between("latitude", self.latitude, MIN_LATITUDE, MAX_LATITUDE)
+        require_between("longitude", self.longitude, MIN_LONGITUDE, MAX_LONGITUDE)
+        center = tuple((int(idx) + 0.5) / GRID_CELL_SCALE_FACTOR for idx in match.groups())
+        if not all(
+            math.isclose(found, expected, abs_tol=CELL_CENTER_TOLERANCE_DEG)
+            for found, expected in zip((self.latitude, self.longitude), center, strict=True)
+        ):
+            raise ValueError(
+                f"latitude e longitude precisam ser o centro da célula {self.cell_id} "
+                f"({center[0]}, {center[1]}), vieram ({self.latitude}, {self.longitude})"
+            )
+        years = [season.year for season in self.seasons]
+        repeated = sorted({year for year in years if years.count(year) > 1})
+        if repeated:
+            raise ValueError(f"ano repetido na série da célula {self.cell_id}: {repeated}")
 
 
 @dataclass(frozen=True)

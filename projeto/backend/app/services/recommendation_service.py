@@ -8,6 +8,7 @@ from statistics import mean
 
 from app.constants import (
     DATA_VERSION,
+    IMERG_RAIN_SOURCE,
     PERCENT_DIVISOR,
     REFERENCE_SOWING_YEAR,
     SCORE_MAX,
@@ -39,7 +40,8 @@ from app.services.field_history_service import FieldHistoryService
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
 
-RAIN_SOURCE_NAMES = {"nasa_power": "NASA POWER", "imerg_final": "GPM IMERG + NASA POWER"}
+# Nome da chuva no "Por quê?": com algum ano do IMERG (tarefa 0027), a série mistura as duas fontes.
+RAIN_SOURCE_NAMES = {"nasa_power": "NASA POWER", IMERG_RAIN_SOURCE: "GPM IMERG + NASA POWER"}
 SOIL_SOURCE_PT = {
     "soilgrids": "SoilGrids",
     "padrao": "padrão, sem dado do SoilGrids",
@@ -292,7 +294,7 @@ class RecommendationService:
 
         maior_margem = max((a.margem for a in avaliacoes), default=0.0)
         maior_margem_seco = max((a.margem_seco for a in avaliacoes), default=0.0)
-        fonte_chuva = RAIN_SOURCE_NAMES.get(seasons[0].rain_source, seasons[0].rain_source)
+        fonte_chuva = self._rain_source_name(seasons)
         opcoes = [
             self._build_option(
                 a,
@@ -481,6 +483,14 @@ class RecommendationService:
             ),
             pior_ano_seco_ha=a.pior_ano_seco,
         )
+
+    @staticmethod
+    def _rain_source_name(seasons: list[ClimateSeason]) -> str:
+        """Nome da chuva da série: um ano com o IMERG basta para "GPM IMERG + NASA POWER"."""
+        if any(season.rain_source == IMERG_RAIN_SOURCE for season in seasons):
+            return RAIN_SOURCE_NAMES[IMERG_RAIN_SOURCE]
+        source = seasons[0].rain_source
+        return RAIN_SOURCE_NAMES.get(source, source)
 
     @staticmethod
     def _money_text(margem: float, is_en: bool) -> str:
