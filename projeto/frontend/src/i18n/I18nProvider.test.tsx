@@ -18,7 +18,7 @@ describe('I18nProvider', () => {
     localStorage.clear()
   })
 
-  it('começa no idioma do navegador e atualiza o lang do html', () => {
+  it('sem escolha salva, começa em inglês mesmo com o navegador em português, e atualiza o lang do html', () => {
     vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['pt-BR'])
 
     render(
@@ -27,8 +27,8 @@ describe('I18nProvider', () => {
       </I18nProvider>,
     )
 
-    expect(screen.getByRole('button')).toHaveTextContent('pt:Guia')
-    expect(document.documentElement.lang).toBe('pt-BR')
+    expect(screen.getByRole('button')).toHaveTextContent('en:Guide')
+    expect(document.documentElement.lang).toBe('en')
   })
 
   it('troca de idioma e guarda a escolha', async () => {
@@ -41,14 +41,14 @@ describe('I18nProvider', () => {
 
     await act(() => userEvent.click(screen.getByRole('button')))
 
-    expect(screen.getByRole('button')).toHaveTextContent('en:Guide')
-    expect(document.documentElement.lang).toBe('en')
-    expect(localStorage.getItem('raiz-orbital:lang')).toBe('en')
+    expect(screen.getByRole('button')).toHaveTextContent('pt:Guia')
+    expect(document.documentElement.lang).toBe('pt-BR')
+    expect(localStorage.getItem('raiz-orbital:lang')).toBe('pt')
   })
 
-  it('respeita a escolha salva', () => {
-    localStorage.setItem('raiz-orbital:lang', 'en')
-    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['pt-BR'])
+  it('respeita a escolha salva (quem escolheu PT continua em PT)', () => {
+    localStorage.setItem('raiz-orbital:lang', 'pt')
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-US'])
 
     render(
       <I18nProvider>
@@ -56,6 +56,6 @@ describe('I18nProvider', () => {
       </I18nProvider>,
     )
 
-    expect(screen.getByRole('button')).toHaveTextContent('en:Guide')
+    expect(screen.getByRole('button')).toHaveTextContent('pt:Guia')
   })
 })
