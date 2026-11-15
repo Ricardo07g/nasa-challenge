@@ -4,6 +4,7 @@ import { createSpeechService } from './speechService'
 class FakeUtterance {
   text: string
   lang = ''
+  rate = 1
   voice: unknown = null
   onend: (() => void) | null = null
   constructor(text: string) {
@@ -32,6 +33,16 @@ describe('speechService', () => {
     const utterance = synth.speak.mock.calls[0][0] as FakeUtterance
     expect(utterance.text).toBe('Olá')
     expect(utterance.lang).toBe('pt-BR')
+  })
+
+  it('fala um pouco mais devagar que o normal (velocidade 0,95, "Ouvir resumo")', () => {
+    const synth = fakeSynth()
+    const service = createSpeechService(synth, FakeUtterance)
+
+    service.speak('Olá', 'pt', () => {})
+
+    const utterance = synth.speak.mock.calls[0][0] as FakeUtterance
+    expect(utterance.rate).toBe(0.95)
   })
 
   it('avisa quando termina de falar', () => {
