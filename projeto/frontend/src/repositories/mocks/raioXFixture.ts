@@ -77,6 +77,7 @@ export function buildRaioX(params: RaioXParams, lang: Lang): RaioX {
       pico_data: '2026-01-17',
       safra: '2025/26',
       fonte: 'MODIS MOD13Q1 + MYD13Q1',
+      soja_vista: true,
     },
     chuva: {
       media_mm: 880,

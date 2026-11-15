@@ -43,6 +43,7 @@ def test_should_bring_the_soil_the_water_and_the_ndvi_strip(client: TestClient) 
     assert [row["ano"] for row in strip["anos"]] == list(range(2017, 2027))
     assert strip["colheita_dia"] == "02-18"
     assert body["verde"]["ultimo_data"] == "2026-06-10"
+    assert body["verde"]["soja_vista"] is True  # tarefa 0049: o rótulo do pico depende disso
 
 
 def test_should_give_the_same_best_option_as_the_recommendation(client: TestClient) -> None:

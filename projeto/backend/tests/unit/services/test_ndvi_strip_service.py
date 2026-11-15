@@ -108,3 +108,34 @@ def test_should_have_no_green_block_without_any_ndvi() -> None:
 
     assert SERVICE.green([], None) is None
     assert SERVICE.green([], no_data) is None
+
+
+def test_should_say_whether_the_satellite_saw_soy_in_the_latest_season() -> None:
+    # S9 (tarefa 0049): num ponto sem soja (cidade), o bloco dizia "Pico da soja 2025/26: 0,33". O
+    # bloco diz se a soja apareceu, com a mesma regra da faixa do histórico (pico e colheita).
+    soy = [
+        _rec(date(2026, 1, 17), 0.86),
+        _rec(date(2026, 2, 18), 0.35),
+        _rec(date(2026, 7, 28), 0.4),
+    ]
+    city = [
+        _rec(date(2026, 1, 17), 0.33),
+        _rec(date(2026, 2, 18), 0.31),
+        _rec(date(2026, 7, 28), 0.3),
+    ]
+    winter_only = [_rec(date(2026, 7, 28), 0.4)]
+
+    with_soy, without_soy, unknown = (SERVICE.green(r, None) for r in (soy, city, winter_only))
+
+    assert with_soy is not None and with_soy.soja_vista is True
+    assert without_soy is not None and without_soy.soja_vista is False
+    assert without_soy.pico_ndvi == 0.33  # o número fica: muda só o rótulo na tela
+    assert unknown is not None and unknown.soja_vista is None  # nenhuma leitura do verão
+
+
+def test_should_take_whether_soy_was_seen_from_the_recent_soy_map_without_a_series() -> None:
+    city = SojaRecente(safra="2025/26", vista=False, ndvi_pico=0.33, fonte="MODIS MOD13Q1")
+
+    green = SERVICE.green([], city)
+
+    assert green is not None and green.soja_vista is False

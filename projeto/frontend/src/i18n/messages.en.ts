@@ -355,6 +355,8 @@ export const en = {
       last: (value: string, date: string) => `Latest reading: ${value}, on ${date}.`,
       peak: (value: string, season: string) => `Soybean peak ${season}: ${value}.`,
       peakOn: (value: string, season: string, date: string) => `Soybean peak ${season}: ${value}, on ${date}.`,
+      peakNoSoy: (value: string, season: string, date: string | null) =>
+        `Highest green from January to mid-March (${season}): ${value}${date ? `, on ${date}` : ''}. The satellite did not see soybeans here.`,
       scale: 'NDVI goes from 0 (bare soil) to 1 (deep green).',
     },
     rain: {

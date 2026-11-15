@@ -267,9 +267,11 @@ function XRayBlockView(props: SatelliteViewProps & { block: XRayBlock; index: nu
         green.ultimo_ndvi !== null && green.ultimo_data && x.green.last(ndvi(green.ultimo_ndvi), formatFullDate(lang, green.ultimo_data)),
         green.pico_ndvi !== null &&
           green.safra &&
-          (green.pico_data
-            ? x.green.peakOn(ndvi(green.pico_ndvi), green.safra, formatFullDate(lang, green.pico_data))
-            : x.green.peak(ndvi(green.pico_ndvi), green.safra)),
+          (green.soja_vista === false
+            ? x.green.peakNoSoy(ndvi(green.pico_ndvi), green.safra, green.pico_data ? formatFullDate(lang, green.pico_data) : null)
+            : green.pico_data
+              ? x.green.peakOn(ndvi(green.pico_ndvi), green.safra, formatFullDate(lang, green.pico_data))
+              : x.green.peak(ndvi(green.pico_ndvi), green.safra)),
         x.green.scale,
       ].filter(Boolean)
       return (

@@ -76,12 +76,16 @@ class NdviStripService:
 
         O pico é o maior NDVI da janela do pico da soja (`regiao_ndvi.pico_inicio` a `pico_fim`, a
         regra da soja do ano) no último ano da série. Sem série, o pico do mapa da soja recente
-        (RF-24), quando o pixel tem dado.
+        (RF-24), quando o pixel tem dado. `soja_vista` diz se aquele verão teve soja, com a regra da
+        faixa do histórico (`FieldHistoryService.soy_harvest_date`: pico e colheita); sem série, o
+        `vista` do mapa da soja recente (tarefa 0049).
         """
         if not records:
             if soja is None or soja.ndvi_pico is None:
                 return None
-            return VerdeLavoura(None, None, soja.ndvi_pico, None, soja.safra, soja.fonte)
+            return VerdeLavoura(
+                None, None, soja.ndvi_pico, None, soja.safra, soja.fonte, soja_vista=soja.vista
+            )
         last = max(records, key=lambda rec: rec.data)
         soy = self._rules.regiao_ndvi
         window = (month_day(soy.pico_inicio), month_day(soy.pico_fim))
@@ -92,6 +96,10 @@ class NdviStripService:
             and window[0] <= (rec.data.month, rec.data.day) <= window[1]
         ]
         peak = max(peak_window, key=lambda rec: (scaled_ndvi(rec.ndvi), rec.data), default=None)
+        seen = None
+        if peak is not None:
+            observations = [(rec.data, rec.ndvi) for rec in records]
+            seen = self._history.soy_harvest_date(last.data.year, observations) is not None
         return VerdeLavoura(
             ultimo_ndvi=scaled_ndvi(last.ndvi),
             ultimo_data=last.data,
@@ -99,4 +107,5 @@ class NdviStripService:
             pico_data=None if peak is None else peak.data,
             safra=safra_label(last.data.year) if peak is not None else None,
             fonte=_source_label(records),
+            soja_vista=seen,
         )

@@ -373,6 +373,9 @@ export const pt = {
       last: (value: string, date: string) => `Última leitura: ${value}, em ${date}.`,
       peak: (value: string, season: string) => `Pico da soja ${season}: ${value}.`,
       peakOn: (value: string, season: string, date: string) => `Pico da soja ${season}: ${value}, em ${date}.`,
+      /** Sem soja no ponto (tarefa 0049): o número é só o maior verde da janela do pico da soja. */
+      peakNoSoy: (value: string, season: string, date: string | null) =>
+        `Maior verde de janeiro a meados de março (${season}): ${value}${date ? `, em ${date}` : ''}. O satélite não viu soja aqui.`,
       scale: 'O NDVI vai de 0 (terra nua) a 1 (verde forte).',
     },
     rain: {
