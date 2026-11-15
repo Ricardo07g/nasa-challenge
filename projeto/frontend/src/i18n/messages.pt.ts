@@ -1683,7 +1683,7 @@ export const pt = {
     articles: (count: number) => (count === 1 ? '1 artigo' : `${count} artigos`),
     minutes: (count: number) => `${count} min de leitura`,
     /** "<b>3</b> resultados para "chuva"": o número vai em negrito na view. */
-    resultsWord: (count: number) => (count === 1 ? 'resultado' : 'resultados'),
+    resultsWord: (count: number): string => (count === 1 ? 'resultado' : 'resultados'),
     resultsFor: (query: string) => `para "${query}"`,
     noResults: (query: string) => `Nenhum artigo encontrado para "${query}"`,
     noResultsHint: 'Tente outra palavra ou veja um destes:',

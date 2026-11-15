@@ -1591,7 +1591,7 @@ export const en = {
     start: 'Start here',
     articles: (count: number) => (count === 1 ? '1 article' : `${count} articles`),
     minutes: (count: number) => `${count} min read`,
-    resultsWord: (count: number) => (count === 1 ? 'result' : 'results'),
+    resultsWord: (count: number): string => (count === 1 ? 'result' : 'results'),
     resultsFor: (query: string) => `for "${query}"`,
     noResults: (query: string) => `No article found for "${query}"`,
     noResultsHint: 'Try another word or see one of these:',
