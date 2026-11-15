@@ -154,6 +154,15 @@ export function SatellitePage() {
       history={state.history}
       confirmations={state.confirmations}
       onConfirmSeason={state.confirmSeason}
+      share={
+        state.share && {
+          state: state.share,
+          communityTo: state.communityTo,
+          onToggle: state.toggleShare,
+          onChange: state.changeShare,
+          onSend: (year) => void state.sendShare(year),
+        }
+      }
       noSoy={state.noSoy}
       adjustTo={state.adjustTo}
       rain={state.rain}
@@ -276,20 +285,31 @@ export function ReportPage() {
 }
 
 export function CommunityPage() {
-  const { messages: t } = useI18n()
+  const { lang, messages: t } = useI18n()
   useDocumentTitle(t.community.title)
   const state = useCommunityController()
   return (
     <CommunityView
       t={t}
+      lang={lang}
       backTo={state.backTo}
+      center={state.center}
+      radiusKm={state.radiusKm}
       status={state.status}
       onRetry={state.retry}
-      community={state.community}
-      center={state.center}
-      points={state.points}
-      demo={state.demo}
-      onDemo={state.showDemo}
+      summary={state.summary}
+      markers={state.markers}
+      canTell={state.canTell}
+      markTo={state.markTo}
+      years={state.years}
+      form={state.form}
+      onOpenForm={state.openForm}
+      onPlanting={state.setPlanting}
+      onRain={state.setRain}
+      onEvent={state.setEvent}
+      onSend={() => void state.send()}
+      onRemove={(id) => void state.remove(id)}
+      removing={state.removing}
       region={state.region}
       regionStatus={state.regionStatus}
       onRegionRetry={state.retryRegion}

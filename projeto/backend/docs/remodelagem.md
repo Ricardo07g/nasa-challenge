@@ -30,7 +30,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | a fazer |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | a fazer |
-| S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | a fazer |
+| S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | feito na branch `feat/remodelagem-s7-comunidade` (falta o merge, aplicar a migração `3f7c2a9d4e81` no banco de desenvolvimento e a revisão) |
 | S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | a fazer |
 
 Ordem de merge: S1 → S8 → S2 → S3 → S4 → S5a → S5b → S6 → S7 → S9. Se a janela de uso acabar, a
@@ -83,6 +83,19 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D39 | 15/11 | A ETo de cada mês é a do motor (`ClimateRiskService.reference_eto`: a gravada, POWER com FAO-56, ou Hargreaves-Samani), e o mês em destaque, o primeiro em que a chuva média fica menor que a ETo média, sai do backend (`mes_chuva_abaixo_eto`). | O mesmo número da conta de água; a regra fica num lugar só. |
 | D40 | 15/11 | Gráficos: a chuva que sobra é uma curva de 15/jan a 31/mar (mediana em linha cheia, ano seco tracejado, marca no dia escolhido); a chuva × ETo tem a chuva cheia e o gasto listrado, e o mês em destaque ganha contorno e o texto "chove menos". | Nenhuma informação só por cor; a curva mostra que cada dia de atraso tira chuva. |
 | D41 | 15/11 | Os dois artigos novos do Guia ("Quando a chuva acaba", sem rascunho por ser de clima e dados; "Plantar logo depois da colheita", rascunho por ser de plantio) citam só páginas já na lista conferida, reabertas em 15/11. | Regra do Guia: só fonte aberta e conferida; números só do `regras.yaml`, `culturas.yaml` e PRD. |
+| D42 | 15/11 | S7: o relato de plantio não tem data do fato; o ano da safra vai em `valores.ano` e precisa ser uma das últimas safras (`FieldHistoryService.confirmable_years()`, as mesmas da tela 4: 2024, 2025 e 2026). A resposta traz `anos_safra` para o front. | Uma fonte só para "as últimas safras"; plantar depois da soja não é um fato de um dia. |
+| D43 | 15/11 | "Deixei parado" é o `pousio` do `culturas.yaml` (não um valor novo) e não pergunta "Como foi" nem o motivo. A lista do plantio é: as 6 culturas do `culturas.yaml` e "outra". | O pedido diz "as do `culturas.yaml`, mais 'outra' e 'deixei parado'", e o pousio já é o "deixar a terra parada"; "foi bem" não faz sentido para a terra parada. **A revisar.** |
+| D44 | 15/11 | Hash do aparelho: HMAC-SHA-256 com o sal `COMMUNITY_DEVICE_SALT` (só o nome no `.env.example`). Sem sal configurado, a API usa um sal aleatório por processo, com aviso no log, em vez de recusar os relatos ou de usar um sal fixo no código. | Funciona no ambiente local sem configuração e nunca guarda hash sem sal; o custo é o limite por dia e o "apagar o meu" recomeçarem quando a API reinicia. Em produção, configurar o sal. |
+| D45 | 15/11 | O limite de 10 relatos por aparelho vale para as **últimas 24 horas** (janela que corre), não para o dia do calendário. | Evita 20 relatos em volta da meia-noite. O número é hipótese do time (`regras.yaml`). |
+| D46 | 15/11 | O "hoje" das datas dos relatos é o dia de Uberlândia (UTC−3 fixo, `PILOT_UTC_OFFSET_HOURS`), não o do servidor. | O servidor roda em UTC; às 22 h no Brasil já seria amanhã e a data de hoje sairia como "30 dias" errados. O Brasil não tem horário de verão desde 2019. |
+| D47 | 15/11 | Um novo relato de plantio do mesmo aparelho e da mesma safra substitui o anterior. | O "Compartilhar com a comunidade" pode ser tocado de novo, e "N vizinhos contaram" não deve contar o mesmo aparelho duas vezes no mesmo ano. |
+| D48 | 15/11 | Sem banco (`DATABASE_URL` vazia), as três rotas respondem 503 `COMMUNITY_UNAVAILABLE` (problem+json); o front trata como `not-connected` e não mostra nem o "Conte" nem a redondeza. Mais de 10 relatos: 429 `TOO_MANY_REPORTS`. | Mesma regra do D2: o que não está ligado não aparece. Os relatos precisam do banco; guardar em memória perderia tudo a cada reinício. |
+| D49 | 15/11 | Ponto fora da área piloto é recusado (422), e o raio da listagem vai até 50 km (`raio_max_km`, hipótese do time). | Mesma área das outras telas; a consulta não varre a caixa inteira. |
+| D50 | 15/11 | Só conta quem marcou a própria lavoura: sem ponto na URL ou na fazenda de exemplo, a tela mostra a redondeza e pede "Marcar minha lavoura". No "Compartilhar" da tela 4, idem. | "O relato vale para o ponto marcado"; a fazenda de exemplo não é a lavoura de ninguém. |
+| D51 | 15/11 | O aparelho vai no cabeçalho `X-Aparelho` (não na query); a listagem marca `meu` comparando o hash e nunca devolve o hash, a hora do envio nem o ponto exato (só a célula e o centro dela). | O cabeçalho não vai para o log de acesso; a hora exata junto da célula ajudaria a achar quem enviou. |
+| D52 | 15/11 | Tela: o resumo de plantio usa a safra mais recente com relatos; a chuva é a média dos relatos de hoje e dos 6 dias anteriores; o selo "Exemplo" vai em cada linha do resumo que tem algum relato de exemplo e em cada evento. Mapa: etiqueta com ícone e número por tipo, legenda em texto e a lista completa para o leitor de tela; abre enquadrando o círculo de 30 km. | Etiquetas com o texto inteiro se sobrepunham no celular (células a ~10 km); o nome de cada ícone fica na legenda, então nada depende só de cor. |
+| D53 | 15/11 | i18n só com acréscimos no bloco `community`; as chaves da comunidade simulada ficaram (a página `/design-system` ainda usa algumas). O RF novo é o RF-28; se outra seção também pegar o RF-28, renumerar no merge (como no D13). | Regra de só acrescentar com a S3 rodando em paralelo. |
+| D54 | 15/11 | Migração `3f7c2a9d4e81` revisa a `6e961f333ddc`. Se outra seção criar migração com a mesma base, o merge deixa duas cabeças no Alembic: a segunda a entrar passa a revisar a outra. O teste antigo da R1.6 passou a descer até a migração inicial (não mais `downgrade -1`). | O `alembic upgrade head` falha com duas cabeças; melhor resolver no merge do que travar as seções. |
 
 ## Revisão por seção
 
@@ -156,6 +169,15 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
   da colheita. Com a regra nova (D31), um ponto com mediana em 21 ou 22/fev passa de "meio" para "tarde".
 
 ## O que não foi possível e por quê
+
+- **S7, chuva do satélite ao lado da chuva relatada:** não há chuva recente do satélite ligada (o
+  IMERG Late saiu do sinal na tarefa 0038 e o banco só tem janeiro a julho). O pedido diz "quando
+  houver dado recente": a frase não aparece.
+- **S7, área queimada do MODIS no mapa:** depende da seção 4 (o MCD64A1 ainda não foi baixado).
+- **S7, links "Fogo na palha" e "Como evitar erosão":** os artigos ainda não existem no Guia (D9).
+  O relato de fogo e o de enxurrada ou erosão ficam sem link até eles serem escritos.
+- **S7, relatos na conta do motor:** os relatos não corrigem a chuva do IMERG nem entram no risco
+  (o PRD 4 ainda fala disso): sem confirmação, só informam.
 
 - **S2, link curto do Google Maps** (`maps.app.goo.gl`, `goo.gl/maps`): não dá para abrir sem rede, e o
   navegador não pode seguir o redirecionamento do Google. A tela explica: abrir o link no Google Maps e

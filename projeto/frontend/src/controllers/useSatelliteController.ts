@@ -11,12 +11,36 @@ import {
   parseConfirmadas,
   withConfirmation,
 } from '../services/confirmedSeasonsService'
+import {
+  communityService,
+  plantingReport,
+  reportErrorKind,
+  type CommunityService,
+  type PlantingDraft,
+  type ReportResult,
+} from '../services/communityService'
 import { farmService, isOutsideArea, type FarmService } from '../services/farmService'
 import { buildFlowQuery, keepFlowQuery, readFlowParams } from '../services/flowParams'
 import { climateSummary, historySummary, rainSummary, soilSummary } from '../services/satelliteService'
 import { useAsync } from './useAsync'
 
-type Deps = { farm: FarmService }
+type Deps = { farm: FarmService; community?: CommunityService }
+
+const EMPTY_SHARE: PlantingDraft = { crop: null, year: null, outcome: null, reason: null }
+
+/** Estado de uma safra no "Compartilhar com a comunidade": enviando, enviada, o motivo da falha ou nada. */
+export type ShareStatus = ReportResult | 'sending'
+
+export type SeasonShareRow = {
+  year: number
+  /** O produtor confirmou "Deixei parado": o relato já está pronto (pousio, sem "como foi"). */
+  idle: boolean
+  draft: PlantingDraft
+  ready: boolean
+  status: ShareStatus
+}
+
+export type SeasonShare = { open: boolean; showNotice: boolean; rows: SeasonShareRow[] }
 
 const defaultDeps: Deps = { farm: farmService }
 
@@ -28,6 +52,10 @@ const defaultDeps: Deps = { farm: farmService }
  * Tarefa 0039: no cartão do histórico, o produtor confirma as últimas safras ("Plantei" / "Deixei
  * parado"). A escolha vai para a URL (`confirmadas`), vale no lugar do satélite na faixa e segue para
  * a recomendação.
+ *
+ * Tarefa 0047: depois de confirmar, "Compartilhar com a comunidade" grava o relato de plantio de cada
+ * safra confirmada no ponto da lavoura ("Deixei parado" vai pronto; "Plantei" pergunta a cultura e
+ * como foi). Na fazenda de exemplo não aparece: o relato vale para a lavoura marcada.
  */
 export function useSatelliteController(deps: Deps = defaultDeps) {
   const { lang } = useI18n()
@@ -94,6 +122,61 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
   const status: ScreenStatus = outside ? 'outside' : talhao.status
   const redirectTo = !params ? '/onde' : !params.colheita ? `/quando${query}` : null
   const historico = talhao.data?.historico ?? null
+  const anosConfirmaveis = talhao.data?.anos_confirmaveis
+  const confirmations = useMemo(
+    () => confirmationRows(historico, anosConfirmaveis, confirmadas),
+    [historico, anosConfirmaveis, confirmadas],
+  )
+
+  // Tarefa 0047: "Compartilhar com a comunidade" das safras confirmadas (só na lavoura marcada).
+  const community = deps.community ?? communityService
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareDrafts, setShareDrafts] = useState<Partial<Record<number, PlantingDraft>>>({})
+  const [shareStatus, setShareStatus] = useState<Partial<Record<number, ShareStatus>>>({})
+  const [noticeSeen, setNoticeSeen] = useState(() => community.noticeSeen())
+  const sharePoint = useMemo(
+    () => (params && !params.exemplo ? { lat: params.lat, lon: params.lon } : null),
+    [params],
+  )
+  const shareRows = useMemo(
+    (): SeasonShareRow[] =>
+      confirmations
+        .filter((row) => row.choice !== null)
+        .map((row) => {
+          const idle = row.choice === 'parado'
+          const saved = shareDrafts[row.year] ?? EMPTY_SHARE
+          const crop = idle ? 'pousio' : saved.crop === 'pousio' ? null : saved.crop
+          const draft: PlantingDraft = { ...saved, crop, year: row.year }
+          const ready = sharePoint !== null && plantingReport(draft, sharePoint) !== null
+          return { year: row.year, idle, draft, ready, status: shareStatus[row.year] ?? null }
+        }),
+    [confirmations, shareDrafts, shareStatus, sharePoint],
+  )
+  const share: SeasonShare | null =
+    sharePoint && shareRows.length > 0 ? { open: shareOpen, showNotice: !noticeSeen, rows: shareRows } : null
+
+  const toggleShare = useCallback(() => setShareOpen((open) => !open), [])
+  const changeShare = useCallback((year: number, change: Partial<PlantingDraft>) => {
+    setShareDrafts((drafts) => ({ ...drafts, [year]: { ...(drafts[year] ?? EMPTY_SHARE), ...change } }))
+    setShareStatus((statuses) => ({ ...statuses, [year]: null }))
+  }, [])
+  const sendShare = useCallback(
+    async (year: number) => {
+      const row = shareRows.find((item) => item.year === year)
+      const report = row && sharePoint ? plantingReport(row.draft, sharePoint) : null
+      if (!report) return
+      setShareStatus((statuses) => ({ ...statuses, [year]: 'sending' }))
+      try {
+        await community.send(report)
+        setShareStatus((statuses) => ({ ...statuses, [year]: 'sent' }))
+      } catch (error) {
+        setShareStatus((statuses) => ({ ...statuses, [year]: reportErrorKind(error) }))
+      } finally {
+        setNoticeSeen(community.noticeSeen())
+      }
+    },
+    [shareRows, sharePoint, community],
+  )
 
   return {
     redirectTo,
@@ -102,7 +185,12 @@ export function useSatelliteController(deps: Deps = defaultDeps) {
     status,
     retry: talhao.retry,
     history: historySummary(applyConfirmations(historico, confirmadas)),
-    confirmations: confirmationRows(historico, talhao.data?.anos_confirmaveis, confirmadas),
+    confirmations,
+    share,
+    toggleShare,
+    changeShare,
+    sendShare,
+    communityTo: `/comunidade${query}`,
     noSoy: noSoyAtPoint(historico),
     rain: rainSummary(talhao.data?.dados ?? [], recomendacao.data?.opcoes ?? null),
     climate: climateSummary(talhao.data?.dados ?? []),

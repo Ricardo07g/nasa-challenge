@@ -49,7 +49,7 @@ Sempre o teste antes do código, vendo ele falhar:
 
 ## Regras das camadas
 
-- **Repository:** só HTTP, via `getJson` de `repositories/httpClient.ts`. Sem regra.
+- **Repository:** só HTTP, via `getJson` (e `sendJson`, para POST e DELETE) de `repositories/httpClient.ts`. Sem regra.
 - **Service:** regras de negócio puras. Recebe o repository por parâmetro
   (`create<X>Service(repository = <x>Repository)`), para ser testável sem rede.
 - **Controller (hook):** estado da tela, efeitos e handlers. Fala com services, nunca direto com repository.
@@ -115,6 +115,32 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   cada ano são um `ChipGroup` (grupo com o rótulo do ano, `aria-pressed`); tocar de novo na resposta
   marcada volta para o satélite. O ano `sem_soja` vira o quadrinho `none` (pontilhado com "–") e a
   legenda "Sem soja"; não conta como parado, plantou nem sem certeza.
+- **Comunidade ("Na sua região", tarefa 0047 do backend, RF-27):** relatos sem cadastro, sem texto livre e
+  sem dado pessoal. O contrato está em `models/community.ts` (`RelatoComunidade`, `RelatosVizinhos`,
+  `NovoRelato` e as listas fechadas `CULTURAS_RELATO`, `RESULTADOS`, `MOTIVOS`, `EVENTOS`, iguais às do
+  backend). `repositories/communityRepository.ts` lista, envia e apaga (`GET`/`POST
+  /api/comunidade/relatos`, `DELETE …/{id}`), sempre com o cabeçalho `X-Aparelho`; o `POST`/`DELETE`
+  passa pelo `sendJson` do `httpClient.ts` (o único lugar com `fetch`). O identificador do aparelho é
+  um UUID v4 aleatório (`crypto.getRandomValues`, que funciona fora de HTTPS) guardado no `localStorage`
+  por `repositories/deviceRepository.ts`, com toda leitura e escrita em try/catch (sem `localStorage`,
+  vale só para a visita); o mesmo repository lembra que o aviso "Seus vizinhos veem a região, não o seu
+  ponto." já apareceu antes de um envio. As regras ficam em `services/communityService.ts`: os
+  rascunhos viram relato só quando completos (`plantingReport`, `rainReport`, `eventReport`: chuva de 0
+  a 300 mm, com vírgula ou ponto; data de 30 dias atrás até hoje; motivo só com "Perdi"; "Deixei
+  parado" sem "Como foi"), o resumo "Perto de você" (`nearbySummary`: plantio da safra mais recente,
+  chuva dos 7 dias, eventos dos 30), o mapa por célula (`cellMarkers`) e o motivo da falha
+  (`reportErrorKind`: 429 = limite, 422 = valor recusado). Quem decide é o backend; os limites do front
+  só desligam o "Enviar". Só conta quem marcou a própria lavoura (sem ponto ou na fazenda de exemplo, a
+  tela pede "Marcar minha lavoura"). Todo relato aparece com o selo "Relato de vizinho, não confirmado";
+  nunca crie relato de exemplo com a API real: os exemplos ficam em `repositories/mocks/mockCommunity.ts`
+  (só no modo `mock`), cada um com `exemplo: true`, e a tela põe o selo "Exemplo". Sem relatos: "Ainda
+  não há relatos perto de você. Seja o primeiro a contar." Sem banco no servidor (503
+  `COMMUNITY_UNAVAILABLE`) ou sem a rota (404 sem código), a comunidade fica `not-connected` e não
+  aparece. O mapa (`design-system/components/ReportsMap.tsx`) desenha o círculo do raio e um marcador
+  por célula de 0,1° (nunca uma fazenda), com ícone e número por tipo e a legenda em texto. Na tela 4,
+  depois de confirmar as safras, "Compartilhar com a comunidade" (`views/ShareSeasons.tsx`, estado no
+  `useSatelliteController`) grava o relato de plantio de cada safra confirmada. Os campos dos relatos
+  ficam em `views/CommunityForms.tsx`, usados pelas duas telas.
 - **Gráfico com dado real:** tudo o que é desenhado vem da API, com a fonte e o período na legenda (ex.:
   "Média de 2005 a 2024, NASA POWER"). O mock traz o mesmo campo, no formato do contrato.
 - **Guia (`/guia`, tarefa 0048, RF-26):** os artigos são arquivos Markdown em

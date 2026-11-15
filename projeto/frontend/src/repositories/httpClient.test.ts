@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ApiError, NotConnectedError, getExternalJson, getJson, isNotConnected, isOutsideArea } from './httpClient'
+import { ApiError, NotConnectedError, getExternalJson, getJson, isNotConnected, isOutsideArea, sendJson } from './httpClient'
 
 describe('getJson', () => {
   it('faz GET no caminho e devolve o JSON', async () => {
@@ -91,5 +91,60 @@ describe('getExternalJson (serviço público de fora, sem chave: busca de endere
 
     expect(error).toBeInstanceOf(ApiError)
     expect(error).toMatchObject({ status: 429, code: null })
+  })
+})
+
+describe('getJson com cabeçalhos (relatos da comunidade, tarefa 0047)', () => {
+  it('manda os cabeçalhos pedidos junto com o idioma', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await getJson('/api/comunidade/relatos?lat=1&lon=2', { lang: 'pt', headers: { 'X-Aparelho': 'abc12345' } })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/comunidade/relatos?lat=1&lon=2', {
+      headers: { 'Accept-Language': 'pt', 'X-Aparelho': 'abc12345' },
+    })
+  })
+})
+
+describe('sendJson (POST e DELETE na API)', () => {
+  it('POST manda o corpo em JSON com os cabeçalhos e devolve a resposta', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ id: 'r1' }, { status: 201 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const data = await sendJson<{ id: string }>('POST', '/api/comunidade/relatos', { tipo: 'chuva' }, {
+      headers: { 'X-Aparelho': 'abc12345' },
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/comunidade/relatos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Aparelho': 'abc12345' },
+      body: JSON.stringify({ tipo: 'chuva' }),
+    })
+    expect(data).toEqual({ id: 'r1' })
+  })
+
+  it('DELETE sem corpo: 204 devolve null', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const data = await sendJson('DELETE', '/api/comunidade/relatos/r1', undefined, { headers: { 'X-Aparelho': 'a' } })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/comunidade/relatos/r1', {
+      method: 'DELETE',
+      headers: { 'X-Aparelho': 'a' },
+    })
+    expect(data).toBeNull()
+  })
+
+  it('erro da API vira ApiError com o status e o código (ex.: limite de relatos)', async () => {
+    const body = { status: 429, code: 'TOO_MANY_REPORTS', detail: 'Este aparelho já enviou 10 relatos.' }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(body, { status: 429 })))
+
+    const error = await sendJson('POST', '/api/comunidade/relatos', {}).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 429, code: 'TOO_MANY_REPORTS' })
+    expect((error as Error).message).toContain('POST')
   })
 })

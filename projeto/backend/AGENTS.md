@@ -71,7 +71,8 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
 - **Rotas:** todas sob `/api` (o `include_router` usa `prefix="/api"`).
 - **Erros:** sempre `application/problem+json` com `type`, `title`, `status`, `detail` e `code` (o front
   lê o `code`). O `main.py` traduz os erros de domínio (404 `NOT_FOUND` / `OUTSIDE_AREA`, 422
-  `VALIDATION_ERROR`) e o parâmetro inválido da requisição (422 `INVALID_REQUEST`, com a lista
+  `VALIDATION_ERROR`, 429 `TOO_MANY_REPORTS` e 503 `COMMUNITY_UNAVAILABLE` dos relatos da comunidade)
+  e o parâmetro inválido da requisição (422 `INVALID_REQUEST`, com a lista
   `invalid_params`: `name`, `in`, `reason`). Rota nova não precisa de nada para ganhar esse formato.
 - **Cache HTTP (que revalida):** só `/recomendacao` usa cache, e só na resposta 200:
   `Cache-Control: public, no-cache` (pode guardar, mas pergunta à API toda vez), `ETag` forte (SHA-256
@@ -96,7 +97,7 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
   Para aplicar com uv (fora do Docker): `uv run alembic upgrade head`
   Para ver SQL gerado sem rodar: `uv run alembic upgrade head --sql`
   Para criar nova migração: `uv run alembic revision -m "descricao"`
-- Tabelas (migração inicial `cb6b775d83e3` + R1.6 `6e961f333ddc`):
+- Tabelas (migração inicial `cb6b775d83e3` + R1.6 `6e961f333ddc` + comunidade `3f7c2a9d4e81`):
   - `grid_cell`, `climate_season` e `soil_point`: gravadas pela busca sob demanda (ver "Dados da API");
     o `climate_season.rain_source` é `nasa_power` ou, nos anos trocados pela carga do IMERG,
     `gpm_imerg`;
@@ -107,6 +108,10 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
     mas ainda não lê as outras (R3.2 e R3.5 do roteiro). O `cmip6_delta` exige a célula em `grid_cell`. O `cmip6_delta`, o `ndvi_point` e o
     `smap_point` são preenchidos pela carga dos arquivos (`pipeline/load_files_to_db.py`, ver
     "Dados da API").
+  - `community_report` (tarefa 0047): os relatos da comunidade sem cadastro, gravados pela API
+    (`PostgisCommunityReportRepository`). Colunas `id` (uuid), `report_type`, `subtype`, `details`
+    (jsonb), `cell_id`, `fact_date`, `sent_at` e `device_hash`; regras em "Relatos da comunidade"
+    (abaixo).
 - Banco criado antes do R1.6: rode `uv run alembic upgrade head` (ou
   `docker compose run --rm migration`). A migração recria `cmip6_delta` e `ndvi_point`, troca
   `smap_moisture` por `smap_point` (o que houver nelas é apagado) e marca as cargas antigas de
@@ -816,6 +821,41 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     `SOJA_RECENTE_PATH=../../data/baixados/nasa_modis_soja_recente/soja_recente_2026.json` no
     `.env` desta pasta; **no compose**, já ligado. Lido uma vez por processo: reinicie o backend.
 
+- **Relatos da comunidade** (tarefa 0047, seção 7 da remodelagem; tela "Na sua região"): sem
+  cadastro, sem texto livre e sem dado pessoal. Rotas (o aparelho vai no cabeçalho `X-Aparelho`,
+  identificador aleatório de 8 a 64 letras, números e hífen):
+  - `POST /api/comunidade/relatos` (201): `{"tipo", "subtipo", "valores", "lat", "lon", "data_fato"}`;
+    campo a mais é recusado (422 `INVALID_REQUEST`). Devolve o relato como os vizinhos veem
+    (`id`, `tipo`, `subtipo`, `valores`, `celula`, `lat`/`lon` do **centro da célula**, `data_fato`,
+    `meu: true`);
+  - `GET /api/comunidade/relatos?lat&lon[&raio_km]` (200): `{"raio_km", "anos_safra", "relatos"}`;
+    com `X-Aparelho`, os relatos dele vêm com `meu: true`;
+  - `DELETE /api/comunidade/relatos/{id}` (204): só o aparelho que enviou; senão, 404 `NOT_FOUND`.
+
+  Tipos de agora (`app/models/community_report.py`): `plantio` (`subtipo` = id do `culturas.yaml`,
+  com `pousio` como "deixei parado", ou `outra`; `valores` = `ano`, `resultado` em `bem`,
+  `mais_ou_menos`, `perdi`, e `motivo` em `seca`, `calor`, `geada`, `granizo`, `praga`, `outro` só
+  com `perdi`; o `pousio` não tem resultado; sem `data_fato`), `chuva` (`valores.mm` de 0 a
+  `chuva_max_mm`, sem subtipo) e `evento` (`subtipo` em `fogo`, `granizo`, `geada`, `vendaval`,
+  `enxurrada_erosao`, `praga_doenca`; `valores` vazio). A coluna `report_type` é texto aberto para
+  os tipos futuros (oferta, troca, empréstimo), que o service ainda recusa. Regras no
+  `CommunityReportService`, números no grupo `comunidade` do `regras.yaml`:
+  - chuva e evento: data não futura e de no máximo `dias_atras_max` (30) dias, no dia de Uberlândia
+    (`PILOT_UTC_OFFSET_HOURS`, UTC-3); plantio: o ano em `FieldHistoryService.confirmable_years()`
+    (as últimas safras da tela 4); ponto dentro da área piloto;
+  - no máximo `max_relatos_por_dia` (10, hipótese do time) relatos por aparelho nas últimas 24 horas
+    (429 `TOO_MANY_REPORTS`); um novo plantio do mesmo aparelho e ano substitui o anterior;
+  - redondeza: as células cujo centro fica a até `raio_km` (30; no máximo `raio_max_km`, 50) do
+    ponto, pela haversine (`cells_within_radius`), com a chuva e os eventos dos últimos 30 dias e o
+    plantio das últimas safras, do mais novo ao mais velho;
+  - sem banco (`DATABASE_URL` vazia), as três rotas respondem 503 `COMMUNITY_UNAVAILABLE` (o front
+    não mostra a comunidade).
+
+  **Privacidade (RNF-10):** o service troca o ponto pela célula de 0,1° (`cell_id_for`) e só ela é
+  gravada (o `CHECK` da tabela recusa coordenada); o identificador do aparelho vira HMAC-SHA-256
+  com o `COMMUNITY_DEVICE_SALT` (o `CHECK` exige 64 dígitos hexadecimais) e nunca volta na
+  resposta; a listagem não traz o hash, a hora do envio nem o ponto exato. Não grave nem registre
+  em log o ponto ou o identificador do aparelho. Detalhes: `docs/tarefas/0047-comunidade.md`.
 - **Testes com banco** (marker `db`, em `tests/integration/db/`): rodam só com `TEST_DATABASE_URL`
   apontando para um banco **só de teste** com PostGIS (as tabelas são esvaziadas a cada teste); sem
   ela, são pulados. A fixture aplica `alembic upgrade head` nesse banco. POWER e SoilGrids são sempre
@@ -1204,6 +1244,10 @@ ilustrativos (e só 2 × 4 dos 721 × 880):
   - `APPEEARS_TOKEN`: token próprio do AppEEARS, de `POST /api/login` (vale cerca de 48 h). Sem ele, o
     script faz o login com `EARTHDATA_USERNAME` e `EARTHDATA_PASSWORD`.
   - `EE_PROJECT` é legado (Earth Engine fora do MVP) e sai quando a ADR-0005 for aceita.
+- `COMMUNITY_DEVICE_SALT` (a API usa, tarefa 0047): sal do hash do identificador do aparelho nos
+  relatos da comunidade. Segredo, só no ambiente (gere um valor longo e aleatório). Vazio: um sal
+  aleatório por processo (os relatos continuam anônimos, mas o limite por dia e o "apagar o meu"
+  recomeçam quando a API reinicia). Trocar o sal tem o mesmo efeito.
 
 ## Dependências
 
