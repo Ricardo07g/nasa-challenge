@@ -30,7 +30,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | a fazer |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | a fazer |
-| S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | feito na branch `feat/remodelagem-s7-comunidade` (falta o merge, aplicar a migração `3f7c2a9d4e81` no banco de desenvolvimento e a revisão) |
+| S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~05:50), revisada |
 | S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | a fazer |
 
 Ordem de merge: S1 → S8 → S2 → S3 → S4 → S5a → S5b → S6 → S7 → S9. Se a janela de uso acabar, a
@@ -98,6 +98,16 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D54 | 15/11 | Migração `3f7c2a9d4e81` revisa a `6e961f333ddc`. Se outra seção criar migração com a mesma base, o merge deixa duas cabeças no Alembic: a segunda a entrar passa a revisar a outra. O teste antigo da R1.6 passou a descer até a migração inicial (não mais `downgrade -1`). | O `alembic upgrade head` falha com duas cabeças; melhor resolver no merge do que travar as seções. |
 
 ## Revisão por seção
+
+### S7 — Comunidade (revisada em 15/11 ~05:55)
+
+- ✅ Três relatos sem cadastro e sem texto livre (plantio, "Choveu aqui", "Aconteceu aqui"), em até 3 toques; aviso "Seus vizinhos veem a região, não o seu ponto."; fogo mostra "ligue 193".
+- ✅ Tabela `community_report` (migração `3f7c2a9d4e81`, com `downgrade`) só com a célula de 0,1° e o HMAC do aparelho; endpoints conferidos de ponta a ponta no banco de revisão: enviar (volta só o centro da célula), listar (sem o hash), apagar (204), validação (500 mm → 422 "A chuva vai de 0 a 300 mm por dia.").
+- ✅ Sem relatos: "Ainda não há relatos perto de você. Seja o primeiro a contar." (nenhum relato falso); exemplos só no modo mock, com o selo "Exemplo". Região pelo satélite continua escondida.
+- ✅ "Compartilhar com a comunidade" depois de confirmar as safras na tela 4; link do Guia no fim.
+- ⚠️ **A migração NÃO foi aplicada no banco `raiz_orbital`** (o Docker do usuário roda o `main`, que não a conhece: o serviço `migration` do compose quebraria). A revisão usa a cópia `raiz_orbital_remodelagem`. Ao fazer o merge do PR, rode `docker compose run --rm migration`.
+- ⚠️ Configure o `COMMUNITY_DEVICE_SALT` no servidor; sem ele, o sal muda a cada reinício (o limite por dia e o "apagar o meu" recomeçam).
+- ⚠️ Os links do Guia para "Fogo na palha" e "Como evitar erosão" esperam esses artigos.
 
 ### S3 — Quando você colhe (revisada em 15/11 ~05:05)
 
