@@ -529,7 +529,7 @@ export const pt = {
       xray: 'como ler o raio-X da sua terra',
       rain: 'quando a chuva acaba',
       dryspell: 'veranico',
-      heat: 'calor de 35 °C na floração',
+      heat: 'calor na floração',
     },
     textures: { arenoso: 'arenosa', medio: 'média', argiloso: 'argilosa' },
     eyebrow: 'Raio-X da sua terra',

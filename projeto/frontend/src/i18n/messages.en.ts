@@ -484,7 +484,7 @@ export const en = {
       xray: "how to read your land's X-ray",
       rain: 'when the rain ends',
       dryspell: 'dry spells',
-      heat: '35 °C heat at flowering',
+      heat: 'heat at flowering',
     },
     textures: { arenoso: 'sandy', medio: 'medium', argiloso: 'clay' },
     eyebrow: "Your land's X-ray",
