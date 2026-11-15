@@ -72,7 +72,7 @@ describe('isNotConnected (dado que a API ainda não manda)', () => {
   })
 })
 
-describe('getExternalJson (serviço público de fora, sem chave: busca de endereço)', () => {
+describe('getExternalJson (serviço público de fora, sem chave: endereço aproximado do Photon)', () => {
   it('faz GET na URL completa com o sinal para cancelar e devolve o JSON', async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ features: [] }))
     vi.stubGlobal('fetch', fetchMock)

@@ -37,7 +37,6 @@ import {
   Plus,
   Pointer,
   Satellite,
-  Search,
   Send,
   ShieldCheck,
   Snowflake,
@@ -237,11 +236,6 @@ export function HeatIcon({ size = 16 }: IconProps) {
 
 export function SendIcon({ size = 18 }: IconProps) {
   return <Send size={size} {...decorative} />
-}
-
-// Busca de endereço (tela "Onde fica a lavoura")
-export function SearchIcon({ size = 20 }: IconProps) {
-  return <Search size={size} {...decorative} />
 }
 
 // Alertas da sua área (raio-X, tela 4, tarefa 0043)

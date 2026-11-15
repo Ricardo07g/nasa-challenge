@@ -46,7 +46,7 @@ export const CREDITS: Record<Lang, CreditsContent> = {
           '**NOAA CPC** · índice ONI e previsão de El Niño / La Niña',
           '**ZARC (MAPA) e Embrapa** · prazos e parâmetros das culturas',
           '**OpenStreetMap** (© colaboradores do OpenStreetMap, ODbL) · mapa e endereços',
-          '**Photon** (komoot) · busca de endereço, com dados do OpenStreetMap',
+          '**Photon** (komoot) · endereço aproximado do ponto marcado, com dados do OpenStreetMap',
         ],
       },
       {
@@ -94,7 +94,7 @@ export const CREDITS: Record<Lang, CreditsContent> = {
           '**NOAA CPC** · ONI index and El Niño / La Niña outlook',
           '**ZARC (MAPA) and Embrapa** · crop calendars and parameters',
           '**OpenStreetMap** (© OpenStreetMap contributors, ODbL) · map and addresses',
-          '**Photon** (komoot) · address search, with OpenStreetMap data',
+          '**Photon** (komoot) · approximate address of the marked spot, with OpenStreetMap data',
         ],
       },
       {
