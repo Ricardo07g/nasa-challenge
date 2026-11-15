@@ -163,25 +163,43 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   ficam em `views/CommunityForms.tsx`, usados pelas duas telas. Pacote 2: o ano do relato de plantio aparece pela
   safra (`seasonName`: "depois da soja 2025/26", "Em que safra?" com "2025/26", "Milheto, safra 2025/26"), e a
   região pelo satélite também ("Na safra 2024/25, …").
-- **Avisos (`/avisos`, tarefa 0046 do backend, RF-31):** o contrato está em `models/avisos.ts`; as regras (o que vira
-  aviso, o nível e o contador) ficam no backend (`GET /api/avisos`), e o front só escreve as frases (bloco `alerts`
-  das mensagens, montadas em `views/alertTexts.ts` com os `valores` de cada `tipo`). **Ponto salvo no aparelho, sem
-  cadastro:** `repositories/savedPointRepository.ts` guarda no `localStorage` (chave `raiz-orbital.avisos.ponto`,
-  toda leitura e escrita em try/catch; sem `localStorage`, vale só para a visita) o último ponto do fluxo com a
-  colheita, o solo e as safras confirmadas, **nunca a fazenda de exemplo** (`exemplo=1`). Quem guarda é o
-  `controllers/useAlertsBadge.ts`, usado pelo `useShellController` (toda tela com o ponto na URL). A tela vale para o
-  ponto da URL ou, sem ele, para o salvo; sem nenhum, pede "Marcar minha lavoura" (`/onde`). O `avisosService` faz um
-  pedido por ponto e idioma na visita (o botão do cabeçalho e a tela usam o mesmo). **Botão do cabeçalho:** "Avisos"
-  logo depois de "Comunidade", com o `contador` da API num selo e no nome acessível ("Avisos: 2 avisos ativos");
-  sem ponto, sem aviso ou com falha, sem número. **Tela:** grupos na ordem Agora, O que mudou na sua área, Fora do
-  comum e Perto de você (grupo `null` não aparece; grupo vazio = "Nada fora do normal." com a última leitura); cada
-  aviso com o nível escrito e um ícone (triângulo em "Atenção", olho em "Fique de olho"; a cor só reforça), o que o
-  dado mostra, "O que fazer:", a fonte e a data (no El Niño / La Niña, o "o que fazer" segue o `valores.sinal`, o
-  veredito do sinal do outono, para dar o mesmo conselho do Plano de 3 anos); os relatos com "Relato de vizinho, não confirmado". Fora da
-  safrinha, o link "Ver como teriam sido os avisos em <ano>" vai para `/resposta?<parâmetros do fluxo>&ano=<ano>`
-  (nunca para `/safra-passada`). O rodapé fixo "Alertas oficiais" aparece sempre (com ou sem ponto), com os botões
-  `sms:40199`, `https://wa.me/556120344611`, `tel:193` e `tel:199` e o link `/guia/alertas-defesa-civil`. Até 480 px,
-  o cabeçalho fica mais justo e, se não couber, os botões descem uma linha.
+- **Avisos (`/avisos`, tarefa 0046 do backend, RF-31; refeita no pacote 3, tarefa 0062, RF-45):** o contrato está em
+  `models/avisos.ts`; as regras do que vira aviso e do nível ficam no backend (`GET /api/avisos`). O front arruma a
+  tela no `services/avisosService.ts` e escreve as frases em `i18n/alertTexts.ts` (bloco `alerts` das mensagens, com os
+  `valores` de cada `tipo`; a view e o "Ouvir resumo" usam as mesmas). **Nenhum número inventado:** sem dado, o item
+  não aparece. **Ponto:** a tela e o sino valem para o ponto da URL (`viewPointFromFlow`, **inclusive a lavoura de
+  demonstração**, `exemplo=1`, que aparece como "Lavoura de demonstração, perto de Uberlândia (MG)") ou, sem ele, o
+  salvo no aparelho; sem nenhum, "Marcar minha lavoura" (`/onde`). **Ponto salvo, sem cadastro:**
+  `repositories/savedPointRepository.ts` (chave `raiz-orbital.avisos.ponto`, toda leitura e escrita em try/catch)
+  guarda o último ponto do fluxo com a colheita, o solo, as safras, a escolha atual e, desde o pacote 3, a `escolha` e
+  o `objetivo` da tela 5; **nunca a lavoura de demonstração** (`pointFromFlow`). Quem guarda é o
+  `controllers/useAlertsBadge.ts`, usado pelo `useShellController`. O `avisosService` faz um pedido por ponto e idioma
+  na visita (o sino e a tela usam o mesmo). **Número do sino = número do resumo** (`activeCount`, usado pelo
+  `headerCount` e pelo `alertsSummary`): só os avisos que a tela mostra, os cartões de "Agora". **O `contador` da API
+  ainda soma o "Perto de você"** (relatos de vizinhos), que saiu da tela: não use esse número. Sem aviso, sem número.
+  O botão do cabeçalho fica logo depois do Guia. **Tela** (protótipo `tela-7-avisos.html`): "← Voltar", "Avisos",
+  "{lugar} · atualizado em **{data}**", "Ouvir resumo" e "Como ler os avisos" (`GuideLink`); o **resumo** (verde sem
+  aviso, azul só com "Fique de olho", laranja com algum "Atenção"; `data-summary` com o tom) com a legenda dos níveis
+  (some sem aviso); a grade **"Agora" + "Alertas oficiais"** (uma coluna até 900 px): cartões-botão com "Atenção"
+  primeiro (`nowAlerts`; tipo desconhecido não aparece), cada um com o nível escrito e o ícone (a cor só reforça), o
+  título curto com o número, "O que fazer:" e a fonte com a data; sem aviso, a caixa verde; no fim, "Seu plano:
+  **{cultura}**, plantio até {prazo}" (`planCropOf` + `planLine`: a cultura da tela 5, `planChoice`, e o `data_limite`
+  da opção, do `farmService.recomendacao`; sem prazo, sem a parte do prazo) e "Ver exemplo: avisos de {ano}" (o
+  `safrinha.explorar_ano`, só fora da safrinha), que abre o modal com o replay daquele ano (`pastSeasonService`,
+  `/api/safra-passada` com a cultura do plano, pedido só com o modal aberto) e os recordes do mesmo ano
+  (`exampleRows`); nunca escreva os números do protótipo. "Alertas oficiais" (sempre visível, `id="alertas-oficiais"`,
+  a âncora do "Ver alertas oficiais" da tela 6; o controller rola até ela de novo quando os dados chegam): `sms:40199`,
+  `https://wa.me/556120344611?text=Oi` (nova aba), `tel:193`, `tel:199` e o Guia `alertas-defesa-civil`. **"Como a sua
+  área está mudando"** (`changeTiles`: até 4 quadros, veranico, fim das chuvas, falta de água, deu certo e o calor se
+  couber; os da cultura só quando a conta da API é da cultura do 1º ano do plano) e **"Já aconteceu aqui"**
+  (`recordTiles`, os 4 recordes): o valor antigo riscado, o novo em laranja quando piorou, "2005–19 → 2020–24".
+  Cada cartão e cada quadro abre o mesmo `Modal` (o controller guarda `detail = {kind, index}`): nível, título, número
+  grande, "O que significa", "O que fazer", fonte com a data ("leitura de" em "Agora", "dados até" nas séries) e o
+  "Saiba mais" em nova aba (`conta-de-agua`, `veranico`, `calor-35-graus`, `el-nino-la-nina`, `quando-a-chuva-acaba`,
+  `deu-certo`). No fim, a comunidade **"Em breve"** (sem botão). **O "Perto de você" saiu da tela** (a API ainda manda
+  `perto`; o backend da comunidade continua). "Ouvir resumo": `alertsListen` (quantos avisos e o "título: o que fazer"
+  de cada cartão; sem aviso, "Nada fora do normal agora…"). No El Niño / La Niña, o "o que fazer" do modal segue o
+  `valores.sinal` (o mesmo conselho do Plano de 3 anos). Cores novas no bloco "Pacote 3 · tela 7" do `tokens.css`.
 - **Pacote 2: regras gerais de todas as telas (tarefa 0054, RF-38).** Valem para toda tela nova ou refeita:
   - **Navegação:** nada de "Pergunta X de 2" nem barra de progresso. Toda tela interna tem o "← Voltar" de
     verdade acima do título: `BackButton` do design system (`to`, `children` = `t.nav.back`); não desenhe outro.
@@ -365,7 +383,7 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   abre a aba 2 do topo. O "Voltar" vai para `/satelite`. **O que fica na URL** (`flowParams.ts`): `objetivo`,
   `comparar` (até 3, o pousio vale), `escolha` (o 1º ano do plano; sem ela, o `pensa` do raio-X e, com "Ainda não
   sei", a sugestão), `ano2` e `ano3` (os anos que o produtor mudou) e `ano` (o ano aberto no "Por que essa
-  sugestão?", que o link dos avisos usa). Escolher para o plano congela a comparação da tela com a cultura e solta
+  sugestão?", que os links antigos usam). Escolher para o plano congela a comparação da tela com a cultura e solta
   `ano2`/`ano3`; trocar o objetivo solta a comparação (e os anos, sem `escolha`). Regras: `services/choiceService.ts`
   (ordem com as fora do prazo no fim, `isLate` = `fora_do_prazo` ou, na API antiga, `!na_janela`; a sugestão é sempre
   a 1ª no prazo; comparação de partida, caixinhas, fluxos) e `services/planService.ts` (o que fixar no
