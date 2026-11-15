@@ -211,6 +211,38 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   uv run python -m pipeline.fetch_cmip6_deltas --area            # caixa piloto, 3 modelos
   ```
 
+- **Chuva do GPM IMERG Final** (R2.4, tarefa 0026): `pipeline/fetch_imerg.py` grava a chuva diária
+  do `GPM_3IMERGDF` v07 (0,1°) das 225 células da caixa piloto, de 1/jan em diante (212 dias) de
+  2005 a 2024, no arquivo do contrato IMERG (abaixo). É refinamento da chuva do POWER (ADR-0003).
+  - **Credencial:** `EARTHDATA_TOKEN` (pelo `Settings`), com o aplicativo **NASA GESDISC DATA
+    ARCHIVE** autorizado e a EULA do GES DISC aceita no perfil da Earthdata. O token vai como
+    `Authorization: Bearer` num cabeçalho comum, que o `urllib` repete no redirecionamento do login
+    (o `authorization` do `HttpRequest` não serve: ele não segue o redirecionamento). Fora dos
+    hosts `*.earthdata.nasa.gov` e `*.eosdis.nasa.gov` o cabeçalho é tirado; o cookie da sessão
+    fica guardado. O token nunca aparece em mensagem ou log.
+  - **Como pede:** a lista dos arquivos vem da busca pública do CMR (sem token, um pedido por ano,
+    paginado), porque o nome muda com o processamento (`V07A`, `V07B`). Um DAS por versão confere
+    a unidade (`mm/day`), o preenchimento e a origem do tempo. Depois, **um recorte ASCII por dia**
+    no OPeNDAP do GES DISC (`gpm1`, Hyrax) com o retângulo de pixels que cobre a caixa
+    (`precipitation[0:0][1310:1324][701:715]`, ordem `[tempo][lon][lat]`). O Hyrax recusa
+    `Accept: application/json` (406): o script pede `text/plain`.
+  - **Paralelo e retomada:** o primeiro pedido vai sozinho (confere o acesso e abre a sessão); os
+    outros vão em paralelo (`--paralelo`, padrão 6, máximo 10), com 3 retentativas e espera
+    exponencial (5, 10 e 20 s). 401, 403, redirecionamento sem fim ou página de login: para na
+    hora. Cada recorte é conferido antes de entrar no cache (gravado como `.part` e renomeado).
+    Algum dia falhou: nada é gravado e o script pede para rodar de novo (continua do cache).
+  - **Tempo:** 4.240 recortes; até ~2,2 h com 6 em paralelo, contando ~11 s por pedido (o primeiro
+    pedido real, que inclui o login); com a sessão aberta deve ser menos. `--anos 2024` baixa um
+    ano só, para conferir antes.
+  - Saída padrão `data/baixados/nasa_gpm_imerg/imerg_diario_caixa.json` e cache
+    `data/baixados/nasa_gpm_imerg/cache_opendap/`, a partir da raiz do repositório (fora do git).
+
+  ```bash
+  uv run python -m pipeline.fetch_imerg --dry-run     # pedidos e tempo, sem rede
+  uv run python -m pipeline.fetch_imerg --anos 2024   # um ano, para conferir
+  uv run python -m pipeline.fetch_imerg               # 2005–2024
+  ```
+
 - **Pré-carga da caixa piloto** (tarefa 0012, R1.5): `pipeline/preload_pilot_box.py` grava no banco
   o clima e o solo das 225 células de 0,1° da caixa (`PILOT_*` de `app/constants.py`), com a da
   fazenda de exemplo primeiro, para o primeiro clique na caixa sair do banco, sem busca sob demanda.
@@ -401,8 +433,8 @@ Regras gerais:
 - Datas `AAAA-MM-DD`. Horas em ISO 8601 com fuso (`2026-11-14T13:00:00Z`).
 - Coordenadas WGS 84 em graus decimais. O ponto vira chave de cache com `point_key` (0,0025°,
   `app/repositories/point_cache.py`); na tabela, `key` + `geom`.
-- Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1` e `smap`.
-  A do IMERG (`gpm_imerg` ou `imerg_final`) espera a decisão da seção 5 do roteiro.
+- Chaves de fonte estáveis: `nasa_power`, `soilgrids`, `nex_gddp_cmip6`, `modis_mod13q1`, `smap` e
+  `gpm_imerg` (a que o front já procura; decisão adotada na tarefa 0026, **a revisar**).
 - Todo arquivo traz `versao_dados`, a execução que o gerou.
 - Sem valor: campo ausente ou `null`. Nunca `-999`, zero ou número inventado, e nunca dado
   sintético com uma dessas chaves de fonte.
@@ -521,6 +553,43 @@ produto (007 ou 008) vai em `versao_dados.parametros`, não em cada linha.
   sm_surface_m3_m3)`, chave `(key, date)`. Substitui a `smap_moisture` por célula da migração inicial.
 - Antes de 2015 não há SMAP. O percentil (`sm_rootzone_pctl`, A2.2) é calculado depois e não faz
   parte deste registro.
+
+### IMERG: `ImergCellSeries` e `ImergSeason` (`app/models/climate.py`)
+
+Chuva diária do GPM IMERG Final (`GPM_3IMERGDF` versão 07, 0,1°) por **célula de 0,1° do projeto**:
+a grade do IMERG tem centros em x,x5, então cada célula (`cell_id_for`, `floor`) é exatamente um
+pixel. O arquivo é a saída do `pipeline/fetch_imerg.py` (R2.4).
+
+```json
+{
+  "versao_dados": {"fonte": "gpm_imerg", "parametros": {"produto": "GPM_3IMERGDF", "versao_produto": "07", "versoes_arquivo": ["V07B"], "anos": [2005, 2024], "temporada": {"inicio": "01-01", "dias": 212}}, "fim": "2026-11-14T13:00:00Z", "versao": "2026.11-gpm-imerg"},
+  "celulas": [
+    {
+      "celula": "-190_-482", "lat": -18.95, "lon": -48.15,
+      "temporadas": [
+        {"ano": 2005, "inicio": "2005-01-01", "chuva_mm": [0.0, 12.41, null, 3.07]}
+      ]
+    }
+  ]
+}
+```
+
+| JSON | Model | Regra |
+| --- | --- | --- |
+| `celula` | `ImergCellSeries.cell_id` | id `floor` do projeto (`<floor(lat×10)>_<floor(lon×10)>`) |
+| `lat`, `lon` | `latitude`, `longitude` | o **centro** da célula ((idx + 0,5) / 10), que é o centro do pixel do IMERG |
+| `ano` | `ImergSeason.year` | sem ano repetido na célula |
+| `inicio` | `start_date` | sempre 1/jan do `ano` |
+| `chuva_mm` | `rain_mm` | **212 dias** desde 1/jan (a janela do `ClimateSeasonBuilder`: no bissexto, até 30/jul), em mm (o `precipitation` do IMERG é mm/dia), 2 casas; `null` = sem dado |
+
+- **Dia sem dado → `null`, nunca 0 inventado:** dia sem arquivo no GES DISC (o
+  `versao_dados.parametros.dias_sem_arquivo` conta) ou pixel com o valor de preenchimento (−9999,9).
+  Chuva negativa é recusada.
+- **Ano com dia faltando continua no arquivo** (`ImergSeason.complete` é falso): a regra de descarte
+  fica para quem usa.
+- `versao_dados.parametros` traz também a variável e a unidade, o serviço, a caixa, o retângulo de
+  pixels e o número de células.
+- Ainda não há tabela própria: a tarefa 0027 (R3.4) leva a série para o `climate_season`.
 
 ## Configuração e segredos
 
