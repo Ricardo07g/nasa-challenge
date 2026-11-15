@@ -854,7 +854,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     com `ordem`, `plano` e `nota_plano`): a ordem é a nota do eixo com desempate pela final; o plano
     é o melhor do PRD 7.7 que começa pela 1ª da ordem (`RotationPlanService.best_plan_starting_with`;
     nos objetivos, sem o pousio). **O Plano A (`plano_3_anos.normal`) é o plano do equilíbrio: começa
-    pela melhor opção**; o Plano B continua livre. A reordenação é no motor; o navegador só escolhe;
+    pela melhor opção**; o Plano B continua livre. A reordenação é no motor; o navegador só escolhe.
+    Desde a tarefa 0056, a `ordem` traz depois das no prazo as culturas fora do prazo do ZARC (mesma
+    regra do eixo); o `plano` continua só com as no prazo;
   - **na célula** (`clima_futuro`, `geada`): **os mesmos objetos do raio-X** (tarefa 0049, S9), para
     a Sugestão e a tela 4 dizerem o mesmo número: `clima_futuro` = o cartão "Clima 2041–2060"
     (`FutureClimateService`: cada mês pesado pela chuva média do mês na célula, com
@@ -866,6 +868,16 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - `fora_da_janela[].data_limite` (o aviso único da colheita tarde junta as culturas por data) e
     `GET /api/safra-passada?…&opcao=<id>` (o detalhe de qualquer ano do explorador, para a opção
     que a aba mostra; fora da janela, 404 `NOT_FOUND`).
+- **Culturas fora do prazo do ZARC na conta** (tela 5 do pacote 2, tarefa 0056, RF-39; contrato
+  em `docs/tarefas/0056-motor-pacote2.md`): o `RecommendationService` calcula todas as culturas
+  (menos o pousio) com a mesma semeadura da faixa de colheita. As que passaram do prazo continuam
+  em `fora_da_janela[]` e vão para o campo `Recomendacao.opcoes_fora_do_prazo` (`na_janela =
+  False`), fora da `melhor`, das alternativas e dos planos sugeridos (decisão padrão, a revisar: o
+  seguro não cobre); o `Recomendacao.opcoes` continua só com as no prazo, então o custo do atraso,
+  o raio-X, o replay, os avisos e o sinal não mudam. No JSON do `/recomendacao` e do `/exemplo`,
+  `opcoes[]` traz as no prazo e depois as fora do prazo, cada uma com `fora_do_prazo` (= `!na_janela`).
+  O `data_limite` continua `AAAA-MM-DD` (o front tira o MM-DD). O model também leva
+  `notas_pousio` (as notas do pousio do PRD 7.7, para o plano em cadeia).
 - **Abas Comparar e Plano de 3 anos** (remodelagem S5b, tarefa 0045, RF-32; contrato completo em
   `docs/tarefas/0045-comparar-e-plano.md`). O Comparar só usa o `/recomendacao`; o Plano usa o
   endpoint novo **`GET /api/plano?lat&lon&anos=a,b,c[&colheita][&solo]`** (`PlanEvaluationService`,
@@ -876,7 +888,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - `anos[]`: `cultura`, `nome`, `na_janela`, `anos_bons`, `total_anos`, `futuro_anos_bons`, `sede`,
     `cobre_terra` (palhada > 0), `deixa_nitrogenio` (`n_deixado_kg` > 0), `quebra_nematoide`
     (`rotacao.culturas_supressoras_nematoide`, PRD 7.7) e `usa_mm` (mediana da ETr do ciclo, o novo
-    `AguaOpcao.usa_mm` do `WaterNeedService`). Fora da janela, os números do motor saem `null`;
+    `AguaOpcao.usa_mm` do `WaterNeedService`). Desde a tarefa 0056: `fora_do_prazo` (a cultura
+    passou do prazo do ZARC: vem com os números do motor, `na_janela: false`, e entra nas médias;
+    antes os números saíam `null`), `fixo` (sempre `true` aqui) e `motivo` (sempre `null` aqui);
   - `notas`: `seguranca` e `futuro` = média das notas do motor nos anos com lavoura na janela (o pousio
     fica de fora); `solo` (saúde da terra) = média da nota de solo dos 3 anos (pousio 0) + o bônus de
     diversidade do PRD 7.7 (`RotationPlanService.diversity_bonus`), até 100;
@@ -885,7 +899,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - `chuva` (chuva aproveitada): `inicio` (a semeadura), `fim` (`chuva_aproveitada.fim`, 07-31),
     `chuva_mm` (mediana da chuva da semeadura ao fim da série), `usa_media_mm` (média do `usa_mm` dos 3
     anos, pousio 0; `null` com ano fora da janela), `anos`, `fonte` (`rain_source`, juntas por `+`);
-  - `plano_ab` (`PlanBService`): o Plano A é a cultura do 1º ano; o Plano B, a cultura na janela (sem o
+  - `plano_ab` (`PlanBService`): o Plano A é a cultura do 1º ano (desde a tarefa 0056, também fora
+    do prazo); o Plano B, a cultura na janela (sem o
     pousio) que mais deu certo nos anos em que a do A falhou (desempate pela nota final). `limite`: a
     chuva dos `plano_b.dias_antes_semeadura` (15) dias antes da semeadura que mais acerta as falhas do
     A; `separa` só com as 4 condições do grupo `plano_b` (3 falhas ou mais, 50% das falhas, 60% dos
@@ -894,7 +909,24 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - `sinal` (tarefa 0049): o sinal do outono no formato do `/recomendacao`, com o Plano A e o Plano B
     desta tela (`SinalOutonoService`, injetado no `PlanEvaluationService`). Com o plano sugerido, é o
     mesmo `sinal` do `/recomendacao`; com o plano editado, fala do Plano A editado. `null` sem a
-    previsão do ENSO, com o 1º ano no pousio ou fora da janela.
+    previsão do ENSO ou com o 1º ano no pousio (fora do prazo, fala dele desde a tarefa 0056).
+  - **Sugestão em cadeia** (tela 5 do pacote 2, tarefa 0056, RF-39): **`GET
+    /api/plano/sugestao?lat&lon&fixos=a[,b][&colheita][&solo]`**. O produtor fixa o 1º ano, ou o 1º
+    e o 2º (qualquer cultura, até fora do prazo, ou o pousio); o `PlanSuggestionService` completa o
+    plano e o `PlanEvaluationService.suggest` devolve **o mesmo JSON do `/api/plano`** do plano
+    completado, com `anos[].fixo` (`false` nos sugeridos) e `anos[].motivo` (a frase pronta no
+    idioma do `Accept-Language`, só nos sugeridos, sem o nome da cultura). Os anos sugeridos saem do
+    `RotationPlanService.best_plan_with_prefix` (o `best_plan_starting_with` generalizado para um
+    prefixo fixo; com 1 ano e sem a cadeia, o plano de antes) com `chain=True`: em cada ano sugerido
+    somam os pontos do grupo `plano_cadeia` (`transition_rules` / `transition_bonus`: milheto depois
+    de um pousio **fixo**, supressora do nematoide depois do milho, nenhuma função repetida do ano
+    anterior; hipótese do time, a revisar). Só culturas no prazo e o pousio são sugeridas. O
+    `motivo` é a frase do grupo `frases_plano` da 1ª regra que pesou: cobrir depois do parado,
+    quebrar o nematoide depois do milho, prazo (sem o prazo do ZARC, uma cultura fora dele ganharia
+    o ano), variar a função, melhor nota; com a sede `pouca`, "e aguenta a seca". O Plano A do
+    `/recomendacao` e os planos de `objetivos` **não** usam a cadeia. Sem 1 ou 2 anos fixos ou com
+    cultura desconhecida: 422 `VALIDATION_ERROR`; sem `fixos`: 422 `INVALID_REQUEST`; ponto sem
+    dados: 404 `OUTSIDE_AREA`. Sem cache HTTP, ~0,4 s.
 - **Região pelo satélite** (P3, tarefas 0034 e 0036): `GET /api/regiao?lat&lon`, no contrato do
   front (`projeto/frontend/src/models/region.ts`), lido do arquivo do `REGIAO_PATH` (com ou sem
   banco).
