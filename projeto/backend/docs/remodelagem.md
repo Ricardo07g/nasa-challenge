@@ -22,15 +22,15 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 
 | # | Seção do pedido | Tarefa | O que entra | Junto com | Estado |
 | --- | --- | --- | --- | --- | --- |
-| S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | ✅ na branch (15/11 ~03:20), revisada |
+| S1 | 1. Valores em reais (e a regra geral de esconder "Ainda não conectado") | 0040 | nota de renda sem preço nem custo no motor (`regras.yaml`), "Renda" com fatos, nenhum R$ na API nem no front, selos "Ainda não conectado" escondidos, "Como a conta é feita" | S8 | ✅ na branch (15/11 ~02:10), revisada |
 | S8 | 8. Guia | 0048 | `/guia` e `/guia/<artigo>`, artigos em Markdown pt/en (primeiro os da lista prioritária), busca por título, imagens das plantas (SVG próprio) | S1 | feito na branch `feat/remodelagem-s8-guia` (19 artigos em pt e en; faltam 7 do tema, ver a tarefa 0048) |
-| S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | ✅ na branch (15/11 ~04:00), revisada |
-| S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | ✅ na branch (15/11 ~05:00), revisada |
-| S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | feito na branch `feat/remodelagem-s4-raio-x` (falta o merge, a revisão e a extração completa do MCD64A1, ver a tarefa 0043) |
+| S2 | 2. Onde fica a lavoura | 0041 | busca com autocompletar (Photon/OSM), coordenadas e link do Google Maps colados, "Confirmar local" com pin, endereço aproximado, limite da área piloto e bloqueio fora dela | S3 | ✅ na branch (15/11 ~02:17), revisada |
+| S3 | 3. Quando você colhe | 0042 | data exata + "Não sei o dia exato", sugestão = seleção, chuva que sobra (mediana e ano seco), chuva × ETo por mês, custo do atraso, fim das chuvas | S2 | ✅ na branch (15/11 ~02:57), revisada |
+| S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | ✅ na branch (15/11 ~04:00), revisada; extração completa do MCD64A1 rodando |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | a fazer |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
 | S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | a fazer |
-| S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~05:50), revisada |
+| S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~03:10), revisada |
 | S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | a fazer |
 
 Ordem de merge: S1 → S8 → S2 → S3 → S4 → S5a → S5b → S6 → S7 → S9. Se a janela de uso acabar, a
@@ -111,7 +111,43 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 
 ## Revisão por seção
 
-### S7 — Comunidade (revisada em 15/11 ~05:55)
+### S4 — Raio-X da sua terra (revisada em 15/11 ~04:10)
+
+Conferida em 1280 e 390 px, em pt e en, com dado real em dois pontos: a fazenda de exemplo (−18,9543 / −48,1993)
+e um ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568).
+
+- ✅ Painel escuro (o único da tela) com números grandes, grade de 8 blocos e selo de fonte e resolução em cada um
+  ("SMAP · NASA · 9 km"). Rodapé "Cada dado vale para a área em volta do ponto…". Animação respeita "reduzir movimento".
+- ✅ Cabeçalho com lugar ("Perto de Uberlândia (MG)"), coordenadas, miniatura do mapa com o pin e leitura mais recente.
+  A altitude não aparece porque o `grid_cell` não tem a coluna, e o pedido diz "não busque fora" (D65).
+- ✅ Os 8 blocos na fazenda: solo 42% de argila em barra (com "Não é? Trocar"), 60 mm e "aguenta cerca de 13 dias"
+  (milho com braquiária, meio), SMAP no percentil 59, NDVI 0,42 com pico da soja 0,90, 862 mm e fim das chuvas
+  (21/abr; 16/mar/2021 a 22/jun/2012), veranico de 43 dias em 2024, calor 1 de 20 e "mais chuvosa que 62% da região".
+  O solo da célula vizinha (até 15 km) aparece com a distância (D58).
+- ✅ Histórico em faixa de calor do NDVI (2017–2026, D5), com "soja / colheita / entressafra" no topo e o título
+  "Na entressafra, sua área ficou parada em 0 de 10 anos.". As safras confirmadas entram na faixa ("plantou (você)").
+- ✅ No ponto da cidade, "Não parece uma lavoura de soja. Confira o ponto no mapa." com "Ajustar no mapa", e a faixa
+  diz "sem soja" em todos os anos.
+- ✅ "Confirme as últimas safras" continua no cartão do histórico, e o "Compartilhar com a comunidade" da S7 aparece
+  depois de confirmar. A junção das duas seções foi feita no merge.
+- ✅ Alertas aparecem só com risco: chuva forte (0,3 dia por ano, 5 dias em 20 anos), sem geada (mínima de 4,1 °C)
+  e sem granizo.
+- ✅ Fogo: a ORNL oferece o MCD64A1, então o caminho é o do produto e não o do índice substituto. O script
+  `pipeline/fetch_area_queimada.py` está rodando na caixa piloto (240 pedidos, ~2,3 h, com linha no `data_run` do
+  banco de revisão). Até o arquivo existir, o alerta de fogo não aparece.
+- ✅ Cartões menores com "ver na sugestão": "20 anos de chuva" (16 de 20 na fazenda, colheita meio) e "Clima
+  2041–2060" (+2,2% de chuva, +1,3 °C, "2 de 3 modelos indicam mais chuva; 3 de 3, mais calor"). Botão "Ver o que
+  plantar" mantido.
+- ✅ Dois artigos novos no Guia: "Como ler o raio-X da sua terra" e "Fogo na palha" (rascunho, com o 193).
+- ⚠️ Bloco 8: o pedido diz "mais seca que X%"; quando a maioria das células chove menos, a frase vira "mais chuvosa
+  que Y%" (D59). Com a frase fixa, a fazenda apareceria como "mais seca que 38%".
+- ⚠️ No ponto da cidade, o bloco "Verde da lavoura" diz "Pico da soja 2025/26: 0,33" embora o satélite não tenha
+  visto soja ali. O número é o maior NDVI de jan–mar; o rótulo devia ser "maior verde" quando não há soja. Fica
+  para a S9 (consistência).
+- ⚠️ No celular, a faixa de calor fica pequena (14 colunas em ~200 px), mas é legível. "Deixei parado" quebra em
+  duas linhas.
+
+### S7 — Comunidade (revisada em 15/11 ~03:11)
 
 - ✅ Três relatos sem cadastro e sem texto livre (plantio, "Choveu aqui", "Aconteceu aqui"), em até 3 toques; aviso "Seus vizinhos veem a região, não o seu ponto."; fogo mostra "ligue 193".
 - ✅ Tabela `community_report` (migração `3f7c2a9d4e81`, com `downgrade`) só com a célula de 0,1° e o HMAC do aparelho; endpoints conferidos de ponta a ponta no banco de revisão: enviar (volta só o centro da célula), listar (sem o hash), apagar (204), validação (500 mm → 422 "A chuva vai de 0 a 300 mm por dia.").
@@ -119,9 +155,10 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 - ✅ "Compartilhar com a comunidade" depois de confirmar as safras na tela 4; link do Guia no fim.
 - ⚠️ **A migração NÃO foi aplicada no banco `raiz_orbital`** (o Docker do usuário roda o `main`, que não a conhece: o serviço `migration` do compose quebraria). A revisão usa a cópia `raiz_orbital_remodelagem`. Ao fazer o merge do PR, rode `docker compose run --rm migration`.
 - ⚠️ Configure o `COMMUNITY_DEVICE_SALT` no servidor; sem ele, o sal muda a cada reinício (o limite por dia e o "apagar o meu" recomeçam).
-- ⚠️ Os links do Guia para "Fogo na palha" e "Como evitar erosão" esperam esses artigos.
+- ⚠️ Os links do Guia para "Fogo na palha" e "Como evitar erosão" esperam esses artigos. "Fogo na palha" entrou
+  com a S4; "Como evitar erosão" ainda falta.
 
-### S3 — Quando você colhe (revisada em 15/11 ~05:05)
+### S3 — Quando você colhe (revisada em 15/11 ~02:58)
 
 - ✅ Dia da colheita no topo, preenchido com o dia do satélite (UFU: 25/02, fim de fevereiro ou março); "Não sei o dia exato" abre as 3 faixas; saiu "Colocar a data exata".
 - ✅ Sugestão = seleção: a faixa azul só diz "já deixamos esse dia" quando é verdade; regra única das faixas no `regras.yaml` (D31).
@@ -132,7 +169,7 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 - ✅ Dois artigos novos no Guia ("Quando a chuva acaba" e "Plantar logo depois da colheita") e os links "Saiba mais". Conferido em 1280 e 390 px com dados reais.
 - ⚠️ O dia exato não vai para a URL (só a faixa): ao voltar da tela 4, volta a faixa (D33).
 
-### S2 — Onde fica a lavoura (revisada em 15/11 ~04:05)
+### S2 — Onde fica a lavoura (revisada em 15/11 ~02:18)
 
 - ✅ Busca "Buscar cidade, estrada ou endereço" com autocompletar pelo Photon (espera de 400 ms, uma busca por vez, mínimo de 3 letras), lista acessível e "© OpenStreetMap" visível.
 - ✅ Coordenadas e link do Google Maps colados (31 casos testados: `!3d!4d`, `q=`, `ll=`, `/search/`, `@lat,lon`); link curto pede o link completo.
@@ -141,7 +178,7 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 - ✅ Conferido em 1280 e 390 px.
 - ⚠️ Privacidade: o texto buscado e o ponto do pin vão para o Photon (komoot). Está no RNF-07 do PRD.
 
-### S1 — Renda sem reais e sem "Ainda não conectado" (revisada em 15/11 ~03:25)
+### S1 — Renda sem reais e sem "Ainda não conectado" (revisada em 15/11 ~02:11)
 
 - ✅ Nenhum `R$` na API (conferido no JSON de `/recomendacao` nos 3 cenários de colheita) nem no front (busca no código, fora dos testes).
 - ✅ "Renda" com fatos: "Dá grão para vender" ou "Não dá grão: é investimento na terra" e "Risco de perder a lavoura: faltou água ou fez calor em N de 20 anos" (na UFU, colheita meio: milho com braquiária, 4 de 20).
@@ -150,7 +187,7 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 - ⚠️ A melhor opção da UFU mudou com a renda nova: colheita cedo e meio passaram de milho sozinho para **milho com braquiária**; tarde continua milheto.
 - ⚠️ Ainda na tela até as próximas seções: o botão "Relatório para banco ou seguro" (sai na S5a) e "Como teria sido em 2024?" (sai na S5b).
 
-### S8 — Guia (revisada em 15/11 ~02:45)
+### S8 — Guia (revisada em 15/11 ~01:47)
 
 - ✅ `/guia` com os 5 temas e busca por título; `/guia/<artigo>` com a estrutura fixa (Em uma frase, Por que importa, Na sua lavoura, Fontes; nas culturas, Conheça e Passo a passo). Conferido no Chrome sem interface em 1280 e 390 px.
 - ✅ 19 artigos em pt e en: os 12 prioritários (6 culturas, deu certo, conta de água, rotação, prazo/ZARC, veranico, alertas da Defesa Civil) e 7 de apoio (palhada, adubo verde, nematoide, geada, El Niño/La Niña, calor de 35 °C, clima 2041–2060). Entre 156 e 214 palavras.
@@ -214,12 +251,17 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 - **S4, MCD64A1 na conferência:** nenhum pixel queimado em 2016 num quadrado de ~10 km perto da fazenda
   (2 pedidos). O alerta de fogo só vai ter número depois da extração completa.
 
+- **S4, ponto dentro da cidade de Uberlândia (−18,9149 / −48,2568):** o raio-X mostra solo, água, chuva e
+  região normalmente, e o bloco do verde diz "Pico da soja 2025/26: 0,33" mesmo sem soja (ver a revisão da S4).
+  O aviso "Não parece uma lavoura de soja" aparece certo.
+
 ## O que não foi possível e por quê
 
 - **S7, chuva do satélite ao lado da chuva relatada:** não há chuva recente do satélite ligada (o
   IMERG Late saiu do sinal na tarefa 0038 e o banco só tem janeiro a julho). O pedido diz "quando
   houver dado recente": a frase não aparece.
-- **S7, área queimada do MODIS no mapa:** depende da seção 4 (o MCD64A1 ainda não foi baixado).
+- **S7, área queimada do MODIS no mapa:** depende da seção 4. O MCD64A1 está sendo baixado (15/11 ~04:05,
+  ~2,3 h); o mapa da comunidade ainda não lê esse arquivo.
 - **S7, links "Fogo na palha" e "Como evitar erosão":** os artigos ainda não existem no Guia (D9).
   O relato de fogo e o de enxurrada ou erosão ficam sem link até eles serem escritos.
 - **S7, relatos na conta do motor:** os relatos não corrigem a chuva do IMERG nem entram no risco
@@ -235,8 +277,8 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 - **S3, "Ver um exemplo pronto" continua com `colheita=meio` fixo** (`ExamplePage`), enquanto o `/exemplo`
   recomenda com a faixa do satélite (tarde na UFU). Na tela 3 isso já não engana (D33), mas a resposta do
   exemplo e a URL dizem faixas diferentes; fica para a S9 (consistência) ou para quem mexer no exemplo.
-- **S3, artigos do Guia:** com os dois desta seção, faltam 5 (plantio direto, sementes, erosão, raio-X e fogo
-  na palha), como na S8.
+- **Artigos do Guia:** com os dois da S3 e os dois da S4 (raio-X e fogo na palha), faltam 3: plantio direto,
+  sementes e erosão (D9).
 - **S4, altitude no cabeçalho do raio-X:** o `grid_cell` não tem altitude (o POWER devolve na busca, mas
   ela não é gravada) e o pedido manda não buscar fora. Para ter, seria uma migração e a pré-carga de
   novo.
