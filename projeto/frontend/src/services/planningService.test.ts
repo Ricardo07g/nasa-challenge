@@ -82,7 +82,16 @@ describe('planTimeline ("O que fazer agora", montado por regra)', () => {
     const steps = planTimeline({ ...base, harvest: '2027-03-03', sowing: '2027-03-03', first: option('tarde', 'sorgo') })
     expect(steps.map((item) => item.kind)).toEqual(['now', 'signal', 'harvest', 'plant', 'water', 'cropHarvest', 'next'])
     expect(step(steps, 'now')).toEqual({ kind: 'now', from: '2026-11-15', to: '2027-03-03' })
-    expect(step(steps, 'next')).toEqual({ kind: 'next', year: 2027, crop: 'milheto' })
+    expect(step(steps, 'next')).toEqual({ kind: 'next', year: 2027, crop: 'milheto', deadline: null, late: false })
+  })
+
+  it('a próxima soja leva o prazo do ZARC do 2º ano (tarefa 0065), marcado quando passou do prazo', () => {
+    const first = option('tarde', 'sorgo')
+    const inTime = planTimeline({ ...base, harvest: '2027-03-03', sowing: '2027-03-03', first, secondDeadline: '2028-03-15' })
+    const late = planTimeline({ ...base, harvest: '2027-03-03', sowing: '2027-03-03', first, secondDeadline: '2028-02-28', secondLate: true })
+
+    expect(step(inTime, 'next')).toEqual({ kind: 'next', year: 2027, crop: 'milheto', deadline: '2028-03-15', late: false })
+    expect(step(late, 'next')).toMatchObject({ deadline: '2028-02-28', late: true })
   })
 
   it.each([

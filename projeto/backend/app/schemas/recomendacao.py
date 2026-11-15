@@ -311,6 +311,8 @@ class ObjetivoSchema(_Frozen):
     ordem: list[str]
     plano: list[str]
     nota_plano: float
+    # Tarefa 0065: o porquê de cada ano do plano em cadeia (null no 1º ano, a 1ª da ordem)
+    motivos: list[str | None] = Field(default_factory=list)
 
 
 class AlternativaSchema(_Frozen):
@@ -326,10 +328,18 @@ class PlanoSchema(_Frozen):
     anos: list[str]
     nota: float
     descricao: str
+    # Tarefa 0065: só no Plano A (`normal`), o porquê de cada ano da sugestão em cadeia (null no
+    # 1º ano); null no `seco` e no `hoje`
+    motivos: list[str | None] | None = None
 
     @classmethod
     def from_model(cls, plano: PlanoRotacao) -> "PlanoSchema":
-        return cls(anos=list(plano.anos), nota=plano.nota, descricao=plano.descricao)
+        return cls(
+            anos=list(plano.anos),
+            nota=plano.nota,
+            descricao=plano.descricao,
+            motivos=list(plano.motivos) if plano.motivos is not None else None,
+        )
 
 
 class Plano3AnosSchema(_Frozen):
@@ -423,7 +433,10 @@ class RecomendacaoResponse(_Frozen):
             sinal=SinalSchema.from_model(rec.sinal) if rec.sinal is not None else None,
             objetivos={
                 chave: ObjetivoSchema(
-                    ordem=list(o.ordem), plano=list(o.plano), nota_plano=o.nota_plano
+                    ordem=list(o.ordem),
+                    plano=list(o.plano),
+                    nota_plano=o.nota_plano,
+                    motivos=list(o.motivos),
                 )
                 for chave, o in rec.objetivos.items()
             },

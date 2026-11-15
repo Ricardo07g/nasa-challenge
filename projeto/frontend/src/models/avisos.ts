@@ -4,7 +4,9 @@
  * Quatro grupos: Agora, O que mudou na sua área, Fora do comum e Perto de você. Grupo `null` = sem dado
  * para o ponto (não aparece); grupo com `avisos: []` = "Nada fora do normal" com a última leitura. Cada
  * aviso traz o nível, o tipo, os números da frase, as fontes e a data da leitura; as frases ficam no
- * bloco `alerts` das mensagens (pt e en).
+ * bloco `alerts` das mensagens (pt e en). Desde a tarefa 0065 do backend, o "Perto de você" (relatos dos
+ * vizinhos) vem `null` e a API recebe a cultura do 1º ano do plano (`cultura`) para a falta de água e o
+ * "deu certo".
  */
 import type { CropId, Objetivo } from './recomendacao'
 import type { CurrentChoice } from './seasonAnswers'
@@ -83,12 +85,13 @@ export type Avisos = {
   ponto: Ponto
   celula_id: string
   hoje: string
-  /** Avisos ativos do botão "Avisos" do cabeçalho: os de Agora e os de Perto de você. */
+  /** Avisos de "Agora" (tarefa 0065 do backend). O sino conta os cartões que a tela mostra (`activeCount`). */
   contador: number
   agora: GrupoAvisos
   mudou: GrupoAvisos | null
   periodo: PeriodoComparado | null
   recordes: GrupoAvisos | null
+  /** Relatos dos vizinhos: `null` desde a tarefa 0065 do backend (a comunidade está "em breve"). */
   perto: GrupoAvisos | null
   raio_km: number
   vizinhos_dias: number

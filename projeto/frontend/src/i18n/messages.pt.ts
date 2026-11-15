@@ -783,6 +783,8 @@ export const pt = {
         title: (crop: string) => `Próxima soja; depois dela, ${crop}`,
         titleAlone: 'Próxima soja',
         text: (year: number) => `Abra o app de novo depois da colheita de ${year} para conferir o plano com a chuva daquele ano.`,
+        deadline: (date: string) => `Plante até ${date} (prazo do ZARC).`,
+        late: (date: string) => `Passou do prazo do ZARC (${date}): o seguro rural não cobre.`,
       },
     },
     alerts: {

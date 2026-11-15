@@ -49,7 +49,13 @@ def test_should_evaluate_any_three_year_plan(client: TestClient) -> None:
         "fora_do_prazo",
         "fixo",
         "motivo",
+        # Tarefa 0065: o prazo do ZARC e o ciclo de cada ano (tela 6)
+        "data_limite",
+        "ciclo",
     }
+    assert [a["data_limite"] for a in body["anos"]] == ["2027-02-28", "2028-03-20", "2029-02-28"]
+    # As culturas falsas do conftest: 60 dias até a floração, ciclo de 100
+    assert body["anos"][1]["ciclo"] == {"dias_florescer": 60, "ciclo_dias": 100}
     # O plano de `anos` é todo do produtor: nenhum ano sugerido
     assert [(a["fixo"], a["motivo"]) for a in body["anos"]] == [(True, None)] * 3
     assert set(body["notas"]) == {"seguranca", "solo", "futuro"}
@@ -65,6 +71,14 @@ def test_should_evaluate_any_three_year_plan(client: TestClient) -> None:
     assert {"cultura_a", "nome_a", "falhas_a", "total", "cultura_b", "nome_b"} <= set(
         body["plano_ab"]
     )
+
+
+def test_should_give_no_deadline_nor_cycle_to_a_fallow_year(client: TestClient) -> None:
+    params = {**UFU, "colheita": "meio", "anos": "sorgo,pousio,milheto"}
+
+    pousio = client.get("/api/plano", params=params).json()["anos"][1]
+
+    assert (pousio["data_limite"], pousio["ciclo"]) == (None, None)
 
 
 def test_should_give_the_same_numbers_as_the_recommendation(client: TestClient) -> None:
@@ -187,6 +201,25 @@ def test_should_suggest_the_next_years_with_the_reason_and_evaluate_the_plan(
     for ano in anos:
         ano.update(fixo=True, motivo=None)
     assert body == avaliado
+
+
+@pytest.mark.parametrize("colheita", ["cedo", "meio", "tarde"])
+def test_should_give_plan_a_the_same_plan_as_the_chain_suggestion_with_its_first_year(
+    client: TestClient, colheita: str
+) -> None:
+    # Tarefa 0065: uma regra só. O Plano A do /recomendacao (e o plano do equilíbrio) é o plano do
+    # /api/plano/sugestao com o mesmo 1º ano e a mesma faixa, com o mesmo porquê de cada ano.
+    params = {**UFU, "colheita": colheita}
+    rec = client.get("/api/recomendacao", params=params).json()
+    plano_a = rec["plano_3_anos"]["normal"]
+
+    sugestao = client.get("/api/plano/sugestao", params={**params, "fixos": plano_a["anos"][0]})
+
+    anos = sugestao.json()["anos"]
+    assert plano_a["anos"] == [a["cultura"] for a in anos]
+    assert plano_a["motivos"] == [a["motivo"] for a in anos]
+    equilibrio = rec["objetivos"]["equilibrio"]
+    assert (equilibrio["plano"], equilibrio["motivos"]) == (plano_a["anos"], plano_a["motivos"])
 
 
 def test_should_write_the_reason_in_the_language_of_accept_language(client: TestClient) -> None:

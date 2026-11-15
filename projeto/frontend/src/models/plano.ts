@@ -28,6 +28,13 @@ export type AnoPlano = {
   fixo?: boolean
   /** Tarefa 0056: o porquê do ano sugerido, frase pronta no idioma, sem o nome da cultura; null nos anos fixos. */
   motivo?: string | null
+  /**
+   * Tarefa 0065: o prazo do ZARC da cultura ("AAAA-MM-DD", no ano daquele ano do plano; o front usa o dia e o mês);
+   * null no pousio, ausente na API antiga.
+   */
+  data_limite?: string | null
+  /** Tarefa 0065: dias até a floração e ciclo da cultura (`culturas.yaml`); null no pousio. */
+  ciclo?: { dias_florescer: number; ciclo_dias: number } | null
 }
 
 /** Notas de 0 a 100; null quando nenhum ano tem o dado (ex.: plano só com pousio, ou sem o CMIP6). */

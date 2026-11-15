@@ -72,8 +72,11 @@ export type TimelineStep =
     }
   /** O fim do ciclo: colher (se dá grão) ou só deixar a palha no chão (as coberturas). */
   | { kind: 'cropHarvest'; crop: CropId; grain: boolean; date: string }
-  /** Out–nov: a próxima soja e, depois dela, a cultura do 2º ano. */
-  | { kind: 'next'; year: number; crop: CropId | null }
+  /**
+   * Out–nov: a próxima soja e, depois dela, a cultura do 2º ano, com o prazo do ZARC dela (`deadline`, tarefa 0065;
+   * null sem ele) e `late` quando ela passou do prazo.
+   */
+  | { kind: 'next'; year: number; crop: CropId | null; deadline: string | null; late: boolean }
 
 export type TimelineInput = {
   /** Hoje (ISO). */
@@ -88,6 +91,9 @@ export type TimelineInput = {
   /** A opção do motor da cultura do 1º ano (prazo, ciclo, critério, grão); null no pousio. */
   first: Opcao | null
   secondCrop: CropId | null
+  /** O prazo do ZARC do 2º ano (`data_limite` do /api/plano) e se ele passou do prazo. */
+  secondDeadline?: string | null
+  secondLate?: boolean
   signal: SinalOutono | null
   planAB: PlanoAB | null
 }
@@ -137,7 +143,13 @@ export function planTimeline(input: TimelineInput): TimelineStep[] {
       steps.push({ kind: 'cropHarvest', crop: firstCrop, grain: first.renda.da_grao, date: addDays(sowing, first.ciclo.dias) })
     }
   }
-  steps.push({ kind: 'next', year: input.season, crop: input.secondCrop })
+  steps.push({
+    kind: 'next',
+    year: input.season,
+    crop: input.secondCrop,
+    deadline: input.secondDeadline ?? null,
+    late: input.secondLate ?? false,
+  })
   return steps
 }
 

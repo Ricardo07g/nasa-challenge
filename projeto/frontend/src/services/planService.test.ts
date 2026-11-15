@@ -117,6 +117,16 @@ describe('planService: o plano em cadeia da aba "2. Plano de 3 anos" (tela 5, ta
     expect(cards?.[2]).toMatchObject({ crop: 'crotalaria', good: 20, late: true, motivo: null })
   })
 
+  it('cada cartão leva o prazo do ZARC do seu ano (`data_limite` do /api/plano, tarefa 0065); sem o campo ou no pousio, null', () => {
+    const fromChoice = plan([
+      year('sorgo', { data_limite: '2027-03-20' }),
+      year('pousio', { fixo: false, data_limite: null }),
+      year('milheto', { fixo: false }),
+    ])
+    const cards = planCards(sources({ fromChoice }), 2027)
+    expect(cards?.map((card) => card.deadline)).toEqual(['2027-03-20', null, null])
+  })
+
   it('com o 3º ano mudado e o plano final ainda carregando, os cartões ficam os da sugestão (a tela não pisca)', () => {
     const fromChoice = plan([year('sorgo'), year('milheto', { fixo: false }), year('sorgo', { fixo: false })])
     const cards = planCards(sources({ edits: { year2: null, year3: 'crotalaria' }, fromChoice }), 2027)

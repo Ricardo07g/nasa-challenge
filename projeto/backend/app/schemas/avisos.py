@@ -72,12 +72,12 @@ class AvisosResponse(_Frozen):
     ponto: PontoSchema
     celula_id: str
     hoje: date
-    contador: int  # avisos de "Agora" e de "Perto de você" (botão do cabeçalho)
+    contador: int  # só os avisos de "Agora" (botão do cabeçalho; tarefa 0065)
     agora: GrupoAvisosSchema
     mudou: GrupoAvisosSchema | None
     periodo: PeriodoSchema | None
     recordes: GrupoAvisosSchema | None
-    perto: GrupoAvisosSchema | None
+    perto: GrupoAvisosSchema | None  # null desde a tarefa 0065 (relatos dos vizinhos desligados)
     raio_km: float
     vizinhos_dias: int
     safrinha: SafrinhaSchema | None

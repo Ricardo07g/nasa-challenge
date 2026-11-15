@@ -6,8 +6,11 @@ Só busca os dados nos repositories e monta os quatro grupos; cada regra mora no
   previsão do ENSO com o ONI e a safrinha em andamento;
 - O que mudou e Fora do comum (`AvisosMudancaService`): a série guardada da célula e a melhor
   opção do motor (a mesma do `/recomendacao`, com a mesma colheita, solo e safras confirmadas);
-- Perto de você (`AvisosVizinhosService`): os relatos da comunidade (sem banco, o grupo some).
-O contador do botão "Avisos" do cabeçalho conta os avisos de Agora e de Perto de você.
+  com a `cultura` do 1º ano do plano (tarefa 0065), a falta de água e o "deu certo" usam ela;
+- Perto de você (`AvisosVizinhosService`): os relatos da comunidade. Desligado desde a tarefa
+  0065 (a comunidade está "em breve"): sem o service dos vizinhos injetado, o grupo é None e a
+  comunidade nem é lida. Volta quando a comunidade voltar (sem banco, o grupo também some).
+O contador do botão "Avisos" do cabeçalho conta só os avisos de Agora (tarefa 0065).
 """
 
 from collections.abc import Callable, Iterable, Sequence
@@ -33,7 +36,7 @@ from app.services.avisos_agora_service import AvisosAgoraService
 from app.services.avisos_mudanca_service import AvisosMudancaService, cycle_deficits
 from app.services.avisos_vizinhos_service import AvisosVizinhosService
 from app.services.climate_risk_service import ClimateRiskService
-from app.services.errors import CommunityUnavailableError
+from app.services.errors import CommunityUnavailableError, ValidationDomainError
 from app.services.harvest_delay_service import RecommenderProtocol
 
 LOCAL_TZ = timezone(timedelta(hours=PILOT_UTC_OFFSET_HOURS))
@@ -66,6 +69,7 @@ class AvisosService:
         smap_repo: CellSmapRepository | None = None,
         rules: Regras | None = None,
         today: Callable[[], date] = pilot_today,
+        vizinhos_service: AvisosVizinhosService | None = None,
     ) -> None:
         self._rules = rules if rules is not None else load_default_rules()
         self._recommender = recommender
@@ -82,7 +86,8 @@ class AvisosService:
         self._today = today
         self._agora = AvisosAgoraService(self._rules, today=today)
         self._mudanca = AvisosMudancaService(self._rules)
-        self._vizinhos = AvisosVizinhosService(self._rules)
+        # "Perto de você" desligado sem o service dos vizinhos (tarefa 0065)
+        self._vizinhos = vizinhos_service
 
     def avisos(
         self,
@@ -92,8 +97,22 @@ class AvisosService:
         solo_override: str | None = None,
         confirmadas: Iterable[tuple[int, str]] = (),
         lang: str = "pt-BR",
+        cultura: str | None = None,
     ) -> Avisos:
-        """Os avisos do ponto. Raises: os mesmos do `/recomendacao` (OutsideAreaError, 422)."""
+        """Os avisos do ponto.
+
+        `cultura` (tarefa 0065): a cultura do 1º ano do plano (id do culturas.yaml, até fora do
+        prazo do ZARC ou o pousio). Com ela, a falta de água e o "deu certo" do grupo "O que
+        mudou" usam essa cultura; sem ela, a melhor opção do motor. Os outros avisos (El Niño /
+        La Niña, safrinha) seguem a melhor opção.
+
+        Raises:
+            ValidationDomainError: cultura desconhecida.
+            Os mesmos do `/recomendacao` (OutsideAreaError, 422).
+        """
+        plan_crop = self._crop_repo.get_by_id(cultura) if cultura is not None else None
+        if cultura is not None and plan_crop is None:
+            raise ValidationDomainError(f"Cultura desconhecida: {cultura}.")
         rec: Any = self._recommender.recommend(
             lat=lat,
             lon=lon,
@@ -109,7 +128,17 @@ class AvisosService:
         today = self._today()
 
         agora, safrinha = self._now_group(lat, lon, cell_id, rec, best, crop, seasons, today)
-        changes = self._mudanca.changes(seasons, best, self._deficits(lat, lon, rec, crop, seasons))
+        if plan_crop is not None:
+            # A conta do motor da cultura do plano, entre as no prazo e as fora do prazo (o pousio
+            # não tem: sem falta de água nem "deu certo")
+            options = (*rec.opcoes, *getattr(rec, "opcoes_fora_do_prazo", ()))
+            changed = next((o for o in options if o.id == plan_crop.id), None)
+            changed_crop = plan_crop
+        else:
+            changed, changed_crop = best, crop
+        changes = self._mudanca.changes(
+            seasons, changed, self._deficits(lat, lon, rec, changed_crop, seasons)
+        )
         perto = self._nearby_group(lat, lon, today)
         return Avisos(
             lat=lat,
@@ -124,7 +153,7 @@ class AvisosService:
             raio_km=self._rules.comunidade.raio_km,
             vizinhos_dias=self._rules.avisos_tela.vizinhos_dias,
             safrinha=safrinha,
-            contador=len(agora.avisos) + (len(perto.avisos) if perto else 0),
+            contador=len(agora.avisos),
         )
 
     # --- Agora ---------------------------------------------------------------------------------
@@ -187,7 +216,7 @@ class AvisosService:
     def _deficits(
         self, lat: float, lon: float, rec: Any, crop: Any, seasons: Sequence[ClimateSeason]
     ) -> dict[int, float]:
-        """Falta de água da melhor opção em cada ano, com o mesmo balde e a mesma CAD do motor."""
+        """Falta de água da cultura em cada ano, com o mesmo balde e a mesma CAD do motor."""
         if crop is None:
             return {}
         cad = SOIL_CAD_BY_TEXTURE.get(rec.solo)
@@ -205,7 +234,7 @@ class AvisosService:
     # --- Perto de você -------------------------------------------------------------------------
 
     def _nearby_group(self, lat: float, lon: float, today: date) -> GrupoAvisos | None:
-        if self._community is None:
+        if self._vizinhos is None or self._community is None:
             return None
         try:
             reports = self._community.nearby(lat, lon)

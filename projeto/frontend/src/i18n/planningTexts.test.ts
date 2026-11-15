@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { TimelineStep } from '../services/planningService'
 import { en } from './messages.en'
 import { pt } from './messages.pt'
-import { gainText, planningAlertText, planningSummary, scenarioName, stepText } from './planningTexts'
+import { gainText, planDeadlineText, planningAlertText, planningSummary, scenarioName, stepText } from './planningTexts'
 
 const signal: TimelineStep = {
   kind: 'signal',
@@ -92,13 +92,26 @@ describe('stepText (as frases de cada passo de "O que fazer agora")', () => {
       title: 'Colha e deixe a palha no chão',
     })
     expect(stepText(pt, 'pt', { kind: 'cropHarvest', crop: 'milheto', grain: false, date: '2027-06-01' }).title).toBe('Deixe a palha no chão')
-    expect(stepText(pt, 'pt', { kind: 'next', year: 2027, crop: 'milheto' })).toMatchObject({
+    const next = { kind: 'next', year: 2027, crop: 'milheto', deadline: null, late: false } as const
+    expect(stepText(pt, 'pt', next)).toMatchObject({
       when: 'out–nov',
       sub: '2027',
       title: 'Próxima soja; depois dela, milheto',
       text: 'Abra o app de novo depois da colheita de 2028 para conferir o plano com a chuva daquele ano.',
+      late: false,
     })
-    expect(stepText(en, 'en', { kind: 'next', year: 2027, crop: 'milheto' }).title).toBe('Next soybeans; after them, pearl millet')
+    expect(stepText(en, 'en', next).title).toBe('Next soybeans; after them, pearl millet')
+    // Tarefa 0065: o prazo do ZARC do 2º ano, no mesmo passo (sem passo novo)
+    expect(stepText(pt, 'pt', { ...next, deadline: '2028-03-15' }).text).toBe(
+      'Plante até 15 de março (prazo do ZARC). Abra o app de novo depois da colheita de 2028 para conferir o plano com a chuva daquele ano.',
+    )
+    expect(stepText(pt, 'pt', { ...next, deadline: '2028-02-28', late: true })).toMatchObject({
+      text: 'Passou do prazo do ZARC (28 de fevereiro): o seguro rural não cobre. Abra o app de novo depois da colheita de 2028 para conferir o plano com a chuva daquele ano.',
+      late: true,
+    })
+    expect(stepText(en, 'en', { ...next, deadline: '2028-03-15' }).text).toBe(
+      "Plant by March 15 (ZARC deadline). Open the app again after the 2028 harvest to check the plan with that year's rain.",
+    )
   })
 })
 
@@ -168,6 +181,16 @@ describe('planningSummary ("Ouvir resumo" da tela 6)', () => {
     expect(planningSummary(pt, 'pt', { ...base, crops: ['pousio', 'milheto', 'sorgo'], plant: null, planB: null })).toContain(
       'Colha a soja por volta de 3 de março. Em fevereiro',
     )
+  })
+})
+
+describe('planDeadlineText (coluna "Prazo" do plano no relatório, tarefa 0065)', () => {
+  it('o prazo do ZARC de cada ano; passou do prazo, avisa; o pousio não tem prazo; sem o dado, um traço', () => {
+    expect(planDeadlineText(pt, 'pt', { crop: 'sorgo', deadline: '2028-03-20', late: false })).toBe('Até 20 de março')
+    expect(planDeadlineText(pt, 'pt', { crop: 'milho_safrinha', deadline: '2027-02-28', late: true })).toBe('Passou do prazo (28 de fevereiro)')
+    expect(planDeadlineText(pt, 'pt', { crop: 'pousio', deadline: null, late: false })).toBe('Sem prazo')
+    expect(planDeadlineText(pt, 'pt', { crop: 'sorgo', deadline: null, late: false })).toBe('—')
+    expect(planDeadlineText(en, 'en', { crop: 'sorgo', deadline: '2028-03-20', late: false })).toBe('By March 20')
   })
 })
 

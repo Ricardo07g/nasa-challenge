@@ -1,6 +1,7 @@
 """Unit tests for PlanSuggestionService (sugestão em cadeia do plano de 3 anos, tarefa 0056)."""
 
 from dataclasses import replace
+from operator import attrgetter
 
 import pytest
 
@@ -188,6 +189,42 @@ def test_should_take_the_phrases_from_injected_rules() -> None:
     anos = service.suggest(["milho_braquiaria", "pousio"], MEIO, (), POUSIO)
 
     assert anos[2].motivo == "a terra ficou descoberta; cobre rápido!"
+
+
+def test_should_choose_the_years_by_the_objective_axis_with_the_same_chain() -> None:
+    # Tarefa 0065: o plano de cada objetivo do produtor sai desta mesma cadeia, com a nota do eixo
+    # do objetivo. "Cuidar da terra" (solo de teste: crotalária 85, milheto 55, milho com
+    # braquiária 50, sorgo 35): crotalária, milho com braquiária, crotalária (73,3 + 10 de
+    # diversidade + 11 da cadeia) passa a crotalária nos 3 anos (85, sem diversidade nem cadeia).
+    solo = {"milho_braquiaria": 50.0, "sorgo": 35.0, "milheto": 55.0, "crotalaria": 85.0}
+    opcoes = [replace(o, notas=replace(o.notas, solo=solo[o.id])) for o in MEIO if o.id in solo]
+    eixo = attrgetter("solo")
+
+    anos = _service().suggest(["crotalaria"], opcoes, (), POUSIO, axis=eixo, allow_fallow=False)
+
+    assert [a.cultura for a in anos] == ["crotalaria", "milho_braquiaria", "crotalaria"]
+    assert tuple(a.cultura for a in anos) == RotationPlanService().best_plan_with_prefix(
+        ("crotalaria",), opcoes, POUSIO, axis=eixo, allow_fallow=False
+    )
+    assert [a.motivo for a in anos] == [
+        None,
+        "dá grão para vender depois de um ano cuidando da terra",
+        "quebra o ciclo do nematoide que o milho multiplica e aguenta a seca",
+    ]
+
+
+def test_should_leave_fallow_out_of_the_objective_plan_when_asked() -> None:
+    # "Mais segurança": o pousio tem segurança 100 e ganharia os anos 2 e 3 (o plano de um
+    # objetivo não tem o pousio, tarefa 0044).
+    seguranca = attrgetter("seguranca")
+
+    com_pousio = _service().suggest(["sorgo"], [MEIO[2]], (), POUSIO, axis=seguranca)
+    sem_pousio = _service().suggest(
+        ["sorgo"], [MEIO[2]], (), POUSIO, axis=seguranca, allow_fallow=False
+    )
+
+    assert "pousio" in [a.cultura for a in com_pousio]
+    assert [a.cultura for a in sem_pousio] == ["sorgo", "sorgo", "sorgo"]
 
 
 @pytest.mark.parametrize("fixos", [[], ["sorgo", "sorgo", "sorgo"]])

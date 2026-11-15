@@ -96,5 +96,5 @@ class Avisos:
     raio_km: float
     vizinhos_dias: int
     safrinha: SafrinhaAviso | None
-    # Avisos ativos do botão "Avisos" do cabeçalho: os de "Agora" e "Perto de você"
+    # Avisos ativos do botão "Avisos" do cabeçalho: só os de "Agora" (tarefa 0065)
     contador: int

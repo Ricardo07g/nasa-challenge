@@ -1,7 +1,7 @@
-"""Integration tests for GET /api/avisos (tela "Avisos", remodelagem S6, tarefa 0046).
+"""Integration tests for GET /api/avisos (tela "Avisos", remodelagem S6, tarefas 0046 e 0065).
 
 Clima, solo e culturas falsos do conftest; NASA POWER recente e relatos da comunidade falsos aqui
-(nada de arquivo, banco ou rede).
+(nada de arquivo, banco ou rede). Desde a tarefa 0065, os relatos dos vizinhos ficam de fora.
 """
 
 from collections.abc import Iterator
@@ -10,6 +10,7 @@ from datetime import UTC, date, datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
+from app.constants import PROBLEM_JSON_MEDIA_TYPE
 from app.dependencies import get_community_report_service, get_recent_weather_repository
 from app.main import app
 from app.models.avisos import RecentDay
@@ -69,15 +70,17 @@ def test_should_answer_the_four_groups_and_the_counter(avisos_client: TestClient
     assert set(body) >= GROUPS | {"contador", "hoje", "periodo", "safrinha", "raio_km"}
     assert body["vizinhos_dias"] == 7
     assert set(body["agora"]) == {"avisos", "ultima_leitura"}
-    # A série falsa chove 8 mm todo dia: nada fora do normal agora; sem relatos, nada perto.
+    # A série falsa chove 8 mm todo dia: nada fora do normal agora. Os relatos dos vizinhos estão
+    # desligados (tarefa 0065): `perto` é null.
     assert body["agora"]["avisos"] == []
-    assert body["perto"] == {"avisos": [], "ultima_leitura": body["hoje"]}
+    assert body["perto"] is None
     assert body["contador"] == 0
 
 
-def test_should_bring_each_alert_with_level_kind_numbers_source_and_date(
+def test_should_leave_the_neighbours_reports_out_of_the_alerts_and_the_counter(
     avisos_client: TestClient, reports: FakeReportRepository
 ) -> None:
+    # Tarefa 0065: um relato de geada do vizinho não vira aviso nem conta no botão "Avisos".
     today = date.fromisoformat(avisos_client.get("/api/avisos", params=UFU).json()["hoje"])
     reports.add(
         NewCommunityReport(TIPO_EVENTO, "geada", {}, "-190_-482", today, "a" * 64),
@@ -86,17 +89,23 @@ def test_should_bring_each_alert_with_level_kind_numbers_source_and_date(
 
     body = avisos_client.get("/api/avisos", params=UFU).json()
 
-    assert body["perto"]["avisos"] == [
-        {
-            "tipo": "vizinho_evento",
-            "nivel": "fique_de_olho",
-            "fontes": ["comunidade"],
-            "data": today.isoformat(),
-            "antiga": False,
-            "valores": {"evento": "geada", "relatos": 1},
-        }
-    ]
-    assert body["contador"] == 1
+    assert body["perto"] is None
+    assert body["contador"] == len(body["agora"]["avisos"]) == 0
+
+
+class _CommunityThatMustNotBeRead:
+    def nearby(self, lat: float, lon: float) -> None:
+        raise AssertionError("os avisos não leem a comunidade (tarefa 0065)")
+
+
+def test_should_not_read_the_community_reports(client: TestClient) -> None:
+    app.dependency_overrides[get_recent_weather_repository] = FakeRecentWeather
+    app.dependency_overrides[get_community_report_service] = _CommunityThatMustNotBeRead
+
+    response = client.get("/api/avisos", params=UFU)
+
+    assert response.status_code == 200
+    assert response.json()["perto"] is None
 
 
 def test_should_compare_the_recent_years_and_list_the_records(avisos_client: TestClient) -> None:
@@ -149,6 +158,34 @@ def test_should_answer_outside_area_like_the_recommendation(avisos_client: TestC
 
     assert response.status_code == 404
     assert response.json()["code"] == "OUTSIDE_AREA"
+
+
+def test_should_count_the_crop_changes_for_the_crop_of_the_plan(
+    avisos_client: TestClient,
+) -> None:
+    # Tarefa 0065: `cultura` (id do culturas.yaml) troca a cultura da falta de água e do "deu
+    # certo"; os outros grupos não mudam.
+    sem = avisos_client.get("/api/avisos", params=UFU).json()
+    com = avisos_client.get("/api/avisos", params={**UFU, "cultura": "sorgo"})
+
+    assert com.status_code == 200
+    body = com.json()
+    for aviso in body["mudou"]["avisos"]:
+        if aviso["tipo"] in ("mudou_falta_agua", "mudou_deu_certo"):
+            assert aviso["valores"]["cultura"] == "sorgo"
+    assert (body["agora"], body["recordes"], body["contador"]) == (
+        sem["agora"],
+        sem["recordes"],
+        sem["contador"],
+    )
+
+
+def test_should_refuse_an_unknown_crop(avisos_client: TestClient) -> None:
+    response = avisos_client.get("/api/avisos", params={**UFU, "cultura": "trigo"})
+
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith(PROBLEM_JSON_MEDIA_TYPE)
+    assert response.json()["code"] == "VALIDATION_ERROR"
 
 
 def test_should_refuse_an_invalid_harvest_band(avisos_client: TestClient) -> None:

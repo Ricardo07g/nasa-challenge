@@ -598,7 +598,11 @@ def test_should_send_objectives_future_climate_frost_and_planting_deadlines(
     equilibrio = body["objetivos"]["equilibrio"]
     assert equilibrio["ordem"] == [o["id"] for o in body["opcoes"]]
     assert equilibrio["plano"][0] == body["melhor"] == body["plano_3_anos"]["normal"]["anos"][0]
-    assert set(equilibrio) == {"ordem", "plano", "nota_plano"}
+    # Tarefa 0065: o porquê de cada ano do plano (null no 1º ano, que é a 1ª da ordem)
+    assert set(equilibrio) == {"ordem", "plano", "nota_plano", "motivos"}
+    assert equilibrio["motivos"][0] is None and all(equilibrio["motivos"][1:])
+    assert body["plano_3_anos"]["normal"]["motivos"] == equilibrio["motivos"]
+    assert body["plano_3_anos"]["seco"]["motivos"] is None
     assert body["clima_futuro"] is None  # sem CMIP6 no conftest
     assert body["geada"] is None  # nenhuma noite de 3 °C ou menos: sem risco, o alerta não vem
     assert {f["id"]: f["data_limite"] for f in body["fora_da_janela"]} == {

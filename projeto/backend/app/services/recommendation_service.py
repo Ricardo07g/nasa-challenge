@@ -49,6 +49,7 @@ from app.services.errors import OutsideAreaError, ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
 from app.services.future_climate_service import FutureClimateService
 from app.services.plan_b_service import PlanBService
+from app.services.plan_suggestion_service import PlanSuggestionService
 from app.services.raio_x_climate_service import RaioXClimateService
 from app.services.rotation_plan_service import FALLOW_ID, RotationPlanService
 from app.services.sinal_outono_service import SinalOutonoService
@@ -266,6 +267,9 @@ class RecommendationService:
         self._cell_climate_service = RaioXClimateService(self._rules)
         # Plano B do sinal do outono: o mesmo da tela do Plano (tarefa 0049)
         self._plan_b_service = PlanBService(self._rules)
+        # Plano A e plano de cada objetivo: a sugestão em cadeia do /api/plano/sugestao, com o
+        # porquê de cada ano (tarefa 0065: uma regra só para o plano)
+        self._suggestion_service = PlanSuggestionService(plan_service, self._rules)
 
     def recommend(
         self,
@@ -393,15 +397,17 @@ class RecommendationService:
             nematoide=nematoide,
             lang=lang,
         )
-        objetivos = self._objectives(opcoes, pousio_notas, nematoide, fora_do_prazo)
+        objetivos = self._objectives(opcoes, pousio_notas, nematoide, fora_do_prazo, lang)
         if "equilibrio" in objetivos:
             # Tarefa 0044: a sugestão é o ano 1 da rotação. O Plano A começa pela melhor opção (o
-            # Plano B, do ano seco, continua livre para começar por outra).
+            # Plano B, do ano seco, continua livre para começar por outra). Tarefa 0065: é o plano
+            # em cadeia do /api/plano/sugestao com esse 1º ano, com o porquê de cada ano.
             equilibrio = objetivos["equilibrio"]
             plano_normal = PlanoRotacao(
                 anos=equilibrio.plano,
                 nota=equilibrio.nota_plano,
                 descricao=plano_normal.descricao,
+                motivos=equilibrio.motivos,
             )
 
         return Recomendacao(
@@ -479,14 +485,16 @@ class RecommendationService:
         pousio: NotasOpcao,
         nematoide: bool | None,
         fora_do_prazo: tuple[ResultadoOpcao, ...] = (),
+        lang: str = "pt-BR",
     ) -> dict[str, ObjetivoResultado]:
         """Ordem das opções e plano para cada objetivo do produtor (seção 5.1, tarefa 0044).
 
         A ordem é a nota do eixo do objetivo, com o desempate pela nota final (a mesma regra da
         tela 6, RF-05); sem objetivo ("equilibrio"), a nota final. As culturas fora do prazo do
         ZARC vêm depois das no prazo, na mesma regra (tarefa 0056). O plano começa pela 1ª da
-        ordem e escolhe os anos 2 e 3 pela nota do mesmo eixo, só com as no prazo. Sem opção na
-        janela: nenhum objetivo.
+        ordem e escolhe os anos 2 e 3 pela nota do mesmo eixo, só com as no prazo, na sugestão em
+        cadeia do `/api/plano/sugestao` (tarefa 0065: `PlanSuggestionService`, com o porquê de
+        cada ano). Sem opção na janela: nenhum objetivo.
         """
         if not opcoes:
             return {}
@@ -502,18 +510,22 @@ class RecommendationService:
             ordem = no_prazo + tuple(o.id for o in sorted(fora_do_prazo, key=by_axis))
             # O plano de um objetivo usa só as culturas; o do equilíbrio é o Plano A do PRD 7.7,
             # com o pousio nas combinações.
-            plano = tuple(
-                self._plan_service.best_plan_starting_with(
-                    ordem[0],
-                    opcoes,
-                    pousio,
-                    axis=eixo,
-                    nematoide=nematoide,
-                    allow_fallow=eixo is None,
-                )
+            anos = self._suggestion_service.suggest(
+                (ordem[0],),
+                opcoes,
+                fora_do_prazo,
+                pousio,
+                nematoide=nematoide,
+                lang=lang,
+                axis=eixo,
+                allow_fallow=eixo is None,
             )
+            plano = tuple(ano.cultura for ano in anos)
             objetivos[objetivo] = ObjetivoResultado(
-                ordem=ordem, plano=plano, nota_plano=self._plan_service.plan_score(plano, finals)
+                ordem=ordem,
+                plano=plano,
+                nota_plano=self._plan_service.plan_score(plano, finals),
+                motivos=tuple(ano.motivo for ano in anos),
             )
         return objetivos
 

@@ -4,6 +4,7 @@
  * relatório impresso. Só apresentação: as regras (datas, o que aparece) ficam em `services/planningService.ts`.
  */
 import type { CropId } from '../models/recomendacao'
+import type { PlanCard } from '../services/planService'
 import type { PlanGain, PlanningAlert, TimelineStep } from '../services/planningService'
 import { CURRENT_SEASON, seasonName } from '../services/seasonService'
 import { formatDayMonth, formatFullDate, formatMonthRange, formatNumber, formatShortDayMonth, formatShortMonth } from './format'
@@ -120,15 +121,31 @@ export function stepText(t: Messages, lang: Lang, step: TimelineStep): StepText 
         title: step.grain ? p.cropHarvest.grain : p.cropHarvest.cover,
         text: p.cropHarvest.text,
       }
-    case 'next':
+    case 'next': {
+      // Tarefa 0065: o prazo do ZARC do 2º ano vai no mesmo passo, antes do "Abra o app de novo"
+      const again = p.next.text(step.year + 1)
+      const deadline = step.deadline ? formatDayMonth(lang, step.deadline) : null
       return {
         ...base,
         when: p.next.when,
         sub: String(step.year),
         title: step.crop ? p.next.title(cropInSentence(t, step.crop)) : p.next.titleAlone,
-        text: p.next.text(step.year + 1),
+        text: !deadline ? again : `${step.late ? p.next.late(deadline) : p.next.deadline(deadline)} ${again}`,
+        late: step.late,
       }
+    }
   }
+}
+
+/**
+ * O prazo de um ano do plano na coluna "Prazo" do relatório (tarefa 0065): o `data_limite` do /api/plano, como o
+ * "Prazo para plantar" da tela 5; passou do prazo, avisa. O pousio não tem prazo; sem o dado (API antiga), um traço.
+ */
+export function planDeadlineText(t: Messages, lang: Lang, card: Pick<PlanCard, 'crop' | 'deadline' | 'late'>): string {
+  const c = t.choose.compare
+  if (!card.deadline) return card.crop === 'pousio' ? c.noDeadline : '—'
+  const date = formatDayMonth(lang, card.deadline)
+  return card.late ? c.deadlineLate(date) : c.deadline(date)
 }
 
 export type PlanningAlertText = { label: string; text: string; todo: string; source: string }

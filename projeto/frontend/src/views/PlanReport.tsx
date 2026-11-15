@@ -3,7 +3,7 @@ import type { PlanningState } from '../controllers/usePlanningController'
 import { formatCoordinates, formatFullDate, formatNumber } from '../i18n/format'
 import type { Lang } from '../i18n/language'
 import type { Messages } from '../i18n/messages.pt'
-import { gainText, planningAlertText, stepText } from '../i18n/planningTexts'
+import { gainText, planDeadlineText, planningAlertText, stepText } from '../i18n/planningTexts'
 import type { SeasonAnswer } from '../models/seasonAnswers'
 import type { LastSeason } from '../services/planningService'
 import { CURRENT_SEASON, seasonName } from '../services/seasonService'
@@ -149,6 +149,7 @@ function Report({ t, lang, state }: PlanReportProps) {
               <th scope="col">{t.planning.past.season}</th>
               <th scope="col">{t.planning.past.past}</th>
               <th scope="col">{t.planning.past.future}</th>
+              <th scope="col">{r.deadline}</th>
               <th scope="col">{r.pros}</th>
               <th scope="col">{r.cons}</th>
             </tr>
@@ -167,6 +168,7 @@ function Report({ t, lang, state }: PlanReportProps) {
                   </td>
                   <td>{card.crop === 'pousio' ? t.planning.past.fallow : value(row?.good)}</td>
                   <td>{card.crop === 'pousio' ? t.planning.past.fallow : value(row?.future)}</td>
+                  <td>{planDeadlineText(t, lang, card)}</td>
                   <td>{prosTexts(t, option).join('; ') || c.compare.nothing}</td>
                   <td>{consTexts(t, lang, option).join('; ') || c.compare.nothing}</td>
                 </tr>

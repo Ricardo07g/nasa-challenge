@@ -100,6 +100,8 @@ export function usePlanningController(deps: PlanningDeps = defaultDeps) {
           firstCrop: cards[0].crop,
           first: optionOf(cards[0].crop),
           secondCrop: cards[1]?.crop ?? null,
+          secondDeadline: cards[1]?.deadline ?? null,
+          secondLate: cards[1]?.late ?? false,
           signal: flow.signal,
           planAB: plan?.plano_ab ?? null,
         })

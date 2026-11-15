@@ -83,8 +83,11 @@ export type ObjetivoChave = Objetivo | 'equilibrio'
 
 export const OBJETIVOS: readonly Objetivo[] = ['seguranca', 'renda', 'terra']
 
-/** Ordem das opções e plano sugerido para um objetivo, prontos no motor. */
-export type ObjetivoResultado = { ordem: CropId[]; plano: CropId[]; nota_plano: number }
+/**
+ * Ordem das opções e plano sugerido para um objetivo, prontos no motor. `motivos` (tarefa 0065 do backend): o porquê
+ * de cada ano do plano em cadeia, na ordem do `plano` (null no 1º ano); ausente na API antiga.
+ */
+export type ObjetivoResultado = { ordem: CropId[]; plano: CropId[]; nota_plano: number; motivos?: (string | null)[] }
 
 export type Opcao = {
   id: CropId
@@ -130,7 +133,11 @@ export type Opcao = {
   enso_acerto?: EnsoAcerto[]
 }
 
-export type Plano = { anos: CropId[]; nota: number; descricao: string }
+/**
+ * Um plano de 3 anos do motor. `motivos` (tarefa 0065 do backend): só no Plano A (`normal`), o porquê de cada ano da
+ * sugestão em cadeia (null no 1º ano); null no `seco` e no `hoje`, ausente na API antiga.
+ */
+export type Plano = { anos: CropId[]; nota: number; descricao: string; motivos?: (string | null)[] | null }
 
 export type NivelSinal = 'normal' | 'seco' | 'incerto'
 
