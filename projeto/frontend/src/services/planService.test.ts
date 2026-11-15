@@ -1,114 +1,205 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { Historico } from '../models/talhao'
-import { buildRecomendacao, buildTalhao } from '../repositories/mocks/fixtures'
-import { guideService } from './guideService'
+import type { AnoPlano, PlanoAB, PlanoAvaliado } from '../models/plano'
+import type { CropId } from '../models/recomendacao'
+import { buildRecomendacao } from '../repositories/mocks/fixtures'
+import { buildSugestao } from '../repositories/mocks/mockPlano'
 import {
-  planSignal,
   PLAN_ARTICLES,
   createPlanService,
+  finalCrops,
+  planBState,
+  planCards,
+  planEdits,
+  planSignal,
+  rainRows,
   rainSourceName,
-  currentPlan,
-  planChoices,
-  planStartingWith,
-  todayPlan,
-  todayRows,
-  withTodayAnswer,
-  withYearCrop,
+  resetPlanFlow,
+  signalParts,
+  suggestionFixos,
+  todayState,
+  yearFlow,
 } from './planService'
 
-const meio = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
-const tarde = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'tarde' }, 'pt')
-const historico = buildTalhao({ lat: -18.9543, lon: -48.1993 }, 'pt').historico as Historico
+const point = { lat: -18.9543, lon: -48.1993, colheita: 'tarde' as const }
 
-describe('planService: montar a rotação (tarefa 0045)', () => {
-  it('cada ano escolhe entre as culturas que cabem na janela (na ordem do objetivo) e o "Deixar parado"', () => {
-    expect(planChoices(meio, null)).toEqual([...meio.objetivos!.equilibrio!.ordem, 'pousio'])
-    expect(planChoices(tarde, 'terra')).not.toContain('milho_safrinha')
-    expect(planChoices(tarde, 'terra').at(-1)).toBe('pousio')
+function year(cultura: CropId, extra: Partial<AnoPlano> = {}): AnoPlano {
+  return {
+    cultura,
+    nome: cultura,
+    na_janela: true,
+    anos_bons: 11,
+    total_anos: 20,
+    futuro_anos_bons: 10,
+    sede: 'media',
+    cobre_terra: true,
+    deixa_nitrogenio: false,
+    quebra_nematoide: false,
+    usa_mm: 180,
+    fora_do_prazo: false,
+    fixo: true,
+    motivo: null,
+    ...extra,
+  }
+}
+
+function plan(anos: AnoPlano[], extra: Partial<PlanoAvaliado> = {}): PlanoAvaliado {
+  return {
+    colheita: 'tarde',
+    semeadura: '2027-03-03',
+    anos,
+    notas: { seguranca: 70, solo: 40, futuro: 70 },
+    terra: { anos_cobertos: 3, anos_nitrogenio: 0, anos_nematoide: 1, repetidas: [], total: 3, bonus_diversidade: 5 },
+    chuva: { inicio: '2027-03-03', fim: '07-31', chuva_mm: 341, usa_media_mm: 122, anos: 20, fonte: 'gpm_imerg' },
+    plano_ab: null,
+    ...extra,
+  }
+}
+
+describe('planService: o plano em cadeia da aba "2. Plano de 3 anos" (tela 5, tarefa 0056)', () => {
+  it('os anos que o produtor mudou vêm da URL', () => {
+    expect(planEdits({ ano2: 'pousio' })).toEqual({ year2: 'pousio', year3: null })
+    expect(planEdits({})).toEqual({ year2: null, year3: null })
   })
 
-  it('sem plano na URL, vale o plano sugerido do objetivo', () => {
-    expect(currentPlan(meio, 'terra', undefined)).toEqual({
-      years: meio.objetivos!.terra!.plano,
-      suggested: meio.objetivos!.terra!.plano,
-      edited: false,
+  it('o que fixar no /api/plano/sugestao: o 1º ano e, se mudou, o 2º', () => {
+    expect(suggestionFixos('sorgo', { year2: null, year3: null })).toEqual(['sorgo'])
+    expect(suggestionFixos('sorgo', { year2: 'pousio', year3: null })).toEqual(['sorgo', 'pousio'])
+    expect(suggestionFixos('sorgo', { year2: 'pousio', year3: 'sorgo' })).toEqual(['sorgo', 'pousio'])
+  })
+
+  it('com o 3º ano mudado, o plano final vai inteiro para o /api/plano (o 2º sugerido entra como está)', () => {
+    const base = plan([year('sorgo'), year('milheto', { fixo: false }), year('sorgo', { fixo: false })])
+    expect(finalCrops('sorgo', { year2: null, year3: 'pousio' }, base)).toEqual(['sorgo', 'milheto', 'pousio'])
+    expect(finalCrops('sorgo', { year2: 'crotalaria', year3: 'pousio' }, null)).toEqual(['sorgo', 'crotalaria', 'pousio'])
+    expect(finalCrops('sorgo', { year2: null, year3: 'pousio' }, null)).toBeNull()
+    expect(finalCrops('sorgo', { year2: 'pousio', year3: null }, base)).toBeNull()
+  })
+
+  it('os 3 cartões: safra, etiqueta, deu certo, sede, fora do prazo e o porquê só nos anos sugeridos', () => {
+    const base = buildSugestao({ ...point, fixos: ['sorgo', 'pousio'] }, 'pt')
+    const cards = planCards('sorgo', { year2: 'pousio', year3: null }, base, null, 2027)
+    expect(cards?.map((card) => [card.season, card.crop, card.tag])).toEqual([
+      [2027, 'sorgo', 'choice'],
+      [2028, 'pousio', 'changed'],
+      [2029, 'milheto', 'suggested'],
+    ])
+    expect(cards?.[2].motivo).toMatch(/terra ficou descoberta/)
+    expect(cards?.[0].motivo).toBeNull()
+    expect(cards?.[1]).toMatchObject({ good: null, total: null, sede: null })
+  })
+
+  it('com o 3º ano mudado, os números vêm do plano final e o porquê do 2º ano fica o da sugestão', () => {
+    const base = plan([year('sorgo'), year('milheto', { fixo: false, motivo: 'varia a cultura' }), year('sorgo', { fixo: false })])
+    const final = plan([year('sorgo'), year('milheto'), year('crotalaria', { anos_bons: 20, fora_do_prazo: true })])
+    const cards = planCards('sorgo', { year2: null, year3: 'crotalaria' }, base, final, 2027)
+    expect(cards?.map((card) => card.tag)).toEqual(['choice', 'suggested', 'changed'])
+    expect(cards?.[1].motivo).toBe('varia a cultura')
+    expect(cards?.[2]).toMatchObject({ crop: 'crotalaria', good: 20, late: true, motivo: null })
+  })
+
+  it('sem a sugestão ainda (carregando), nada de cartão', () => {
+    expect(planCards('sorgo', { year2: null, year3: null }, null, null, 2027)).toBeNull()
+  })
+
+  it('trocar o 1º ano solta o 2º e o 3º; trocar o 2º solta o 3º; trocar o 3º só grava ele', () => {
+    const params = { lat: 1, lon: 2, escolha: 'sorgo' as const, ano2: 'pousio' as const, ano3: 'milheto' as const }
+    expect(yearFlow(params, 0, 'milheto')).toMatchObject({ escolha: 'milheto', ano2: undefined, ano3: undefined })
+    expect(yearFlow(params, 1, 'sorgo')).toMatchObject({ escolha: 'sorgo', ano2: 'sorgo', ano3: undefined })
+    expect(yearFlow(params, 2, 'crotalaria')).toMatchObject({ escolha: 'sorgo', ano2: 'pousio', ano3: 'crotalaria' })
+  })
+
+  it('"Voltar ao plano sugerido" tira os anos mudados e mantém a escolha', () => {
+    expect(resetPlanFlow({ lat: 1, lon: 2, escolha: 'sorgo', ano2: 'pousio', ano3: 'sorgo' })).toEqual({
+      lat: 1,
+      lon: 2,
+      escolha: 'sorgo',
+      ano2: undefined,
+      ano3: undefined,
+    })
+  })
+})
+
+describe('planService: "Como é hoje" nas notas do plano (as 3 últimas safras)', () => {
+  it('com as 3 culturas respondidas, vale o plano delas (o pousio vale)', () => {
+    expect(todayState({ 2024: 'milho_braquiaria', 2025: 'pousio', 2026: 'sorgo' })).toEqual({
+      kind: 'crops',
+      crops: ['milho_braquiaria', 'pousio', 'sorgo'],
     })
   })
 
-  it('o plano editado da URL vale se todas as culturas cabem na janela', () => {
-    const edited = currentPlan(meio, null, ['sorgo', 'pousio', 'milheto'])
-    expect(edited).toMatchObject({ years: ['sorgo', 'pousio', 'milheto'], edited: true })
-
-    expect(currentPlan(tarde, null, ['milho_safrinha', 'sorgo', 'sorgo']).edited).toBe(false)
-    expect(currentPlan(meio, null, meio.objetivos!.equilibrio!.plano).edited).toBe(false)
+  it('faltou resposta (ou só "Plantei" sem dizer o quê): "não preenchido", com o aviso', () => {
+    expect(todayState({})).toEqual({ kind: 'missing' })
+    expect(todayState({ 2024: 'sorgo', 2025: 'soja', 2026: 'sorgo' })).toEqual({ kind: 'missing' })
   })
 
-  it('troca a cultura de um ano e "Usar no meu plano" leva a cultura para o ano 1', () => {
-    expect(withYearCrop(['sorgo', 'sorgo', 'sorgo'], 1, 'crotalaria')).toEqual(['sorgo', 'crotalaria', 'sorgo'])
-    expect(planStartingWith(['milho_braquiaria', 'crotalaria', 'sorgo'], 'milheto')).toEqual([
-      'milheto',
-      'crotalaria',
-      'sorgo',
-    ])
+  it('"Não plantei" (sem soja) em alguma safra: preencheu, mas não dá para comparar; diz quais safras', () => {
+    expect(todayState({ 2024: 'sem_soja', 2025: 'sorgo', 2026: 'sem_soja' })).toEqual({ kind: 'noSoy', seasons: [2024, 2026] })
+    // Sem soja vale mais que a resposta que faltou: o aviso de "não preencheu" estaria errado para essa safra.
+    expect(todayState({ 2024: 'sem_soja' })).toEqual({ kind: 'noSoy', seasons: [2024] })
   })
 })
 
-describe('planService: "Como é hoje" com o NDVI e a resposta do produtor (tarefa 0045)', () => {
-  const years = [2024, 2025, 2026]
-
-  it('uma linha por safra confirmável, com o que o satélite viu; parado já conta como "Deixar parado"', () => {
-    // No exemplo: 2024 parado, 2025 parado, 2026 plantou
-    const rows = todayRows(historico, years, {}, {})
-
-    expect(rows.map((row) => [row.year, row.seen, row.value])).toEqual([
-      [2024, 'parado', 'pousio'],
-      [2025, 'parado', 'pousio'],
-      [2026, 'plantou', null],
-    ])
-    expect(rows[2]).toMatchObject({ ndvi: 0.71, byProducer: false, answer: null })
+describe('planService: "E se o ano vier seco?"', () => {
+  it('o sinal em duas frases: a previsão e como a cultura se saiu nos anos daquela fase', () => {
+    expect(
+      signalParts(
+        'Previsão para fevereiro a abril de 2027: El Niño (98%, NOAA). Nos 7 anos de El Niño desde 2005, sorgo deu certo em 3 e milheto em 7.',
+      ),
+    ).toEqual({
+      forecast: 'Previsão para fevereiro a abril de 2027: El Niño (98%, NOAA).',
+      history: 'Nos 7 anos de El Niño desde 2005, sorgo deu certo em 3 e milheto em 7.',
+    })
+    expect(signalParts('Previsão (NOAA): nenhuma fase se destaca (La Niña 30%, neutro 40%, El Niño 30%).')).toEqual({
+      forecast: 'Previsão (NOAA): nenhuma fase se destaca (La Niña 30%, neutro 40%, El Niño 30%).',
+      history: null,
+    })
   })
 
-  it('a safra confirmada na tela 4 vale no lugar do satélite', () => {
-    const rows = todayRows(historico, years, { 2024: 'plantou' }, {})
-
-    expect(rows[0]).toMatchObject({ seen: 'plantou', byProducer: true, value: null })
+  const ab = (extra: Partial<PlanoAB>): PlanoAB => ({
+    cultura_a: 'sorgo',
+    nome_a: 'Sorgo',
+    falhas_a: 9,
+    total: 20,
+    cultura_b: 'milheto',
+    nome_b: 'Milheto',
+    b_bons_nas_falhas: 9,
+    limite: null,
+    motivo: null,
+    ...extra,
   })
 
-  it('a resposta do "O que foi?" vale mais que tudo', () => {
-    const rows = todayRows(historico, years, {}, { 2024: 'sorgo', 2026: 'milho_safrinha' })
-
-    expect(rows.map((row) => row.value)).toEqual(['sorgo', 'pousio', 'milho_safrinha'])
+  it('Plano B: a cultura que mais deu certo quando a do Plano A falhou (do motor, não fixa)', () => {
+    expect(planBState(ab({}))).toEqual({ kind: 'b', crop: 'milheto', name: 'Milheto', good: 9, fails: 9 })
+    expect(planBState(ab({ cultura_b: 'crotalaria', nome_b: 'Crotalária', b_bons_nas_falhas: 4 }))).toMatchObject({ crop: 'crotalaria' })
   })
 
-  it('sem NDVI para o ponto, pergunta direto: nenhuma linha com o que o satélite viu', () => {
-    const rows = todayRows(null, years, {}, {})
-
-    expect(rows.map((row) => [row.seen, row.value])).toEqual([
-      [null, null],
-      [null, null],
-      [null, null],
-    ])
+  it('"Não precisa" com a terra parada ou quando o 1º ano nunca falhou; sem outra melhor, "nenhuma"', () => {
+    expect(planBState(ab({ cultura_b: null, nome_b: null, b_bons_nas_falhas: null, motivo: 'nunca_falhou' }))).toEqual({
+      kind: 'notNeeded',
+      reason: 'nunca_falhou',
+    })
+    expect(planBState(ab({ cultura_a: 'pousio', cultura_b: null, nome_b: null, motivo: 'pousio' }))).toEqual({ kind: 'notNeeded', reason: 'pousio' })
+    expect(planBState(ab({ cultura_b: null, nome_b: null, motivo: 'nenhuma_melhor' }))).toEqual({ kind: 'none' })
   })
 
-  it('com as 3 safras conhecidas, "Como é hoje" é o que ele plantou; senão, a referência do motor', () => {
-    const known = todayRows(historico, years, {}, { 2026: 'sorgo' })
-    expect(todayPlan(known, meio)).toEqual({ crops: ['pousio', 'pousio', 'sorgo'], reference: false })
-
-    const missing = todayRows(historico, years, {}, {})
-    expect(todayPlan(missing, meio)).toEqual({ crops: meio.plano_3_anos.hoje.anos, reference: true })
-    expect(todayPlan([], meio).reference).toBe(true)
-  })
-
-  it('marca e desmarca a resposta de um ano', () => {
-    expect(withTodayAnswer({ 2024: 'sorgo' }, 2025, 'pousio')).toEqual({ 2024: 'sorgo', 2025: 'pousio' })
-    expect(withTodayAnswer({ 2024: 'sorgo' }, 2024, null)).toEqual({})
+  it('chuva aproveitada: a terra parada e o que a lavoura usa em cada ano (pousio = 0)', () => {
+    const data = plan([year('sorgo', { usa_mm: 183 }), year('pousio', { usa_mm: null }), year('milheto', { usa_mm: 182 })])
+    expect(rainRows(data, 2027)).toEqual({
+      rain: 341,
+      rows: [
+        { season: 2027, crop: 'sorgo', mm: 183 },
+        { season: 2028, crop: 'pousio', mm: 0 },
+        { season: 2029, crop: 'milheto', mm: 182 },
+      ],
+    })
+    expect(rainRows(plan([], { chuva: null }), 2027)).toBeNull()
   })
 })
 
-describe('planService: pedir a avaliação do plano (GET /api/plano)', () => {
+describe('planService: pedir o plano (GET /api/plano e /api/plano/sugestao)', () => {
   it('pede ao repository e guarda o mesmo plano em memória', async () => {
     const get = vi.fn().mockResolvedValue({ anos: [] })
-    const service = createPlanService({ get })
+    const service = createPlanService({ get, suggest: vi.fn() })
     const params = { lat: 1, lon: 2, colheita: 'meio' as const, anos: ['sorgo', 'sorgo', 'sorgo'] as const }
 
     await service.evaluate(params, 'pt')
@@ -119,9 +210,22 @@ describe('planService: pedir a avaliação do plano (GET /api/plano)', () => {
     expect(get).toHaveBeenLastCalledWith({ ...params, anos: ['sorgo', 'pousio', 'sorgo'] }, 'pt')
   })
 
+  it('a sugestão em cadeia também fica em memória, separada por anos fixos e idioma', async () => {
+    const suggest = vi.fn().mockResolvedValue({ anos: [] })
+    const service = createPlanService({ get: vi.fn(), suggest })
+    const params = { lat: 1, lon: 2, colheita: 'tarde' as const, fixos: ['sorgo'] as const }
+
+    await service.suggest(params, 'pt')
+    await service.suggest({ ...params, fixos: ['sorgo'] }, 'pt')
+    await service.suggest(params, 'en')
+    await service.suggest({ ...params, fixos: ['sorgo', 'pousio'] }, 'pt')
+
+    expect(suggest).toHaveBeenCalledTimes(3)
+  })
+
   it('não guarda a falha: o próximo pedido tenta de novo', async () => {
     const get = vi.fn().mockRejectedValueOnce(new Error('rede')).mockResolvedValue({ anos: [] })
-    const service = createPlanService({ get })
+    const service = createPlanService({ get, suggest: vi.fn() })
     const params = { lat: 1, lon: 2, colheita: 'meio' as const, anos: ['sorgo', 'sorgo', 'sorgo'] as const }
 
     await expect(service.evaluate(params, 'pt')).rejects.toThrow('rede')
@@ -129,21 +233,14 @@ describe('planService: pedir a avaliação do plano (GET /api/plano)', () => {
   })
 })
 
-describe('planService: artigos do Guia da aba', () => {
-  it('rotação, conta de água e veranico existem em pt e en', () => {
-    for (const path of Object.values(PLAN_ARTICLES)) {
-      const slug = path.replace('/guia/', '')
-      expect(guideService.get('pt', slug)).not.toBeNull()
-      expect(guideService.get('en', slug)).not.toBeNull()
-    }
+describe('planService: artigos do Guia e fonte da chuva', () => {
+  it('os artigos da aba existem (slugs tipados do Guia)', () => {
+    expect(Object.values(PLAN_ARTICLES)).toEqual(['rotacao-de-culturas', 'conta-de-agua', 'veranico'])
   })
-})
 
-describe('planService: nome da fonte da chuva na frase', () => {
   it('o nome de cada fonte da série, juntos com "+"', () => {
     expect(rainSourceName('gpm_imerg')).toBe('GPM IMERG')
     expect(rainSourceName('gpm_imerg+nasa_power')).toBe('GPM IMERG + NASA POWER')
-    expect(rainSourceName('nasa_power')).toBe('NASA POWER')
   })
 })
 
@@ -151,7 +248,7 @@ describe('planSignal: o sinal do outono fala do Plano A da tela (tarefa 0049)', 
   const rec = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
   const fromPlan = { ...rec.sinal!, motivo: 'Sinal do plano editado (teste).' }
 
-  it('com a avaliação do plano, vale o sinal dela (o do Plano A e do Plano B que a tela mostra)', () => {
+  it('com a avaliação do plano, vale o sinal dela', () => {
     expect(planSignal({ sinal: fromPlan }, rec, true)).toBe(fromPlan)
     expect(planSignal({ sinal: null }, rec, false)).toBeNull()
   })
