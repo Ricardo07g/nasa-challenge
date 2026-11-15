@@ -29,7 +29,7 @@ inteiro (as "Regras gerais" valem para todas), os `AGENTS.md` e esta página.
 | S4 | 4. O que o satélite viu (raio-X) | 0043 | painel escuro com 8 blocos, histórico em faixa de calor do NDVI, alertas (geada, chuva forte, fogo: MCD64A1 na ORNL ou índice substituto), cartões menores | — | ✅ na branch (15/11 ~04:00), revisada; extração completa do MCD64A1 rodando |
 | S5a | 5. Abas: objetivo, Sugestão e Água | 0044 | abas Sugestão / Comparar / Plano, seletor "O que você quer mais?", linha Água e sede da cultura, explorador ano a ano (substitui `/safra-passada`), "Como fazer" em 4 partes, aviso único da colheita tarde, sem relatório | — | ✅ na branch (15/11 ~04:12), revisada; irrigação opcional não feita |
 | S5b | 5. Comparar e Plano de 3 anos | 0045 | Comparar (até 3 culturas, colunas, "Usar no meu plano"), Plano editável com notas na hora, saúde da terra da rotação, chuva aproveitada, "Como é hoje" com o NDVI e a confirmação, Plano A/B com número derivado da série, sem "Comece por um pedaço" | — | a fazer |
-| S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | feito na branch `feat/remodelagem-s6-avisos` (15/11), falta merge e revisão |
+| S6 | 6. Avisos | 0046 | `/avisos` com contador, grupos Agora / O que mudou / Fora do comum / Perto de você, POWER recente com cache de 24 h, rodapé "Alertas oficiais" | S7 | ✅ na branch (15/11 ~04:50), revisada |
 | S7 | 7. Comunidade | 0047 | relatos (plantio, chuva, evento) sem cadastro, tabela `community_report`, endpoints, mapa de 30 km, resumo "Perto de você" | S6 | ✅ na branch (15/11 ~03:10), revisada |
 | S9 | 9. Consistência e revisão final | 0049 | missão com as fontes certas, "Como a conta é feita" com as regras novas, nenhum link para telas removidas, lista final do pedido | — | a fazer |
 
@@ -139,6 +139,38 @@ Cada decisão tomada sem o usuário entra aqui, com o porquê. Decisões de prod
 | D104 | 15/11 | S6: artigo novo do Guia "Como ler os avisos" (tema clima, sem rascunho, por ser de dados), só com fontes já conferidas em `verifiedSources.ts`; a tela liga com "Saiba mais". O RF novo é o RF-31 (a S5a usa o RF-30). | Explica os níveis, os grupos e as fontes sem número novo. |
 
 ## Revisão por seção
+
+### S6 — Avisos (revisada em 15/11 ~04:55)
+
+Conferida em 1280 e 390 px, pt e en, com dado real na fazenda de exemplo e num ponto perto de Prata
+(−19,55 / −48,95), um dos 3 com a terra seca no SMAP de 10/11.
+
+- ✅ Botão "Avisos" ao lado de "Comunidade", com o contador em número e no nome acessível (fazenda: 1; Prata: 3).
+  No celular, o cabeçalho cabe em uma linha (só os ícones).
+- ✅ Ponto salvo no aparelho, sem cadastro (D91). Sem ponto, a tela pede "Marcar minha lavoura". Não há push.
+- ✅ Cada aviso tem o nível em texto ("Atenção" ou "Fique de olho"), o que o dado mostra, "O que fazer:", a fonte
+  e a data da leitura. Grupo sem aviso: "Nada fora do normal." com a data.
+- ✅ Agora:
+  - terra seca em Prata: "mais seca que em 85% dos anos nesta época", SMAP de 10/11;
+  - calor: "5 dias com 35 °C ou mais nos últimos 10", NASA POWER de 12/11, pedido pelo backend com cache de 24 h;
+  - El Niño: previsão de 98% para fev–abr de 2027 e "nos 7 anos de El Niño… 5; nos outros 13, 11. São poucos anos.";
+  - fora da safrinha, o link "Ver como teriam sido os avisos em 2024" abre o detalhe de 2024 no explorador da
+    Sugestão (S5a);
+  - nenhuma comparação da chuva recente com "o normal".
+- ✅ O que mudou (2020–2024 × 2005–2019), com os dois números e "São poucos anos": veranico 20,8 → 27,2 dias, fim
+  das chuvas 24/abr → 13/abr, falta de água 101,6 → 177,4 mm, deu certo 13 de 15 → 3 de 5.
+- ✅ Fora do comum: veranico de 43 dias (2024), outono mais seco (178 mm em 2021), chuva que acabou mais cedo
+  (16/mar/2021) e ano com mais calor (2024). Os números batem com o raio-X.
+- ✅ Perto de você: eventos de vizinhos dos últimos 7 dias a até 30 km, com "Relato de vizinho, não confirmado".
+  Hoje não há relatos.
+- ✅ "Alertas oficiais": texto do pedido, botões de SMS para 40199, WhatsApp, 193 e 199, e o link do Guia. Artigo
+  novo "Como ler os avisos".
+- ⚠️ "Falta de água no ciclo" aqui é a **média por ano** (101,6 e 177,4 mm), e na linha "Água" da Sugestão é a
+  **mediana** (116 mm) dos 20 anos. As duas estão certas, mas lado a lado parecem discordar. Alinhar a palavra
+  ("em média" × "em metade dos anos") na S9.
+- ⚠️ O rodapé é o último bloco da tela, não uma barra presa (D102): uma barra cobriria os avisos no celular.
+- ⚠️ O aviso de calor aparece também fora da safrinha (novembro), com o "o que fazer" condicional ("Se a lavoura
+  estiver na floração…").
 
 ### S5a — Abas, objetivo, Sugestão e Água (revisada em 15/11 ~04:20)
 
