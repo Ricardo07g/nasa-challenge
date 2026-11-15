@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -228,6 +228,24 @@ describe('rotas', () => {
         '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&exemplo=1',
       ),
     )
+  })
+
+  it('/guia mostra os temas e /guia/:artigo abre um artigo real, em pt e en', async () => {
+    renderAt('/guia')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Guia' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Culturas' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia/veranico')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Veranico' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia/veranico', 'en')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Dry spell' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/guia/nao-existe')
+    expect(await screen.findByText('Não achamos esse artigo.')).toBeInTheDocument()
   })
 
   it('endereço desconhecido volta ao início', async () => {

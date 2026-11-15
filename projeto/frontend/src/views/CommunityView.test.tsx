@@ -40,6 +40,11 @@ function setup(overrides: Partial<CommunityViewProps> = {}) {
 }
 
 describe('CommunityView (tela 8)', () => {
+  it('no fim da tela, um link para o Guia', () => {
+    setup()
+    expect(screen.getByRole('link', { name: 'Guia: dúvidas e respostas curtas' })).toHaveAttribute('href', '/guia')
+  })
+
   it('região pelo satélite: o último ano em destaque, a comparação e o gráfico ano a ano (P3)', () => {
     setup()
 
