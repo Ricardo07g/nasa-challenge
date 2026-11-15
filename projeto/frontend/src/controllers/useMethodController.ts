@@ -31,11 +31,18 @@ export function useMethodController(deps: Deps = defaultDeps) {
     () =>
       params?.colheita
         ? deps.farm.recomendacao(
-            { lat: params.lat, lon: params.lon, colheita: params.colheita, solo: params.solo, exemplo: params.exemplo },
+            {
+              lat: params.lat,
+              lon: params.lon,
+              colheita: params.colheita,
+              solo: params.solo,
+              exemplo: params.exemplo,
+              confirmadas: params.confirmadas,
+            },
             lang,
           )
         : deps.farm.recomendacao({ ...EXAMPLE_FARM, colheita: 'meio', exemplo: true }, lang),
-    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, lang, deps.farm],
+    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, params?.confirmadas, lang, deps.farm],
   )
   const talhao = useAsync(
     () =>

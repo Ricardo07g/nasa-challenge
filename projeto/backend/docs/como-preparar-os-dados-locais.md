@@ -123,6 +123,9 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
     rode o mesmo comando de novo, que só pede as datas que faltam. Recorte que dá 502 duas vezes é
     dividido sozinho em pedaços menores. `--datas-por-pedido` (padrão 5, máximo 10) e `--pausa`
     (padrão 5 s) ajustam o ritmo; dá para mudar de uma execução para outra sem perder o cache.
+  - **Anos**: os do `historico_ndvi` do `regras.yaml` (2017 a 2026 desde a tarefa 0039). Quem tem o
+    cache de 2016 a 2025 baixa só 2026 (6 pedidos por ponto). O arquivo de saída tem só os pontos
+    pedidos: passe todos os pontos que já estavam nele.
 - O IMERG grava em `data/baixados/nasa_gpm_imerg/` (o JSON e o cache `cache_opendap/`) a partir
   da raiz do repositório. O `--dry-run` mostra pedidos, o que já está no cache e o tempo, sem rede.
   O primeiro recorte vai sozinho: se o GES DISC recusar (token vencido, aplicativo não autorizado
@@ -145,7 +148,8 @@ Pré-requisitos: Docker (OrbStack no Mac), [uv](https://docs.astral.sh/uv/) e o 
   `--saida` com o caminho do `data/baixados` do checkout principal.
 - **Região pelo satélite** (tarefas 0034 e 0036): grava em `data/baixados/nasa_modis_ndvi_regiao/`
   o JSON e o cache `cache_ornl/` (uma resposta por pedido, em gzip; ~60 MB), a partir da raiz do
-  repositório. Pede, para cada ano de 2016 a 2025, 1/jan a 31/mar (pico e colheita da soja) e abril
+  repositório. Pede, para cada ano do histórico do talhão (2017 a 2026 desde a tarefa 0039; com o
+  cache de 2016 a 2025, faltam 9 pedidos), 1/jan a 31/mar (pico e colheita da soja) e abril
   a julho (entressafra). Antes, veja os 81 pedidos sem baixar nada, quantos já estão no cache e o
   tempo do que falta: `uv run python -m pipeline.fetch_regiao_ndvi --dry-run`. Quem já tem o cache
   da primeira versão (só abril a julho) baixa só os 40 de jan–mar (~20 min). Outras regiões:
@@ -228,7 +232,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | Chuva | "20 anos de chuva daqui" (ou menos, se algum ano não tinha dado completo) | igual: vem do NASA POWER na hora |
 | Solo | "Terra … · Do mapa de solos" | "Não achamos no mapa de solos; usamos terra média" |
 | Clima dos próximos anos | ✓ pronto (só onde há deltas: a caixa piloto inteira com `--area`; só a região da fazenda de exemplo com `--pontos`) | "Ainda não disponível para esta área" |
-| Histórico do talhão | faixa de 2016 a 2025 | não aparece (ou "Ainda não conectado") |
+| Histórico do talhão | faixa de 2017 a 2026 (2026 fica "?" até baixar o NDVI de 2026; ano sem soja com "–"), e "Confirme as últimas safras" com 2024 a 2026 e o que o satélite viu | "Ainda não conectado", com "Confirme as últimas safras" (anos vazios) |
 | Anos de chuva (tocar num ano) | ponto de El Niño / La Niña em cima dos anos e "Ano de El Niño." na frase | a frase de cada ano aparece igual, sem a marca |
 | Na sua região (http://localhost:5173/comunidade) | "Em 2025, X% da área de soja ficou parada depois da colheita" e as barras de 2016 a 2025 | o card diz que o satélite ainda não mediu a região da lavoura (a API responde 404 `OUTSIDE_AREA`) |
 | "Por quê?" de cada opção | frase do balde pelo SMAP (anos de 2016 em diante) | sem a frase; o balde começa em 50% da CAD |

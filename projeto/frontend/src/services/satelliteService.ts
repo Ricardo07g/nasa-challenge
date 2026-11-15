@@ -6,6 +6,10 @@ export type HistorySummary = {
   planted: number
   /** Anos em que o satélite não teve certeza (`incerto` + `sem_dado`). */
   uncertain: number
+  /** Anos em que o satélite não viu a soja (`sem_soja`): à parte, com legenda própria. */
+  noSoy: number
+  /** Anos que o produtor confirmou (valem no lugar do satélite). */
+  confirmed: number
   /** Anos certos (parado + plantou): a frase do cartão conta só esses. */
   known: number
   total: number
@@ -25,12 +29,13 @@ function historyWindow(janela: string | undefined): HistorySummary['window'] {
 
 /**
  * Tela 4, cartão 1: o que cresceu depois da soja, ano a ano (NDVI do MODIS). A frase conta só os anos
- * certos ("parada em 5 de 9 anos (1 sem certeza)"). As contas saem dos próprios anos da faixa, para a
- * frase nunca discordar dos quadrinhos. Sem dado, ou sem nenhum ano certo, o cartão some.
+ * certos ("parada em 5 de 9 anos (1 sem certeza)"); o ano sem soja fica à parte. As contas saem dos
+ * próprios anos da faixa, para a frase nunca discordar dos quadrinhos. Sem dado, ou sem nenhum ano
+ * certo, o cartão some.
  */
 export function historySummary(historico: Talhao['historico']): HistorySummary | null {
   if (!historico) return null
-  const count = (situacao: SituacaoAno) => historico.anos.filter((ano) => ano.situacao === situacao).length
+  const count = (...which: SituacaoAno[]) => historico.anos.filter((ano) => which.includes(ano.situacao)).length
   const idle = count('parado')
   const planted = count('plantou')
   const known = idle + planted
@@ -38,7 +43,9 @@ export function historySummary(historico: Talhao['historico']): HistorySummary |
   return {
     idle,
     planted,
-    uncertain: historico.anos.length - known,
+    uncertain: count('incerto', 'sem_dado'),
+    noSoy: count('sem_soja'),
+    confirmed: historico.anos.filter((ano) => ano.fonte_ano === 'produtor').length,
     known,
     total: historico.anos.length,
     situations: historico.anos.map((ano) => ano.situacao),

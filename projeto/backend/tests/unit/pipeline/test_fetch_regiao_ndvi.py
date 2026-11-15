@@ -163,25 +163,27 @@ def test_should_plan_the_soy_season_and_the_offseason_of_each_year_plus_the_land
     land_cover = [r for r in plan if r.product == LAND_COVER_PRODUCT]
     assert len(plan) == 81
     assert len(ndvi) == 10 * 2 * 2 * 2
-    assert plan[0] == SubsetRequest("MOD13Q1", NDVI_BAND, date(2016, 1, 1), date(2016, 3, 21), 6)
+    # Os anos do historico_ndvi do regras.yaml: 2017 a 2026 (decisão de 15/11/2026).
+    assert plan[0] == SubsetRequest("MOD13Q1", NDVI_BAND, date(2017, 1, 1), date(2017, 3, 22), 6)
     assert plan[1] == replace(plan[0], band=QUALITY_BAND)
-    assert plan[2] == SubsetRequest("MOD13Q1", NDVI_BAND, date(2016, 4, 6), date(2016, 7, 27), 8)
-    assert SubsetRequest("MYD13Q1", QUALITY_BAND, date(2016, 1, 9), date(2016, 3, 29), 6) in plan
+    assert plan[2] == SubsetRequest("MOD13Q1", NDVI_BAND, date(2017, 4, 7), date(2017, 7, 28), 8)
+    assert SubsetRequest("MYD13Q1", QUALITY_BAND, date(2017, 1, 9), date(2017, 3, 30), 6) in plan
     assert land_cover == [
-        SubsetRequest(LAND_COVER_PRODUCT, "LC_Type1", date(2016, 1, 1), date(2025, 1, 1), 10)
+        SubsetRequest(LAND_COVER_PRODUCT, "LC_Type1", date(2017, 1, 1), date(2026, 1, 1), 10)
     ]
     assert all(r.n_dates <= 10 for r in plan)
 
 
 def test_should_keep_the_offseason_requests_with_the_same_cache_names() -> None:
-    # Os 41 pedidos da primeira versão (abril a julho e o uso do solo) continuam valendo no cache.
+    # Os pedidos de abril a julho da primeira versão continuam valendo no cache nos anos que ficaram
+    # na janela (2017 a 2025); 2026 e o uso do solo com os anos novos são pedidos novos.
     plan = _plan()
     names = {r.cache_name(DEFAULT_CENTER, 33) for r in plan}
 
     assert {
-        "MOD13Q1_250m_16_days_NDVI_20160406_20160727_-18.9543_-48.1993_33km.json.gz",
+        "MOD13Q1_250m_16_days_NDVI_20170407_20170728_-18.9543_-48.1993_33km.json.gz",
         "MYD13Q1_250m_16_days_pixel_reliability_20250415_20250720_-18.9543_-48.1993_33km.json.gz",
-        "MCD12Q1_LC_Type1_20160101_20250101_-18.9543_-48.1993_33km.json.gz",
+        "MCD12Q1_LC_Type1_20170101_20260101_-18.9543_-48.1993_33km.json.gz",
     } <= names
     offseason = [r for r in plan if r.product in NDVI_PRODUCTS and r.start.month == 4]
     assert len(offseason) == 10 * 2 * 2
@@ -641,8 +643,8 @@ def test_should_download_classify_and_write_the_region_then_resume_from_the_cach
     assert (region.lat, region.lon, region.raio_km) == (-18.9543, -48.1993, 1.0)
     assert region.fonte == "MODIS MOD13Q1 + MYD13Q1"
     assert region.mascara == "soja do ano (pico e colheita) em MCD12Q1 LC_Type1 classe 12"
-    assert [a.ano for a in region.anos] == list(range(2016, 2026))
-    assert region.anos[0] == RegiaoAno(2016, 4, 0.0, 100.0, 0.0, 0.0, n_pixels_lavoura=4)
+    assert [a.ano for a in region.anos] == list(range(2017, 2027))
+    assert region.anos[0] == RegiaoAno(2017, 4, 0.0, 100.0, 0.0, 0.0, n_pixels_lavoura=4)
     params = FileRegionRepository(output).get_data_run().params
     assert params["servico"] == "ornl_daac"
     assert params["mascara"]["classes"] == [12]

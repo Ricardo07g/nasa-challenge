@@ -149,30 +149,39 @@ class FakeIngestionService:
 
 
 class FakeNdviRepository:
-    """Série de NDVI de teste: 3 observações boas por entressafra, com o maior valor em maio."""
+    """Série de NDVI de teste: a soja (pico em 17/jan, colhida em 6/mar) e 3 observações boas por
+    entressafra, com o maior valor em maio. Nos anos de `no_soy`, o verão não passa de 0,30.
+    """
 
-    def __init__(self, peaks: dict[int, float]) -> None:
+    def __init__(self, peaks: dict[int, float], no_soy: frozenset[int] = frozenset()) -> None:
         self._peaks = peaks
+        self._no_soy = no_soy
 
     def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
         return [
             NdviRecord(data=date(year, month, day), ndvi=ndvi, qualidade=0, produto="MOD13Q1")
             for year, peak in self._peaks.items()
-            for month, day, ndvi in ((4, 7, 0.22), (5, 9, peak), (6, 10, 0.22))
+            for month, day, ndvi in (
+                (1, 17, 0.30 if year in self._no_soy else 0.85),
+                (3, 6, 0.30),
+                (4, 7, 0.22),
+                (5, 9, peak),
+                (6, 10, 0.22),
+            )
         ]
 
 
-# 2016 a 2025: 3 parado, 5 plantou, 2020 incerto e 2018 sem dado -> 3 de 8 anos certos parados
+# 2017 a 2026: 3 parado, 5 plantou, 2021 incerto e 2019 sem dado -> 3 de 8 anos certos parados
 PEAKS = {
-    2016: 0.30,
-    2017: 0.71,
-    2019: 0.71,
-    2020: 0.52,
-    2021: 0.71,
-    2022: 0.30,
-    2023: 0.71,
-    2024: 0.30,
-    2025: 0.71,
+    2017: 0.30,
+    2018: 0.71,
+    2020: 0.71,
+    2021: 0.52,
+    2022: 0.71,
+    2023: 0.30,
+    2024: 0.71,
+    2025: 0.30,
+    2026: 0.71,
 }
 
 
@@ -713,7 +722,7 @@ def test_should_explain_the_field_history_in_every_option_when_ndvi_exists() -> 
 
     assert {o.porque[-1] for o in rec.opcoes} == {
         "Seu talhão ficou em pousio em 3 de 8 entressafras vistas pelo satélite "
-        "de 2016 a 2025 (NDVI do MODIS)."
+        "de 2017 a 2026 (NDVI do MODIS)."
     }
 
 
@@ -724,14 +733,19 @@ def test_should_explain_the_field_history_in_english() -> None:
 
     assert _opcao(rec, "milho_safrinha").porque[-1] == (
         "Your field was left fallow in 3 of 8 off-seasons seen by the satellite "
-        "from 2016 to 2025 (MODIS NDVI)."
+        "from 2017 to 2026 (MODIS NDVI)."
     )
 
 
 @pytest.mark.parametrize(
     "ndvi",
-    [None, FakeNdviRepository({}), FakeNdviRepository({2016: 0.52, 2017: 0.50})],
-    ids=["sem-repositorio", "sem-serie", "sem-ano-certo"],
+    [
+        None,
+        FakeNdviRepository({}),
+        FakeNdviRepository({2017: 0.52, 2018: 0.50}),
+        FakeNdviRepository(PEAKS, no_soy=frozenset(PEAKS)),
+    ],
+    ids=["sem-repositorio", "sem-serie", "sem-ano-certo", "sem-soja"],
 )
 def test_should_not_explain_history_without_a_year_seen_with_certainty(
     ndvi: FakeNdviRepository | None,
@@ -742,18 +756,65 @@ def test_should_not_explain_history_without_a_year_seen_with_certainty(
     assert not any("NDVI" in frase for o in rec.opcoes for frase in o.porque)
 
 
+def test_should_not_count_years_without_soybean_in_the_history_phrase() -> None:
+    # 2017 e 2023 (parados) sem soja no verão: saem da conta -> 1 de 6 anos certos parados
+    rec = _service(ndvi=FakeNdviRepository(PEAKS, no_soy=frozenset({2017, 2023}))).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio"
+    )
+
+    assert _opcao(rec, "sorgo").porque[-1] == (
+        "Seu talhão ficou em pousio em 1 de 6 entressafras vistas pelo satélite "
+        "de 2017 a 2026 (NDVI do MODIS)."
+    )
+
+
+def test_should_use_the_producer_confirmations_in_the_history_phrase() -> None:
+    # Tarefa 0039: 2024 (satélite: plantou) e 2025 (satélite: parado) confirmados como parado e
+    # plantou, 2026 (satélite: plantou) confirmado como parado. Fica parado em 4 de 8 anos certos:
+    # 3 do produtor e 5 do satélite.
+    rec = _service(ndvi=FakeNdviRepository(PEAKS)).recommend(
+        lat=-18.95,
+        lon=-48.20,
+        colheita="meio",
+        confirmadas=[(2024, "parado"), (2025, "plantou"), (2026, "parado")],
+    )
+
+    assert _opcao(rec, "sorgo").porque[-1] == (
+        "Seu talhão ficou em pousio em 4 de 8 entressafras de 2017 a 2026 "
+        "(você confirmou 3; o satélite viu 5, pelo NDVI do MODIS)."
+    )
+
+
+def test_should_explain_the_history_from_the_confirmations_alone_without_ndvi() -> None:
+    rec = _service(ndvi=FakeNdviRepository({})).recommend(
+        lat=-18.95, lon=-48.20, colheita="meio", lang="en", confirmadas=[(2025, "parado")]
+    )
+
+    assert _opcao(rec, "sorgo").porque[-1] == (
+        "Your field was left fallow in 1 of 1 off-seasons from 2017 to 2026 "
+        "(you confirmed 1; the satellite saw 0, with MODIS NDVI)."
+    )
+
+
+def test_should_refuse_confirmations_outside_the_last_three_off_seasons() -> None:
+    with pytest.raises(ValidationDomainError, match="2019"):
+        _service().recommend(
+            lat=-18.95, lon=-48.20, colheita="meio", confirmadas=[(2019, "plantou")]
+        )
+
+
 def test_should_write_history_with_phrase_template_from_injected_rules() -> None:
     base = load_default_rules()
     modelo = "{parado}/{anos_certos} ({sem_certeza} sem certeza de {total}; {ano_inicio}-{ano_fim})"
     frases = {**base.frases, "pt": replace(base.frases["pt"], historico=modelo)}
-    historico_ndvi = replace(base.historico_ndvi, ano_inicio=2017)
+    historico_ndvi = replace(base.historico_ndvi, ano_inicio=2018)
 
     rec = _service(
         rules=replace(base, frases=frases, historico_ndvi=historico_ndvi),
         ndvi=FakeNdviRepository(PEAKS),
     ).recommend(lat=-18.95, lon=-48.20, colheita="meio")
 
-    assert _opcao(rec, "sorgo").porque[-1] == "2/7 (2 sem certeza de 9; 2017-2025)"
+    assert _opcao(rec, "sorgo").porque[-1] == "2/7 (2 sem certeza de 9; 2018-2026)"
 
 
 def _option(

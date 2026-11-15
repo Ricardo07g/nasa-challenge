@@ -35,12 +35,28 @@ describe('historySummary', () => {
       idle: 1,
       planted: 1,
       uncertain: 1,
+      noSoy: 0,
+      confirmed: 0,
       known: 2,
       total: 3,
       situations: ['parado', 'plantou', 'incerto'],
       years: ['2016', '2017', '2018'],
       window: { from: 4, to: 7 },
     })
+  })
+
+  it('"sem_soja" fica à parte: não é parado, plantou nem sem certeza (tarefa 0039)', () => {
+    const summary = historySummary(historico(['parado', 'sem_soja', 'sem_soja', 'incerto', 'plantou']))
+
+    expect(summary).toMatchObject({ idle: 1, planted: 1, uncertain: 1, noSoy: 2, known: 2, total: 5 })
+    expect(summary?.situations).toEqual(['parado', 'sem_soja', 'sem_soja', 'incerto', 'plantou'])
+  })
+
+  it('conta os anos que o produtor confirmou', () => {
+    const base = historico(['parado', 'plantou', 'parado'])
+    const anos = base.anos.map((a, index) => (index > 0 ? { ...a, fonte_ano: 'produtor' as const } : a))
+
+    expect(historySummary({ ...base, anos })?.confirmed).toBe(2)
   })
 
   it('a frase conta só os anos certos: 5 parados, 4 plantados e 1 incerto = 5 de 9 (1 sem certeza)', () => {

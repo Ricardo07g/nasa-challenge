@@ -47,7 +47,8 @@ export function MetricRow({ icon, iconTone = 'green', label, value, pill, childr
   )
 }
 
-export type CellState = 'good' | 'bad' | 'unknown'
+/** `none`: ano que não conta (ex.: o satélite não viu soja no ponto naquele ano). */
+export type CellState = 'good' | 'bad' | 'unknown' | 'none'
 
 type YearStripProps = {
   label: string
@@ -56,12 +57,12 @@ type YearStripProps = {
   years?: readonly string[]
 }
 
-/** O ano sem certeza leva um "?" além do cinza, para o significado não depender só da cor. */
-const UNKNOWN_MARK = '?'
+/** O ano sem certeza leva um "?" e o ano que não conta, um traço: o significado não depende só da cor. */
+const CELL_MARK: Partial<Record<CellState, string>> = { unknown: '?', none: '–' }
 
 /**
  * Um quadrinho por ano: cheio = deu certo / plantou; contorno laranja = faltou água / ficou parado;
- * cinza com "?" = o satélite não teve certeza.
+ * cinza com "?" = o satélite não teve certeza; pontilhado com "–" = não conta (sem soja).
  */
 export function YearStrip({ label, cells, size = 'sm', years }: YearStripProps) {
   return (
@@ -75,7 +76,7 @@ export function YearStrip({ label, cells, size = 'sm', years }: YearStripProps) 
       {cells.map((state, index) => (
         <span key={index} className={styles.cellWrap}>
           <span className={styles.cell} data-state={state}>
-            {state === 'unknown' ? UNKNOWN_MARK : null}
+            {CELL_MARK[state] ?? null}
           </span>
           {years && <span className={styles.year}>{years[index]}</span>}
         </span>
@@ -101,7 +102,7 @@ export function StripLegend({ items, markers = [], note }: StripLegendProps) {
       {items.map((item) => (
         <li key={item.state} className={styles.legendItem}>
           <span className={styles.legendCell} data-state={item.state} aria-hidden="true">
-            {item.state === 'unknown' ? UNKNOWN_MARK : null}
+            {CELL_MARK[item.state] ?? null}
           </span>
           {item.label}
         </li>

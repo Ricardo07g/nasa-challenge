@@ -280,6 +280,9 @@ const MONTHLY_RAIN: ChuvaMensal = {
   fonte: 'nasa_power',
 }
 
+/** As 3 últimas entressafras, que o produtor confirma na tela 4 (como a API manda). */
+const CONFIRMABLE_YEARS = [2024, 2025, 2026]
+
 export function buildTalhao(point: Ponto, lang: Lang): Talhao {
   void lang // o talhão não tem textos; o idioma fica aqui para o formato ser igual ao da API
   if (!insideBox(point)) {
@@ -293,9 +296,11 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
       dados: [],
       chuva_mensal: null,
       soja_recente: null,
+      anos_confirmaveis: CONFIRMABLE_YEARS,
     }
   }
-  // Exemplo do guia do NDVI: 5 anos parados, 4 plantados e 1 em que o satélite não teve certeza.
+  // Exemplo do guia do NDVI, de 2017 a 2026: 5 anos parados, 4 plantados e 1 em que o satélite não
+  // teve certeza.
   const situacoes: SituacaoAno[] = [
     'parado',
     'plantou',
@@ -308,12 +313,19 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
     'parado',
     'plantou',
   ]
-  const NDVI_MAX: Record<SituacaoAno, number | null> = { plantou: 0.71, parado: 0.42, incerto: 0.52, sem_dado: null }
+  const NDVI_MAX: Record<SituacaoAno, number | null> = {
+    plantou: 0.71,
+    parado: 0.42,
+    incerto: 0.52,
+    sem_dado: null,
+    sem_soja: null,
+  }
   const anos = situacoes.map((situacao, index) => ({
-    ano: 2016 + index,
+    ano: 2017 + index,
     situacao,
     ndvi_max: NDVI_MAX[situacao],
     n_obs: situacao === 'sem_dado' ? 1 : 12,
+    fonte_ano: 'satelite' as const,
   }))
   const count = (...which: SituacaoAno[]) => anos.filter((ano) => which.includes(ano.situacao)).length
   return {
@@ -327,6 +339,7 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
       parado: count('parado'),
       plantou: count('plantou'),
       sem_certeza: count('incerto', 'sem_dado'),
+      sem_soja: count('sem_soja'),
       total: anos.length,
       fonte: 'MODIS MOD13Q1 + MYD13Q1',
       janela: '04-01 a 07-31',
@@ -339,6 +352,7 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
     chuva_mensal: MONTHLY_RAIN,
     // Soja vista na última safra: no modo de demonstração, a tela 3 não avisa (RF-24).
     soja_recente: { safra: '2025/26', vista: true, ndvi_pico: 0.86, fonte: 'MODIS MOD13Q1 + MYD13Q1' },
+    anos_confirmaveis: CONFIRMABLE_YEARS,
   }
 }
 

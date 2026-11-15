@@ -143,7 +143,7 @@ Cada linha diz quem decide e qual tarefa fica parada até lá.
 | --- | --- | --- | --- |
 | Id da célula ✅ | **Decidido em 14/11: `floor`** (`cell_id_for`, plano técnico §5, alinhado à grade 0,1° do IMERG) | backend | R1.2 |
 | Ano com dia faltando no POWER ✅ | **Decidido em 14/11: descartar o ano** (como `pipeline/export_climate_fixture.py`) | backend + agrônoma | R1.4 |
-| Anos do histórico NDVI ✅ | **Decidido em 14/11: 2016–2025** (plano técnico, guia NDVI, Lovable) | produto | R2.2 |
+| Anos do histórico NDVI ✅ | **Decidido em 14/11: 2016–2025; em 15/11 passou a 2017–2026** (10 anos até a entressafra mais recente; o produtor confirma 2024, 2025 e 2026, [tarefa 0039](tarefas/0039-confirma-safras.md)) (plano técnico, guia NDVI, Lovable) | produto | R2.2 |
 | Formato do `historico` ✅ | **Decidido em 14/11: completo do guia NDVI** (`n_obs`, `plantou`, `sem_certeza`, `janela` e o estado `sem_dado`) | produto + front | R3.2 |
 | Delta de Tmin no CMIP6 (padrão adotado, **a revisar**) | Adotado no R2.1: `tasmax` **e** `tasmin` | backend | R2.1 |
 | Modelos do CMIP6 (padrão adotado, **a revisar**) | Adotados no R2.1: ACCESS-CM2, MPI-ESM1-2-HR e MRI-ESM2-0 (`r1i1p1f1`, `_v2.0`, conferidos no THREDDS) | backend + agrônoma | R2.1 |

@@ -96,13 +96,16 @@ def test_should_load_autumn_signal_thresholds() -> None:
 
 
 def test_should_load_shipped_field_history_rules_from_the_ndvi_guide() -> None:
-    # PRD 7.8 e guia do histórico NDVI ("Regra do talhão"); anos 2016 a 2025 (decisão do time)
+    # PRD 7.8 e guia do histórico NDVI ("Regra do talhão"); anos 2017 a 2026 (decisão de 15/11/2026:
+    # a entressafra de 2026, de abril a julho, já aconteceu; continuam 10 anos)
     historico = YamlRulesRepository(SHIPPED).get_rules().historico_ndvi
 
     assert (historico.janela_inicio, historico.janela_fim) == ("04-01", "07-31")
     assert (historico.limite_plantou, historico.limite_parado) == (0.60, 0.45)
     assert historico.min_observacoes == 3
-    assert (historico.ano_inicio, historico.ano_fim) == (2016, 2025)
+    assert (historico.ano_inicio, historico.ano_fim) == (2017, 2026)
+    # O produtor confirma as 3 últimas entressafras (2024, 2025 e 2026; decisão de 15/11/2026)
+    assert historico.anos_confirmaveis == 3
 
 
 def test_should_load_shipped_region_soy_rules() -> None:
@@ -135,6 +138,9 @@ def test_should_load_phrase_templates_in_portuguese_and_english() -> None:
     # PRD 7.6: frase do histórico do talhão, com o número de entressafras paradas
     assert "{parado}" in regras.frases["pt"].historico
     assert "{parado}" in regras.frases["en"].historico
+    # Com safras confirmadas pelo produtor (tarefa 0039), a frase diz quantas ele confirmou
+    assert "{confirmadas}" in regras.frases["pt"].historico_confirmado
+    assert "{confirmadas}" in regras.frases["en"].historico_confirmado
 
 
 def test_should_load_shipped_alert_rules_for_the_season_replay() -> None:

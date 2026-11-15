@@ -7,7 +7,7 @@
 from pydantic import BaseModel, ConfigDict
 
 from app.models.soja_recente import SojaRecente
-from app.models.talhao import ChuvaMensal, HistoricoTalhao, SituacaoAno, Talhao
+from app.models.talhao import ChuvaMensal, FonteAno, HistoricoTalhao, SituacaoAno, Talhao
 
 
 class _Frozen(BaseModel):
@@ -34,8 +34,10 @@ class ColheitaSugeridaSchema(_Frozen):
 class HistoricoAnoSchema(_Frozen):
     ano: int
     situacao: SituacaoAno
-    ndvi_max: float | None  # null quando o ano fica sem_dado
+    ndvi_max: float | None  # null quando o ano fica sem_dado ou sem_soja
     n_obs: int
+    # "produtor" no ano que ele confirmou (a situação é a dele; o NDVI, o do satélite)
+    fonte_ano: FonteAno = "satelite"
 
 
 class HistoricoSchema(_Frozen):
@@ -43,16 +45,21 @@ class HistoricoSchema(_Frozen):
     parado: int
     plantou: int
     sem_certeza: int  # incerto + sem_dado
-    total: int  # anos da janela
+    total: int  # anos da janela (parado + plantou + sem_certeza + sem_soja)
     fonte: str
     janela: str
+    sem_soja: int = 0  # anos sem a soja e a colheita no verão (tarefa 0039)
 
     @classmethod
     def from_model(cls, historico: HistoricoTalhao) -> "HistoricoSchema":
         return cls(
             anos=[
                 HistoricoAnoSchema(
-                    ano=a.ano, situacao=a.situacao, ndvi_max=a.ndvi_max, n_obs=a.n_obs
+                    ano=a.ano,
+                    situacao=a.situacao,
+                    ndvi_max=a.ndvi_max,
+                    n_obs=a.n_obs,
+                    fonte_ano=a.fonte_ano,
                 )
                 for a in historico.anos
             ],
@@ -62,6 +69,7 @@ class HistoricoSchema(_Frozen):
             total=historico.total,
             fonte=historico.fonte,
             janela=historico.janela,
+            sem_soja=historico.sem_soja,
         )
 
 
@@ -114,6 +122,8 @@ class TalhaoResponse(_Frozen):
     dados: list[FonteDadoSchema]
     chuva_mensal: ChuvaMensalSchema | None  # null fora da área ou sem temporada completa
     soja_recente: SojaRecenteSchema | None  # null sem o arquivo ou com o ponto fora da grade
+    # Entressafras que o produtor pode confirmar na tela 4 (as 3 últimas, tarefa 0039)
+    anos_confirmaveis: list[int]
 
     @classmethod
     def from_model(cls, talhao: Talhao) -> "TalhaoResponse":
@@ -152,4 +162,5 @@ class TalhaoResponse(_Frozen):
                 if talhao.soja_recente is not None
                 else None
             ),
+            anos_confirmaveis=list(talhao.anos_confirmaveis),
         )

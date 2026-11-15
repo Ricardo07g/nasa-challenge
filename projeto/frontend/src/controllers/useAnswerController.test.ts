@@ -49,6 +49,19 @@ describe('useAnswerController (tela 5)', () => {
     )
   })
 
+  it('as safras confirmadas na tela 4 vão para a recomendação (tarefa 0039)', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useAnswerController(d), {
+      wrapper: providers(`/resposta?${flow}&confirmadas=2025:parado`),
+    })
+
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    expect(d.farm.recomendacao).toHaveBeenCalledWith(
+      { lat: -18.9543, lon: -48.1993, colheita: 'meio', solo: undefined, exemplo: false, confirmadas: '2025:parado' },
+      'pt',
+    )
+  })
+
   it('as abas marcam a Resposta e o Voltar vai para a pergunta 2', () => {
     const d = deps()
     const { result } = renderHook(() => useAnswerController(d), { wrapper: providers(`/resposta?${flow}`) })

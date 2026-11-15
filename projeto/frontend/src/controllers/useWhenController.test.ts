@@ -96,6 +96,22 @@ describe('useWhenController (tela 3)', () => {
     )
   })
 
+  it('voltando da tela 4 com safras confirmadas, elas seguem na URL e na recomendação (tarefa 0039)', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useWhenController(d), {
+      wrapper: providers(`/quando?${point}&confirmadas=2025:parado`),
+    })
+    await waitFor(() => expect(result.current.suggestion).not.toBeNull())
+
+    act(() => result.current.confirm())
+
+    expect(screen.getByTestId('location')).toHaveTextContent(`/calculando?${point}&colheita=cedo&confirmadas=2025:parado`)
+    expect(d.farm.recomendacao).toHaveBeenCalledWith(
+      { lat: -18.9543, lon: -48.1993, colheita: 'cedo', solo: undefined, exemplo: false, confirmadas: '2025:parado' },
+      'pt',
+    )
+  })
+
   it('o Voltar leva para o mapa com o mesmo ponto', () => {
     const d = deps()
     const { result } = renderHook(() => useWhenController(d), { wrapper: providers(`/quando?${point}`) })

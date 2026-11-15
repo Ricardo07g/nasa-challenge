@@ -37,6 +37,18 @@ describe('repositories http', () => {
     )
   })
 
+  it('recomendacao leva as safras confirmadas pelo produtor (tarefa 0039)', async () => {
+    const getJson = vi.fn().mockResolvedValue({})
+    const repository = createHttpRecomendacaoRepository(getJson)
+
+    await repository.get({ ...UBERLANDIA, colheita: 'meio', confirmadas: '2024:plantou,2026:parado' }, 'pt')
+
+    expect(getJson).toHaveBeenCalledWith(
+      '/api/recomendacao?lat=-18.92&lon=-48.28&colheita=meio&confirmadas=2024:plantou,2026:parado',
+      { lang: 'pt' },
+    )
+  })
+
   it('exemplo chama /api/exemplo', async () => {
     const getJson = vi.fn().mockResolvedValue({})
     const repository = createHttpExemploRepository(getJson)
@@ -71,11 +83,20 @@ describe('repositories mock (dados de exemplo no formato do contrato)', () => {
       janela: '04-01 a 07-31',
     })
     for (const ano of historico!.anos) {
-      expect(['plantou', 'parado', 'incerto', 'sem_dado']).toContain(ano.situacao)
+      expect(['plantou', 'parado', 'incerto', 'sem_dado', 'sem_soja']).toContain(ano.situacao)
       expect(ano.n_obs).toBeGreaterThanOrEqual(0)
+      expect(ano.fonte_ano).toBe('satelite')
     }
     const uncertain = historico!.anos.filter((a) => a.situacao === 'incerto' || a.situacao === 'sem_dado')
     expect(uncertain).toHaveLength(historico!.sem_certeza)
+    expect(historico!.sem_soja).toBe(0)
+  })
+
+  it('histórico de 2017 a 2026 e as 3 últimas safras para o produtor confirmar (tarefa 0039)', async () => {
+    const talhao = await createMockTalhaoRepository(0).get(UBERLANDIA, 'pt')
+
+    expect(talhao.historico?.anos.map((a) => a.ano)).toEqual([2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026])
+    expect(talhao.anos_confirmaveis).toEqual([2024, 2025, 2026])
   })
 
   it('talhão traz a chuva de cada mês, de janeiro a junho, no formato do contrato', async () => {

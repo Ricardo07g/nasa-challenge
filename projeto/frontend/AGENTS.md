@@ -95,6 +95,21 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   Campo novo de uma resposta que já existe (ex.: `chuva_mensal` do talhão) entra **opcional** no model
   (`campo?: X | null`): ausente (API antiga) ou `null` dá "Ainda não conectado". Enquanto o dado carrega,
   a tela não mostra nem o dado nem esse estado (nada de "Ainda não conectado" piscando).
+- **O que a URL guarda (RF-18):** `services/flowParams.ts` lê e monta `lat`, `lon`, `colheita`, `solo`,
+  `exemplo` e `confirmadas` (as safras que o produtor confirmou na tela 4, `2024:plantou,2025:parado`,
+  em ordem de ano e sem codificar `:` e `,`, para o link continuar legível). Toda tela que pede a
+  recomendação passa o `confirmadas` da URL para o `farm.recomendacao` (o cache do `farmService` separa
+  por ele). Na fazenda de exemplo, com safra confirmada, a recomendação vem do `/recomendacao` do ponto
+  do exemplo, não do `/exemplo`.
+- **Safras confirmadas (tarefa 0039 do backend, RF-25):** a regra fica em
+  `services/confirmedSeasonsService.ts` (ler e escrever o parâmetro, pôr a resposta do produtor no
+  lugar do satélite com `fonte_ano: 'produtor'`, as linhas do bloco e o aviso "Não parece uma lavoura
+  de soja"). Os anos confirmáveis vêm do `/talhao` (`anos_confirmaveis`); sem o campo (API antiga), o
+  bloco não aparece. A tela 4 pede o `/talhao` **sem** `confirmadas` (o que o satélite viu) e aplica as
+  respostas no front, para confirmar não recarregar o talhão; o relatório também aplica. Os botões de
+  cada ano são um `ChipGroup` (grupo com o rótulo do ano, `aria-pressed`); tocar de novo na resposta
+  marcada volta para o satélite. O ano `sem_soja` vira o quadrinho `none` (pontilhado com "–") e a
+  legenda "Sem soja"; não conta como parado, plantou nem sem certeza.
 - **Gráfico com dado real:** tudo o que é desenhado vem da API, com a fonte e o período na legenda (ex.:
   "Média de 2005 a 2024, NASA POWER"). O mock traz o mesmo campo, no formato do contrato.
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface

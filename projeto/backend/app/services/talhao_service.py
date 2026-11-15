@@ -4,6 +4,7 @@ Plano técnico §3.1; a chuva de cada mês é o gráfico da tela 3 (tarefa 0028)
 mais recente é a checagem do começo do fluxo (RF-24, tarefa 0037).
 """
 
+from collections.abc import Iterable
 from typing import Any
 
 from app.constants import IMERG_RAIN_SOURCE
@@ -44,8 +45,16 @@ class TalhaoService:
         self._smap_repo = smap_repo
         self._soja_recente_service = soja_recente_service
 
-    def inspect_talhao(self, lat: float, lon: float) -> Talhao:
-        """Returns complete field metadata for the given coordinates (US-01, US-02, US-07)."""
+    def inspect_talhao(
+        self, lat: float, lon: float, confirmadas: Iterable[tuple[int, str]] = ()
+    ) -> Talhao:
+        """Returns complete field metadata for the given coordinates (US-01, US-02, US-07).
+
+        `confirmadas`: as últimas safras que o produtor confirmou (ano, "plantou" ou "parado"),
+        que valem no lugar do satélite no histórico (tarefa 0039). Sem série de NDVI e sem
+        confirmação, `historico` fica None.
+        """
+        confirmadas_por_ano = self._history_service.check_confirmations(confirmadas)
         cell_id = find_or_ingest_cell(self._climate_repo, self._ingestion_service, lat, lon)
 
         dentro_da_area = cell_id is not None
@@ -54,7 +63,11 @@ class TalhaoService:
         ndvi_res: Any = self._ndvi_repo.get_ndvi_history(lat, lon)
         serie_ndvi = ndvi_res[0] if isinstance(ndvi_res, tuple) else ndvi_res
 
-        historico = self._history_service.classify_entressafra(serie_ndvi) if serie_ndvi else None
+        historico = (
+            self._history_service.classify_entressafra(serie_ndvi, confirmadas_por_ano)
+            if serie_ndvi or confirmadas_por_ano
+            else None
+        )
         colheita_sugerida = self._history_service.suggest_harvest_band(serie_ndvi)
 
         chuva_mensal = (
@@ -111,6 +124,7 @@ class TalhaoService:
             dados_fontes=tuple(dados_fontes),
             chuva_mensal=chuva_mensal,
             soja_recente=soja_recente,
+            anos_confirmaveis=self._history_service.confirmable_years(),
         )
 
     def obter_talhao(self, lat: float, lon: float) -> Talhao:

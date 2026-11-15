@@ -1,5 +1,6 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { EXAMPLE_FARM } from '../models/area'
+import { applyConfirmations, parseConfirmadas } from '../services/confirmedSeasonsService'
 import { farmService, type FarmService } from '../services/farmService'
 import { nearestPlace } from '../services/locationService'
 import { useFlowFarm } from './useFlowFarm'
@@ -22,6 +23,12 @@ export function useReportController(deps: Deps = defaultDeps) {
   const { params, query, redirectTo, talhao, recomendacao, status } = useFlowFarm(deps.farm)
   const { print: printPage } = deps
   const print = useCallback(() => printPage(), [printPage])
+  // As safras confirmadas na tela 4 valem no lugar do satélite no histórico do relatório (tarefa 0039).
+  const confirmed = useMemo(() => {
+    if (!talhao.data) return null
+    const historico = applyConfirmations(talhao.data.historico, parseConfirmadas(params?.confirmadas))
+    return { ...talhao.data, historico }
+  }, [talhao.data, params?.confirmadas])
 
   return {
     redirectTo,
@@ -31,7 +38,7 @@ export function useReportController(deps: Deps = defaultDeps) {
       talhao.retry()
       recomendacao.retry()
     },
-    talhao: status === 'ready' ? (talhao.data ?? null) : null,
+    talhao: status === 'ready' ? confirmed : null,
     recomendacao: status === 'ready' ? (recomendacao.data ?? null) : null,
     example: params ? params.exemplo || isExampleFarm(params) : false,
     place: params ? nearestPlace(params) : null,

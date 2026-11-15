@@ -58,6 +58,19 @@ describe('useMethodController (tela 9)', () => {
     expect(result.current.backTo).toBe('/resposta?lat=-19.1&lon=-48.3&colheita=tarde')
   })
 
+  it('as safras confirmadas na tela 4 entram na conta mostrada (tarefa 0039)', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useMethodController(d), {
+      wrapper: providers('/como-funciona?lat=-19.1&lon=-48.3&colheita=tarde&confirmadas=2024:parado'),
+    })
+
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    expect(d.farm.recomendacao).toHaveBeenCalledWith(
+      { lat: -19.1, lon: -48.3, colheita: 'tarde', solo: undefined, exemplo: false, confirmadas: '2024:parado' },
+      'pt',
+    )
+  })
+
   it('se as notas não vierem, mostra o erro e tenta de novo', async () => {
     let calls = 0
     const d = deps(() => (++calls === 1 ? Promise.reject(new Error('x')) : Promise.resolve(sample)))

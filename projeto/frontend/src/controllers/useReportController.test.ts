@@ -31,6 +31,21 @@ describe('useReportController (relatório para banco e seguro, P2)', () => {
     expect(result.current.place).toBe('Uberlândia (MG)')
   })
 
+  it('as safras confirmadas valem no histórico do relatório e na recomendação (tarefa 0039)', async () => {
+    const d = deps()
+    const { result } = renderHook(() => useReportController(d), {
+      wrapper: providers(`/relatorio?${flow}&confirmadas=2026:parado`),
+    })
+
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    const ano2026 = result.current.talhao?.historico?.anos.find((a) => a.ano === 2026)
+    expect(ano2026).toMatchObject({ situacao: 'parado', fonte_ano: 'produtor' })
+    expect(d.farm.recomendacao).toHaveBeenCalledWith(
+      { ...point, colheita: 'meio', solo: undefined, exemplo: false, confirmadas: '2026:parado' },
+      'pt',
+    )
+  })
+
   it('"Salvar em PDF" abre a impressão do navegador', async () => {
     const d = deps()
     const { result } = renderHook(() => useReportController(d), { wrapper: providers(`/relatorio?${flow}`) })

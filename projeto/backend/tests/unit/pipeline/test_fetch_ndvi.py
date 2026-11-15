@@ -14,8 +14,11 @@ import pytest
 from app.models.data_run import DataRun
 from app.models.talhao import NdviRecord
 from app.repositories.external.http_client import HttpRequest, HttpResponse
+from app.repositories.rules_repository import load_default_rules
 from pipeline.fetch_ndvi import (
     DEFAULT_POINT,
+    FIRST_YEAR,
+    LAST_YEAR,
     AppeearsClient,
     AppeearsError,
     Credentials,
@@ -176,6 +179,13 @@ def test_should_ask_for_a_new_token_when_it_is_rejected_and_there_is_no_login() 
 # --- tarefa -------------------------------------------------------------------------------
 
 
+def test_should_take_the_default_years_from_the_field_history_rules() -> None:
+    # Um lugar só para a janela de anos: o grupo historico_ndvi do regras.yaml (2017 a 2026).
+    historico = load_default_rules().historico_ndvi
+
+    assert (FIRST_YEAR, LAST_YEAR) == (historico.ano_inicio, historico.ano_fim) == (2017, 2026)
+
+
 def test_should_build_a_point_task_for_both_products_from_january_to_july() -> None:
     points = [Point(-18.9543, -48.1993), Point(-17.5, -47.25)]
 
@@ -185,7 +195,7 @@ def test_should_build_a_point_task_for_both_products_from_january_to_july() -> N
     assert request["task_name"] == "raiz-ndvi-teste"
     params = request["params"]
     assert params["dates"] == [
-        {"startDate": "01-01", "endDate": "07-31", "recurring": True, "yearRange": [2016, 2025]}
+        {"startDate": "01-01", "endDate": "07-31", "recurring": True, "yearRange": [2017, 2026]}
     ]
     assert params["layers"] == [
         {"product": "MOD13Q1.061", "layer": "_250m_16_days_NDVI"},
@@ -338,7 +348,7 @@ def test_should_login_again_when_the_token_expires_in_the_middle() -> None:
 
 
 def test_should_parse_the_appeears_csv_by_column_name() -> None:
-    text = "\n".join([MOD_HEADER, _row("2016-04-06", "0.6123", "0")])
+    text = "\n".join([MOD_HEADER, _row("2017-04-06", "0.6123", "0")])
 
     observations = parse_appeears_csv(text)
 
@@ -346,7 +356,7 @@ def test_should_parse_the_appeears_csv_by_column_name() -> None:
     obs = observations[0]
     assert (obs.point_id, obs.lat, obs.lon) == ("p1", -18.9543, -48.1993)
     assert (obs.day, obs.product, obs.ndvi, obs.quality) == (
-        date(2016, 4, 6),
+        date(2017, 4, 6),
         "MOD13Q1",
         0.6123,
         0,
@@ -355,18 +365,18 @@ def test_should_parse_the_appeears_csv_by_column_name() -> None:
 
 def test_should_refuse_a_csv_without_the_ndvi_column() -> None:
     with pytest.raises(AppeearsError, match="NDVI"):
-        parse_appeears_csv("ID,Latitude,Longitude,Date\np1,-18.9,-48.1,2016-04-06")
+        parse_appeears_csv("ID,Latitude,Longitude,Date\np1,-18.9,-48.1,2017-04-06")
 
 
 def test_should_keep_only_good_and_acceptable_quality() -> None:
     text = "\n".join(
         [
             MOD_HEADER,
-            _row("2016-04-06", "0.6123", "0"),
-            _row("2016-04-22", "0.5512", "1"),
-            _row("2016-05-08", "0.3011", "2"),  # neve
-            _row("2016-05-24", "0.2010", "3"),  # nuvem
-            _row("2016-06-09", "0.4000", "-1"),  # sem dado
+            _row("2017-04-06", "0.6123", "0"),
+            _row("2017-04-22", "0.5512", "1"),
+            _row("2017-05-08", "0.3011", "2"),  # neve
+            _row("2017-05-24", "0.2010", "3"),  # nuvem
+            _row("2017-06-09", "0.4000", "-1"),  # sem dado
         ]
     )
 
@@ -374,42 +384,42 @@ def test_should_keep_only_good_and_acceptable_quality() -> None:
 
     serie = payload["pontos"][0]["serie"]
     assert [(item["data"], item["qualidade"]) for item in serie] == [
-        ("2016-04-06", 0),
-        ("2016-04-22", 1),
+        ("2017-04-06", 0),
+        ("2017-04-22", 1),
     ]
 
 
-def test_should_keep_only_january_to_july_from_2016_to_2025() -> None:
+def test_should_keep_only_january_to_july_from_2017_to_2026() -> None:
     text = "\n".join(
         [
             MOD_HEADER,
-            _row("2015-04-07", "0.6000", "0"),
-            _row("2016-01-01", "0.6100", "0"),
-            _row("2016-07-27", "0.6200", "0"),
-            _row("2016-08-12", "0.6300", "0"),
-            _row("2025-07-28", "0.6400", "0"),
-            _row("2026-01-01", "0.6500", "0"),
+            _row("2016-04-07", "0.6000", "0"),
+            _row("2017-01-01", "0.6100", "0"),
+            _row("2017-07-27", "0.6200", "0"),
+            _row("2017-08-12", "0.6300", "0"),
+            _row("2026-07-28", "0.6400", "0"),
+            _row("2027-01-01", "0.6500", "0"),
         ]
     )
 
     payload = build_ndvi_payload(parse_appeears_csv(text), [DEFAULT_POINT], FINISHED_AT)
 
     assert [item["data"] for item in payload["pontos"][0]["serie"]] == [
-        "2016-01-01",
-        "2016-07-27",
-        "2025-07-28",
+        "2017-01-01",
+        "2017-07-27",
+        "2026-07-28",
     ]
 
 
 def test_should_apply_the_scale_factor_when_the_csv_brings_raw_values() -> None:
     text = "\n".join(
-        [MOD_HEADER, _row("2016-04-06", "6123", "0"), _row("2016-04-22", "-3000", "1")]
+        [MOD_HEADER, _row("2017-04-06", "6123", "0"), _row("2017-04-22", "-3000", "1")]
     )
 
     payload = build_ndvi_payload(parse_appeears_csv(text), [DEFAULT_POINT], FINISHED_AT)
 
     assert payload["pontos"][0]["serie"] == [
-        {"data": "2016-04-06", "ndvi": 0.6123, "qualidade": 0, "produto": "MOD13Q1"}
+        {"data": "2017-04-06", "ndvi": 0.6123, "qualidade": 0, "produto": "MOD13Q1"}
     ]
 
 
@@ -418,10 +428,10 @@ def test_should_refuse_the_fill_value_even_with_good_quality() -> None:
     text = "\n".join(
         [
             MOD_HEADER,
-            _row("2016-04-06", "-0.3", "0"),
-            _row("2016-04-22", "-3000", "0"),
-            _row("2016-05-08", "", "0"),
-            _row("2016-05-24", "0.5000", "0"),
+            _row("2017-04-06", "-0.3", "0"),
+            _row("2017-04-22", "-3000", "0"),
+            _row("2017-05-08", "", "0"),
+            _row("2017-05-24", "0.5000", "0"),
         ]
     )
 
@@ -432,9 +442,9 @@ def test_should_refuse_the_fill_value_even_with_good_quality() -> None:
 
 def test_should_build_the_contract_file_validated_by_the_models() -> None:
     mod = "\n".join(
-        [MOD_HEADER, _row("2016-04-06", "0.7100", "0"), _row("2016-04-06", "0.5", "0", "p2")]
+        [MOD_HEADER, _row("2017-04-06", "0.7100", "0"), _row("2017-04-06", "0.5", "0", "p2")]
     )
-    myd = "\n".join([MYD_HEADER, _row("2016-04-14", "0.6900", "1")])
+    myd = "\n".join([MYD_HEADER, _row("2017-04-14", "0.6900", "1")])
     points = [DEFAULT_POINT, Point(-17.5, -47.25)]
     observations = parse_appeears_csv(myd) + parse_appeears_csv(mod)
 
@@ -455,8 +465,8 @@ def test_should_build_the_contract_file_validated_by_the_models() -> None:
     first, second = payload["pontos"]
     assert (first["lat"], first["lon"]) == (-18.9543, -48.1993)
     assert first["serie"] == [
-        {"data": "2016-04-06", "ndvi": 0.71, "qualidade": 0, "produto": "MOD13Q1"},
-        {"data": "2016-04-14", "ndvi": 0.69, "qualidade": 1, "produto": "MYD13Q1"},
+        {"data": "2017-04-06", "ndvi": 0.71, "qualidade": 0, "produto": "MOD13Q1"},
+        {"data": "2017-04-14", "ndvi": 0.69, "qualidade": 1, "produto": "MYD13Q1"},
     ]
     assert (second["lat"], second["lon"]) == (-17.5, -47.25)
     for point in payload["pontos"]:
@@ -471,7 +481,7 @@ def test_should_build_the_contract_file_validated_by_the_models() -> None:
 
 
 def test_should_drop_duplicated_observations_of_the_same_date_and_product() -> None:
-    text = "\n".join([MOD_HEADER, _row("2016-04-06", "0.71", "0"), _row("2016-04-06", "0.71", "0")])
+    text = "\n".join([MOD_HEADER, _row("2017-04-06", "0.71", "0"), _row("2017-04-06", "0.71", "0")])
 
     payload = build_ndvi_payload(parse_appeears_csv(text), [DEFAULT_POINT], FINISHED_AT)
 
@@ -511,7 +521,7 @@ def test_should_print_the_task_without_network_or_credentials_on_dry_run(
 
 
 def test_should_resume_an_existing_task_and_write_the_contract_file(tmp_path: Path) -> None:
-    csv_text = "\n".join([MOD_HEADER, _row("2016-04-06", "0.7100", "0")])
+    csv_text = "\n".join([MOD_HEADER, _row("2017-04-06", "0.7100", "0")])
     bundle = {"files": [{"file_id": "f1", "file_name": "teste-MOD13Q1-061-results.csv"}]}
     transport = FakeTransport(
         {
@@ -564,7 +574,7 @@ def test_should_return_an_error_code_and_the_resume_hint_on_timeout(
 
 def test_should_convert_local_csv_files_without_network(tmp_path: Path) -> None:
     csv_path = tmp_path / "teste-MOD13Q1-061-results.csv"
-    csv_path.write_text("\n".join([MOD_HEADER, _row("2016-04-06", "0.7100", "0")]), "utf-8")
+    csv_path.write_text("\n".join([MOD_HEADER, _row("2017-04-06", "0.7100", "0")]), "utf-8")
     output = tmp_path / "ndvi.json"
 
     code = run(

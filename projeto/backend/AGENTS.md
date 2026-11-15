@@ -559,27 +559,53 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     (`NDVI_POINT_MAX_DISTANCE_M`, um pixel do MOD13Q1); mais longe, série vazia. Descarta observação com
     qualidade 2 ou 3 ou sem `ndvi`.
   - `FieldHistoryService`: regra do talhão do guia NDVI, com os números do grupo `historico_ndvi` do
-    `regras.yaml` (anos 2016 a 2025, janela `04-01` a `07-31`, mínimo de 3 observações, 0,60 e 0,45).
-    Série vazia: `historico: null` (nada inventado). Com série, sempre os 10 anos:
+    `regras.yaml` (anos **2017 a 2026**, decisão de 15/11/2026; mínimo de 3 observações, 0,60 e 0,45).
+    **Soja de cada ano** (tarefa 0039, a mesma regra da região, grupo `regiao_ndvi`): o ano só conta
+    como entressafra depois da soja se o pixel mostrou o pico (maior NDVI de 1/jan a 15/mar ≥ 0,70) e
+    a colheita (depois do pico, até 15/mai, alguma observação ≤ 0,40). A entressafra é classificada
+    pelo `classify_year` só com as observações **depois da colheita até 31/jul**. Sem pico ou sem
+    colheita: `sem_soja` (cidade, cana, pasto). Sem nenhuma observação boa de 1/jan a 15/mar:
+    `sem_dado` (o satélite não viu o verão). A regra do pico e da colheita (`soy_harvest_date`,
+    `post_harvest_values`) fica **só** no `FieldHistoryService`; o `RegionClassifier` chama ela.
+    Série vazia e nenhuma safra confirmada: `historico: null` (nada inventado). Com série, sempre os
+    10 anos:
 
     ```json
     "historico": {
-      "anos": [{"ano": 2016, "situacao": "parado", "ndvi_max": 0.31, "n_obs": 3},
-               {"ano": 2018, "situacao": "sem_dado", "ndvi_max": null, "n_obs": 1}],
-      "parado": 5, "plantou": 4, "sem_certeza": 1, "total": 10,
+      "anos": [{"ano": 2017, "situacao": "parado", "ndvi_max": 0.31, "n_obs": 3, "fonte_ano": "satelite"},
+               {"ano": 2018, "situacao": "sem_soja", "ndvi_max": null, "n_obs": 0, "fonte_ano": "satelite"},
+               {"ano": 2025, "situacao": "plantou", "ndvi_max": 0.31, "n_obs": 3, "fonte_ano": "produtor"}],
+      "parado": 4, "plantou": 4, "sem_certeza": 1, "sem_soja": 1, "total": 10,
       "fonte": "MODIS MOD13Q1 + MYD13Q1", "janela": "04-01 a 07-31"
-    }
+    },
+    "anos_confirmaveis": [2024, 2025, 2026]
     ```
 
-    `situacao`: `plantou`, `parado`, `incerto` ou `sem_dado`; `ndvi_max` (físico, com até 4 casas, a
-    precisão do MOD13Q1) é `null` no `sem_dado`;
-    `sem_certeza` = incerto + sem_dado; `total` = anos da janela; `fonte` lista os produtos que vieram
-    na série (cache antigo, sem produto: só `MODIS`).
+    `situacao`: `plantou`, `parado`, `incerto`, `sem_dado` ou `sem_soja`; `ndvi_max` (físico, com até 4
+    casas, a precisão do MOD13Q1) é `null` no `sem_dado` e no `sem_soja` (aí `n_obs` é 0);
+    `sem_certeza` = incerto + sem_dado; `sem_soja` à parte; `total` = anos da janela; `fonte` lista os
+    produtos que vieram na série (cache antigo, sem produto: só `MODIS`; sem série, só com safras
+    confirmadas: `produtor`). A `janela` continua a do `historico_ndvi` (o texto "de abril a julho"
+    da tela), embora a entressafra comece na colheita de cada ano.
+  - **Safras confirmadas pelo produtor** (tarefa 0039, RF-25): `/api/talhao` e `/api/recomendacao`
+    aceitam `confirmadas=2024:plantou,2025:parado`. O controller (`confirmadas_param.py`) só confere o
+    formato (`AAAA:valor` separados por vírgula; fora dele, 422 `INVALID_REQUEST` com o campo) e
+    converte em pares; o `FieldHistoryService.check_confirmations` aceita só os anos de
+    `confirmable_years()` (as `historico_ndvi.anos_confirmaveis` = 3 últimas: 2024, 2025 e 2026), os
+    valores `plantou` e `parado` e nenhum ano repetido (senão 422 `VALIDATION_ERROR`). O ano
+    confirmado sai com a situação do produtor e `fonte_ano: "produtor"` (`ndvi_max` e `n_obs`
+    continuam os do satélite); os outros, `"satelite"`. Sem série de NDVI, o histórico sai só com as
+    safras confirmadas (os outros anos `sem_dado`). O `/talhao` sempre lista `anos_confirmaveis`.
   - `porque` da recomendação: frase do histórico (modelo `frases.<língua>.historico` do `regras.yaml`,
-    PRD 7.6), contando só os anos certos (parado + plantou). Sem série ou sem ano certo, não há frase.
+    PRD 7.6), contando só os anos certos (parado + plantou; sem soja, incerto e sem dado ficam de fora),
+    com as safras confirmadas no lugar do satélite. Com alguma confirmada, o modelo é
+    `historico_confirmado` (diz quantas o produtor confirmou e quantas o satélite viu). Sem série e
+    sem confirmação, ou sem ano certo, não há frase. Hoje só a frase lê o histórico: o pousio e o
+    plano "hoje" ainda não usam o histórico do talhão.
   - `/exemplo` recomenda com a `colheita_sugerida` do talhão (PRD 7.9), não mais com `meio` fixo.
 - **NDVI do MODIS** (tarefas 0017 e 0024): `pipeline/fetch_ndvi.py` traz a série de MOD13Q1 e
-  MYD13Q1 (coleção 061, jan–jul de 2016 a 2025) de cada ponto e grava o arquivo do contrato do NDVI
+  MYD13Q1 (coleção 061, jan–jul dos anos do `historico_ndvi` do `regras.yaml`, hoje 2017 a 2026: o
+  script lê os anos de lá) de cada ponto e grava o arquivo do contrato do NDVI
   (qualidade 0 ou 1, fator 0,0001 aplicado, sem o −3000). Duas fontes, **mesmo arquivo**: saída
   padrão `data/baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` a partir da **raiz do
   repositório** (pelo caminho do script, como o CMIP6; fora do git), que o compose liga no
@@ -603,6 +629,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     o que falta, e mudar o `--datas-por-pedido` entre execuções não perde nada. Data que ficou sem
     resposta ou 3 falhas seguidas: código 2, nada gravado na saída; rode de novo que continua do
     cache.
+  - **A saída tem só os pontos pedidos**: para acrescentar um ano (ex.: 2026, tarefa 0039), rode
+    com todos os pontos do arquivo. Com o cache de 2016 a 2025 dos 4 pontos de teste, faltam só os
+    recortes de 2026: **24 pedidos, ~36 min** pelo `--dry-run` (15/11/2026).
 
   ```bash
   uv run python -m pipeline.fetch_ndvi --dry-run                 # AppEEARS: mostra o pedido, sem rede
@@ -610,6 +639,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   uv run python -m pipeline.fetch_ndvi --pontos "-18.9543,-48.1993;-17.5,-47.25"
   uv run python -m pipeline.fetch_ndvi --fonte ornl --dry-run    # ORNL: pedidos, cache e tempo
   uv run python -m pipeline.fetch_ndvi --fonte ornl              # ORNL, fazenda de exemplo
+  # os 4 pontos de teste (fazenda, Uberlândia urbana, cana/pasto e norte), 2017 a 2026
+  uv run python -m pipeline.fetch_ndvi --fonte ornl "--pontos=-18.9543,-48.1993;-18.9149,-48.2568;-19.55,-48.75;-18.6,-48.9"
   ```
 - **Chuva de cada mês** (`chuva_mensal` de `/talhao` e do talhão do `/exemplo`, gráfico da tela 3,
   tarefa 0028): o `MonthlyRainService` soma a chuva de cada mês, de janeiro a junho, em cada
@@ -632,7 +663,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   banco).
   - `pipeline/fetch_regiao_ndvi.py` pede à **ORNL DAAC** (`modis.ornl.gov/rst/api/v1`, pública,
     sem credencial) o recorte **por área** do NDVI e da `pixel_reliability` de MOD13Q1 e MYD13Q1
-    e o uso do solo **MCD12Q1** (`LC_Type1`). Duas janelas por ano (2016 a 2025): **1/jan a
+    e o uso do solo **MCD12Q1** (`LC_Type1`). Duas janelas por ano (os anos do `historico_ndvi`:
+    2016 a 2025 no arquivo de 15/11; 2017 a 2026 desde a tarefa 0039, e com o cache atual faltam
+    **9 pedidos, ~4 min**, os de 2026 e o uso do solo com os anos novos): **1/jan a
     31/mar** (pico e colheita da soja; Terra e Aqua com 6 datas cada) e a do `historico_ndvi`,
     **abril a julho** (os mesmos pedidos e nomes de cache da primeira versão). Por área porque o
     tempo do pedido quase não depende da área (medido em 14/11: ~25 s tanto para 9 × 9 quanto para
@@ -652,7 +685,9 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
     mostrar a soja **e** a colheita: o maior NDVI de 1/jan a 15/mar chega a **0,70** (com o mesmo
     valor em duas datas, vale a última) e, depois do pico e até 15/mai, alguma observação fica em
     **0,40** ou menos (a primeira é a data da colheita). Sem pico ou sem colheita (perene, pasto,
-    solo exposto), o pixel fica fora dos percentuais.
+    solo exposto), o pixel fica fora dos percentuais. Desde a tarefa 0039 a regra mora no
+    `FieldHistoryService` (`soy_harvest_date` e `post_harvest_values`), que também confere a soja
+    de cada ano do talhão: um lugar só para as duas telas.
   - **Regra da entressafra**: cada pixel de soja do ano (250 m, centro dentro do raio) é
     classificado pelo `RegionClassifier` com o `classify_year` do `FieldHistoryService` (a mesma
     regra do talhão: qualidade 0 ou 1, mínimo de 3 observações, 0,60 e 0,45), mas só com as

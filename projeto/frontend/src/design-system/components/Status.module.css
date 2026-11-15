@@ -153,8 +153,22 @@
   line-height: 1;
 }
 
+/* Ano que não conta (sem soja): pontilhado, sem fundo, com um traço */
+.cell[data-state='none'] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1.5px dotted var(--color-border-strong);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
 /* Na faixa grande (histórico do talhão), o "?" acompanha o tamanho do quadrinho */
-.strip[data-size='lg'] .cell[data-state='unknown'] {
+.strip[data-size='lg'] .cell[data-state='unknown'],
+.strip[data-size='lg'] .cell[data-state='none'] {
   font-size: var(--font-size-small);
 }
 
@@ -210,6 +224,17 @@
   line-height: 1;
 }
 
+.legendCell[data-state='none'] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dotted var(--color-border-strong);
+  color: var(--color-text-muted);
+  font-size: 8px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
 @media (max-width: 768px) {
   .strip {
     gap: 3px;
@@ -223,7 +248,8 @@
     font-size: 9px;
   }
 
-  .cell[data-state='unknown'] {
+  .cell[data-state='unknown'],
+  .cell[data-state='none'] {
     font-size: 9px;
   }
 }

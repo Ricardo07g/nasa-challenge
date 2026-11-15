@@ -84,6 +84,13 @@ describe('YearStrip', () => {
     expect(strip.querySelector('[data-state="good"]')).toHaveTextContent('')
     expect(strip.querySelector('[data-state="bad"]')).toHaveTextContent('')
   })
+
+  it('o ano sem soja leva um traço, diferente do "?" (tarefa 0039)', () => {
+    render(<YearStrip label="Plantou em 1 de 1 ano" cells={['good', 'none']} />)
+
+    const strip = screen.getByRole('img', { name: 'Plantou em 1 de 1 ano' })
+    expect(strip.querySelector('[data-state="none"]')).toHaveTextContent('–')
+  })
 })
 
 describe('StripLegend', () => {
@@ -107,6 +114,12 @@ describe('StripLegend', () => {
     const cell = screen.getByRole('listitem').querySelector('[data-state="unknown"]')
     expect(cell).toHaveTextContent('?')
     expect(cell).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('o quadrinho sem soja da legenda tem o traço', () => {
+    render(<StripLegend items={[{ state: 'none', label: 'Sem soja' }]} />)
+
+    expect(screen.getByRole('listitem').querySelector('[data-state="none"]')).toHaveTextContent('–')
   })
 })
 

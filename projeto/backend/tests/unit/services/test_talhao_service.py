@@ -3,9 +3,12 @@
 from datetime import date
 from typing import Any
 
+import pytest
+
 from app.models.climate import ClimateSeason, Cmip6Delta, SmapSoilMoisture
 from app.models.soja_recente import PicoSojaRecente, SojaRecente
 from app.models.talhao import ChuvaMes, FonteDado, HistoricoAno, NdviRecord, SoloInfo
+from app.services.errors import ValidationDomainError
 from app.services.field_history_service import FieldHistoryService
 from app.services.soja_recente_service import SojaRecenteService
 from app.services.talhao_service import TalhaoService
@@ -142,14 +145,53 @@ def test_should_return_soil_history_and_climate_sources_when_point_has_data() ->
     assert talhao.solo.textura_solo == "argiloso"
     assert talhao.colheita_sugerida.faixa == "meio"
     assert talhao.historico is not None
-    # 2016 a 2025: 2019 a 2024 com 3 observações boas por entressafra, os outros sem dado
+    # 2017 a 2026: 2019 a 2024 com 3 observações boas por entressafra, os outros sem dado
     assert (talhao.historico.plantou, talhao.historico.sem_certeza) == (6, 4)
     assert talhao.historico.total == 10
-    assert talhao.historico.anos[3] == HistoricoAno(
+    assert talhao.historico.anos[2] == HistoricoAno(
         ano=2019, situacao="plantou", ndvi_max=0.7, n_obs=3
     )
     # Só as fontes que existem: sem CMIP6 no arquivo, ele não aparece como "ok".
     assert talhao.dados_fontes == (FonteDado(fonte="nasa_power", periodo="2005-2024"),)
+
+
+def test_should_apply_the_producer_confirmations_to_the_history() -> None:
+    # Tarefa 0039: 2024 o satélite viu "plantou"; o produtor diz que deixou parado. 2026 sem dado.
+    talhao = _service().inspect_talhao(
+        lat=-18.9543, lon=-48.1993, confirmadas=[(2024, "parado"), (2026, "plantou")]
+    )
+
+    assert talhao.historico is not None
+    por_ano = {a.ano: a for a in talhao.historico.anos}
+    assert (por_ano[2024].situacao, por_ano[2024].fonte_ano) == ("parado", "produtor")
+    assert (por_ano[2026].situacao, por_ano[2026].fonte_ano) == ("plantou", "produtor")
+    assert por_ano[2023].fonte_ano == "satelite"
+    assert (talhao.historico.parado, talhao.historico.plantou) == (1, 6)
+    assert talhao.anos_confirmaveis == (2024, 2025, 2026)
+
+
+def test_should_build_the_history_from_confirmations_when_the_point_has_no_ndvi() -> None:
+    talhao = _service(ndvi=FakeNdviRepository(empty=True)).inspect_talhao(
+        lat=-18.9543, lon=-48.1993, confirmadas=[(2025, "parado")]
+    )
+
+    assert talhao.historico is not None
+    assert talhao.historico.fonte == "produtor"
+    assert (talhao.historico.parado, talhao.historico.sem_certeza) == (1, 9)
+
+
+def test_should_keep_null_history_without_ndvi_and_without_confirmations() -> None:
+    talhao = _service(ndvi=FakeNdviRepository(empty=True)).inspect_talhao(
+        lat=-18.9543, lon=-48.1993
+    )
+
+    assert talhao.historico is None
+    assert talhao.anos_confirmaveis == (2024, 2025, 2026)
+
+
+def test_should_refuse_confirmations_outside_the_last_three_off_seasons() -> None:
+    with pytest.raises(ValidationDomainError, match="2020"):
+        _service().inspect_talhao(lat=-18.9543, lon=-48.1993, confirmadas=[(2020, "parado")])
 
 
 def test_should_list_cmip6_source_with_scenario_and_model_count_when_deltas_exist() -> None:

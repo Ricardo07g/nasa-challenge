@@ -144,7 +144,7 @@ def _ndvi(day: date, ndvi: float, produto: str = "MOD13Q1") -> NdviRecord:
 
 
 class FakeNdviRepository:
-    """Valores de teste (não são do MODIS), de 2016 a 2025, com Terra e Aqua.
+    """Valores de teste (não são do MODIS), de 2017 a 2026, com Terra e Aqua.
 
     Soja seca em 18/fev (colheita "meio"). Entressafra: anos ímpares plantou (0,71), pares parado
     (0,30); 2018 tem 1 observação só (sem_dado) e 2020 fica em 0,52 (incerto).
@@ -152,7 +152,7 @@ class FakeNdviRepository:
 
     def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
         records = []
-        for year in range(2016, 2026):
+        for year in range(2017, 2027):
             records += [_ndvi(date(year, 1, 17), 0.84), _ndvi(date(year, 2, 18), 0.35)]
             peak = 0.52 if year == 2020 else (0.71 if year % 2 else 0.30)
             records.append(_ndvi(date(year, 5, 9), peak))
