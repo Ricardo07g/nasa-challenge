@@ -112,6 +112,22 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   legenda "Sem soja"; não conta como parado, plantou nem sem certeza.
 - **Gráfico com dado real:** tudo o que é desenhado vem da API, com a fonte e o período na legenda (ex.:
   "Média de 2005 a 2024, NASA POWER"). O mock traz o mesmo campo, no formato do contrato.
+- **Guia (`/guia`, tarefa 0048, RF-26):** os artigos são arquivos Markdown em
+  `src/content/guia/pt/<slug>.md` e `.../en/<slug>.md` (mesmo slug nos dois idiomas, carregados no build
+  por `repositories/guideRepository.ts`). Cabeçalho simples entre `---`: `titulo`, `tema`
+  (`culturas`, `plantar`, `terra`, `clima` ou `seguranca`), `slug` (igual ao nome do arquivo), `rascunho`
+  (`sim` ou `nao`) e, nas culturas, `planta` (id do `culturas.yaml`, para a ilustração de
+  `design-system/plants/PlantImage`). Título de seção fixo: "Em uma frase", "Por que importa", "Na sua
+  lavoura", "Fontes" (cultura tem também "Conheça" e "Passo a passo"; em inglês "In one sentence", "Why it
+  matters", "In your field", "Sources", "Get to know it", "Step by step"). De 150 a 300 palavras, frases
+  curtas. Artigo de cultura, plantio e manejo tem `rascunho: sim` (a view põe "Rascunho: a revisar pela
+  agrônoma." no topo). Números só de `culturas.yaml`, `regras.yaml` e do PRD. Link externo só de página
+  aberta e conferida, e a página entra antes em `src/content/guia/verifiedSources.ts` (url, o que confirma,
+  data); `guideContent.test.ts` barra link fora da lista, artigo fora do tamanho, sem a estrutura, sem par
+  em outro idioma ou com link interno quebrado. Para ligar uma tela a um artigo, use o link
+  `/guia/<slug>`. O Markdown é lido por `services/markdownService.ts` (títulos, parágrafos, listas, negrito
+  e links; HTML vira texto puro e a view nunca usa `dangerouslySetInnerHTML`). Não adicione biblioteca de
+  Markdown.
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front.
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).
