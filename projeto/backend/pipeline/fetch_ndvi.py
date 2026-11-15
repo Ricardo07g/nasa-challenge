@@ -154,7 +154,7 @@ class Point:
     lon: float
 
 
-# Fazenda Experimental do Glória (UFU), Uberlândia: a fazenda de exemplo.
+# Lavoura de demonstração, perto de Uberlândia (MG): a fazenda de exemplo.
 DEFAULT_POINT: Final[Point] = Point(-18.9543, -48.1993)
 
 

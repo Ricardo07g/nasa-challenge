@@ -22,7 +22,7 @@ from app.repositories.smap_repository import PostgisSmapRepository
 pytestmark = pytest.mark.db
 
 CELL_ID = "-190_-482"
-# Fazenda do Glória (UFU), a fazenda de exemplo
+# Lavoura de demonstração, perto de Uberlândia (MG): a fazenda de exemplo
 LAT, LON = -18.9543, -48.1993
 
 

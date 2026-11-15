@@ -24,7 +24,7 @@ from tests.integration.db.support import count_rows
 pytestmark = pytest.mark.db
 
 UFU_POWER_CELL = {"lat_min": -19.25, "lat_max": -18.75, "lon_min": -48.4375, "lon_max": -47.8125}
-FARM_CELL = "-190_-482"  # centro -18,95 / -48,15: dentro da célula do POWER da UFU
+FARM_CELL = "-190_-482"  # centro -18,95 / -48,15: dentro da célula do POWER da lavoura
 OUTSIDE_CELL = "-200_-500"  # nenhum ponto do arquivo cobre
 UFU = (-18.9543, -48.1993)
 

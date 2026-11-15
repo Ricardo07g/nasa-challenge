@@ -454,7 +454,7 @@ avisos_tela:
     fonte: "Hipótese do time, a revisar: a média do maior veranico de março a maio de cada ano só aparece como mudança com 5 dias ou mais de diferença entre 2020–2024 e 2005–2019 (metade do veranico do aviso, 10 dias)"
   mudou_fim_chuvas_dias_min:
     valor: 10
-    fonte: "Hipótese do time, a revisar: a mediana do fim das chuvas só aparece como mudança com 10 dias ou mais de diferença (o fim das chuvas na UFU varia de 16/mar a 22/jun nos 20 anos)"
+    fonte: "Hipótese do time, a revisar: a mediana do fim das chuvas só aparece como mudança com 10 dias ou mais de diferença (o fim das chuvas na lavoura de demonstração varia de 16/mar a 22/jun nos 20 anos)"
   mudou_calor_dias_min:
     valor: 1.0
     fonte: "Hipótese do time, a revisar: a média de dias com 35 °C ou mais de março a maio por ano só aparece como mudança com 1 dia por ano ou mais de diferença"
@@ -616,7 +616,7 @@ agua:
   # balanço hídrico diário do motor (PRD 7.2), nos dias do ciclo de cada ano: "precisa" = mediana
   # do consumo da cultura (ETc = ETo x Kc); "chove" = mediana da chuva (GPM IMERG; nos anos sem
   # IMERG, NASA POWER); "falta" = ETc - ETr (o que a planta queria e a terra não tinha).
-  # Na fazenda da UFU (15/11), o consumo vai de ~230 mm (milheto) a ~360 mm (milho): os cortes
+  # Na lavoura de demonstração (15/11), o consumo vai de ~230 mm (milheto) a ~360 mm (milho): os cortes
   # abaixo deixam milho em "muita", sorgo em "média" e milheto e crotalária em "pouca".
   sede_pouca_ate_mm:
     valor: 280.0

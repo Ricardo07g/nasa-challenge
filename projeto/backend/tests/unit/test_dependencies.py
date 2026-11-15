@@ -161,7 +161,8 @@ def test_should_keep_file_repositories_and_no_ingestion_without_database(
 
 
 def _write_cmip6_file(path: Path) -> Path:
-    # Arquivo do contrato CMIP6 com valores de teste (não é dado real), célula do POWER da UFU.
+    # Arquivo do contrato CMIP6 com valores de teste (não é dado real), célula do POWER da
+    # lavoura de demonstração.
     payload = {
         "versao_dados": {"fonte": "nex_gddp_cmip6", "parametros": {}, "fim": "2026-11-14T13:00:00Z",
                          "versao": "2026.11-teste"},

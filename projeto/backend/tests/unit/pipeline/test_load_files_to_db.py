@@ -20,12 +20,12 @@ from app.repositories.climate_repository import SeasonWindow
 from pipeline import load_files_to_db
 from pipeline.load_files_to_db import FilesToDbLoader, LoadError, describe_plan
 
-# Célula do POWER (0,5° × 0,625°) da Fazenda do Glória (UFU) e a de cima dela.
+# Célula do POWER (0,5° × 0,625°) da lavoura de demonstração e a de cima dela.
 UFU_POWER_CELL = {"lat_min": -19.25, "lat_max": -18.75, "lon_min": -48.4375, "lon_max": -47.8125}
 NORTH_POWER_CELL = {"lat_min": -18.75, "lat_max": -18.25, "lon_min": -48.4375, "lon_max": -47.8125}
-FARM_CELL = "-190_-482"  # centro -18,95: dentro da UFU
-LOWER_EDGE_CELL = "-193_-482"  # centro -19,25: borda de baixo da UFU, dentro
-UPPER_EDGE_CELL = "-188_-482"  # centro -18,75: borda de cima da UFU, fora (é da de cima)
+FARM_CELL = "-190_-482"  # centro -18,95: dentro da célula do POWER da lavoura
+LOWER_EDGE_CELL = "-193_-482"  # centro -19,25: borda de baixo da célula, dentro
+UPPER_EDGE_CELL = "-188_-482"  # centro -18,75: borda de cima da célula, fora (é da de cima)
 OUTSIDE_CELL = "-200_-500"  # centro -19,95 / -49,95: nenhum ponto do arquivo cobre
 FINISHED = datetime(2026, 11, 14, 15, 30, tzinfo=UTC)
 

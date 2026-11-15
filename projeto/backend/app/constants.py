@@ -20,8 +20,9 @@ POINT_CACHE_STEP_DEG: Final[float] = 0.0025  # chave dos caches por ponto (~250 
 NDVI_POINT_MAX_DISTANCE_M: Final[float] = 250.0
 EARTH_RADIUS_M: Final[float] = 6_371_000.0
 
-# Fazenda de exemplo (plano técnico §3.3): campo de soja de 48 ha da Fazenda Experimental do
-# Glória (UFU), Uberlândia. O ponto antigo (-18,92 / -48,28) caía perto do centro urbano.
+# Fazenda de exemplo (plano técnico §3.3): lavoura de demonstração, perto de Uberlândia (MG).
+# Fica perto da Fazenda do Glória, mas não garantidamente dentro dela. O ponto antigo
+# (-18,92 / -48,28) caía perto do centro urbano.
 EXAMPLE_FARM_LAT: Final[float] = -18.9543
 EXAMPLE_FARM_LON: Final[float] = -48.1993
 
