@@ -249,14 +249,13 @@ export function PlanPage() {
       status={state.status}
       onRetry={state.retry}
       signal={state.signal}
-      scenario={state.scenario}
-      onScenario={state.chooseScenario}
-      rule={state.rule}
       plan={state.plan}
-      thirst={state.thirst}
+      evaluation={state.evaluation}
+      today={state.today}
+      onChooseCrop={state.chooseCrop}
+      onReset={state.reset}
+      onAnswerToday={state.answerToday}
       communityTo={state.communityTo}
-      pastTo={state.pastTo}
-      showGainReference={state.showGainReference}
     />
   )
 }

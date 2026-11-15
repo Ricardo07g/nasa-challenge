@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { ChipGroup, DateField, MeasureField, NumberStepper, RadioCard } from './Choice'
+import { ChipGroup, DateField, MeasureField, NumberStepper, RadioCard, SelectField } from './Choice'
 
 const options = [
   { value: 'chuva', label: 'Chuva' },
@@ -146,5 +146,27 @@ describe('MeasureField (relatos da comunidade: milímetros de chuva)', () => {
     await userEvent.type(input, '2')
     expect(onChange).toHaveBeenLastCalledWith('12')
     expect(screen.getByText('mm')).toBeInTheDocument()
+  })
+})
+
+describe('SelectField (cultura de cada ano do plano, tarefa 0045)', () => {
+  it('lista as opções com o rótulo visível e avisa a escolha', async () => {
+    const onChange = vi.fn()
+    render(
+      <SelectField
+        label="O que plantar em 2028"
+        value="sorgo"
+        options={[
+          { value: 'sorgo', label: 'Sorgo' },
+          { value: 'pousio', label: 'Deixar parado' },
+        ]}
+        onChange={onChange}
+      />,
+    )
+
+    const select = screen.getByRole('combobox', { name: 'O que plantar em 2028' })
+    expect(select).toHaveValue('sorgo')
+    await userEvent.selectOptions(select, 'pousio')
+    expect(onChange).toHaveBeenCalledWith('pousio')
   })
 })

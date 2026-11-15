@@ -111,6 +111,16 @@ export function withTodayAnswer(answers: TodayAnswers, year: number, crop: CropI
   return next
 }
 
+const RAIN_SOURCE_NAMES: Record<string, string> = { gpm_imerg: 'GPM IMERG', nasa_power: 'NASA POWER' }
+
+/** Nome das fontes da chuva da série (`gpm_imerg+nasa_power` → "GPM IMERG + NASA POWER"), para citar a fonte certa. */
+export function rainSourceName(fonte: string): string {
+  return fonte
+    .split('+')
+    .map((key) => RAIN_SOURCE_NAMES[key] ?? key)
+    .join(' + ')
+}
+
 export type PlanService = {
   evaluate(params: PlanoParams, lang: Lang): Promise<PlanoAvaliado>
 }

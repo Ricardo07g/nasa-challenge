@@ -789,9 +789,10 @@ export const pt = {
     rainYearFallow: (year: number, mm: string) => `${year}, deixar parado: ${mm} mm caem sem cultura`,
     rainYearOut: (year: number, crop: string) => `${year}, ${crop}: fora do prazo de plantio, sem a conta`,
     rainToday: (mm: string) => `Como é hoje, a lavoura usa ${mm} mm por ano.`,
-    rainNote: (date: string, years: number) =>
-      `Chuva do GPM IMERG de ${date} (dia de plantar da conta) até o fim de julho, mediana de ${years} anos. "Usa" = a água que a planta tirou da terra no ciclo (conta do motor, com o gasto da lavoura do NASA POWER). Na terra parada, não estimamos a água que evapora.`,
+    rainNote: (source: string, date: string, years: number) =>
+      `Chuva do ${source} de ${date} (dia de plantar da conta) até o fim de julho, mediana de ${years} anos. "Usa" = a água que a planta tirou da terra no ciclo (conta do motor, com o gasto da lavoura do NASA POWER). Na terra parada, não estimamos a água que evapora.`,
     abTitle: 'Plano A e Plano B',
+    articleDry: 'Veranico',
     planA: (crop: string) => `Plano A: ${crop}, se a chuva vier normal.`,
     planAFallow: 'Plano A: deixar a terra parada.',
     planB: (crop: string) => `Plano B: ${crop}, se secar.`,
@@ -808,7 +809,7 @@ export const pt = {
     planBNever: (crop: string, total: number) => `Não precisou de Plano B: ${crop} deu certo nos ${total} anos.`,
     planBNone: (crop: string) =>
       `Nenhuma outra cultura que cabe na janela deu certo nos anos em que ${crop} falhou: siga com ${crop}.`,
-    planBSource: 'Chuva do GPM IMERG no seu ponto; anos bons e ruins da conta do motor.',
+    planBSource: (source: string) => `Chuva do ${source} no seu ponto; anos bons e ruins da conta do motor.`,
     todayTitle: 'Como é hoje',
     todaySeen: (years: string) => `O satélite viu plantio na entressafra de ${years}. O que foi?`,
     todayNotSeen: 'Conte o que você fez nas últimas entressafras.',

@@ -5,6 +5,7 @@ import { guideService } from './guideService'
 import {
   PLAN_ARTICLES,
   createPlanService,
+  rainSourceName,
   currentPlan,
   planChoices,
   planStartingWith,
@@ -134,5 +135,13 @@ describe('planService: artigos do Guia da aba', () => {
       expect(guideService.get('pt', slug)).not.toBeNull()
       expect(guideService.get('en', slug)).not.toBeNull()
     }
+  })
+})
+
+describe('planService: nome da fonte da chuva na frase', () => {
+  it('o nome de cada fonte da série, juntos com "+"', () => {
+    expect(rainSourceName('gpm_imerg')).toBe('GPM IMERG')
+    expect(rainSourceName('gpm_imerg+nasa_power')).toBe('GPM IMERG + NASA POWER')
+    expect(rainSourceName('nasa_power')).toBe('NASA POWER')
   })
 })

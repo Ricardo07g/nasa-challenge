@@ -763,9 +763,10 @@ export const en = {
     rainYearFallow: (year: number, mm: string) => `${year}, fallow: ${mm} mm fall with no crop`,
     rainYearOut: (year: number, crop: string) => `${year}, ${crop}: past the sowing deadline, no calculation`,
     rainToday: (mm: string) => `As it is today, the crop uses ${mm} mm a year.`,
-    rainNote: (date: string, years: number) =>
-      `GPM IMERG rain from ${date} (the sowing day in the calculation) to the end of July, median of ${years} years. "Uses" = the water the plant took from the soil during its cycle (engine calculation, with crop water use from NASA POWER). On fallow land, we do not estimate the water that evaporates.`,
+    rainNote: (source: string, date: string, years: number) =>
+      `${source} rain from ${date} (the sowing day in the calculation) to the end of July, median of ${years} years. "Uses" = the water the plant took from the soil during its cycle (engine calculation, with crop water use from NASA POWER). On fallow land, we do not estimate the water that evaporates.`,
     abTitle: 'Plan A and Plan B',
+    articleDry: 'Dry spell',
     planA: (crop: string) => `Plan A: ${crop}, if the rain comes as usual.`,
     planAFallow: 'Plan A: leave the land fallow.',
     planB: (crop: string) => `Plan B: ${crop}, if it turns dry.`,
@@ -780,7 +781,7 @@ export const en = {
       `We do not give a number for "dry": ${cropA} failed in only ${fails} of ${total} years, too few to find a limit. Use Plan B if the soil is dry on sowing day.`,
     planBNever: (crop: string, total: number) => `No Plan B was needed: ${crop} worked in all ${total} years.`,
     planBNone: (crop: string) => `No other crop that fits the window worked in the years in which ${crop} failed: stay with ${crop}.`,
-    planBSource: 'GPM IMERG rain at your point; good and bad years from the engine calculation.',
+    planBSource: (source: string) => `${source} rain at your point; good and bad years from the engine calculation.`,
     todayTitle: 'How it is today',
     todaySeen: (years: string) => `The satellite saw a crop in the off-season of ${years}. What was it?`,
     todayNotSeen: 'Tell us what you did in the last off-seasons.',

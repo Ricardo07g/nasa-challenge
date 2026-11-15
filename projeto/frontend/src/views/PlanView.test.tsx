@@ -4,25 +4,29 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
-import type { SinalOutono } from '../models/recomendacao'
-import { buildRecomendacao } from '../repositories/mocks/fixtures'
-import { buildPlan } from '../services/recomendacaoRules'
+import type { PlanoAvaliado } from '../models/plano'
+import type { CropId, SinalOutono } from '../models/recomendacao'
+import { buildRecomendacao, buildTalhao } from '../repositories/mocks/fixtures'
+import { buildPlano } from '../repositories/mocks/mockPlano'
+import { planChoices, todayRows } from '../services/planService'
+import { thirstByCrop } from '../services/suggestionService'
 import { PlanView, type PlanViewProps } from './PlanView'
 
-const rec = buildRecomendacao({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
-/** Sinal de teste no formato da API (tarefa 0038): textos e números de teste, não são da NOAA nem do SMAP. */
+const point = { lat: -18.9543, lon: -48.1993 }
+const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
+const field = buildTalhao(point, 'pt')
+const PLAN: CropId[] = ['milho_braquiaria', 'crotalaria', 'sorgo']
+const TODAY: CropId[] = ['milho_safrinha', 'pousio', 'milho_safrinha']
+
+/** Sinal de teste no formato da API (tarefa 0038): textos e números de teste. */
 const testSignal: SinalOutono = {
   nivel: 'normal',
-  motivo: 'Previsão de teste: El Niño (70%, Fonte de teste). Nos 6 anos de El Niño, milho deu certo em 5.',
-  fonte: ['Fonte de teste', 'Chuva de teste', 'SMAP'],
+  motivo: 'Previsão de teste: El Niño (70%, Fonte de teste).',
+  fonte: ['Fonte de teste'],
   data: '2026-11-14',
-  regra_dia_plantar: {
-    data_limite: '2027-02-28',
-    texto: 'Se nos 30 dias antes de 28/fev chover menos que 90 mm (60% da média de 150 mm), vá de plano B.',
-  },
-  regra_data: { data_limite: '2027-02-28', inicio: '2027-01-29', dias: 30, chuva_min_mm: 90, media_mm: 150 },
-  smap_agora: { percentil: 59, data: '2026-11-10', texto: 'Linha de teste do SMAP de agora, percentil 59.' },
+  regra_dia_plantar: { data_limite: '2027-02-28', texto: 'Regra antiga de teste.' },
 }
+
 const nav = {
   label: 'Telas da resposta',
   backTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=meio',
@@ -35,28 +39,41 @@ const nav = {
   chooseObjective: vi.fn(),
 }
 
-function setupProps(overrides: Partial<PlanViewProps> = {}): PlanViewProps {
-  return {
+/** Avaliação de teste no formato da API (números de teste, não são de fonte real). */
+function evaluation(anos: CropId[], over: Partial<PlanoAvaliado> = {}): PlanoAvaliado {
+  return { ...buildPlano({ ...point, colheita: 'meio', anos }, 'pt'), ...over }
+}
+
+function setup(overrides: Partial<PlanViewProps> = {}) {
+  const props: PlanViewProps = {
     t: pt,
     lang: 'pt',
     nav,
     status: 'ready',
     onRetry: vi.fn(),
-    signal: rec.sinal ?? null,
-    scenario: 'normal',
-    onScenario: vi.fn(),
-    rule: { text: 'No dia de plantar (até 28/fev), se a terra estiver seca, use o plano B: sorgo no lugar do milho.' },
-    plan: buildPlan(rec, 'normal'),
-    communityTo: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
-    pastTo: '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
-    thirst: { milho_braquiaria: 'muita', crotalaria: 'pouca', sorgo: 'media' },
-    showGainReference: true,
+    signal: null,
+    plan: {
+      years: PLAN.map((crop, index) => ({ year: 2027 + index, crop })),
+      choices: planChoices(rec, null),
+      edited: false,
+      thirst: thirstByCrop(rec),
+      options: rec.opcoes,
+    },
+    evaluation: { data: evaluation(PLAN), status: 'ready' },
+    today: {
+      rows: todayRows(field.historico, field.anos_confirmaveis, {}, {}),
+      hasSatellite: true,
+      crops: TODAY,
+      reference: true,
+      referenceText: 'Referência de teste.',
+      evaluation: { data: evaluation(TODAY), status: 'ready' },
+    },
+    onChooseCrop: vi.fn(),
+    onReset: vi.fn(),
+    onAnswerToday: vi.fn(),
+    communityTo: '/comunidade',
     ...overrides,
   }
-}
-
-function setup(overrides: Partial<PlanViewProps> = {}) {
-  const props = setupProps(overrides)
   render(
     <MemoryRouter>
       <PlanView {...props} />
@@ -65,177 +82,191 @@ function setup(overrides: Partial<PlanViewProps> = {}) {
   return props
 }
 
-describe('PlanView (tela 7)', () => {
-  it('sinal para o outono com o nível, o motivo, a fonte e o plano que ele marca (RF-20, tarefa 0038)', () => {
-    setup({ signal: testSignal })
-
-    const signal = screen.getByRole('region', { name: 'Sinal para o outono de 2027' })
-    expect(within(signal).getByText('Sinal de ano normal')).toBeInTheDocument()
-    expect(signal).toHaveTextContent('Nos 6 anos de El Niño, milho deu certo em 5.')
-    expect(signal).toHaveTextContent('Chance de El Niño e La Niña publicada por Fonte de teste em 14 de novembro.')
-    expect(signal).toHaveTextContent('O sinal marca o Plano A.')
-    expect(signal).not.toHaveTextContent('Deixe o plano B na manga.')
-  })
-
-  it('sinal de ano seco marca o Plano B, se secar', () => {
-    setup({ signal: { ...testSignal, nivel: 'seco' }, scenario: 'seco' })
-
-    const signal = screen.getByRole('region', { name: 'Sinal para o outono de 2027' })
-    expect(signal).toHaveTextContent('O sinal marca o Plano B, se secar.')
-  })
-
-  it('sem sinal claro, não diz que marca um plano e deixa o plano B na manga', () => {
-    setup({ signal: { ...testSignal, nivel: 'incerto' } })
-
-    const signal = screen.getByRole('region', { name: 'Sinal para o outono de 2027' })
-    expect(within(signal).getByText('Sem sinal claro')).toBeInTheDocument()
-    expect(signal).not.toHaveTextContent('O sinal marca')
-    expect(signal).toHaveTextContent('Deixe o plano B na manga.')
-  })
-
-  it('a umidade de agora pelo SMAP aparece só para informar (não decide o plano)', () => {
-    setup({ signal: testSignal })
-
-    const signal = screen.getByRole('region', { name: 'Sinal para o outono de 2027' })
-    expect(signal).toHaveTextContent('Linha de teste do SMAP de agora, percentil 59.')
-    expect(signal).toHaveTextContent('A umidade de agora só informa: não muda o plano.')
-  })
-
-  it('sem o SMAP de agora na API, a linha do SMAP não aparece', () => {
-    setup({ signal: { ...testSignal, smap_agora: null } })
-
-    expect(screen.queryByText(/não muda o plano/)).not.toBeInTheDocument()
-  })
-
-  it('Plano A e Plano B, com o marcado pelo controller', async () => {
+describe('PlanView (aba Plano de 3 anos, tarefa 0045)', () => {
+  it('um ano por cartão, com a imagem, o selo de sede e a escolha da cultura', async () => {
     const props = setup()
 
-    expect(screen.getByRole('button', { name: 'Plano A' })).toHaveAttribute('aria-pressed', 'true')
-    await userEvent.click(screen.getByRole('button', { name: 'Plano B, se secar' }))
-    expect(props.onScenario).toHaveBeenCalledWith('seco')
+    const years = screen.getByRole('list', { name: 'Seu plano ano a ano' })
+    expect(within(years).getAllByRole('listitem')).toHaveLength(3)
+    expect(years).toHaveTextContent('2027Milho com braquiária')
+    expect(within(years).getByText('Sede: muita água')).toBeInTheDocument()
+    expect(within(years).getByText('Deu certo em 14 de 20 anos')).toBeInTheDocument()
+
+    const select = screen.getByRole('combobox', { name: 'O que plantar em 2028' })
+    expect(within(select).getAllByRole('option').map((option) => option.textContent)).toContain('Deixar parado')
+    await userEvent.selectOptions(select, 'milheto')
+    expect(props.onChooseCrop).toHaveBeenCalledWith(1, 'milheto')
   })
 
-  it('no Plano B, diz como ele foi testado (texto da API) e mostra a troca na linha do tempo', () => {
-    setup({ scenario: 'seco', plan: buildPlan(rec, 'seco') })
-
-    expect(screen.getByText('Troca o milho pelo sorgo no ano seco.')).toBeInTheDocument()
-    expect(screen.queryByText(/últimos 20/)).not.toBeInTheDocument()
-    expect(screen.getByRole('list', { name: 'Plano ano a ano' })).toHaveTextContent(
-      '2027SorgoSede: água médiaNo lugar de milho com braquiária: aguenta mais a seca.',
-    )
-  })
-
-  it('sem o sinal na API, o sinal não aparece (nada de "Ainda não conectado") e o Plano A/B continua', () => {
-    setup({ signal: null })
-
-    expect(screen.queryByRole('region', { name: 'Sinal para o outono de 2027' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/publicada por/)).not.toBeInTheDocument()
-    const choice = screen.getByRole('region', { name: 'Qual plano seguir' })
-    expect(within(choice).getByRole('button', { name: 'Plano A' })).toBeInTheDocument()
-  })
-
-  it('sem "Comece por um pedaço": nenhum hectare nem valor em reais (tarefa 0040)', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <PlanView {...setupProps()} />
-      </MemoryRouter>,
-    )
-
-    expect(screen.queryByRole('region', { name: 'Comece por um pedaço' })).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Quantos hectares quer testar?')).not.toBeInTheDocument()
-    expect(container).not.toHaveTextContent('R$')
-  })
-
-  it('regra do dia de plantar sem o sinal: montada com a data limite', () => {
-    setup({ signal: null, rule: { date: '2027-02-28', planA: 'milho_braquiaria', planB: 'sorgo' } })
-
-    expect(
-      screen.getByText(
-        'No dia de plantar (até 28 de fevereiro), se a terra estiver seca, use o plano B: sorgo no lugar de milho com braquiária.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('O satélite mede a água na raiz. Você não precisa adivinhar.')).toBeInTheDocument()
-  })
-
-  it('regra da data (tarefa 0038): o texto da API e como medir a chuva', () => {
-    setup({ signal: testSignal, rule: { text: testSignal.regra_dia_plantar.texto } })
-
-    expect(screen.getByText(testSignal.regra_dia_plantar.texto)).toBeInTheDocument()
-    expect(
-      screen.getByText('Meça a chuva no seu pluviômetro. A média vem da série de chuva do satélite no seu ponto.'),
-    ).toBeInTheDocument()
-    expect(screen.queryByText('O satélite mede a água na raiz. Você não precisa adivinhar.')).not.toBeInTheDocument()
-  })
-
-  it('resumo do plano, como é hoje e o link para a região', () => {
+  it('o título liga ao artigo "Rotação de culturas"', () => {
     setup()
 
-    expect(screen.getByRole('region', { name: 'Com plano' })).toHaveTextContent('Terra coberta nos 3 anos · Grão em 2 de 3 anos')
-    expect(screen.getByRole('region', { name: 'Como é hoje' })).toHaveTextContent('Terra descoberta em metade dos anos')
-    expect(screen.getByRole('link', { name: 'Ver o que acontece na sua região' })).toHaveAttribute(
-      'href',
-      '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
+    expect(screen.getByRole('link', { name: 'Saiba mais: Rotação de culturas' })).toHaveAttribute('href', '/guia/rotacao-de-culturas')
+  })
+
+  it('"Voltar ao plano sugerido" só com o plano mudado', async () => {
+    setup()
+    expect(screen.queryByRole('button', { name: 'Voltar ao plano sugerido' })).not.toBeInTheDocument()
+    expect(screen.getByText('Este é o plano sugerido para o que você quer mais.')).toBeInTheDocument()
+  })
+
+  it('com o plano mudado, o botão volta ao sugerido', async () => {
+    const props = setup({ plan: { ...setupPlan(), edited: true } })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Voltar ao plano sugerido' }))
+    expect(props.onReset).toHaveBeenCalled()
+  })
+
+  it('as notas do plano ao lado do "Como é hoje": segurança, saúde da terra e clima 2041–2060', () => {
+    setup({
+      evaluation: { data: evaluation(PLAN, { notas: { seguranca: 85, solo: 71.7, futuro: 80 } }), status: 'ready' },
+    })
+
+    const table = screen.getByRole('table', { name: 'Notas do seu plano ao lado de como é hoje' })
+    expect(within(table).getByRole('columnheader', { name: 'Seu plano' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Como é hoje' })).toBeInTheDocument()
+    for (const row of ['Segurança climática', 'Saúde da terra', 'Clima 2041–2060']) {
+      expect(within(table).getByRole('columnheader', { name: row })).toBeInTheDocument()
+    }
+    expect(within(table).getByText('85 de 100')).toBeInTheDocument()
+    expect(within(table).getByText('72 de 100')).toBeInTheDocument()
+  })
+
+  it('enquanto recalcula, as notas anteriores ficam e o aviso aparece', () => {
+    setup({ evaluation: { data: evaluation(PLAN), status: 'loading' } })
+
+    expect(screen.getByRole('status')).toHaveTextContent('Recalculando…')
+    expect(screen.getByRole('table', { name: 'Notas do seu plano ao lado de como é hoje' })).toBeInTheDocument()
+  })
+
+  it('saúde da terra com fatos: anos cobertos, nitrogênio, nematoide e repetição', () => {
+    setup({
+      evaluation: {
+        data: evaluation(PLAN, {
+          terra: { anos_cobertos: 3, anos_nitrogenio: 1, anos_nematoide: 1, repetidas: ['milho_braquiaria'], total: 3, bonus_diversidade: 10 },
+        }),
+        status: 'ready',
+      },
+    })
+
+    const soil = screen.getByRole('region', { name: 'Saúde da terra na rotação' })
+    expect(soil).toHaveTextContent('Terra coberta nos 3 anos')
+    expect(soil).toHaveTextContent('1 ano deixa nitrogênio na terra')
+    expect(soil).toHaveTextContent('1 ano quebra o ciclo do nematoide')
+    expect(soil).toHaveTextContent('Repete a mesma cultura: milho com braquiária')
+    expect(soil).toHaveTextContent('soma 10 pontos')
+  })
+
+  it('chuva aproveitada: a frase do pedido, cada ano e o "Como é hoje", com a fonte', () => {
+    setup({
+      evaluation: {
+        data: evaluation(['milho_braquiaria', 'pousio', 'crotalaria'], {
+          chuva: { inicio: '2027-02-18', fim: '07-31', chuva_mm: 413, usa_media_mm: 143, anos: 20, fonte: 'gpm_imerg' },
+        }),
+        status: 'ready',
+      },
+      plan: { ...setupPlan(['milho_braquiaria', 'pousio', 'crotalaria']) },
+    })
+
+    const rain = screen.getByRole('region', { name: 'Chuva aproveitada' })
+    expect(rain).toHaveTextContent(
+      'Com a terra parada, 413 mm de chuva por ano caem sem virar grão nem palha. Com o plano, a lavoura usa 143 mm.',
+    )
+    expect(rain).toHaveTextContent('2028, deixar parado: 413 mm caem sem cultura')
+    expect(rain).toHaveTextContent('Chuva do GPM IMERG de 18 de fevereiro')
+    expect(within(rain).getByRole('link', { name: 'Saiba mais: A conta de água da lavoura' })).toHaveAttribute('href', '/guia/conta-de-agua')
+  })
+
+  it('Plano A e Plano B numa frase cada; sem limite que separe, o Plano B vem sem número', () => {
+    setup()
+
+    const ab = screen.getByRole('region', { name: 'Plano A e Plano B' })
+    expect(ab).toHaveTextContent('Plano A: milho com braquiária, se a chuva vier normal.')
+    expect(ab).toHaveTextContent('Plano B: crotalária, se secar.')
+    expect(ab).toHaveTextContent('Não damos um número para "secar"')
+    expect(ab).not.toHaveTextContent('mm no pluviômetro')
+    expect(within(ab).getByRole('link', { name: 'Saiba mais: Veranico' })).toHaveAttribute('href', '/guia/veranico')
+  })
+
+  it('com um limite que separa bem, o Plano B traz o número do pluviômetro', () => {
+    const base = evaluation(PLAN)
+    setup({
+      evaluation: {
+        data: {
+          ...base,
+          plano_ab: {
+            ...base.plano_ab!,
+            falhas_a: 4,
+            limite: { dias: 15, chuva_mm: 42, anos_marcados: 3, falhas_marcadas: 3, falhas: 4, total: 20, chance_pct: 0.3, separa: true, motivo: null },
+          },
+        },
+        status: 'ready',
+      },
+    })
+
+    const ab = screen.getByRole('region', { name: 'Plano A e Plano B' })
+    expect(ab).toHaveTextContent('Secar = menos de 42 mm no pluviômetro nos 15 dias antes de plantar.')
+    expect(ab).toHaveTextContent('esse limite pegou 3 dos 4 anos')
+  })
+
+  it('"Como é hoje": o que o satélite viu nas 3 últimas safras e a pergunta "O que foi?"', async () => {
+    const props = setup()
+
+    const today = screen.getByRole('region', { name: 'Como é hoje' })
+    expect(today).toHaveTextContent('O satélite viu plantio na entressafra de 2026. O que foi?')
+    expect(today).toHaveTextContent('o satélite viu a terra parada')
+    expect(today).toHaveTextContent('verde máximo 0,71 (MODIS)')
+    expect(today).toHaveTextContent('Enquanto você não conta as 3 safras, "Como é hoje" é uma referência. Referência de teste.')
+    const question = within(today).getByRole('group', { name: 'O que foi em 2026?' })
+    await userEvent.click(within(question).getByRole('button', { name: 'Sorgo' }))
+    expect(props.onAnswerToday).toHaveBeenCalledWith(2026, 'sorgo')
+  })
+
+  it('sem NDVI para o ponto, pergunta direto', () => {
+    setup({
+      today: {
+        rows: todayRows(null, [2024, 2025, 2026], {}, {}),
+        hasSatellite: false,
+        crops: TODAY,
+        reference: true,
+        referenceText: 'Referência de teste.',
+        evaluation: { data: null, status: 'loading' },
+      },
+    })
+
+    expect(screen.getByRole('region', { name: 'Como é hoje' })).toHaveTextContent(
+      'Sem o satélite para o seu ponto: conte o que você fez nas últimas entressafras.',
     )
   })
 
-  it('o estudo ilustrativo do ganho na soja só aparece com os dados de exemplo', () => {
-    setup({ showGainReference: true })
-    expect(screen.getByText('Referência ilustrativa; estudo a confirmar.')).toBeInTheDocument()
+  it('o sinal do outono continua, sem a regra antiga da data', () => {
+    setup({ signal: testSignal })
+
+    expect(screen.getByText(testSignal.motivo)).toBeInTheDocument()
+    expect(screen.queryByText('Regra antiga de teste.')).not.toBeInTheDocument()
   })
 
-  it('com a API real, o estudo ilustrativo (que não vem de dado nenhum) sai da tela', () => {
-    setup({ showGainReference: false })
+  it('sem "Como teria sido em 2024?" e sem valor em reais', () => {
+    setup()
 
-    expect(screen.queryByText('O ganho vem na soja seguinte')).not.toBeInTheDocument()
-    expect(screen.queryByText(/11%/)).not.toBeInTheDocument()
-  })
-
-  it('enquanto carrega e fora da área', () => {
-    const { unmount } = render(
-      <MemoryRouter>
-        <PlanView {...({ t: pt, lang: 'pt', nav, status: 'loading', plan: null } as unknown as PlanViewProps)} />
-      </MemoryRouter>,
-    )
-    expect(screen.getByRole('status')).toHaveTextContent('Carregando…')
-    unmount()
-
-    setup({ status: 'outside', plan: null })
-    expect(screen.getByRole('region', { name: 'Ainda não chegamos aí' })).toBeInTheDocument()
+    expect(screen.queryByText(/Como teria sido em/)).not.toBeInTheDocument()
+    expect(document.body.textContent).not.toMatch(/R\$/)
   })
 
   it('em inglês', () => {
-    setup({ t: en, lang: 'en', signal: { ...testSignal, nivel: 'seco' } })
+    setup({ t: en, lang: 'en' })
 
-    expect(screen.getByRole('heading', { level: 1, name: '3-year plan' })).toBeInTheDocument()
-    expect(screen.getByText('Dry-year signal')).toBeInTheDocument()
-    expect(screen.getByText('El Niño and La Niña chances published by Fonte de teste on November 14.')).toBeInTheDocument()
-    expect(screen.getByText('The signal marks Plan B, if it dries.')).toBeInTheDocument()
-    expect(screen.getByText('Current soil moisture is for information only: it does not change the plan.')).toBeInTheDocument()
-    expect(document.body).not.toHaveTextContent('R$')
-  })
-
-  it('leva ao detalhe de 2024 no explorador da Sugestão (a safra passada não é mais tela solta)', () => {
-    setup()
-
-    expect(screen.getByRole('link', { name: 'Como teria sido em 2024?' })).toHaveAttribute(
-      'href',
-      '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio&ano=2024',
-    )
-  })
-
-  it('cada ano do plano tem a imagem da planta e o selo de sede (tarefa 0044)', () => {
-    setup()
-
-    const timeline = screen.getByRole('list', { name: 'Plano ano a ano' })
-    expect(within(timeline).getByRole('img', { name: 'Desenho da planta: Crotalária' })).toBeInTheDocument()
-    expect(within(timeline).getByText('Sede: pouca água')).toBeInTheDocument()
-    expect(within(timeline).getByText('Sede: muita água')).toBeInTheDocument()
-  })
-
-  it('o seletor "O que você quer mais?" fica no topo, como nas outras abas', () => {
-    setup()
-
-    expect(screen.getByRole('group', { name: 'O que você quer mais?' })).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Scores of your plan next to how it is today' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Plan A and Plan B' })).toBeInTheDocument()
   })
 })
+
+function setupPlan(crops: CropId[] = PLAN): PlanViewProps['plan'] & object {
+  return {
+    years: crops.map((crop, index) => ({ year: 2027 + index, crop })),
+    choices: planChoices(rec, null),
+    edited: false,
+    thirst: thirstByCrop(rec),
+    options: rec.opcoes,
+  }
+}

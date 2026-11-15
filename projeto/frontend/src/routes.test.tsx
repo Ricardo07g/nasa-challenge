@@ -145,7 +145,10 @@ describe('rotas', () => {
 
     await userEvent.click(await screen.findByRole('link', { name: 'Plano de 3 anos' }))
 
-    expect(await screen.findByRole('list', { name: 'Plano ano a ano' })).toHaveTextContent('2027Milho com braquiária')
+    // Tarefa 0045: o plano editável, ano a ano, com as notas ao lado do "Como é hoje" (GET /api/plano de exemplo).
+    expect(await screen.findByRole('list', { name: 'Seu plano ano a ano' })).toHaveTextContent('2027Milho com braquiária')
+    expect(await screen.findByRole('table', { name: 'Notas do seu plano ao lado de como é hoje' })).toBeInTheDocument()
+    expect(screen.queryByText(/Como teria sido em/)).not.toBeInTheDocument()
     expect(document.title).toBe('Raiz Orbital – Plano de 3 anos')
   })
 
