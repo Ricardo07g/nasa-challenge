@@ -335,9 +335,18 @@ export const pt = {
     sowing: (date: string) => `Semeadura em ${date} · dentro da janela de plantio`,
     sowingOut: (date: string) => `Semeadura em ${date} · fora da janela de plantio`,
     table: 'Todas as opções',
-    headers: { crop: 'Opção', years: 'Anos que deram certo', margin: 'Sobra por hectare', soil: 'Terra' },
+    headers: {
+      crop: 'Opção',
+      years: 'Anos que deram certo',
+      future: 'Clima 2041–2060',
+      margin: 'Sobra por hectare',
+      soil: 'Terra',
+    },
     /** Anos bons de N: os dois números vêm da API (chuva.anos_bons e chuva.anos). */
     yearsOf: (good: number, total: number) => `${good} de ${total}`,
+    /** Clima de 2041–2060: média dos modelos e, quando eles discordam, a faixa entre eles. */
+    futureOf: (good: number, total: number, range: { min: number; max: number } | null) =>
+      `${good} de ${total}${range ? ` (de ${range.min} a ${range.max})` : ''}`,
     history: 'Histórico da área',
     idle: (idle: number, known: number, uncertain: number) =>
       `Ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,

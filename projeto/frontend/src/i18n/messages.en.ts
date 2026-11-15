@@ -321,8 +321,16 @@ export const en = {
     sowing: (date: string) => `Sowing on ${date} · inside the planting window`,
     sowingOut: (date: string) => `Sowing on ${date} · outside the planting window`,
     table: 'All options',
-    headers: { crop: 'Option', years: 'Years it worked', margin: 'Left per hectare', soil: 'Soil' },
+    headers: {
+      crop: 'Option',
+      years: 'Years it worked',
+      future: '2041–2060 climate',
+      margin: 'Left per hectare',
+      soil: 'Soil',
+    },
     yearsOf: (good: number, total: number) => `${good} of ${total}`,
+    futureOf: (good: number, total: number, range: { min: number; max: number } | null) =>
+      `${good} of ${total}${range ? ` (${range.min} to ${range.max})` : ''}`,
     history: 'Field history',
     idle: (idle: number, known: number, uncertain: number) =>
       `Left idle in ${idle} of ${known} years${uncertain > 0 ? ` (${uncertain} uncertain)` : ''}`,

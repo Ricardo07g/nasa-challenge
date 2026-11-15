@@ -52,9 +52,38 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
 
     const table = screen.getByRole('table', { name: 'Todas as opções' })
     expect(within(table).getAllByRole('row')).toHaveLength(6)
-    expect(table).toHaveTextContent('Milho com braquiária14 de 20R$ 700Fica coberta na seca')
+    expect(table).toHaveTextContent('Milho com braquiária14 de 2012 de 20 (de 10 a 13)R$ 700Fica coberta na seca')
     expect(within(table).getByRole('columnheader', { name: 'Anos que deram certo' })).toBeInTheDocument()
     expect(table).not.toHaveTextContent('(de 20)')
+  })
+
+  it('a tabela traz o clima de 2041–2060 de cada opção, com a faixa entre os modelos', () => {
+    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
+    const futuro = { anos_bons_media: 19, anos_bons_min: 19, anos_bons_max: 19, modelos: 3, cenario: 'ssp245' }
+    setup({ recomendacao: { ...rec, opcoes: rec.opcoes.map((o) => (o.id === 'sorgo' ? { ...o, futuro } : o)) } })
+
+    const table = screen.getByRole('table', { name: 'Todas as opções' })
+    const headers = within(table).getAllByRole('columnheader').map((header) => header.textContent)
+    expect(headers).toEqual(['Opção', 'Anos que deram certo', 'Clima 2041–2060', 'Sobra por hectare', 'Terra'])
+    expect(within(table).getByRole('row', { name: /Sorgo/ })).toHaveTextContent('Sorgo17 de 2019 de 20R$')
+  })
+
+  it('sem o dado do CMIP6, a coluna do futuro fica com "Ainda não conectado"', () => {
+    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
+    setup({ recomendacao: { ...rec, opcoes: rec.opcoes.map((option) => ({ ...option, futuro: null })) } })
+
+    const row = within(screen.getByRole('table', { name: 'Todas as opções' })).getByRole('row', { name: /Sorgo/ })
+    expect(row.querySelector('[data-status="not-connected"]')).toHaveTextContent('Ainda não conectado')
+  })
+
+  it('opção fora da janela: o aviso ocupa as colunas de anos e de clima futuro', () => {
+    const rec = buildRecomendacao({ ...point, colheita: 'meio' }, 'pt')
+    setup({ recomendacao: { ...rec, opcoes: rec.opcoes.map((o) => (o.id === 'sorgo' ? { ...o, na_janela: false } : o)) } })
+
+    const row = within(screen.getByRole('table', { name: 'Todas as opções' })).getByRole('row', { name: /Sorgo/ })
+    const cell = within(row).getByText('Fora da janela de plantio')
+    expect(cell).toHaveAttribute('colspan', '2')
+    expect(row).not.toHaveTextContent('de 20')
   })
 
   it('sinal do outono, histórico da área e fontes', () => {
@@ -124,5 +153,8 @@ describe('ReportView (relatório para banco e seguro, P2)', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Field report · Raiz Orbital' })).toBeInTheDocument()
     expect(screen.getByRole('article')).toHaveTextContent('Left idle in 5 of 9 years (1 uncertain)')
     expect(screen.getByRole('article')).toHaveTextContent('Seen by the MODIS satellite (NASA), from April to July each year')
+    const table = screen.getByRole('table', { name: 'All options' })
+    expect(within(table).getByRole('columnheader', { name: '2041–2060 climate' })).toBeInTheDocument()
+    expect(table).toHaveTextContent('Corn with brachiaria14 of 2012 of 20 (10 to 13)')
   })
 })
