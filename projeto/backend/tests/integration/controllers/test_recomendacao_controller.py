@@ -292,6 +292,7 @@ def test_should_return_example_farm_at_ufu_point_when_get_exemplo_called(
     body = response.json()
     assert body["talhao"]["ponto"] == UFU
     assert body["talhao"]["dentro_da_area"] is True
+    assert body["talhao"]["chuva_mensal"]["anos"] == list(range(2005, 2025))
     assert body["recomendacao"]["entrada"]["colheita"] == "meio"
     assert body["recomendacao"]["opcoes"][0]["chuva"]["texto"].startswith("Worked in")
 

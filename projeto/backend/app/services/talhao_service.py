@@ -1,4 +1,7 @@
-"""Olhar o talhão: área com dados, solo, histórico pelo NDVI e fontes (plano técnico §3.1)."""
+"""Olhar o talhão: área com dados, solo, histórico pelo NDVI, chuva de cada mês e fontes.
+
+Plano técnico §3.1; a chuva de cada mês é o gráfico da tela 3 (tarefa 0028).
+"""
 
 from typing import Any
 
@@ -8,12 +11,13 @@ from app.repositories.ndvi_repository import NdviRepository
 from app.repositories.soil_repository import SoilRepository
 from app.services.cell_lookup import IngestionServiceProtocol, find_or_ingest_cell
 from app.services.field_history_service import FieldHistoryService
+from app.services.monthly_rain_service import MonthlyRainService
 
 CMIP6_PERIOD = "2041-2060"
 
 
 class TalhaoService:
-    """Junta solo, histórico do NDVI, colheita sugerida e as fontes de clima de um ponto."""
+    """Junta solo, histórico do NDVI, colheita sugerida, chuva de cada mês e fontes de um ponto."""
 
     def __init__(
         self,
@@ -22,12 +26,14 @@ class TalhaoService:
         ndvi_repo: NdviRepository,
         history_service: FieldHistoryService,
         ingestion_service: IngestionServiceProtocol | None = None,
+        monthly_rain_service: MonthlyRainService | None = None,
     ) -> None:
         self._climate_repo = climate_repo
         self._soil_repo = soil_repo
         self._ndvi_repo = ndvi_repo
         self._history_service = history_service
         self._ingestion_service = ingestion_service
+        self._monthly_rain_service = monthly_rain_service or MonthlyRainService()
 
     def inspect_talhao(self, lat: float, lon: float) -> Talhao:
         """Returns complete field metadata for the given coordinates (US-01, US-02, US-07)."""
@@ -41,6 +47,12 @@ class TalhaoService:
 
         historico = self._history_service.classify_entressafra(serie_ndvi) if serie_ndvi else None
         colheita_sugerida = self._history_service.suggest_harvest_band(serie_ndvi)
+
+        chuva_mensal = (
+            self._monthly_rain_service.summarize(self._climate_repo.get_seasons(cell_id))
+            if cell_id is not None
+            else None
+        )
 
         dados_fontes: list[FonteDado] = []
         if dentro_da_area and cell_id is not None:
@@ -71,6 +83,7 @@ class TalhaoService:
             colheita_sugerida=colheita_sugerida,
             historico=historico,
             dados_fontes=tuple(dados_fontes),
+            chuva_mensal=chuva_mensal,
         )
 
     def obter_talhao(self, lat: float, lon: float) -> Talhao:

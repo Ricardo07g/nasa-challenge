@@ -64,6 +64,26 @@ def test_should_return_dentro_da_area_false_when_point_has_no_data(client: TestC
     assert body["dentro_da_area"] is False
     assert body["celula_id"] is None
     assert body["dados"] == []
+    assert body["chuva_mensal"] is None
+
+
+def test_should_return_the_rain_of_each_month_from_january_to_june(client: TestClient) -> None:
+    # Clima falso do conftest: 8 mm/dia, sem chuva de fevereiro a junho em 2007 e 2014.
+    # Fevereiro = (13 anos x 224 + 5 bissextos x 232 + 2 secos x 0) / 20 = 203,6
+    body = client.get("/api/talhao", params=UFU).json()
+
+    assert body["chuva_mensal"] == {
+        "meses": [
+            {"mes": 1, "media_mm": 248.0},
+            {"mes": 2, "media_mm": 203.6},
+            {"mes": 3, "media_mm": 223.2},
+            {"mes": 4, "media_mm": 216.0},
+            {"mes": 5, "media_mm": 223.2},
+            {"mes": 6, "media_mm": 216.0},
+        ],
+        "anos": list(range(2005, 2025)),
+        "fonte": "nasa_power",
+    }
 
 
 class FakeRulesRepository:

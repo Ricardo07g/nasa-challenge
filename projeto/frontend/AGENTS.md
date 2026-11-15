@@ -88,6 +88,11 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   bloco. Use o estado único "Ainda não conectado" (`t.common.notConnected`): `NotConnected` (em linha),
   `NotConnectedCard` (bloco) ou `DataSourceCard status="unavailable"`. Um endpoint que ainda não existe
   (404 sem `code`) ou um repository sem versão http (`NotConnectedError`) vira esse estado, não erro.
+  Campo novo de uma resposta que já existe (ex.: `chuva_mensal` do talhão) entra **opcional** no model
+  (`campo?: X | null`): ausente (API antiga) ou `null` dá "Ainda não conectado". Enquanto o dado carrega,
+  a tela não mostra nem o dado nem esse estado (nada de "Ainda não conectado" piscando).
+- **Gráfico com dado real:** tudo o que é desenhado vem da API, com a fonte e o período na legenda (ex.:
+  "Média de 2005 a 2024, NASA POWER"). O mock traz o mesmo campo, no formato do contrato.
 - **Telegram (`VITE_TELEGRAM_BOT_URL`):** link público do bot (ex.: `https://t.me/NomeDoBot`). Vazio = a interface
   não fala do Telegram. Só o link: o token do bot nunca entra no front.
 - **Variáveis de ambiente:** tudo que começa com `VITE_` é **público** (vai no JavaScript do navegador).

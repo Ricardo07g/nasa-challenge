@@ -7,7 +7,7 @@ import type { Lang } from '../../i18n/language'
 import type { Community } from '../../models/community'
 import type { AnoDetalhe, CropId, Motivo, Opcao, Recomendacao, RecomendacaoParams, Rotulo } from '../../models/recomendacao'
 import { PREPARED_AREA } from '../../models/area'
-import type { Colheita, Ponto, SituacaoAno, Talhao } from '../../models/talhao'
+import type { ChuvaMensal, Colheita, Ponto, SituacaoAno, Talhao } from '../../models/talhao'
 
 /** O backend responde `dentro_da_area: false` fora da caixa preparada; o mock imita isso. */
 function insideBox({ lat, lon }: Ponto): boolean {
@@ -273,6 +273,13 @@ export function cellId({ lat, lon }: Ponto): string {
   return `${Math.floor(lat * 10)}_${Math.floor(lon * 10)}`
 }
 
+/** Chuva de cada mês, de janeiro a junho: os números da fazenda de exemplo (NASA POWER, 2005 a 2024). */
+const MONTHLY_RAIN: ChuvaMensal = {
+  meses: [212.7, 161.0, 156.8, 74.7, 31.3, 12.6].map((media_mm, index) => ({ mes: index + 1, media_mm })),
+  anos: Array.from({ length: 20 }, (_, index) => 2005 + index),
+  fonte: 'nasa_power',
+}
+
 export function buildTalhao(point: Ponto, lang: Lang): Talhao {
   void lang // o talhão não tem textos; o idioma fica aqui para o formato ser igual ao da API
   if (!insideBox(point)) {
@@ -284,6 +291,7 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
       colheita_sugerida: null,
       historico: null,
       dados: [],
+      chuva_mensal: null,
     }
   }
   // Exemplo do guia do NDVI: 5 anos parados, 4 plantados e 1 em que o satélite não teve certeza.
@@ -327,6 +335,7 @@ export function buildTalhao(point: Ponto, lang: Lang): Talhao {
       { fonte: 'nasa_power', periodo: '2006-2025' },
       { fonte: 'nex_gddp_cmip6', periodo: '2041-2060', cenario: 'ssp245', modelos: 3 },
     ],
+    chuva_mensal: MONTHLY_RAIN,
   }
 }
 

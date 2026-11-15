@@ -137,3 +137,22 @@ def test_should_replay_the_dry_2024_and_the_good_2023_of_the_example_farm(
         ("2024-06-17", "colheita"),
     ]
     assert [e["tipo"] for e in good["eventos"]] == ["semeadura", "fase_critica", "colheita"]
+
+
+def test_should_show_the_rain_of_each_month_of_the_example_farm(
+    real_data_client: TestClient,
+) -> None:
+    # Gráfico da tela 3 com a chuva real do NASA POWER (fixture, 2005 a 2024): a chuva vai
+    # acabando depois de março, que é o que o texto "Por que perguntamos isso?" diz.
+    chuva = real_data_client.get("/api/exemplo").json()["talhao"]["chuva_mensal"]
+
+    assert chuva["fonte"] == "nasa_power"
+    assert chuva["anos"] == list(range(2005, 2025))
+    assert [(m["mes"], m["media_mm"]) for m in chuva["meses"]] == [
+        (1, 212.7),
+        (2, 161.0),
+        (3, 156.8),
+        (4, 74.7),
+        (5, 31.3),
+        (6, 12.6),
+    ]
