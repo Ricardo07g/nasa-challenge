@@ -32,6 +32,7 @@ DATA_ENV_VARS = (
     "CMIP6_PATH",
     "SMAP_PATH",
     "SMAP_RECENTE_PATH",
+    "AREA_QUEIMADA_PATH",
 )
 
 
@@ -65,6 +66,7 @@ def _clear_dependency_caches() -> None:
     dependencies.get_ndvi_repository.cache_clear()
     dependencies.get_smap_repository.cache_clear()
     dependencies.get_recent_soil_moisture_repository.cache_clear()
+    dependencies.get_area_queimada_repository.cache_clear()
 
 
 @pytest.fixture

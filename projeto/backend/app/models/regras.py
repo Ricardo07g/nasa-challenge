@@ -112,6 +112,53 @@ class RegrasFimDasChuvas:
 
 
 @dataclass(frozen=True)
+class RegrasRaioX:
+    """Raio-X da sua terra (tela 4, remodelagem S4, tarefa 0043). Datas "MM-DD", inclusivas.
+
+    O dia seco é o dos avisos (`avisos.dia_seco_abaixo_mm`), o calor é o do motor
+    (`clima.calor_temp_c`) e a janela em volta da floração é a do aperto
+    (`clima.janela_grao_meia_dias`): não se repetem aqui.
+    """
+
+    chuva_inicio: str
+    chuva_fim: str
+    veranico_inicio: str
+    veranico_fim: str
+    calor_inicio: str
+    calor_fim: str
+    regiao_inicio: str
+    regiao_fim: str
+    regiao_min_celulas: int
+    solo_vizinho_max_km: float
+    ndvi_inicio: str
+    ndvi_fim: str
+    ndvi_coluna_dias: int
+    futuro_mes_inicio: int
+    futuro_mes_fim: int
+
+
+@dataclass(frozen=True)
+class RegrasAlertasArea:
+    """Alertas da sua área (tela 4, tarefa 0043): cada um só aparece se o dado indicar risco.
+
+    Sem granizo: nenhuma fonte que o app usa mede granizo.
+    """
+
+    geada_temp_c: float
+    geada_inicio: str
+    geada_fim: str
+    geada_anos_min: int
+    chuva_forte_mm: float
+    chuva_forte_inicio: str
+    chuva_forte_fim: str
+    chuva_forte_media_min_dias: float
+    fogo_raio_km: float
+    fogo_anos_min: int
+    fogo_ano_inicio: int
+    fogo_ano_fim: int
+
+
+@dataclass(frozen=True)
 class RegrasHistoricoNdvi:
     """Histórico do talhão pelo NDVI do MODIS (PRD 7.8 e guia do histórico NDVI).
 
@@ -326,3 +373,5 @@ class Regras:
     chuva_que_sobra: RegrasChuvaQueSobra
     fim_das_chuvas: RegrasFimDasChuvas
     comunidade: RegrasComunidade
+    raio_x: RegrasRaioX
+    alertas_area: RegrasAlertasArea

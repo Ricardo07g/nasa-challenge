@@ -13,6 +13,7 @@ from app.models.regras import (
     FrasesPorque,
     FrasesSafra,
     Regras,
+    RegrasAlertasArea,
     RegrasAvisos,
     RegrasChuvaQueSobra,
     RegrasClima,
@@ -23,6 +24,7 @@ from app.models.regras import (
     RegrasHistoricoNdvi,
     RegrasNdvi,
     RegrasNotaFinal,
+    RegrasRaioX,
     RegrasRegiaoNdvi,
     RegrasRenda,
     RegrasRotacao,
@@ -107,6 +109,8 @@ class YamlRulesRepository:
             chuva_que_sobra=_group(raw, "chuva_que_sobra", RegrasChuvaQueSobra),
             fim_das_chuvas=_group(raw, "fim_das_chuvas", RegrasFimDasChuvas),
             comunidade=_group(raw, "comunidade", RegrasComunidade),
+            raio_x=_group(raw, "raio_x", RegrasRaioX),
+            alertas_area=_group(raw, "alertas_area", RegrasAlertasArea),
         )
         return self._cache
 

@@ -354,3 +354,58 @@ def test_should_refuse_a_screen_three_number_without_source(
 
     with pytest.raises(ValueError, match=".".join(path)):
         YamlRulesRepository(_write(tmp_path, raw)).get_rules()
+
+
+def test_should_load_the_x_ray_rule() -> None:
+    # Remodelagem S4 (tarefa 0043), seção 4 do pedido: chuva de janeiro a julho, veranico, calor e
+    # a região em março a maio, solo da célula vizinha até 15 km e colunas de 16 dias do NDVI.
+    regra = YamlRulesRepository(SHIPPED).get_rules().raio_x
+
+    assert (regra.chuva_inicio, regra.chuva_fim) == ("01-01", "07-31")
+    assert (regra.veranico_inicio, regra.veranico_fim) == ("03-01", "05-31")
+    assert (regra.calor_inicio, regra.calor_fim) == ("03-01", "05-31")
+    assert (regra.regiao_inicio, regra.regiao_fim, regra.regiao_min_celulas) == (
+        "03-01",
+        "05-31",
+        10,
+    )
+    assert regra.solo_vizinho_max_km == 15.0
+    assert (regra.ndvi_inicio, regra.ndvi_fim, regra.ndvi_coluna_dias) == ("01-01", "07-31", 16)
+    assert (regra.futuro_mes_inicio, regra.futuro_mes_fim) == (3, 5)
+
+
+def test_should_load_the_area_alerts_rule() -> None:
+    # Seção 4 do pedido: geada (mínima de 3 °C ou menos de maio a julho), chuva forte (50 mm ou mais
+    # em fevereiro e março) e fogo (MODIS MCD64A1 a até 5 km). Sem granizo: não existe dado.
+    regra = YamlRulesRepository(SHIPPED).get_rules().alertas_area
+
+    assert (regra.geada_temp_c, regra.geada_inicio, regra.geada_fim) == (3.0, "05-01", "07-31")
+    assert regra.geada_anos_min == 1
+    assert (regra.chuva_forte_mm, regra.chuva_forte_inicio, regra.chuva_forte_fim) == (
+        50.0,
+        "02-01",
+        "03-31",
+    )
+    assert regra.chuva_forte_media_min_dias == 0.1
+    assert (regra.fogo_raio_km, regra.fogo_anos_min) == (5.0, 1)
+    assert (regra.fogo_ano_inicio, regra.fogo_ano_fim) == (2016, 2025)
+    assert not hasattr(regra, "granizo_mm")
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ("raio_x", "veranico_inicio"),
+        ("raio_x", "solo_vizinho_max_km"),
+        ("alertas_area", "geada_temp_c"),
+        ("alertas_area", "fogo_raio_km"),
+    ],
+)
+def test_should_refuse_an_x_ray_number_without_source(
+    tmp_path: Path, path: tuple[str, str]
+) -> None:
+    raw = _shipped_raw()
+    del raw[path[0]][path[1]]["fonte"]
+
+    with pytest.raises(ValueError, match=".".join(path)):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
