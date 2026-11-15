@@ -26,11 +26,13 @@ from pipeline.fetch_regiao_ndvi import (
     LAND_COVER_PRODUCT,
     MODIS_250M_PIXEL_M,
     NDVI_BAND,
+    NDVI_PRODUCTS,
     QUALITY_BAND,
     SINUSOIDAL_RADIUS_M,
     Grid,
     OrnlClient,
     OrnlError,
+    PixelCount,
     SubsetCache,
     SubsetRequest,
     build_plan,
@@ -111,6 +113,26 @@ def test_should_list_terra_and_aqua_composites_of_the_offseason_window() -> None
     assert composite_dates("MOD13Q1", 2017, "04-01", "07-31")[0] == date(2017, 4, 7)
 
 
+def test_should_list_terra_and_aqua_composites_of_the_soy_season() -> None:
+    # Conferido na ORNL (GET /MYD13Q1/dates, 14/11/2026): Aqua nos dias 9, 25, 41, 57, 73 e 89.
+    assert composite_dates("MYD13Q1", 2016, "01-01", "03-31") == [
+        date(2016, 1, 9),
+        date(2016, 1, 25),
+        date(2016, 2, 10),
+        date(2016, 2, 26),
+        date(2016, 3, 13),
+        date(2016, 3, 29),
+    ]
+    assert composite_dates("MOD13Q1", 2017, "01-01", "03-31") == [
+        date(2017, 1, 1),
+        date(2017, 1, 17),
+        date(2017, 2, 2),
+        date(2017, 2, 18),
+        date(2017, 3, 6),
+        date(2017, 3, 22),
+    ]
+
+
 def test_should_split_dates_in_groups_of_at_most_ten() -> None:
     days = [date(2016, 1, 1 + i) for i in range(23)]
 
@@ -128,25 +150,56 @@ def test_should_ask_for_a_box_that_covers_the_whole_radius() -> None:
     assert subset_km(30.0) / 0.25 * CELL >= 30_000
 
 
-def test_should_plan_one_request_per_year_product_and_band_plus_the_land_cover() -> None:
-    plan = build_plan(RULES.historico_ndvi)
+def _plan() -> list[SubsetRequest]:
+    return build_plan(RULES.historico_ndvi, RULES.regiao_ndvi)
+
+
+def test_should_plan_the_soy_season_and_the_offseason_of_each_year_plus_the_land_cover() -> None:
+    # Por ano, produto e banda: 1/jan até a véspera da entressafra (pico e colheita da soja) e a
+    # entressafra (abril a julho). Mais 1 pedido do uso do solo com os 10 anos.
+    plan = _plan()
 
     ndvi = [r for r in plan if r.product != LAND_COVER_PRODUCT]
     land_cover = [r for r in plan if r.product == LAND_COVER_PRODUCT]
-    assert len(plan) == 41
-    assert len(ndvi) == 10 * 2 * 2
-    assert plan[0] == SubsetRequest("MOD13Q1", NDVI_BAND, date(2016, 4, 6), date(2016, 7, 27), 8)
+    assert len(plan) == 81
+    assert len(ndvi) == 10 * 2 * 2 * 2
+    assert plan[0] == SubsetRequest("MOD13Q1", NDVI_BAND, date(2016, 1, 1), date(2016, 3, 21), 6)
     assert plan[1] == replace(plan[0], band=QUALITY_BAND)
+    assert plan[2] == SubsetRequest("MOD13Q1", NDVI_BAND, date(2016, 4, 6), date(2016, 7, 27), 8)
+    assert SubsetRequest("MYD13Q1", QUALITY_BAND, date(2016, 1, 9), date(2016, 3, 29), 6) in plan
     assert land_cover == [
         SubsetRequest(LAND_COVER_PRODUCT, "LC_Type1", date(2016, 1, 1), date(2025, 1, 1), 10)
     ]
     assert all(r.n_dates <= 10 for r in plan)
 
 
+def test_should_keep_the_offseason_requests_with_the_same_cache_names() -> None:
+    # Os 41 pedidos da primeira versão (abril a julho e o uso do solo) continuam valendo no cache.
+    plan = _plan()
+    names = {r.cache_name(DEFAULT_CENTER, 33) for r in plan}
+
+    assert {
+        "MOD13Q1_250m_16_days_NDVI_20160406_20160727_-18.9543_-48.1993_33km.json.gz",
+        "MYD13Q1_250m_16_days_pixel_reliability_20250415_20250720_-18.9543_-48.1993_33km.json.gz",
+        "MCD12Q1_LC_Type1_20160101_20250101_-18.9543_-48.1993_33km.json.gz",
+    } <= names
+    offseason = [r for r in plan if r.product in NDVI_PRODUCTS and r.start.month == 4]
+    assert len(offseason) == 10 * 2 * 2
+
+
+def test_should_refuse_a_soy_rule_that_reaches_beyond_the_downloaded_window() -> None:
+    # Os pedidos vão até o fim da entressafra do talhão (31/jul): depois disso não há dado.
+    later = replace(RULES.regiao_ndvi, entressafra_fim="08-31")
+
+    with pytest.raises(ValueError, match="entressafra_fim"):
+        build_plan(RULES.historico_ndvi, later)
+
+
 def test_should_split_a_longer_window_into_requests_of_up_to_ten_dates() -> None:
     longer = replace(RULES.historico_ndvi, janela_inicio="01-01", janela_fim="08-31")
 
-    plan = build_plan(replace(longer, ano_inicio=2020, ano_fim=2020))
+    # Com a entressafra a partir de 1/jan, não há pedido antes dela.
+    plan = build_plan(replace(longer, ano_inicio=2020, ano_fim=2020), RULES.regiao_ndvi)
 
     terra = [r for r in plan if r.product == "MOD13Q1" and r.band == NDVI_BAND]
     assert [(r.start, r.end, r.n_dates) for r in terra] == [
@@ -338,32 +391,32 @@ NDVI_GRID = Grid(xll=0.0, yll=0.0, cellsize=CELL, nrows=2, ncols=4)
 LAND_COVER_GRID = Grid(xll=0.0, yll=0.0, cellsize=CELL_500, nrows=1, ncols=2)
 CROPLAND = frozenset({0})
 CENTER = Point(0.002, 0.004)
-DAYS = [date(2022, 4, 7), date(2022, 5, 9), date(2022, 6, 10)]
+# Pico da soja (18/fev), colheita (22/mar) e três datas da entressafra.
+DAYS = [date(2022, 2, 18), date(2022, 3, 22), date(2022, 4, 7), date(2022, 5, 9), date(2022, 6, 10)]
+SOY_IDLE = [8800, 3000, 3000, 2200, 2500]
 
 
-def _layers(band: str, by_pixel: dict[int, list[int]], fill: int) -> bytes:
+def _layers(band: str, by_pixel: dict[int, list[int]], fill: int | list[int]) -> bytes:
     """Uma camada por data; `by_pixel[i]` = os valores do pixel i nas datas (os outros, `fill`)."""
-    layers = {
-        day: [by_pixel.get(i, [fill] * len(DAYS))[k] for i in range(8)]
-        for k, day in enumerate(DAYS)
-    }
+    default = fill if isinstance(fill, list) else [fill] * len(DAYS)
+    layers = {day: [by_pixel.get(i, default)[k] for i in range(8)] for k, day in enumerate(DAYS)}
     return _subset_json(NDVI_GRID, band, layers)
 
 
-def test_should_count_cropland_pixels_inside_the_radius_by_offseason_situation() -> None:
+def test_should_count_soy_pixels_inside_the_radius_by_offseason_situation() -> None:
     ndvi = _layers(
         NDVI_BAND,
         {
-            0: [7200, 2200, 2500],  # plantou
-            1: [3000, 2200, 2500],  # parado
-            4: [6000, 2200, 2500],  # 0,6 no limite: incerto (sem ruído de float)
-            5: [9000, 9000, 9000],  # tudo nuvem: sem_dado
+            0: [8800, 3000, 7200, 2200, 2500],  # plantou
+            1: [8800, 3000, 3000, 2200, 2500],  # parado
+            4: [8800, 3000, 6000, 2200, 2500],  # 0,6 no limite: incerto (sem ruído de float)
+            5: [8800, 3000, 9000, 9000, 9000],  # nuvem depois da colheita: sem_dado
         },
         fill=8000,
     )
-    quality = _layers(QUALITY_BAND, {5: [3, 3, 3]}, fill=0)
+    quality = _layers(QUALITY_BAND, {5: [0, 0, 3, 3, 3]}, fill=0)
 
-    counts = count_region_year(
+    count = count_region_year(
         2022,
         [(parse_subset(ndvi), parse_subset(quality))],
         LAND_COVER_GRID,
@@ -373,36 +426,66 @@ def test_should_count_cropland_pixels_inside_the_radius_by_offseason_situation()
         RegionClassifier(RULES),
     )
 
-    assert counts == {"plantou": 1, "parado": 1, "incerto": 1, "sem_dado": 1}
+    assert count == PixelCount(
+        n_lavoura=4, situacoes={"plantou": 1, "parado": 1, "incerto": 1, "sem_dado": 1}
+    )
+
+
+def test_should_leave_perennial_and_bare_pixels_of_the_cropland_out_of_the_soy_count() -> None:
+    # A máscara de lavoura tem 4 pixels; só 2 mostram a soja do ano (pico e colheita).
+    ndvi = _layers(
+        NDVI_BAND,
+        {
+            0: SOY_IDLE,
+            1: [8000, 7800, 7500, 7000, 6600],  # cana ou café: nunca seca
+            4: [2500, 2400, 2300, 2200, 2100],  # solo exposto: sem pico
+            5: [8800, 3000, 7200, 7000, 6500],  # soja e depois milho safrinha
+        },
+        fill=8000,
+    )
+    quality = _layers(QUALITY_BAND, {}, fill=0)
+
+    count = count_region_year(
+        2022,
+        [(parse_subset(ndvi), parse_subset(quality))],
+        LAND_COVER_GRID,
+        CROPLAND,
+        CENTER,
+        1.0,
+        RegionClassifier(RULES),
+    )
+
+    assert count == PixelCount(n_lavoura=4, situacoes={"parado": 1, "plantou": 1})
 
 
 def test_should_drop_fill_values_and_join_terra_and_aqua_observations() -> None:
-    # Pixel 0: Terra tem 2 observações boas e um -3000 (sem dado); o Aqua completa a terceira.
-    terra_ndvi = _layers(NDVI_BAND, {0: [3000, -3000, 2500]}, fill=3000)
-    aqua_ndvi = _layers(NDVI_BAND, {0: [2000, 2000, 2000]}, fill=3000)
-    aqua_quality = _layers(QUALITY_BAND, {0: [0, 2, 2]}, fill=0)
+    # Pixel 0: depois da colheita, Terra tem 2 observações boas e um -3000 (sem dado); o Aqua
+    # completa a terceira (só 7/abr com qualidade boa).
+    terra_ndvi = _layers(NDVI_BAND, {0: [8800, 3000, 3000, -3000, 2500]}, fill=SOY_IDLE)
+    aqua_ndvi = _layers(NDVI_BAND, {0: [2000, 2000, 2000, 2000, 2000]}, fill=3000)
+    aqua_quality = _layers(QUALITY_BAND, {0: [2, 2, 0, 2, 2]}, fill=0)
     terra_quality = _layers(QUALITY_BAND, {}, fill=0)
     pairs = [
         (parse_subset(terra_ndvi), parse_subset(terra_quality)),
         (parse_subset(aqua_ndvi), parse_subset(aqua_quality)),
     ]
 
-    counts = count_region_year(
+    count = count_region_year(
         2022, pairs, LAND_COVER_GRID, frozenset({0}), CENTER, 1.0, RegionClassifier(RULES)
     )
 
-    assert counts == {"parado": 4}
+    assert count == PixelCount(n_lavoura=4, situacoes={"parado": 4})
 
 
 def test_should_count_nothing_when_no_pixel_is_cropland() -> None:
-    ndvi = parse_subset(_layers(NDVI_BAND, {}, fill=7000))
+    ndvi = parse_subset(_layers(NDVI_BAND, {}, fill=SOY_IDLE))
     quality = parse_subset(_layers(QUALITY_BAND, {}, fill=0))
 
-    counts = count_region_year(
+    count = count_region_year(
         2022, [(ndvi, quality)], LAND_COVER_GRID, frozenset(), CENTER, 1.0, RegionClassifier(RULES)
     )
 
-    assert counts == {}
+    assert count == PixelCount(n_lavoura=0, situacoes={})
 
 
 # --- arquivo do contrato -----------------------------------------------------------------------
@@ -416,8 +499,8 @@ def test_should_write_the_contract_file_that_the_api_reads(tmp_path: Path) -> No
         fonte="MODIS MOD13Q1 + MYD13Q1",
         mascara="MCD12Q1 LC_Type1 classe 12 (lavouras)",
         anos=(
-            RegiaoAno(2016, 1372, 60.5, 30.6, 8.9, 2.2),
-            RegiaoAno(2017, 0, None, None, None, None),
+            RegiaoAno(2016, 1372, 60.5, 30.6, 8.9, 2.2, n_pixels_lavoura=5000),
+            RegiaoAno(2017, 0, None, None, None, None, n_pixels_lavoura=800),
         ),
     )
 
@@ -432,6 +515,7 @@ def test_should_write_the_contract_file_that_the_api_reads(tmp_path: Path) -> No
         "versao": "2026.11-modis-ndvi-regiao",
     }
     assert payload["regioes"][0]["anos"][1]["pct_parado"] is None
+    assert payload["regioes"][0]["anos"][0]["n_pixels_lavoura"] == 5000
     assert FileRegionRepository(path).list_regions() == [region]
     assert FileRegionRepository(path).get_data_run() == DataRun(
         source="modis_mod13q1",
@@ -449,14 +533,23 @@ def _date_from_modis(text: str) -> date:
     return date.fromordinal(date(year, 1, 1).toordinal() + doy - 1)
 
 
+def _test_soy_ndvi(day: date) -> int:
+    """NDVI de teste de uma soja seguida de milho: 0,85 até 15/mar (pico), 0,30 até abril
+    (colheita) e 0,72 de maio em diante (plantou)."""
+    if (day.month, day.day) <= (3, 15):
+        return 8500
+    return 3000 if day.month < 5 else 7200
+
+
 class FakeOrnl:
     """Responde a qualquer `/subset` com uma grade de 2 × 2 pixels em volta do centro pedido.
 
-    NDVI 0,72 com qualidade boa em todas as datas (plantou) e lavoura (classe 12) em tudo.
+    NDVI da soja de teste com qualidade boa em todas as datas e lavoura (classe 12) em tudo.
     """
 
     def __init__(self) -> None:
         self.calls = 0
+        self.starts: list[date] = []
 
     def __call__(self, request: HttpRequest, timeout: float) -> HttpResponse:
         self.calls += 1
@@ -464,6 +557,7 @@ class FakeOrnl:
         product = request.url.rsplit("/", 2)[-2]
         x0, y0 = _sinusoidal(Point(params["latitude"], params["longitude"]))
         start, end = _date_from_modis(params["startDate"]), _date_from_modis(params["endDate"])
+        self.starts.append(start)
         if product == LAND_COVER_PRODUCT:
             grid = Grid(xll=x0 - CELL, yll=y0 - CELL, cellsize=CELL_500, nrows=1, ncols=1)
             days = [date(y, 1, 1) for y in range(start.year, end.year + 1)]
@@ -472,8 +566,9 @@ class FakeOrnl:
         days = [
             d for d in composite_dates(product, start.year, "01-01", "12-31") if start <= d <= end
         ]
-        value = 7200 if params["band"] == NDVI_BAND else 0
-        body = _subset_json(grid, params["band"], {d: [value] * 4 for d in days})
+        ndvi = params["band"] == NDVI_BAND
+        layers = {d: [_test_soy_ndvi(d) if ndvi else 0] * 4 for d in days}
+        body = _subset_json(grid, params["band"], layers)
         return HttpResponse(200, gzip.compress(body))
 
 
@@ -495,11 +590,33 @@ def _run(argv: list[str], transport, logs: list[str] | None = None) -> int:
 def test_should_only_show_the_plan_on_dry_run(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    code = _run(["--dry-run", "--saida", str(tmp_path / "regiao.json")], _no_network)
+    argv = ["--dry-run", "--saida", str(tmp_path / "regiao.json"), "--cache", str(tmp_path)]
+    code = _run(argv, _no_network)
 
     assert code == 0
-    assert "41 pedidos" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "81 pedidos" in out
+    assert "0 já no cache, 81 a baixar" in out
+    assert "cerca de 40 min" in out
     assert not (tmp_path / "regiao.json").exists()
+
+
+def test_should_count_on_dry_run_what_is_already_in_the_cache(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    cache = SubsetCache(tmp_path / "cache")
+    # Só os 41 da primeira versão: abril a julho e o uso do solo (sem os de 1/jan a 31/mar).
+    soy_season = [r for r in _plan() if r.product in NDVI_PRODUCTS and r.start.month == 1]
+    for request in _plan():
+        if request not in soy_season:
+            cache.put(request.cache_name(DEFAULT_CENTER, 33), b"{}")
+
+    code = _run(["--dry-run", "--cache", str(tmp_path / "cache")], _no_network)
+
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "41 já no cache, 40 a baixar" in out
+    assert "cerca de 20 min" in out
 
 
 def test_should_download_classify_and_write_the_region_then_resume_from_the_cache(
@@ -519,22 +636,47 @@ def test_should_download_classify_and_write_the_region_then_resume_from_the_cach
     ornl = FakeOrnl()
 
     assert _run(argv, ornl) == 0
-    assert ornl.calls == 41
+    assert ornl.calls == 81
     (region,) = FileRegionRepository(output).list_regions()
     assert (region.lat, region.lon, region.raio_km) == (-18.9543, -48.1993, 1.0)
     assert region.fonte == "MODIS MOD13Q1 + MYD13Q1"
-    assert region.mascara == "MCD12Q1 LC_Type1 classe 12 (lavouras)"
+    assert region.mascara == "soja do ano (pico e colheita) em MCD12Q1 LC_Type1 classe 12"
     assert [a.ano for a in region.anos] == list(range(2016, 2026))
-    assert region.anos[0] == RegiaoAno(2016, 4, 0.0, 100.0, 0.0, 0.0)
+    assert region.anos[0] == RegiaoAno(2016, 4, 0.0, 100.0, 0.0, 0.0, n_pixels_lavoura=4)
     params = FileRegionRepository(output).get_data_run().params
     assert params["servico"] == "ornl_daac"
     assert params["mascara"]["classes"] == [12]
-    assert params["pedidos"] == 41
+    assert params["soja_do_ano"] == {
+        "pico_inicio": "01-01",
+        "pico_fim": "03-15",
+        "pico_min_ndvi": 0.7,
+        "colheita_fim": "05-15",
+        "colheita_max_ndvi": 0.4,
+        "entressafra_fim": "07-31",
+    }
+    assert params["janelas_pedidas"] == ["01-01 a 03-31", "04-01 a 07-31"]
+    assert params["pedidos"] == 81
 
     first = output.read_text(encoding="utf-8")
     output.unlink()
     assert _run(argv, _no_network) == 0  # tudo do cache, nenhum pedido
     assert output.read_text(encoding="utf-8") == first
+
+
+def test_should_only_ask_for_the_soy_season_when_the_offseason_is_already_in_the_cache(
+    tmp_path: Path,
+) -> None:
+    # Cache da primeira versão (só abril a julho e o uso do solo): faltam só os 40 de jan–mar.
+    cache = tmp_path / "cache"
+    argv = ["--raio-km", "1", "--saida", str(tmp_path / "regiao.json"), "--cache", str(cache)]
+    assert _run(argv, FakeOrnl()) == 0
+    for path in cache.glob("*_2???01??_2???03??_*.json.gz"):
+        path.unlink()
+    ornl = FakeOrnl()
+
+    assert _run(argv, ornl) == 0
+    assert ornl.calls == 40
+    assert {start.month for start in ornl.starts} == {1}
 
 
 def test_should_stop_with_a_hint_to_resume_when_the_ornl_keeps_failing(tmp_path: Path) -> None:
