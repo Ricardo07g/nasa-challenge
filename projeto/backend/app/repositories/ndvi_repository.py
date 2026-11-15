@@ -28,6 +28,24 @@ class WritableNdviRepository(NdviRepository, Protocol):
     def save_ndvi_history(self, lat: float, lon: float, records: list[NdviRecord]) -> None: ...
 
 
+class LayeredNdviRepository:
+    """Lê as fontes na ordem dada e fica com a primeira que tiver a série do ponto.
+
+    Na API (tarefa 0050): o arquivo por ponto (`NDVI_CACHE_PATH`, só os pontos pedidos, a até um
+    pixel) e depois a grade por área (`NDVI_AREA_PATH`, qualquer ponto dos ladrilhos).
+    """
+
+    def __init__(self, *sources: NdviRepository) -> None:
+        self._sources = sources
+
+    def get_ndvi_history(self, lat: float, lon: float) -> list[NdviRecord]:
+        for source in self._sources:
+            records = source.get_ndvi_history(lat, lon)
+            if records:
+                return records
+        return []
+
+
 @dataclass(frozen=True)
 class NdviPointSeries:
     """A série de um ponto do arquivo, lida como o `get_ndvi_history` lê.

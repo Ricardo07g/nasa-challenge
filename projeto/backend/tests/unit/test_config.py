@@ -17,6 +17,7 @@ DATA_ENV_VARS = (
     "SMAP_PATH",
     "SMAP_RECENTE_PATH",
     "SOJA_RECENTE_PATH",
+    "NDVI_AREA_PATH",
 )
 CREDENTIAL_ENV_VARS = (
     "EARTHDATA_TOKEN",
@@ -160,6 +161,17 @@ def test_soja_recente_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: P
     monkeypatch.setenv("SOJA_RECENTE_PATH", str(tmp_path / "soja_recente_2026.json"))
 
     assert Settings(_env_file=None).soja_recente_path == tmp_path / "soja_recente_2026.json"
+
+
+def test_ndvi_area_path_defaults_to_none_so_the_ndvi_stays_by_point_without_the_file() -> None:
+    # Sem o índice do NDVI por área (tarefa 0050), a série vem só do arquivo por ponto, como antes.
+    assert Settings(_env_file=None).ndvi_area_path is None
+
+
+def test_ndvi_area_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("NDVI_AREA_PATH", str(tmp_path / "ndvi_modis_area.json"))
+
+    assert Settings(_env_file=None).ndvi_area_path == tmp_path / "ndvi_modis_area.json"
 
 
 def test_rules_path_defaults_to_file_shipped_with_the_app() -> None:
