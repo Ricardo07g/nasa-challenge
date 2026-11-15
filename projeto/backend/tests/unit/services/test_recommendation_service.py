@@ -511,6 +511,44 @@ def test_should_write_texts_in_english_when_language_is_en() -> None:
     assert any("NASA POWER" in frase for frase in milho.porque)
 
 
+class ImergRainClimateRepository(FakeClimateRepository):
+    """Os anos de `imerg_years` têm a chuva do IMERG (carga da tarefa 0027); os outros, do POWER."""
+
+    def __init__(self, imerg_years: tuple[int, ...]) -> None:
+        super().__init__()
+        self._imerg_years = imerg_years
+
+    def get_seasons(self, cell_id: str) -> list[ClimateSeason]:
+        return [
+            replace(season, rain_source="gpm_imerg") if season.year in self._imerg_years else season
+            for season in super().get_seasons(cell_id)
+        ]
+
+
+@pytest.mark.parametrize(
+    "imerg_years",
+    [tuple(range(2005, 2025)), (2006, 2010)],  # todos os anos, ou só alguns (2005 com o POWER)
+)
+def test_should_name_imerg_and_power_when_any_year_uses_imerg_rain(
+    imerg_years: tuple[int, ...],
+) -> None:
+    service = _service(climate=ImergRainClimateRepository(imerg_years))
+
+    for lang in ("pt-BR", "en"):
+        milho = _opcao(
+            service.recommend(-18.95, -48.20, colheita="meio", lang=lang), "milho_safrinha"
+        )
+        assert any("(GPM IMERG + NASA POWER)" in frase for frase in milho.porque)
+        assert not any("(NASA POWER)" in frase for frase in milho.porque)
+
+
+def test_should_name_only_nasa_power_when_no_year_uses_imerg_rain() -> None:
+    milho = _opcao(_service().recommend(-18.95, -48.20, colheita="meio"), "milho_safrinha")
+
+    assert any("(NASA POWER)" in frase for frase in milho.porque)
+    assert not any("IMERG" in frase for frase in milho.porque)
+
+
 def test_should_give_how_to_steps_in_the_requested_language() -> None:
     pt = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="pt-BR")
     en = _service().recommend(lat=-18.95, lon=-48.20, colheita="meio", lang="en-US,en;q=0.9")

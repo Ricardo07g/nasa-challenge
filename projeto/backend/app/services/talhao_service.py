@@ -5,6 +5,7 @@ Plano técnico §3.1; a chuva de cada mês é o gráfico da tela 3 (tarefa 0028)
 
 from typing import Any
 
+from app.constants import IMERG_RAIN_SOURCE
 from app.models.talhao import FonteDado, Talhao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.ndvi_repository import NdviRepository
@@ -14,6 +15,7 @@ from app.services.field_history_service import FieldHistoryService
 from app.services.monthly_rain_service import MonthlyRainService
 
 CMIP6_PERIOD = "2041-2060"
+CLIMATE_PERIOD = "2005-2024"  # janela das temporadas de chuva (ADR-0003), POWER ou IMERG
 
 
 class TalhaoService:
@@ -56,7 +58,13 @@ class TalhaoService:
 
         dados_fontes: list[FonteDado] = []
         if dentro_da_area and cell_id is not None:
-            dados_fontes.append(FonteDado(fonte="nasa_power", periodo="2005-2024"))
+            dados_fontes.append(FonteDado(fonte="nasa_power", periodo=CLIMATE_PERIOD))
+            # Chuva do IMERG (tarefa 0027): os anos completos trocaram a do POWER na célula.
+            if any(
+                season.rain_source == IMERG_RAIN_SOURCE
+                for season in self._climate_repo.get_seasons(cell_id)
+            ):
+                dados_fontes.append(FonteDado(fonte=IMERG_RAIN_SOURCE, periodo=CLIMATE_PERIOD))
             deltas = (
                 self._climate_repo.get_cmip6_deltas(cell_id)
                 if hasattr(self._climate_repo, "get_cmip6_deltas")

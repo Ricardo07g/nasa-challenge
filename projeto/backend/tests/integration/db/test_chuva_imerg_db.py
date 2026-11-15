@@ -16,6 +16,7 @@ import pytest
 from app.models.climate import ClimateSeason
 from app.repositories.climate_repository import PostgisClimateRepository, SeasonWindow
 from pipeline.load_files_to_db import build_loader
+from tests.integration.db.support import Api
 
 pytestmark = pytest.mark.db
 
@@ -170,3 +171,30 @@ def test_should_give_the_same_result_when_loaded_twice(db_url: str, tmp_path: Pa
 
     assert _by_year(repo, FARM_CELL) == first
     assert [source for source, _, _ in _runs(db_url)] == ["gpm_imerg", "gpm_imerg"]
+
+
+# --- na API -------------------------------------------------------------------------------------
+
+UFU = {"lat": -18.9543, "lon": -48.1993}  # dentro da célula -190_-482
+
+
+def test_api_should_show_the_imerg_rain_after_the_load(
+    api: Api, db_url: str, tmp_path: Path
+) -> None:
+    years = range(2005, 2025)
+    _save(db_url, FARM_CELL, *(_season(FARM_CELL, year) for year in years))
+    before = api.client.get("/api/talhao", params=UFU).json()
+    path = _imerg_file(tmp_path, [_cell(FARM_CELL, {year: [7.5] * DAYS for year in years})])
+    loader = build_loader(db_url)
+    loader.run(loader.plan(imerg_path=path))
+
+    talhao = api.client.get("/api/talhao", params=UFU).json()
+    rec = api.client.get("/api/recomendacao", params={**UFU, "colheita": "meio"}).json()
+
+    def sources(body: dict[str, Any]) -> list[tuple[str, str]]:
+        return [(dado["fonte"], dado["periodo"]) for dado in body["dados"]]
+
+    assert sources(before) == [("nasa_power", "2005-2024")]
+    assert sources(talhao) == [("nasa_power", "2005-2024"), ("gpm_imerg", "2005-2024")]
+    porque = [frase for opcao in rec["opcoes"] for frase in opcao["porque"]]
+    assert any("(GPM IMERG + NASA POWER)" in frase for frase in porque)

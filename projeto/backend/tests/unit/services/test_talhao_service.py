@@ -14,9 +14,15 @@ DAYS = 212  # 1/jan a 31/jul
 class FakeClimateRepository:
     """Temporadas de teste de 2005 a 2024 com 2 mm de chuva todo dia (valores redondos)."""
 
-    def __init__(self, deltas: list[Cmip6Delta] | None = None, seasons: bool = True) -> None:
+    def __init__(
+        self,
+        deltas: list[Cmip6Delta] | None = None,
+        seasons: bool = True,
+        imerg_years: tuple[int, ...] = (),
+    ) -> None:
         self._deltas = deltas or []
         self._seasons = seasons
+        self._imerg_years = imerg_years
 
     def find_cell_id(self, lat: float, lon: float) -> str | None:
         return "-190_-482" if -19.25 <= lat < -18.75 and -48.4375 <= lon < -47.8125 else None
@@ -31,7 +37,7 @@ class FakeClimateRepository:
                 start_date=date(year, 1, 1),
                 lat=-18.95,
                 rain_mm=tuple([2.0] * DAYS),
-                rain_source="nasa_power",
+                rain_source="gpm_imerg" if year in self._imerg_years else "nasa_power",
                 tmax_c=tuple([30.0] * DAYS),
                 tmin_c=tuple([18.0] * DAYS),
             )
@@ -124,6 +130,20 @@ def test_should_list_cmip6_source_with_scenario_and_model_count_when_deltas_exis
     assert talhao.dados_fontes[-1] == FonteDado(
         fonte="nex_gddp_cmip6", periodo="2041-2060", cenario="ssp245", modelos=3
     )
+
+
+def test_should_list_imerg_rain_when_the_cell_has_any_year_with_it() -> None:
+    # Carga da tarefa 0027: os anos completos do IMERG trocam a chuva do POWER na célula.
+    deltas = [Cmip6Delta(model="ACCESS-CM2", scenario="ssp245", month=1, rain_pct=0.0, tmax_c=1.0)]
+    climate = FakeClimateRepository(deltas, imerg_years=(2010, 2011))
+
+    talhao = _service(climate).inspect_talhao(lat=-18.9543, lon=-48.1993)
+
+    assert talhao.dados_fontes[:2] == (
+        FonteDado(fonte="nasa_power", periodo="2005-2024"),
+        FonteDado(fonte="gpm_imerg", periodo="2005-2024"),
+    )
+    assert talhao.dados_fontes[-1].fonte == "nex_gddp_cmip6"
 
 
 def test_should_return_outside_area_without_sources_when_point_has_no_data() -> None:
