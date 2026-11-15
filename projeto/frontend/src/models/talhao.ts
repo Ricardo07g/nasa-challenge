@@ -37,6 +37,18 @@ export type Historico = {
   janela: string
 }
 
+/** Chuva média de um mês na célula (mm): a média, entre os anos, da chuva total do mês (1 = janeiro). */
+export type ChuvaMes = { mes: number; media_mm: number }
+
+/** Gráfico "Chuva de cada mês na região" da tela 3: janeiro a junho. */
+export type ChuvaMensal = {
+  meses: ChuvaMes[]
+  /** Anos que entraram na média, em ordem. */
+  anos: number[]
+  /** Fonte da chuva (ex.: `nasa_power`); mais de uma vem separada por `+`. */
+  fonte: string
+}
+
 export type Talhao = {
   ponto: Ponto
   celula_id: string | null
@@ -45,4 +57,6 @@ export type Talhao = {
   colheita_sugerida: { faixa: Colheita; fonte: 'ndvi_modis' | 'padrao'; anos_usados: number } | null
   historico: Historico | null
   dados: { fonte: string; periodo: string; cenario?: string; modelos?: number }[]
+  /** null fora da área ou sem dado; ausente na API que ainda não manda o campo. */
+  chuva_mensal?: ChuvaMensal | null
 }
