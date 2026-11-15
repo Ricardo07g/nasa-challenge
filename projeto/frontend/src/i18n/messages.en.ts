@@ -569,7 +569,7 @@ export const en = {
       futureLess: (mm: string) => `${mm} mm less than today.`,
       futureSame: 'The same as today.',
       note: (years: number) =>
-        `Model calculation over the crop cycle: GPM IMERG rain and crop water use from NASA POWER weather. Median of ${years} years; dry year = only 1 in 5 years had a bigger shortage.`,
+        `Model calculation over the crop cycle: GPM IMERG rain and crop water use from NASA POWER weather. Normal year = in half of the years the shortage was this or less (median of ${years} years); dry year = only 1 in 5 years had a bigger shortage.`,
       guide: 'The moisture held by straw, runoff and the water left for the next crop are in the Guide, without numbers: we do not have that data.',
     },
     climate: {
@@ -1093,7 +1093,7 @@ export const en = {
       changedHeat: (recent: string, before: string, temp: number, recentPeriod: string, beforePeriod: string) =>
         `Days at ${temp} °C or more from March to May: ${recent} a year in ${recentPeriod}; ${before} in ${beforePeriod}.`,
       changedShortage: (crop: string, recent: string, before: string, recentPeriod: string, beforePeriod: string) =>
-        `Water shortage of ${crop} in the cycle: ${recent} mm a year in ${recentPeriod}; ${before} mm in ${beforePeriod}.`,
+        `Water shortage of ${crop} in the cycle, averaged over the years: ${recent} mm a year in ${recentPeriod}; ${before} mm in ${beforePeriod}. Very dry years pull the average up.`,
       changedWorked: (
         crop: string,
         recentGood: number,

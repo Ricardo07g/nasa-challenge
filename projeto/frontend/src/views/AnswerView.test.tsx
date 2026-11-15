@@ -188,6 +188,8 @@ describe('AnswerView (aba Sugestão, tarefa 0044)', () => {
     expect(screen.getByText('Falta 116 mm em ano normal e 158 mm em ano seco')).toBeInTheDocument()
     expect(screen.getByText('Em 2041–2060, a falta em ano normal seria de 128 mm (de 118 a 141 mm, conforme o modelo). 12 mm a mais que hoje.')).toBeInTheDocument()
     expect(screen.getByText(/a terra só guarda 60 mm/)).toBeInTheDocument()
+    // Tarefa 0049: o "ano normal" é o do meio (mediana), não a média dos Avisos.
+    expect(screen.getByText(/Ano normal = em metade dos anos faltou isso ou menos \(mediana de 20 anos\)/)).toBeInTheDocument()
     expect(screen.getByText(/A umidade que a palhada segura, a enxurrada e a água que fica para a próxima safra estão no Guia, sem número/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Saiba mais: A conta de água da lavoura' })).toHaveAttribute('href', '/guia/conta-de-agua')
   })

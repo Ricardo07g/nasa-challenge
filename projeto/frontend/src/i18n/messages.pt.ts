@@ -592,7 +592,7 @@ export const pt = {
       futureLess: (mm: string) => `${mm} mm a menos que hoje.`,
       futureSame: 'Igual a hoje.',
       note: (years: number) =>
-        `Conta do motor nos dias do ciclo: chuva do GPM IMERG e gasto da lavoura com o clima do NASA POWER. Mediana de ${years} anos; ano seco = só 1 em cada 5 anos teve falta maior.`,
+        `Conta do motor nos dias do ciclo: chuva do GPM IMERG e gasto da lavoura com o clima do NASA POWER. Ano normal = em metade dos anos faltou isso ou menos (mediana de ${years} anos); ano seco = só 1 em cada 5 anos teve falta maior.`,
       guide: 'A umidade que a palhada segura, a enxurrada e a água que fica para a próxima safra estão no Guia, sem número: não temos esse dado.',
     },
     climate: {
@@ -1132,7 +1132,7 @@ export const pt = {
       changedHeat: (recent: string, before: string, temp: number, recentPeriod: string, beforePeriod: string) =>
         `Dias de ${temp} °C ou mais de março a maio: ${recent} por ano em ${recentPeriod}; ${before} em ${beforePeriod}.`,
       changedShortage: (crop: string, recent: string, before: string, recentPeriod: string, beforePeriod: string) =>
-        `Falta de água de ${crop} no ciclo: ${recent} mm por ano em ${recentPeriod}; ${before} mm em ${beforePeriod}.`,
+        `Falta de água de ${crop} no ciclo, na média dos anos: ${recent} mm por ano em ${recentPeriod}; ${before} mm em ${beforePeriod}. Os anos muito secos puxam a média para cima.`,
       changedWorked: (
         crop: string,
         recentGood: number,

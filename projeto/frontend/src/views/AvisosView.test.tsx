@@ -160,6 +160,20 @@ describe('AvisosView (tela "Avisos")', () => {
     expect(mudou).toHaveTextContent('Fonte: GPM IMERG (NASA) · dados até 30 de julho de 2024')
   })
 
+  it('a falta de água diz que é a média dos anos, para não parecer o "ano normal" da Sugestão (tarefa 0049)', () => {
+    const avisos = buildAvisos(POINT, 'pt')
+    const shortage = aviso(
+      'mudou_falta_agua',
+      { cultura: 'milho_braquiaria', nome: 'Milho com braquiária', antes: 101.6, recente: 177.4 },
+      { nivel: 'fique_de_olho' },
+    )
+    renderView(props({ ...avisos, mudou: { avisos: [shortage], ultima_leitura: '2024-07-30' } }))
+
+    expect(group('O que mudou na sua área')).toHaveTextContent(
+      'Falta de água de milho com braquiária no ciclo, na média dos anos: 177,4 mm por ano em 2020–2024; 101,6 mm em 2005–2019. Os anos muito secos puxam a média para cima.',
+    )
+  })
+
   it('fora do comum: os recordes com o ano', () => {
     renderView(props(buildAvisos(POINT, 'pt')))
 
