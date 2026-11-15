@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canConfirm, EXAMPLE_FARM, isInsideArea, nearestPlace, whereStatus } from './locationService'
+import { canConfirm, EXAMPLE_FARM, isInsideArea, nearestPlace, opensWithDemo, whereStatus } from './locationService'
 
 /** Como vem de GET /api/area-piloto. */
 const AREA = { min_lat: -19.9, max_lat: -18.4, min_lon: -49.0, max_lon: -47.5 }
@@ -15,6 +15,16 @@ describe('locationService', () => {
     expect(isInsideArea({ lat: -19.95, lon: -48.0 }, AREA)).toBe(false)
     expect(isInsideArea({ lat: -19.0, lon: -49.1 }, AREA)).toBe(false)
     expect(isInsideArea({ lat: -19.9, lon: -47.5 }, AREA)).toBe(true)
+  })
+
+  it('VITE_ABRIR_COM_DEMONSTRACAO (pacote 2): ligado por padrão; só "false", "0" ou "nao" desligam', () => {
+    expect(opensWithDemo(undefined)).toBe(true)
+    expect(opensWithDemo('')).toBe(true)
+    expect(opensWithDemo('true')).toBe(true)
+    expect(opensWithDemo('false')).toBe(false)
+    expect(opensWithDemo(' FALSE ')).toBe(false)
+    expect(opensWithDemo('0')).toBe(false)
+    expect(opensWithDemo('nao')).toBe(false)
   })
 
   it('acha a cidade mais próxima para mostrar "Perto de …"', () => {

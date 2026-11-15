@@ -1,12 +1,11 @@
 import { useId, type FormEvent } from 'react'
-import { Link } from 'react-router'
 import type { ListenSummaryState } from '../controllers/useListenSummary'
 import type { AreaInfoState, OtherWaysState } from '../controllers/useWhereController'
+import { BackButton } from '../design-system/components/BackButton'
 import { FieldMap, type FieldMapView, type LatLon } from '../design-system/components/FieldMap'
 import { ListenSummary } from '../design-system/components/ListenSummary'
 import { Modal } from '../design-system/components/Modal'
 import {
-  ArrowLeftIcon,
   ArrowRightIcon,
   ChevronRightIcon,
   CrosshairIcon,
@@ -69,10 +68,7 @@ export function WhereView(props: WhereViewProps) {
 
   return (
     <div className={styles.page}>
-      <Link to="/" className={styles.back}>
-        <ArrowLeftIcon size={18} />
-        {t.nav.back}
-      </Link>
+      <BackButton to="/">{t.nav.back}</BackButton>
       <h1 className={styles.title}>{w.title}</h1>
       <div className={styles.sub}>
         <p>{w.lead}</p>
@@ -154,7 +150,8 @@ export function WhereView(props: WhereViewProps) {
             </span>
             <span className={styles.demoArrow}>
               <ChevronRightIcon size={16} />
-            </span>
+            </span>{' '}
+            <span className={styles.demoBadge}>{w.demoBadge}</span>
           </button>
           <button type="button" className={styles.otherWays} aria-haspopup="dialog" onClick={other.onOpen}>
             {w.otherWays}

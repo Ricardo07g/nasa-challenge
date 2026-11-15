@@ -21,7 +21,7 @@ function deps(position = { lat: -19.0, lon: -48.0 }) {
 /** Passa o tempo (a espera de 400 ms do Photon) e deixa as promessas responderem. */
 const wait = (ms = 0) => act(() => vi.advanceTimersByTimeAsync(ms))
 
-function setup(d = deps(), url = '/onde', lang: Lang = 'pt') {
+function setup(d: ReturnType<typeof deps> & { openWithDemo?: boolean } = deps(), url = '/onde', lang: Lang = 'pt') {
   const hook = renderHook(() => useWhereController(d), { wrapper: providers(url, lang) })
   return { ...hook, d }
 }
@@ -40,6 +40,25 @@ describe('useWhereController (tela "Onde fica a lavoura", tarefa 0053)', () => {
     expect(result.current.view.target).toBe('area')
     expect(result.current.area).toEqual(AREA)
     expect(d.geocoding.reverse).not.toHaveBeenCalled()
+  })
+
+  it('pacote 2: com VITE_ABRIR_COM_DEMONSTRACAO ligado, abre com a lavoura de demonstração marcada e o Confirmar ligado', async () => {
+    const { result, d } = setup({ ...deps(), openWithDemo: true })
+    await wait(1000)
+
+    expect(result.current.point).toEqual(DEMO)
+    expect(result.current.demo).toBe(true)
+    expect(result.current.status).toBe('marked')
+    expect(result.current.canConfirm).toBe(true)
+    expect(result.current.view.target).toBe('point')
+    expect(d.geocoding.reverse).not.toHaveBeenCalled()
+  })
+
+  it('pacote 2: com lat/lon na URL vale o ponto da URL, mesmo com a demonstração ligada', () => {
+    const { result } = setup({ ...deps(), openWithDemo: true }, '/onde?lat=-19.74&lon=-47.93')
+
+    expect(result.current.point).toEqual({ lat: -19.74, lon: -47.93 })
+    expect(result.current.demo).toBe(false)
   })
 
   it('volta ao ponto que já estava na URL, chegando perto dele', () => {

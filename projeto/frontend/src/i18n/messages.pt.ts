@@ -209,6 +209,7 @@ export const pt = {
     gpsError: 'Não deu para achar onde você está. Toque no mapa ou use a lavoura de demonstração.',
     useLocation: 'Usar onde estou agora',
     locating: 'Procurando você…',
+    demoBadge: 'Bom para testar',
     useDemo: 'Usar a lavoura de demonstração',
     demoNear: 'Perto de Uberlândia (MG)',
     otherWays: 'Outras formas de marcar',

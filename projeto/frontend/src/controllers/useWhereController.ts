@@ -7,7 +7,7 @@ import { farmService, type FarmService } from '../services/farmService'
 import { buildFlowQuery, readFlowParams } from '../services/flowParams'
 import { geocodingService, SEARCH_DELAY_MS, type GeocodingService } from '../services/geocodingService'
 import { parseLocationInput } from '../services/locationInputService'
-import { canConfirm, EXAMPLE_FARM, nearestPlace, whereStatus } from '../services/locationService'
+import { canConfirm, EXAMPLE_FARM, nearestPlace, OPEN_WITH_DEMO, whereStatus } from '../services/locationService'
 import { pilotAreaService, type PilotAreaService } from '../services/pilotAreaService'
 import { positionService, type PositionService } from '../services/positionService'
 import { speechService, type SpeechService } from '../services/speechService'
@@ -21,6 +21,8 @@ type Deps = {
   geocoding: Pick<GeocodingService, 'reverse'>
   pilotArea: PilotAreaService
   speech: SpeechService
+  /** Abrir com a lavoura de demonstração marcada (`VITE_ABRIR_COM_DEMONSTRACAO`); ausente = desligado. */
+  openWithDemo?: boolean
 }
 
 const defaultDeps: Deps = {
@@ -29,6 +31,7 @@ const defaultDeps: Deps = {
   geocoding: geocodingService,
   pilotArea: pilotAreaService,
   speech: speechService,
+  openWithDemo: OPEN_WITH_DEMO,
 }
 
 /** Modal "Outras formas de marcar": coordenadas ou link do Google Maps. */
@@ -65,7 +68,9 @@ export function useWhereController(deps: Deps = defaultDeps) {
   const [search] = useSearchParams()
   const [marked, setMarked] = useState<Marked | null>(() => {
     const params = readFlowParams(search)
-    return params ? { point: { lat: params.lat, lon: params.lon }, demo: params.exemplo } : null
+    if (params) return { point: { lat: params.lat, lon: params.lon }, demo: params.exemplo }
+    // Pacote 2: sem ponto na URL, a tela pode abrir com a lavoura de demonstração já marcada.
+    return deps.openWithDemo ? { point: EXAMPLE_FARM, demo: true } : null
   })
   const [view, setView] = useState<FieldMapView>(() => ({ target: marked ? 'point' : 'area', seq: 0 }))
   const [gps, setGps] = useState<'idle' | 'locating' | 'error'>('idle')

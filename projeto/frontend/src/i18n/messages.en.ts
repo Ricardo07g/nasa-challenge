@@ -189,6 +189,7 @@ export const en = {
     gpsError: 'We could not find your location. Tap the map or use the demo field.',
     useLocation: 'Use my current location',
     locating: 'Finding you…',
+    demoBadge: 'Good for testing',
     useDemo: 'Use the demo field',
     demoNear: 'Near Uberlândia (MG)',
     otherWays: 'Other ways to mark',
