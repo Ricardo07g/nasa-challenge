@@ -205,7 +205,7 @@ do R0.2: em arquivo antes do R1.6 e em tabela depois. **Nunca gerar dado sintét
 | --- | --- | --- | --- | --- |
 | [R3.1](tarefas/0021-nota-de-futuro-cmip6.md) ✅ | **Nota de futuro.** `get_cmip6_deltas` passa a ler os deltas (hoje o PostGIS só repassa à fixture). O `TalhaoService` já põe `nex_gddp_cmip6` em `dados[]` quando há deltas | `climate_repository.py` | R2.1 (+R1.6 para ler do banco) | T-06 |
 | [R3.2](tarefas/0018-historico-ndvi-na-api.md) ✅ | **Histórico do talhão** <ul><li>Cache ou tabela de NDVI ligado</li><li>Contrato completo (decisão da seção 5)</li><li>**Frase de histórico no `porque`** (PRD 7.6)</li><li>`/exemplo` usando a `colheita_sugerida`, em vez de `meio` fixo</li></ul> | `field_history_service.py`, `recommendation_service.py`, `schemas/talhao.py`, `recomendacao_controller.py` | R2.2 | T-10 |
-| R3.3 | **Balde inicial pelo SMAP:** passar `smap_wetness` para `simulate_historical` (o parâmetro e o `get_latest_smap` já existem) | `climate_risk_service.py`, `recommendation_service.py` | R2.3 | — |
+| [R3.3](tarefas/0030-smap-balde-inicial.md) ✅ | **Balde inicial pelo SMAP:** o balde de cada ano começa com o SMAP do dia de plantar daquele ano (tabela `smap_point` → `SMAP_PATH`); ano sem SMAP, 50% da CAD. Frase no `porque` e `smap` em `dados[]` | `climate_risk_service.py`, `recommendation_service.py`, `smap_repository.py` | R2.3 | — |
 | [R3.4](tarefas/0027-imerg-na-conta.md) ✅ | **Chuva do IMERG no balde** (`rain_source = gpm_imerg`), com a mesma chave de fonte no back e no front | `climate_repository.py`, front `satelliteService.ts` | R2.4, decisão da chave | T-04 |
 | R3.5 | **`versao_dados` pelo `data_run`** (hoje é a constante `DATA_VERSION` em `app/constants.py`) | `constants.py`, `recommendation_service.py` | R1.6 | — |
 

@@ -22,8 +22,8 @@ alguns cartões (clima futuro, histórico do talhão).
 | Umidade da terra no dia de plantar (2016–2025) | SMAP L4 (`SPL4SMGP` 008) pelo OPeNDAP da Earthdata | arquivo `data/baixados/nasa_smap/smap_semeadura.json` e, depois da carga, banco (`smap_point`) | ainda nada: o balde inicial pelo SMAP é o R3.3 (até lá, 50% da CAD) | script `fetch_smap` + carga no banco |
 
 O `docker compose` monta `data/baixados/` dentro do backend (só leitura, em `/dados_baixados`) e
-aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH` e `IMERG_LATE_PATH` para os
-arquivos acima. Arquivo ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`).
+aponta `CMIP6_PATH`, `NDVI_CACHE_PATH`, `ONI_PATH`, `REGIAO_PATH`, `IMERG_LATE_PATH` e `SMAP_PATH`
+para os arquivos acima. Arquivo ausente = a API segue sem aquele dado, sem erro (o `/api/regiao` responde 404 `OUTSIDE_AREA`).
 
 ## Caminho rápido: receber o pacote de alguém do time (~5 min)
 
@@ -189,6 +189,7 @@ Na interface (http://localhost:5173/satelite?lat=-18.9543&lon=-48.1993&colheita=
 | Histórico do talhão | faixa de 2016 a 2025 | não aparece (ou "Ainda não conectado") |
 | Anos de chuva (tocar num ano) | ponto de El Niño / La Niña em cima dos anos e "Ano de El Niño." na frase | a frase de cada ano aparece igual, sem a marca |
 | Na sua região (http://localhost:5173/comunidade) | "Em 2025, X% da área de lavoura ficou parada" e as barras de 2016 a 2025 | o bloco da região fica com erro (a API responde 404 `OUTSIDE_AREA`) |
+| "Por quê?" de cada opção | frase do balde pelo SMAP (anos de 2016 em diante) | sem a frase; o balde começa em 50% da CAD |
 
 ## Problemas comuns
 

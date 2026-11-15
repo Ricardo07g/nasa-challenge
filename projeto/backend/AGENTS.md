@@ -103,8 +103,8 @@ Faça de baixo para cima, sempre com o teste antes do código e vendo ele falhar
   - `cmip6_delta`, `ndvi_point`, `smap_point` e `data_run` (com `version`): no formato do "Contrato
     dos dados das fontes", abaixo. `PostgisCmip6Repository`, `PostgisNdviRepository`,
     `PostgisSmapRepository` e `PostgisDataRunRepository` gravam e leem. A API já lê o `cmip6_delta`
-    (R3.1, ver "Deltas do CMIP6 na API"), mas ainda não lê as outras (R3.2, R3.3 e R3.5 do
-    roteiro). O `cmip6_delta` exige a célula em `grid_cell`. O `cmip6_delta`, o `ndvi_point` e o
+    (R3.1, ver "Deltas do CMIP6 na API") e o `smap_point` (R3.3, ver "Balde inicial pelo SMAP"),
+    mas ainda não lê as outras (R3.2 e R3.5 do roteiro). O `cmip6_delta` exige a célula em `grid_cell`. O `cmip6_delta`, o `ndvi_point` e o
     `smap_point` são preenchidos pela carga dos arquivos (`pipeline/load_files_to_db.py`, ver
     "Dados da API").
 - Banco criado antes do R1.6: rode `uv run alembic upgrade head` (ou
@@ -139,7 +139,8 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   `docs/como-preparar-os-dados-locais.md`.
 - A API lê **só** o que está em `Settings` (`DATABASE_URL`, `CULTURAS_PATH`, `REGRAS_PATH`,
   `CLIMA_PATH`, `SOLO_CACHE_PATH`, `NDVI_CACHE_PATH`, `CMIP6_PATH`, `ONI_PATH`, `REGIAO_PATH`,
-  `IMERG_LATE_PATH`). Nunca coloque caminho fixo (como `/workspace/...`) num repository.
+  `IMERG_LATE_PATH`, `SMAP_PATH`). Nunca coloque caminho fixo (como `/workspace/...`) num
+  repository.
 - `app/config_data/culturas.yaml`: parâmetros do PRD (seção 5 e nota de solo da 7.4).
 - `app/config_data/regras.yaml`: limiares, pesos, rótulos e modelos de frase pt/en do motor (PRD 7),
   cada número com `valor` e `fonte` (o `YamlRulesRepository` recusa número sem fonte). Regra de
@@ -459,10 +460,30 @@ docker compose exec db psql -U raiz -d raiz_orbital   # console do banco
   - **no compose**: já ligado. O serviço `backend` monta a pasta local `data/baixados` (fora do git)
     em `/dados_baixados`, só leitura, e aponta `CMIP6_PATH` para
     `/dados_baixados/nasa_nex_gddp_cmip6/cmip6_deltas_nex_gddp.json`, `NDVI_CACHE_PATH` para
-    `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json` e `REGIAO_PATH` para
-    `/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json`. Sem o arquivo, segue sem o dado.
+    `/dados_baixados/nasa_modis_ndvi/ndvi_modis_appeears.json`, `REGIAO_PATH` para
+    `/dados_baixados/nasa_modis_ndvi_regiao/regiao_ndvi_modis.json` e `SMAP_PATH` para
+    `/dados_baixados/nasa_smap/smap_semeadura.json`. Sem o arquivo, segue sem o dado.
     Como baixar ou receber esses arquivos: `docs/como-preparar-os-dados-locais.md`.
 
+- **Balde inicial pelo SMAP** (R3.3, tarefa 0030, PRD 7.2): o balde de cada ano da série começa
+  com a umidade do SMAP do **dia de plantar daquele ano** (o dia e o mês da faixa de colheita):
+  `arm0 = CAD × sm_rootzone_wetness`, com piso de 20% da CAD (`MIN_INITIAL_ARM_FRACTION`, US-03).
+  Ano sem SMAP nesse dia (antes de 2016, ou dia que o arquivo não tem): 50% da CAD, como antes.
+  - **Regra no service:** `ClimateRiskService.sowing_day_wetness` (o dia de cada ano) e
+    `initial_bucket_fraction` (fração da CAD); `simulate_historical` e `simulate_future_cmip6`
+    recebem `smap_wetness_by_year`. O futuro do CMIP6 usa o mesmo balde de cada ano (o método do
+    delta muda só o clima).
+  - **Leitura no repository** (`get_smap_repository` em `dependencies.py`): a série da célula de
+    0,1° (o ponto do centro dela), nesta ordem: tabela `smap_point` (só com banco;
+    `PostgisSmapRepository.get_cell_smap_series`) e o arquivo do `SMAP_PATH`
+    (`FileSmapRepository`, o ponto do arquivo dentro da célula). Nunca a série de célula vizinha.
+  - **Na resposta:** o `/talhao` lista `{"fonte": "smap", "periodo": "<primeiro ano>-<último ano>"}`
+    em `dados` quando a célula tem SMAP (o front marca o SMAP como conectado). O `porque` de cada
+    opção do `/recomendacao` ganha, logo depois da frase da chuva, a frase `frases.<língua>.balde_smap`
+    do `regras.yaml` com quantos anos da série usaram o SMAP. Sem nenhum ano, não há frase.
+  - Para ligar o arquivo: **com uv**, `SMAP_PATH=../../data/baixados/nasa_smap/smap_semeadura.json`
+    no `.env` desta pasta; **no compose**, já ligado em `/dados_baixados/nasa_smap/smap_semeadura.json`.
+    Reinicie o backend depois de trocar o arquivo (ele é lido uma vez por processo).
 - **NDVI do MODIS e histórico do talhão** (R3.2, tarefa 0018). Com ou sem banco, a série vem do arquivo
   do `NDVI_CACHE_PATH` (a tabela `ndvi_point` existe desde o R1.6 e a carga da tarefa 0022 a preenche,
   mas a API ainda não lê dela). O arquivo vem do
