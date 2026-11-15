@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     # Caches opcionais por ponto (SoilGrids e NDVI do MODIS). Sem arquivo: solo padrão e sem NDVI.
     solo_cache_path: Path | None = None
     ndvi_cache_path: Path | None = None
+    # NDVI do MODIS por área (saída do pipeline/fetch_ndvi_area.py, tarefa 0050): o índice dos
+    # ladrilhos. A série de um ponto vem do NDVI_CACHE_PATH e, sem ponto perto, daqui. Sem
+    # arquivo: só o arquivo por ponto, como antes.
+    ndvi_area_path: Path | None = None
     # Deltas mensais do NEX-GDDP-CMIP6 por célula do POWER (saída do
     # pipeline/fetch_cmip6_deltas.py). Sem arquivo: a nota de futuro fica de fora (`futuro: null`),
     # a não ser que o banco tenha os deltas da célula (tabela `cmip6_delta`).

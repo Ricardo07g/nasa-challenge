@@ -6,8 +6,11 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app import dependencies
+from app.config import Settings
 from app.constants import PROBLEM_JSON_MEDIA_TYPE
 from app.dependencies import (
     get_climate_repository,
@@ -23,6 +26,7 @@ from app.repositories.ndvi_repository import CachedNdviRepository
 from app.repositories.rules_repository import load_default_rules
 from app.repositories.soja_recente_repository import FileSojaRecenteRepository
 from tests.integration.controllers.conftest import FakeClimateRepository
+from tests.ndvi_grid_fakes import FakeTile, write_ndvi_grid
 
 UFU = {"lat": -18.9543, "lon": -48.1993}
 SITUACOES = {"plantou", "parado", "incerto", "sem_dado", "sem_soja"}
@@ -346,6 +350,89 @@ def test_should_return_null_history_when_the_ndvi_file_has_no_point_near_the_fie
         "anos_usados": 0,
         "dia": None,
     }
+
+
+# --- NDVI por área (RF-34, tarefa 0050) ---------------------------------------------------------
+
+# A mesma série do `_ndvi_file`, em ladrilho: soja seca em 10/fev (Aqua) e a entressafra parada
+# nos anos pares e plantada nos ímpares. A nuvem não entra no ladrilho (o script tira na
+# compactação). Datas e valores de teste.
+GRID_DAYS = [("01-17", "MOD13Q1"), ("02-02", "MOD13Q1"), ("02-10", "MYD13Q1"),
+             ("04-07", "MOD13Q1"), ("04-15", "MYD13Q1"), ("05-09", "MOD13Q1")]  # fmt: skip
+GRID_DATES = [
+    (date.fromisoformat(f"{year}-{day}"), product)
+    for year in range(2017, 2027)
+    for day, product in GRID_DAYS
+]
+
+
+def _grid_value(row: int, col: int, index: int) -> tuple[int, int]:
+    day, _ = GRID_DATES[index]
+    raw = {"01-17": 8400, "02-02": 7000, "02-10": 3800, "04-07": 2600, "04-15": 2400}.get(
+        f"{day:%m-%d}", 7400 if day.year % 2 else 3100
+    )
+    return raw, 1 if f"{day:%m-%d}" == "04-15" else 0
+
+
+@pytest.fixture
+def ndvi_settings(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyped-def]
+    """Usa a ligação real do `get_ndvi_repository` com os arquivos dados (sem o NDVI falso)."""
+
+    def _apply(ndvi_cache_path: Path | None, ndvi_area_path: Path | None) -> None:
+        settings = Settings(
+            _env_file=None, ndvi_cache_path=ndvi_cache_path, ndvi_area_path=ndvi_area_path
+        )
+        monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
+        dependencies.get_ndvi_repository.cache_clear()
+        app.dependency_overrides.pop(get_ndvi_repository, None)
+
+    yield _apply
+    dependencies.get_ndvi_repository.cache_clear()
+
+
+def test_should_read_the_history_of_a_point_covered_only_by_the_area_grid(
+    client: TestClient, tmp_path: Path, ndvi_settings
+) -> None:  # type: ignore[no-untyped-def]
+    points_file = tmp_path / "ndvi.json"  # só um ponto a ~80 km: não cobre a fazenda
+    serie = [_obs("2017-04-07", 0.26)]
+    points_file.write_text(
+        json.dumps({"versao_dados": TEST_RUN,
+                    "pontos": [{"lat": -19.55, "lon": -48.75, "serie": serie}]}),
+        encoding="utf-8",
+    )  # fmt: skip
+    # 5 × 5 pixels em volta da fazenda de exemplo (pixel global 52298, 64518).
+    tile = FakeTile(row=52296, col=64516, nrows=5, ncols=5)
+    index = write_ndvi_grid(tmp_path / "area", [tile], GRID_DATES, _grid_value)
+    ndvi_settings(points_file, index)
+
+    body = client.get("/api/talhao", params=UFU).json()
+
+    historico = body["historico"]
+    assert (historico["parado"], historico["plantou"], historico["sem_certeza"]) == (5, 5, 0)
+    assert historico["fonte"] == "MODIS MOD13Q1 + MYD13Q1"
+    assert historico["anos"][:2] == [
+        {"ano": 2017, "situacao": "plantou", "ndvi_max": 0.74, "n_obs": 3, "fonte_ano": "satelite"},
+        {"ano": 2018, "situacao": "parado", "ndvi_max": 0.31, "n_obs": 3, "fonte_ano": "satelite"},
+    ]
+    assert body["colheita_sugerida"] == {
+        "faixa": "cedo",
+        "fonte": "ndvi_modis",
+        "anos_usados": 10,
+        "dia": "02-10",
+    }
+
+
+def test_should_keep_the_null_history_outside_the_area_grid(
+    client: TestClient, tmp_path: Path, ndvi_settings
+) -> None:  # type: ignore[no-untyped-def]
+    # Ladrilho a ~1 km a oeste da fazenda: ela fica fora, e a resposta é a de hoje (sem NDVI).
+    tile = FakeTile(row=52296, col=64500, nrows=5, ncols=5)
+    ndvi_settings(None, write_ndvi_grid(tmp_path / "area", [tile], GRID_DATES, _grid_value))
+
+    body = client.get("/api/talhao", params=UFU).json()
+
+    assert body["historico"] is None
+    assert body["colheita_sugerida"]["fonte"] == "padrao"
 
 
 # --- soja na safra mais recente (RF-24, tarefa 0037) ------------------------------------------

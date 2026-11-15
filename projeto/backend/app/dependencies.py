@@ -45,8 +45,10 @@ from app.repositories.external.soilgrids_client import (
     SoilGridsClient,
     SoilGridsClientProtocol,
 )
+from app.repositories.ndvi_grid_repository import GridNdviRepository
 from app.repositories.ndvi_repository import (
     CachedNdviRepository,
+    LayeredNdviRepository,
     NdviRepository,
 )
 from app.repositories.recent_rain_repository import FileRecentRainRepository
@@ -171,9 +173,15 @@ def get_soil_repository() -> SoilRepository:
     return cached
 
 
+# NDVI do talhão: o arquivo por ponto (NDVI_CACHE_PATH) e, sem ponto perto, a grade por área
+# (NDVI_AREA_PATH, tarefa 0050), com ou sem banco.
 @lru_cache
 def get_ndvi_repository() -> NdviRepository:
-    return CachedNdviRepository(get_settings().ndvi_cache_path)
+    settings = get_settings()
+    points = CachedNdviRepository(settings.ndvi_cache_path)
+    if settings.ndvi_area_path is None:
+        return points
+    return LayeredNdviRepository(points, GridNdviRepository(settings.ndvi_area_path))
 
 
 # Região pelo satélite (P3): com ou sem banco, vem do arquivo do REGIAO_PATH.

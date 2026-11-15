@@ -10,7 +10,13 @@ from typing import Any
 
 from app.models.data_run import DataRun
 from app.models.talhao import NdviRecord
-from app.repositories.ndvi_repository import CachedNdviRepository, NdviPointSeries
+from app.repositories.ndvi_grid_repository import GridNdviRepository
+from app.repositories.ndvi_repository import (
+    CachedNdviRepository,
+    LayeredNdviRepository,
+    NdviPointSeries,
+)
+from tests.ndvi_grid_fakes import FakeTile, pixel_center, write_ndvi_grid
 
 UFU = (-18.9543, -48.1993)
 TEST_RUN = {"fonte": "teste", "parametros": {}, "fim": "2026-11-14T13:00:00Z", "versao": "teste"}
@@ -167,3 +173,46 @@ def test_should_read_the_data_version_of_the_ndvi_file(tmp_path: Path) -> None:
 def test_should_have_no_data_version_in_the_old_cache_or_without_file(tmp_path: Path) -> None:
     assert CachedNdviRepository(_old_cache(tmp_path)).get_data_run() is None
     assert CachedNdviRepository(None).get_data_run() is None
+
+
+# --- camadas: o arquivo de pontos primeiro, depois a grade por área (tarefa 0050) ---------------
+
+GRID_DATES = [(date(2017, 1, 1), "MOD13Q1"), (date(2017, 1, 9), "MYD13Q1")]
+# 5 × 5 pixels em volta da fazenda de exemplo (pixel global 52298, 64518).
+GRID_TILE = FakeTile(row=52296, col=64516, nrows=5, ncols=5)
+
+
+def _grid(tmp_path: Path) -> GridNdviRepository:
+    folder = tmp_path / "grade"
+    return GridNdviRepository(
+        write_ndvi_grid(folder, [GRID_TILE], GRID_DATES, lambda row, col, index: (5000, 0))
+    )
+
+
+def test_should_prefer_the_exact_point_of_the_points_file_over_the_grid(tmp_path: Path) -> None:
+    serie = [{"data": "2016-04-06", "ndvi": 0.71, "qualidade": 0, "produto": "MOD13Q1"}]
+    points = CachedNdviRepository(_new_file(tmp_path, [_ponto(*UFU, serie)]))
+
+    layered = LayeredNdviRepository(points, _grid(tmp_path))
+
+    assert layered.get_ndvi_history(*UFU) == [
+        NdviRecord(data=date(2016, 4, 6), ndvi=0.71, qualidade=0, produto="MOD13Q1")
+    ]
+
+
+def test_should_read_the_grid_where_the_points_file_has_no_point(tmp_path: Path) -> None:
+    serie = [{"data": "2016-04-06", "ndvi": 0.71, "qualidade": 0, "produto": "MOD13Q1"}]
+    points = CachedNdviRepository(_new_file(tmp_path, [_ponto(-19.5, -48.6, serie)]))
+
+    layered = LayeredNdviRepository(points, _grid(tmp_path))
+
+    assert layered.get_ndvi_history(*pixel_center(52300, 64520)) == [
+        NdviRecord(data=date(2017, 1, 1), ndvi=0.5, qualidade=0, produto="MOD13Q1"),
+        NdviRecord(data=date(2017, 1, 9), ndvi=0.5, qualidade=0, produto="MYD13Q1"),
+    ]
+
+
+def test_should_return_nothing_when_no_layer_covers_the_point(tmp_path: Path) -> None:
+    layered = LayeredNdviRepository(CachedNdviRepository(None), _grid(tmp_path))
+
+    assert layered.get_ndvi_history(-15.79, -47.88) == []

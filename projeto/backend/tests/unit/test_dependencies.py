@@ -20,6 +20,8 @@ from app.repositories.climate_repository import (
 from app.repositories.cmip6_repository import FileCmip6Repository, PostgisCmip6Repository
 from app.repositories.enso_forecast_repository import FileEnsoForecastRepository
 from app.repositories.enso_repository import FileEnsoRepository
+from app.repositories.ndvi_grid_repository import GridNdviRepository
+from app.repositories.ndvi_repository import CachedNdviRepository, LayeredNdviRepository
 from app.repositories.recent_rain_repository import FileRecentRainRepository
 from app.repositories.regiao_repository import FileRegionRepository
 from app.repositories.rules_repository import load_default_rules
@@ -63,6 +65,7 @@ def _clear_caches() -> None:
     dependencies.get_smap_repository.cache_clear()
     dependencies.get_recent_soil_moisture_repository.cache_clear()
     dependencies.get_soja_recente_repository.cache_clear()
+    dependencies.get_ndvi_repository.cache_clear()
 
 
 @pytest.fixture
@@ -75,6 +78,8 @@ def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None
         smap_path: Path | None = None,
         smap_recente_path: Path | None = None,
         soja_recente_path: Path | None = None,
+        ndvi_cache_path: Path | None = None,
+        ndvi_area_path: Path | None = None,
     ) -> None:
         settings = Settings(
             _env_file=None,
@@ -85,6 +90,8 @@ def use_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., None
             smap_path=smap_path,
             smap_recente_path=smap_recente_path,
             soja_recente_path=soja_recente_path,
+            ndvi_cache_path=ndvi_cache_path,
+            ndvi_area_path=ndvi_area_path,
         )
         monkeypatch.setattr(dependencies, "get_settings", lambda: settings)
         _clear_caches()
@@ -355,3 +362,37 @@ def test_should_read_the_recent_soybean_from_the_file_of_soja_recente_path(
     assert isinstance(service, SojaRecenteService)
     # Sem o arquivo: nenhuma checagem (o /talhao responde soja_recente: null)
     assert service.check(-18.9543, -48.1993) is None
+
+
+@pytest.mark.parametrize("database_url", [None, DATABASE_URL])
+def test_should_read_the_ndvi_from_the_points_file_then_the_area_grid(
+    use_settings: Callable[..., None], tmp_path: Path, database_url: str | None
+) -> None:
+    # Com ou sem banco (tarefa 0050): o arquivo por ponto e, sem ponto perto, a grade por área.
+    use_settings(
+        database_url,
+        ndvi_cache_path=tmp_path / "ndvi.json",
+        ndvi_area_path=tmp_path / "area" / "ndvi_modis_area.json",
+    )
+
+    repository = dependencies.get_ndvi_repository()
+
+    assert isinstance(repository, LayeredNdviRepository)
+    points, grid = repository._sources
+    assert isinstance(points, CachedNdviRepository)
+    assert points._cache_path == tmp_path / "ndvi.json"
+    assert isinstance(grid, GridNdviRepository)
+    assert grid._index_path == tmp_path / "area" / "ndvi_modis_area.json"
+    # Sem os arquivos, nenhuma série (o /talhao responde historico: null, como hoje)
+    assert repository.get_ndvi_history(-18.9543, -48.1993) == []
+
+
+def test_should_keep_only_the_points_file_without_ndvi_area_path(
+    use_settings: Callable[..., None], tmp_path: Path
+) -> None:
+    use_settings(None, ndvi_cache_path=tmp_path / "ndvi.json")
+
+    repository = dependencies.get_ndvi_repository()
+
+    assert isinstance(repository, CachedNdviRepository)
+    assert repository._cache_path == tmp_path / "ndvi.json"
