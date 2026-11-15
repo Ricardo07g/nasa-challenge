@@ -11,6 +11,7 @@ import {
   MissionPage,
   OptionsPage,
   PlanPage,
+  PlanningPage,
   MethodPage,
   SatellitePage,
   ShellPage,
@@ -32,6 +33,8 @@ export const routes: RouteObject[] = [
       { path: '/resposta', element: <AnswerPage /> },
       { path: '/opcoes', element: <OptionsPage /> },
       { path: '/plano', element: <PlanPage /> },
+      // Tarefa 0058: a tela final; por enquanto, os blocos que saíram do raio-X.
+      { path: '/planejamento', element: <PlanningPage /> },
       // Tarefa 0044: o relatório saiu e a safra passada virou o detalhe do ano na Sugestão; os
       // endereços antigos levam para a Sugestão com o mesmo caminho (e o ano, na safra passada).
       { path: '/relatorio', element: <LegacyAnswerRedirect /> },

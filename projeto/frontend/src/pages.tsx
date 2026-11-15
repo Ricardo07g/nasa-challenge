@@ -13,7 +13,8 @@ import { useDocumentTitle } from './controllers/useDocumentTitle'
 import { useExampleController } from './controllers/useExampleController'
 import { useOptionsController } from './controllers/useOptionsController'
 import { usePlanController } from './controllers/usePlanController'
-import { useSatelliteController } from './controllers/useSatelliteController'
+import { usePlanningController } from './controllers/usePlanningController'
+import { useSatelliteController, type SatelliteDeps } from './controllers/useSatelliteController'
 import { useShellController } from './controllers/useShellController'
 import { useStartController } from './controllers/useStartController'
 import { useWhenController } from './controllers/useWhenController'
@@ -30,6 +31,7 @@ import { MethodView } from './views/MethodView'
 import { MissionView } from './views/MissionView'
 import { OptionsView } from './views/OptionsView'
 import { PlanView } from './views/PlanView'
+import { PlanningView } from './views/PlanningView'
 import { SatelliteView } from './views/SatelliteView'
 import { ShellView } from './views/ShellView'
 import { StartView } from './views/StartView'
@@ -144,10 +146,11 @@ export function MissionPage() {
   )
 }
 
-export function SatellitePage() {
+/** Tela 4 (pacote 2, tarefa 0058): raio-X da sua terra e últimas safras. `deps` só nos testes. */
+export function SatellitePage({ deps }: { deps?: SatelliteDeps } = {}) {
   const { lang, messages: t } = useI18n()
   useDocumentTitle(t.satellite.title)
-  const state = useSatelliteController()
+  const state = useSatelliteController(deps)
   if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
   return (
     <SatelliteView
@@ -156,9 +159,19 @@ export function SatellitePage() {
       backTo={state.backTo}
       status={state.status}
       onRetry={state.retry}
-      history={state.history}
-      confirmations={state.confirmations}
-      onConfirmSeason={state.confirmSeason}
+      listen={state.listen}
+      xray={state.xray}
+      detail={state.detail}
+      onOpenDetail={state.openDetail}
+      onCloseDetail={state.closeDetail}
+      soil={state.soil}
+      onChooseSoil={state.chooseSoil}
+      chart={state.chart}
+      seasons={state.seasons}
+      onAnswerSeason={state.answerSeason}
+      onChooseCurrent={state.chooseCurrent}
+      noSoy={state.noSoy}
+      adjustTo={state.adjustTo}
       share={
         state.share && {
           state: state.share,
@@ -168,20 +181,7 @@ export function SatellitePage() {
           onSend: (year) => void state.sendShare(year),
         }
       }
-      noSoy={state.noSoy}
-      adjustTo={state.adjustTo}
-      rain={state.rain}
-      climate={state.climate}
-      soil={state.soil}
-      soilOpen={state.soilOpen}
-      onToggleSoil={state.toggleSoil}
-      onChooseSoil={state.chooseSoil}
       onConfirm={state.confirm}
-      xray={state.xray}
-      heatmap={state.heatmap}
-      alerts={state.alerts}
-      cards={state.cards}
-      answerTo={state.answerTo}
     />
   )
 }
@@ -263,6 +263,32 @@ export function PlanPage() {
       onReset={state.reset}
       onAnswerToday={state.answerToday}
       communityTo={state.communityTo}
+    />
+  )
+}
+
+/**
+ * Tela final "Seu planejamento" (`/planejamento`, tarefa 0058): por enquanto, os alertas, os 20 anos de chuva e o
+ * clima 2041–2060 que saíram do raio-X. Será refeita no próximo pacote.
+ */
+export function PlanningPage() {
+  const { lang, messages: t } = useI18n()
+  useDocumentTitle(t.planning.title)
+  const state = usePlanningController()
+  if (state.redirectTo) return <Navigate to={state.redirectTo} replace />
+  return (
+    <PlanningView
+      t={t}
+      lang={lang}
+      backTo={state.backTo}
+      status={state.status}
+      onRetry={state.retry}
+      listen={state.listen}
+      alerts={state.alerts}
+      cards={state.cards}
+      rain={state.rain}
+      climate={state.climate}
+      answerTo={state.answerTo}
     />
   )
 }

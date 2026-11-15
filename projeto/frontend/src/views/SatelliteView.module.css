@@ -1,199 +1,458 @@
-/* Tela 4: bloco "Confirme as últimas safras" dentro do cartão do histórico */
-.confirm {
+/*
+ * Tela 4 "Pronto. O satélite já viu o resto." (protótipo do pacote 2, tarefa 0058). Contêiner de 1280 px com
+ * margem de 52 px (20 px no celular): o painel escuro do raio-X, "Suas últimas safras" num cartão branco e o
+ * "Ver o que plantar" (preso embaixo no celular).
+ */
+.page {
+  width: 100%;
+  max-width: var(--page-width-v4);
+  margin-inline: auto;
+  padding: 22px var(--page-margin-v4) 36px;
+  color: var(--color-text-muted);
+}
+
+.title {
+  margin: 18px 0 0;
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+/* A frase e o "Ouvir resumo" na mesma linha no computador, empilhados no celular */
+.sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin-top: 8px;
+}
+
+.sub p {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.4;
+}
+
+.state {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-stack);
+  margin-top: 22px;
+}
+
+.page > section:first-of-type {
+  margin-top: 22px;
+}
+
+/* Modal de um bloco: o nome, o número grande, o texto, a fonte e o "Saiba mais" */
+.detail {
+  color: var(--color-text-muted);
+}
+
+.detailLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-info);
+}
+
+.detailValue {
+  margin: 6px 0 0;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
+}
+
+.detailValue small {
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+}
+
+.detailText {
+  margin: 14px 0 0;
+  font-size: var(--font-size-small);
+  line-height: 1.65;
+}
+
+.detailText strong {
+  color: var(--color-text);
+}
+
+.detailSource {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-tiny);
+  line-height: 1.5;
+  color: var(--color-text-soft);
+}
+
+.detailGuide {
+  margin-top: 12px;
+}
+
+/* "Sua terra é diferente?" (no modal do Solo e no cartão sem raio-X) */
+.soilChooser {
+  margin-top: 14px;
+}
+
+.soilChooserTitle {
+  margin: 0 0 8px;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Mesmo tamanho marcado ou não: só a cor muda (a tela não pula) */
+.chip {
+  height: 36px;
+  padding: 0 13px;
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--color-primary);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.chip:focus-visible,
+.cta:focus-visible,
+.soyWarningLink:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Sem o raio-X: a terra num cartão claro */
+.soilCard {
+  margin-top: 22px;
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.soilCardTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.soilCardText {
+  margin: 4px 0 0;
+  font-size: var(--font-size-caption);
+}
+
+/* Suas últimas safras */
+.seasons {
+  margin-top: 20px;
+  padding: 22px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.seasonsTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.seasonsTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.25;
+  color: var(--color-text);
+}
+
+.seasonsSub {
+  margin: 4px 0 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.satStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: var(--radius-2xs);
+  background: var(--color-tint-blue);
+  color: var(--color-info);
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+}
+
+.satStatus svg {
+  flex: none;
+}
+
+.satStatus[data-reading='false'] {
+  background: var(--color-sat-status-bg);
+  color: var(--color-text-soft);
+}
+
+.soyWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-outside-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-outside-bg);
+  color: var(--color-outside-text);
+  font-size: var(--font-size-caption);
+  line-height: 1.45;
+}
+
+.soyWarning svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--color-outside);
+}
+
+.soyWarning p {
+  margin: 0;
+}
+
+.soyWarningTitle {
+  font-weight: var(--font-weight-semibold);
+}
+
+.soyWarningLink {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--color-outside-text);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.chart {
+  margin-top: 16px;
+}
+
+.confirm {
   margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-divider);
 }
 
 .confirmTitle {
+  margin: 0;
   font-family: var(--font-display);
-  font-size: var(--font-size-body);
+  font-size: 17px;
   font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
+  color: var(--color-text);
 }
 
-.confirmRow {
+.confirmSub {
+  margin: 4px 0 10px;
+  font-size: var(--font-size-caption);
+  line-height: 1.45;
+}
+
+.share {
+  margin-top: 16px;
+}
+
+.seasonsFoot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2) var(--space-3);
+  gap: 12px;
+  margin-top: 14px;
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-soft);
 }
 
-.confirmYear {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* Aviso de "não parece lavoura de soja" quando o histórico aparece (o produtor confirmou anos) */
-.noSoyNote {
-  margin-top: 12px;
-  font-size: var(--font-size-small);
-  color: var(--color-title-on-orange-tint);
-}
-
-/* Raio-X da sua terra (tarefa 0043): cabeçalho do painel escuro */
-.xrayHeader {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.xrayHeaderText {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  font-size: var(--font-size-small);
-  color: var(--color-instrument-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.xrayPlace {
-  font-family: var(--font-display);
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-instrument-text);
-}
-
-/* Links e botão dentro do painel escuro (contraste 7,9:1 sobre os blocos) */
-.panelLink,
-.panelButton {
+/* Coluna da direita do gráfico: a resposta do produtor (✓ verde; "Deixei parado" laranja) e o plano (azul) */
+.answer {
   display: inline-flex;
   align-items: center;
-  min-height: var(--touch-min);
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-instrument-link);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.panelLink:focus-visible,
-.panelButton:focus-visible {
-  outline: 2px solid var(--color-instrument-link);
-  outline-offset: 2px;
-}
-
-/* Histórico do talhão */
-.historyHead {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
-.historyIcon {
-  display: flex;
-  flex: 0 0 auto;
+  gap: 6px;
+  min-width: 0;
+  font-weight: var(--font-weight-bold);
   color: var(--color-primary);
 }
 
-.historyTitle,
-.sectionTitle,
-.smallTitle {
-  font-family: var(--font-display);
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
+.answer span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Aviso "Não parece uma lavoura de soja": laranja, com o triângulo, sem selo de "pronto" */
-.soyWarning {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  border-radius: var(--radius-sm);
-  background: var(--color-tint-orange);
-  border: 1px solid var(--color-border-orange-tint);
-  color: var(--color-title-on-orange-tint);
+.answer svg {
+  flex: none;
+  color: var(--color-primary);
 }
 
-.warningIcon {
-  display: flex;
-  flex: 0 0 auto;
-  color: var(--color-risk);
+.answer[data-tone='fallow'] {
+  color: var(--color-fallow);
 }
 
-.warningTitle {
-  font-weight: var(--font-weight-semibold);
-}
-
-/* Alertas da sua área: uma fileira de cartões curtos */
-.alerts {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: var(--space-4);
-}
-
-.alert {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--color-tint-orange);
-  border: 1px solid var(--color-border-orange-tint);
-  color: var(--color-title-on-orange-tint);
-}
-
-.alertIcon {
-  display: flex;
-  flex: 0 0 auto;
-  color: var(--color-risk);
-}
-
-.alertText {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-.alertTitle {
-  font-family: var(--font-display);
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-semibold);
-}
-
-/* Cartões menores lado a lado; um por linha no celular */
-.cardsRow {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-  gap: var(--space-stack);
-  align-items: start;
-}
-
-.bigNumber {
-  font-family: var(--font-display);
-  font-size: var(--font-size-best);
+.plan {
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: var(--font-weight-bold);
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-primary-strong);
+  color: var(--color-info);
 }
 
-.mediumNumber {
-  font-family: var(--font-display);
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
+/* Ação: o que falta e "Ver o que plantar" */
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.actionText {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--color-text-soft);
+}
+
+.barStatus {
+  display: none;
 }
 
 .cta {
-  max-width: 340px;
-  width: 100%;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 58px;
+  padding: 0 30px;
+  border: 0;
+  border-radius: var(--radius-cta);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-cta);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-size: 17px;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cta:hover {
+  background: var(--color-primary-strong);
+}
+
+/* Celular e tablet (até 900 px): uma coluna mais justa e o botão preso embaixo */
+@media (max-width: 900px) {
+  .page {
+    padding: 14px var(--page-margin-v4) 24px;
+  }
+
+  /* Espaço embaixo da página para a barra fixa não cobrir o rodapé */
+  :global(body):has(.action) {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .title {
+    margin-top: 12px;
+    font-size: 28px;
+  }
+
+  .sub {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .sub p {
+    font-size: 15.5px;
+  }
+
+  .page > section:first-of-type {
+    margin-top: 16px;
+  }
+
+  .seasons {
+    padding: 18px 14px;
+  }
+
+  .seasonsTitle {
+    font-size: 19px;
+  }
+
+  .action {
+    position: fixed;
+    z-index: 1000;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin: 0;
+    padding: 10px var(--page-margin-v4) calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-border);
+    background: var(--color-confirm-bar);
+    box-shadow: var(--shadow-confirm-bar);
+  }
+
+  .actionText {
+    display: none;
+  }
+
+  .barStatus {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+  }
+
+  .barStatus svg {
+    flex: none;
+    color: var(--color-primary);
+  }
+
+  .cta {
+    width: 100%;
+    height: 54px;
+  }
 }

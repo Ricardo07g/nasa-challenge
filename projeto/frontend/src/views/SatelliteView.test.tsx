@@ -2,49 +2,63 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
+import type { SeasonsModel, XRayModel } from '../controllers/useSatelliteController'
 import { en } from '../i18n/messages.en'
 import { pt } from '../i18n/messages.pt'
 import { buildRaioX } from '../repositories/mocks/raioXFixture'
-import { alertList, heatmap, xRayBlocks } from '../services/raioXService'
+import { xRayBlocks } from '../services/raioXService'
+import { seasonChart } from '../services/seasonChartService'
 import { SatelliteView, type SatelliteViewProps } from './SatelliteView'
+
+const RAIO = buildRaioX({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
+const XRAY: XRayModel = { raio: RAIO, blocks: xRayBlocks(RAIO), place: 'Uberlândia (MG)', demo: true, point: { lat: -18.9543, lon: -48.1993 } }
+
+const SEASONS: SeasonsModel = {
+  rows: [
+    { year: 2024, satellite: { soy: true, after: 'plantou', ndvi: 0.71 } },
+    { year: 2025, satellite: { soy: true, after: 'plantou', ndvi: 0.8 } },
+    { year: 2026, satellite: { soy: true, after: 'plantou', ndvi: 0.89 } },
+  ],
+  answers: {},
+  current: { choice: null, harvestDate: '2027-03-03', changeDateTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=tarde&data=2027-03-03' },
+  answered: 0,
+  seen: { kind: 'all', count: 3 },
+}
+
+const historico = {
+  anos: Array.from({ length: 10 }, (_, index) => ({ ano: 2017 + index, situacao: 'plantou' as const, ndvi_max: 0.8, n_obs: 12 })),
+  parado: 0,
+  plantou: 10,
+  sem_certeza: 0,
+  total: 10,
+  fonte: 'MODIS',
+  janela: '04-01 a 07-31',
+}
 
 function setup(overrides: Partial<SatelliteViewProps> = {}) {
   const props: SatelliteViewProps = {
     t: pt,
     lang: 'pt',
-    backTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=meio',
+    backTo: '/quando?lat=-18.9543&lon=-48.1993&colheita=tarde',
     status: 'ready',
     onRetry: vi.fn(),
-    history: {
-      idle: 1,
-      planted: 1,
-      uncertain: 0,
-      noSoy: 0,
-      confirmed: 0,
-      known: 2,
-      total: 2,
-      situations: ['parado', 'plantou'],
-      years: ['2024', '2025'],
-      window: { from: 4, to: 7 },
-    },
-    confirmations: [],
-    onConfirmSeason: vi.fn(),
-    noSoy: false,
-    adjustTo: '/onde?lat=-18.9543&lon=-48.1993&colheita=meio',
-    rain: { years: 20, period: { start: '2005', end: '2024' }, skipped: 0 },
-    climate: { period: { start: '2041', end: '2060' } },
-    soil: { textura: 'argiloso', source: 'map' },
-    soilOpen: false,
-    onToggleSoil: vi.fn(),
+    listen: { supported: true, speaking: false, toggle: vi.fn() },
+    xray: XRAY,
+    detail: null,
+    onOpenDetail: vi.fn(),
+    onCloseDetail: vi.fn(),
+    soil: { textura: 'medio', source: 'map' },
     onChooseSoil: vi.fn(),
+    chart: seasonChart({ strip: RAIO.historico_ndvi, historico, answers: {}, current: null }),
+    seasons: SEASONS,
+    onAnswerSeason: vi.fn(),
+    onChooseCurrent: vi.fn(),
+    noSoy: false,
+    adjustTo: '/onde?lat=-18.9543&lon=-48.1993&colheita=tarde',
+    share: null,
     onConfirm: vi.fn(),
-    xray: null,
-    heatmap: null,
-    alerts: [],
-    cards: null,
-    answerTo: '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio',
     ...overrides,
-  } as SatelliteViewProps
+  }
   render(
     <MemoryRouter>
       <SatelliteView {...props} />
@@ -53,577 +67,268 @@ function setup(overrides: Partial<SatelliteViewProps> = {}) {
   return props
 }
 
-describe('SatelliteView (tela 4)', () => {
-  it('sem o raio-X: histórico (sem ✓) e os 3 cartões de antes, cada um com o ✓ de pronto', () => {
-    setup()
+const NO_READING_CHART = seasonChart({ strip: null, historico: null, answers: {}, current: null, harvestDay: '03-03' })
+const NO_READING: SeasonsModel = {
+  ...SEASONS,
+  rows: SEASONS.rows.map((row) => ({ ...row, satellite: null })),
+  seen: { kind: 'no-reading', count: 0 },
+}
 
+describe('SatelliteView (tela 4: raio-X e últimas safras)', () => {
+  it('topo: Voltar, o título, o subtítulo novo e o "Ouvir resumo"', async () => {
+    const props = setup()
+
+    expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute('href', props.backTo)
     expect(screen.getByRole('heading', { level: 1, name: 'Pronto. O satélite já viu o resto.' })).toBeInTheDocument()
-    expect(screen.getByText('Você não precisa preencher mais nada.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Na entressafra, sua área ficou parada em 1 de 2 anos.' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Plantou em 1 de 2 anos' })).toHaveTextContent('20242025')
-    expect(screen.getByText('Ficou parado')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: '20 anos de chuva daqui' })).toBeInTheDocument()
-    expect(screen.getByText('De 2005 a 2024, dia por dia.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Terra argilosa' })).toBeInTheDocument()
-    expect(screen.getByText('Do mapa de solos.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Clima dos próximos anos' })).toBeInTheDocument()
-    expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
-    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
-      'href',
-      '/quando?lat=-18.9543&lon=-48.1993&colheita=meio',
-    )
+    expect(screen.getByText('Confira o raio-X da sua terra e confirme as últimas safras.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvir resumo' }))
+    expect(props.listen.toggle).toHaveBeenCalled()
   })
 
-  const withUncertain: SatelliteViewProps['history'] = {
-    idle: 5,
-    planted: 4,
-    uncertain: 1,
-    noSoy: 0,
-    confirmed: 0,
-    known: 9,
-    total: 10,
-    situations: ['parado', 'plantou', 'parado', 'plantou', 'parado', 'incerto', 'plantou', 'parado', 'parado', 'plantou'],
-    years: ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'],
-    window: { from: 4, to: 7 },
-  }
-
-  it('com ano sem certeza, a frase conta só os anos certos e o ano fica cinza com "?"', () => {
-    setup({ history: withUncertain })
-
-    expect(screen.getByRole('heading', { name: 'Na entressafra, sua área ficou parada em 5 de 10 anos.' })).toBeInTheDocument()
-    const strip = screen.getByRole('img', { name: 'Plantou em 4 de 9 anos (1 sem certeza)' })
-    expect(strip.querySelectorAll('[data-state="unknown"]')).toHaveLength(1)
-    expect(strip.querySelector('[data-state="unknown"]')).toHaveTextContent('?')
-    expect(strip.querySelectorAll('[data-state="good"]')).toHaveLength(4)
-    expect(strip.querySelectorAll('[data-state="bad"]')).toHaveLength(5)
-    expect(screen.getByText('Sem certeza')).toBeInTheDocument()
-  })
-
-  it('"sem_dado" também vira o quadrinho cinza com "?"', () => {
-    setup({ history: { ...withUncertain, situations: [...withUncertain!.situations.slice(0, 5), 'sem_dado', ...withUncertain!.situations.slice(6)] } })
-
-    const strip = screen.getByRole('img', { name: 'Plantou em 4 de 9 anos (1 sem certeza)' })
-    expect(strip.querySelector('[data-state="unknown"]')).toHaveTextContent('?')
-  })
-
-  it('sem ano sem certeza, a frase fica sem o parêntese e a legenda sem o cinza', () => {
-    setup()
-
-    expect(screen.getByRole('heading', { name: 'Na entressafra, sua área ficou parada em 1 de 2 anos.' })).toBeInTheDocument()
-    expect(screen.queryByText('Sem certeza')).not.toBeInTheDocument()
-  })
-
-  it('embaixo da faixa, diz de onde veio: o satélite MODIS e os meses olhados', () => {
-    setup({ history: withUncertain })
-
-    expect(screen.getByText('Visto pelo satélite MODIS (NASA), de abril a julho de cada ano')).toBeInTheDocument()
-  })
-
-  it('os meses da linha da fonte seguem a janela do dado', () => {
-    setup({ history: { ...withUncertain!, window: { from: 5, to: 8 } } })
-
-    expect(screen.getByText('Visto pelo satélite MODIS (NASA), de maio a agosto de cada ano')).toBeInTheDocument()
-  })
-
-  it('17 anos de chuva: o número vem do dado e o subtítulo diz quantos anos ficaram de fora', () => {
-    setup({ rain: { years: 17, period: { start: '2005', end: '2024' }, skipped: 3 } })
-
-    expect(screen.getByRole('heading', { name: '17 anos de chuva daqui' })).toBeInTheDocument()
-    expect(screen.getByText('De 2005 a 2024, dia por dia. 3 anos ficaram de fora por falta de dado.')).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: '20 anos de chuva daqui' })).not.toBeInTheDocument()
-  })
-
-  it('um ano de fora fica no singular', () => {
-    setup({ rain: { years: 19, period: { start: '2005', end: '2024' }, skipped: 1 } })
-
-    expect(screen.getByText('De 2005 a 2024, dia por dia. 1 ano ficou de fora por falta de dado.')).toBeInTheDocument()
-  })
-
-  it('com o número de anos mas sem o período, não inventa as datas', () => {
-    setup({ rain: { years: 17, period: null, skipped: 0 } })
-
-    expect(screen.getByRole('heading', { name: '17 anos de chuva daqui' })).toBeInTheDocument()
-    expect(screen.getByText('Dia por dia.')).toBeInTheDocument()
-  })
-
-  it('sem dado de chuva, o cartão da chuva não aparece (decisão D2, nada de "Ainda não conectado")', () => {
-    setup({ rain: null })
-
-    expect(screen.queryByRole('heading', { name: 'Chuva daqui' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
-    expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(2)
-  })
-
-  it('com o CMIP6, o clima dos próximos anos aparece pronto, com o período do dado', () => {
-    setup()
-
-    const title = screen.getByRole('heading', { name: 'Clima dos próximos anos' })
-    expect(screen.getByText('Como a chuva e o calor devem mudar de 2041 a 2060.')).toBeInTheDocument()
-    expect(title.closest('[data-status]')).toHaveAttribute('data-status', 'ready')
-  })
-
-  it('com o CMIP6 mas sem o período, não inventa o ano', () => {
-    setup({ climate: { period: null } })
-
-    expect(screen.getByText('Como a chuva e o calor devem mudar nos próximos anos.')).toBeInTheDocument()
-  })
-
-  it('sem o CMIP6, o cartão do clima dos próximos anos não aparece (decisão D2)', () => {
-    setup({ climate: null })
-
-    expect(screen.queryByRole('heading', { name: 'Clima dos próximos anos' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Como a chuva e o calor devem mudar/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
-    expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(2)
-  })
-
-  it('sem histórico do satélite e sem anos para confirmar, o cartão do histórico não aparece (decisão D2)', () => {
-    setup({ history: null })
-
-    expect(screen.queryByRole('heading', { name: /ficou parada/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'O que cresceu depois da soja' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('img', { name: /Plantou em/ })).not.toBeInTheDocument()
-    expect(screen.getAllByRole('img', { name: 'Pronto' })).toHaveLength(3)
-  })
-
-  describe('confirmação das últimas safras (tarefa 0039)', () => {
-    const rows: SatelliteViewProps['confirmations'] = [
-      { year: 2024, satellite: 'parado', choice: null },
-      { year: 2025, satellite: 'plantou', choice: 'parado' },
-      { year: 2026, satellite: null, choice: null },
-    ]
-
-    it('um grupo por ano, com o que o satélite viu e "Plantei" / "Deixei parado"', () => {
-      setup({ confirmations: rows })
-
-      expect(screen.getByRole('heading', { name: 'Confirme as últimas safras' })).toBeInTheDocument()
-      for (const year of [2024, 2025, 2026]) {
-        const group = screen.getByRole('group', { name: `Depois da soja de ${year}` })
-        expect(within(group).getByRole('button', { name: 'Plantei' })).toBeInTheDocument()
-        expect(within(group).getByRole('button', { name: 'Deixei parado' })).toBeInTheDocument()
-      }
-      expect(screen.getByText('O satélite viu: ficou parado')).toBeInTheDocument()
-      expect(screen.getByText('O satélite viu: plantou')).toBeInTheDocument()
-      // 2026 sem dado do satélite: começa vazio
-      expect(screen.getAllByText(/O satélite viu/)).toHaveLength(2)
-      const marked = within(screen.getByRole('group', { name: 'Depois da soja de 2025' }))
-      expect(marked.getByRole('button', { name: 'Deixei parado' })).toHaveAttribute('aria-pressed', 'true')
-      expect(marked.getByRole('button', { name: 'Plantei' })).toHaveAttribute('aria-pressed', 'false')
-    })
-
-    it('marcar chama o controller; tocar de novo na resposta marcada tira a confirmação', async () => {
-      const props = setup({ confirmations: rows })
-
-      await userEvent.click(within(screen.getByRole('group', { name: 'Depois da soja de 2024' })).getByRole('button', { name: 'Plantei' }))
-      await userEvent.click(
-        within(screen.getByRole('group', { name: 'Depois da soja de 2025' })).getByRole('button', { name: 'Deixei parado' }),
-      )
-
-      expect(props.onConfirmSeason).toHaveBeenNthCalledWith(1, 2024, 'plantou')
-      expect(props.onConfirmSeason).toHaveBeenNthCalledWith(2, 2025, null)
-    })
-
-    it('sem histórico do satélite, o produtor confirma direto, sem "Ainda não conectado" (decisão D2)', () => {
-      setup({ history: null, confirmations: rows.map((row) => ({ ...row, satellite: null })) })
-
-      expect(screen.getByRole('heading', { name: 'Confirme as últimas safras' })).toBeInTheDocument()
-      expect(screen.getByRole('group', { name: 'Depois da soja de 2026' })).toBeInTheDocument()
-      expect(screen.queryByText(/O satélite viu/)).not.toBeInTheDocument()
-      expect(screen.queryByText(/Ainda não conectado/)).not.toBeInTheDocument()
-    })
-
-    it('sem anos para confirmar (API antiga), o bloco não aparece', () => {
+  describe('painel do raio-X', () => {
+    it('cabeçalho: o lugar (a lavoura de demonstração), as coordenadas, a leitura mais recente e a nota', () => {
       setup()
 
-      expect(screen.queryByRole('heading', { name: 'Confirme as últimas safras' })).not.toBeInTheDocument()
+      const panel = screen.getByRole('region', { name: 'Lavoura de demonstração, perto de Uberlândia (MG)' })
+      expect(within(panel).getByText('Raio-X da sua terra')).toBeInTheDocument()
+      expect(within(panel).getByText('-18,9543 · -48,1993')).toBeInTheDocument()
+      expect(within(panel).getByText('Leitura mais recente: 10 de novembro de 2026')).toBeInTheDocument()
+      expect(
+        within(panel).getByText('Toque num bloco para ver os detalhes. Cada dado vale para a área em volta do ponto, no tamanho indicado no selo.'),
+      ).toBeInTheDocument()
     })
 
-    it('com anos confirmados, a legenda diz quantos foram', () => {
-      setup({ history: { ...withUncertain!, confirmed: 2 } })
+    it('fora da demonstração, o lugar é "Perto de …"', () => {
+      setup({ xray: { ...XRAY, demo: false } })
 
-      expect(screen.getByText('2 anos confirmados por você')).toBeInTheDocument()
+      expect(screen.getByRole('region', { name: 'Perto de Uberlândia (MG)' })).toBeInTheDocument()
     })
 
-    it('depois de confirmar, oferece "Compartilhar com a comunidade" no bloco (tarefa 0047)', async () => {
-      const onToggle = vi.fn()
+    it('8 blocos enxutos, cada um um botão: nome, número, uma linha e o selo, sem o texto longo', () => {
+      setup()
+
+      const panel = screen.getByRole('region', { name: /Lavoura de demonstração/ })
+      const blocks = within(panel).getAllByRole('button')
+      expect(blocks).toHaveLength(8)
+      expect(blocks[0]).toHaveAccessibleName('Solo 32 % de argila Terra média SoilGrids · ISRIC · 250 m Ver detalhes')
+      expect(blocks[1]).toHaveTextContent('Aguenta ~11 dias sem chuva na floração')
+      expect(within(panel).queryByText(/Pelo mapa de solos SoilGrids/)).not.toBeInTheDocument()
+      expect(within(panel).queryByRole('link', { name: /Saiba mais/ })).not.toBeInTheDocument()
+    })
+
+    it('tocar num bloco pede o detalhe dele', async () => {
+      const props = setup()
+
+      await userEvent.click(screen.getByRole('button', { name: /^Água que a terra guarda/ }))
+      expect(props.onOpenDetail).toHaveBeenCalledWith('water')
+    })
+
+    it('o modal do bloco: o título, o número, o texto completo, a fonte e o "Saiba mais" em nova aba', () => {
+      setup({ detail: 'water' })
+
+      const dialog = screen.getByRole('dialog', { name: 'Quanta água a terra guarda' })
+      expect(within(dialog).getByText('Água que a terra guarda')).toBeInTheDocument()
+      expect(within(dialog).getByText('50')).toBeInTheDocument()
+      expect(within(dialog).getByText('50 mm', { selector: 'strong' })).toBeInTheDocument()
+      expect(dialog).toHaveTextContent('Na floração de milho com braquiária, por volta de 19 de abril, a planta gasta uns 4,3 mm por dia.')
+      expect(within(dialog).getByText(/evapotranspiração de 3,6 mm do NASA POWER/)).toBeInTheDocument()
+      const link = within(dialog).getByRole('link', { name: /Saiba mais: como ler o raio-X da sua terra/ })
+      expect(link).toHaveAttribute('href', '/guia/raio-x')
+      expect(link).toHaveAttribute('target', '_blank')
+    })
+
+    it('o modal do Solo tem "Sua terra é diferente?": a terra marcada e a troca', async () => {
+      const props = setup({ detail: 'soil', soil: { textura: 'argiloso', source: 'map' } })
+
+      const dialog = screen.getByRole('dialog', { name: 'Do que a sua terra é feita' })
+      const choose = within(dialog).getByRole('group', { name: 'Sua terra é diferente?' })
+      expect(within(choose).getAllByRole('button').map((button) => button.textContent)).toEqual(['Arenosa', 'Média', 'Argilosa'])
+      expect(within(choose).getByRole('button', { name: 'Argilosa' })).toHaveAttribute('aria-pressed', 'true')
+      await userEvent.click(within(choose).getByRole('button', { name: 'Arenosa' }))
+      expect(props.onChooseSoil).toHaveBeenCalledWith('arenoso')
+    })
+
+    it('fechar o modal pede para fechar', async () => {
+      const props = setup({ detail: 'heat' })
+
+      await userEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+      expect(props.onCloseDetail).toHaveBeenCalled()
+    })
+
+    it('sem o raio-X, o painel não aparece e a terra fica num cartão claro, com a troca', async () => {
+      const props = setup({ xray: null, soil: { textura: 'argiloso', source: 'map' } })
+
+      expect(screen.queryByRole('region', { name: /Lavoura de demonstração/ })).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Terra argilosa' })).toBeInTheDocument()
+      await userEvent.click(within(screen.getByRole('group', { name: 'Sua terra é diferente?' })).getByRole('button', { name: 'Média' }))
+      expect(props.onChooseSoil).toHaveBeenCalledWith('medio')
+    })
+  })
+
+  describe('suas últimas safras', () => {
+    it('com NDVI: o título, desde quando o satélite olha e o que ele viu da soja', () => {
+      setup()
+
+      const section = screen.getByRole('region', { name: 'Suas últimas safras' })
+      expect(within(section).getByText('O que o satélite viu na sua área desde a safra 2016/17, e o que você confirmou.')).toBeInTheDocument()
+      expect(within(section).getByText('O satélite viu a soja nas 3 últimas safras')).toBeInTheDocument()
+    })
+
+    it('o gráfico: todas as safras com leitura, a safra atual tracejada e o título contado pelas respostas', () => {
+      const chart = seasonChart({
+        strip: RAIO.historico_ndvi,
+        historico,
+        answers: { 2024: 'milho_braquiaria', 2025: 'milho_safrinha', 2026: 'pousio' },
+        current: 'milho_safrinha',
+      })
+      setup({ chart })
+
+      const figure = screen.getByRole('figure', { name: 'Na entressafra, sua área ficou parada em 1 de 10 safras' })
+      const rows = within(figure).getAllByRole('listitem').filter((item) => item.hasAttribute('data-tone'))
+      expect(rows).toHaveLength(11)
+      expect(rows[0]).toHaveTextContent('2016/17jan–jul 2017satélite: plantou')
+      expect(rows[7]).toHaveTextContent('2023/24jan–jul 2024Milho com braquiária')
+      expect(rows[9]).toHaveTextContent('Deixei parado')
+      expect(rows[10]).toHaveTextContent('2026/27jan–jul 2027pensa em milho sozinho')
+      expect(within(figure).getByText('MODIS NDVI · NASA · 250 m')).toBeInTheDocument()
+    })
+
+    it('safra atual sem escolha: "a planejar"; "Ainda não sei": "ainda não sabe"', () => {
+      setup()
+      expect(screen.getByRole('figure')).toHaveTextContent('2026/27jan–jul 2027a planejar')
+    })
+
+    it('sem NDVI: só as 3 últimas, listradas, e os textos de "marque você"', () => {
+      setup({ chart: NO_READING_CHART, seasons: NO_READING })
+
+      const section = screen.getByRole('region', { name: 'Suas últimas safras' })
+      expect(within(section).getByText('Marque o que você fez nas últimas 3 safras e o que pensa plantar nesta.')).toBeInTheDocument()
+      expect(within(section).getByText('Sem leitura do satélite neste ponto: marque você')).toBeInTheDocument()
+      const figure = within(section).getByRole('figure', { name: 'As últimas safras, pelo que você marcar' })
+      expect(within(figure).getAllByRole('listitem').filter((item) => item.hasAttribute('data-tone'))).toHaveLength(4)
+      expect(within(figure).getAllByText('Falta confirmar')).toHaveLength(3)
+      expect(within(figure).getByText('sem leitura do satélite')).toBeInTheDocument()
+      expect(within(section).getByText('Sem leitura do satélite neste ponto, o que vale é a sua resposta.')).toBeInTheDocument()
+    })
+
+    it('confirmações: o formulário das 3 safras e a safra atual, com a data da colheita e o "Trocar data"', async () => {
+      const props = setup()
+
+      expect(screen.getByRole('heading', { level: 3, name: 'Confirme as últimas safras' })).toBeInTheDocument()
+      expect(screen.getByText('O satélite vê que houve plantio, mas não qual planta. Sua resposta vale no lugar dele.')).toBeInTheDocument()
+      expect(screen.getByText('colheita prevista em 3 de março de 2027')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Trocar data' })).toHaveAttribute('href', props.seasons.current.changeDateTo)
+
+      await userEvent.click(within(screen.getByRole('group', { name: 'Depois da soja na safra 2023/24' })).getByRole('button', { name: 'Sorgo' }))
+      expect(props.onAnswerSeason).toHaveBeenCalledWith(2024, 'sorgo')
+      await userEvent.click(
+        within(screen.getByRole('group', { name: 'O que você pensa plantar depois da soja 2026/27' })).getByRole('button', { name: 'Milheto' }),
+      )
+      expect(props.onChooseCurrent).toHaveBeenCalledWith('milheto')
+    })
+
+    it('rodapé: para que servem as respostas e o "Saiba mais: rotação de culturas" em nova aba', () => {
+      setup()
+
+      expect(screen.getByText('Usamos essas respostas para comparar o seu plano com “como é hoje”.')).toBeInTheDocument()
+      const link = screen.getByRole('link', { name: /Saiba mais: rotação de culturas/ })
+      expect(link).toHaveAttribute('href', '/guia/rotacao-de-culturas')
+      expect(link).toHaveAttribute('target', '_blank')
+    })
+
+    it('ponto sem soja: avisa e oferece ajustar no mapa', () => {
+      const props = setup({ noSoy: true })
+
+      expect(screen.getByText('Não parece uma lavoura de soja. Confira o ponto no mapa.')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Ajustar no mapa' })).toHaveAttribute('href', props.adjustTo)
+    })
+
+    it('com safras respondidas fora da demonstração, oferece compartilhar com a comunidade', () => {
       setup({
-        confirmations: rows,
         share: {
-          state: { open: false, showNotice: true, rows: [] },
-          communityTo: '/comunidade?lat=-18.9543&lon=-48.1993&colheita=meio',
-          onToggle,
+          state: { open: false, showNotice: false, rows: [] },
+          communityTo: '/comunidade',
+          onToggle: vi.fn(),
           onChange: vi.fn(),
           onSend: vi.fn(),
         },
       })
 
-      await userEvent.click(screen.getByRole('button', { name: 'Compartilhar com a comunidade' }))
-      expect(onToggle).toHaveBeenCalled()
-    })
-
-    it('sem safra confirmada (ou na lavoura de demonstração), não oferece compartilhar', () => {
-      setup({ confirmations: rows, share: null })
-
-      expect(screen.queryByRole('button', { name: 'Compartilhar com a comunidade' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Compartilhar com a comunidade' })).toBeInTheDocument()
     })
   })
 
-  describe('soja de cada ano (tarefa 0039)', () => {
-    it('ano sem soja: traço na faixa e legenda própria "Sem soja"', () => {
-      const situations = [...withUncertain!.situations]
-      situations[2] = 'sem_soja'
-      setup({ history: { ...withUncertain!, idle: 4, known: 8, noSoy: 1, situations } })
+  describe('ação', () => {
+    it('"Ver o que plantar" com o que falta: nada é obrigatório', async () => {
+      const props = setup()
 
-      const strip = screen.getByRole('img', { name: 'Plantou em 4 de 8 anos (1 sem certeza)' })
-      expect(strip.querySelector('[data-state="none"]')).toHaveTextContent('–')
-      expect(screen.getByText('Sem soja')).toBeInTheDocument()
+      expect(screen.getByText('Faltam 3 safras. Pode seguir: sem resposta, usamos o que o satélite viu.')).toBeInTheDocument()
+      expect(screen.getByText('0 de 3 safras confirmadas')).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: 'Ver o que plantar' }))
+      expect(props.onConfirm).toHaveBeenCalled()
     })
 
-    it('sem ano sem soja, a legenda não fala de soja', () => {
-      setup()
-
-      expect(screen.queryByText('Sem soja')).not.toBeInTheDocument()
+    it('falta 1, sem satélite, e tudo confirmado', () => {
+      setup({ seasons: { ...NO_READING, answered: 2 }, chart: NO_READING_CHART })
+      expect(screen.getByText('Falta 1 safra. Pode seguir: sem resposta, o plano não compara com “como é hoje”.')).toBeInTheDocument()
     })
 
-    it('nenhum ano com soja: o cartão diz que não parece lavoura de soja e oferece ajustar no mapa', () => {
-      setup({ history: null, noSoy: true })
-
-      expect(
-        screen.getByRole('heading', { name: 'Não parece uma lavoura de soja. Confira o ponto no mapa.' }),
-      ).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Ajustar no mapa' })).toHaveAttribute(
-        'href',
-        '/onde?lat=-18.9543&lon=-48.1993&colheita=meio',
-      )
-      expect(screen.queryByText('Ainda não conectado')).not.toBeInTheDocument()
-    })
-
-    it('com safras confirmadas num ponto sem soja, o aviso continua no cartão', () => {
-      setup({ noSoy: true })
-
-      expect(screen.getByRole('heading', { name: 'Na entressafra, sua área ficou parada em 1 de 2 anos.' })).toBeInTheDocument()
-      expect(screen.getByText('Não parece uma lavoura de soja. Confira o ponto no mapa.')).toBeInTheDocument()
+    it('tudo confirmado', () => {
+      setup({ seasons: { ...SEASONS, answered: 3 } })
+      expect(screen.getByText('Últimas safras confirmadas.')).toBeInTheDocument()
+      expect(screen.getByText('3 safras confirmadas')).toBeInTheDocument()
     })
   })
 
-  it('confirmação e soja em inglês', () => {
-    setup({
-      t: en,
-      lang: 'en',
-      history: null,
-      noSoy: true,
-      confirmations: [{ year: 2024, satellite: 'sem_soja', choice: null }],
-    })
-
-    expect(screen.getByRole('heading', { name: "This doesn't look like a soybean field. Check the point on the map." })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Confirm your last seasons' })).toBeInTheDocument()
-    const group = screen.getByRole('group', { name: 'After the 2024 soybeans' })
-    expect(within(group).getByRole('button', { name: 'I planted' })).toBeInTheDocument()
-    expect(within(group).getByRole('button', { name: 'I left it idle' })).toBeInTheDocument()
-    expect(screen.getByText('Satellite saw: no soybeans')).toBeInTheDocument()
-  })
-
-  it('"Não é? Trocar" chama o controller', async () => {
-    const props = setup()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Não é? Trocar' }))
-
-    expect(props.onToggleSoil).toHaveBeenCalled()
-  })
-
-  it('com a escolha aberta, mostra as 3 terras com a atual marcada', async () => {
-    const props = setup({ soilOpen: true })
-
-    expect(screen.getByRole('button', { name: 'Fechar' })).toHaveAttribute('aria-expanded', 'true')
-    const group = screen.getByRole('group', { name: 'Qual é a sua terra?' })
-    expect(group.querySelectorAll('button')).toHaveLength(3)
-    expect(screen.getByRole('button', { name: /Argilosa/ })).toHaveAttribute('aria-pressed', 'true')
-    await userEvent.click(screen.getByRole('button', { name: /Arenosa/ }))
-
-    expect(props.onChooseSoil).toHaveBeenCalledWith('arenoso')
-  })
-
-  it('diz de onde veio a terra', () => {
-    setup({ soil: { textura: 'arenoso', source: 'user' } })
-    expect(screen.getByText('Você escolheu.')).toBeInTheDocument()
-  })
-
-  it('"Ver o que plantar" segue para a resposta', async () => {
-    const props = setup()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Ver o que plantar' }))
-
-    expect(props.onConfirm).toHaveBeenCalled()
-  })
-
-  it('enquanto carrega, avisa e mostra os cartões vazios (nunca tela branca)', () => {
-    setup({ status: 'loading' })
-
-    expect(screen.getByRole('status')).toHaveTextContent('Buscando dados do satélite…')
-    expect(screen.queryByRole('button', { name: 'Ver o que plantar' })).not.toBeInTheDocument()
-  })
-
-  it('se não vier, explica, tenta de novo ou abre o exemplo', async () => {
-    const props = setup({ status: 'error' })
-
-    expect(screen.getByRole('alert')).toHaveTextContent('Não conseguimos buscar os dados agora.')
-    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
-    expect(props.onRetry).toHaveBeenCalled()
-    expect(screen.getByRole('link', { name: 'Ver a lavoura de demonstração' })).toHaveAttribute('href', '/exemplo')
+  it('carregando, erro e fora da área', () => {
+    const { unmount } = render(
+      <MemoryRouter>
+        <SatelliteView {...setupProps({ status: 'loading' })} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('Buscando dados do satélite…')).toBeInTheDocument()
+    unmount()
+    render(
+      <MemoryRouter>
+        <SatelliteView {...setupProps({ status: 'outside' })} />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByRole('region', { name: 'Suas últimas safras' })).not.toBeInTheDocument()
   })
 
   it('em inglês', () => {
-    setup({ t: en })
+    setup({ t: en, lang: 'en', xray: { ...XRAY, demo: false } })
 
     expect(screen.getByRole('heading', { level: 1, name: 'Done. The satellite saw the rest.' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Clayey soil' })).toBeInTheDocument()
-  })
-
-  it('o histórico em inglês, com o ano sem certeza e a linha da fonte', () => {
-    setup({ t: en, lang: 'en', history: withUncertain })
-
-    expect(screen.getByRole('heading', { name: 'In the off-season, your field was left idle in 5 of 10 years.' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Planted in 4 of 9 years (1 uncertain)' })).toBeInTheDocument()
-    expect(screen.getByText('Uncertain')).toBeInTheDocument()
-    expect(screen.getByText('Seen by the MODIS satellite (NASA), from April to July each year')).toBeInTheDocument()
-  })
-
-  it('chuva, clima e histórico em inglês: 17 anos, sem o CMIP6 e sem o histórico', () => {
-    setup({ t: en, rain: { years: 17, period: { start: '2005', end: '2024' }, skipped: 3 }, climate: null, history: null })
-
-    expect(screen.getByRole('heading', { name: '17 years of rain right here' })).toBeInTheDocument()
-    expect(screen.getByText('From 2005 to 2024, day by day. 3 years were left out for missing data.')).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Climate in the coming years' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'What grew after soybeans' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Not connected yet/)).not.toBeInTheDocument()
-  })
-
-  it('fora da área com dados preparados: explica e oferece a lavoura de demonstração', () => {
-    setup({ status: 'outside' })
-
-    const outside = screen.getByRole('region', { name: 'Ainda não chegamos aí' })
-    expect(outside).toHaveTextContent(
-      'Por enquanto, os dados estão prontos só para a região de Uberlândia e Uberaba. Vamos ampliar para todo o Triângulo Mineiro.',
-    )
-    expect(screen.getByRole('link', { name: 'Ver a lavoura de demonstração' })).toHaveAttribute('href', '/exemplo')
+    expect(screen.getByRole('region', { name: 'Near Uberlândia (MG)' })).toBeInTheDocument()
+    expect(screen.getByText('-18.9543 · -48.1993')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Your last seasons' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'See what to plant' })).toBeInTheDocument()
   })
 })
 
-describe('raio-X da sua terra (tarefa 0043)', () => {
-  const raio = buildRaioX({ lat: -18.9543, lon: -48.1993, colheita: 'meio' }, 'pt')
-  const xray = { raio, blocks: xRayBlocks(raio), place: 'Uberlândia (MG)', point: { lat: -18.9543, lon: -48.1993 } }
-  const historico = {
-    anos: raio.historico_ndvi!.anos.map((row, index) => ({
-      ano: row.ano,
-      situacao: (index % 2 ? 'plantou' : 'parado') as 'plantou' | 'parado',
-      ndvi_max: 0.5,
-      n_obs: 5,
-      fonte_ano: (row.ano === 2025 ? 'produtor' : 'satelite') as 'produtor' | 'satelite',
-    })),
-    parado: 5,
-    plantou: 5,
-    sem_certeza: 0,
-    total: 10,
-    fonte: 'MODIS',
-    janela: '04-01 a 07-31',
+function setupProps(overrides: Partial<SatelliteViewProps>): SatelliteViewProps {
+  return {
+    t: pt,
+    lang: 'pt',
+    backTo: '/quando',
+    status: 'ready',
+    onRetry: vi.fn(),
+    listen: { supported: false, speaking: false, toggle: vi.fn() },
+    xray: null,
+    detail: null,
+    onOpenDetail: vi.fn(),
+    onCloseDetail: vi.fn(),
+    soil: { textura: 'medio', source: 'map' },
+    onChooseSoil: vi.fn(),
+    chart: NO_READING_CHART,
+    seasons: NO_READING,
+    onAnswerSeason: vi.fn(),
+    onChooseCurrent: vi.fn(),
+    noSoy: false,
+    adjustTo: '/onde',
+    share: null,
+    onConfirm: vi.fn(),
+    ...overrides,
   }
-  const tenYears: SatelliteViewProps['history'] = {
-    idle: 5,
-    planted: 5,
-    uncertain: 0,
-    noSoy: 0,
-    confirmed: 1,
-    known: 10,
-    total: 10,
-    situations: historico.anos.map((ano) => ano.situacao),
-    years: historico.anos.map((ano) => String(ano.ano)),
-    window: { from: 4, to: 7 },
-  }
-  const full: Partial<SatelliteViewProps> = {
-    xray,
-    heatmap: heatmap(raio.historico_ndvi, historico),
-    alerts: alertList(raio),
-    cards: raio.cartoes,
-    history: tenYears,
-  }
-
-  it('painel escuro com o lugar, as coordenadas, a leitura mais recente e o mapa', () => {
-    setup(full)
-
-    const panel = screen.getByRole('region', { name: 'Raio-X da sua terra' })
-    expect(within(panel).getByText('Perto de Uberlândia (MG)')).toBeInTheDocument()
-    expect(within(panel).getByText('Ponto marcado: -18.9543, -48.1993')).toBeInTheDocument()
-    expect(within(panel).getByText('Leitura mais recente: 10 de novembro de 2026')).toBeInTheDocument()
-    expect(within(panel).getByRole('img', { name: 'Miniatura do mapa com o ponto marcado, perto de Uberlândia (MG)' })).toBeInTheDocument()
-    expect(within(panel).queryByText(/Altitude/)).not.toBeInTheDocument()
-    expect(
-      within(panel).getByText(
-        'Cada dado vale para a área em volta do ponto, no tamanho indicado em cada selo, e não para o talhão exato.',
-      ),
-    ).toBeInTheDocument()
-  })
-
-  it('os 8 blocos, cada um com o selo da fonte e da resolução', () => {
-    setup(full)
-
-    const panel = screen.getByRole('region', { name: 'Raio-X da sua terra' })
-    const labels = within(panel).getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)
-    expect(labels).toEqual([
-      'Solo',
-      'Água que a terra guarda',
-      'Umidade da terra agora',
-      'Verde da lavoura',
-      'Chuva de um ano típico',
-      'Maior veranico',
-      'Calor',
-      'Sua área e a região',
-    ])
-    expect(within(panel).getByText('SMAP · NASA · 9 km')).toBeInTheDocument()
-    expect(within(panel).getByText('SoilGrids · ISRIC · 250 m')).toBeInTheDocument()
-    expect(within(panel).getByText('NASA POWER · ~50 km')).toBeInTheDocument()
-  })
-
-  it('sem soja no ponto, o pico vira "maior verde de jan–mar" (tarefa 0049)', () => {
-    const city = { ...raio, verde: { ...raio.verde!, pico_ndvi: 0.33, soja_vista: false } }
-    setup({ ...full, xray: { ...xray, raio: city, blocks: xRayBlocks(city) } })
-
-    expect(screen.getByText(/Maior verde de janeiro a meados de março \(2025\/26\): 0,33, em 17 de janeiro de 2026\. O satélite não viu soja aqui\./)).toBeInTheDocument()
-    expect(screen.queryByText(/Pico da soja/)).not.toBeInTheDocument()
-  })
-
-  it('as frases dos blocos, com a fonte certa e os números do backend', () => {
-    setup(full)
-
-    expect(screen.getByRole('img', { name: 'Argila 32%, silte 20% e areia 48%' })).toBeInTheDocument()
-    expect(screen.getByText(/Terra média, pelo mapa de solos\./)).toBeInTheDocument()
-    expect(
-      screen.getByText(/Aguenta cerca de 11 dias sem chuva na floração de milho com braquiária, por volta de 19 de abril\./),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Mais úmida que em 41% dos anos nesta época. Leitura de 10 de novembro de 2026.')).toBeInTheDocument()
-    expect(screen.getByRole('meter', { name: /mais úmida que em 41%/ })).toHaveAttribute('aria-valuenow', '41')
-    expect(screen.getByText(/Pico da soja 2025\/26: 0,88, em 17 de janeiro de 2026\./)).toBeInTheDocument()
-    expect(
-      screen.getByText(/Em metade dos anos, a chuva acabou até 18 de abril; o mais cedo foi 20 de março de 2016 e o mais tarde 25 de maio de 2009\./),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/Em 2021, a partir de 2 de abril: o maior trecho com menos de 1 mm por dia/)).toBeInTheDocument()
-    expect(screen.getByText(/Anos com algum dia de 35 °C ou mais entre março e maio \(NASA POWER\)\. Foi em 2019 e 2024\./)).toBeInTheDocument()
-    expect(screen.getByText(/Em chuva de março a maio, sua área é mais seca que 64% da região\./)).toBeInTheDocument()
-  })
-
-  it('"Não é? Trocar" fica no bloco do solo e abre a escolha embaixo do painel', async () => {
-    const props = setup({ ...full, soilOpen: true })
-
-    const panel = screen.getByRole('region', { name: 'Raio-X da sua terra' })
-    expect(within(panel).getByRole('button', { name: 'Fechar' })).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.queryByRole('heading', { name: 'Terra argilosa' })).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /Arenosa/ }))
-    expect(props.onChooseSoil).toHaveBeenCalledWith('arenoso')
-  })
-
-  it('solo da célula vizinha: o bloco diz a distância', () => {
-    const neighbor = { ...raio, solo: { ...raio.solo!, vizinho_km: 6.2 } }
-    setup({ ...full, xray: { ...xray, raio: neighbor, blocks: xRayBlocks(neighbor) } })
-
-    expect(screen.getByText(/usamos o ponto mais perto, a 6,2 km\./)).toBeInTheDocument()
-  })
-
-  it('bloco sem dado não aparece', () => {
-    const partial = { ...raio, umidade: null, regiao: null }
-    setup({ ...full, xray: { ...xray, raio: partial, blocks: xRayBlocks(partial) } })
-
-    expect(screen.queryByRole('heading', { name: 'Umidade da terra agora' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Sua área e a região' })).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Solo' })).toBeInTheDocument()
-  })
-
-  it('"Saiba mais" leva aos artigos do Guia que existem', () => {
-    setup(full)
-
-    expect(screen.getAllByRole('link', { name: 'Saiba mais: Como ler o raio-X da sua terra' })[0]).toHaveAttribute('href', '/guia/raio-x')
-    expect(screen.getByRole('link', { name: 'Saiba mais: Veranico' })).toHaveAttribute('href', '/guia/veranico')
-    expect(screen.getByRole('link', { name: 'Saiba mais: Calor de 35 °C na floração' })).toHaveAttribute('href', '/guia/calor-35-graus')
-  })
-
-  it('histórico em faixa de calor: um ano por linha, com o que aconteceu escrito e as marcas no topo', () => {
-    setup(full)
-
-    expect(screen.getByRole('heading', { name: 'Na entressafra, sua área ficou parada em 5 de 10 anos.' })).toBeInTheDocument()
-    const figure = screen.getByRole('img', { name: /Verde da lavoura pelo satélite MODIS, de 2017 a 2026/ })
-    expect(within(figure).getByText('2017')).toBeInTheDocument()
-    expect(within(figure).getAllByText('parada')).toHaveLength(4)
-    expect(within(figure).getByText('parada (você)')).toBeInTheDocument()
-    expect(within(figure).getByText('soja')).toBeInTheDocument()
-    expect(within(figure).getByText('colheita')).toBeInTheDocument()
-    expect(within(figure).getByText('entressafra')).toBeInTheDocument()
-    expect(screen.getByText('0,75 ou mais')).toBeInTheDocument()
-    expect(screen.getByText('sem leitura (nuvem)')).toBeInTheDocument()
-    expect(screen.queryByRole('img', { name: /Plantou em/ })).not.toBeInTheDocument()
-  })
-
-  it('o aviso "Não parece uma lavoura de soja" não leva selo de pronto', () => {
-    setup({ ...full, history: null, noSoy: true })
-
-    const warning = screen.getByRole('heading', { name: 'Não parece uma lavoura de soja. Confira o ponto no mapa.' })
-    expect(warning.closest('section')?.querySelector('[aria-label="Pronto"]')).toBeNull()
-  })
-
-  it('alertas da área: só os que o dado indica, com a frase da erosão na chuva forte', () => {
-    setup({
-      ...full,
-      alerts: alertList({
-        ...raio,
-        alertas: {
-          geada: { anos: [2011, 2021], total_anos: 20, temp_c: 3, menor_temp_c: 2.4, fonte: 'nasa_power' },
-          chuva_forte: raio.alertas.chuva_forte,
-          fogo: { anos: [2017, 2019, 2021], total_anos: 10, raio_km: 5, fonte: 'MODIS MCD64A1' },
-        },
-      }),
-    })
-
-    expect(screen.getByRole('heading', { name: 'Alertas da sua área' })).toBeInTheDocument()
-    expect(screen.getByText('Em 2 de 20 anos, a mínima chegou a 3 °C ou menos entre maio e julho (NASA POWER).')).toBeInTheDocument()
-    expect(screen.getByText(/Terra descoberta perde solo nesses dias\./)).toBeInTheDocument()
-    expect(screen.getByText('Houve fogo a até 5 km do seu ponto em 3 de 10 anos (MODIS, NASA).')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Saiba mais: Geada na safrinha' })).toHaveAttribute('href', '/guia/geada-na-safrinha')
-    expect(screen.getByRole('link', { name: 'Saiba mais: Fogo na palha' })).toHaveAttribute('href', '/guia/fogo-na-palha')
-    // Tarefa 0049: o artigo da erosão existe, e a chuva forte liga para ele.
-    expect(screen.getByRole('link', { name: 'Saiba mais: Como evitar erosão' })).toHaveAttribute('href', '/guia/como-evitar-erosao')
-    expect(screen.queryByText(/granizo/i)).not.toBeInTheDocument()
-  })
-
-  it('sem alerta, a fileira não aparece', () => {
-    setup({ ...full, alerts: [] })
-
-    expect(screen.queryByRole('heading', { name: 'Alertas da sua área' })).not.toBeInTheDocument()
-  })
-
-  it('cartões menores com o número principal e "ver na sugestão", no lugar dos cartões de antes', () => {
-    setup(full)
-
-    expect(screen.getByRole('heading', { name: '20 anos de chuva' })).toBeInTheDocument()
-    expect(screen.getByText('16 de 20')).toBeInTheDocument()
-    expect(screen.getByText('anos em que milho com braquiária deu certo (GPM IMERG e NASA POWER).')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Clima 2041–2060' })).toBeInTheDocument()
-    expect(screen.getByText('Chuva de março a maio: -4,5%')).toBeInTheDocument()
-    expect(screen.getByText('Máxima: +1,6 °C')).toBeInTheDocument()
-    expect(screen.getByText('2 de 3 modelos indicam menos chuva; 3 de 3, mais calor.')).toBeInTheDocument()
-    for (const link of screen.getAllByRole('link', { name: 'ver na sugestão' })) {
-      expect(link).toHaveAttribute('href', '/resposta?lat=-18.9543&lon=-48.1993&colheita=meio')
-    }
-    expect(screen.queryByRole('heading', { name: '20 anos de chuva daqui' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Clima dos próximos anos' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Ver o que plantar' })).toBeInTheDocument()
-  })
-
-  it('em inglês', () => {
-    setup({ ...full, t: en, lang: 'en' })
-
-    expect(screen.getByRole('region', { name: "Your land's X-ray" })).toBeInTheDocument()
-    expect(screen.getByText('Near Uberlândia (MG)')).toBeInTheDocument()
-    expect(screen.getByText(/In March to May rain, your area is drier than 64% of the region\./)).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'In the off-season, your field was left idle in 5 of 10 years.' })).toBeInTheDocument()
-    expect(screen.getByText('March to May rain: -4.5%')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Alerts for your area' })).toBeInTheDocument()
-  })
-})
+}

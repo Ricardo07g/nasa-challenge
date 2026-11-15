@@ -410,14 +410,9 @@ export const pt = {
   },
   satellite: {
     title: 'Pronto. O satélite já viu o resto.',
-    subtitle: 'Você não precisa preencher mais nada.',
-    /** Conta só os anos certos; os sem certeza vão no parêntese. */
-    historyTitle: (idle: number, known: number, uncertain: number) =>
-      `Sua área ficou parada em ${idle} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
-    historySubtitle: 'O que cresceu depois da soja, ano a ano:',
+    subtitle: 'Confira o raio-X da sua terra e confirme as últimas safras.',
     historyStripLabel: (planted: number, known: number, uncertain: number) =>
       `Plantou em ${planted} de ${known} anos${uncertain > 0 ? ` (${uncertain} sem certeza)` : ''}`,
-    historySource: (from: string, to: string) => `Visto pelo satélite MODIS (NASA), de ${from} a ${to} de cada ano`,
     planted: 'Plantou',
     idle: 'Ficou parado',
     uncertain: 'Sem certeza',
@@ -433,13 +428,6 @@ export const pt = {
     soilFromUser: 'Você escolheu.',
     soilDefault: 'Não achamos no mapa de solos; usamos terra média.',
     soilChange: 'Não é? Trocar',
-    soilChoose: 'Qual é a sua terra?',
-    soilOptions: {
-      arenoso: { title: 'Arenosa', sub: 'Solta, seca rápido' },
-      medio: { title: 'Média', sub: 'Nem muito solta, nem pesada' },
-      argiloso: { title: 'Argilosa', sub: 'Pesada, gruda na bota' },
-    },
-    close: 'Fechar',
     loading: 'Buscando dados do satélite…',
     error: 'Não conseguimos buscar os dados agora. Tente de novo ou veja a lavoura de demonstração.',
     climateTitle: 'Clima dos próximos anos',
@@ -447,37 +435,79 @@ export const pt = {
     climateSubtitle: (start: string, end: string) => `Como a chuva e o calor devem mudar de ${start} a ${end}.`,
     climateSubtitleGeneric: 'Como a chuva e o calor devem mudar nos próximos anos.',
     cta: 'Ver o que plantar',
-    /** Tarefa 0039: ano em que o satélite não viu a soja e a colheita (legenda da faixa). */
-    noSoy: 'Sem soja',
     noSoyTitle: 'Não parece uma lavoura de soja. Confira o ponto no mapa.',
     noSoyDetail: 'O satélite não viu a soja crescer e ser colhida aqui nos anos que conseguiu olhar.',
     adjustMap: 'Ajustar no mapa',
-    /** Legenda da faixa: anos em que vale a resposta do produtor. */
-    historyConfirmed: (count: number) => (count === 1 ? '1 ano confirmado por você' : `${count} anos confirmados por você`),
     confirmTitle: 'Confirme as últimas safras',
-    confirmHint: 'O que você fez depois da soja? Sua resposta vale no lugar do satélite.',
-    /** Rótulo do grupo de botões de cada ano (leitor de tela). */
-    confirmYear: (year: number) => `Depois da soja de ${year}`,
-    confirmPlanted: 'Plantei',
-    confirmIdle: 'Deixei parado',
-    satelliteSaw: (what: string) => `O satélite viu: ${what}`,
-    satelliteSawLabels: { plantou: 'plantou', parado: 'ficou parado', incerto: 'sem certeza', sem_soja: 'sem soja' },
+    /** Resumo falado (tarefa 0058): com os números da tela; frase sem dado não entra. */
+    summary: {
+      soil: (texture: string, mm: string) => `Sua terra é ${texture} e guarda cerca de ${mm} milímetros de água.`,
+      water: (mm: string) => `A terra guarda cerca de ${mm} milímetros de água.`,
+      moisture: (pct: number) => `Hoje ela está mais úmida que em ${pct}% dos anos.`,
+      rain: (mm: string) => `Num ano típico chovem ${mm} milímetros de janeiro a julho.`,
+      rainDryspell: (mm: string, days: number) =>
+        `Num ano típico chovem ${mm} milímetros de janeiro a julho, e o maior veranico foi de ${days} dias.`,
+      dryspell: (days: number) => `O maior veranico foi de ${days} dias.`,
+      ask: 'Confirme abaixo o que você plantou nas últimas safras.',
+    },
+    /** "Suas últimas safras" (pacote 2, tarefa 0058): o gráfico do satélite e as confirmações. */
+    seasons: {
+      title: 'Suas últimas safras',
+      subtitle: (first: string) => `O que o satélite viu na sua área desde a safra ${first}, e o que você confirmou.`,
+      subtitleNoReading: 'Marque o que você fez nas últimas 3 safras e o que pensa plantar nesta.',
+      seenAll: 'O satélite viu a soja nas 3 últimas safras',
+      seenSome: (count: number) => `O satélite viu a soja em ${count} das 3 últimas safras`,
+      seenNone: 'O satélite não viu a soja nas 3 últimas safras',
+      noReading: 'Sem leitura do satélite neste ponto: marque você',
+      chartTitle: (idle: number, total: number) => `Na entressafra, sua área ficou parada em ${idle} de ${total} safras`,
+      chartTitleNoSoy: 'O satélite não viu soja aqui nas safras que leu',
+      chartTitleNoReading: 'As últimas safras, pelo que você marcar',
+      colSeason: 'Safra',
+      colAfter: 'Depois da soja',
+      marks: { soy: 'Soja', harvest: 'Colheita', after: 'Depois da soja' },
+      /** Coluna da direita: o que o satélite viu depois da soja. */
+      satellite: {
+        plantou: 'satélite: plantou',
+        parado: 'satélite: parada',
+        incerto: 'satélite: sem certeza',
+        sem_dado: 'satélite: sem leitura',
+        sem_soja: 'satélite: sem soja',
+      },
+      missing: 'Falta confirmar',
+      noSoy: 'Não plantei soja',
+      toPlan: 'a planejar',
+      plans: (crop: string) => `pensa em ${crop}`,
+      notSure: 'ainda não sabe',
+      cell: (day: string, value: string) => `${day}: NDVI ${value}`,
+      cellEmpty: (day: string) => `${day}: sem leitura`,
+      legendTitle: 'Verde (NDVI):',
+      legend: ['menos de 0,30', '0,30 a 0,45', '0,45 a 0,60', '0,60 a 0,75', '0,75 ou mais'],
+      legendNoReading: 'sem leitura do satélite',
+      legendCurrent: 'safra atual (ainda sem leitura)',
+      chartSource: 'MODIS NDVI · NASA · 250 m',
+      confirmSub: 'O satélite vê que houve plantio, mas não qual planta. Sua resposta vale no lugar dele.',
+      confirmSubNoReading: 'Sem leitura do satélite neste ponto, o que vale é a sua resposta.',
+      note: 'Usamos essas respostas para comparar o seu plano com “como é hoje”.',
+      rotation: 'Saiba mais: rotação de culturas',
+      missingAction: (count: number) =>
+        `${count === 1 ? 'Falta 1 safra' : `Faltam ${count} safras`}. Pode seguir: sem resposta, usamos o que o satélite viu.`,
+      missingActionNoReading: (count: number) =>
+        `${count === 1 ? 'Falta 1 safra' : `Faltam ${count} safras`}. Pode seguir: sem resposta, o plano não compara com “como é hoje”.`,
+      done: 'Últimas safras confirmadas.',
+      barCount: (count: number) => `${count} de 3 safras confirmadas`,
+      barDone: '3 safras confirmadas',
+    },
+    /** Sem o raio-X (falha ou API antiga): a terra, com a escolha, num cartão claro. */
+    soilFallback: (texture: string) => `Terra ${texture}`,
   },
   /** Raio-X da sua terra (tela 4, remodelagem S4, tarefa 0043): os números vêm do `/api/raio-x`. */
   xray: {
-    panelTitle: 'Raio-X da sua terra',
     place: (name: string) => `Perto de ${name}`,
-    coordinates: (coords: string) => `Ponto marcado: ${coords}`,
     mapLabel: (name: string) => `Miniatura do mapa com o ponto marcado, perto de ${name}`,
     latestReading: (date: string) => `Leitura mais recente: ${date}`,
     altitude: (meters: string) => `Altitude: ${meters} m`,
-    footer:
-      'Cada dado vale para a área em volta do ponto, no tamanho indicado em cada selo, e não para o talhão exato.',
     learnMore: (title: string) => `Saiba mais: ${title}`,
     articles: {
-      xray: 'Como ler o raio-X da sua terra',
-      dryspell: 'Veranico',
-      heat: 'Calor de 35 °C na floração',
       frost: 'Geada na safrinha',
       fire: 'Fogo na palha',
       erosion: 'Como evitar erosão',
@@ -492,90 +522,120 @@ export const pt = {
       heat: 'NASA POWER · ~50 km',
       region: 'GPM IMERG · NASA · 10 km',
     },
+    /** Os títulos dos "Saiba mais" do Guia nos modais dos blocos (tarefa 0058). */
+    guides: {
+      xray: 'como ler o raio-X da sua terra',
+      rain: 'quando a chuva acaba',
+      dryspell: 'veranico',
+      heat: 'calor de 35 °C na floração',
+    },
+    textures: { arenoso: 'arenosa', medio: 'média', argiloso: 'argilosa' },
+    eyebrow: 'Raio-X da sua terra',
+    /** Tocar no bloco abre o modal com o texto completo (texto escondido, para o leitor de tela). */
+    details: 'Ver detalhes',
+    note: 'Toque num bloco para ver os detalhes. Cada dado vale para a área em volta do ponto, no tamanho indicado no selo.',
+    /** Os 8 blocos (tarefa 0058): no bloco, só o nome, o número, uma linha e o selo; o resto fica no modal. */
     soil: {
       label: 'Solo',
       unit: '% de argila',
-      sentence: (texture: string) => `Terra ${texture}, pelo mapa de solos.`,
+      line: (texture: string) => `Terra ${texture}`,
+      lineChosen: (texture: string) => `Você escolheu: terra ${texture}`,
+      title: 'Do que a sua terra é feita',
+      text: (clay: number, silt: number, sand: number, texture: string, about: string) =>
+        `Pelo mapa de solos SoilGrids, a terra deste ponto tem **${clay}% de argila**, ${silt}% de silte e ${sand}% de areia. É uma terra ${texture}: ${about}`,
+      about: {
+        arenoso: 'solta, seca rápido e guarda menos água.',
+        medio: 'nem muito solta, nem pesada.',
+        argiloso: 'segura bem a água, mas encharca mais fácil.',
+      },
       neighbor: (km: string) => `A célula do ponto não tem dado de solo: usamos o ponto mais perto, a ${km} km.`,
-      parts: { clay: 'Argila', silt: 'Silte', sand: 'Areia' },
-      barLabel: (clay: number, silt: number, sand: number) => `Argila ${clay}%, silte ${silt}% e areia ${sand}%`,
       chosen: (texture: string) => `Você escolheu terra ${texture}: a conta da água usa a sua escolha.`,
+      source: 'SoilGrids (ISRIC), mapa de 250 m, CC BY 4.0.',
+      change: 'Sua terra é diferente?',
+      options: { arenoso: 'Arenosa', medio: 'Média', argiloso: 'Argilosa' },
     },
     water: {
       label: 'Água que a terra guarda',
       unit: 'mm',
-      days: (days: number, crop: string, date: string) =>
-        `Aguenta cerca de ${days} dias sem chuva na floração de ${crop}, por volta de ${date}.`,
-      use: (use: string, eto: string, kc: string) =>
-        `Nessa fase a planta gasta ${use} mm por dia (evapotranspiração de ${eto} mm do NASA POWER × Kc ${kc}).`,
-      noCrop: 'É a água que a terra segura ao alcance das raízes.',
+      line: (days: number) => `Aguenta ~${days} dias sem chuva na floração`,
+      lineNoCrop: 'Ao alcance das raízes',
+      title: 'Quanta água a terra guarda',
+      text: (mm: string) => `A terra deste ponto guarda cerca de **${mm} mm** de água para a planta.`,
+      flowering: (crop: string, date: string, use: string, days: number) =>
+        `Na floração de ${crop}, por volta de ${date}, a planta gasta uns ${use} mm por dia. Então a terra aguenta **cerca de ${days} dias sem chuva** nessa fase.`,
+      source: (eto: string, kc: string) =>
+        `Textura do SoilGrids; gasto de água: evapotranspiração de ${eto} mm do NASA POWER × coeficiente da cultura ${kc}.`,
+      sourceNoCrop: 'Textura do SoilGrids (ISRIC).',
     },
     moisture: {
       label: 'Umidade da terra agora',
-      sentence: (pct: number, date: string) => `Mais úmida que em ${pct}% dos anos nesta época. Leitura de ${date}.`,
-      meterLabel: (pct: number) => `Umidade da terra agora: mais úmida que em ${pct}% dos anos nesta época`,
-      low: 'mais seca',
-      high: 'mais úmida',
+      line: (pct: number) => `Mais úmida que em ${pct}% dos anos nesta época`,
+      title: 'Como está a terra agora',
+      text: (date: string, pct: number) =>
+        `Na leitura de **${date}**, a terra estava **mais úmida que em ${pct}% dos anos** nesta mesma época.`,
+      source: 'SMAP L4 (NASA), 9 km.',
     },
     green: {
       label: 'Verde da lavoura',
       unit: 'NDVI',
+      /** "jan/2026" */
+      month: (month: string, year: string) => `${month}/${year}`,
+      linePeak: (value: string, month: string) => `Pico da última soja: ${value} (${month})`,
+      lineNoSoy: (value: string) => `Maior verde de jan a meados de mar: ${value}`,
+      lineLast: (date: string) => `Última leitura: ${date}`,
+      title: 'O verde da lavoura visto do espaço',
+      text: 'O NDVI mede o verde da planta: vai de **0 (terra nua)** a **1 (verde forte)**.',
       last: (value: string, date: string) => `Última leitura: ${value}, em ${date}.`,
-      peak: (value: string, season: string) => `Pico da soja ${season}: ${value}.`,
-      peakOn: (value: string, season: string, date: string) => `Pico da soja ${season}: ${value}, em ${date}.`,
+      peak: (season: string, value: string) => `Na soja ${season}, o pico foi ${value}.`,
+      peakOn: (season: string, value: string, date: string) => `Na soja ${season}, o pico foi ${value}, em ${date}.`,
       /** Sem soja no ponto (tarefa 0049): o número é só o maior verde da janela do pico da soja. */
-      peakNoSoy: (value: string, season: string, date: string | null) =>
+      peakNoSoy: (season: string, value: string, date: string | null) =>
         `Maior verde de janeiro a meados de março (${season}): ${value}${date ? `, em ${date}` : ''}. O satélite não viu soja aqui.`,
-      scale: 'O NDVI vai de 0 (terra nua) a 1 (verde forte).',
+      source: 'MODIS NDVI (NASA), MOD13Q1 + MYD13Q1, pixel de 250 m.',
     },
     rain: {
-      label: 'Chuva de um ano típico',
-      unit: 'mm de janeiro a julho',
-      years: (years: number) => `Média de ${years} anos, medida pelo satélite GPM IMERG.`,
-      end: (median: string, early: string, earlyYear: number, late: string, lateYear: number) =>
-        `Em metade dos anos, a chuva acabou até ${median}; o mais cedo foi ${early} de ${earlyYear} e o mais tarde ${late} de ${lateYear}.`,
+      label: 'Chuva num ano típico',
+      unit: 'mm',
+      line: (years: number) => `De janeiro a julho, média de ${years} anos`,
+      title: 'Quanto chove num ano típico',
+      text: (mm: string, first: number, last: number) =>
+        `De janeiro a julho caem, em média, **${mm} mm** de chuva neste ponto (${first} a ${last}).`,
+      end: (median: string) => `Em metade dos anos, a chuva acabou até ${median}.`,
+      endRange: (early: string, late: string) => `A que acabou mais cedo foi em ${early}; a mais tarde, em ${late}.`,
+      source: 'GPM IMERG Final (NASA), 10 km.',
     },
     dryspell: {
       label: 'Maior veranico',
-      unit: 'dias seguidos sem chuva',
-      sentence: (year: number, start: string) =>
-        `Em ${year}, a partir de ${start}: o maior trecho com menos de 1 mm por dia entre março e maio (GPM IMERG).`,
+      unit: 'dias',
+      line: (year: number) => `Seguidos sem chuva, em ${year}`,
+      title: 'O maior período sem chuva',
+      text: (year: number, start: string, days: number, total: number) =>
+        `Em ${year}, a partir de ${start}, foram **${days} dias seguidos** com menos de 1 mm de chuva por dia. Foi o maior trecho seco entre março e maio em ${total} anos.`,
+      source: (total: number) => `GPM IMERG Final (NASA), 10 km, ${total} anos.`,
     },
     heat: {
-      label: 'Calor',
+      label: 'Calor forte',
       unit: (total: number) => `de ${total} anos`,
-      sentence: (temp: string) => `Anos com algum dia de ${temp} °C ou mais entre março e maio (NASA POWER).`,
-      years: (years: string) => `Foi em ${years}.`,
+      line: (temp: string) => `Com ${temp} °C ou mais de março a maio`,
+      title: 'Dias de calor forte',
+      none: (total: number, temp: string) => `Em ${total} anos, nenhum teve dia de ${temp} °C ou mais entre março e maio.`,
+      one: (total: number, year: string, temp: string) =>
+        `Em ${total} anos, só **1 ano (${year})** teve pelo menos um dia de ${temp} °C ou mais entre março e maio.`,
+      many: (total: number, count: number, years: string, temp: string) =>
+        `Em ${total} anos, **${count} anos (${years})** tiveram pelo menos um dia de ${temp} °C ou mais entre março e maio.`,
+      why: 'Calor assim na floração faz a planta perder flor e produção.',
+      source: (total: number) => `NASA POWER, ~50 km, ${total} anos.`,
     },
     region: {
       label: 'Sua área e a região',
-      drier: (pct: number) => `Em chuva de março a maio, sua área é mais seca que ${pct}% da região.`,
-      wetter: (pct: number) => `Em chuva de março a maio, sua área é mais chuvosa que ${pct}% da região.`,
-      detail: (mm: string, cells: number) =>
-        `${mm} mm em média, comparada com ${cells} áreas de 10 km da região (GPM IMERG).`,
-    },
-    history: {
-      title: (idle: number, total: number) => `Na entressafra, sua área ficou parada em ${idle} de ${total} anos.`,
-      others: (uncertain: number, noSoy: number) =>
-        [
-          uncertain > 0 ? `${uncertain === 1 ? '1 ano' : `${uncertain} anos`} sem certeza` : '',
-          noSoy > 0 ? `${noSoy === 1 ? '1 ano' : `${noSoy} anos`} sem soja` : '',
-        ]
-          .filter(Boolean)
-          .join('; '),
-      subtitle:
-        'Cada linha é um ano. Cada quadrinho é uma leitura do satélite a cada 16 dias, de janeiro a julho: quanto mais escuro, mais verde.',
-      label: (from: number, to: number, idle: number, total: number) =>
-        `Verde da lavoura pelo satélite MODIS, de ${from} a ${to}: parada na entressafra em ${idle} de ${total} anos.`,
-      marks: { soy: 'soja', harvest: 'colheita', offseason: 'entressafra' },
-      tags: { plantou: 'plantou', parado: 'parada', incerto: 'sem certeza', sem_dado: 'sem leitura', sem_soja: 'sem soja' },
-      byProducer: (tag: string) => `${tag} (você)`,
-      legend: ['menos de 0,30', '0,30 a 0,45', '0,45 a 0,60', '0,60 a 0,75', '0,75 ou mais'],
-      noData: 'sem leitura (nuvem)',
-      cell: (column: string, value: string) => `${column}: NDVI ${value}`,
-      cellEmpty: (column: string) => `${column}: sem leitura`,
-      source:
-        'NDVI do satélite MODIS (NASA), MOD13Q1 + MYD13Q1, pixel de 250 m. A colheita é o dia em que a soja costuma secar.',
+      lineWetter: (pct: number) => `Mais chuvosa que ${pct}% da região (mar–mai)`,
+      lineDrier: (pct: number) => `Mais seca que ${pct}% da região (mar–mai)`,
+      title: 'Sua área comparada com a região',
+      textWetter: (pct: number, mm: string, cells: number) =>
+        `Na chuva de março a maio, sua área é **mais chuvosa que ${pct}% da região**: ${mm} mm em média, comparada com ${cells} áreas de 10 km em volta.`,
+      textDrier: (pct: number, mm: string, cells: number) =>
+        `Na chuva de março a maio, sua área é **mais seca que ${pct}% da região**: ${mm} mm em média, comparada com ${cells} áreas de 10 km em volta.`,
+      source: 'GPM IMERG Final (NASA), 10 km.',
     },
     alerts: {
       title: 'Alertas da sua área',
@@ -608,6 +668,23 @@ export const pt = {
       agreeHeat: (count: number, models: number) => `${count} de ${models}, mais calor`,
       futureSource: 'Média dos modelos do NEX-GDDP-CMIP6 (NASA), cenário intermediário.',
       seeAnswer: 'ver na sugestão',
+    },
+  },
+  /**
+   * Tela final "Seu planejamento" (`/planejamento`, tarefa 0058): por enquanto, os blocos que saíram do raio-X
+   * (alertas, 20 anos de chuva e clima 2041–2060), como eram. Será refeita no próximo pacote.
+   */
+  planning: {
+    title: 'Seu planejamento',
+    subtitle: 'Os alertas da sua área e o clima dos próximos anos.',
+    loading: 'Buscando os dados da sua área…',
+    summary: {
+      noAlerts: 'Nenhum alerta de geada, chuva forte ou fogo na sua área.',
+      alerts: (list: string, count: number) => `Na sua área, há ${count === 1 ? 'alerta' : 'alertas'} de ${list}.`,
+      names: { frost: 'geada', heavyRain: 'chuva forte', fire: 'fogo' },
+      and: 'e',
+      rain: (crop: string, good: number, total: number) => `Com ${crop}, deu certo em ${good} de ${total} anos de chuva.`,
+      future: (agreement: string) => `Para 2041 a 2060: ${agreement}`,
     },
   },
   answer: {
@@ -1085,7 +1162,7 @@ export const pt = {
     mapEvent: (count: number) => (count === 1 ? '1 evento' : `${count} eventos`),
     shareTitle: 'Compartilhar com a comunidade',
     shareHint: 'Conte aos vizinhos o que você fez nessas safras.',
-    shareYear: (year: number) => `Safra ${year}`,
+    shareYear: (season: string) => `Safra ${season}`,
     shareIdle: 'Deixei parado',
     shareSent: 'Compartilhado. Obrigado!',
     shareSeeCommunity: 'Ver o que os vizinhos contam',

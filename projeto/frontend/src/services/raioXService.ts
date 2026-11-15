@@ -7,7 +7,6 @@ import type {
   CalorOutono,
   ChuvaTipica,
   ClimaFuturo,
-  FaixaNdvi,
   RaioX,
   RaioXParams,
   RegiaoChuva,
@@ -16,7 +15,6 @@ import type {
   Veranico,
   VerdeLavoura,
 } from '../models/raioX'
-import type { Historico, SituacaoAno } from '../models/talhao'
 import { raioXRepository as defaultRepository } from '../repositories'
 import type { RaioXRepository } from '../repositories/raioXRepository'
 
@@ -76,64 +74,6 @@ export type NdviLevel = 0 | 1 | 2 | 3 | 4 | 5
 export function ndviLevel(value: number | null): NdviLevel {
   if (value === null) return 0
   return (NDVI_BREAKS.filter((limit) => value >= limit).length + 1) as NdviLevel
-}
-
-export type HeatmapRow = {
-  year: number
-  cells: { value: number | null; level: NdviLevel }[]
-  /** O que aconteceu na entressafra (com a resposta do produtor no lugar do satélite). */
-  situation: SituacaoAno | null
-  byProducer: boolean
-}
-
-/** Faixas de colunas `[de, até)` marcadas no topo; `harvest` é a coluna da colheita. */
-export type HeatmapMarks = { soy: [number, number]; harvest: number | null; offseason: [number, number] }
-
-export type Heatmap = {
-  columns: string[]
-  rows: HeatmapRow[]
-  marks: HeatmapMarks
-  /** Primeira coluna de cada mês (1 = janeiro), para o eixo de cima. */
-  months: { month: number; from: number }[]
-  source: string
-}
-
-const OFFSEASON_FALLBACK = '04-01'
-
-function columnOf(columns: string[], day: string): number {
-  const index = columns.findLastIndex((start) => start <= day)
-  return Math.max(0, index)
-}
-
-/**
- * Histórico do talhão em faixa de calor: as linhas do backend (`historico_ndvi` do `/raio-x`), com o
- * que aconteceu em cada ano vindo do histórico do talhão já com as safras confirmadas. A colheita é o
- * dia em que a soja costuma secar (RF-16); sem ele, a entressafra começa em abril (janela do histórico).
- */
-export function heatmap(strip: FaixaNdvi | null | undefined, historico: Historico | null): Heatmap | null {
-  if (!strip) return null
-  const byYear = new Map((historico?.anos ?? []).map((ano) => [ano.ano, ano]))
-  const columns = strip.colunas
-  const harvest = strip.colheita_dia ? columnOf(columns, strip.colheita_dia) : null
-  const offseasonStart = harvest !== null ? harvest + 1 : columns.findIndex((start) => start >= OFFSEASON_FALLBACK)
-  const start = offseasonStart < 0 ? columns.length : offseasonStart
-  const months: Heatmap['months'] = []
-  columns.forEach((column, index) => {
-    const month = Number(column.slice(0, 2))
-    if (months.at(-1)?.month !== month) months.push({ month, from: index })
-  })
-  return {
-    columns,
-    rows: strip.anos.map((row) => ({
-      year: row.ano,
-      cells: row.valores.map((value) => ({ value, level: ndviLevel(value) })),
-      situation: byYear.get(row.ano)?.situacao ?? null,
-      byProducer: byYear.get(row.ano)?.fonte_ano === 'produtor',
-    })),
-    marks: { soy: [0, harvest ?? start], harvest, offseason: [start, columns.length] },
-    months,
-    source: strip.fonte,
-  }
 }
 
 export type AreaAlert =

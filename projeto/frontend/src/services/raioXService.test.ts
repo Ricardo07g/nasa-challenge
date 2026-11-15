@@ -1,12 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { FaixaNdvi, RaioX } from '../models/raioX'
-import type { Historico } from '../models/talhao'
+import type { RaioX } from '../models/raioX'
 import { buildRaioX } from '../repositories/mocks/raioXFixture'
 import {
   alertList,
   createRaioXService,
   futureAgreement,
-  heatmap,
   ndviLevel,
   regionSide,
   soilParts,
@@ -47,61 +45,6 @@ describe('raioXService (raio-X da sua terra, tela 4)', () => {
 
   it('nível de cor do NDVI em 5 faixas (0 = sem leitura)', () => {
     expect([null, 0.1, 0.3, 0.44, 0.45, 0.6, 0.74, 0.75, 0.95].map(ndviLevel)).toEqual([0, 1, 2, 2, 3, 4, 4, 5, 5])
-  })
-
-  const historico: Historico = {
-    anos: [
-      { ano: 2017, situacao: 'parado', ndvi_max: 0.3, n_obs: 5, fonte_ano: 'satelite' },
-      { ano: 2018, situacao: 'plantou', ndvi_max: 0.8, n_obs: 5, fonte_ano: 'produtor' },
-    ],
-    parado: 1,
-    plantou: 1,
-    sem_certeza: 0,
-    total: 2,
-    fonte: 'MODIS',
-    janela: '04-01 a 07-31',
-  }
-
-  const strip: FaixaNdvi = {
-    colunas: ['01-01', '01-17', '02-02', '02-18', '03-06', '03-22', '04-07'],
-    anos: [
-      { ano: 2017, valores: [0.8, 0.82, 0.5, 0.3, null, 0.31, 0.32] },
-      { ano: 2018, valores: [0.81, 0.84, 0.6, 0.35, 0.5, 0.7, 0.75] },
-    ],
-    fonte: 'MODIS MOD13Q1 + MYD13Q1',
-    colheita_dia: '02-25',
-  }
-
-  it('faixa de calor: um ano por linha, com o nível de cada leitura e o que aconteceu no ano', () => {
-    const model = heatmap(strip, historico)!
-
-    expect(model.rows.map((row) => row.year)).toEqual([2017, 2018])
-    expect(model.rows[0].cells.map((cell) => cell.level)).toEqual([5, 5, 3, 2, 0, 2, 2])
-    expect(model.rows[0].situation).toBe('parado')
-    expect(model.rows[1]).toMatchObject({ situation: 'plantou', byProducer: true })
-  })
-
-  it('marca a soja até a coluna da colheita e a entressafra depois dela', () => {
-    const model = heatmap(strip, historico)!
-
-    // 25/fev cai na coluna de 18/fev (4ª): soja nas 3 primeiras, colheita na 4ª, entressafra depois.
-    expect(model.marks).toEqual({ soy: [0, 3], harvest: 3, offseason: [4, 7] })
-    expect(model.months).toEqual([
-      { month: 1, from: 0 },
-      { month: 2, from: 2 },
-      { month: 3, from: 4 },
-      { month: 4, from: 6 },
-    ])
-  })
-
-  it('sem o dia da colheita, a entressafra começa em abril (a janela do histórico) e sem marca de colheita', () => {
-    const model = heatmap({ ...strip, colheita_dia: null }, historico)!
-
-    expect(model.marks).toEqual({ soy: [0, 6], harvest: null, offseason: [6, 7] })
-  })
-
-  it('sem faixa, sem modelo', () => {
-    expect(heatmap(null, historico)).toBeNull()
   })
 
   it('alertas na ordem geada, chuva forte e fogo, só os que existem', () => {

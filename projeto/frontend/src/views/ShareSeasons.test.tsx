@@ -40,7 +40,7 @@ describe('ShareSeasons ("Compartilhar com a comunidade" na tela 4, tarefa 0047)'
 
     const button = screen.getByRole('button', { name: 'Compartilhar com a comunidade' })
     expect(button).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByText('Safra 2024')).not.toBeInTheDocument()
+    expect(screen.queryByText('Safra 2023/24')).not.toBeInTheDocument()
     await userEvent.click(button)
     expect(props.onToggle).toHaveBeenCalled()
   })
@@ -50,14 +50,14 @@ describe('ShareSeasons ("Compartilhar com a comunidade" na tela 4, tarefa 0047)'
 
     expect(screen.getByRole('button', { name: 'Compartilhar com a comunidade' })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByText('Seus vizinhos veem a região, não o seu ponto.')).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Safra 2024' })).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Safra 2025' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Safra 2023/24' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Safra 2024/25' })).toBeInTheDocument()
   })
 
   it('"Plantei": pergunta a cultura (sem "Deixei parado") e como foi', async () => {
     const props = setup()
 
-    const season = screen.getByRole('group', { name: 'Safra 2024' })
+    const season = screen.getByRole('group', { name: 'Safra 2023/24' })
     const crops = within(season).getByRole('group', { name: 'O que você plantou?' })
     expect(within(crops).queryByRole('button', { name: 'Deixei parado' })).not.toBeInTheDocument()
     expect(within(crops).getAllByRole('button')).toHaveLength(6)
@@ -70,7 +70,7 @@ describe('ShareSeasons ("Compartilhar com a comunidade" na tela 4, tarefa 0047)'
   it('"Deixei parado": já pronto, só enviar', async () => {
     const props = setup()
 
-    const season = screen.getByRole('group', { name: 'Safra 2025' })
+    const season = screen.getByRole('group', { name: 'Safra 2024/25' })
     expect(season).toHaveTextContent('Deixei parado')
     expect(within(season).queryByRole('group', { name: 'Como foi?' })).not.toBeInTheDocument()
     await userEvent.click(within(season).getByRole('button', { name: 'Enviar' }))
@@ -101,6 +101,6 @@ describe('ShareSeasons ("Compartilhar com a comunidade" na tela 4, tarefa 0047)'
     setup({}, { t: en })
 
     expect(screen.getByRole('button', { name: 'Share with the community' })).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: '2025 season' })).toHaveTextContent('Left it idle')
+    expect(screen.getByRole('group', { name: '2024/25 season' })).toHaveTextContent('Left it idle')
   })
 })

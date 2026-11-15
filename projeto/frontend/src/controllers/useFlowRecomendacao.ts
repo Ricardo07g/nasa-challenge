@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/useI18n'
 import type { ScreenStatus } from '../models/screenStatus'
 import { isOutsideArea, type FarmService } from '../services/farmService'
 import { keepFlowQuery, readFlowParams } from '../services/flowParams'
+import { confirmadasFromAnswers, seasonAnswersFromFlow } from '../services/seasonAnswersService'
 import { useAsync } from './useAsync'
 
 /**
@@ -14,6 +15,8 @@ export function useFlowRecomendacao(farm: FarmService) {
   const { lang } = useI18n()
   const [search] = useSearchParams()
   const params = useMemo(() => readFlowParams(search), [search])
+  // Pacote 2: as respostas das safras vêm do `safras` (e dos links antigos com `confirmadas`).
+  const confirmadas = useMemo(() => confirmadasFromAnswers(seasonAnswersFromFlow(params)), [params])
 
   const recomendacao = useAsync(
     () =>
@@ -25,12 +28,12 @@ export function useFlowRecomendacao(farm: FarmService) {
               colheita: params.colheita,
               solo: params.solo,
               exemplo: params.exemplo,
-              confirmadas: params.confirmadas,
+              confirmadas,
             },
             lang,
           )
         : Promise.reject(new Error('sem ponto ou colheita na URL')),
-    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, params?.confirmadas, lang, farm],
+    [params?.lat, params?.lon, params?.colheita, params?.solo, params?.exemplo, confirmadas, lang, farm],
   )
 
   const query = keepFlowQuery(search.toString())

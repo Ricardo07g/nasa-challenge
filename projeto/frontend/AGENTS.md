@@ -113,15 +113,16 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   Desde o pacote 2 (tarefa 0054), a URL guarda também `data` (a data da colheita da tela 2, `AAAA-MM-DD`, só
   data que existe), `safras` e `pensa` (as respostas das últimas safras, ver "Pacote 2" abaixo), no fim e
   legíveis. O `confirmadas` e o `hoje` continuam no `FlowParams` para as telas que ainda não mudaram.
-- **Safras confirmadas (tarefa 0039 do backend, RF-25):** a regra fica em
-  `services/confirmedSeasonsService.ts` (ler e escrever o parâmetro, pôr a resposta do produtor no
-  lugar do satélite com `fonte_ano: 'produtor'`, as linhas do bloco e o aviso "Não parece uma lavoura
-  de soja"). Os anos confirmáveis vêm do `/talhao` (`anos_confirmaveis`); sem o campo (API antiga), o
-  bloco não aparece. A tela 4 pede o `/talhao` **sem** `confirmadas` (o que o satélite viu) e aplica as
-  respostas no front, para confirmar não recarregar o talhão. Os botões de
-  cada ano são um `ChipGroup` (grupo com o rótulo do ano, `aria-pressed`); tocar de novo na resposta
-  marcada volta para o satélite. O ano `sem_soja` vira o quadrinho `none` (pontilhado com "–") e a
-  legenda "Sem soja"; não conta como parado, plantou nem sem certeza.
+- **Safras confirmadas (tarefa 0039 do backend, RF-25):** a regra antiga (`confirmadas=2024:plantou,2025:parado`)
+  fica em `services/confirmedSeasonsService.ts` (ler e escrever o parâmetro, pôr a resposta do produtor no
+  lugar do satélite com `fonte_ano: 'produtor'` e o aviso "Não parece uma lavoura de soja", `noSoyAtPoint`). **Desde
+  o pacote 2 (tarefas 0054 e 0058), a tela 4 confirma por safra:** a cultura do depois de cada uma das 3 últimas
+  safras (`safras=2024:milho_braquiaria,2025:pousio,2026:sem_soja`) e o que o produtor pensa plantar na atual
+  (`pensa`), com o `SeasonAnswersForm` e o `seasonAnswersService` (lê também o `confirmadas` e o `hoje` dos links
+  antigos; responder grava `safras` e tira os dois). Para a API, `confirmadasFromAnswers`. As linhas são as
+  `LAST_SEASONS` com o que o satélite viu (`seasonRows(historico)`). A tela 4 pede o `/talhao` e o `/raio-x`
+  **sem** as respostas (o que o satélite viu) e aplica as respostas no front, para responder não recarregar nada.
+  Tudo vai para a URL pelo `useReplaceFlow` (clicar não mexe na rolagem; teste em `pages.satellite.test.tsx`).
 - **Comunidade ("Na sua região", tarefa 0047 do backend, RF-27):** relatos sem cadastro, sem texto livre e
   sem dado pessoal. O contrato está em `models/community.ts` (`RelatoComunidade`, `RelatosVizinhos`,
   `NovoRelato` e as listas fechadas `CULTURAS_RELATO`, `RESULTADOS`, `MOTIVOS`, `EVENTOS`, iguais às do
@@ -294,21 +295,31 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `plantar-logo-depois-da-colheita`, `conta-de-agua`, `quando-a-chuva-acaba`). "Ouvir resumo" próprio
   (`when.summary*`): com a data ou a época, os números da chuva que sobra; sem nada, pede o dia ou a época.
   Textos com negrito no modal usam `**…**` lido pelo `parseInline` (nunca HTML).
-- **Tela 4 "O que o satélite viu" = raio-X da sua terra (tarefa 0043 do backend, RF-29):** os números vêm
+- **Tela 4 "Raio-X da sua terra" (tarefas 0043 e 0058, RF-29 e RF-41):** os números vêm
   de `GET /api/raio-x` (`repositories/raioXRepository.ts` → `services/raioXService.ts`), pedido com a
-  colheita e a terra da URL e **sem** as safras confirmadas (como o talhão: confirmar não recarrega o
-  painel). O service só ordena e prepara (`xRayBlocks`, `heatmap`, `alertList`, `regionSide`,
-  `futureAgreement`, `soilParts`, `ndviLevel`); as frases ficam no bloco `xray` das mensagens. O painel é
-  o **único elemento escuro da tela**, com os tokens `--color-instrument-*` (contraste conferido) e o
-  design system `Instrument` (`InstrumentPanel`, `InstrumentBlock` com selo de fonte e resolução,
-  `SplitBar`, `Meter`, `CountUp`, `NdviHeatmap`) e o `MiniMap` (Leaflet parado). A entrada em sequência é
-  CSS e o `CountUp` só conta com `matchMedia` e sem "reduzir movimento"; o texto no DOM é sempre o valor
-  final ("Ouvir", leitor de tela e testes). Bloco sem dado não aparece. A faixa de calor do NDVI tem 5
-  cores que sempre escurecem (`--color-ndvi-1..5`, cortes `NDVI_BREAKS`), legenda numérica, "sem leitura"
-  listrado e o que aconteceu no ano escrito em cada linha (nada só por cor). Alertas (só os que o backend
-  manda, sem granizo) e cartões menores com "ver na sugestão". Os "Saiba mais" só apontam para artigos
-  que existem. Sem o raio-X (API antiga ou falha), a tela volta aos cartões de antes. Aviso nunca leva o
-  selo de "pronto" (✓).
+  colheita e a terra da URL e **sem** as respostas das safras (como o talhão: responder não recarrega o
+  painel; trocar a terra recarrega, mas o painel e o modal ficam na tela com o último raio-X). O service só
+  ordena e prepara (`xRayBlocks`, `alertList`, `regionSide`, `futureAgreement`, `soilParts`, `ndviLevel`).
+  **Pacote 2 (tarefa 0058):** o painel escuro (tokens `--xray-*` e `--color-xray-*` do `tokens.css`) tem 8 blocos
+  enxutos (`InstrumentPanel` e `InstrumentBlock` do design system): só o nome, o número (`CountUp`), uma linha e o
+  selo da fonte, e **o bloco inteiro é um botão** que abre o `Modal` com o texto completo (negrito `**…**` pelo
+  `parseInline`), a fonte e o "Saiba mais" (`GuideLink`, nova aba). As frases ficam em `i18n/xrayTexts.ts`
+  (`xrayText`, testado com os números da lavoura de demonstração); o "Sua terra é diferente?" fica no modal do Solo.
+  O gráfico "Suas últimas safras" é o `SeasonChart` do design system, com a regra em `services/seasonChartService.ts`
+  (`seasonChart`): com NDVI, todas as safras com leitura; sem NDVI, as 3 últimas listradas; sempre a safra atual
+  tracejada; **nada dentro das barras** (regra geral 5); a coluna da direita traz a resposta do produtor ou o que o
+  satélite viu (no celular, sai da vista e fica para o leitor de tela); o título conta as safras paradas pelas
+  respostas. As 5 cores do NDVI (`--color-ndvi-1..5`, cortes `NDVI_BREAKS`) têm legenda numérica. Embaixo, o
+  `SeasonAnswersForm` com a safra atual (data do `data` da tela 2 e "Trocar data" para `/quando` com o fluxo).
+  "Ver o que plantar" leva o fluxo inteiro para `/resposta`; no celular, fica preso embaixo com "{n} de 3 safras
+  confirmadas" e a tela põe o espaço embaixo do `body` (`:global(body):has(...)`). "Ouvir resumo": `xraySummary`.
+  Sem o raio-X (API antiga ou falha), o painel não aparece e a terra fica num cartão claro com a troca. O
+  `MiniMap` mostra o crédito do Leaflet sem a bandeira. Bloco sem dado não aparece; aviso nunca leva o selo de
+  "pronto" (✓).
+- **`/planejamento` (tela final, tarefa 0058, RF-41):** por enquanto, só os blocos que saíram do raio-X, como eram
+  ("Alertas da sua área", "20 anos de chuva" e "Clima 2041–2060"; sem o raio-X, os cartões de antes), com o
+  `BackButton` para `/resposta` e o "Ouvir resumo" (`planningSummary`). `PlanningView` + `usePlanningController`.
+  Será refeita no próximo pacote; o link para ela ("Ver meu planejamento →") é do Plano de 3 anos.
 - **Abas da resposta e aba Sugestão (tarefa 0044 do backend, RF-05, RF-22 e RF-30):** as abas são
   "Sugestão", "Comparar" e "Plano de 3 anos", nessa ordem (`controllers/useAnswerNav.ts`); as URLs
   continuam `/resposta`, `/opcoes` e `/plano`. O topo das três (`views/AnswerHeader.tsx`) tem o "Voltar",
@@ -372,7 +383,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   para a fala; sem voz no navegador, o link não aparece. **Desde o pacote 2, toda tela tem o seu**, montado com os números
   dela no controller (ex.: avisos = o lugar e quantos avisos ativos; comunidade = o raio e o plantio da safra mais
   recente; artigo do Guia = o título e o "Em uma frase", `articleSummary`). O texto não deve mudar a cada segundo
-  (cada troca para a fala): na missão, nada de fase; no Guia, o total de artigos, não o da busca.
+  (cada troca para a fala): na missão, nada de fase; no Guia, o total de artigos, não o da busca. Os da tela 4 e de
+  `/planejamento` ficam em `i18n/xrayTexts.ts`.
 - **Modal reutilizável (`design-system/components/Modal.tsx`, tarefa 0052):** o padrão de todo "ver detalhes".
   `<dialog>` nativo (`showModal`; sem ele, o atributo `open`): fecha com o X, com Esc e com clique fora (no fundo
   escurecido); o foco entra no modal, fica preso nele (Tab e Shift+Tab dão a volta) e volta a quem o abriu. Quem
