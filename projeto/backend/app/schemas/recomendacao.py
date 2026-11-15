@@ -1,9 +1,8 @@
 """JSON de GET /api/recomendacao e GET /api/exemplo (plano técnico §3.2 e §3.3)."""
 
 from datetime import date
-from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enso import FaseEnso
 from app.models.recomendacao import (
@@ -46,22 +45,17 @@ class FuturoSchema(_Frozen):
     cenario: str
 
 
-class DinheiroSchema(_Frozen):
-    margem_ha: float
-    rotulo: str
-    texto: str
-    # A1.2: margem do pior dos anos mais secos (a conta x hectares fica no front)
-    pior_ano_seco_ha: float | None = None
+class RendaSchema(_Frozen):
+    """Renda só com fatos (tarefa 0040, antes `dinheiro`): nenhum valor em reais."""
 
-    # Sem tipo de retorno de propósito: com ele, o OpenAPI (/docs) perde os campos do `dinheiro`.
-    @model_serializer(mode="wrap")
-    def _omit_missing_worst_dry_year(self, handler: SerializerFunctionWrapHandler):
-        # Sem valor, a chave não vai: o front (`dinheiro.pior_ano_seco_ha?: number`) testa
-        # `=== undefined`, e um null viraria R$ 0 na conta x hectares.
-        data: dict[str, Any] = handler(self)
-        if data.get("pior_ano_seco_ha") is None:
-            data.pop("pior_ano_seco_ha", None)
-        return data
+    da_grao: bool
+    # Anos com aperto do motor (falta de água ou calor na fase crítica); o total é `chuva.anos`
+    anos_aperto: int
+    rotulo: str
+    # "Dá grão para vender" ou "Não dá grão: é investimento na terra"
+    texto: str
+    # "Risco de perder a lavoura: faltou água ou fez calor em N de 20 anos."
+    risco: str
 
 
 class TerraSchema(_Frozen):
@@ -117,7 +111,7 @@ class OpcaoSchema(_Frozen):
     data_limite: str | None
     chuva: ChuvaSchema
     futuro: FuturoSchema | None
-    dinheiro: DinheiroSchema
+    renda: RendaSchema
     terra: TerraSchema
     notas: NotasSchema
     porque: list[str]
@@ -150,11 +144,12 @@ class OpcaoSchema(_Frozen):
                 if o.futuro is not None
                 else None
             ),
-            dinheiro=DinheiroSchema(
-                margem_ha=o.margem_ha,
-                rotulo=o.rotulo_dinheiro,
-                texto=o.texto_dinheiro,
-                pior_ano_seco_ha=o.pior_ano_seco_ha,
+            renda=RendaSchema(
+                da_grao=o.da_grao,
+                anos_aperto=o.total_anos - o.anos_bons_chuva,
+                rotulo=o.rotulo_renda,
+                texto=o.texto_renda,
+                risco=o.texto_risco,
             ),
             terra=TerraSchema(nota=o.notas.solo, rotulo=o.rotulo_terra, texto=o.texto_terra),
             notas=NotasSchema.from_model(o.notas),

@@ -31,9 +31,7 @@ from app.repositories.soja_recente_repository import FileSojaRecenteRepository
 DAYS = 212
 
 
-def _crop(
-    crop_id: str, tipo: str, limite: str | None, solo: tuple[int, int, int], **kw
-) -> CropParams:
+def _crop(crop_id: str, tipo: str, limite: str | None, solo: tuple[int, int, int]) -> CropParams:
     palhada, nitrogenio, pragas = solo
     return CropParams(
         id=crop_id,
@@ -49,41 +47,16 @@ def _crop(
         solo_pragas=pragas,
         n_deixado_kg=0,
         como_fazer=("Passo 1",),
-        **kw,
     )
 
 
 CROPS = [
     _crop("pousio", "pousio", None, (0, 0, 0)),
-    _crop(
-        "milho_safrinha",
-        "grao",
-        "02-28",
-        (20, 0, 0),
-        produtividade_padrao_sc_ha=80.0,
-        preco_padrao_saca=62.0,
-        custo_padrao_ha=3500.0,
-    ),
-    _crop(
-        "sorgo",
-        "grao",
-        "03-20",
-        (20, 0, 15),
-        produtividade_padrao_sc_ha=60.0,
-        preco_padrao_saca=49.6,
-        custo_padrao_ha=2200.0,
-    ),
-    _crop(
-        "milho_braquiaria",
-        "consorcio",
-        "02-28",
-        (40, 0, 10),
-        produtividade_padrao_sc_ha=76.0,
-        preco_padrao_saca=62.0,
-        custo_padrao_ha=3800.0,
-    ),
-    _crop("milheto", "cobertura", "03-15", (35, 0, 20), custo_padrao_ha=600.0),
-    _crop("crotalaria", "cobertura", "02-28", (25, 30, 30), custo_padrao_ha=800.0),
+    _crop("milho_safrinha", "grao", "02-28", (20, 0, 0)),
+    _crop("sorgo", "grao", "03-20", (20, 0, 15)),
+    _crop("milho_braquiaria", "consorcio", "02-28", (40, 0, 10)),
+    _crop("milheto", "cobertura", "03-15", (35, 0, 20)),
+    _crop("crotalaria", "cobertura", "02-28", (25, 30, 30)),
 ]
 
 

@@ -4,7 +4,6 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
 from datetime import date
 from operator import attrgetter
-from statistics import mean
 
 from app.constants import (
     DATA_VERSION,
@@ -29,7 +28,7 @@ from app.models.recomendacao import (
     ResultadoAno,
     ResultadoOpcao,
 )
-from app.models.regras import Regras, RegrasNotaFinal, RegrasRotulos, RegrasSolo
+from app.models.regras import Regras, RegrasNotaFinal, RegrasRenda, RegrasRotulos, RegrasSolo
 from app.models.talhao import Confirmacao
 from app.repositories.climate_repository import ClimateRepository
 from app.repositories.crop_params_repository import CropParamsRepository
@@ -63,7 +62,7 @@ MONTHS_EN = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct
 # "Se você prefere…": motivo e eixo de cada alternativa, na ordem em que a tela mostra.
 ALTERNATIVE_AXES: tuple[tuple[str, Callable[[NotasOpcao], float]], ...] = (
     ("menos_risco", attrgetter("seguranca")),
-    ("mais_dinheiro", attrgetter("renda")),
+    ("mais_renda", attrgetter("renda")),
     ("cuidar_da_terra", attrgetter("solo")),
 )
 
@@ -101,25 +100,20 @@ def soil_score(crop: CropParams, nematoide: bool | None, regras: RegrasSolo) -> 
     return round(_clamp(total), 1)
 
 
-def expected_margin(crop: CropParams, anos: list[ResultadoAno]) -> float:
-    """Margem (PRD 7.5): produtividade x (1 - perda média dos anos) x preço - custo."""
-    perda_media = mean(r.fator_perda for r in anos) if anos else 0.0
-    receita = crop.produtividade_padrao_sc_ha * (1.0 - perda_media) * crop.preco_padrao_saca
-    return round(receita - crop.custo_padrao_ha, 2)
+def gives_grain(crop: CropParams, regras: RegrasRenda) -> bool:
+    """A cultura dá grão para vender? Pelo `tipo` do culturas.yaml (grupo `renda`, tarefa 0040)."""
+    return crop.tipo in regras.tipos_com_grao
 
 
-def worst_dry_year_margin(crop: CropParams, anos_secos: list[ResultadoAno]) -> float | None:
-    """Margem do pior dos anos mais secos (A1.2, PRD 7.11): a mesma conta da margem, ano a ano."""
-    if not anos_secos:
-        return None
-    return min(expected_margin(crop, [ano]) for ano in anos_secos)
+def income_score(crop: CropParams, seguranca: float, regras: RegrasRenda) -> float:
+    """Nota de renda sem preço nem custo (PRD 7.5, tarefa 0040).
 
-
-def income_score(margem: float, maior_margem: float) -> float:
-    """Nota de renda (PRD 7.5): 100 x margem / maior margem; margem negativa vale 0."""
-    if maior_margem <= 0.0 or margem <= 0.0:
-        return 0.0
-    return round(_clamp(PERCENT_DIVISOR * margem / maior_margem), 1)
+    Quem dá grão tem a renda que o clima deixa colher: a segurança climática da própria opção.
+    Quem não dá grão (cobertura, pousio) fica com a nota fixa `nota_sem_grao`.
+    """
+    if gives_grain(crop, regras):
+        return round(_clamp(seguranca), 1)
+    return round(_clamp(regras.nota_sem_grao), 1)
 
 
 def final_score(
@@ -167,7 +161,7 @@ def _single_top(
 def build_alternatives(opcoes: list[ResultadoOpcao], melhor_id: str) -> tuple[Alternativa, ...]:
     """Uma alternativa por eixo, só se superar a `melhor` nesse eixo e sem repetir cultura (R4.2).
 
-    Os eixos seguem a ordem da tela (risco, dinheiro, terra). Cada eixo pega, entre as opções ainda
+    Os eixos seguem a ordem da tela (risco, renda, terra). Cada eixo pega, entre as opções ainda
     não usadas com nota maior que a da `melhor` naquele eixo, a de maior nota no eixo. No empate,
     a opção que é a única maior de um eixo seguinte fica para ele; depois, vale a maior nota final.
     Sem candidata, o eixo não aparece.
@@ -196,7 +190,7 @@ def build_alternatives(opcoes: list[ResultadoOpcao], melhor_id: str) -> tuple[Al
 
 @dataclass(frozen=True)
 class _Avaliacao:
-    """Contas de uma opção antes da nota de renda (que depende da maior margem entre todas)."""
+    """Contas de uma opção antes das notas (clima de hoje e do futuro, solo e anos detalhados)."""
 
     crop: CropParams
     nome: str
@@ -204,14 +198,11 @@ class _Avaliacao:
     anos_secos: list[ResultadoAno]
     futuro: FuturoResultado | None
     solo: float
-    margem: float
-    margem_seco: float
-    pior_ano_seco: float | None
     anos_detalhe: tuple[AnoDetalhe, ...]
 
 
 class RecommendationService:
-    """Junta clima, solo e dinheiro numa resposta: melhor opção, alternativas e plano de 3 anos."""
+    """Junta clima, solo e renda numa resposta: melhor opção, alternativas e plano de 3 anos."""
 
     def __init__(
         self,
@@ -328,14 +319,10 @@ class RecommendationService:
                 )
             )
 
-        maior_margem = max((a.margem for a in avaliacoes), default=0.0)
-        maior_margem_seco = max((a.margem_seco for a in avaliacoes), default=0.0)
         fonte_chuva = self._rain_source_name(seasons)
         opcoes = [
             self._build_option(
                 a,
-                maior_margem=maior_margem,
-                maior_margem_seco=maior_margem_seco,
                 bonus=self._rules.nota_final.bonus_gado_milho_braquiaria
                 if (gado is True and a.crop.id == "milho_braquiaria")
                 else 0.0,
@@ -417,15 +404,15 @@ class RecommendationService:
         """Notas do pousio para o plano de 3 anos: fora do ranking, mas nas combinações (PRD 7.7).
 
         Segurança 100 (PRD 7.2: não tem o que perder) e futuro 100 quando há CMIP6 (PRD 7.6); renda
-        0 (PRD 5) e a nota de solo da tabela 7.4 (0). Iguais no ano normal e no ano seco.
+        de quem não dá grão (`renda.nota_sem_grao`, tarefa 0040) e a nota de solo da tabela 7.4 (0).
+        Iguais no ano normal e no ano seco.
         """
         crop = next((c for c in crops if c.id == FALLOW_ID), None)
         solo = soil_score(crop, nematoide, self._rules.solo) if crop else SCORE_MIN
         futuro = SCORE_MAX if has_future else None
-        final = final_score(SCORE_MAX, solo, SCORE_MIN, futuro, self._rules.nota_final)
-        return NotasOpcao(
-            seguranca=SCORE_MAX, futuro=futuro, solo=solo, renda=SCORE_MIN, final=final
-        )
+        renda = round(_clamp(self._rules.renda.nota_sem_grao), 1)
+        final = final_score(SCORE_MAX, solo, renda, futuro, self._rules.nota_final)
+        return NotasOpcao(seguranca=SCORE_MAX, futuro=futuro, solo=solo, renda=renda, final=final)
 
     def _evaluate(
         self,
@@ -463,9 +450,6 @@ class RecommendationService:
             anos_secos=secos,
             futuro=futuro,
             solo=soil_score(crop, nematoide, self._rules.solo),
-            margem=expected_margin(crop, anos),
-            margem_seco=expected_margin(crop, secos),
-            pior_ano_seco=worst_dry_year_margin(crop, secos),
             anos_detalhe=self._year_detail_service.year_details(
                 crop=crop, semeadura=semeadura, seasons=seasons, resultados=anos, lang=lang
             ),
@@ -474,8 +458,6 @@ class RecommendationService:
     def _build_option(
         self,
         a: _Avaliacao,
-        maior_margem: float,
-        maior_margem_seco: float,
         bonus: float,
         semeadura: date,
         solo: tuple[str, float, str],
@@ -488,9 +470,12 @@ class RecommendationService:
         nota_futuro = _pct(a.futuro.anos_bons_media, total) if a.futuro else None
 
         seguranca = _pct(anos_bons, total)
-        renda = income_score(a.margem, maior_margem)
         seguranca_seco = _pct(anos_bons_secos, len(a.anos_secos))
-        renda_seco = income_score(a.margem_seco, maior_margem_seco)
+        regras_renda = self._rules.renda
+        renda = income_score(a.crop, seguranca, regras_renda)
+        renda_seco = income_score(a.crop, seguranca_seco, regras_renda)
+        da_grao = gives_grain(a.crop, regras_renda)
+        frases = self._rules.frases["en" if is_en else "pt"]
 
         pesos = self._rules.nota_final
         rotulos = self._rules.rotulos
@@ -525,9 +510,10 @@ class RecommendationService:
                 else f"Deu certo em {anos_bons} de {total} anos"
             ),
             futuro=a.futuro,
-            margem_ha=a.margem,
-            rotulo_dinheiro=_label(renda, rotulos.dinheiro_bom, rotulos.dinheiro_medio),
-            texto_dinheiro=self._money_text(a.margem, is_en),
+            da_grao=da_grao,
+            rotulo_renda=_label(renda, rotulos.renda_bom, rotulos.renda_medio),
+            texto_renda=frases.renda_com_grao if da_grao else frases.renda_sem_grao,
+            texto_risco=frases.renda_risco.format(anos_aperto=total - anos_bons, total=total),
             rotulo_terra=_label(a.solo, rotulos.terra_bom, rotulos.terra_medio),
             texto_terra=self._soil_text(a.crop, is_en),
             notas=notas,
@@ -536,7 +522,6 @@ class RecommendationService:
             como_fazer=(
                 a.crop.como_fazer_en if (is_en and a.crop.como_fazer_en) else a.crop.como_fazer
             ),
-            pior_ano_seco_ha=a.pior_ano_seco,
             anos_detalhe=a.anos_detalhe,
         )
 
@@ -547,19 +532,6 @@ class RecommendationService:
             return RAIN_SOURCE_NAMES[IMERG_RAIN_SOURCE]
         source = seasons[0].rain_source
         return RAIN_SOURCE_NAMES.get(source, source)
-
-    @staticmethod
-    def _money_text(margem: float, is_en: bool) -> str:
-        valor = int(round(abs(margem), -1))
-        if is_en:
-            return (
-                f"About R$ {valor:,} per hectare left over"
-                if margem >= 0
-                else f"Costs about R$ {valor:,} per hectare"
-            )
-        valor_br = f"{valor:,}".replace(",", ".")
-        verbo = "Sobra" if margem >= 0 else "Custa"
-        return f"{verbo} perto de R$ {valor_br} por hectare"
 
     @staticmethod
     def _soil_text(crop: CropParams, is_en: bool) -> str:

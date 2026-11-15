@@ -63,7 +63,6 @@ def _result(
         aperto=falta_agua or calor,
         isna=0.4 if falta_agua else 0.9,
         dias_calor=dias_calor,
-        fator_perda=0.6 if falta_agua else 0.0,
         falta_agua=falta_agua,
         calor=calor,
     )

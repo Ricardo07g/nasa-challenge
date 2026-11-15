@@ -23,15 +23,32 @@ def _write(tmp_path: Path, raw: dict[str, Any]) -> Path:
 
 
 def test_should_load_shipped_regras_yaml_with_prd_thresholds() -> None:
-    # PRD 7.2 e 7.5: ISNA 0,55 (grão) / 0,50 (cobertura), ±15 dias, 30 dias, 35 °C x 3 dias
+    # PRD 7.2: ISNA 0,55 (grão) / 0,50 (cobertura), ±15 dias, 30 dias, 35 °C x 3 dias
     regras = YamlRulesRepository(SHIPPED).get_rules()
     clima = regras.clima
 
     assert (clima.isna_grao, clima.isna_cobertura) == (0.55, 0.50)
     assert (clima.janela_grao_meia_dias, clima.janela_cobertura_dias) == (15, 30)
     assert (clima.calor_temp_c, clima.calor_min_dias) == (35.0, 3)
-    assert (clima.perda_isna_sem_perda, clima.perda_isna_alta_abaixo) == (0.65, 0.55)
-    assert (clima.perda_fator_media, clima.perda_fator_alta) == (0.30, 0.60)
+    # Tarefa 0040: a perda de produtividade pelo ISNA só servia à margem em reais, que saiu.
+    assert not hasattr(clima, "perda_fator_alta")
+
+
+def test_should_load_the_income_rule_without_price_or_cost() -> None:
+    # Tarefa 0040 (seção 1 da remodelagem): renda sem preço nem custo. Grão (grão e consórcio)
+    # vale a segurança climática; cobertura e pousio não dão grão e ficam com a nota fixa.
+    renda = YamlRulesRepository(SHIPPED).get_rules().renda
+
+    assert renda.tipos_com_grao == frozenset({"grao", "consorcio"})
+    assert renda.nota_sem_grao == 0.0
+
+
+def test_should_refuse_an_income_rule_without_source(tmp_path: Path) -> None:
+    raw = _shipped_raw()
+    del raw["renda"]["nota_sem_grao"]["fonte"]
+
+    with pytest.raises(ValueError, match="renda.nota_sem_grao"):
+        YamlRulesRepository(_write(tmp_path, raw)).get_rules()
 
 
 def test_should_load_shipped_weights_labels_and_soil_points() -> None:
@@ -51,7 +68,7 @@ def test_should_load_shipped_weights_labels_and_soil_points() -> None:
     assert nota.bonus_gado_milho_braquiaria == 15.0
     assert (rotulos.chuva_bom_pct, rotulos.chuva_medio_pct) == (85.0, 60.0)
     assert (rotulos.terra_bom, rotulos.terra_medio) == (50.0, 20.0)
-    assert (rotulos.dinheiro_bom, rotulos.dinheiro_medio) == (70.0, 30.0)
+    assert (rotulos.renda_bom, rotulos.renda_medio) == (70.0, 30.0)
     assert (solo.palhada_max, solo.nitrogenio_max, solo.pragas_max) == (40.0, 30.0, 30.0)
     assert solo.peso_pragas_nematoide == 1.5
 
@@ -141,6 +158,12 @@ def test_should_load_phrase_templates_in_portuguese_and_english() -> None:
     # Com safras confirmadas pelo produtor (tarefa 0039), a frase diz quantas ele confirmou
     assert "{confirmadas}" in regras.frases["pt"].historico_confirmado
     assert "{confirmadas}" in regras.frases["en"].historico_confirmado
+    # Renda só com fatos (tarefa 0040): dá grão ou não e o risco de perder a lavoura
+    assert regras.frases["pt"].renda_com_grao == "Dá grão para vender"
+    assert regras.frases["pt"].renda_sem_grao == "Não dá grão: é investimento na terra"
+    assert regras.frases["en"].renda_com_grao == "Gives grain to sell"
+    assert "{anos_aperto} de {total} anos" in regras.frases["pt"].renda_risco
+    assert "{anos_aperto} of {total} years" in regras.frases["en"].renda_risco
 
 
 def test_should_load_shipped_alert_rules_for_the_season_replay() -> None:

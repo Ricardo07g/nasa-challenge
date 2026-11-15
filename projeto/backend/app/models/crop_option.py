@@ -14,7 +14,7 @@ class CropOption:
 
 @dataclass(frozen=True)
 class CropParams:
-    """Parâmetros agronômicos, de solo e de dinheiro de uma opção de entressafra."""
+    """Parâmetros agronômicos e de solo de uma opção de entressafra (sem preço nem custo)."""
 
     id: str
     nome: str
@@ -29,10 +29,6 @@ class CropParams:
     solo_nitrogenio: int
     solo_pragas: int
     n_deixado_kg: int
-    # Coberturas não dão grão: produtividade e preço zero, só o custo da semente.
-    produtividade_padrao_sc_ha: float = 0.0
-    preco_padrao_saca: float = 0.0
-    custo_padrao_ha: float = 0.0
     como_fazer: tuple[str, ...] = ()
     nome_en: str = ""
     como_fazer_en: tuple[str, ...] = ()  # vazio = sem tradução (o service usa o português)

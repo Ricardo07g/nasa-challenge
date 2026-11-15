@@ -33,9 +33,6 @@ def _make_crop(
         solo_nitrogenio=0,
         solo_pragas=0,
         n_deixado_kg=0,
-        produtividade_padrao_sc_ha=95.0,
-        preco_padrao_saca=55.0,
-        custo_padrao_ha=3200.0,
         como_fazer=("Plantar no limpo",),
     )
 
@@ -152,19 +149,6 @@ def test_should_judge_water_shortage_of_cover_crops_by_their_own_isna_threshold(
     )
 
     assert (result.falta_agua, result.calor, result.aperto) == (False, False, False)
-
-
-@pytest.mark.parametrize(
-    ("isna", "expected"),
-    [(0.80, 0.0), (0.65, 0.0), (0.64, 0.30), (0.55, 0.30), (0.54, 0.60), (0.10, 0.60)],
-)
-def test_should_use_loss_steps_from_prd_when_computing_loss_factor(
-    isna: float, expected: float
-) -> None:
-    # PRD 7.5: 0% com ISNA >= 0,65; 30% entre 0,55 e 0,65; 60% abaixo de 0,55
-    service = ClimateRiskService(WaterBalanceCalculator())
-
-    assert service.loss_factor(isna) == expected
 
 
 def test_should_compute_eto_from_temperatures_and_latitude_when_season_has_no_eto() -> None:
@@ -318,14 +302,6 @@ def test_should_use_heat_threshold_from_injected_rules() -> None:
 
     assert result.dias_calor >= 3
     assert result.aperto is True
-
-
-def test_should_use_loss_steps_from_injected_rules() -> None:
-    service = ClimateRiskService(
-        WaterBalanceCalculator(), rules=_rules_with_clima(perda_fator_alta=0.90)
-    )
-
-    assert service.loss_factor(0.10) == 0.90
 
 
 # --- balde inicial pelo SMAP (PRD 7.2, R3.3) ---------------------------------------------------

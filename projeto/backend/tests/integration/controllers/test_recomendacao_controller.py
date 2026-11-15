@@ -60,8 +60,8 @@ def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
     }
     assert len(body["opcoes"]) == 5
     assert body["melhor"] in {o["id"] for o in body["opcoes"]}
-    # Só os eixos em que alguma opção supera a melhor (R4.2): aqui todas têm 18 anos bons e o milho
-    # tem a maior renda, então sobra só "cuidar da terra".
+    # Só os eixos em que alguma opção supera a melhor (R4.2): aqui todas têm 18 anos bons e os grãos
+    # empatam na renda (a segurança, tarefa 0040), então sobra só "cuidar da terra".
     assert body["alternativas"] == [{"motivo": "cuidar_da_terra", "opcao": "crotalaria"}]
 
     milho = next(o for o in body["opcoes"] if o["id"] == "milho_safrinha")
@@ -73,11 +73,19 @@ def test_should_return_recommendation_in_the_contract_shape_used_by_the_front(
         "texto": "Deu certo em 18 de 20 anos",
     }
     assert milho["futuro"] is None
-    # A1.2: `pior_ano_seco_ha` (contrato do front, `dinheiro.pior_ano_seco_ha?: number`) entrou no
-    # `dinheiro`. 2007 e 2014 ficam sem chuva: o milho perde 60% (80 x 0,4 x 62 - 3500).
-    assert set(milho["dinheiro"]) == {"margem_ha", "rotulo", "texto", "pior_ano_seco_ha"}
-    assert milho["dinheiro"]["pior_ano_seco_ha"] == pytest.approx(80 * 0.4 * 62 - 3500)
-    assert "custo_semente_ha" not in milho  # espera o valor da agrônoma (A1.1)
+    # Tarefa 0040: a renda só com fatos (dá grão ou não e os anos com aperto do motor), sem reais
+    assert milho["renda"] == {
+        "da_grao": True,
+        "anos_aperto": 2,
+        "rotulo": "bom",
+        "texto": "Dá grão para vender",
+        "risco": "Risco de perder a lavoura: faltou água ou fez calor em 2 de 20 anos.",
+    }
+    crotalaria = next(o for o in body["opcoes"] if o["id"] == "crotalaria")
+    assert crotalaria["renda"]["da_grao"] is False
+    assert crotalaria["renda"]["texto"] == "Não dá grão: é investimento na terra"
+    assert "dinheiro" not in milho
+    assert "custo_semente_ha" not in milho
     assert milho["terra"] == {
         "nota": 20.0,
         "rotulo": "medio",
@@ -325,6 +333,24 @@ def test_should_return_example_farm_at_ufu_point_when_get_exemplo_called(
     assert body["talhao"]["chuva_mensal"]["anos"] == list(range(2005, 2025))
     assert body["recomendacao"]["entrada"]["colheita"] == "meio"
     assert body["recomendacao"]["opcoes"][0]["chuva"]["texto"].startswith("Worked in")
+    assert body["recomendacao"]["opcoes"][0]["renda"]["risco"].startswith("Risk of losing")
+
+
+@pytest.mark.parametrize(
+    ("path", "params"),
+    [("/api/recomendacao", {**UFU, "colheita": "meio"}), ("/api/exemplo", {})],
+)
+@pytest.mark.parametrize("lang", ["pt-BR", "en"])
+def test_should_send_no_money_value_anywhere_in_the_answer(
+    client: TestClient, path: str, params: dict, lang: str
+) -> None:
+    # Seção 1 da remodelagem (tarefa 0040): nenhum valor em reais na API
+    response = client.get(path, params=params, headers={"Accept-Language": lang})
+
+    assert response.status_code == 200
+    assert "R$" not in response.text
+    for campo in ("dinheiro", "margem_ha", "pior_ano_seco_ha", "custo_semente_ha", "mais_dinheiro"):
+        assert campo not in response.text
 
 
 class FakeEnsoForecastRepository:
@@ -419,7 +445,7 @@ def test_should_use_rules_from_the_injected_rules_repository(client: TestClient)
     regras = replace(
         base,
         clima=replace(base.clima, calor_temp_c=29.0),
-        rotulos=replace(base.rotulos, dinheiro_bom=101.0),
+        rotulos=replace(base.rotulos, renda_medio=-1.0),
         rotacao=replace(base.rotacao, anos_secos=2),
     )
     app.dependency_overrides[get_rules_repository] = lambda: FakeRulesRepository(regras)
@@ -430,7 +456,7 @@ def test_should_use_rules_from_the_injected_rules_repository(client: TestClient)
     body = response.json()
     milho = next(o for o in body["opcoes"] if o["id"] == "milho_safrinha")
     assert milho["chuva"]["anos_bons"] == 0  # máxima de 30 °C já é calor com o limiar de 29 °C
-    assert milho["dinheiro"]["rotulo"] == "medio"  # renda 100 abaixo do "bom" de 101
+    assert milho["renda"]["rotulo"] == "medio"  # renda 0 (nenhum ano bom) acima do "médio" de -1
     assert "(2007, 2014)" in body["plano_3_anos"]["seco"]["descricao"]
 
 

@@ -4,8 +4,8 @@
 #
 # Cada número tem `valor` e `fonte`. A API não carrega um número sem fonte.
 # "Hipótese do time" = valor a calibrar com a agrônoma e com os resultados reais.
-# Os parâmetros de cada cultura (ciclo, Kc, data limite, nota de solo, dinheiro) ficam em
-# culturas.yaml.
+# Os parâmetros de cada cultura (ciclo, Kc, data limite, nota de solo) ficam em culturas.yaml.
+# Nenhum número em reais: a renda é só fatos (grupo `renda`, tarefa 0040).
 # ==============================================================================
 
 clima:
@@ -28,19 +28,8 @@ clima:
   calor_min_dias:
     valor: 3
     fonte: "PRD 7.2 item 3: 3 dias ou mais com calor na janela crítica"
-  # Perda de produtividade pelo ISNA, usada na margem (PRD 7.5)
-  perda_isna_sem_perda:
-    valor: 0.65
-    fonte: "PRD 7.5: perda de 0% com ISNA de 0,65 ou mais (hipótese do time)"
-  perda_isna_alta_abaixo:
-    valor: 0.55
-    fonte: "PRD 7.5: perda de 60% com ISNA abaixo de 0,55 (hipótese do time)"
-  perda_fator_media:
-    valor: 0.30
-    fonte: "PRD 7.5: perda de 30% com ISNA entre 0,55 e 0,65 (hipótese do time)"
-  perda_fator_alta:
-    valor: 0.60
-    fonte: "PRD 7.5: perda de 60% com ISNA abaixo de 0,55 (hipótese do time)"
+  # A perda de produtividade pelo ISNA (0%, 30% e 60%) só servia à margem em reais e saiu com ela
+  # (tarefa 0040).
 
 nota_final:
   # Nota final = soma de (peso x nota). Sem CMIP6, o futuro sai e os outros pesos são reescalados.
@@ -74,12 +63,25 @@ rotulos:
   terra_medio:
     valor: 20.0
     fonte: "PRD 7.6: terra Médio com nota de solo de 20 a 49"
-  dinheiro_bom:
+  renda_bom:
     valor: 70.0
-    fonte: "PRD 7.6: dinheiro Bom com nota de renda 70 ou mais"
-  dinheiro_medio:
+    fonte: "PRD 7.6: renda Bom com nota de renda 70 ou mais (antes 'dinheiro'; tarefa 0040)"
+  renda_medio:
     valor: 30.0
-    fonte: "PRD 7.6: dinheiro Médio com nota de renda de 30 a 69"
+    fonte: "PRD 7.6: renda Médio com nota de renda de 30 a 69 (antes 'dinheiro'; tarefa 0040)"
+
+renda:
+  # Nota de renda sem preço nem custo (PRD 7.5, tarefa 0040; seção 1 da remodelagem: nenhum valor em
+  # reais). Quem dá grão para vender tem a renda que o clima deixa colher: nota = segurança climática
+  # da própria opção (anos sem aperto / anos simulados x 100; no cenário seco, só os anos secos).
+  # Quem não dá grão (cobertura, pousio) fica com a nota fixa abaixo. A nota final continua com os
+  # mesmos eixos e pesos (grupo nota_final).
+  tipos_com_grao:
+    valor: [grao, consorcio]
+    fonte: "PRD 5 (coluna Função: milho safrinha e sorgo são grão; milho + braquiária é grão + cobertura) e o `tipo` do culturas.yaml. Hipótese do time, a revisar"
+  nota_sem_grao:
+    valor: 0.0
+    fonte: "PRD 5 (coluna Renda: 0 para pousio, milheto e crotalária, que não dão grão). Hipótese do time, a revisar: a cobertura é investimento na terra e ganha no eixo do solo, não no da renda"
 
 solo:
   # Nota de solo (PRD 7.4): palhada + nitrogênio + quebra de pragas; os pontos por cultura ficam
@@ -305,6 +307,8 @@ enso:
 #   historico_confirmado: os campos do historico mais {confirmadas} {vistas}
 #     (quando o produtor confirmou alguma das últimas safras, tarefa 0039: confirmadas = anos
 #     que ele respondeu; vistas = anos certos que vieram do satélite)
+#   renda_com_grao, renda_sem_grao: sem campos (linha "Renda" da opção, tarefa 0040)
+#   renda_risco: {anos_aperto} {total} (os anos com aperto do motor e os anos simulados)
 frases:
   pt:
     seguranca: "Semeando em {data}, em {anos_aperto} dos últimos {total} anos faltou água ou fez calor de {calor_c} °C {fase} ({fonte_chuva})."
@@ -319,6 +323,9 @@ frases:
     colheita_meio: "no meio de fevereiro"
     colheita_tarde: "no fim de fevereiro ou em março"
     historico_confirmado: "Seu talhão ficou em pousio em {parado} de {anos_certos} entressafras de {ano_inicio} a {ano_fim} (você confirmou {confirmadas}; o satélite viu {vistas}, pelo NDVI do MODIS)."
+    renda_com_grao: "Dá grão para vender"
+    renda_sem_grao: "Não dá grão: é investimento na terra"
+    renda_risco: "Risco de perder a lavoura: faltou água ou fez calor em {anos_aperto} de {total} anos."
   en:
     seguranca: "Sowing on {data}, in {anos_aperto} of the last {total} years the crop ran short of water or had {calor_c} °C heat {fase} ({fonte_chuva})."
     fase_grao: "around flowering"
@@ -332,6 +339,9 @@ frases:
     colheita_meio: "in mid-February"
     colheita_tarde: "in late February or March"
     historico_confirmado: "Your field was left fallow in {parado} of {anos_certos} off-seasons from {ano_inicio} to {ano_fim} (you confirmed {confirmadas}; the satellite saw {vistas}, with MODIS NDVI)."
+    renda_com_grao: "Gives grain to sell"
+    renda_sem_grao: "No grain: it is an investment in the soil"
+    renda_risco: "Risk of losing the crop: water ran short or it was too hot in {anos_aperto} of {total} years."
 
 # Textos da linha do tempo da safra (P4 e P6), sem IA generativa. RASCUNHO: agrônoma revisar.
 #   semeadura, colheita_grao, colheita_cobertura: {opcao} (nome da opção)

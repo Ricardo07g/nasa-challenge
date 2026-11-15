@@ -15,7 +15,6 @@ class ResultadoAno:
     aperto: bool
     isna: float
     dias_calor: int
-    fator_perda: float
     # Por que o ano apertou (PRD 7.2): ISNA abaixo do limiar e/ou calor na janela crítica.
     # aperto = falta_agua or calor
     falta_agua: bool = False
@@ -75,9 +74,12 @@ class ResultadoOpcao:
     rotulo_chuva: str
     texto_chuva: str
     futuro: FuturoResultado | None
-    margem_ha: float
-    rotulo_dinheiro: str
-    texto_dinheiro: str
+    # Renda só com fatos (tarefa 0040): dá grão para vender ou não, o rótulo da nota de renda e as
+    # frases "Dá grão..." e "Risco de perder a lavoura... em N de 20 anos". Nenhum valor em reais.
+    da_grao: bool
+    rotulo_renda: str
+    texto_renda: str
+    texto_risco: str
     rotulo_terra: str
     texto_terra: str
     notas: NotasOpcao
@@ -85,8 +87,6 @@ class ResultadoOpcao:
     notas_seco: NotasOpcao
     porque: tuple[str, ...]
     como_fazer: tuple[str, ...]
-    # Margem por hectare no pior dos anos mais secos (A1.2, PRD 7.11); None sem ano seco na série
-    pior_ano_seco_ha: float | None = None
     # O que aconteceu em cada ano da faixa de chuva, na mesma ordem (P1)
     anos_detalhe: tuple[AnoDetalhe, ...] = ()
 
