@@ -13,6 +13,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  CircleAlert,
   CircleCheck,
   CircleHelp,
   Clock,
@@ -22,6 +23,7 @@ import {
   CloudSun,
   DropletOff,
   Droplets,
+  ExternalLink,
   Eye,
   FileText,
   Flame,
@@ -106,6 +108,11 @@ export function ArrowLeftIcon({ size = 20 }: IconProps) {
 
 export function ArrowUpRightIcon({ size = 14 }: IconProps) {
   return <ArrowUpRight size={size} {...decorative} />
+}
+
+/** "Abre em nova aba" (o "Saiba mais" do Guia, regra geral 3 do pacote 2). */
+export function ExternalLinkIcon({ size = 14 }: IconProps) {
+  return <ExternalLink size={size} {...decorative} />
 }
 
 export function ChevronDownIcon({ size = 18 }: IconProps) {
@@ -224,6 +231,11 @@ export function ReportIcon({ size = 20 }: IconProps) {
 // Replay da safra passada
 export function NoRainIcon({ size = 16 }: IconProps) {
   return <CloudOff size={size} {...decorative} />
+}
+
+/** Aviso "Você não preencheu as últimas safras" (regra geral 6 do pacote 2): círculo com "!". */
+export function NoticeIcon({ size = 18 }: IconProps) {
+  return <CircleAlert size={size} {...decorative} />
 }
 
 export function WarningIcon({ size = 16 }: IconProps) {

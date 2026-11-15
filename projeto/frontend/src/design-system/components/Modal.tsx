@@ -18,8 +18,12 @@ export type ModalProps = {
   subtitle?: string
   /** Nome do X ("Fechar" / "Close"). */
   closeLabel: string
-  /** `wide` = 640 px (créditos); o padrão tem até 560 px. */
-  size?: 'default' | 'wide'
+  /**
+   * Tamanho (regra geral 7 do pacote 2). `default` = normal, até 560 px (no celular, sobe de baixo); `wide` =
+   * 640 px (créditos); `large` = grande, quase a tela toda e centralizado, com 24 px de borda em volta (8 px
+   * no celular), para "ver detalhes" com gráficos.
+   */
+  size?: 'default' | 'wide' | 'large'
   children: ReactNode
 }
 
@@ -46,7 +50,8 @@ function hide(dialog: HTMLDialogElement) {
  * Modal reutilizável (tarefa 0052): o padrão de todo "ver detalhes". `<dialog>` nativo, que fecha com o X,
  * com Esc e com clique fora; o foco entra no modal, fica preso nele enquanto está aberto e volta a quem o
  * abriu. No computador fica no centro (560 px, ou 640 px no `wide`); no celular, é uma folha de baixo para
- * cima, com a largura toda e até 88% da altura. Quem abre e fecha é o controller da tela (`open`/`onClose`).
+ * cima, com a largura toda e até 88% da altura. O `large` é quase tela cheia, centralizado também no celular.
+ * Quem abre e fecha é o controller da tela (`open`/`onClose`).
  */
 export function Modal({ open, onClose, title, subtitle, closeLabel, size = 'default', children }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null)

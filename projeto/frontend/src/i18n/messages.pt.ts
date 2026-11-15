@@ -15,6 +15,55 @@ export const pt = {
     ready: 'Pronto',
     /** Nome do X dos modais. */
     close: 'Fechar',
+    /** Texto escondido do "Saiba mais" do Guia, que abre em nova aba (regra geral 3 do pacote 2). */
+    newTab: '(abre em nova aba)',
+  },
+  /**
+   * Respostas das últimas safras (pacote 2, tarefa 0054): o formulário "Confirme as últimas safras" (telas 4
+   * e 5) e o aviso "Você não preencheu as últimas safras". Os períodos vêm do `seasonService`.
+   */
+  seasons: {
+    colSeason: 'Safra',
+    colSoy: 'Soja',
+    colAfter: 'Depois da soja',
+    planted: 'Plantei',
+    notPlanted: 'Não plantei',
+    /** "de março a julho de 2024: o que você plantou". */
+    afterQuestion: (months: string) => `${months}: o que você plantou`,
+    noSoyAfter: 'Sem soja nessa safra: não há o que marcar aqui.',
+    groupSoy: (season: string) => `Soja na safra ${season}`,
+    groupAfter: (season: string) => `Depois da soja na safra ${season}`,
+    groupCurrent: (season: string) => `O que você pensa plantar depois da soja ${season}`,
+    /** As 6 opções, na ordem do protótipo; "Deixei parado" no passado e "Deixar parado" na safra atual. */
+    options: {
+      milho_safrinha: 'Milho sozinho',
+      milho_braquiaria: 'Milho com braquiária',
+      sorgo: 'Sorgo',
+      milheto: 'Milheto',
+      crotalaria: 'Crotalária',
+      pousio: 'Deixei parado',
+    },
+    fallowFuture: 'Deixar parado',
+    notSure: 'Ainda não sei',
+    satellitePlanted: 'satélite viu plantio',
+    satelliteFallow: 'satélite viu a terra parada',
+    satelliteSoy: 'satélite viu a soja',
+    satelliteNoSoy: 'satélite não viu a soja',
+    /** " · verde 0,71" depois da dica do satélite. */
+    green: (value: string) => `verde ${value}`,
+    currentTag: 'safra atual',
+    soyPlanted: 'Soja plantada',
+    harvestExpected: (date: string) => `colheita prevista em ${date}`,
+    harvestExpectedEarly: (year: string) => `colheita prevista no começo de ${year}`,
+    changeDate: 'Trocar data',
+    /** "depois de colher (3 de março) até julho de 2027: o que você pensa plantar". */
+    currentQuestion: (date: string, year: string) => `depois de colher (${date}) até julho de ${year}: o que você pensa plantar`,
+    currentQuestionNoDate: (year: string) => `depois de colher até julho de ${year}: o que você pensa plantar`,
+    missing: 'Você não preencheu as últimas safras.',
+    fillNow: 'Preencher agora',
+    modalTitle: 'Suas últimas safras',
+    modalSubtitle: 'O que você plantou depois da soja? Pode pular o que não lembrar.',
+    save: 'Salvar',
   },
   header: {
     home: 'Raiz Orbital, voltar ao início',
