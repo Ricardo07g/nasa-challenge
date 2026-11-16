@@ -9,7 +9,7 @@
     "preDeployCommand": ["alembic upgrade head"],
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 120,
-    "sleepApplication": true,
+    "sleepApplication": false,
     "restartPolicyType": "ON_FAILURE"
   }
 }
