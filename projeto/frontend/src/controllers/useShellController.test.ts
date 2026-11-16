@@ -13,28 +13,26 @@ describe('useShellController', () => {
     expect(result.current.header.navLabel).toBe('Principal')
     expect(result.current.header.lang.current).toBe('pt')
     expect(Object.keys(result.current.header).sort()).toEqual(
-      ['alerts', 'guide', 'homeLabel', 'lang', 'nameMeaning', 'navLabel', 'slogan'].sort(),
+      ['alerts', 'guide', 'homeLabel', 'homeTitle', 'lang', 'navLabel', 'slogan'].sort(),
     )
   })
 
-  it('na Início em inglês, o cabeçalho traz o slogan novo e explica o nome: Portuguese for “Orbital Root”', () => {
-    const { result } = renderHook(() => useShellController(), { wrapper: providers('/', 'en') })
+  it('em inglês, o link do nome explica o nome no title e no aria-label, em qualquer tela', () => {
+    for (const path of ['/', '/guia']) {
+      const { result, unmount } = renderHook(() => useShellController(), { wrapper: providers(path, 'en') })
 
-    expect(result.current.header.slogan).toBe('Eyes on the sky, roots in the ground.')
-    expect(result.current.header.nameMeaning).toBe('Portuguese for “Orbital Root”')
+      expect(result.current.header.slogan).toBe('Eyes on the sky, roots in the ground.')
+      expect(result.current.header.homeTitle).toBe('Raiz Orbital: Portuguese for “Orbital Root”')
+      expect(result.current.header.homeLabel).toBe('Raiz Orbital: Portuguese for “Orbital Root”, home page')
+      unmount()
+    }
   })
 
-  it('em português, o nome não ganha explicação (já é português), nem na Início', () => {
+  it('em português, o link do nome diz só "Raiz Orbital" (o nome já é português)', () => {
     const { result } = renderHook(() => useShellController(), { wrapper: providers('/', 'pt') })
 
-    expect(result.current.header.nameMeaning).toBeNull()
-  })
-
-  it('nas outras telas, nem em inglês o nome ganha explicação (só na Início)', () => {
-    const { result } = renderHook(() => useShellController(), { wrapper: providers('/guia', 'en') })
-
-    expect(result.current.header.slogan).toBe('Eyes on the sky, roots in the ground.')
-    expect(result.current.header.nameMeaning).toBeNull()
+    expect(result.current.header.homeTitle).toBe('Raiz Orbital')
+    expect(result.current.header.homeLabel).toBe('Raiz Orbital, página inicial')
   })
 
   it('o Guia (pacote 3) leva a /guia, de qualquer tela', () => {

@@ -31,7 +31,7 @@ describe('rotas', () => {
     renderAt('/')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'O que plantar depois da soja?' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Raiz Orbital, página inicial' })).toBeInTheDocument()
     expect(screen.getByRole('main')).toBeInTheDocument()
   })
 
@@ -319,28 +319,31 @@ describe('rotas', () => {
     expect(within(agro).getByRole('link', { name: 'Como a conta é feita' })).toHaveAttribute('href', '/como-funciona')
   })
 
-  it('em inglês, o cabeçalho e a Início mostram o slogan novo, e só a Início explica o nome (15/11/2026)', async () => {
+  it('em inglês, o cabeçalho não mostra "Portuguese for" em nenhuma tela: o nome se explica no title do link e na Início', async () => {
     renderAt('/', 'en')
 
-    const banner = await screen.findByRole('banner')
+    let banner = await screen.findByRole('banner')
     expect(within(banner).getByText('Eyes on the sky, roots in the ground.')).toBeInTheDocument()
-    expect(within(banner).getByText('Portuguese for “Orbital Root”')).toBeInTheDocument()
-    expect(within(screen.getByRole('main')).getByText('Eyes on the sky, roots in the ground.')).toBeInTheDocument()
+    expect(within(banner).queryByText(/Portuguese for/)).not.toBeInTheDocument()
+    expect(within(banner).getByRole('link', { name: 'Raiz Orbital: Portuguese for “Orbital Root”, home page' })).toHaveAttribute('title', 'Raiz Orbital: Portuguese for “Orbital Root”')
+    expect(within(screen.getByRole('main')).getByText('Raiz Orbital is Portuguese for “Orbital Root”.')).toBeInTheDocument()
     cleanup()
 
     renderAt('/guia', 'en')
-    const guideBanner = await screen.findByRole('banner')
-    expect(within(guideBanner).getByText('Eyes on the sky, roots in the ground.')).toBeInTheDocument()
-    expect(screen.queryByText(/Portuguese for/)).not.toBeInTheDocument()
+    banner = await screen.findByRole('banner')
+    expect(within(banner).queryByText(/Portuguese for/)).not.toBeInTheDocument()
+    expect(within(banner).getByRole('link', { name: 'Raiz Orbital: Portuguese for “Orbital Root”, home page' })).toHaveAttribute('title', 'Raiz Orbital: Portuguese for “Orbital Root”')
+    expect(screen.queryByText('Raiz Orbital is Portuguese for “Orbital Root”.')).not.toBeInTheDocument()
   })
 
-  it('em português, a Início continua com "Do espaço até a raiz." e sem a explicação do nome', async () => {
+  it('em português, a Início continua com "Do espaço até a raiz." e sem explicar o nome em lugar nenhum', async () => {
     renderAt('/')
 
     const banner = await screen.findByRole('banner')
     expect(within(banner).getByText('Do espaço até a raiz.')).toBeInTheDocument()
     expect(within(screen.getByRole('main')).getByText('Do espaço até a raiz.')).toBeInTheDocument()
     expect(screen.queryByText(/Portuguese for|Orbital Root/)).not.toBeInTheDocument()
+    expect(within(banner).getByRole('link', { name: 'Raiz Orbital, página inicial' })).toHaveAttribute('title', 'Raiz Orbital')
   })
 
   it('o cabeçalho de toda tela tem só Guia, Avisos e o idioma, sem Comunidade e sem o botão grande "Ouvir"', async () => {

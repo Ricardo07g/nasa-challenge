@@ -81,6 +81,7 @@ export function StartView({ t, listen, sources }: StartViewProps) {
               {s.title}
             </h1>
             <p className={styles.slogan}>{t.header.slogan}</p>
+            {s.nameMeaning && <p className={styles.nameMeaning}>{s.nameMeaning}</p>}
             <p className={styles.lead}>{s.lead}</p>
             <ListenSummary
               className={styles.listen}
