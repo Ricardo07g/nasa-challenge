@@ -6,9 +6,9 @@ import { AppHeader, type AppHeaderProps } from './Header'
 
 function setup(overrides: Partial<AppHeaderProps> = {}, path = '/') {
   const props: AppHeaderProps = {
-    homeLabel: 'Raiz Orbital, voltar ao início',
+    homeLabel: 'Raiz Orbital, página inicial',
+    homeTitle: 'Raiz Orbital',
     slogan: 'Do espaço até a raiz.',
-    nameMeaning: null,
     navLabel: 'Principal',
     guide: { label: 'Guia', to: '/guia' },
     alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null },
@@ -27,8 +27,9 @@ describe('AppHeader (cabeçalho global, tarefas 0052 e 0061)', () => {
   it('tem o logo e o nome que levam ao início, com o slogan', () => {
     setup()
 
-    const home = screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })
+    const home = screen.getByRole('link', { name: 'Raiz Orbital, página inicial' })
     expect(home).toHaveAttribute('href', '/')
+    expect(home).toHaveAttribute('title', 'Raiz Orbital')
     expect(home).toHaveTextContent('Raiz Orbital')
     expect(screen.getByText('Do espaço até a raiz.')).toBeInTheDocument()
   })
@@ -113,24 +114,18 @@ describe('AppHeader (cabeçalho global, tarefas 0052 e 0061)', () => {
     expect(props.lang.onToggle).toHaveBeenCalled()
   })
 
-  it('com o significado do nome, mostra a linha discreta logo abaixo do nome e acima do slogan, sem link nem botão próprio', () => {
-    setup({ slogan: 'Eyes on the sky, roots in the ground.', nameMeaning: 'Portuguese for “Orbital Root”' })
+  it('em inglês, o link do nome explica o nome só no title e no aria-label: nada de linha a mais no cabeçalho', () => {
+    setup({
+      homeLabel: 'Raiz Orbital: Portuguese for “Orbital Root”, home page',
+      homeTitle: 'Raiz Orbital: Portuguese for “Orbital Root”',
+      slogan: 'Eyes on the sky, roots in the ground.',
+    })
 
-    const home = screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })
-    const meaning = screen.getByText('Portuguese for “Orbital Root”')
-    expect(meaning.tagName).toBe('SPAN')
-    expect(meaning.closest('button')).toBeNull()
-    expect(within(home).queryAllByRole('link', { hidden: true })).toHaveLength(0)
-    const brand = Array.from(meaning.parentElement!.children).map((child) => child.textContent)
-    expect(brand).toEqual(['Raiz Orbital', 'Portuguese for “Orbital Root”', 'Eyes on the sky, roots in the ground.'])
-  })
-
-  it('sem o significado do nome (null), a linha não aparece', () => {
-    setup({ nameMeaning: null })
-
-    const home = screen.getByRole('link', { name: 'Raiz Orbital, voltar ao início' })
-    expect(home).not.toHaveTextContent('Portuguese for')
-    expect(home).toHaveTextContent('Raiz OrbitalDo espaço até a raiz.')
+    const home = screen.getByRole('link', { name: 'Raiz Orbital: Portuguese for “Orbital Root”, home page' })
+    expect(home).toHaveAttribute('title', 'Raiz Orbital: Portuguese for “Orbital Root”')
+    expect(screen.queryByText(/Portuguese for/)).not.toBeInTheDocument()
+    const brand = Array.from(screen.getByText('Raiz Orbital').parentElement!.children).map((child) => child.textContent)
+    expect(brand).toEqual(['Raiz Orbital', 'Eyes on the sky, roots in the ground.'])
   })
 
   it('em inglês, destaca o EN', () => {

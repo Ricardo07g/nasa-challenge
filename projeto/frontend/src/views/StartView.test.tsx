@@ -26,6 +26,13 @@ function setup({
 }
 
 describe('StartView (tela Início, tarefa 0052)', () => {
+  it('em português, a Início não explica o nome (o nome já é português)', () => {
+    setup()
+
+    expect(screen.getByText('Do espaço até a raiz.')).toBeInTheDocument()
+    expect(screen.queryByText(/Portuguese for|Orbital Root/)).not.toBeInTheDocument()
+  })
+
   it('a abertura tem a etiqueta, a pergunta, o slogan, a frase e o "Começar", nessa ordem', () => {
     setup()
 
@@ -152,8 +159,12 @@ describe('StartView (tela Início, tarefa 0052)', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'What to plant after soybeans?' })).toBeInTheDocument()
     expect(screen.getByText('For soybean growers in Triângulo Mineiro, Brazil')).toBeInTheDocument()
-    expect(screen.getByText('Eyes on the sky, roots in the ground.')).toBeInTheDocument()
-    expect(screen.queryByText(/Portuguese for/)).not.toBeInTheDocument()
+    const slogan = screen.getByText('Eyes on the sky, roots in the ground.')
+    const meaning = screen.getByText('Raiz Orbital is Portuguese for “Orbital Root”.')
+    expect(screen.getAllByText(/Portuguese for/)).toHaveLength(1)
+    expect(slogan.nextElementSibling).toBe(meaning)
+    expect(meaning.tagName).toBe('P')
+    expect(meaning.closest('a, button')).toBeNull()
     expect(screen.getByRole('link', { name: 'Start' })).toHaveAttribute('href', '/onde')
     expect(screen.getByRole('button', { name: 'Listen to summary' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'NASA data Triângulo Mineiro · MG' })).toBeInTheDocument()

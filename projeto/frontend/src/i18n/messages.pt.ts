@@ -68,13 +68,11 @@ export const pt = {
     save: 'Salvar',
   },
   header: {
-    home: 'Raiz Orbital, voltar ao início',
+    /** Nome acessível do link do logo e do nome; em inglês, explica o nome ("Portuguese for “Orbital Root”"). */
+    home: 'Raiz Orbital, página inicial',
+    /** Dica (title) do link do logo e do nome; em inglês, com o que o nome quer dizer. */
+    homeTitle: 'Raiz Orbital',
     slogan: 'Do espaço até a raiz.',
-    /**
-     * Linha discreta sob o nome, só na Início (15/11/2026). Vazia em português (o nome já é português), para não
-     * aparecer; em inglês, "Portuguese for “Orbital Root”". O nome "Raiz Orbital" não se traduz.
-     */
-    nameMeaning: '',
     navLabel: 'Principal',
     /** Pílula do cabeçalho (pacote 3, tarefa 0061): o Guia no lugar da Comunidade, que está "em breve". */
     guide: 'Guia',
@@ -169,6 +167,11 @@ export const pt = {
     eyebrow: 'Para quem planta soja no Triângulo Mineiro',
     title: 'O que plantar depois da soja?',
     lead: 'O satélite da NASA olha a chuva de muitos anos na sua lavoura. Veja a melhor opção.',
+    /**
+     * Linha logo abaixo do slogan da abertura, só em inglês: "Raiz Orbital is Portuguese for “Orbital Root”." Vazia
+     * em português (o nome já é português), e a linha não aparece. O nome "Raiz Orbital" não se traduz.
+     */
+    nameMeaning: '',
     /** Resumo falado do "Ouvir resumo" (2 ou 3 frases, nunca a tela inteira). */
     summary:
       'O Raiz Orbital ajuda a decidir o que plantar depois da soja, com 20 anos de dados de satélite da NASA. É só marcar a lavoura no mapa e dizer quando você colhe a soja. Em seguida, você vê a melhor opção para a sua terra.',

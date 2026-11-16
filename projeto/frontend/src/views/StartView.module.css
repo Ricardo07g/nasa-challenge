@@ -86,6 +86,15 @@
   color: var(--color-text);
 }
 
+/* Só em inglês, logo abaixo do slogan: o que o nome quer dizer. Discreta, sem cara de link. */
+.nameMeaning {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  line-height: 1.4;
+  color: var(--color-text-soft);
+}
+
 .slogan {
   margin: 18px 0 0;
   font-family: var(--font-display);
@@ -475,6 +484,10 @@
   .slogan {
     margin-top: 12px;
     font-size: 19px;
+  }
+
+  .nameMeaning {
+    font-size: 13px;
   }
 
   .lead {

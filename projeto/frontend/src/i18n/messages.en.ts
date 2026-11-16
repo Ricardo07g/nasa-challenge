@@ -55,9 +55,9 @@ export const en = {
     save: 'Save',
   },
   header: {
-    home: 'Raiz Orbital, back to start',
+    home: 'Raiz Orbital: Portuguese for “Orbital Root”, home page',
+    homeTitle: 'Raiz Orbital: Portuguese for “Orbital Root”',
     slogan: 'Eyes on the sky, roots in the ground.',
-    nameMeaning: 'Portuguese for “Orbital Root”',
     navLabel: 'Main',
     guide: 'Guide',
     langToggleLabel: 'Switch language: Portuguese or English',
@@ -143,6 +143,7 @@ export const en = {
     eyebrow: 'For soybean growers in Triângulo Mineiro, Brazil',
     title: 'What to plant after soybeans?',
     lead: 'NASA satellites look at many years of rain on your field. See the best option.',
+    nameMeaning: 'Raiz Orbital is Portuguese for “Orbital Root”.',
     summary:
       'Raiz Orbital helps you decide what to plant after soybeans, using 20 years of NASA satellite data. Just mark your field on the map and tell us when you harvest your soybeans. Then you see the best option for your land.',
     start: 'Start',

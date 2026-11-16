@@ -6,8 +6,9 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * Slogan em inglês (15/11/2026): "Eyes on the sky, roots in the ground." no lugar do antigo, e a linha discreta
- * que explica o nome só na Início em inglês. A busca no repositório inteiro (docs, README) é feita com grep no PR;
- * aqui, o pacote do front, que é o que roda também no container.
+ * que explica o nome só na Início em inglês, abaixo do slogan da abertura (fora do cabeçalho desde 16/11/2026).
+ * A busca no repositório inteiro (docs, README) é feita com grep no PR; aqui, o pacote do front, que é o que roda
+ * também no container.
  */
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const read = (file: string) => readFileSync(resolve(root, file), 'utf-8')
@@ -41,18 +42,33 @@ describe('slogan em inglês (15/11/2026)', () => {
     expect(offenders).toEqual([])
   })
 
-  it('a linha "Portuguese for “Orbital Root”" é discreta: 14 px no computador, 13 px no celular, cor #5d6461, peso normal', () => {
-    const css = read('src/design-system/components/Header.module.css')
+  it('na Início (só em inglês), a linha que explica o nome é discreta: 14 px no computador, 13 px no celular, cor #5d6461, peso normal, 6 px acima', () => {
+    const css = read('src/views/StartView.module.css')
     const [desktop] = css.split('@media')
     const mobile = css.slice(css.indexOf('@media (max-width: 900px)'))
     const tokens = read('src/design-system/tokens.css')
 
     const base = rule(desktop, '.nameMeaning')
+    expect(base).toMatch(/margin:\s*6px 0 0;/)
     expect(base).toMatch(/font-size:\s*14px;/)
     expect(base).toMatch(/color:\s*var\(--color-text-soft\);/)
     expect(base).toMatch(/font-weight:\s*var\(--font-weight-regular\);/)
     expect(tokens).toMatch(/--color-text-soft:\s*#5d6461;/)
     expect(tokens).toMatch(/--font-weight-regular:\s*400;/)
     expect(rule(mobile, '.nameMeaning')).toMatch(/font-size:\s*13px;/)
+  })
+
+  it('o cabeçalho não tem mais a linha do nome; o slogan fica embaixo do nome: 12 px, #5d6461, peso normal, sem quebrar, e some no celular', () => {
+    const css = read('src/design-system/components/Header.module.css')
+    const [desktop] = css.split('@media')
+    const mobile = css.slice(css.indexOf('@media (max-width: 900px)'))
+
+    expect(css).not.toMatch(/\.nameMeaning/)
+    const slogan = rule(desktop, '.slogan')
+    expect(slogan).toMatch(/font-size:\s*12px;/)
+    expect(slogan).toMatch(/color:\s*var\(--color-text-soft\);/)
+    expect(slogan).toMatch(/font-weight:\s*var\(--font-weight-regular\);/)
+    expect(slogan).toMatch(/white-space:\s*nowrap;/)
+    expect(rule(mobile, '.slogan')).toMatch(/display:\s*none;/)
   })
 })

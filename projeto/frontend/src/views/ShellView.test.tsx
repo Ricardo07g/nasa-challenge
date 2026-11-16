@@ -9,9 +9,9 @@ import type { AppHeaderProps } from '../design-system/components/Header'
 import { ShellView } from './ShellView'
 
 const header: AppHeaderProps = {
-  homeLabel: 'Raiz Orbital, voltar ao início',
+  homeLabel: 'Raiz Orbital, página inicial',
   slogan: 'Do espaço até a raiz.',
-  nameMeaning: null,
+  homeTitle: 'Raiz Orbital',
   navLabel: 'Principal',
   guide: { label: 'Guia', to: '/guia' },
   alerts: { label: 'Avisos', to: '/avisos', count: null, countLabel: null },

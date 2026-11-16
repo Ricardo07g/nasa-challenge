@@ -53,21 +53,12 @@
   color: var(--color-text);
 }
 
-/*
- * O que o nome quer dizer (15/11/2026): só na Início e só em inglês, logo abaixo do nome e acima do slogan.
- * Discreta: texto corrido, sem cara de link.
- */
-.nameMeaning {
-  margin-top: 2px;
-  font-size: 14px;
-  font-weight: var(--font-weight-regular);
-  line-height: 1.3;
-  color: var(--color-text-soft);
-}
-
+/* Slogan numa linha só embaixo do nome; o que o nome quer dizer fica no title do link e na Início (em inglês). */
 .slogan {
   margin-top: 3px;
+  white-space: nowrap;
   font-size: 12px;
+  font-weight: var(--font-weight-regular);
   line-height: 1.3;
   color: var(--color-text-soft);
 }
@@ -231,11 +222,6 @@
 
   .brandName {
     font-size: 17px;
-  }
-
-  .nameMeaning {
-    margin-top: 1px;
-    font-size: 13px;
   }
 
   .slogan {

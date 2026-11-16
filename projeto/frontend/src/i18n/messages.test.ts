@@ -27,7 +27,7 @@ describe('dicionários', () => {
           ? Object.values(obj).flatMap(values)
           : []
     // Única exceção: o significado do nome fica vazio em pt (o nome já é português), para a linha não aparecer.
-    const ptWithoutNameMeaning = { ...pt, header: { ...pt.header, nameMeaning: 'x' } }
+    const ptWithoutNameMeaning = { ...pt, start: { ...pt.start, nameMeaning: 'x' } }
     expect(empty.length).toBeGreaterThan(0)
     expect(values(ptWithoutNameMeaning).filter((text) => text.trim() === '')).toEqual([])
     expect(values(en).filter((text) => text.trim() === '')).toEqual([])
@@ -37,17 +37,20 @@ describe('dicionários', () => {
 describe('nome e slogan (15/11/2026)', () => {
   it('o nome continua "Raiz Orbital" nos dois idiomas; o slogan em inglês é "Eyes on the sky, roots in the ground."', () => {
     expect(en.header.slogan).toBe('Eyes on the sky, roots in the ground.')
-    expect(en.header.home).toBe('Raiz Orbital, back to start')
+    expect(en.header.home).toBe('Raiz Orbital: Portuguese for “Orbital Root”, home page')
+    expect(en.header.homeTitle).toBe('Raiz Orbital: Portuguese for “Orbital Root”')
   })
 
   it('o slogan em português não muda', () => {
     expect(pt.header.slogan).toBe('Do espaço até a raiz.')
-    expect(pt.header.home).toBe('Raiz Orbital, voltar ao início')
+    expect(pt.header.home).toBe('Raiz Orbital, página inicial')
+    expect(pt.header.homeTitle).toBe('Raiz Orbital')
   })
 
-  it('só em inglês o nome ganha a explicação, com aspas curvas; em português fica vazia (não aparece)', () => {
-    expect(en.header.nameMeaning).toBe('Portuguese for “Orbital Root”')
-    expect(pt.header.nameMeaning).toBe('')
+  it('só em inglês a Início explica o nome, com aspas curvas; em português fica vazia (não aparece)', () => {
+    expect(en.start.nameMeaning).toBe('Raiz Orbital is Portuguese for “Orbital Root”.')
+    expect(pt.start.nameMeaning).toBe('')
+    expect('nameMeaning' in en.header).toBe(false)
   })
 })
 

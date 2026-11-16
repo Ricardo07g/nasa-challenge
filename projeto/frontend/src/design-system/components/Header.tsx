@@ -4,13 +4,11 @@ import { FlagBR, FlagUS } from '../flags/Flag'
 import styles from './Header.module.css'
 
 export type AppHeaderProps = {
+  /** Nome acessível do link do logo e do nome (em inglês, explica o nome: "Portuguese for “Orbital Root”"). */
   homeLabel: string
+  /** Dica (title) do link do logo e do nome; em inglês, com o que o nome quer dizer. */
+  homeTitle: string
   slogan: string
-  /**
-   * Linha discreta logo abaixo do nome e acima do slogan (15/11/2026): o que o nome quer dizer, "Portuguese for
-   * “Orbital Root”". Só na Início e só em inglês; `null` = a linha não aparece.
-   */
-  nameMeaning: string | null
   /** Nome da navegação ("Principal" / "Main"). */
   navLabel: string
   /**
@@ -38,15 +36,14 @@ export type AppHeaderProps = {
  * só Guia, Avisos e o idioma. A Comunidade saiu (está "em breve"). O "Ouvir" não fica aqui: cada tela tem o seu
  * "Ouvir resumo" perto do título.
  */
-export function AppHeader({ homeLabel, slogan, nameMeaning, navLabel, guide, alerts, lang }: AppHeaderProps) {
+export function AppHeader({ homeLabel, homeTitle, slogan, navLabel, guide, alerts, lang }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link to="/" className={styles.logo} aria-label={homeLabel}>
+        <Link to="/" className={styles.logo} aria-label={homeLabel} title={homeTitle}>
           <LogoMark size={44} />
           <span className={styles.brand} aria-hidden="true">
             <span className={styles.brandName}>Raiz Orbital</span>
-            {nameMeaning && <span className={styles.nameMeaning}>{nameMeaning}</span>}
             <span className={styles.slogan}>{slogan}</span>
           </span>
         </Link>
