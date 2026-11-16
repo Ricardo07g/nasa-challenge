@@ -11,9 +11,17 @@ nenhuma credencial entra no git.** Senhas e segredos ficam só nas variáveis da
 | `backend` | pasta `projeto/backend`, `Dockerfile` e `railway.json` | privada (domínio público opcional) | FastAPI. Antes de cada deploy roda `alembic upgrade head`. Volume em `/dados` com os arquivos de `data/baixados` |
 | `frontend` | pasta `projeto/frontend`, `Dockerfile.prod` e `railway.json` | domínio público `*.up.railway.app` | build do Vite + Caddy (`Caddyfile`), que serve o site e repassa `/api/*` ao backend pela rede privada |
 
-Os três serviços dormem depois de ~10 min sem acesso (`sleepApplication`) e acordam no primeiro pedido. O primeiro
-clique depois de um tempo parado leva alguns segundos a mais. O banco pode dormir porque a API abre uma conexão nova a
-cada pedido (sem pool): a conexão do backend acorda o `db` pela rede privada.
+**Quem dorme:** o `backend` e o `db` dormem de 5 a 10 min depois do último tráfego (`sleepApplication`) e acordam no
+primeiro pedido. O `frontend` fica **sempre ligado** (`sleepApplication: false`): o site carrega na hora, sem o 502
+que a Railway pode devolver no primeiro pedido a um serviço dormindo. O custo é de ~US$ 0,45 por mês (Caddy com ~32 MB
+de memória).
+- **Acordar a cadeia:** o Caddy repassa o `/api/*` e, se o backend ainda está acordando, tenta de novo a cada 500 ms
+  por até 20 s (`lb_try_duration` no `Caddyfile`), em vez de responder 502. O banco pode dormir porque a API abre uma
+  conexão nova a cada pedido (sem pool): a conexão do backend acorda o `db` pela rede privada. O primeiro clique depois
+  de um tempo parado leva ~4 a 5 s (medido em 15/11/2026).
+- **Mudou a configuração de um serviço?** Ela só vale num deploy novo. O `railway redeploy` reaproveita a configuração do
+  deploy anterior: use `railway up` ou a mutação `serviceInstanceDeployV2` e confira o `meta.serviceManifest` do deploy
+  (foi assim que o `db` ficou sem dormir até 15/11/2026).
 
 **O backend escuta em `0.0.0.0`, não em `::`.** O asyncio abre o socket IPv6 só para IPv6 (`IPV6_V6ONLY`), e o health
 check da Railway chega por IPv4: com `--host ::` o deploy falha com "replicas never became healthy". A rede privada

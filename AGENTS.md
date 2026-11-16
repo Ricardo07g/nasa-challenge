@@ -48,7 +48,7 @@ docker compose down -v           # para tudo e APAGA o banco local
 
 Mudou dependência do frontend? Rode `docker compose up --build -V` para recriar o `node_modules` do container.
 
-Deploy na Railway (banco PostGIS, backend e front, que dormem depois de ~10 min sem uso): veja
+Deploy na Railway (banco PostGIS e backend, que dormem sem uso, e o site, sempre ligado): veja
 `projeto/backend/docs/deploy-railway.md`. Nenhuma credencial vai para o git: segredos só nas variáveis da Railway.
 
 ## CI/CD (GitHub Actions)

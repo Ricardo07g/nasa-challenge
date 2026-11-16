@@ -9,7 +9,12 @@
 	encode zstd gzip
 
 	handle /api/* {
-		reverse_proxy {$BACKEND_URL}
+		# O backend dorme sem uso (Railway) e leva alguns segundos para acordar: em vez de responder 502 na
+		# hora, o Caddy tenta de novo a cada 500 ms por até 20 s.
+		reverse_proxy {$BACKEND_URL} {
+			lb_try_duration 20s
+			lb_try_interval 500ms
+		}
 	}
 
 	handle {
