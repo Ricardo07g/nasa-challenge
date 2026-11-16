@@ -572,7 +572,8 @@ Com Docker (a partir de `projeto/`): `docker compose up --build frontend` e
   `VITE_API_MODE`, `VITE_TELEGRAM_BOT_URL` e `VITE_ABRIR_COM_DEMONSTRACAO` (pacote 2; só `false`, `0` ou `nao`
   desligam). Nos testes, o `test.env` do `vite.config.ts` fixa o valor.
 - **Imagem de produção (`Dockerfile.prod`, deploy na Railway):** build do Vite + Caddy (`Caddyfile`), que repassa
-  `/api/*` ao backend. O build grava `dist/versao.json` com o argumento `COMMIT_SHA` (a Railway passa a variável do
+  `/api/*` ao backend; como o backend dorme sem uso, o Caddy tenta de novo por até 20 s enquanto ele acorda
+  (`lb_try_duration`), sem devolver 502. O site fica sempre ligado. O build grava `dist/versao.json` com o argumento `COMMIT_SHA` (a Railway passa a variável do
   serviço, que o deploy do CI grava; sem ela, `local`): o smoke test do CI confere o commit no ar. Não é `VITE_*`:
   não vai para o código do app.
 - **Idioma:** textos da interface em português (produtor) e inglês (juízes), conforme o PRD (RNF-03).
