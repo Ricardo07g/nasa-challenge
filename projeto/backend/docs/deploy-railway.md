@@ -11,11 +11,16 @@ nenhuma credencial entra no git.** Senhas e segredos ficam só nas variáveis da
 | `backend` | pasta `projeto/backend`, `Dockerfile` e `railway.json` | privada (domínio público opcional) | FastAPI. Antes de cada deploy roda `alembic upgrade head`. Volume em `/dados` com os arquivos de `data/baixados` |
 | `frontend` | pasta `projeto/frontend`, `Dockerfile.prod` e `railway.json` | domínio público `*.up.railway.app` | build do Vite + Caddy (`Caddyfile`), que serve o site e repassa `/api/*` ao backend pela rede privada |
 
-**Quem dorme:** o `backend` e o `db` dormem de 5 a 10 min depois do último tráfego (`sleepApplication`) e acordam no
-primeiro pedido. O `frontend` fica **sempre ligado** (`sleepApplication: false`): o site carrega na hora, sem o 502
-que a Railway pode devolver no primeiro pedido a um serviço dormindo. O custo é de ~US$ 0,45 por mês (Caddy com ~32 MB
-de memória).
-- **Acordar a cadeia:** o Caddy repassa o `/api/*` e, se o backend ainda está acordando, tenta de novo a cada 500 ms
+**Agora (desde 16/11/2026, semana da avaliação): os três serviços ficam ligados 24/7** (`sleepApplication: false`).
+Custo medido: ~US$ 3 a 4 por mês de uso, dentro dos US$ 5 incluídos no plano Hobby. Motivo: no teste com a API e o
+banco dormindo, o site abriu na hora e o Caddy segurou a API (sem 502), mas 2 de 7 chamadas que usam o banco deram 500:
+a API conectou enquanto o banco ainda subia (`server closed the connection unexpectedly`).
+
+**Para voltar a economizar depois da avaliação:** ligar o `sleepApplication` do `backend` e do `db` pela API
+(`serviceInstanceUpdate`), pôr `true` no `projeto/backend/railway.json` e fazer um deploy novo de cada um (abaixo).
+Antes, resolver o 500 do banco acordando: deixar o `db` ligado (~US$ 0,90 por mês) ou fazer a API tentar a conexão de
+novo por alguns segundos. O `frontend` fica sempre ligado de qualquer jeito (~US$ 0,45 por mês).
+- **Acordar a cadeia (quando o modo dormindo estiver ligado):** o Caddy repassa o `/api/*` e, se o backend ainda está acordando, tenta de novo a cada 500 ms
   por até 20 s (`lb_try_duration` no `Caddyfile`), em vez de responder 502. O banco pode dormir porque a API abre uma
   conexão nova a cada pedido (sem pool): a conexão do backend acorda o `db` pela rede privada. O primeiro clique depois
   de um tempo parado leva ~4 a 5 s (medido em 15/11/2026).
