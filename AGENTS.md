@@ -17,8 +17,9 @@ A referência do produto está no próprio repositório:
   `roteiro-de-implementacao.md`, `tarefas/` (uma tarefa por PR, com os requisitos) e `adr/` (decisões de arquitetura);
 - os números do motor em `projeto/backend/app/config_data/regras.yaml` e `culturas.yaml`, cada um com a fonte.
 
-Os ids antigos citados no código e nos documentos (RF-xx, PRD 7.x, plano técnico §x) são referência histórica: os
-documentos de produto de origem saíram do repositório em 15/11/2026. Requisito novo fica na tarefa
+Os documentos de produto atuais (discovery, plano de negócio, PRD e roadmap) ficam em `docs/product/`, em inglês,
+porque fazem parte da submissão. Os ids antigos citados no código (RF-xx, PRD 7.x, plano técnico §x) são referência
+histórica. Requisito novo fica na tarefa
 (`projeto/backend/docs/tarefas/`) do PR que o implementa. Se o código e a documentação discordarem, pergunte.
 
 ## Mapa do repositório
@@ -33,6 +34,9 @@ projeto/
 .pre-commit-config.yaml   checagens antes de cada commit (segredos, lint)
 .github/workflows/ci-cd.yml  CI em todo PR e deploy na Railway a cada merge no main
 .github/scripts/          script do deploy na Railway e o teste dele
+docs/product/             discovery, plano de negócio, PRD e roadmap (em inglês)
+docs/submission/          textos enviados ao NASA Space Apps (em inglês)
+docs/images/              telas e ilustrações usadas no README e na submissão
 ```
 
 ## Como rodar
